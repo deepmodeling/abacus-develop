@@ -75,17 +75,13 @@ public:
 				this->lmaxmax,
 				this->init_vel,
 				this->fixed_axes);
-		delete[] ucell->atom_label;
-		delete[] ucell->atom_mass;
-		delete[] ucell->pseudo_fn;
-		delete[] ucell->pseudo_type;
-		delete[] ucell->orbital_fn;
+		
 		delete[] ucell->magnet.start_magnetization; //mag set here
-		ucell->atom_label = new std::string[ucell->ntype];
-		ucell->atom_mass = new double[ucell->ntype];
-		ucell->pseudo_fn = new std::string[ucell->ntype];
-		ucell->pseudo_type = new std::string[ucell->ntype];
-		ucell->orbital_fn = new std::string[ucell->ntype];
+		ucell->atom_label.resize(ucell->ntype);
+		ucell->atom_mass.resize(ucell->ntype);
+		ucell->pseudo_fn.resize(ucell->ntype);
+		ucell->pseudo_type.resize(ucell->ntype);
+		ucell->orbital_fn.resize(ucell->ntype);
 		ucell->magnet.start_magnetization = new double[ucell->ntype]; //mag set here
 		ucell->magnet.ux_[0] = 0.0; // ux_ set here
 		ucell->magnet.ux_[1] = 0.0;
@@ -109,7 +105,7 @@ public:
 		ucell->latvec.e13 = this->latvec[2];
 		ucell->latvec.e21 = this->latvec[3];
 		ucell->latvec.e22 = this->latvec[4];
-	       	ucell->latvec.e23 = this->latvec[5];
+	    ucell->latvec.e23 = this->latvec[5];
 		ucell->latvec.e31 = this->latvec[6];
 		ucell->latvec.e32 = this->latvec[7];
 		ucell->latvec.e33 = this->latvec[8];

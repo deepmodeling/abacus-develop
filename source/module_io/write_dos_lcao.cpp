@@ -8,7 +8,6 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_psi/wavefunc.h"
 #include "write_orb_info.h"
 
 #include <sys/time.h>
@@ -461,11 +460,17 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                     }
 
                     psi->fix_k(ik);
-                    psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                    
+                    psi::Psi<std::complex<double>> Dwfc(1, 
+                                                        psi->get_nbands(),
+                                                        psi->get_nbasis(),
+                                                        psi->get_nbasis(),
+                                                        true);
+
                     std::complex<double>* p_dwfc = Dwfc.get_pointer();
                     for (int index = 0; index < Dwfc.size(); ++index)
                     {
-                        p_dwfc[index] = conj(p_dwfc[index]);
+                        p_dwfc[index] = conj(psi->get_pointer()[index]);
                     }
 
                     for (int i = 0; i < PARAM.inp.nbands; ++i)

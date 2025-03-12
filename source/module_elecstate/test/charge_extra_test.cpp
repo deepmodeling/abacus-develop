@@ -24,6 +24,8 @@ Magnetism::~Magnetism()
 {
     delete[] this->start_magnetization;
 }
+Parallel_Grid::~Parallel_Grid(){};
+
 
 // mock functions for Charge
 Charge::Charge()
@@ -87,7 +89,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup_structure_factor(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
 {
 }
 
@@ -113,6 +115,7 @@ class ChargeExtraTest : public ::testing::Test
     Charge_Extra CE;
     UcellTestPrepare utp = UcellTestLib["Si"];
     std::unique_ptr<UnitCell> ucell;
+    Parallel_Grid* pgrid = nullptr;
     Charge charge;
     Structure_Factor sf;
     void SetUp() override
@@ -183,7 +186,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -205,7 +208,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -227,7 +230,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -248,7 +251,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
     CE.istep = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results

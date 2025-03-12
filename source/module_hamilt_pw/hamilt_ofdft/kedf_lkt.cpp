@@ -35,7 +35,7 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
         this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            energy += pow(prho[0][ir], 5. / 3.) / std::cosh(as[ir]);
+            energy += std::pow(prho[0][ir], 5. / 3.) / std::cosh(as[ir]);
         }
         energy *= this->dV_ * this->c_tf_;
     }
@@ -77,7 +77,7 @@ double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, M
 
     this->nabla(prho[is], pw_rho, nabla_rho);
     this->get_as(prho[is], nabla_rho, pw_rho->nrxx, as);
-    energy_den = this->c_tf_ * pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
+    energy_den = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
 
     delete[] as;
     for (int i = 0; i < 3; ++i) {

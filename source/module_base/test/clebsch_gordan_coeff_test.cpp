@@ -16,18 +16,6 @@
  *     - functions: gen_rndm_r and compute_ap
  */
 
-namespace ModuleBase
-{
-void WARNING_QUIT(const std::string& file, const std::string& description)
-{
-    return;
-}
-void WARNING(const std::string& file, const std::string& description)
-{
-    return;
-}
-} // namespace ModuleBase
-
 TEST(ClebschGordanTest, ClebschGordanExit)
 {
     int lmaxkb = -2;

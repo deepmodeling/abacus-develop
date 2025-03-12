@@ -11,7 +11,6 @@
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
-    - [psi\_initializer](#psi_initializer)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -22,6 +21,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [nb2d](#nb2d)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
@@ -37,14 +37,15 @@
     - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
+    - [diago\_smooth\_ethr](#diago_smooth_ethr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [diag\_subspace](#diag_subspace)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-    - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
     - [lcao\_ecut](#lcao_ecut)
     - [lcao\_dk](#lcao_dk)
@@ -91,6 +92,7 @@
     - [scf\_os\_stop](#scf_os_stop)
     - [scf\_os\_thr](#scf_os_thr)
     - [scf\_os\_ndim](#scf_os_ndim)
+    - [sc\_os\_ndim](#sc_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
@@ -208,6 +210,36 @@
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
     - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft)
+    - [of\_ml\_gene\_data](#of_ml_gene_data)
+    - [of\_ml\_device](#of_ml_device)
+    - [of\_ml\_feg](#of_ml_feg)
+    - [of\_ml\_nkernel](#of_ml_nkernel)
+    - [of\_ml\_kernel](#of_ml_kernel)
+    - [of\_ml\_kernel\_scaling](#of_ml_kernel_scaling)
+    - [of\_ml\_yukawa\_alpha](#of_ml_yukawa_alpha)
+    - [of\_ml\_kernel\_file](#of_ml_kernel_file)
+    - [of\_ml\_gamma](#of_ml_gamma)
+    - [of\_ml\_p](#of_ml_p)
+    - [of\_ml\_q](#of_ml_q)
+    - [of\_ml\_tanhp](#of_ml_tanhp)
+    - [of\_ml\_tanhq](#of_ml_tanhq)
+    - [of\_ml\_chi\_p](#of_ml_chi_p)
+    - [of\_ml\_chi\_q](#of_ml_chi_q)
+    - [of\_ml\_gammanl](#of_ml_gammanl)
+    - [of\_ml\_pnl](#of_ml_pnl)
+    - [of\_ml\_qnl](#of_ml_qnl)
+    - [of\_ml\_xi](#of_ml_xi)
+    - [of\_ml\_tanhxi](#of_ml_tanhxi)
+    - [of\_ml\_tanhxi\_nl](#of_ml_tanhxi_nl)
+    - [of\_ml\_tanh\_pnl](#of_ml_tanh_pnl)
+    - [of\_ml\_tanh\_qnl](#of_ml_tanh_qnl)
+    - [of\_ml\_tanhp\_nl](#of_ml_tanhp_nl)
+    - [of\_ml\_tanhq\_nl](#of_ml_tanhq_nl)
+    - [of\_ml\_chi\_xi](#of_ml_chi_xi)
+    - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
+    - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
+    - [of\_ml\_local\_test](#of_ml_local_test)
   - [Electric field and dipole correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
@@ -435,7 +467,7 @@
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
-  - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
+  - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
@@ -548,21 +580,10 @@ These variables are used to control general system parameters.
   - triclinic: triclinic (14)
 - **Default**: none
 
-### psi_initializer
-
-- **Type**: Integer
-- **Description**: enable the experimental feature psi_initializer, to support use numerical atomic orbitals initialize wavefunction (`basis_type pw` case).
-
-  NOTE: this feature is not well-implemented for `nspin 4` case (closed presently), and cannot use with `calculation nscf`/`esolver_type sdft` cases.
-  Available options are:
-  - 0: disable psi_initializer
-  - 1: enable psi_initializer
-- **Default**: 0
-
 ### init_wfc
 
 - **Type**: String
-- **Description**: Only useful for plane wave basis only now. It is the name of the starting wave functions. In the future. we should also make this variable available for localized orbitals set.
+- **Description**: The type of the starting wave functions.
 
   Available options are:
 
@@ -570,10 +591,10 @@ These variables are used to control general system parameters.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
   - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
-
-  with `psi_initializer 1`, two more options are supported:
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
+  
+  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `set_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
 ### init_chg
@@ -666,6 +687,19 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
 
+### nb2d
+
+- **Type**: Integer
+- **Description**: When using elpa or scalapack to solver the eigenvalue problem, the data should be distributed by the two-dimensional block-cyclic distribution. This paramter specifies the size of the block. It is valid for:
+  - [ks_solver](#ks_solver) is genelpa or scalapack_gvx. If nb2d is set to 0, then it will be automatically set in the program according to the size of atomic orbital basis:
+    - if size <= 500: nb2d = 1
+    - if 500 < size <= 1000: nb2d = 32
+    - if size > 1000: nb2d = 64;
+  - [ks_solver](#ks_solver) is dav_subspace, and [diag_subspace](#diag_subspace) is 1 or 2. It is the block size for the diagonization of subspace. If it is set to 0, then it will be automatically set in the program according to the number of band:
+    - if number of band > 500: nb2d = 32
+    - if number of band < 500: nb2d = 16
+- **Default**: 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Variables related to input files
@@ -739,6 +773,7 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Real
 - **Description**: Energy cutoff for plane wave functions, the unit is **Rydberg**. Note that even for localized orbitals basis, you still need to setup an energy cutoff for this system. Because our local pseudopotential parts and the related force are calculated from plane wave basis set, etc. Also, because our orbitals are generated by matching localized orbitals to a chosen set of wave functions from a certain energy cutoff, this set of localize orbitals is most accurate under this same plane wave energy cutoff.
+> `ecutwfc` and `ecutrho` can be set simultaneously. Besides, if only one parameter is set, abacus will automatically set another parameter based on the 4-time relationship. If both parameters are not set, the default values will be employed.
 - **Default**: 50 Ry (PW basis), 100 Ry (LCAO basis)
 
 ### ecutrho
@@ -777,6 +812,12 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Only used when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.**
 - **Default**: 0.01
 
+### diago_smooth_ethr
+
+- **Type**: bool
+- **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
+- **Default**: false
+
 ### pw_diag_nmax
 
 - **Type**: Integer
@@ -787,7 +828,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-- **Default**: 4
+- **Default**: 4 
+
+### diag_subspace
+
+- **Type**: Integer
+- **Description**: The method to diagonalize subspace in dav_subspace method. The available options are:
+  - 0: by LAPACK
+  - 1: by GenELPA
+  - 2: by ScaLAPACK
+  LAPACK only solve in one core, GenELPA and ScaLAPACK can solve in parallel. If the system is small (such as the band number is less than 100), LAPACK is recommended. If the system is large and MPI parallel is used, then GenELPA or ScaLAPACK is recommended, and GenELPA usually has better performance. For GenELPA and ScaLAPACK, the block size can be set by [nb2d](#nb2d).
+
+- **Default**: 0
 
 ### erf_ecut
 
@@ -829,15 +881,6 @@ These variables are used to control the plane wave related parameters.
 ## Numerical atomic orbitals related variables
 
 These variables are used to control the numerical atomic orbitals related parameters.
-
-### nb2d
-
-- **Type**: Integer
-- **Description**: In LCAO calculations, we arrange the total number of processors in an 2D array, so that we can partition the wavefunction matrix (number of bands*total size of atomic orbital basis) and distribute them in this 2D array. When the system is large, we group processors into sizes of nb2d, so that multiple processors take care of one row block (a group of atomic orbitals) in the wavefunction matrix. If set to 0, nb2d will be automatically set in the program according to the size of atomic orbital basis:
-  - if size <= 500 : nb2d = 1
-  - if 500 < size <= 1000 : nb2d = 32
-  - if size > 1000 : nb2d = 64;
-- **Default**: 0
 
 ### lmaxmax
 
@@ -1193,6 +1236,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Real
 - **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
+- **Unit**: Ry if `scf_thr_type=1`, **dimensionless** if `scf_thr_type=2`
 
 ### scf_ene_thr
 
@@ -1205,10 +1249,8 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion.
-  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron.
-
-  Note: This parameter is still under testing and the default setting is usually sufficient.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$, which is used in SCF of PW basis with unit Ry. 
+  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron, which is used in SCF of LCAO with unit **dimensionless**.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
@@ -1554,10 +1596,8 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)).
-  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
-  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
-- **Default**: 0
+- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
+- **Default**: [scf_nmax](#scf_nmax)
 
 ### out_chg
 
@@ -2053,7 +2093,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: int
 - **Availability**: numerical atomic orbital basis
 - **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
-  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output psialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output phialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
 - **Default**: 0
 
 ### deepks_out_unittest
@@ -2072,11 +2112,18 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The type of KEDF (kinetic energy density functional).
+
+  Analytical functionals:
   - **wt**: Wang-Teter.
   - **tf**: Thomas-Fermi.
   - **vw**: von Weizsäcker.
-  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **tf+**: TF $\rm{\lambda}$ vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
   - **lkt**: Luo-Karasiev-Trickey.
+
+  Machine learning (ML) based functionals:
+  - **ml**: ML-based KEDF allows for greater flexibility, enabling users to set related ML model parameters themselves. see [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft).
+  - **mpn**: ML-based Physically-constrained Non-local (MPN) KEDF. ABACUS automatically configures the necessary parameters, requiring no manual intervention from the user.
+  - **cpn5**: Multi-Channel MPN (CPN) KEDF with 5 channels. Similar to mpn, ABACUS handles all parameter settings automatically.
 - **Default**: wt
 
 ### of_method
@@ -2207,6 +2254,221 @@ Warning: this function is not robust enough for the current version. Please try 
 
 [back to top](#full-list-of-input-keywords)
 
+## ML-KEDF: machine learning based kinetic energy density functional for OFDFT
+
+### of_ml_gene_data
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Generate training data or not.
+- **Default**: False
+
+### of_ml_device
+
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: Run Neural Network on GPU or CPU.
+  - **cpu**: CPU
+  - **gpu**: GPU
+- **Default**: cpu
+
+### of_ml_feg
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: The method to incorporate the Free Electron Gas (FEG) limit: $F_\theta |_{\rm{FEG}} = 1$, where $F_\theta$ is enhancement factor of Pauli energy.
+  - **0**: Do not incorporate the FEG limit.
+  - **1**: Incorporate the FEG limit by translation: $F_\theta = F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + 1$.
+  - **3**: Incorporate the FEG limit by nonlinear transformation: $F_\theta = f(F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + \ln(e - 1))$, where $f = \ln(1 + e^x)$ is softplus function, satisfying $f(x)|_{x=\ln(e-1)} = 1$. 
+- **Default**: 0
+
+### of_ml_nkernel
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: Number of kernel functions.
+- **Default**: 1
+
+### of_ml_kernel
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the type of the $i$-th kernel function.
+  - **1**: Wang-Teter kernel function.
+  - **2**: Modified Yukawa function: $k_{\rm{F}}^2\frac{\exp{({-\alpha k_{\rm{F}}|\mathbf{r}-\mathbf{r}'|})}}{|\mathbf{r}-\mathbf{r}'|}$, and $\alpha$ is specified by [of_ml_yukawa_alpha](#of_ml_yukawa_alpha).
+  - **3**: Truncated kinetic kernel (TKK), the file containing TKK is specified by [of_ml_kernel_file](#of_kernel_file).
+- **Default**: 1
+
+### of_ml_kernel_scaling
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the RECIPROCAL of scaling parameter $\lambda$ of the $i$-th kernel function. $w_i(\mathbf{r}-\mathbf{r}') = \lambda^3 w_i'(\lambda(\mathbf{r}-\mathbf{r}'))$.
+- **Default**: 1.0
+
+### of_ml_yukawa_alpha
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the parameter $\alpha$ of $i$-th kernel function. ONLY used for Yukawa kernel function.
+- **Default**: 1.0
+
+### of_ml_kernel_file
+
+- **Type**: Vector of String
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the file containint the $i$-th kernel function. ONLY used for TKK.
+- **Default**: none
+
+### of_ml_gamma
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Local descriptor: $\gamma(\mathbf{r}) = (\rho(\mathbf{r}) / \rho_0)^{1/3}$.
+- **Default**: False
+
+### of_ml_p
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $p(\mathbf{r}) = \frac{|\nabla \rho(\mathbf{r})|^2} {[2 (3 \pi^2)^{1/3} \rho^{4/3}(\mathbf{r})]^2}$.
+- **Default**: False
+
+### of_ml_q
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $q(\mathbf{r}) = \frac{\nabla^2 \rho(\mathbf{r})} {[4 (3 \pi^2)^{2/3} \rho^{5/3}(\mathbf{r})]}$.
+- **Default**: False
+
+### of_ml_tanhp
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_tanhq
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_chi_p
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_p$: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: 1.0
+
+### of_ml_chi_q
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_q$: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_gammanl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\gamma_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \gamma(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $p_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') p(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $q_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') q(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_xi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\xi(\mathbf{r}) = \frac{\int{w_i(\mathbf{r}-\mathbf{r}') \rho^{1/3}(\mathbf{r}') dr'}}{\rho^{1/3}(\mathbf{r})}$. 
+- **Default**: 0
+
+### of_ml_tanhxi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 0
+
+### of_ml_tanhxi_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{\xi}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanh_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanh_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanhp_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{p}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanhq_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{q}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_chi_xi
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_\xi$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 1.0
+
+### of_ml_chi_pnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{p_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_chi_qnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{q_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_local_test
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: FOR TEST. Read in the density, and output the F and Pauli potential.
+- **Default**: False
+
+[back to top](#full-list-of-input-keywords)
+
 ## Electric field and dipole correction
 
 These variables are relevant to electric field and dipole correction
@@ -2227,7 +2489,7 @@ These variables are relevant to electric field and dipole correction
   - True：A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
 
-> Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+> Note: If you do not want any electric field, the parameter `efield_amp` should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
 
 - **Default**: False
 
@@ -2439,10 +2701,11 @@ These variables are relevant when using hybrid functionals.
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
-  - 1.5: if *[dft_functional](#dft_functional)==hse*
-  - 5: else
+  - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
+  - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*
+  - 1: else
 
 ### exx_distribute_type
 
@@ -2481,6 +2744,7 @@ These variables are relevant when using hybrid functionals.
 - **Description**:
   - True: Enforce LibRI to use `double` data type.
   - False: Enforce LibRI to use `complex` data type.
+  Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only
   - False: else
@@ -3212,9 +3476,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Integer
 - **Description**:
   method of propagator
-  - 0: Crank-Nicolson.
+  - 0: Crank-Nicolson, based on matrix inversion.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
+  - 3: Crank-Nicolson, based on solving linear equation.
 - **Default**: 0
 
 ### td_vext
@@ -3274,19 +3539,21 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
+  `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
+  $$
 - **Default**: 0.05
 
 ### td_lcut2
 
 - **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
-- **Default**: 0.05
+  `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
+  $$
+- **Default**: 0.95
 
 ### td_gauss_freq
 
@@ -3504,19 +3771,24 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Availability**:
-  - For PW and LCAO codes. if set to 1, occupations of bands will be setting of "ocp_set".
-  - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
-  - For OFDFT, this feature can't be used.
+  - For PW and LCAO codes: If set to 1, the band occupations will be determined by `ocp_set`.
+  - For RT-TDDFT in LCAO codes: If set to 1, same as above, but the occupations will be constrained starting from the second ionic step.
+  - For OFDFT: This feature is not available.
 - **Description**:
-- True: fix the occupations of bands.
-- False: do not fix the occupations of bands.
+- True: Fixes the band occupations based on the values specified in `ocp_set`.
+- False: Does not fix the band occupations.
 - **Default**: False
 
 ### ocp_set
 
 - **Type**: String
-- **Description**: If ocp is True, the ocp_set is a string to set the number of occupancy, like '1 10 * 1 0 1' representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
-- **Default**: none
+- **Description**:
+  - If `ocp` is set to 1, `ocp_set` must be provided as a string specifying the occupation numbers for each band across all k-points. The format follows a space-separated pattern, where occupations are assigned sequentially to bands for each k-point. A shorthand notation `N*x` can be used to repeat a value `x` for `N` bands.
+  - Example:
+    - `1 10*1 0 1` represents occupations for 13 bands, where the 12th band is fully unoccupied (`0`), and all others are occupied (`1`).
+    - For a system with multiple k-points, the occupations must be specified for all k-points, following their order in the output file kpoints (may lead to fractional occupations).
+  - Incorrect specification of `ocp_set` could lead to inconsistencies in electron counting, causing the calculation to terminate with an error.
+- **Default**: None
 
 [back to top](#full-list-of-input-keywords)
 

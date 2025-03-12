@@ -22,5 +22,5 @@ out_stru            1
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
 pseudo_dir	    ../../../tests/PP_ORB
 orbital_dir	    ../../../tests/PP_ORB
-psi_initializer 1
+pw_seed             1
 init_wfc nao

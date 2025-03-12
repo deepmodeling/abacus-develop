@@ -40,7 +40,7 @@ namespace ModuleBase
         : nr(nr_in),
           nc(nc_in)
     {
-        this->ptr_1D = new T[nr * nc];
+        this->ptr_1D = new T[nr * nc]();
         this->ptr_2D = new T*[nr];
         for (int ir = 0; ir < nr; ++ir)
             this->ptr_2D[ir] = &this->ptr_1D[ir * nc];

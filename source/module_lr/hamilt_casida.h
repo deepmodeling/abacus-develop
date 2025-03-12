@@ -115,14 +115,14 @@ namespace LR
             }
 #endif
 
-            this->cal_dm_trans = [&, this](const int& is, const T* X)->void
+            this->cal_dm_trans = [&, this](const int& is, const T* const X)->void
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
 #ifdef __MPI
-                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in);
+                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in, (T)1.0 / (T)nk);
                     if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat_in);
 #else
-                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
+                    std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is], (T)1.0 / (T)nk);
                     if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
                     // LR_Util::print_tensor<T>(dm_trans_2d[0], "dm_trans_2d[0]", &pmat_in);
@@ -134,7 +134,7 @@ namespace LR
 
         std::vector<T> matrix()const;
 
-        void hPsi(const T* psi_in, T* hpsi, const int ld_psi, const int& nband) const
+        void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int& nband) const
         {
             assert(ld_psi == nk * pX[0].get_local_size());
             for (int ib = 0;ib < nband;++ib)
@@ -189,6 +189,6 @@ namespace LR
         /// first node operator, add operations from each operators
         hamilt::Operator<T, base_device::DEVICE_CPU>* ops = nullptr;
 
-        std::function<void(const int&, const T*)> cal_dm_trans;
+        std::function<void(const int&, const T* const)> cal_dm_trans;
     };
 }

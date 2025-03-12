@@ -35,31 +35,31 @@ public:
 	ModuleBase::Vector3<double> a1, a2, a3;	//primitive cell vectors(might be changed during the process of the program)
 	ModuleBase::Vector3<double>	p1, p2, p3;	//primitive cell vectors
 	
-	int ntype;	//the number of atomic species
-	int nat; 	//the number of all atoms
- 	int *na;	//number of atoms for each species
-	int *istart; //start number of atom.
-	int itmin_type; //the type has smallest number of atoms
-	int itmin_start;
+	int ntype=0;	  //the number of atomic species
+	int nat  =0; 	  //the number of all atoms
+ 	int *na  =nullptr;//number of atoms for each species
+	int *istart=nullptr; //start number of atom.
+	int itmin_type=0; //the type has smallest number of atoms
+	int itmin_start=0;
 
 	// direct coordinates of atoms.
-	double *newpos;
+	double *newpos=nullptr;
 	// positions of atoms after rotation.
-	double *rotpos;
+	double *rotpos=nullptr;
 	
 	
 	std::vector<ModuleBase::Vector3<double>> ptrans; // the translation vectors of the primitive cell in the input structure
     int ncell=1;	//the number of primitive cells within one supercell
-	int *index;
+	int *index=nullptr;
 	
-	double cel_const[6];
-	double pcel_const[6];	//cel_const of primitive cell
-	double pre_const[6];	//cel_const of input configuration, first 3 is moduli of a1, a2, a3, last 3 is eular angle
+	double cel_const[6]={0.0};
+	double pcel_const[6]={0.0};	//cel_const of primitive cell
+	double pre_const[6]={0.0};	//cel_const of input configuration, first 3 is moduli of a1, a2, a3, last 3 is eular angle
 
-	bool symflag_fft[48];
-	int sym_test;
-	int pbrav;		//ibrav of primitive cell
-	int real_brav;    // the real ibrav for the cell     pengfei Li 3-15-2022
+	bool symflag_fft[48]={false};
+	int sym_test=0;
+	int pbrav=0;		//ibrav of primitive cell
+	int real_brav=0;    // the real ibrav for the cell     pengfei Li 3-15-2022
 	std::string ilattname;	//the bravais lattice type of the supercell
 	std::string plattname;	//the bravais lattice type of the primitive cell
 
@@ -68,12 +68,12 @@ public:
 	ModuleBase::Vector3<double> gtrans[48];
 	
 	ModuleBase::Matrix3 symop[48];	//the rotation matrices for the pure bravais lattice
-    int nop;	//the number of point group operations of the pure bravais lattice without basis
-	int nrot;	//the number of pure point group rotations
+    int nop=0;	//the number of point group operations of the pure bravais lattice without basis
+	int nrot=0;	//the number of pure point group rotations
     int nrotk = -1; 	//the number of all space group operations, >0 means the nrotk has been analyzed
     int max_nrotk = -1;  ///< record the maximum number of symmetry operations during cell-relax
-    int pgnumber;	//the serial number of point group
-	int spgnumber;	//the serial number of point group in space group
+    int pgnumber=0;	//the serial number of point group
+	int spgnumber=0;	//the serial number of point group in space group
 	std::string pgname;	//the Schoenflies name of the point group R in {R|0}
 	std::string spgname;	//the Schoenflies name of the point group R in the space group {R|t}
 
@@ -91,9 +91,10 @@ public:
 
     void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
         const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int ntype, const int itmin_type, const int itmin_start, int* istart, int* na)const;
     bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int itmin_type,
+        const int ntype, const int itmin_start, int* istart, int* na)const;
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 
@@ -145,6 +146,10 @@ public:
     /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
     bool magmom_same_check(const Atom* atoms)const;
 
+    /// Analyze magnetic group without time-reversal symmetry 
+    /// (because currently the charge density symmetrization does not support it)
+    /// Method: treat atoms with different magmom as atoms of different type
+    void analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out);
 };
 }
 

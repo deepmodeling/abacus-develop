@@ -1,7 +1,8 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     scf
+calculation             scf
+dft_functional          scan
 
 nbands			8
 symmetry		1
@@ -23,3 +24,5 @@ smearing_sigma			0.002
 mixing_type		broyden
 mixing_beta		0.7
 
+init_chg                file
+read_file_dir           .

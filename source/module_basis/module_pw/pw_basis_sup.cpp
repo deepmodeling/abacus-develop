@@ -100,8 +100,9 @@ void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
     this->npw_per = new int[this->poolnproc]; // number of planewaves on each core.
     delete[] this->fftixy2ip;
     this->fftixy2ip = new int[this->fftnxy]; // ip of core which contains the stick on (x, y).
-    for (int ixy = 0; ixy < this->fftnxy; ++ixy)
+    for (int ixy = 0; ixy < this->fftnxy; ++ixy) {
         this->fftixy2ip[ixy] = -1; // meaning this stick has not been distributed or there is no stick on (x, y).
+}
     if (poolrank == 0)
     {
         // (1) Count the total number of planewaves (tot_npw) and sticks (this->nstot).
@@ -212,10 +213,11 @@ void PW_Basis_Sup::divide_sticks_3(
     int fftnx_s = nx_s;
     if (this->gamma_only)
     {
-        if (this->xprime)
+        if (this->xprime) {
             fftnx_s = int(nx_s / 2) + 1;
-        else
+        } else {
             fftny_s = int(ny_s / 2) + 1;
+}
     }
 
     int fftnxy_s = fftnx_s * fftny_s;
@@ -225,15 +227,19 @@ void PW_Basis_Sup::divide_sticks_3(
     {
         int ix = ixy / fftny_s;
         int iy = ixy % fftny_s;
-        if (ix >= int(nx_s / 2) + 1)
+        if (ix >= int(nx_s / 2) + 1) {
             ix -= nx_s;
-        if (iy >= int(ny_s / 2) + 1)
+}
+        if (iy >= int(ny_s / 2) + 1) {
             iy -= ny_s;
+}
 
-        if (ix < 0)
+        if (ix < 0) {
             ix += nx;
-        if (iy < 0)
+}
+        if (iy < 0) {
             iy += ny;
+}
         int index = ix * this->fftny + iy;
         int ip = fftixy2ip_s[ixy];
         if (ip >= 0)
@@ -312,7 +318,7 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu")
         {
-            delmem_int_op()(gpu_ctx, this->d_is2fftixy);
+            delmem_int_op()(this->d_is2fftixy);
             d_is2fftixy = nullptr;
         }
 #endif
@@ -349,8 +355,9 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
             fftixy2is[ixy] = st_move;
             st_move++;
         }
-        if (st_move == this->nst)
+        if (st_move == this->nst) {
             break;
+}
     }
 
     // distribute planewaves in the same order as smooth grids first.
@@ -363,19 +370,25 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
         int ixy = pw_rho->is2fftixy[is];
         int ix = ixy / pw_rho->fftny;
         int iy = ixy % pw_rho->fftny;
-        if (ix >= int(pw_rho->nx / 2) + 1)
+        if (ix >= int(pw_rho->nx / 2) + 1) {
             ix -= pw_rho->nx;
-        if (iy >= int(pw_rho->ny / 2) + 1)
+}
+        if (iy >= int(pw_rho->ny / 2) + 1) {
             iy -= pw_rho->ny;
-        if (iz >= int(pw_rho->nz / 2) + 1)
+}
+        if (iz >= int(pw_rho->nz / 2) + 1) {
             iz -= pw_rho->nz;
+}
 
-        if (ix < 0)
+        if (ix < 0) {
             ix += this->nx;
-        if (iy < 0)
+}
+        if (iy < 0) {
             iy += this->ny;
-        if (iz < 0)
+}
+        if (iz < 0) {
             iz += this->nz;
+}
         int ixy_now = ix * this->fftny + iy;
         int index = ixy_now * this->nz + iz;
         int is_now = fftixy2is[ixy_now];
@@ -383,8 +396,9 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
         this->ig2isz[ig] = isz_now;
         pw_filled++;
         found[index] = true;
-        if (xprime && ix == 0)
+        if (xprime && ix == 0) {
             ng_xeq0++;
+}
     }
     assert(pw_filled == pw_rho->npw);
 
@@ -397,21 +411,24 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
             for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz)
             {
                 int z = iz;
-                if (z < 0)
+                if (z < 0) {
                     z += this->nz;
+}
                 if (!found[ixy * this->nz + z])
                 {
                     found[ixy * this->nz + z] = true;
                     int is = fftixy2is[ixy];
                     this->ig2isz[pw_filled] = is * this->nz + z;
                     pw_filled++;
-                    if (xprime && ixy / fftny == 0)
+                    if (xprime && ixy / fftny == 0) {
                         ng_xeq0++;
+}
                 }
             }
         }
-        if (pw_filled == this->npw)
+        if (pw_filled == this->npw) {
             break;
+}
     }
 
     delete[] fftixy2is;
@@ -420,8 +437,8 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu")
     {
-        resmem_int_op()(gpu_ctx, d_is2fftixy, this->nst);
-        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
+        resmem_int_op()(d_is2fftixy, this->nst);
+        syncmem_int_h2d_op()(this->d_is2fftixy, this->is2fftixy, this->nst);
     }
 #endif
     return;

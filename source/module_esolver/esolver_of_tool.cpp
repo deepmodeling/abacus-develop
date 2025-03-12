@@ -20,7 +20,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
-        this->pelec->charge->allocate(PARAM.inp.nspin);
+        this->chr.allocate(PARAM.inp.nspin);
     }
     this->pelec->omega = ucell.omega;
 
@@ -30,6 +30,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &ucell,
                                                 &(this->locpp.vloc),
                                                 &(this->sf),
+                                                &(this->solvent),
                                                 &(this->pelec->f_en.etxc),
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
@@ -70,7 +71,11 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
+    this->psi_ = new psi::Psi<double>(1, 
+                                      PARAM.inp.nspin, 
+                                      this->pw_rho->nrxx,
+                                      this->pw_rho->nrxx,
+                                      true);
     ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     this->pphi_ = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -381,7 +386,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
  * @brief Print nessecary information to the screen,
  * and write the components of the total energy into running_log.
  */
-void ESolver_OF::print_info()
+void ESolver_OF::print_info(const bool conv_esolver)
 {
     if (this->iter_ == 0)
     {
@@ -397,15 +402,15 @@ void ESolver_OF::print_info()
         // min/max(dE/dPhi)" << endl;
     }
     // ============ used to compare with PROFESS3.0 ================
-    // double minDen = pelec->charge->rho[0][0];
-    // double maxDen = pelec->charge->rho[0][0];
+    // double minDen = this->chr.rho[0][0];
+    // double maxDen = this->chr.rho[0][0];
     // double minPot = this->pdEdphi_[0][0];
     // double maxPot = this->pdEdphi_[0][0];
     // for (int i = 0; i < this->pw_rho->nrxx; ++i)
     // {
-    //     if (pelec->charge->rho[0][i] < minDen) minDen =
-    //     pelec->charge->rho[0][i]; if (pelec->charge->rho[0][i] > maxDen)
-    //     maxDen = pelec->charge->rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
+    //     if (this->chr.rho[0][i] < minDen) minDen =
+    //     this->chr.rho[0][i]; if (this->chr.rho[0][i] > maxDen)
+    //     maxDen = this->chr.rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
     //     minPot = this->pdEdphi_[0][i]; if (this->pdEdphi_[0][i] > maxPot)
     //     maxPot = this->pdEdphi_[0][i];
     // }
@@ -426,8 +431,11 @@ void ESolver_OF::print_info()
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (PARAM.inp.printe > 0
-        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_esolver || this->iter_ == PARAM.inp.scf_nmax))
+	if ((PARAM.inp.printe > 0 && 
+				((this->iter_ + 1) % PARAM.inp.printe == 0 || 
+				 conv_esolver || 
+				 this->iter_ == PARAM.inp.scf_nmax)) || 
+			PARAM.inp.init_chg == "file")
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);
@@ -437,8 +445,8 @@ void ESolver_OF::print_info()
         energies_Ry.push_back(this->pelec->f_en.hartree_energy);
         titles.push_back("E_xc");
         energies_Ry.push_back(this->pelec->f_en.etxc - this->pelec->f_en.etxcc);
-        titles.push_back("E_IonElec");
-        energies_Ry.push_back(this->pelec->f_en.eion_elec);
+        titles.push_back("E_LocalPP");
+        energies_Ry.push_back(this->pelec->f_en.e_local_pp);
         titles.push_back("E_Ewald");
         energies_Ry.push_back(this->pelec->f_en.ewald_energy);
         if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
@@ -447,7 +455,7 @@ void ESolver_OF::print_info()
             energies_Ry.push_back(this->tf_->tf_energy);
         }
         if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-            || this->of_kinetic_ == "lkt")
+            || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
         {
             titles.push_back("vW KEDF");
             energies_Ry.push_back(this->vw_->vw_energy);
@@ -462,6 +470,13 @@ void ESolver_OF::print_info()
             titles.push_back("LKT KEDF");
             energies_Ry.push_back(this->lkt_->lkt_energy);
         }
+#ifdef __MLKEDF
+        if (this->of_kinetic_ == "ml")
+        {
+            titles.push_back("MPN KEDF");
+            energies_Ry.push_back(this->ml_->ml_energy);
+        }
+#endif
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {

@@ -1,12 +1,12 @@
 #include "sto_stress_pw.h"
 
 #include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
-#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
@@ -19,8 +19,9 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                const psi::Psi<complex<FPTYPE>, Device>& psi_in,
                                                const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                                                const Charge* const chr,
-                                               pseudopot_cell_vnl* nlpp,
-                                               const UnitCell& ucell_in)
+                                               const pseudopot_cell_vl* locpp,
+                                               const pseudopot_cell_vnl* nlpp,
+                                               UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
@@ -39,23 +40,23 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
 
     // hartree contribution
-    this->stress_har(ucell_in,sigmahar, rho_basis, true, chr);
+    this->stress_har(ucell_in, sigmahar, rho_basis, true, chr);
 
     // ewald contribution
-    this->stress_ewa(ucell_in,sigmaewa, rho_basis, true);
+    this->stress_ewa(ucell_in, sigmaewa, rho_basis, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(ucell_in,sigmaxc, rho_basis, chr);
+    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr);
 
     // local contribution
-    this->stress_loc(ucell_in,sigmaloc, rho_basis, nlpp->vloc, p_sf, true, chr);
+    this->stress_loc(ucell_in, sigmaloc, rho_basis, locpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, true, nlpp->numeric, chr);
+    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);
@@ -110,11 +111,11 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
     ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
 
     int nksbands = psi.get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (!PARAM.globalv.ks_run)
     {
         nksbands = 0;
     }
-    
+
     hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
 
     for (int ik = 0; ik < wfc_basis->nks; ++ik)
@@ -122,7 +123,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
         const int stobands = stowf.nchip[ik];
         psi.fix_k(ik);
         stowf.shchi->fix_k(ik);
-        
+
         kin_tool.cal_gk(ik);
 
         kin_tool.cal_stress_kin(ik, nksbands, true, psi.get_pointer());
@@ -159,15 +160,15 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (!PARAM.globalv.ks_run)
     {
         nksbands = 0;
     }
 
     // allocate memory for the stress
     FPTYPE* stress_device = nullptr;
-    resmem_var_op()(this->ctx, stress_device, 9);
-    setmem_var_op()(this->ctx, stress_device, 0, 9);
+    resmem_var_op()(stress_device, 9);
+    setmem_var_op()(stress_device, 0, 9);
     std::vector<FPTYPE> sigmanlc(9, 0.0);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
@@ -197,12 +198,11 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
                 nl_tools.cal_stress(ik, nstobands, false, ipol, jpol, stress_device, nksbands);
             }
         }
-
     }
 
     // transfer stress from device to host
-    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, sigmanlc.data(), stress_device, 9);
-    delmem_var_op()(this->ctx, stress_device);
+    syncmem_var_d2h_op()(sigmanlc.data(), stress_device, 9);
+    delmem_var_op()(stress_device);
     // sum up forcenl from all processors
     for (int l = 0; l < 3; l++)
     {
@@ -233,7 +233,6 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
     return;
 }
-
 
 template class Sto_Stress_PW<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

@@ -52,6 +52,7 @@ class IState_Charge
                const std::string& global_out_dir,
                std::ofstream& ofs_warning,
                const UnitCell* ucell_in,
+               const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv);
 
@@ -80,6 +81,7 @@ class IState_Charge
                const std::string& global_out_dir,
                std::ofstream& ofs_warning,
                UnitCell* ucell_in,
+               const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv,
                const bool if_separate_k,
@@ -139,8 +141,8 @@ class IState_Charge
 
 #endif
     std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma;
-    psi::Psi<std::complex<double>>* psi_k;
+    psi::Psi<double>* psi_gamma=nullptr;
+    psi::Psi<std::complex<double>>* psi_k=nullptr;
     const Parallel_Orbitals* ParaV;
 };
 #endif

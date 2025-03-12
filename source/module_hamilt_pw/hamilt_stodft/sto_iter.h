@@ -121,15 +121,15 @@ class Stochastic_Iter
 
     double mu0; // chemical potential; unit in Ry
     bool change;
-    double targetne;
+    double targetne=0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
     bool check = false;
-    double th_ne;
-    double KS_ne;
+    double th_ne=0.0;
+    double KS_ne=0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
@@ -141,7 +141,7 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
-    K_Vectors* pkv;
+    K_Vectors* pkv=nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]
@@ -163,7 +163,7 @@ class Stochastic_Iter
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using castmem_d2z_op = base_device::memory::cast_memory_op<T, Real, Device, Device>;
     using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
-    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemv_op = ModuleBase::gemv_op<T, Device>;
 };
 
 #endif // Eelectrons_Iter

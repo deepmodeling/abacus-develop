@@ -1,4 +1,4 @@
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
 #include "module_base/kernels/math_op.h"
 
 #include <base/macros/macros.h>

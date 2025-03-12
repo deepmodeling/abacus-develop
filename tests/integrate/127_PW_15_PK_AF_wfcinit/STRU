@@ -1,0 +1,19 @@
+ATOMIC_SPECIES
+Fe 1.000 Fe_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+5
+
+LATTICE_VECTORS
+ 1.00    0.50     0.50
+ 0.50    1.00     0.50
+ 0.50    0.50     1.00
+ATOMIC_POSITIONS
+Direct
+
+Fe
+1.0
+1
+0.00            0.00            0.00            1        1       1
+
+

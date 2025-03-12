@@ -137,7 +137,7 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
     if (GlobalV::RANK_IN_POOL == 0)
     {
         int nkstot = this->p_kv->get_nkstot();
-        int ikglobal = K_Vectors::get_ik_global(ik, nkstot);
+        int ikglobal = p_kv->ik2iktot[ik];
         std::stringstream ss;
         ss << PARAM.globalv.global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
         Binstream binpij(ss.str(), "w");

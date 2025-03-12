@@ -28,7 +28,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
     std::vector<double> vldr3(this->bxyz,0.0);
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -107,7 +107,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
 
             //do integration to get stress
             this-> cal_meshball_stress(na_grid, block_index.data(), psir_vlbr3_DM.get_ptr_1D(), 
-                                        dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
+                                       dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
     }
 #pragma omp critical(gint)
@@ -153,7 +153,7 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
     std::vector<int> block_size(max_size,0);
     std::vector<double> vldr3(this->bxyz,0.0);
     std::vector<double> vkdr3(this->bxyz,0.0);
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {

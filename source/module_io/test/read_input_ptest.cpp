@@ -154,6 +154,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.diago_cg_prec, 1);
     EXPECT_EQ(param.inp.pw_diag_ndim, 4);
     EXPECT_DOUBLE_EQ(param.inp.pw_diag_thr, 1.0e-2);
+    EXPECT_FALSE(param.inp.diago_smooth_ethr);
     EXPECT_EQ(param.inp.nb2d, 0);
     EXPECT_EQ(param.inp.nurse, 0);
     EXPECT_EQ(param.inp.t_in_h, 1);
@@ -183,7 +184,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.printe, 100);
     EXPECT_EQ(param.inp.init_chg, "atomic");
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
-    EXPECT_EQ(param.inp.out_freq_elec, 0);
+    EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
     EXPECT_EQ(param.inp.out_chg[0], 0);
     EXPECT_EQ(param.inp.out_chg[1], 3);
@@ -294,7 +295,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.soc_lambda, 1.0);
     EXPECT_DOUBLE_EQ(param.inp.td_force_dt, 0.02);
     EXPECT_EQ(param.inp.td_vext, 0);
-    EXPECT_EQ(param.inp.td_vext_dire, "1");
     EXPECT_EQ(param.inp.propagator, 0);
     EXPECT_EQ(param.inp.td_stype, 0);
     EXPECT_EQ(param.inp.td_ttype, "0");
@@ -430,6 +430,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
     EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.abs_broadening, 0.01);
+    EXPECT_EQ(param.inp.abs_gauge, "length");
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "time.h"
+#include <ctime>
 
 // test_size is the number of atoms in the unitcell
 // modify test_size to test different size of unitcell
@@ -39,7 +39,6 @@ class HContainerTest : public ::testing::Test
     {
         delete HR;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
     }
 
     UnitCell ucell;
@@ -53,7 +52,7 @@ TEST(single_test_hcontainer, insert_pair)
     // print current used memory of system
     auto memory_start = ModuleBase::GlobalFunc::MemAvailable() / 1024.0;
     // get random number between (0, 100000000) by rand()
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(nullptr));
     hamilt::HContainer<double> HR_test(test_size);
     clock_t start, end;
     start = clock();
@@ -86,7 +85,7 @@ TEST(single_test_hcontainer, insert_pair)
 TEST(single_test_IJR, insert_pair)
 {
     // get random number between (0, 100000000) by rand()
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(nullptr));
     hamilt::HContainer<double> HR_test(test_size);
     clock_t start, end;
     start = clock();
@@ -122,7 +121,7 @@ TEST(single_test_IJR, insert_pair)
 TEST_F(HContainerTest, find_pair)
 {
     // find_pair 1000000 times with random iat1 and iat2
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(nullptr));
     clock_t start, end;
     start = clock();
     for (int i = 0; i < test_size * 100; i++)

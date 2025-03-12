@@ -35,6 +35,17 @@ add_test(NAME base_parallel_reduce_test
 )
 
 AddTest(
+  TARGET base_para_gemm
+  LIBS MPI::MPI_CXX ${math_libs} base device parameter
+  SOURCES test_para_gemm.cpp
+)
+
+add_test(NAME base_para_gemm_parallel
+      COMMAND mpirun -np 4 ./base_para_gemm
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
     TARGET parallel_2d_test
     SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
     LIBS parameter ${math_libs} 

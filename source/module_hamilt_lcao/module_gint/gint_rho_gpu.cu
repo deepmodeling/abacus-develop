@@ -34,9 +34,11 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
     const int max_atompair_per_z = max_atom * max_atom * nbzp;
 
     std::vector<cudaStream_t> streams(num_streams);
+    std::vector<cudaEvent_t> events(num_streams);
     for (int i = 0; i < num_streams; i++)
     {
         checkCuda(cudaStreamCreate(&streams[i]));
+        checkCuda(cudaEventCreateWithFlags(&events[i], cudaEventDisableTiming));
     }
 
     Cuda_Mem_Wrapper<double> dr_part(max_atom_per_z * 3, num_streams, true);
@@ -71,8 +73,20 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
 
 // calculate the rho for every nbzp bigcells
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(num_streams) collapse(2)
+const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
 #endif
+#pragma omp parallel num_threads(max_thread_num)
+{
+#ifdef _OPENMP
+    const int tid = omp_get_thread_num();
+    const int num_threads = omp_get_num_threads();
+    const int sid_start = tid * num_streams / num_threads;
+    const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
+#else
+    const int sid_start = 0;
+    const int thread_num_streams = num_streams;
+#endif
+#pragma omp for collapse(2) schedule(dynamic)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
@@ -81,12 +95,9 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
             // cuda's device is not safe in a multi-threaded environment.
 
             checkCuda(cudaSetDevice(gridt.dev_id));
-            // get stream id
-#ifdef _OPENMP
-            const int sid = omp_get_thread_num();
-#else
-            const int sid = 0;
-#endif
+
+            const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
+            checkCuda(cudaEventSynchronize(events[sid]));
 
             int max_m = 0;
             int max_n = 0;
@@ -147,6 +158,7 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
             gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             dot_product.copy_host_to_device_async(streams[sid], sid);
+            checkCuda(cudaEventRecord(events[sid], streams[sid]));
             
             psi.memset_device_async(streams[sid], sid, 0);
             psi_dm.memset_device_async(streams[sid], sid, 0);
@@ -203,9 +215,9 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
                 psi_dm.get_device_pointer(sid),
                 dot_product.get_device_pointer(sid));
             checkCudaLastError();
-            checkCuda(cudaStreamSynchronize(streams[sid]));
         }
     }
+}
 
     // Copy rho from device to host
     checkCuda(cudaMemcpy(rho,
@@ -216,6 +228,7 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
     for (int i = 0; i < num_streams; i++)
     {
         checkCuda(cudaStreamDestroy(streams[i]));
+        checkCuda(cudaEventDestroy(events[i]));
     }
 }
 } // namespace GintKernel

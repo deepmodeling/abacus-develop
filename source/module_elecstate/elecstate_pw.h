@@ -7,7 +7,7 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 namespace elecstate
 {
@@ -35,12 +35,16 @@ class ElecStatePW : public ElecState
 
     virtual void cal_tau(const psi::Psi<T, Device>& psi);
 
+    //! calculate becsum for uspp
+    void cal_becsum(const psi::Psi<T, Device>& psi);
+
     Real* becsum = nullptr;
 
     //! init rho_data and kin_r_data
     void init_rho_data();
-    Real** rho = nullptr; 
-    Real** kin_r = nullptr; //[Device] [spin][nrxx] rho and kin_r
+    Real** rho = nullptr;   // [Device] [spin][nrxx] rho
+    T** rhog = nullptr;     // [Device] [spin][nrxx] rhog
+    Real** kin_r = nullptr; // [Device] [spin][nrxx] kin_r
 
   protected:
 
@@ -61,13 +65,13 @@ class ElecStatePW : public ElecState
     
     //! calcualte rho for each k
     void rhoBandK(const psi::Psi<T, Device>& psi);
-    
+
     //! add to the charge density in reciprocal space the part which is due to the US augmentation.
     void add_usrho(const psi::Psi<T, Device>& psi);
 
     //! Non-local pseudopotentials
     //! \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
-    void addusdens_g(const Real* becsum, T* rhog);
+    void addusdens_g(const Real* becsum, T** rhog);
 
     Device * ctx = {};
 
@@ -75,7 +79,8 @@ class ElecStatePW : public ElecState
 
     mutable T* vkb = nullptr;
 
-    Real* rho_data = nullptr; 
+    Real* rho_data = nullptr;
+    T* rhog_data = nullptr;
     Real* kin_r_data = nullptr;
     T* wfcr = nullptr; 
     T* wfcr_another_spin = nullptr;
@@ -93,8 +98,8 @@ class ElecStatePW : public ElecState
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 
-    using gemv_op = hsolver::gemv_op<T, Device>;
-    using gemm_op = hsolver::gemm_op<T, Device>;
+    using gemv_op = ModuleBase::gemv_op<T, Device>;
+    using gemm_op = ModuleBase::gemm_op<T, Device>;
 };
 
 } // namespace elecstate

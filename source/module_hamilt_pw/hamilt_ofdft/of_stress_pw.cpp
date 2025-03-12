@@ -79,7 +79,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, p_sf, true, locpp.numeric, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);

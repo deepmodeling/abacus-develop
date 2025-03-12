@@ -32,7 +32,14 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // dm.fix_k(ik);
         // dm[ik].create(ParaV->ncol, ParaV->nrow);
         //  wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi::Psi<double> wg_wfc(wfc, 1);
+
+        psi::Psi<double> wg_wfc(1, 
+                                wfc.get_nbands(), 
+                                wfc.get_nbasis(),
+                                wfc.get_nbasis(),
+                                true);
+        wg_wfc.set_all_psi(wfc.get_pointer(), wg_wfc.size());
+
 
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
@@ -89,7 +96,12 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // dm.fix_k(ik);
         //dm[ik].create(ParaV->ncol, ParaV->nrow);
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi::Psi<std::complex<double>> wg_wfc(1, wfc.get_nbands(), wfc.get_nbasis(), nullptr);
+        psi::Psi<std::complex<double>> wg_wfc(1, 
+                                              wfc.get_nbands(), 
+                                              wfc.get_nbasis(),
+                                              wfc.get_nbasis(),
+                                              true);
+        
         const std::complex<double>* pwfc = wfc.get_pointer();
         std::complex<double>* pwg_wfc = wg_wfc.get_pointer();
 #ifdef _OPENMP

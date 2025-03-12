@@ -1,7 +1,7 @@
 #ifndef MODULEHAMILTPW_ONSITEPROJECTOR_H
 #define MODULEHAMILTPW_ONSITEPROJECTOR_H
 #include "module_base/module_device/device.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"
@@ -130,7 +130,7 @@ namespace projectors
         bool initialed = false;
 
         /// @brief rename the operators for CPU/GPU device
-        using gemm_op = hsolver::gemm_op<std::complex<T>, Device>;
+        using gemm_op = ModuleBase::gemm_op<std::complex<T>, Device>;
 
         using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<T>, Device>;
         using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<T>, base_device::DEVICE_CPU>;

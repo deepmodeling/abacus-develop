@@ -66,7 +66,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_CPU>*>(this->psi);
         const int nbands = psi_t->get_nbands();
         const int nks = psi_t->get_nk();
-        const int npol = psi_t->npol;
+        const int npol = psi_t->get_npol();
         for(int ik = 0; ik < nks; ik++)
         {
             psi_t->fix_k(ik);
@@ -112,7 +112,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
         const int nbands = psi_t->get_nbands();
         const int nks = psi_t->get_nk();
-        const int npol = psi_t->npol;
+        const int npol = psi_t->get_npol();
         for(int ik = 0; ik < nks; ik++)
         {
             psi_t->fix_k(ik);

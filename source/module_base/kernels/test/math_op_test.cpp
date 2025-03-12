@@ -306,13 +306,13 @@ TEST_F(TestModuleBaseMathMultiDevice, cal_ylm_real_op_gpu)
     std::vector<double> ylm(expected_ylm.size(), 0.0);
     double * d_ylm = nullptr, * d_g = nullptr, * d_p = nullptr;
 
-    resmem_var_op()(gpu_ctx, d_g, g.size());
-    resmem_var_op()(gpu_ctx, d_p, p.size());
-    resmem_var_op()(gpu_ctx, d_ylm, ylm.size());
+    resmem_var_op()(d_g, g.size());
+    resmem_var_op()(d_p, p.size());
+    resmem_var_op()(d_ylm, ylm.size());
 
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_g, g.data(), g.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_p, p.data(), p.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_ylm, ylm.data(), ylm.size());
+    syncmem_var_h2d_op()(d_g, g.data(), g.size());
+    syncmem_var_h2d_op()(d_p, p.data(), p.size());
+    syncmem_var_h2d_op()(d_ylm, ylm.data(), ylm.size());
 
     ModuleBase::cal_ylm_real_op<double, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                    ng,
@@ -326,15 +326,15 @@ TEST_F(TestModuleBaseMathMultiDevice, cal_ylm_real_op_gpu)
                                                                    d_p,
                                                                    d_ylm);
 
-    syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, ylm.data(), d_ylm, ylm.size());
+    syncmem_var_d2h_op()(ylm.data(), d_ylm, ylm.size());
 
     for (int ii = 0; ii < ylm.size(); ii++) {
         EXPECT_LT(fabs(ylm[ii] - expected_ylm[ii]), 6e-5);
     }
 
-    delmem_var_op()(gpu_ctx, d_g);
-    delmem_var_op()(gpu_ctx, d_p);
-    delmem_var_op()(gpu_ctx, d_ylm);
+    delmem_var_op()(d_g);
+    delmem_var_op()(d_p);
+    delmem_var_op()(d_ylm);
 }
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

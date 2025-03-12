@@ -13,6 +13,7 @@
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
+#include "module_base/module_device/device.h"
 namespace ModuleIO
 {
 
@@ -105,9 +106,6 @@ ReadInput::ReadInput(const int& rank)
     this->item_exx();
     this->item_dftu();
     this->item_others();
-
-    // set globalv functions
-    this->set_globalv_bcast();
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -115,8 +113,54 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // 1. only rank 0 read the input file
     if (this->rank == 0)
     {
+        // We can also easily add other input file formats here
         this->read_txt_input(param, filename_in);
     }
+
+    // 2. check the number of atom types from STRU file
+    // set the global directories
+    this->set_global_dir(param.inp, param.sys); 
+    if (this->check_ntype_flag && this->rank == 0)
+    {
+        check_ntype(param.globalv.global_in_stru, param.input.ntype);
+    }
+
+    // 3. broadcast input parameters
+    // It must be after the check_ntype, because some parameters need to be filled due to ntype
+    for (auto& bcastfunc: this->bcastfuncs)
+    {
+        bcastfunc(param);
+    }
+
+    // 4. set the globalv parameters, some parameters in different processes are different. e.g. rank, log_file
+    this->set_globalv(param.inp, param.sys);
+
+    // 5. check the value of the parameters
+    // It must be after the check_ntype, because some parameters need to be checked according to ntype
+    // It must be after the set_globalv, because some parameters need to be checked according to param.sys
+    if (this->rank == 0)
+    {
+        for (auto& input_item: this->input_lists)
+        {
+            Input_Item* checkvalue_item = &(input_item.second);
+            if (checkvalue_item->check_value != nullptr)
+            {
+                checkvalue_item->check_value(*checkvalue_item, param);
+            }
+        }
+    }
+
+    // 6. check and reset kpar. 
+    // It must be after bcastfunc, and kpar and bndpar are synchronized
+    // It must be before wirte_txt_input, because kpar is used in write_txt_input
+    if (param.inp.device  == "gpu" && param.inp.basis_type == "pw")
+    {
+        param.input.kpar = base_device::information::get_device_kpar(param.inp.kpar, param.inp.bndpar);
+    }
+
+
+    
+
     if (this->check_mode)
     {
         std::cout << "----------------------------------------------------------" << std::endl;
@@ -124,12 +168,6 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
         std::cout << "----------------------------------------------------------" << std::endl;
         exit(0);
         return;
-    }
-
-    // 2. broadcast the parameters
-    for (auto& bcastfunc: this->bcastfuncs)
-    {
-        bcastfunc(param);
     }
 }
 
@@ -283,22 +321,6 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             resetvalue_item->reset_value(*resetvalue_item, param);
         }
     }
-    this->set_globalv(param);
-
-    // 3) count the number of atom types from STRU file
-    if (this->check_ntype_flag)
-    {
-        check_ntype(param.globalv.global_in_stru, param.input.ntype);
-    }
-
-    // 4) check the value of the parameters
-    for (auto& input_item: this->input_lists)
-    {
-        Input_Item* checkvalue_item = &(input_item.second);
-        if (checkvalue_item->check_value != nullptr) {
-            checkvalue_item->check_value(*checkvalue_item, param);
-        }
-    }
 }
 
 void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
@@ -442,9 +464,10 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
     }
-    else {
+    else
+    {
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
-}
+    }
 }
 
 int ReadInput::current_md_step(const std::string& file_dir)

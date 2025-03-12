@@ -7,7 +7,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 
 #include <complex>
@@ -178,7 +178,7 @@ class Onsite_Proj_tools
     std::complex<FPTYPE>* becp = nullptr;  // nbands * nkb
 
     /// @brief rename the operators for CPU/GPU device
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 

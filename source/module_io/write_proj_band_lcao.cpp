@@ -25,8 +25,9 @@ void ModuleIO::write_proj_band_lcao(
     const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
+    if (PARAM.inp.nspin == 2) {
         nspin0 = 2;
+}
     int nks = 0;
     if (nspin0 == 1)
     {
@@ -103,14 +104,16 @@ void ModuleIO::write_proj_band_lcao(
 
             out << "<pband>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
-            if (PARAM.inp.nspin == 4)
+            if (PARAM.inp.nspin == 4) {
                 out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
-            else
+            } else {
                 out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+}
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << PARAM.inp.nbands << "\" units=\"eV\">"
                 << std::endl;
-            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++) {
                 out << " " << (pelec->ekb(is * nks, ib)) * ModuleBase::Ry_to_eV;
+}
             out << std::endl;
             out << "</band_structure>" << std::endl;
 
@@ -139,9 +142,9 @@ void ModuleIO::write_proj_band_lcao(
                     out << "<data>" << std::endl;
                     for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                     {
-                        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
                             out << std::setw(13) << weight(is, ib * PARAM.globalv.nlocal + w);
-                        else if (PARAM.inp.nspin == 4)
+                        } else if (PARAM.inp.nspin == 4)
                         {
                             int w0 = w - s0;
                             out << std::setw(13)
@@ -178,8 +181,9 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
     int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
+    if (PARAM.inp.nspin == 2) {
         nspin0 = 2;
+}
     int nks = 0;
     if (nspin0 == 1)
     {
@@ -221,11 +225,16 @@ void ModuleIO::write_proj_band_lcao(
 
                     // calculate Mulk
                     psi->fix_k(ik);
-                    psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                    psi::Psi<std::complex<double>> Dwfc(1, 
+                                                        psi->get_nbands(),
+                                                        psi->get_nbasis(),
+                                                        psi->get_nbasis(),
+                                                        true);
+
                     std::complex<double>* p_dwfc = Dwfc.get_pointer();
                     for (int index = 0; index < Dwfc.size(); ++index)
                     {
-                        p_dwfc[index] = conj(p_dwfc[index]);
+                        p_dwfc[index] = conj(psi->get_pointer()[index]);
                     }
 
                     for (int i = 0; i < PARAM.inp.nbands; ++i)
@@ -301,8 +310,9 @@ void ModuleIO::write_proj_band_lcao(
 
 			for (int ik = 0; ik < nks; ik++)
 			{
-				for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+				for (int ib = 0; ib < PARAM.inp.nbands; ib++) {
 					out << " " << (pelec->ekb(ik + is * nks, ib)) * ModuleBase::Ry_to_eV;
+}
 				out << std::endl;
 			}
             out << "</band_structure>" << std::endl;

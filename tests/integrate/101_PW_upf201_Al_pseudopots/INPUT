@@ -9,6 +9,7 @@ pseudo_dir	../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc			30
+ecutrho                 160
 scf_thr				1e-9
 scf_nmax			100
 

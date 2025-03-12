@@ -248,6 +248,7 @@ void ReadInput::item_elec_stru()
             }
         };
         sync_double(input.nupdown);
+        add_bool_bcast(sys.two_fermi);
         this->add_item(item);
     }
     {
@@ -312,6 +313,12 @@ void ReadInput::item_elec_stru()
                 }
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("diago_smooth_ethr");
+        item.annotation = "smooth ethr for iter methods";
+        read_sync_bool(input.diago_smooth_ethr);
         this->add_item(item);
     }
     {

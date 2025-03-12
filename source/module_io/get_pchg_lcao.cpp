@@ -49,6 +49,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const std::string& global_out_dir,
                           std::ofstream& ofs_warning,
                           const UnitCell* ucell_in,
+                          const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv)
 {
@@ -130,7 +131,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
                 double ef_spin = ef_all_spin[is];
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     rho_save[is].data(),
                     is,
                     nspin,
@@ -172,6 +173,7 @@ void IState_Charge::begin(Gint_k& gk,
                           const std::string& global_out_dir,
                           std::ofstream& ofs_warning,
                           UnitCell* ucell_in,
+                          const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv,
                           const bool if_separate_k,
@@ -256,7 +258,7 @@ void IState_Charge::begin(Gint_k& gk,
                         ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                         double ef_spin = ef_all_spin[is];
-                        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                        ModuleIO::write_vdata_palgrid(pgrid,
                             rho_save[is].data(),
                             is,
                             nspin,
@@ -315,7 +317,7 @@ void IState_Charge::begin(Gint_k& gk,
                     ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                     double ef_spin = ef_all_spin[is];
-                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(pgrid,
                         rho_save[is].data(),
                         is,
                         nspin,
@@ -476,7 +478,14 @@ void IState_Charge::idmatrix(const int& ib,
 
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
         this->psi_gamma->fix_k(is);
-        psi::Psi<double> wg_wfc(*this->psi_gamma, 1);
+
+        // psi::Psi<double> wg_wfc(*this->psi_gamma, 1, this->psi_gamma->get_nbands());
+        psi::Psi<double> wg_wfc(1, 
+                                this->psi_gamma->get_nbands(),
+                                this->psi_gamma->get_nbasis(),
+                                this->psi_gamma->get_nbasis(),
+                                true);
+        wg_wfc.set_all_psi(this->psi_gamma->get_pointer(), wg_wfc.size());
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
@@ -538,7 +547,12 @@ void IState_Charge::idmatrix(const int& ib,
         }
 
         this->psi_k->fix_k(ik);
-        psi::Psi<std::complex<double>> wg_wfc(*this->psi_k, 1);
+        
+        psi::Psi<std::complex<double>> wg_wfc(1, 
+                                              this->psi_k->get_nbands(), 
+                                              this->psi_k->get_nbasis(),
+                                              this->psi_k->get_nbasis(),
+                                              true);
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {

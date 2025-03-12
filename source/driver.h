@@ -36,7 +36,7 @@ class Driver
     void atomic_world();
 
     // the actual calculations
-    void driver_run(UnitCell& ucell);
+    void driver_run();
 };
 
 #endif

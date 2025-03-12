@@ -153,36 +153,32 @@ void ModuleBase::Global_File::make_dir_out(
 #endif
     }
 
-    std::stringstream ss,ss1;
-
     // mohan add 2010-09-12
     if(out_alllog)
     {
-	    ss << "running_" << calculation << "_" << rank + 1;
-	    open_log(GlobalV::ofs_running, ss.str(), calculation, restart);
+	    open_log(GlobalV::ofs_running, PARAM.globalv.log_file, calculation, restart);
         #if defined(__CUDA) || defined(__ROCM)
-        open_log(GlobalV::ofs_device, "device" + std::to_string(rank), calculation, restart);
+        open_log(GlobalV::ofs_device, "device" + std::to_string(rank) + ".log", calculation, restart);
         #endif
     }
     else
     {
 	    if(rank==0)
 	    {
-		    ss << "running_" << calculation;
-		    open_log(GlobalV::ofs_running, ss.str(), calculation, restart);
+		    open_log(GlobalV::ofs_running, PARAM.globalv.log_file, calculation, restart);
             #if defined(__CUDA) || defined(__ROCM)
-            open_log(GlobalV::ofs_device, "device", calculation, restart);
+            open_log(GlobalV::ofs_device, "device.log", calculation, restart);
             #endif
 	    }
     }
 
     if(rank==0)
     {
-        open_log(GlobalV::ofs_warning, "warning", calculation, restart);
+        open_log(GlobalV::ofs_warning, "warning.log", calculation, restart);
     }
 
 #ifdef GATHER_INFO
-    open_log(GlobalV::ofs_info, "math_info_" + std::to_string(rank), calculation, restart);
+    open_log(GlobalV::ofs_info, "math_info_" + std::to_string(rank) + ".log", calculation, restart);
 #endif
 
     return;
@@ -206,7 +202,7 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
 // PARAM.globalv.global_out_dir : (default dir to store "*.log" file)
 //----------------------------------------------------------
     std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << fn << ".log";
+    ss << PARAM.globalv.global_out_dir << fn;
 
     if(calculation == "md" && restart)
     {
