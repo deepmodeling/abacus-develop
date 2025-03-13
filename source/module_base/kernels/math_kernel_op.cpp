@@ -167,14 +167,27 @@ template <typename T>
 struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2)
+    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add)
     {
+        if (add)
+        {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
 #endif
-        for (int i = 0; i < dim; i++)
+            for (int i = 0; i < dim; i++)
+            {
+                result[i] += vector1[i] * vector2[i];
+            }
+        }
+        else
         {
-            result[i] = vector1[i] * vector2[i];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+            for (int i = 0; i < dim; i++)
+            {
+                result[i] = vector1[i] * vector2[i];
+            }
         }
     }
 };
