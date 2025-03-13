@@ -257,6 +257,9 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             const int* unconv,
                                             std::vector<Real>* eigenvalue_iter)
 {
+    bool test_eigs = true;
+    bool test_precond = true;
+    bool test_norm = true;
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
     for (size_t i = 0; i < notconv; i++)
     {
@@ -265,29 +268,6 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
             syncmem_complex_op()(this->ctx, this->ctx, vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
             (*eigenvalue_iter)[i] = (*eigenvalue_iter)[unconv[i]];
         }
-    }
-
-    // Before first GEMM
-    static bool test_calc_grad = false;  // Set to true to enable debug prints
-    if (test_calc_grad) {
-        std::cout << "\n=== " << (this->device == base_device::GpuDevice ? "GPU" : "CPU") 
-                  << " Calc Grad Debug (Initial) ===" << std::endl;
-        // Print first few elements of first vector
-        std::cout << "First vector in psi_iter (first 5 elements):" << std::endl;
-        if (this->device == base_device::GpuDevice) {
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            delete[] temp;
-        } else {
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-        }
-        std::cout << std::endl;
     }
 
 #ifdef __DSP
@@ -310,52 +290,59 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
 
-    // After first GEMM
-    if (test_calc_grad) {
-        std::cout << "\n=== " << (this->device == base_device::GpuDevice ? "GPU" : "CPU") 
-                  << " Calc Grad Debug (After First GEMM) ===" << std::endl;
-        std::cout << "First vector in psi_iter (first 5 elements):" << std::endl;
-        if (this->device == base_device::GpuDevice) {
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            delete[] temp;
-        } else {
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
+    // Eigenvalues operation section
+    if (test_eigs) {
+        // Original implementation
+        std::vector<Real> e_temp_cpu(this->notconv, 0);
+        Real* e_temp_hd = e_temp_cpu.data();
+        if (this->device == base_device::GpuDevice)
+        {
+            e_temp_hd = nullptr;
+            resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
         }
-        std::cout << std::endl;
-    }
-    std::vector<Real> e_temp_cpu(this->notconv, 0);
-    Real* e_temp_hd = e_temp_cpu.data();
-    if (this->device == base_device::GpuDevice)
-    {
-        e_temp_hd = nullptr;
-        resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
-    }
 
-    // Prepare the eigenvalues for the kernel
-    for (int m = 0; m < this->notconv; m++)
-    {
-        e_temp_cpu[m] = -(*eigenvalue_iter)[m]; // Assign -lambda_m
-    }
+        for (int m = 0; m < this->notconv; m++)
+        {
+            e_temp_cpu[m] = -(*eigenvalue_iter)[m];
+        }
 
-    if (this->device == base_device::GpuDevice)
-    {
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), this->notconv);
-    }
+        if (this->device == base_device::GpuDevice)
+        {
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), this->notconv);
+        }
+        
+        apply_eigenvalues_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
 
-    
-    // Call apply_eigenvalues_op with nbase and nbase_x
-    apply_eigenvalues_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
-
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_real_op()(this->ctx, e_temp_hd);
+        if (this->device == base_device::GpuDevice)
+        {
+            delmem_real_op()(this->ctx, e_temp_hd);
+        }
+    } else {
+        // Old implementation
+        std::vector<Real> e_temp_cpu(nbase, 0);
+        Real* e_temp_hd = e_temp_cpu.data();
+        if(this->device == base_device::GpuDevice)
+        {
+            e_temp_hd = nullptr;
+            resmem_real_op()(this->ctx, e_temp_hd, nbase);
+        }
+        for (int m = 0; m < notconv; m++)
+        {
+            e_temp_cpu.assign(nbase, (-1.0 * (*eigenvalue_iter)[m]));
+            if (this->device == base_device::GpuDevice)
+            {
+                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), nbase);
+            }
+            vector_mul_vector_op<T, Device>()(this->ctx,
+                                                    nbase,
+                                                    vcc + m * this->nbase_x,
+                                                    vcc + m * this->nbase_x,
+                                                    e_temp_hd);
+        }
+        if(this->device == base_device::GpuDevice)
+        {
+            delmem_real_op()(this->ctx, e_temp_hd);
+        }
     }
 
 #ifdef __DSP
@@ -378,220 +365,114 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + nbase * this->dim,
                          this->dim);
 
-    // After second GEMM
-    if (test_calc_grad) {
-        std::cout << "\n=== " << (this->device == base_device::GpuDevice ? "GPU" : "CPU") 
-                  << " Calc Grad Debug (After Second GEMM) ===" << std::endl;
-        std::cout << "First vector in psi_iter (first 5 elements):" << std::endl;
-        if (this->device == base_device::GpuDevice) {
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            delete[] temp;
-        } else {
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-        }
-        std::cout << std::endl << "================================\n" << std::endl;
-    }
-    // "precondition!!!"
+    // Precondition section
+    if (test_precond) {
+        // Original implementation
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        // Debug prints before precondition
-        static bool test_precondition = false;  // Set to true to enable debug prints
-        if (test_precondition) {
-            std::cout << "\n=== GPU Precondition Debug (Before) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            std::cout << std::endl;
-            delete[] temp;
-        }
-
-        Real* eigenvalues_gpu = nullptr;
-        resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu, (*eigenvalue_iter).data(), notconv);
-        
-        precondition_op<T, Device>()(this->ctx,
-                                    this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    d_precondition,
-                                    eigenvalues_gpu);
-
-        // Debug prints after precondition
-        if (test_precondition) {
-            std::cout << "\n=== GPU Precondition Debug (After) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "================================\n" << std::endl;
-            delete[] temp;
-        }
-
-        delmem_real_op()(this->ctx, eigenvalues_gpu);
-    }
-    else
-#endif
-    {
-        // Debug prints before precondition
-        static bool test_precondition = false;  // Set to true to enable debug prints
-        if (test_precondition) {
-            std::cout << "\n=== CPU Precondition Debug (Before) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-            std::cout << std::endl;
-        }
-
-        precondition_op<T, Device>()(this->ctx,
-                                    this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    this->precondition.data(),
-                                    (*eigenvalue_iter).data());
-
-        // Debug prints after precondition
-        if (test_precondition) {
-            std::cout << "\n=== CPU Precondition Debug (After) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "================================\n" << std::endl;
-        }
-    }
-
-    // "normalize!!!" in order to improve numerical stability of subspace diagonalization
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        // Allocate and initialize norm array on GPU
-        Real* psi_norm = nullptr;
-        resmem_real_op()(this->ctx, psi_norm, notconv);
-        cudaMemset(psi_norm, 0, notconv * sizeof(Real));
-
-        // Debug prints before normalization
-        static bool test_normalize = false;  // Set to true to enable debug prints
-        if (test_normalize) {
-            std::cout << "\n=== GPU Normalize Debug (Before) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            std::cout << std::endl;
-            delete[] temp;
-        }
-
-        normalize_op<T, Device>()(this->ctx,
-                                this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
-
-        // Debug prints after normalization
-        if (test_normalize) {
-            std::cout << "\n=== GPU Normalize Debug (After) ===" << std::endl;
-            // Print norms
-            Real* norms = new Real[notconv];
-            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, norms, psi_norm, notconv);
-            std::cout << "Norms:" << std::endl;
-            for (int i = 0; i < notconv; i++) {
-                std::cout << sqrt(norms[i]) << " ";
-            }
-            std::cout << std::endl;
-
-            // Print first few elements of first normalized vector
-            std::cout << "First normalized vector (first 5 elements):" << std::endl;
-            T* temp = new T[5];
-            using sync_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
-            sync_op()(this->cpu_ctx, this->ctx, temp, psi_iter + nbase * dim, 5);
-            for (int i = 0; i < 5; i++) {
-                std::cout << temp[i] << " ";
-            }
-            std::cout << std::endl;
-            delete[] temp;
-            delete[] norms;
-            std::cout << "================================\n" << std::endl;
-        }
-
-        delmem_real_op()(this->ctx, psi_norm);
-    }
-    else
-#endif
-    {
-        // Debug prints before normalization
-        static bool test_normalize = false;  // Set to true to enable debug prints
-        if (test_normalize) {
-            std::cout << "\n=== CPU Normalize Debug (Before) ===" << std::endl;
-            // Print first few elements of first vector
-            std::cout << "First vector (first 5 elements):" << std::endl;
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-            std::cout << std::endl;
-        }
-
-        // Allocate norm array for CPU to match GPU behavior
-        Real* psi_norm = nullptr;
-        if (test_normalize) {
-            psi_norm = new Real[notconv];
-        }
-
-        normalize_op<T, Device>()(this->ctx,
-                                this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
-
-        // Debug prints after normalization
-        if (test_normalize) {
-            std::cout << "\n=== CPU Normalize Debug (After) ===" << std::endl;
-            if (psi_norm) {
-                std::cout << "Norms:" << std::endl;
-                for (int i = 0; i < notconv; i++) {
-                    std::cout << psi_norm[i] << " ";
-                }
-                std::cout << std::endl;
-            }
-
-            // Print first few elements of first normalized vector
-            std::cout << "First normalized vector (first 5 elements):" << std::endl;
-            for (int i = 0; i < 5; i++) {
-                std::cout << psi_iter[nbase * dim + i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "================================\n" << std::endl;
+        if (this->device == base_device::GpuDevice)
+        {
+            Real* eigenvalues_gpu = nullptr;
+            resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu, (*eigenvalue_iter).data(), notconv);
             
-            delete[] psi_norm;
+            precondition_op<T, Device>()(this->ctx,
+                                        this->dim,
+                                        psi_iter,
+                                        nbase,
+                                        notconv,
+                                        d_precondition,
+                                        eigenvalues_gpu);
+            delmem_real_op()(this->ctx, eigenvalues_gpu);
+        }
+        else
+#endif
+        {
+            precondition_op<T, Device>()(this->ctx,
+                                        this->dim,
+                                        psi_iter,
+                                        nbase,
+                                        notconv,
+                                        this->precondition.data(),
+                                        (*eigenvalue_iter).data());
+        }
+    } else {
+        // Old implementation
+        std::vector<Real> pre(this->dim, 0.0);
+        for (int m = 0; m < notconv; m++)
+        {
+            for (size_t i = 0; i < this->dim; i++)
+            {
+                double x = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
+                pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+            }
+#if defined(__CUDA) || defined(__ROCM)
+            if (this->device == base_device::GpuDevice)
+            {
+                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, pre.data(), this->dim);
+                vector_div_vector_op<T, Device>()(this->ctx,
+                                                  this->dim,
+                                                  psi_iter + (nbase + m) * this->dim,
+                                                  psi_iter + (nbase + m) * this->dim,
+                                                  this->d_precondition);
+            }
+            else
+#endif
+            {
+                vector_div_vector_op<T, Device>()(this->ctx,
+                                                  this->dim,
+                                                  psi_iter + (nbase + m) * this->dim,
+                                                  psi_iter + (nbase + m) * this->dim,
+                                                  pre.data());
+            }
+        }
+    }
+
+    // Normalize section
+    if (test_norm) {
+        // Original implementation
+#if defined(__CUDA) || defined(__ROCM)
+        if (this->device == base_device::GpuDevice)
+        {
+            Real* psi_norm = nullptr;
+            resmem_real_op()(this->ctx, psi_norm, notconv);
+            cudaMemset(psi_norm, 0, notconv * sizeof(Real));
+            normalize_op<T, Device>()(this->ctx,
+                                    this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    psi_norm);
+            delmem_real_op()(this->ctx, psi_norm);
+        }
+        else
+#endif
+        {
+            Real* psi_norm = nullptr;
+            normalize_op<T, Device>()(this->ctx,
+                                    this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    psi_norm);
+        }
+    } else {
+        // Old implementation
+        std::vector<Real> psi_norm(notconv, 0.0);
+        for (size_t i = 0; i < notconv; i++)
+        {
+            psi_norm[i] = dot_real_op<T, Device>()(this->ctx,
+                                                   this->dim,
+                                                   psi_iter + (nbase + i) * this->dim,
+                                                   psi_iter + (nbase + i) * this->dim,
+                                                   true);
+            assert(psi_norm[i] > 0.0);
+            psi_norm[i] = sqrt(psi_norm[i]);
+
+            vector_div_constant_op<T, Device>()(this->ctx,
+                                                this->dim,
+                                                psi_iter + (nbase + i) * this->dim,
+                                                psi_iter + (nbase + i) * this->dim,
+                                                psi_norm[i]);
         }
     }
 
