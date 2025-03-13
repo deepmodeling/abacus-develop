@@ -6,7 +6,7 @@ The following files are the central output files for ABACUS. After executing the
 
 Different from `INPUT` given by the users, `OUT.suffix/INPUT` contains all parameters in ABACUS.
 
-> **Note:** `OUT.suffix/INPUT` contain the initial default of ABACUS instead of the real parameters used in calculations. If you want to figure out the real parameters used in calculations, you can open `OUT.suffix/runing_scf.log` and research corresponding parameter you are interested.
+> **Note:** `OUT.suffix/INPUT` contain the initial default of ABACUS instead of the real parameters used in calculations. This file is stored for reproduction in case the default value is changed during development. If you want to figure out the real parameters used in calculations, you can open `OUT.suffix/runing_scf.log` and research corresponding parameter you are interested.
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
@@ -33,9 +33,9 @@ BAND               Energy(ev)               Occupation                Kpoint = 1
       5                  9.41058                        0
 ```
 
-## *STRU_SIMPLE.cif*
+## *STRU.cif*
 
-ABACUS generates a `.cif` format structure file based on the input file `STRU`, facilitating users to visualize with commonly used software. `STRU_READIN_ADJUST.cif` is the structure after considering symmetry.
+ABACUS generates a `.cif` format structure file based on the input file `STRU`, facilitating users to visualize with commonly used software.
 
 ## *warning.log*
 
