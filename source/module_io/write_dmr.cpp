@@ -61,7 +61,6 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
 {
     if (!out_csr && !out_npz)
     {
-        ModuleBase::WARNING("write_dmr", "the output type of DMR should be npz or csr.");
         return;
     }
 
