@@ -7,7 +7,7 @@
 ABACUS Documentation
 =================================================
 
-ABACUS (**A**tomic-orbital **B**ased **A**b-initio **C**omputation at **US**tc) is
+ABACUS (Atomic-orbital Based Ab-initio Computation at UStc) is
 an open-source computer code package based on density functional
 theory (DFT). The package utilizes both plane wave and numerical
 atomic basis sets with the usage of pseudopotentials
