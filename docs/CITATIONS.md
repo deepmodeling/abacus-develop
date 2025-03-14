@@ -12,7 +12,7 @@ The following references are required to be cited when using ABACUS. Specificall
 
     Peize Lin, Xinguo Ren, Xiaohui Liu, Lixin He. Ab initio electronic structure calculations based on numerical atomic orbitals: Basic fomalisms and recent progresses. Wiley Interdisciplinary Reviews: Computational Molecular Science, 2024, 14(1): e1687.
 
-    *For LCAO and PW basis :*
+    *For LCAO and PW basis:*
 
     Weiqing Zhou, Deye Zheng, Qianrui Liu, et al. ABACUS: An Electronic Structure Analysis Package for the AI Era. arXiv preprint arXiv:2501.08697, 2025.
 
