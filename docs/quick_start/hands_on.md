@@ -51,7 +51,7 @@ suffix                  MgO
 pseudo_dir              ./
 orbital_dir		./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		    # SCF criterion
+scf_thr                 1e-6		    # SCF criterion
 basis_type              lcao            
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
@@ -139,7 +139,7 @@ INPUT_PARAMETERS
 suffix                  MgO
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		    # SCF criterion
+scf_thr                 1e-6		    # SCF criterion
 basis_type              pw              # changes the type of basis set
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
@@ -203,7 +203,7 @@ nelec                   0.0
 pseudo_dir              ./
 orbital_dir             ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# SCF criterion
+scf_thr                 1e-6		# SCF criterion
 basis_type              lcao 
 calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
 force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
@@ -223,7 +223,7 @@ suffix                  MgO
 nelec                   0.0
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# SCF criterion
+scf_thr                 1e-6		# SCF criterion
 basis_type              pw
 calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
 force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
