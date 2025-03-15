@@ -32,6 +32,10 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_hybrid_alpha = "1";
                 }
+                else if (dft_functional_lower == "b3lyp")
+                {
+                    para.input.exx_hybrid_alpha = "0.2";
+                }
                 else
                 { // no exx in scf, but will change to non-zero in
                     // postprocess like rpa

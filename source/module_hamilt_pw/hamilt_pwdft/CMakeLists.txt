@@ -9,6 +9,7 @@ list(APPEND objects
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp
     operator_pw/onsite_proj_pw.cpp
+    operator_pw/op_exx_pw.cpp
     forces_nl.cpp
     forces_cc.cpp
     forces_scc.cpp
@@ -38,7 +39,7 @@ list(APPEND objects
     fs_nonlocal_tools.cpp
     fs_kin_tools.cpp
     radial_proj.cpp
-    onsite_projector.cpp 
+    onsite_projector.cpp
     onsite_proj_tools.cpp
 )
 
@@ -46,6 +47,7 @@ add_library(
     hamilt_pwdft
     OBJECT
     ${objects}
+        stress_func_exx.cpp
 )
 
 if(ENABLE_COVERAGE)

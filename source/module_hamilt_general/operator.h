@@ -18,6 +18,7 @@ enum class calculation_type
     pw_veff,
     pw_meta,
     pw_onsite,
+    pw_exx,
     lcao_overlap,
     lcao_fixed,
     lcao_gint,
@@ -41,7 +42,6 @@ class Operator
 
     // this is the core function for Operator
     //  do H|psi> from input |psi> ,
-
     /// as default, different operators donate hPsi independently
     /// run this->act function for the first operator and run all act() for other nodes in chain table
     /// if this procedure is not suitable for your operator, just override this function.
@@ -88,6 +88,11 @@ class Operator
     int get_act_type() const
     {
         return this->act_type;
+    }
+
+    calculation_type get_cal_type() const
+    {
+        return this->cal_type;
     }
 
   protected:

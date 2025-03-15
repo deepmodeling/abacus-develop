@@ -2,6 +2,7 @@
 
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_io/cube_io.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
@@ -23,6 +24,8 @@
 #include "module_base/parallel_common.h"
 #include "module_cell/module_paw/paw_cell.h"
 #endif
+
+#include "esolver_ks_pw.h"
 
 namespace ModuleESolver
 {

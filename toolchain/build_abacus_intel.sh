@@ -4,13 +4,12 @@
 #SBATCH -n 16
 #SBATCH -o install.log
 #SBATCH -e install.err
-# install ABACUS with libxc and deepks
-# JamesMisaka in 2023.08.22
+# JamesMisaka in 2025.03.09
 
 # Build ABACUS by intel-toolchain
 
 # module load mkl compiler mpi
-# source path/to/vars.sh
+# source path/to/setvars.sh
 
 ABACUS_DIR=..
 TOOL=$(pwd)
@@ -23,15 +22,15 @@ BUILD_DIR=build_abacus_intel
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
+ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
-LIBXC=$INSTALL_DIR/libxc-6.2.2
+LIBXC=$INSTALL_DIR/libxc-7.0.0
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
 # LIBCOMM=$INSTALL_DIR/LibComm-0.1.1
-# DEEPMD=$HOME/apps/anaconda3/envs/deepmd
+# DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
 
 # if use deepks and deepmd
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
@@ -54,7 +53,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 #         -DLIBRI_DIR=$LIBRI \
 #         -DLIBCOMM_DIR=$LIBCOMM \
 # 	      -DDeePMD_DIR=$DEEPMD \
-# 	      -DTensorFlow_DIR=$DEEPMD \
 
 
 cmake --build $BUILD_DIR -j `nproc` 

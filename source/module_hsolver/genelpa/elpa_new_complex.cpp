@@ -9,7 +9,7 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
 
-#include "my_math.hpp"
+#include "module_base/scalapack_connector.h"
 #include "utils.h"
 
 extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
@@ -72,7 +72,7 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
             t=-1;
             timer(myid, "A*U^-1", "2.1a", t);
         }
-        Cpzgemm('C', 'N', nFull, 1.0, A, B, 0.0, zwork.data(), desc);
+        ScalapackConnector::gemm('C', 'N', nFull, nFull, nFull, 1.0, A, B, 0.0, zwork.data(), desc);
         if(loglevel>1)
         {
             timer(myid, "A*U^-1", "2.1a", t);
@@ -84,7 +84,7 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
             t=-1;
             timer(myid, "U^-T*(A*U^-1)", "2.2a", t);
         }
-        Cpzgemm('C', 'N', nFull, 1.0, B, zwork.data(), 0.0, A, desc);
+        ScalapackConnector::gemm('C', 'N', nFull, nFull, nFull, 1.0, B, zwork.data(), 0.0, A, desc);
         if(loglevel>1)
         {
             timer(myid, "U^-T*(A*U^-1)", "2.2a", t);
@@ -98,7 +98,7 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
             t=-1;
             timer(myid, "B*A^T", "2.1b", t);
         }
-        Cpzgemm('N', 'C', nFull, 1.0, B, A, 0.0, zwork.data(), desc);
+        ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, B, A, 0.0, zwork.data(), desc);
         if(loglevel>1)
         {
             timer(myid, "B*A^T", "2.1b", t);
@@ -109,7 +109,7 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
             t=-1;
             timer(myid, "B*(B*A^T)^T", "2.2b", t);
         }
-        Cpzgemm('N', 'C', nFull, 1.0, B, zwork.data(), 0.0, A, desc);
+        ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, B, zwork.data(), 0.0, A, desc);
         if(loglevel>1)
         {
             timer(myid, "B*(B*A^T)^T", "2.2b", t);
@@ -168,7 +168,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
             t=-1;
             timer(myid, "pzpotrf_", "1", t);
         }
-        Cpzpotrf('U', nFull, B, desc);
+        ScalapackConnector::potrf('U', nFull, B, desc);
         if(loglevel>1)
         {
             timer(myid, "pzpotrf_", "1", t);
@@ -214,7 +214,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
                 t=-1;
                 timer(myid, "pzpotrf_", "2", t);
             }
-            Cpzpotrf('U', nFull, B, desc);
+            ScalapackConnector::potrf('U', nFull, B, desc);
             if(loglevel>1)
             {
                 timer(myid, "pzpotrf_", "2", t);
@@ -290,7 +290,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
             t=-1;
             timer(myid, "qevq=qev*q^T", "2", t);
         }
-        Cpzgemm('N', 'C', nFull, 1.0, zwork.data(), EigenVector, 0.0, B, desc);
+        ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, zwork.data(), EigenVector, 0.0, B, desc);
         if(loglevel>1)
         {
             timer(myid, "qevq=qev*q^T", "2", t);
@@ -310,7 +310,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, std::complex<double>* B
             t=-1;
             timer(myid, "Cpztrmm", "1", t);
         }
-        Cpztrmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
+        ScalapackConnector::trmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
         if(loglevel>1)
         {
             timer(myid, "Cpztrmm", "1", t);
@@ -322,7 +322,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, std::complex<double>* B
             t=-1;
             timer(myid, "Cpzgemm", "1", t);
         }
-        Cpzgemm('C', 'N', nFull, nev, nFull, 1.0, B, zwork.data(), 0.0, EigenVector, desc);
+        ScalapackConnector::gemm('C', 'N', nFull, nev, nFull, 1.0, B, zwork.data(), 0.0, EigenVector, desc);
         if(loglevel>1)
         {
             timer(myid, "Cpzgemm", "1", t);
@@ -368,10 +368,10 @@ void ELPA_Solver::verify(std::complex<double>* A, double* EigenValue, std::compl
     }
 
     // R=V*D
-    Cpzhemm('R', 'U', nFull, 1.0, D, V, 0.0, R, desc);
+    ScalapackConnector::hemm('R', 'U', nFull, 1.0, D, V, 0.0, R, desc);
     if(loglevel>2) saveMatrix("VD.dat", nFull, R, desc, cblacs_ctxt);
     // R=A*V-V*D=A*V-R
-    Cpzhemm('L', 'U', nFull, 1.0, A, V, -1.0, R, desc);
+    ScalapackConnector::hemm('L', 'U', nFull, 1.0, A, V, -1.0, R, desc);
     if(loglevel>2) saveMatrix("AV-VD.dat", nFull, R, desc, cblacs_ctxt);
     // calculate the maximum and mean value of sum_i{R(:,i)*R(:,i)}
     double sumError=0;
@@ -379,8 +379,8 @@ void ELPA_Solver::verify(std::complex<double>* A, double* EigenValue, std::compl
     for(int i=1; i<=nev; ++i)
     {
         std::complex<double> E;
-        Cpzdotc(nFull, E, R, 1, i, 1,
-                         R, 1, i, 1, desc);
+        ScalapackConnector::dot(nFull, E, R, 1, i, 1,
+            R, 1, i, 1, desc);
         double abs_E=std::abs(E);
         sumError+=abs_E;
         maxError=std::max(maxError, abs_E);
@@ -427,13 +427,13 @@ void ELPA_Solver::verify(std::complex<double>* A, std::complex<double>* B,
     }
 
     // zwork=B*V
-    Cpzhemm('L', 'U', nFull, 1.0, B, V, 0.0, zwork.data(), desc);
+    ScalapackConnector::hemm('L', 'U', nFull, 1.0, B, V, 0.0, zwork.data(), desc);
     if(loglevel>2) saveMatrix("BV.dat", nFull, zwork.data(), desc, cblacs_ctxt);
     // R=B*V*D=zwork*D
-    Cpzhemm('R', 'U', nFull, 1.0, D, zwork.data(), 0.0, R, desc);
+    ScalapackConnector::hemm('L', 'U', nFull, 1.0, B, V, 0.0, zwork.data(), desc);
     if(loglevel>2) saveMatrix("BVD.dat", nFull, R, desc, cblacs_ctxt);
     // R=A*V-B*V*D=A*V-R
-    Cpzhemm('L', 'U', nFull, 1.0, A, V, -1.0, R, desc);
+    ScalapackConnector::hemm('L', 'U', nFull, 1.0, B, V, 0.0, zwork.data(), desc);
     if(loglevel>2) saveMatrix("AV-BVD.dat", nFull, R, desc, cblacs_ctxt);
     // calculate the maximum and mean value of sum_i{R(:,i)*R(:,i)}
     double sumError=0;
@@ -441,8 +441,8 @@ void ELPA_Solver::verify(std::complex<double>* A, std::complex<double>* B,
     for(int i=1; i<=nev; ++i)
     {
         std::complex<double> E;
-        Cpzdotc(nFull, E, R, 1, i, 1,
-                         R, 1, i, 1, desc);
+        ScalapackConnector::dot(nFull, E, R, 1, i, 1,
+            R, 1, i, 1, desc);
         double abs_E=std::abs(E);
         sumError+=abs_E;
         maxError=std::max(maxError, abs_E);

@@ -13,8 +13,11 @@
 # if you want to run EXX calculation, you should set --with-libri=install
 # mpich (and intel toolchain) is recommended for EXX support
 
-./install_abacus_toolchain.sh --with-openmpi=install \
---with-intel=no --with-gcc=system \
+./install_abacus_toolchain.sh \
+--with-gcc=system \
+--with-intel=no \
+--with-openblas=install \
+--with-openmpi=install \
 --with-cmake=install \
 --with-scalapack=install \
 --with-libxc=install \
@@ -26,4 +29,6 @@
 --with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \
+--with-4th-openmpi=no \
 | tee compile.log
+# if you want to use openmpi-version4: set --with-4th-openmpi=yes
