@@ -17,6 +17,7 @@ protected:
 
         ucell.ntype = 2;
         ucell.lat0 = 1.0;
+        ucell.nat = 10;
         ucell.atoms = new Atom[ucell.ntype];
         for (int i = 0; i < ucell.ntype; i++) {
             ucell.atoms[i].na = 5; 
