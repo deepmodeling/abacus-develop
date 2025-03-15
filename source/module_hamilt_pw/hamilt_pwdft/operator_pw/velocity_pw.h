@@ -72,8 +72,8 @@ class Velocity
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using castmem_complex_h2d_op = base_device::memory::cast_memory_op<std::complex<FPTYPE>, std::complex<double>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
 };
 }
 #endif

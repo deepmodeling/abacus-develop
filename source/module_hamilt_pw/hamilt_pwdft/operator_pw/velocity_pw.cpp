@@ -37,7 +37,6 @@ Velocity<FPTYPE, Device>::~Velocity()
     delmem_var_op()(this->gz_);
     delmem_complex_op()(vkb_);
     delmem_complex_op()(gradvkb_);
-    delmem_var_op()(deeq_);
 }
 
 template <typename FPTYPE, typename Device>
@@ -48,10 +47,12 @@ void Velocity<FPTYPE, Device>::init(const int ik_in)
     const int npw = this->wfcpw->npwk[ik_in];
     const int npwk_max = this->wfcpw->npwk_max;
     std::vector<FPTYPE> gtmp(npw);
+    resmem_var_op()(gx_, npw);
+    resmem_var_op()(gy_, npw);
+    resmem_var_op()(gz_, npw);
     std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
     for(int i=0; i<3; ++i)
     {
-        resmem_var_op()(gtmp_ptr[i], npw);
         for (int ig = 0; ig < npw; ++ig)
         {
             const ModuleBase::Vector3<double> tmpg = wfcpw->getgpluskcar(this->ik, ig);
@@ -64,47 +65,20 @@ void Velocity<FPTYPE, Device>::init(const int ik_in)
     if (this->ppcell->nkb > 0 && this->nonlocal)
     {
         this->ppcell->getgradq_vnl(*this->ucell, ik_in);
-    }
 
-    // sync to device
-    if(std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
-    {
-        const int nkb = this->ppcell->nkb;
-        // vkb
-        resmem_complex_op()(vkb_, nkb * npwk_max);
-        for(int ib = 0; ib < nkb; ++ib)
+        // sync to device
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
         {
-            castmem_complex_h2d_op()(vkb_ + ib * npw, this->ppcell->vkb.c + ib * npwk_max, npw);
-        }
+            const int nkb = this->ppcell->nkb;
+            // vkb
+            resmem_complex_op()(vkb_, nkb * npwk_max);
+            castmem_complex_h2d_op()(vkb_, this->ppcell->vkb.c, nkb * npwk_max);
 
-        // gradvkb
-        resmem_complex_op()(gradvkb_, 3 * nkb * npwk_max);
-        for(int ib = 0; ib < 3 * nkb; ++ib)
-        {
-            castmem_complex_h2d_op()(gradvkb_ + ib * npw, this->ppcell->gradvkb.ptr + ib * npwk_max, npw);
-        }
-
-        // deep
-        int dim_deeq = 0;
-        for (int it = 0; it < this->ucell->ntype; ++it)
-        {
-            const int Nprojs = this->ucell->atoms[it].ncpp.nh;
-            dim_deeq += Nprojs * Nprojs * this->ucell->atoms[it].na;
-        }
-        resmem_var_op()(deeq_, dim_deeq);
-        const int current_spin = this->isk[ik];
-        int ipp = 0;
-        int iat = 0;
-        for (int it = 0; it < this->ucell->ntype; it++)
-        {
-            const int Nprojs = this->ucell->atoms[it].ncpp.nh;
-            const int Nprojs2 = Nprojs * Nprojs;
-            castmem_var_h2d_op()(deeq_ + ipp, &(this->ppcell->deeq(current_spin, iat, 0, 0)), Nprojs2);
-            iat += this->ucell->atoms[it].na;
-            ipp += Nprojs2;
+            // gradvkb
+            resmem_complex_op()(gradvkb_, 3 * nkb * npwk_max);
+            castmem_complex_h2d_op()(gradvkb_, this->ppcell->gradvkb.ptr, 3 * nkb * npwk_max);
         }
     }
-
 }
 
 template <typename FPTYPE, typename Device>
@@ -116,9 +90,8 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
 {
     ModuleBase::timer::tick("Operator", "Velocity");
 
-    const int npw = psi_in->get_current_nbas();
-
-    const int max_npw = psi_in->get_nbasis() / psi_in->get_npol();
+    const int npw = this->wfcpw->npwk[this->ik];
+    const int max_npw = this->wfcpw->npwk_max;
     const int npol = psi_in->get_npol();
     
     std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
@@ -161,11 +134,20 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     const int nkb3 = 3 * nkb;
     Complex one = 1.0;
     Complex zero = 0.0;
+
+    Complex* vkb_d = reinterpret_cast<Complex*>(this->ppcell->vkb.c);
+    Complex* gradvkb_d = reinterpret_cast<Complex*>(this->ppcell->gradvkb.ptr);
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
+    {
+        vkb_d = vkb_;
+        gradvkb_d = gradvkb_;
+    }
+
     if (n_npwx == 1)
     {
         int inc = 1;
-        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb, &one, vkb_, max_npw, psi0, inc, &zero, becp1_, inc);
-        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb3, &one, gradvkb_, max_npw, psi0, inc, &zero, becp2_, inc);
+        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb, &one, vkb_d, max_npw, psi0, inc, &zero, becp1_, inc);
+        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb3, &one, gradvkb_d, max_npw, psi0, inc, &zero, becp2_, inc);
     }
     else
     {
@@ -175,7 +157,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                n_npwx,
                                                npw,
                                                &one,
-                                               vkb_,
+                                               vkb_d,
                                                max_npw,
                                                psi0,
                                                max_npw,
@@ -188,7 +170,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                n_npwx,
                                                npw,
                                                &one,
-                                               gradvkb_,
+                                               gradvkb_d,
                                                max_npw,
                                                psi0,
                                                max_npw,
@@ -220,6 +202,9 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
         Parallel_Reduce::reduce_pool(becp2_, nkb3 * n_npwx);
         becp1_cpu = becp1_;
         becp2_cpu = becp2_;
+
+        setmem_complex_op()(ps1_, 0.0, nkb * n_npwx);
+        setmem_complex_op()(ps2_, 0.0, nkb3 * n_npwx);
         ps1_cpu = ps1_;
         ps2_cpu = ps2_;
     }
@@ -241,7 +226,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                     {
                         for (int ib = 0; ib < n_npwx; ++ib)
                         {
-                            double dij = this->ppcell->deeq(current_spin, iat, ip, ip2);
+                            FPTYPE dij = static_cast<FPTYPE>(this->ppcell->deeq(current_spin, iat, ip, ip2));
                             int sumip2 = sum + ip2;
                             int sumip = sum + ip;
                             ps1_cpu[sumip2 * n_npwx + ib] += dij * becp1_cpu[ib * nkb + sumip];
@@ -279,7 +264,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                    npw,
                                                    nkb,
                                                    &one,
-                                                   gradvkb_ + vkbshift,
+                                                   gradvkb_d + vkbshift,
                                                    max_npw,
                                                    ps1_,
                                                    inc,
@@ -290,7 +275,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                    npw,
                                                    nkb,
                                                    &one,
-                                                   vkb_,
+                                                   vkb_d,
                                                    max_npw,
                                                    ps2_ + ps2shift,
                                                    inc,
@@ -312,7 +297,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                    n_npwx,
                                                    nkb,
                                                    &one,
-                                                   gradvkb_ + vkbshift,
+                                                   gradvkb_d + vkbshift,
                                                    max_npw,
                                                    ps1_,
                                                    n_npwx,
@@ -325,7 +310,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                                                    n_npwx,
                                                    nkb,
                                                    &one,
-                                                   vkb_,
+                                                   vkb_d,
                                                    max_npw,
                                                    ps2_ + ps2shift,
                                                    n_npwx,

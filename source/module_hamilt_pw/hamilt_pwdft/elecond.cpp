@@ -159,6 +159,7 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
         {
             pij_c = pij_d;
         }
+        else
         {
             std::vector<std::complex<FPTYPE>> pij_h(nbands * nbands);
             syncmem_complex_d2h_op()(pij_h.data(), pij_d, nbands * nbands);

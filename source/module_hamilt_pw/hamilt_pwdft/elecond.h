@@ -15,7 +15,7 @@ class EleCond
   public:
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
   public:
     EleCond(UnitCell* p_ucell_in,
             K_Vectors* p_kv_in,
