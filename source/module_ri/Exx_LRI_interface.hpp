@@ -62,10 +62,12 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) { XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        } 
-        else if (istep > 0) { XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-        } 
+        if ((GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx)
+            || (istep > 0)
+            || (PARAM.inp.init_wfc == "file"))
+        {
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        }
         else
         {
             if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
@@ -120,10 +122,13 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const K_Vectors& kv, 
                                                    const int& iter)
 {
+    std::cout << "iter=" << iter << std::endl;
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0))
+        if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0 || PARAM.inp.init_wfc == "file") // non separate loop case
+            || (GlobalC::exx_info.info_global.separate_loop && PARAM.inp.init_wfc == "file" && this->two_level_step == 0 && iter == 1))  // the first iter in separate loop case
         {
+            std::cout << "update exx" << std::endl;
             const bool flag_restart = (iter == 1) ? true : false;
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {
@@ -313,7 +318,8 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 std::cout << " Updating EXX " << std::flush;
                 timeval t_start;       gettimeofday(&t_start, nullptr);
 
-                const bool flag_restart = (this->two_level_step == 0) ? true : false;
+                // if init_wfc == "file", DM is calculated in the 1st iter of the 1st two-level step, so we mix it here
+                const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
 
                 if (this->exx_spacegroup_symmetry)
                     {this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart);}
