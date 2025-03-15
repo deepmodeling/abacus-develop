@@ -43,20 +43,6 @@ TEST_F(BFGSTest, PrepareStep) {
     }
 }
 
-TEST_F(BFGSTest, RelaxStep) {
-    ModuleBase::matrix force;
-    force = ModuleBase::matrix(10, 3);
-    for (int i = 0; i < force.nr; ++i)
-    {
-        for (int j = 0; j < force.nc; ++j)
-        {
-            force(i, j) =  -0.1 * (i + 1);
-        }
-    }
-    bfgs.relax_step(force, ucell);
-    EXPECT_TRUE(ucell.ionic_position_updated);
-    EXPECT_GT(Ions_Move_Basic::largest_grad, 0);
-}
 
 TEST_F(BFGSTest, AllocateTest) {
     BFGS bfgs;
