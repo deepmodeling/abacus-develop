@@ -30,5 +30,7 @@
 --with-libri=no \
 --with-libcomm=no \
 --with-4th-openmpi=no \
+#--enable-cuda \
+#--gpu-ver=L40S \
 | tee compile.log
 # if you want to use openmpi-version4: set --with-4th-openmpi=yes
