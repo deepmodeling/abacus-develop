@@ -12,7 +12,7 @@
 # libtorch and libnpy are for deepks support, which can be =no
 # if you want to run EXX calculation, you should set --with-libri=install
 # mpich (and intel toolchain) is recommended for EXX support
-
+#export CUDA_PATH=/usr/local/cuda
 ./install_abacus_toolchain.sh \
 --with-gcc=system \
 --with-intel=no \
