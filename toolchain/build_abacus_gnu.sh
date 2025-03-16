@@ -55,7 +55,9 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 #         -DENABLE_LIBRI=ON \
 #         -DLIBRI_DIR=$LIBRI \
 #         -DLIBCOMM_DIR=$LIBCOMM \
-# 	      -DDeePMD_DIR=$DEEPMD \
+# 	      -DUSE_CUDA=ON \
+#         -DENABLE_CUSOLVERMP=ON \
+#         -D CAL_CUSOLVERMP_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2x.xx/math_libs/1x.x/targets/x86_64-linux/lib
 
 # # add mkl env for libtorch to link
 # if one want to install libtorch, mkl should be load in build process
