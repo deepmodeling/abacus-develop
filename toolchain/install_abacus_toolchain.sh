@@ -449,12 +449,13 @@ while [ $# -ge 1 ]; do
     --gpu-ver=*)
       user_input="${1#*=}"
       case "${user_input}" in
-        K20X | K40 | K80 | P100 | V100 | A100 | Mi50 | Mi100 | Mi250 | no)
+        K20X | K40 | K80 | P100 | V100 | A100 | L40S | Mi50 | Mi100 | Mi250 | no)
           export GPUVER="${user_input}"
+          export TARGET="nvidia"
           ;;
         *)
           report_error ${LINENO} \
-            "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, Mi50, Mi100, Mi250, and no as options"
+            "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, L40S, Mi50, Mi100, Mi250, and no as options"
           exit 1
           ;;
       esac
@@ -835,6 +836,9 @@ case ${GPUVER} in
     ;;
   A100)
     export ARCH_NUM="80"
+    ;;
+  L40S)
+    export ARCH_NUM="89"
     ;;
   Mi50)
     # TODO: export ARCH_NUM=
