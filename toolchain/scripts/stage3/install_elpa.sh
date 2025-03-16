@@ -139,7 +139,7 @@ case "$with_elpa" in
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
           ${config_flags} \
-          --enable-nvidia-gpu-kernels \
+          --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
           --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_75") \
           FC=${MPIFC} \
