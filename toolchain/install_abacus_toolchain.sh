@@ -59,10 +59,11 @@ USAGE:
 
 $(basename $SCRIPT_NAME) [options]
 
-Or a more RECOMMENDED way is to use it by pre-setting workflow scripts:
+A MORE RECOMMENDED way is to use it by pre-setting workflow scripts:
 > gcc-openmpi-openblas environments: toolchain_gnu.sh
 > intel-mkl-mpi environments: toolchain_intel.sh
 > intel-mpich environments: toolchain_intel_mpich.sh
+> AMD environments: toolchain_amd.sh [in development]
 
 OPTIONS:
 
@@ -148,14 +149,18 @@ The --with-PKG options follow the rules:
   --with-PKG              The option keyword alone will be equivalent to
                           --with-PKG=install
 
-  --with-gcc              The GCC compiler to use to compile ABACUS.
+  --with-gcc              Use the GNU compiler to use to build ABACUS.
                           Default = system
-  --with-intel            Use the Intel compiler to compile ABACUS.
+  --with-intel            Use the Intel compiler to build ABACUS.
                           Default = system
   --with-intel-classic    Use the classic Intel compiler (icc, icpc, ifort) to compile ABACUS.
                           Default = no
   --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
+  --with-amd              Use the AMD compiler to build CP2K.
+                          Default = system
+  --with-flang            Use flang in AMD compiler, which may lead to problem and efficiency loss in ELPA
+                          Default = no
   --with-cmake            Cmake utilities
                           Default = install
   --with-openmpi          OpenMPI, important if you want a parallel version of ABACUS.
@@ -179,6 +184,10 @@ The --with-PKG options follow the rules:
                           If MKL's FFTW3 interface is suitable (no FFTW-MPI support),
                           it replaces the FFTW library. If the ScaLAPACK component is
                           found, it replaces the one specified by --with-scalapack.
+                          Default = system
+  --with-aocl             AMD Optimizing CPU Libraries, which provides LAPACK, BLAS, FFTW, ScaLAPACK
+                          the ScaLAPACK and FFTW can directly use which in AOCL by setting --with-scalapack=system and --with-fftw=system if AOCL in system environment.
+                          related scripts are in development to incorporate scalapack and fftw once for all.
                           Default = system
   --with-openblas         OpenBLAS is a free high performance LAPACK and BLAS library,
                           the successor to GotoBLAS.
@@ -233,9 +242,9 @@ EOF
 # PACKAGE LIST: register all new dependent tools and libs here. Order
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
-tool_list="gcc intel cmake"
+tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
-math_list="mkl openblas"
+math_list="mkl aocl openblas"
 lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
@@ -263,6 +272,9 @@ with_scalapack="__INSTALL__"
 if [ "${MKLROOT}" ]; then
   export MATH_MODE="mkl"
   with_mkl="__SYSTEM__"
+elif [ "${AOCLhome}" ]; then
+  export MATH_MODE="aocl"
+  with_aocl="__SYSTEM__"
 else
   export MATH_MODE="openblas"
 fi
@@ -288,6 +300,8 @@ if (command -v mpiexec > /dev/null 2>&1); then
   elif (mpiexec --version 2>&1 | grep -s -q "Intel"); then
     echo "MPI is detected and it appears to be Intel MPI"
     with_gcc="__DONTUSE__"
+    with_amd="__DONTUSE__"
+    with_aocl="__DONTUSE__"
     with_intel="__SYSTEM__"
     with_intelmpi="__SYSTEM__"
     export MPI_MODE="intelmpi"
@@ -314,9 +328,11 @@ export intel_classic="no"
 # and will lead to problem in force calculation
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
-# zhaoqing by 2023.08
+# JamesMisaka by 2023.08
 export intelmpi_classic="no"
-export with_ifx="yes"
+export with_ifx="yes" # whether ifx is used in oneapi
+export with_flang="no" # whether flang is used in aocc
+export openmpi_4th="no" # whether openmpi downgrade
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -336,6 +352,8 @@ if [ "${CRAY_LD_LIBRARY_PATH}" ]; then
   export MPI_MODE="mpich"
   # set default value for some installers appropriate for CLE
   with_gcc="__DONTUSE__"
+  with_amd="__DONTUSE__"
+  with_aocl="__DONTUSE__"
   with_intel="__DONTUSE__"
   with_fftw="__SYSTEM__"
   with_scalapack="__DONTUSE__"
@@ -373,7 +391,9 @@ while [ $# -ge 1 ]; do
     --install-all)
       # set all package to the default installation status
       for ii in ${package_list}; do
-        if [ "${ii}" != "intel" ] && [ "${ii}" != "intelmpi" ]; then
+        if [ "${ii}" != "intel" ] && 
+          [ "${ii}" != "intelmpi" ] &&
+          [ "${ii}" != "amd" ]; then
           eval with_${ii}="__INSTALL__"
         fi
       done
@@ -408,6 +428,12 @@ while [ $# -ge 1 ]; do
         cray)
           export MATH_MODE="cray"
           ;;
+        aocl)
+          export MATH_MODE="aocl"
+          with_aocl="__SYSTEM__"
+          with_fftw="__SYSTEM__"
+          with_scalapack="__SYSTEM__"
+          ;;
         mkl)
           export MATH_MODE="mkl"
           ;;
@@ -416,7 +442,7 @@ while [ $# -ge 1 ]; do
           ;;
         *)
           report_error ${LINENO} \
-            "--math-mode currently only supports mkl, and openblas as options"
+            "--math-mode currently only supports mkl, aocl, openblas and cray as options"
           ;;
       esac
       ;;
@@ -496,6 +522,9 @@ while [ $# -ge 1 ]; do
         export MPI_MODE=mpich
       fi
       ;;
+    --with-4th-openmpi*)
+      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
+      ;;
     --with-openmpi*)
       with_openmpi=$(read_with "${1}")
       if [ "${with_openmpi}" != "__DONTUSE__" ]; then
@@ -514,11 +543,20 @@ while [ $# -ge 1 ]; do
     --with-intel-mpi-clas*)
       intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
-    --with-intel*)
+    --with-intel*)  # must be read after items above
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-ifx*)
       with_ifx=$(read_with "${1}" "yes") # default yes
+      ;;
+    --with-amd*)
+      with_amd=$(read_with "${1}" "__SYSTEM__")
+      ;;
+    --with-flang*)
+      with_flang=$(read_with "${1}" "no")
+      ;;
+    --with-aocl*)
+      with_aocl=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-libxc*)
       with_libxc=$(read_with "${1}")
@@ -590,8 +628,16 @@ export ENABLE_CRAY="${enable_cray}"
 # ------------------------------------------------------------------------
 # Compiler conflicts
 if [ "${with_intel}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
-  echo "You have chosen to use the Intel compiler, therefore the installation of the GCC compiler will be skipped."
+  echo "You have chosen to use the Intel compiler, therefore the installation of the GNU compiler will be skipped."
   with_gcc="__SYSTEM__"
+fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
+  echo "You have chosen to use the AMD compiler, therefore the installation of the GNU compiler will be skipped."
+  with_gcc="__SYSTEM__"
+fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_intel}" != "__DONTUSE__" ]; then
+  report_error "You have chosen to use the AMD and the Intel compiler. Select only one compiler."
+  exit 1
 fi
 # MPI library conflicts
 if [ "${MPI_MODE}" = "no" ]; then
@@ -606,7 +652,7 @@ if [ "${MPI_MODE}" = "no" ]; then
 else
   # if gcc is installed, then mpi needs to be installed too
   if [ "${with_gcc}" = "__INSTALL__" ]; then
-    echo "You have chosen to install the GCC compiler, therefore MPI libraries have to be installed too"
+    echo "You have chosen to install the GNU compiler, therefore MPI libraries have to be installed too"
     case ${MPI_MODE} in
       mpich)
         with_mpich="__INSTALL__"
@@ -842,6 +888,8 @@ To build ABACUS by gnu-toolchain, just use:
     ./build_abacus_gnu.sh
 To build ABACUS by intel-toolchain, just use:
     ./build_abacus_intel.sh
+To build ABACUS by amd-toolchain in gcc-aocl, just use:
+    ./build_abacus_gnu-aocl.sh
 or you can modify the builder scripts to suit your needs.
 """
 EOF

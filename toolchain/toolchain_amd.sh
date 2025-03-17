@@ -14,14 +14,15 @@
 # mpich (and intel toolchain) is recommended for EXX support
 
 ./install_abacus_toolchain.sh \
---with-gcc=system \
+--with-amd=system \
+--math-mode=aocl \
 --with-intel=no \
---with-openblas=install \
+--with-gcc=no \
 --with-openmpi=install \
 --with-cmake=install \
---with-scalapack=install \
+--with-scalapack=system \
 --with-libxc=install \
---with-fftw=install \
+--with-fftw=system \
 --with-elpa=install \
 --with-cereal=install \
 --with-rapidjson=install \
@@ -30,5 +31,7 @@
 --with-libri=no \
 --with-libcomm=no \
 --with-4th-openmpi=no \
+--with-flang=no \
 | tee compile.log
 # if you want to use openmpi-version4: set --with-4th-openmpi=yes
+# flang is not recommended to use in this stage

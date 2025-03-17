@@ -3,7 +3,7 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0912
+# Last Update in 2025-0308
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -12,8 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # mpich_sha256="17406ea90a6ed4ecd5be39c9ddcbfac9343e6ab4f77ac4e8c5ebe4a3e3b6c501"
 # mpich_ver="4.1.2"
 # mpich_sha256="3492e98adab62b597ef0d292fb2459b6123bc80070a8aa0a30be6962075a12f0"
-mpich_ver="4.2.2"
-mpich_sha256="883f5bb3aeabf627cb8492ca02a03b191d09836bbe0f599d8508351179781d41"
+mpich_ver="4.3.0"
+mpich_sha256="5e04132984ad83cab9cc53f76072d2b5ef5a6d24b0a9ff9047a8ff96121bcc63"
 mpich_pkg="mpich-${mpich_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
