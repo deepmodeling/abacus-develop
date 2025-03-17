@@ -160,7 +160,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
     if (PARAM.inp.relax_nmax == 0)
     {
         std::cout << "-----------------------------------------------" << std::endl;
-        std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEED :)" << std::endl;
+        std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
         std::cout << "-----------------------------------------------" << std::endl;
     }
 
