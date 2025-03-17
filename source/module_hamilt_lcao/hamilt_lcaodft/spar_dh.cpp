@@ -26,9 +26,9 @@ void sparse_format::cal_dH(const UnitCell& ucell,
     fsr_dh.DHloc_fixedR_y = new double[nnr];
     fsr_dh.DHloc_fixedR_z = new double[nnr];
 
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
     const bool cal_deri = true;
