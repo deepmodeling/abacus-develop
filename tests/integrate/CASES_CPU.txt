@@ -297,6 +297,7 @@
 704_LJ_CR_multi_ele
 705_LJ_single_rule2
 706_LJ_RE_stop
+707_LJ_dry_run
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc
