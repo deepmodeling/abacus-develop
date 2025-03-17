@@ -3,6 +3,7 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -17,6 +18,7 @@
 #include "module_io/output_mat_sparse.h"
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
+#include "module_io/read_wfc_nao.h"
 #include "module_io/to_qo.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
@@ -27,7 +29,6 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
-
 
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
@@ -67,14 +68,12 @@
 namespace ModuleESolver
 {
 
-//------------------------------------------------------------------------------
-//! the 1st function of ESolver_KS_LCAO: constructor
-//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
+
 #ifdef __EXX
     // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
     //  because the latter is not reused by ESolver_LCAO_TDDFT,
@@ -94,47 +93,30 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 #endif
 }
 
-//------------------------------------------------------------------------------
-//! the 2nd function of ESolver_KS_LCAO: deconstructor
-//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
 }
 
-//------------------------------------------------------------------------------
-//! the 3rd function of ESolver_KS_LCAO: init
-//! 1) calculate overlap matrix S or initialize
-//! 2) init ElecState
-//! 3) init LCAO basis
-//! 4) initialize the density matrix
-//! 5) initialize exx
-//! 6) initialize DFT+U
-//! 7) ppcell
-//! 8) inititlize the charge density
-//! 9) initialize the potential.
-//! 10) initialize deepks
-//! 11) set occupations
-//! 12) print a warning if needed
-//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
+    // 1) before_all_runners in ESolver_KS
     ESolver_KS<TK>::before_all_runners(ucell, inp);
 
     // 2) init ElecState
-    // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
+    // autoset nbands in ElecState before basis_init (for Psi 2d division)
     if (this->pelec == nullptr)
     {
         // TK stands for double and complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),
-                                                       &(this->GG), // mohan add 2024-04-01
-                                                       &(this->GK), // mohan add 2024-04-01
+                                                       &(this->GG),
+                                                       &(this->GK),
                                                        this->pw_rho,
                                                        this->pw_big);
     }
@@ -152,15 +134,53 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                  two_center_bundle_,
                                  orb_);
 
-    // 4) initialize the density matrix
+    // 4) initialize electronic wave function psi
+    if (this->psi == nullptr)
+    {
+        int nsk = 0;
+        int ncol = 0;
+        if (PARAM.globalv.gamma_only_local)
+        {
+            nsk = PARAM.inp.nspin;
+            ncol = this->pv.ncol_bands;
+            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp")
+            {
+                ncol = this->pv.ncol;
+            }
+        }
+        else
+        {
+            nsk = this->kv.get_nks();
+#ifdef __MPI
+            ncol = this->pv.ncol_bands;
+#else
+            ncol = PARAM.inp.nbands;
+#endif
+        }
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
+    }
+
+    // 5) read psi from file
+    if (PARAM.inp.init_wfc == "file")
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
+        }
+    }
+
+    // 6) initialize the density matrix
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
 
+    // 7) initialize exact exchange calculations
 #ifdef __EXX
-    // 5) initialize exx
-    // PLEASE simplify the Exx_Global interface
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" 
+        || PARAM.inp.calculation == "relax" 
+        || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
@@ -181,22 +201,22 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 #endif
 
-    // 6) initialize DFT+U
+    // 8) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
-    // 7) initialize ppcell
+    // 9) initialize local pseudopotentials
     this->locpp.init_vloc(ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-    // 8) inititlize the charge density
-    this->pelec->charge->allocate(PARAM.inp.nspin);
+    // 10) inititlize the charge density
+    this->chr.allocate(PARAM.inp.nspin);
     this->pelec->omega = ucell.omega;
 
-    // 9) initialize the potential
+    // 11) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -209,9 +229,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                                     &(this->pelec->f_en.vtxc));
     }
 
+    // 12) initialize deepks
 #ifdef __DEEPKS
-    // 10) initialize deepks
-    LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld);
+    LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
     if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
@@ -220,22 +240,28 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         DeePKS_domain::read_pdm((PARAM.inp.init_chg == "file"),
                                 PARAM.inp.deepks_equiv,
                                 ld.init_pdm,
+                                ucell.nat,
                                 orb_.Alpha[0].getTotal_nchi() * ucell.nat,
                                 ld.lmaxd,
-                                ld.inl_l,
+                                ld.inl2l,
                                 *orb_.Alpha,
                                 ld.pdm);
     }
 #endif
 
-    // 11) set occupations
+    // 13) set occupations
     // tddft does not need to set occupations in the first scf
     if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
+        elecstate::fixed_weights(PARAM.inp.ocp_kb,
+                                 PARAM.inp.nbands,
+                                 PARAM.inp.nelec,
+                                 this->pelec->klist,
+                                 this->pelec->wg,
+                                 this->pelec->skip_weights);
     }
 
-    // 12) if kpar is not divisible by nks, print a warning
+    // 14) if kpar is not divisible by nks, print a warning
     if (PARAM.globalv.kpar_lcao > 1)
     {
         if (this->kv.get_nks() % PARAM.globalv.kpar_lcao != 0)
@@ -245,8 +271,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%"
                       << std::endl;
-            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar (" << PARAM.globalv.kpar_lcao
-                      << ")." << std::endl;
+            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar ("
+                      << PARAM.globalv.kpar_lcao << ")." << std::endl;
             std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
             std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;
             std::cout << " you want, please ignore this warning." << std::endl;
@@ -256,7 +282,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         }
     }
 
-    // 13) initialize rdmft, added by jghan
+    // 15) initialize rdmft, added by jghan
     if (PARAM.inp.rdmft == true)
     {
         rdmft_solver.init(this->GG,
@@ -276,10 +302,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     return;
 }
 
-//------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS_LCAO: cal_energy
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::cal_energy()
 {
@@ -288,10 +311,7 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
     return this->pelec->f_en.etot;
 }
 
-//------------------------------------------------------------------------------
-//! the 6th function of ESolver_KS_LCAO: cal_force
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
@@ -330,7 +350,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        &ucell.symm);
 
     // delete RA after cal_force
-
     this->RA.delete_grid();
 
     this->have_force = true;
@@ -348,12 +367,16 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 
+    // if the users do not want to calculate forces but want stress,
+    // we call cal_force
     if (!this->have_force)
     {
         ModuleBase::matrix fcs;
         this->cal_force(ucell, fcs);
     }
-    stress = this->scs; // copy the stress
+
+    // the 'scs' stress has already been calculated in 'cal_force'
+    stress = this->scs;
     this->have_force = false;
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
@@ -374,6 +397,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
+    // 1) write information
     if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
     {
         GlobalV::ofs_running << "\n\n\n\n";
@@ -406,7 +430,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                              << std::endl;
         GlobalV::ofs_running << "\n\n\n\n";
     }
-    // qianrui modify 2020-10-18
+
+    // 2) write information
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
     {
         ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
@@ -414,6 +439,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
+    // 3) print out band information
     if (PARAM.inp.out_band[0])
     {
         for (int is = 0; is < nspin0; is++)
@@ -429,13 +455,15 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                 this->pelec->ekb,
                                 this->kv);
         }
-    } // out_band
+    } 
 
-    if (PARAM.inp.out_proj_band) // Projeced band structure added by jiyy-2022-4-20
+    // 4) write projected band structure by jiyy-2022-4-20
+    if (PARAM.inp.out_proj_band)
     {
         ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
     }
 
+    // 5) print out density of states (DOS)
     if (PARAM.inp.out_dos)
     {
         ModuleIO::out_dos_nao(this->psi,
@@ -452,6 +480,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                               this->p_hamilt);
     }
 
+    // 6) print out exchange-correlation potential
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
@@ -465,7 +494,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     *this->pw_rho,
                                     *this->pw_rhod,
                                     this->locpp.vloc,
-                                    *this->pelec->charge,
+                                    this->chr,
                                     this->GG,
                                     this->GK,
                                     this->kv,
@@ -480,6 +509,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
         );
     }
 
+    // 7) write eband terms
     if (PARAM.inp.out_eband_terms)
     {
         ModuleIO::write_eband_terms<TK, TR>(PARAM.inp.nspin,
@@ -493,7 +523,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             *this->pw_rho,
                                             *this->pw_rhod,
                                             this->locpp.vloc,
-                                            *this->pelec->charge,
+                                            this->chr,
                                             this->GG,
                                             this->GK,
                                             this->kv,
@@ -512,10 +542,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
 
-//------------------------------------------------------------------------------
-//! the 10th function of ESolver_KS_LCAO: iter_init
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
@@ -540,6 +567,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             std::cout << " eV " << std::endl;
         }
     }
+
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
@@ -575,7 +603,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
-    // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
     // electrons number.
     if (istep == 0 && PARAM.inp.init_wfc == "file")
@@ -585,14 +612,21 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
 
             // calculate the density matrix using read in wave functions
-            // and the ncalculate the charge density on grid.
+            // and then calculate the charge density on grid.
 
             this->pelec->skip_weights = true;
-            this->pelec->calculate_weights();
+            elecstate::calculate_weights(this->pelec->ekb,
+                                         this->pelec->wg,
+                                         this->pelec->klist,
+                                         this->pelec->eferm,
+                                         this->pelec->f_en,
+                                         this->pelec->nelec_spin,
+                                         this->pelec->skip_weights);
+
             if (!PARAM.inp.dm_to_rho)
             {
                 auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                _pelec->calEBand();
+                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
                 elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
                 _pelec->DM->cal_DMR();
             }
@@ -624,7 +658,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             elecstate::cal_ux(ucell);
 
             //! update the potentials by using new electron charge density
-            this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+            this->pelec->pot->update_from_charge(&this->chr, &ucell);
 
             //! compute the correction energy for metals
             this->pelec->f_en.descf = this->pelec->cal_delta_escf();
@@ -661,7 +695,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             GlobalC::dftu.set_dmr(dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
         }
         // Calculate U and J if Yukawa potential is used
-        GlobalC::dftu.cal_slater_UJ(ucell, this->pelec->charge->rho, this->pw_rho->nrxx);
+        GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
 #ifdef __DEEPKS
@@ -689,33 +723,18 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     }
 }
 
-//------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS_LCAO: hamilt2density_single
-//! mohan add 2024-05-11
-//! 1) save input rho
-//! 2) save density matrix DMR for mixing
-//! 3) solve the Hamiltonian and output band gap
-//! 4) print bands for each k-point and each band
-//! 5) EXX:
-//! 6) DFT+U: compute local occupation number matrix and energy correction
-//! 7) DeePKS: compute delta_e
-//! 8) DeltaSpin:
-//! 9) use new charge density to calculate energy
-//! 10) symmetrize the charge density
-//! 11) compute magnetization, only for spin==2
-//! 12) calculate delta energy
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
 
-    // reset energy
+    // i1) reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    // 2) run the inner lambda loop to contrain atomic moments with the DeltaSpin method
     bool skip_solve = false;
     if (PARAM.inp.sc_mag_switch)
     {
@@ -734,13 +753,15 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
             skip_solve = true;
         }
     }
+
+    // 3) run Hsolver
     if (!skip_solve)
     {
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
         hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
     }
 
-    // 5) what's the exd used for?
+    // 4) EXX
 #ifdef __EXX
     if (PARAM.inp.calculation != "nscf")
     {
@@ -755,22 +776,18 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
     }
 #endif
 
-    // 10) symmetrize the charge density
+    // 5) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
-    // 12) calculate delta energy
+    // 6) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
-//------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS_LCAO: update_pot
-//! mohan add 2024-05-11
-//! 1) print potential
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
 {
@@ -779,7 +796,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
@@ -788,21 +805,14 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     }
 }
 
-//------------------------------------------------------------------------------
-//! the 13th function of ESolver_KS_LCAO: iter_finish
-//! mohan add 2024-05-11
-//! 1) mix density matrix
-//! 2) output charge density
-//! 3) output exx matrix
-//! 4) output charge density and density matrix
-//------------------------------------------------------------------------------
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    // 6) calculate the local occupation number matrix and energy correction in
-    // DFT+U
+    // 1) calculate the local occupation number matrix and energy correction
+    // in DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         // only old DFT+U method should calculated energy correction in esolver,
@@ -825,7 +835,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         GlobalC::dftu.output(ucell);
     }
 
-    // (7) for deepks, calculate delta_e
+    // 2) for deepks, calculate delta_e
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
@@ -838,17 +848,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 #endif
 
-    // 8) for delta spin
+    // 3) for delta spin
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(iter);
     }
 
-    // call iter_finish() of ESolver_KS
+    // 4) call iter_finish() of ESolver_KS
     ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
 
-    // 1) mix density matrix if mixing_restart + mixing_dmr + not first
+    // 5) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
     if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
     {
@@ -856,18 +866,18 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         this->p_chgmix->mix_dmr(dm);
     }
 
-    // 2) save charge density
+    // 6) save charge density
     // Peize Lin add 2020.04.04
     if (GlobalC::restart.info_save.save_charge)
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
+            GlobalC::restart.save_disk("charge", is, this->chr.nrxx, this->chr.rho[is]);
         }
     }
 
 #ifdef __EXX
-    // 3) save exx matrix
+    // 7) save exx matrix
     if (PARAM.inp.calculation != "nscf")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
@@ -894,7 +904,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 #endif
 
-    // 6) use the converged occupation matrix for next MD/Relax SCF calculation
+    // 8) use the converged occupation matrix for next MD/Relax SCF calculation
     if (PARAM.inp.dft_plus_u && conv_esolver)
     {
         GlobalC::dftu.initialed_locale = true;

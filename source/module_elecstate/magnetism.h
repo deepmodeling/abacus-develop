@@ -13,7 +13,7 @@ public:
     Magnetism();
     ~Magnetism();
 
-    // notice : becast is done in unitcell
+    // notice : bcast (MPI operation) is done in unitcell
     double *start_magnetization=nullptr;
 
     // tot_magnetization : majority spin - minority spin (nelup - neldw).
@@ -28,10 +28,9 @@ public:
                                
                                double* nelec_spin = nullptr);
 
-    ModuleBase::Vector3<double> *m_loc_=nullptr;//magnetization for each element along c-axis
-	double *angle1_=nullptr;                    //angle between c-axis and real spin std::vector
-	double *angle2_=nullptr;                    //angle between a-axis and real spin std::vector projection in ab-plane
-    //void cal_ux(const int ntype);
+    ModuleBase::Vector3<double> *m_loc_=nullptr; //magnetization for each element along c-axis
+	double *angle1_=nullptr;                     //angle between c-axis and real spin std::vector
+	double *angle2_=nullptr;                     //angle between a-axis and real spin std::vector projection in ab-plane
     double ux_[3]={0.0};
 	bool lsign_=false;
 

@@ -157,6 +157,13 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
         ++istep;
     }
 
+    if (PARAM.inp.relax_nmax == 0)
+    {
+        std::cout << "-----------------------------------------------" << std::endl;
+        std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
+        std::cout << "-----------------------------------------------" << std::endl;
+    }
+
     if (PARAM.inp.out_level == "i")
     {
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;

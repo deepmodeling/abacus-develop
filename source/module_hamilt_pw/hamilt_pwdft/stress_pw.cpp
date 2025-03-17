@@ -49,6 +49,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // DFT+U and DeltaSpin stress
     ModuleBase::matrix sigmaonsite;
     sigmaonsite.create(3, 3);
+    // EXX PW stress
+    ModuleBase::matrix sigmaexx;
+    sigmaexx.create(3, 3);
 
     for (int i = 0; i < 3; i++)
     {
@@ -64,6 +67,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
             sigmaxcc(i, j) = 0.0;
             sigmavdw(i, j) = 0.0;
             sigmaonsite(i, j) = 0.0;
+            sigmaexx(i, j) = 0.0;
         }
     }
 
@@ -118,13 +122,21 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
     }
 
+    // EXX PW stress
+    if (GlobalC::exx_info.info_global.cal_exx)
+    {
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell);
+    }
+
+
     for (int ipol = 0; ipol < 3; ipol++)
     {
         for (int jpol = 0; jpol < 3; jpol++)
         {
             sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
                                    + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol);
+                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol)
+                                   + sigmaexx(ipol, jpol);
         }
     }
 
@@ -136,9 +148,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     bool ry = false;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
-    if (PARAM.inp.test_stress)
+    if (PARAM.inp.test_stress || true)
     {
-        ry = true;
+//        ry = true;
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
@@ -152,6 +164,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, PARAM.inp.test_stress, ry);
+        }
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            ModuleIO::print_stress("EXX    STRESS", sigmaexx, PARAM.inp.test_stress, ry);
         }
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
     }

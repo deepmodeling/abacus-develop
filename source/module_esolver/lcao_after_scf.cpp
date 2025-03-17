@@ -1,5 +1,4 @@
 #include "esolver_ks_lcao.h"
-
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
@@ -28,7 +27,6 @@
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
 
-
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -40,10 +38,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 
-
-//mohan add 20250302
+// mohan add 20250302
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-
 
 #include <memory>
 #ifdef __EXX
@@ -81,7 +77,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
     //------------------------------------------------------------------
-    // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
+    //! 1) calculate the kinetic energy density tau in LCAO basis
+    //！sunliang 2024-09-18
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
@@ -95,7 +92,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
 
     //------------------------------------------------------------------
-    //! 3) write density matrix for sparse matrix
+    //! 3) write density matrix for sparse matrix in LCAO basis
     //------------------------------------------------------------------
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
                         this->pv,
@@ -107,7 +104,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                         istep);
 
     //------------------------------------------------------------------
-    //! 4) write density matrix
+    //! 4) write density matrix in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_dm)
     {
@@ -126,7 +123,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 5) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
+    //! 5) write Hexx matrix in LCAO basis
+    // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (PARAM.inp.calculation != "nscf")
     {
@@ -147,7 +145,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 #endif
 
     //------------------------------------------------------------------
-    // 6) write Hamiltonian and Overlap matrix
+    // 6) write Hamiltonian and Overlap matrix in LCAO basis
     //------------------------------------------------------------------
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
@@ -194,7 +192,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    // 7) write electronic wavefunctions
+    // 7) write electronic wavefunctions in LCAO basis
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (istep % PARAM.inp.out_interval == 0))
     {
@@ -208,31 +206,31 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 8) write DeePKS information
+    //! 8) write DeePKS information in LCAO basis
     //------------------------------------------------------------------
 #ifdef __DEEPKS
     if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
     {
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&ld, [](LCAO_Deepks*) {});
+        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
         deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                              this->pelec->klist->get_nks(),
-                              ucell.nat,
-                              PARAM.globalv.nlocal,
-                              this->pelec->ekb,
-                              this->pelec->klist->kvec_d,
-                              ucell,
-                              orb_,
-                              this->gd,
-                              &(this->pv),
-                              *(this->psi),
-                              dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                              p_ham_deepks);
+                                           this->pelec->klist->get_nks(),
+                                           ucell.nat,
+                                           PARAM.globalv.nlocal,
+                                           this->pelec->ekb,
+                                           this->pelec->klist->kvec_d,
+                                           ucell,
+                                           orb_,
+                                           this->gd,
+                                           &(this->pv),
+                                           *(this->psi),
+                                           dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                           p_ham_deepks,
+                                           GlobalV::MY_RANK);
     }
 #endif
-
 
     //------------------------------------------------------------------
     //! 9) Perform RDMFT calculations
@@ -262,10 +260,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         double etot_rdmft = this->rdmft_solver.run(dedocc, dedwfc);
     }
 
-
 #ifdef __EXX
     //------------------------------------------------------------------
-    // 10) Write RPA information.
+    // 10) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.rpa)
     {
@@ -280,9 +277,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 #endif
 
-
     //------------------------------------------------------------------
-    // 11) write HR in npz format.
+    // 11) write HR in npz format in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_hr_npz)
     {
@@ -303,7 +299,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    // 12) write density matrix in the 'npz' format.
+    // 12) write density matrix in the 'npz' format in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_dm_npz)
     {
@@ -340,7 +336,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                     this->kv,
                                     this->p_hamilt);
 
-        //! Perform Mulliken charge analysis
+        //! Perform Mulliken charge analysis in LCAO basis
         if (PARAM.inp.out_mul)
         {
             ModuleIO::cal_mag(&(this->pv),
@@ -357,7 +353,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 14) Print out atomic magnetization only when 'spin_constraint' is on.
+    //! 14) Print out atomic magnetization in LCAO basis
+    //! only when 'spin_constraint' is on.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
     {
@@ -368,33 +365,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 15) Clean up RA.
-    //! this should be last function and put it in the end, mohan request 2024-11-28
-    //------------------------------------------------------------------
-    if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
-    {
-        RA.delete_grid();
-    }
-
-    //------------------------------------------------------------------
-    //! 16) Print out quasi-orbitals.
-    //------------------------------------------------------------------
-    if (PARAM.inp.qo_switch)
-    {
-        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
-        tqo.initialize(PARAM.globalv.global_out_dir,
-                       PARAM.inp.pseudo_dir,
-                       PARAM.inp.orbital_dir,
-                       &ucell,
-                       this->kv.kvec_d,
-                       GlobalV::ofs_running,
-                       GlobalV::MY_RANK,
-                       GlobalV::NPROC);
-        tqo.calculate();
-    }
-
-    //------------------------------------------------------------------
-    //! 17) Print out kinetic matrix.
+    //! 15) Print out kinetic matrix in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_tk[0])
     {
@@ -430,59 +401,84 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 18) wannier90 interface, added by jingan in 2018.11.7
+    //! 16) wannier90 interface in LCAO basis
+    // added by jingan in 2018.11.7
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
         if (PARAM.inp.wannier_method == 1)
         {
-            toWannier90_LCAO_IN_PW myWannier(PARAM.inp.out_wannier_mmn,
-                                             PARAM.inp.out_wannier_amn,
-                                             PARAM.inp.out_wannier_unk,
-                                             PARAM.inp.out_wannier_eig,
-                                             PARAM.inp.out_wannier_wvfn_formatted,
-                                             PARAM.inp.nnkpfile,
-                                             PARAM.inp.wannier_spin);
-            myWannier.set_tpiba_omega(ucell.tpiba, ucell.omega);
-            myWannier.calculate(ucell,
-                                this->pelec->ekb,
-                                this->pw_wfc,
-                                this->pw_big,
-                                this->sf,
-                                this->kv,
-                                this->psi,
-                                &(this->pv));
-        }
-        else if (PARAM.inp.wannier_method == 2)
-        {
-            toWannier90_LCAO myWannier(PARAM.inp.out_wannier_mmn,
+            toWannier90_LCAO_IN_PW wan(PARAM.inp.out_wannier_mmn,
                                        PARAM.inp.out_wannier_amn,
                                        PARAM.inp.out_wannier_unk,
                                        PARAM.inp.out_wannier_eig,
                                        PARAM.inp.out_wannier_wvfn_formatted,
                                        PARAM.inp.nnkpfile,
-                                       PARAM.inp.wannier_spin,
-                                       orb_);
+                                       PARAM.inp.wannier_spin);
+            wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
+            wan.calculate(ucell,
+                          this->pelec->ekb,
+                          this->pw_wfc,
+                          this->pw_big,
+                          this->sf,
+                          this->kv,
+                          this->psi,
+                          &(this->pv));
+        }
+        else if (PARAM.inp.wannier_method == 2)
+        {
+            toWannier90_LCAO wan(PARAM.inp.out_wannier_mmn,
+                                 PARAM.inp.out_wannier_amn,
+                                 PARAM.inp.out_wannier_unk,
+                                 PARAM.inp.out_wannier_eig,
+                                 PARAM.inp.out_wannier_wvfn_formatted,
+                                 PARAM.inp.nnkpfile,
+                                 PARAM.inp.wannier_spin,
+                                 orb_);
 
-            myWannier.calculate(ucell, this->gd, this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
+            wan.calculate(ucell, this->gd, this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
     }
 
     //------------------------------------------------------------------
-    //! 19) berry phase calculations, added by jingan
+    //! 17) berry phase calculations in LCAO basis
+    // added by jingan
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&(this->pv));
         bp.lcao_init(ucell, this->gd, this->kv, this->GridT, orb_);
-        // additional step before calling
-        // macroscopic_polarization (why capitalize
-        // the function name?)
+        // additional step before calling macroscopic_polarization
         bp.Macroscopic_polarization(ucell, this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
+    }
+
+    //------------------------------------------------------------------
+    //! 18) calculate quasi-orbitals in LCAO basis
+    //------------------------------------------------------------------
+    if (PARAM.inp.qo_switch)
+    {
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
+        tqo.initialize(PARAM.globalv.global_out_dir,
+                       PARAM.inp.pseudo_dir,
+                       PARAM.inp.orbital_dir,
+                       &ucell,
+                       this->kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK,
+                       GlobalV::NPROC);
+        tqo.calculate();
+    }
+
+    //------------------------------------------------------------------
+    //! 19) Clean up RA, which is used to serach for adjacent atoms
+    //------------------------------------------------------------------
+    if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
+    {
+        RA.delete_grid();
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");

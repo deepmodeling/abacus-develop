@@ -136,9 +136,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
-    int T1, I1;
+    int T1=0;
+    int I1=0;
     this->ucell->iat2iait(iat1, &I1, &T1);
-    int T2, I2;
+    int T2=0;
+    int I2=0;
     this->ucell->iat2iait(iat2, &I2, &T2);
     Atom& atom1 = this->ucell->atoms[T1];
     Atom& atom2 = this->ucell->atoms[T2];
@@ -220,10 +222,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         hr_mat_p += (npol - 1) * col_indexes.size();
         if (current_mat_p != nullptr)
         {
-            for (int dir = 0; dir < 3; dir++) {
-                current_mat_p[dir] += (npol - 1) * col_indexes.size();
-}
-        }
+			for (int dir = 0; dir < 3; dir++) 
+			{
+				current_mat_p[dir] += (npol - 1) * col_indexes.size();
+			}
+		}
     }
 }
 // init two center integrals and vector potential for td_ekintic term

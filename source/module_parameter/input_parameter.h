@@ -637,5 +637,9 @@ struct Input_para
     double rdmft_power_alpha = 0.656;             // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
     // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
 
+    // ==============   #Parameters (22.EXX PW) =====================
+    // EXX for planewave basis, rhx0820 2025-03-10
+    bool exxace = true;                          // exxace, exact exchange for planewave basis
+
 };
 #endif

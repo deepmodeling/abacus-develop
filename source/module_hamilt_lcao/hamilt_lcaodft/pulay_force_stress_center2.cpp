@@ -16,8 +16,8 @@ namespace PulayForceStress
         const double& factor_force,
         const double& factor_stress)
     {
-        ModuleBase::TITLE("Force_LCAO", "cal_pulay_fs_center2");
-        ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
+        ModuleBase::TITLE("Forces", "cal_pulay");
+        ModuleBase::timer::tick("Forces", "cal_pulay");
 
         const int nspin = PARAM.inp.nspin;
         const int nlocal = PARAM.globalv.nlocal;
@@ -52,7 +52,7 @@ namespace PulayForceStress
 
         if (isstress) { StressTools::stress_fill(ucell.lat0, ucell.omega, s); }
 
-        ModuleBase::timer::tick("Force_LCAO", "cal_pulay_fs_center2");
+        ModuleBase::timer::tick("Forces", "cal_pulay");
     }
 
     template<>  //multi-k, provided xy
@@ -70,13 +70,26 @@ namespace PulayForceStress
         const double& factor_force,
         const double& factor_stress)
     {
-        auto stress_func = [](ModuleBase::matrix& local_s, const double& dm2d1_s, const double** dHSx, const double** dHSxy, const double* dtau, const int& irr)
-            {
+		auto stress_func = [](ModuleBase::matrix& local_s, 
+				const double& dm2d1_s, 
+				const double** dHSx, 
+				const double** dHSxy, 
+				const double* dtau, 
+				const int& irr)
+		{
                 int ij = 0;
-                for (int i = 0; i < 3; ++i) { for (int j = i; j < 3; ++j) { local_s(i, j) += dm2d1_s * dHSxy[ij++][irr]; } }
-            };
-        cal_pulay_fs(f, s, dm, ucell, pv, dHSx, dHSxy, nullptr, isforce, isstress, ra, factor_force, factor_stress, stress_func);
-    }
+				for (int i = 0; i < 3; ++i) 
+				{ 
+					for (int j = i; j < 3; ++j) 
+					{ 
+						local_s(i, j) += dm2d1_s * dHSxy[ij++][irr]; 
+					} 
+				}
+		};
+		cal_pulay_fs(f, s, dm, ucell, pv, dHSx, dHSxy, 
+				nullptr, isforce, isstress, ra, 
+				factor_force, factor_stress, stress_func);
+	}
 
     template<>  // multi-k, provided x
     void cal_pulay_fs(
@@ -93,11 +106,24 @@ namespace PulayForceStress
         const double& factor_force,
         const double& factor_stress)
     {
-        auto stress_func = [](ModuleBase::matrix& local_s, const double& dm2d1_s, const double** dHSx, const double** dHSxy, const double* dtau, const int& irr)
+		auto stress_func = [](ModuleBase::matrix& local_s, 
+				const double& dm2d1_s, 
+				const double** dHSx, 
+				const double** dHSxy, 
+				const double* dtau, 
+				const int& irr)
             {
-                for (int i = 0; i < 3; ++i) { for (int j = i; j < 3; ++j) { local_s(i, j) += dm2d1_s * dHSx[i][irr] * dtau[irr * 3 + j]; } }
-            };
-        cal_pulay_fs(f, s, dm, ucell, pv, dHSx, nullptr, dtau, isforce, isstress, ra, factor_force, factor_stress, stress_func);
+                for (int i = 0; i < 3; ++i) 
+				{ 
+					for (int j = i; j < 3; ++j) 
+					{ 
+						local_s(i, j) += dm2d1_s * dHSx[i][irr] * dtau[irr * 3 + j]; 
+					} 
+				}
+			};
+		cal_pulay_fs(f, s, dm, ucell, pv, dHSx, 
+				nullptr, dtau, isforce, isstress, ra, 
+				factor_force, factor_stress, stress_func);
     }
 
 }

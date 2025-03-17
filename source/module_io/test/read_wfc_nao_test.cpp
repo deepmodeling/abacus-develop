@@ -12,7 +12,6 @@
 namespace elecstate
 {
       const double* ElecState::getRho(int spin) const{return &(this->eferm.ef);}//just for mock
-      void ElecState::calculate_weights(){}
 }
 
 // mock wfc_lcao_gen_fname

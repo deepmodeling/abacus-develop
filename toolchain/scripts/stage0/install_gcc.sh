@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # gcc 13 is good
 gcc_ver="13.2.0"
 gcc_sha256="8cb4be3796651976f94b9356fa08d833524f62420d6292c5033a9a26af315078"
-# use gcc 14 with caution
+# use gcc 14 with caution, do not compatible with GPU-ABACUS
 #gcc_ver="14.2.0"
 #gcc_sha256="7d376d445f93126dc545e2c0086d0f647c3094aae081cdb78f42ce2bc25e7293"
 

@@ -298,19 +298,19 @@ template <typename T, typename Device> struct matrixTranspose_op {
                   const T *input_matrix, T *output_matrix);
 };
 
-template <typename T, typename Device> struct matrixSetToAnother {
-  /// @brief initialize matrix B with A
+template <typename T, typename Device> struct matrixCopy {
+  /// @brief copy matrix A to B, they can have different leading dimensions
   ///
   /// Input Parameters
-  /// \param n : first dimension of matrix
+  /// \param n1 : first dimension of matrix
+  /// \param n2 : second dimension of matrix
   /// \param A : input matrix A
   /// \param LDA : leading dimension of A
   /// \param LDB : leading dimension of B
   ///
   /// Output Parameters
   /// \param B : output matrix B
-  void operator()(const int &n, const T *A, const int &LDA,
-                  T *B, const int &LDB);
+  void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -370,12 +370,13 @@ struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU> {
                   const Real constant2);
 };
 
-template <typename T> struct matrixSetToAnother<T, base_device::DEVICE_GPU> {
-  void operator()(const int &n,
-                  const T *A, // input
-                  const int &LDA,
-                  T *B, // output
-                  const int &LDB);
+template <typename T> struct matrixCopy<T, base_device::DEVICE_GPU> {
+    void operator()(const int& n1,
+                    const int& n2,
+                    const T* A, // input
+                    const int& LDA,
+                    T* B, // output
+                    const int& LDB);
 };
 
 void createGpuBlasHandle();
