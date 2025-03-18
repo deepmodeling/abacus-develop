@@ -269,7 +269,35 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 
 Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now, see discussion here [#2906](https://github.com/deepmodeling/abacus-develop/issues/2906) and [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
-If you wants to use ABACUS GPU-LCAO by `cusolvermp` or `elpa`, please contact the coresponding developer, toolchain do not fully support them now.
+If you wants to use ABACUS GPU-LCAO by "cusolvermp" or "elpa", please compile according to the following usage:
+
+Firstly, in cmake, it is necessary to add `-DUSE_CUDA=ON`, which is necessary for compiling NVIDIA GPUs.
+1. For the elpa method, add
+```shell
+--enable-cuda
+--gpu-ver=GPU name
+export CUDA-PATH=/path/to/CUDA
+```
+to the `toolchain_gnu.sh`, and then follow the normal step to install the dependencies using `./toolchain_gnu.sh`.
+Afterwards, add the link files corresponding to
+```shell
+-DUSE_ELPA=ON \
+-DELPA_LINK-NLIBRARIES=/path/to/lib
+```
+in the `build_abacus_gnu.sh` file, just build the abacus executable program by compiling it with `./build_abacus_gnu.sh`.
+
+2. For the cusolvermp method, toolchain_gnu.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_gnu.sh`, and then add
+```shell
+-DUSE_CUSOLVERMP=ON \
+-D CAL_CUSOLVERMP_PATH=/path/to/math.libs/1x.x/target/x86_64-linux/lib
+```
+to the `build.abacus_gnu.sh` file. At the same time, add the following three items to the environment:
+```shell
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/comm_libs/1x.x/hpcx/hpcx-x.xx/ucc/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/comm_libs/1x.x/hpcx/hpcx-x.xx/ucx/lib
+export CPATH=$CPATH:/path/to/math_libs/1x.x/targets/x86_64-linux/include
+```
+Just enough to build the abacus executable program by compiling it with `./build_abacus_gnu.sh`.
 
 ### Shell problem
 
