@@ -7,7 +7,7 @@
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_base/kernels/dsp/dsp_connector.h"
-
+#include <hip/hip_runtime.h>
 #include <vector>
 
 using namespace hsolver;
@@ -261,6 +261,16 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     bool test_precond = true;
     bool test_norm = true;
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
+/***#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice) {
+        size_t free_mem, total_mem;
+        hipMemGetInfo(&free_mem, &total_mem);
+        std::cout << "\n[Memory Debug] Before operations - Free GPU memory: " << free_mem / 1024.0 / 1024.0 
+                  << " MB, Total: " << total_mem / 1024.0 / 1024.0 << " MB" << std::endl;
+        std::cout << "[Memory Debug] Dimensions - dim: " << dim << ", nbase: " << nbase 
+                  << ", notconv: " << notconv << std::endl;
+     }
+#endif***/
     for (size_t i = 0; i < notconv; i++)
     {
         if (unconv[i] != i)
@@ -292,13 +302,27 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     // Eigenvalues operation section
     if (test_eigs) {
+/***#if defined(__CUDA) || defined(__ROCM)
+        if (this->device == base_device::GpuDevice) {
+             size_t free_mem, total_mem;
+             hipMemGetInfo(&free_mem, &total_mem);
+             std::cout << "\n[Memory Debug] Before eigenvalues op - Free GPU memory: " << free_mem / 1024.0 / 1024.0 
+                       << " MB" << std::endl;
+         }
+#endif***/       
         // Original implementation
         std::vector<Real> e_temp_cpu(this->notconv, 0);
         Real* e_temp_hd = e_temp_cpu.data();
         if (this->device == base_device::GpuDevice)
         {
             e_temp_hd = nullptr;
-            resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
+            try {
+                resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
+            } catch (const std::exception& e) {
+                std::cerr << "[Memory Debug] Failed to allocate e_temp_hd of size " 
+                          << (this->notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
+                throw;
+            }
         }
 
         for (int m = 0; m < this->notconv; m++)
@@ -371,10 +395,18 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == base_device::GpuDevice)
         {
+          /***  size_t free_mem, total_mem;
+            hipMemGetInfo(&free_mem, &total_mem);
+            std::cout << "\n[Memory Debug] Before precondition op - Free GPU memory: " << free_mem / 1024.0 / 1024.0  << " MB" << std::endl;***/
             Real* eigenvalues_gpu = nullptr;
-            resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu, (*eigenvalue_iter).data(), notconv);
-            
+            try {
+                resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
+                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu,(*eigenvalue_iter).data(), notconv);
+            } catch (const std::exception& e) {
+                std::cerr << "[Memory Debug] Failed to allocate eigenvalues_gpu of size " 
+                          << (notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
+                throw;
+             } 
             precondition_op<T, Device>()(this->ctx,
                                         this->dim,
                                         psi_iter,
@@ -433,9 +465,20 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == base_device::GpuDevice)
         {
+            /***size_t free_mem, total_mem;
+            hipMemGetInfo(&free_mem, &total_mem);
+            std::cout << "\n[Memory Debug] Before normalize op - Free GPU memory: " << free_mem / 1024.0 / 1024.0  << " MB" << std::endl;***/
             Real* psi_norm = nullptr;
-            resmem_real_op()(this->ctx, psi_norm, notconv);
-            cudaMemset(psi_norm, 0, notconv * sizeof(Real));
+            try {
+                resmem_real_op()(this->ctx, psi_norm, notconv);
+                using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+                setmem_real_op()(this->ctx, psi_norm, 0.0, notconv);
+//hipMemset(psi_norm, 0, notconv * sizeof(Real));
+            } catch (const std::exception& e){
+                std::cerr << "[Memory Debug] Failed to allocate psi_norm of size " 
+                          << (notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
+                throw;
+            }
             normalize_op<T, Device>()(this->ctx,
                                     this->dim,
                                     psi_iter,

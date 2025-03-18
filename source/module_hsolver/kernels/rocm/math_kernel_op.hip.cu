@@ -12,6 +12,15 @@
 #define FULL_MASK 0xffffffff
 #define THREAD_PER_BLOCK 256
 
+template <>
+struct GetTypeReal<thrust::complex<float>> {
+    using type = float; /**< The return type specialization for std::complex<double>. */
+};
+template <>
+struct GetTypeReal<thrust::complex<double>> {
+    using type = double; /**< The return type specialization for std::complex<double>. */
+};
+
 // Forward declarations for abs2
 template<typename T>
 __device__ typename GetTypeReal<T>::type abs2(const T& x);
@@ -54,14 +63,6 @@ __device__ double abs2(const std::complex<double>& x) {
     return tx->real() * tx->real() + tx->imag() * tx->imag();
 }
 
-template <>
-struct GetTypeReal<thrust::complex<float>> {
-    using type = float; /**< The return type specialization for std::complex<double>. */
-};
-template <>
-struct GetTypeReal<thrust::complex<double>> {
-    using type = double; /**< The return type specialization for std::complex<double>. */
-};
 
 namespace hsolver {
 
