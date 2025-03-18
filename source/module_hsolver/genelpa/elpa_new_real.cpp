@@ -1,6 +1,6 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
-//#include "my_math.hpp"
+
 #include "module_base/scalapack_connector.h"
 #include "utils.h"
 
