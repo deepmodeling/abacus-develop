@@ -118,15 +118,15 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         // set DMR element
                         double* target_DMR_ptr = target_mat->get_pointer();
-                        std::complex<double>* tmp_DMK_ptr = this->_DMK[ik + ik_begin].data();
+                        std::complex<double>* DMK_ptr = this->_DMK[ik + ik_begin].data();
                         double* DMK_real_ptr = nullptr;
                         double* DMK_imag_ptr = nullptr;
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
-                        tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
+                        DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                         for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
                         {
-                            DMK_real_ptr = (double*)tmp_DMK_ptr;
+                            DMK_real_ptr = (double*)DMK_ptr;
                             DMK_imag_ptr = DMK_real_ptr + 1;
                             BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                                 kphase.real(),
@@ -141,7 +141,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                                                 ld_hk2,
                                                 target_DMR_ptr,
                                                 1);
-                            tmp_DMK_ptr += 1;
+                            DMK_ptr += 1;
                             target_DMR_ptr += this->_paraV->get_col_size(iat2);
                         }
                     }
@@ -164,21 +164,21 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         // set DMR element
                         std::complex<double>* tmp_DMR_ptr = tmp_DMR.data();
-                        std::complex<double>* tmp_DMK_ptr = this->_DMK[ik + ik_begin].data();
+                        std::complex<double>* DMK_ptr = this->_DMK[ik + ik_begin].data();
                         double* DMK_real_ptr = nullptr;
                         double* DMK_imag_ptr = nullptr;
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
-                        tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
+                        DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                         for (int mu = 0; mu < target_ap.get_row_size(); ++mu)
                         {
                             BlasConnector::axpy(target_ap.get_col_size(),
                                                 kphase,
-                                                tmp_DMK_ptr,
+                                                DMK_ptr,
                                                 ld_hk,
                                                 tmp_DMR_ptr,
                                                 1);
-                            tmp_DMK_ptr += 1;
+                            DMK_ptr += 1;
                             tmp_DMR_ptr += target_ap.get_col_size();
                         }
                     }
@@ -271,21 +271,21 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
                 // set DMR element
                 std::complex<double>* target_DMR_ptr = target_mat->get_pointer();
-                const std::complex<double>* tmp_DMK_ptr = this->_DMK[ik].data();
+                const std::complex<double>* DMK_ptr = this->_DMK[ik].data();
                 double* DMK_real_ptr = nullptr;
                 double* DMK_imag_ptr = nullptr;
                 // jump DMK to fill DMR
                 // DMR is row-major, DMK is column-major
-                tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
+                DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                 for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
                 {
                     BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                         kphase,
-                                        tmp_DMK_ptr,
+                                        DMK_ptr,
                                         ld_hk,
                                         target_DMR_ptr,
                                         1);
-                    tmp_DMK_ptr += 1;
+                    DMK_ptr += 1;
                     target_DMR_ptr += this->_paraV->get_col_size(iat2);
                 }
             }
@@ -353,18 +353,18 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             double kphase = 1;
             // set DMR element
             double* target_DMR_ptr = target_mat->get_pointer();
-            double* tmp_DMK_ptr = this->_DMK[0 + ik_begin].data();
+            double* DMK_ptr = this->_DMK[0 + ik_begin].data();
             // transpose DMK col=>row
-            tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
+            DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
             for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
             {
                 BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                     kphase,
-                                    tmp_DMK_ptr,
+                                    DMK_ptr,
                                     ld_hk,
                                     target_DMR_ptr,
                                     1);
-                tmp_DMK_ptr += 1;
+                DMK_ptr += 1;
                 target_DMR_ptr += this->_paraV->get_col_size(iat2);
             }
         }
