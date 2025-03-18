@@ -7,7 +7,6 @@
 #include "module_base/para_gemm.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/para_linear_transform.h"
 
@@ -350,8 +349,6 @@ class DiagoBPCG
     // note: these operators use template parameter base_device::Device_*
     // defined in module_base/module_device/types.h
     // different from ct_Device!
-    using calc_grad_with_block_op = calc_grad_with_block_op<T, Device>;
-    using line_minimize_with_block_op = line_minimize_with_block_op<T, Device>;
     using gemm_op = ModuleBase::gemm_op<T, Device>;
 
 };
