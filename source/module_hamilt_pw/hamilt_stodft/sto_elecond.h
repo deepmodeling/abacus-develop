@@ -6,7 +6,7 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
 
-class Sto_EleCond : protected EleCond
+class Sto_EleCond : protected EleCond<double, base_device::DEVICE_CPU>
 {
   public:
     Sto_EleCond(UnitCell* p_ucell_in,
@@ -90,7 +90,7 @@ class Sto_EleCond : protected EleCond
                      const int& bsize_psi,
                      std::vector<std::complex<float>>& j1,
                      std::vector<std::complex<float>>& j2,
-                     hamilt::Velocity& velop,
+                     hamilt::Velocity<double, base_device::DEVICE_CPU>& velop,
                      const int& ik,
                      const std::complex<double>& factor,
                      const int bandinfo[6]);

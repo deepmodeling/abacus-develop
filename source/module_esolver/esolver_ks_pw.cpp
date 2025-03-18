@@ -943,7 +943,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 7) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
-        EleCond elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &this->ppcell);
+        EleCond<Real, Device> elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->kspw_psi, &this->ppcell);
         elec_cond.KG(PARAM.inp.cond_smear,
                      PARAM.inp.cond_fwhm,
                      PARAM.inp.cond_wcut,

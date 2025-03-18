@@ -325,16 +325,23 @@ __global__ void vector_div_constant_kernel(
 }
 
 template <typename T>
-__global__ void vector_mul_vector_kernel(
-    const int size,
-    T* result,
-    const T* vector1,
-    const typename GetTypeReal<T>::type* vector2)
+__global__ void vector_mul_vector_kernel(const int size,
+                                         T* result,
+                                         const T* vector1,
+                                         const typename GetTypeReal<T>::type* vector2,
+                                         const bool add)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size)
     {
-        result[i] = vector1[i] * vector2[i];
+        if (add)
+        {
+            result[i] += vector1[i] * vector2[i];
+        }
+        else
+        {
+            result[i] = vector1[i] * vector2[i];
+        }
     }
 }
 
@@ -548,11 +555,12 @@ template <>
 void vector_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                        double* result,
                                                                        const double* vector1,
-                                                                       const double* vector2)
+                                                                       const double* vector2,
+                                                                       const bool& add)
 {
     int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
-    vector_mul_vector_kernel<double> <<<block, thread >>> (dim, result, vector1, vector2);
+    vector_mul_vector_kernel<double> <<<block, thread >>> (dim, result, vector1, vector2, add);
 
     cudaCheckOnDebug();
 }
@@ -561,13 +569,14 @@ template <typename FPTYPE>
 inline void vector_mul_vector_complex_wrapper(const int& dim,
                                               std::complex<FPTYPE>* result,
                                               const std::complex<FPTYPE>* vector1,
-                                              const FPTYPE* vector2)
+                                              const FPTYPE* vector2,
+                                              const bool& add)
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
     int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
-    vector_mul_vector_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector1_tmp, vector2);
+    vector_mul_vector_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector1_tmp, vector2, add);
 
     cudaCheckOnDebug();
 }
@@ -575,18 +584,20 @@ template <>
 void vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                                     std::complex<float>* result,
                                                                                     const std::complex<float>* vector1,
-                                                                                    const float* vector2)
+                                                                                    const float* vector2,
+                                                                                    const bool& add)
 {
-    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2);
+    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2, add);
 }
 template <>
 void vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
     const int& dim,
     std::complex<double>* result,
     const std::complex<double>* vector1,
-    const double* vector2)
+    const double* vector2,
+    const bool& add)
 {
-    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2);
+    vector_mul_vector_complex_wrapper(dim, result, vector1, vector2, add);
 }
 
 // vector operator: result[i] = vector1[i](not complex) / vector2[i](not complex)
@@ -1019,6 +1030,7 @@ template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<float, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>;
@@ -1029,6 +1041,7 @@ template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
@@ -1039,7 +1052,6 @@ template struct matrixCopy<std::complex<double>, base_device::DEVICE_GPU>;
 #ifdef __LCAO
 template struct dot_real_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_GPU>;
-template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 #endif
 }  // namespace ModuleBase

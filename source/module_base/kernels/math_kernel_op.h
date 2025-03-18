@@ -143,11 +143,11 @@ template <typename T, typename Device> struct vector_mul_vector_op {
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param vector2 : input array B
+  /// \param add : flag to control whether to add the result to the output array
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const int &dim, T *result, const T *vector1,
-                  const Real *vector2);
+  void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
@@ -350,8 +350,7 @@ struct vector_div_constant_op<T, base_device::DEVICE_GPU> {
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
 template <typename T> struct vector_mul_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const int &dim, T *result,
-                  const T *vector1, const Real *vector2);
+  void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
