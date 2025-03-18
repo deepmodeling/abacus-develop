@@ -8,14 +8,6 @@
 #include <thrust/complex.h>
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
-
-namespace ModuleBase
-{
-const int warp_size = 32;
-// const unsigned int full_mask = 0xffffffff;
-const int thread_per_block = 256;
-}
-
 namespace ModuleBase {
 template <typename T>
 struct GetTypeThrust {
@@ -33,6 +25,14 @@ struct GetTypeThrust<std::complex<double>> {
 };
 
 static cublasHandle_t cublas_handle = nullptr;
+
+void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
+    cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
+void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
+    cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
+}
 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
@@ -52,6 +52,56 @@ void destoryBLAShandle(){
 //     for (int offset = 16; offset > 0; offset >>= 1)
 //         val += __shfl_down_sync(full_mask, val, offset);
 // }
+template <>
+void scal_op<float, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                         const std::complex<float>* alpha,
+                                                         std::complex<float>* X,
+                                                         const int& incx)
+{
+    cublasErrcheck(cublasCscal(cublas_handle, N, (float2*)alpha, (float2*)X, incx));
+}
+
+template <>
+void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                          const std::complex<double>* alpha,
+                                                          std::complex<double>* X,
+                                                          const int& incx)
+{
+    cublasErrcheck(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
+}
+
+template <>
+void axpy_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                          const double* alpha,
+                                                          const double* X,
+                                                          const int& incX,
+                                                          double* Y,
+                                                          const int& incY)
+{
+    cublasErrcheck(cublasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY));
+}
+
+template <>
+void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                                       const std::complex<float>* alpha,
+                                                                       const std::complex<float>* X,
+                                                                       const int& incX,
+                                                                       std::complex<float>* Y,
+                                                                       const int& incY)
+{
+    cublasErrcheck(cublasCaxpy(cublas_handle, N, (float2*)alpha, (float2*)X, incX, (float2*)Y, incY));
+}
+
+template <>
+void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                                        const std::complex<double>* alpha,
+                                                                        const std::complex<double>* X,
+                                                                        const int& incX,
+                                                                        std::complex<double>* Y,
+                                                                        const int& incY)
+{
+    cublasErrcheck(cublasZaxpy(cublas_handle, N, (double2*)alpha, (double2*)X, incX, (double2*)Y, incY));
+}
 
 
 template <typename T>

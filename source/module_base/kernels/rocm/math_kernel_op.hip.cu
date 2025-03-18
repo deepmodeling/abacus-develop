@@ -7,10 +7,6 @@
 #include <hip/hip_runtime.h>
 #include <hipblas/hipblas.h>
 #include <thrust/complex.h>
-
-#define WARP_SIZE 32
-#define FULL_MASK 0xffffffff
-#define THREAD_PER_BLOCK 256
 template <>
 struct GetTypeReal<thrust::complex<float>> {
     using type = float; /**< The return type specialization for std::complex<double>. */
@@ -39,6 +35,14 @@ struct GetTypeThrust<std::complex<double>> {
 
 static hipblasHandle_t cublas_handle = nullptr;
 
+void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
+    hipblasErrcheck(hipblasSdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
+void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
+    hipblasErrcheck(hipblasDdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         hipblasErrcheck(hipblasCreate(&cublas_handle));
@@ -50,6 +54,64 @@ void destoryBLAShandle(){
         hipblasErrcheck(hipblasDestroy(cublas_handle));
         cublas_handle = nullptr;
     }
+}
+
+template <>
+void scal_op<float, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                         const std::complex<float>* alpha,
+                                                         std::complex<float>* X,
+                                                         const int& incx)
+{
+    hipblasErrcheck(hipblasCscal(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incx));
+}
+
+template <>
+void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                          const std::complex<double>* alpha,
+                                                          std::complex<double>* X,
+                                                          const int& incx)
+{
+    hipblasErrcheck(hipblasZscal(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incx));
+}
+
+template <>
+void axpy_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                          const double* alpha,
+                                                          const double* X,
+                                                          const int& incX,
+                                                          double* Y,
+                                                          const int& incY)
+{
+    hipblasErrcheck(hipblasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY));
+}
+
+template <>
+void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                                       const std::complex<float>* alpha,
+                                                                       const std::complex<float>* X,
+                                                                       const int& incX,
+                                                                       std::complex<float>* Y,
+                                                                       const int& incY)
+{
+    hipblasErrcheck(
+        hipblasCaxpy(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incX, (hipblasComplex*)Y, incY));
+}
+
+template <>
+void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& N,
+                                                                        const std::complex<double>* alpha,
+                                                                        const std::complex<double>* X,
+                                                                        const int& incX,
+                                                                        std::complex<double>* Y,
+                                                                        const int& incY)
+{
+    hipblasErrcheck(hipblasZaxpy(cublas_handle,
+                                 N,
+                                 (hipblasDoubleComplex*)alpha,
+                                 (hipblasDoubleComplex*)X,
+                                 incX,
+                                 (hipblasDoubleComplex*)Y,
+                                 incY));
 }
 
 template <typename T>
