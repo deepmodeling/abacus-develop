@@ -1,7 +1,10 @@
-#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_base/kernels/math_kernel_op.h"
-#include <thrust/complex.h>
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
 
+#include <base/macros/macros.h>
+#include <thrust/complex.h>
+#define WARP_SIZE 32
+#define THREAD_PER_BLOCK 256
 namespace hsolver
 {
 template <typename Real>

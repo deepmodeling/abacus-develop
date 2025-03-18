@@ -39,16 +39,6 @@ struct GetTypeThrust<std::complex<double>> {
 
 static hipblasHandle_t cublas_handle = nullptr;
 
-static inline
-void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
-    hipblasErrcheck(hipblasSdot(cublas_handle, n, x, incx, y, incy, &result));
-}
-
-static inline
-void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
-    hipblasErrcheck(hipblasDdot(cublas_handle, n, x, incx, y, incy, &result));
-}
-
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         hipblasErrcheck(hipblasCreate(&cublas_handle));

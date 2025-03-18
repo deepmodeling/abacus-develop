@@ -7,6 +7,7 @@
 #include "module_base/para_gemm.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/para_linear_transform.h"
 

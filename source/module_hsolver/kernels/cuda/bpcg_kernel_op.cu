@@ -1,8 +1,13 @@
-#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_base/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
+
+#include <base/macros/macros.h>
 #include <thrust/complex.h>
 namespace hsolver
 {
+const int warp_size = 32;
+const int thread_per_block = 256;
+
 template <typename Real>
 __global__ void line_minimize_with_block(
         thrust::complex<Real>* grad,

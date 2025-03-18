@@ -1,16 +1,37 @@
 #include "module_base/kernels/math_kernel_op.h"
 
+#include <base/macros/macros.h>
 #include <thrust/complex.h>
 
+template <>
+struct GetTypeReal<thrust::complex<float>> {
+    using type = float; /**< The return type specialization for std::complex<double>. */
+};
+template <>
+struct GetTypeReal<thrust::complex<double>> {
+    using type = double; /**< The return type specialization for std::complex<double>. */
+};
 namespace ModuleBase
 {
+const int thread_per_block = 256;
+static cublasHandle_t cublas_handle = nullptr;
+
+static inline
+void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
+    cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
+static inline
+void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
+    cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
+}
 
 // Define the CUDA kernel:
-template <typename FPTYPE>
+template <typename T>
 __global__ void vector_mul_real_kernel(const int size,
-                                       thrust::complex<FPTYPE>* result,
-                                       const thrust::complex<FPTYPE>* vector,
-                                       const FPTYPE constant)
+                                       T* result,
+                                       const T* vector,
+                                       const typename GetTypeReal<T>::type constant)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size)
@@ -87,6 +108,20 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
 }
 
 // vector operator: result[i] = vector[i] * constant
+template <>
+void vector_mul_real_op<double, base_device::DEVICE_GPU>::operator()(const int dim,
+                                                                     double* result,
+                                                                     const double* vector,
+                                                                     const double constant)
+{
+    // In small cases, 1024 threads per block will only utilize 17 blocks, much less than 40
+    int thread = thread_per_block;
+    int block = (dim + thread - 1) / thread;
+    vector_mul_real_kernel<double><<<block, thread>>>(dim, result, vector, constant);
+
+    cudaCheckOnDebug();
+}
+
 template <typename FPTYPE>
 inline void vector_mul_real_wrapper(const int dim,
                                     std::complex<FPTYPE>* result,
@@ -98,7 +133,7 @@ inline void vector_mul_real_wrapper(const int dim,
 
     int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
-    vector_mul_real_kernel<FPTYPE><<<block, thread>>>(dim, result_tmp, vector_tmp, constant);
+    vector_mul_real_kernel<thrust::complex<FPTYPE>><<<block, thread>>>(dim, result_tmp, vector_tmp, constant);
 
     cudaCheckOnDebug();
 }
@@ -326,4 +361,25 @@ double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(co
     return dot_complex_wrapper(dim, psi_L, psi_R, reduce);
 }
 
+// Explicitly instantiate functors for the types of functor registered.
+template struct vector_mul_real_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_mul_real_op<double, base_device::DEVICE_GPU>;
+template struct vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct vector_mul_vector_op<float, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct dot_real_op<double, base_device::DEVICE_GPU>;
+template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 } // namespace ModuleBase

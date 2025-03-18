@@ -1,3 +1,4 @@
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_base/blas_connector.h"
 #include "module_base/kernels/math_kernel_op.h"
 #include "module_base/parallel_reduce.h"

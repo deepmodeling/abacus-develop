@@ -15,13 +15,11 @@ struct scal_op<FPTYPE, base_device::DEVICE_CPU>
     }
 };
 
-template <typename FPTYPE>
-struct vector_mul_real_op<FPTYPE, base_device::DEVICE_CPU>
+template <typename T>
+struct vector_mul_real_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const int dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector,
-                    const FPTYPE constant)
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -153,8 +151,9 @@ struct dot_real_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 template struct scal_op<float, base_device::DEVICE_CPU>;
 template struct scal_op<double, base_device::DEVICE_CPU>;
 
-template struct vector_mul_real_op<float, base_device::DEVICE_CPU>;
+template struct vector_mul_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_mul_real_op<double, base_device::DEVICE_CPU>;
+template struct vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;

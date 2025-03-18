@@ -66,9 +66,10 @@ template <typename FPTYPE, typename Device> struct scal_op {
                   const int &incx);
 };
 
-// vector operator: result[i] = vector[i] * constant
-template <typename FPTYPE, typename Device> struct vector_mul_real_op {
-  /// @brief result[i] = vector[i] * constant, where vector is complex number and constant is real number
+template <typename T, typename Device> struct vector_mul_real_op {
+  using Real = typename GetTypeReal<T>::type;
+  /// @brief result[i] = vector[i] * constant, where vector is complex number and constant is real number。
+  ///        It is different from the scal_op, which is used to multiply a complex number by a complex number.
   ///
   /// Input Parameters
   /// \param dim : array size
@@ -78,8 +79,7 @@ template <typename FPTYPE, typename Device> struct vector_mul_real_op {
   /// Output Parameters
   /// \param result : output array
   /// \note Use mulitple instead of divide. It is faster.
-  void operator()(const int dim, std::complex<FPTYPE> *result, const std::complex<FPTYPE> *vector,
-                  const FPTYPE constant);
+  void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
@@ -293,13 +293,11 @@ template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
 };
 
 // vector operator: result[i] = vector[i] / constant
-template <typename FPTYPE>
-struct vector_mul_real_op<FPTYPE, base_device::DEVICE_GPU>
+template <typename T>
+struct vector_mul_real_op<T, base_device::DEVICE_GPU>
 {
-    void operator()(const int dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector,
-                    const FPTYPE constant);
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)

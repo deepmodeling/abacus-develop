@@ -375,9 +375,9 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         assert(psi_norm > 0.0);
         psi_norm = sqrt(psi_norm);
         ModuleBase::vector_mul_real_op<T, Device>()(this->dim,
-                                                    psi_iter + (nbase + i) * this->dim,
-                                                    psi_iter + (nbase + i) * this->dim,
-                                                    1.0 / psi_norm);
+                                                       psi_iter + (nbase + i) * this->dim,
+                                                       psi_iter + (nbase + i) * this->dim,
+                                                       Real(1.0 / psi_norm));
     }
 
     // update hpsi[:, nbase:nbase+notconv]

@@ -1,15 +1,35 @@
 #include "module_base/kernels/math_kernel_op.h"
 
+#include <base/macros/macros.h>
 #include <thrust/complex.h>
-
+template <>
+struct GetTypeReal<thrust::complex<float>> {
+    using type = float; /**< The return type specialization for std::complex<double>. */
+};
+template <>
+struct GetTypeReal<thrust::complex<double>> {
+    using type = double; /**< The return type specialization for std::complex<double>. */
+};
 namespace ModuleBase
 {
+
+static hipblasHandle_t cublas_handle = nullptr;
+static inline
+void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
+    hipblasErrcheck(hipblasSdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
+static inline
+void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
+    hipblasErrcheck(hipblasDdot(cublas_handle, n, x, incx, y, incy, &result));
+}
+
 // Define the CUDA kernel:
-template <typename FPTYPE>
+template <typename T>
 __launch_bounds__(1024) __global__ void vector_mul_real_kernel(const int size,
-                                                               thrust::complex<FPTYPE>* result,
-                                                               const thrust::complex<FPTYPE>* vector,
-                                                               FPTYPE constant)
+                                                               T* result,
+                                                               const T* vector,
+                                                               const typename GetTypeReal<T>::type constant)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < size)
@@ -86,6 +106,26 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
 }
 
 // vector operator: result[i] = vector[i] * constant
+template <>
+void vector_mul_real_op<double, base_device::DEVICE_GPU>::operator()(const int dim,
+                                                                     double* result,
+                                                                     const double* vector,
+                                                                     const double constant)
+{
+    int thread = 1024;
+    int block = (dim + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<double>),
+                       dim3(block),
+                       dim3(thread),
+                       0,
+                       0,
+                       dim,
+                       result,
+                       vector,
+                       constant);
+
+    hipCheckOnDebug();
+}
 template <typename FPTYPE>
 inline void vector_mul_real_wrapper(const int dim,
                                     std::complex<FPTYPE>* result,
@@ -96,7 +136,7 @@ inline void vector_mul_real_wrapper(const int dim,
     const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_real_kernel<FPTYPE>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_real_kernel<thrust::complex<FPTYPE>>),
                        dim3(block),
                        dim3(thread),
                        0,
@@ -378,4 +418,26 @@ double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(co
 {
     return dot_complex_wrapper(dim, psi_L, psi_R, reduce);
 }
+
+// Explicitly instantiate functors for the types of functor registered.
+template struct vector_mul_real_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_mul_real_op<double, base_device::DEVICE_GPU>;
+template struct vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct vector_mul_vector_op<float, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct dot_real_op<double, base_device::DEVICE_GPU>;
+template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 } // namespace ModuleBase

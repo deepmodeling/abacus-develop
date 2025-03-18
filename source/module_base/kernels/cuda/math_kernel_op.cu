@@ -16,14 +16,6 @@ const int warp_size = 32;
 const int thread_per_block = 256;
 }
 
-template <>
-struct GetTypeReal<thrust::complex<float>> {
-    using type = float; /**< The return type specialization for std::complex<double>. */
-};
-template <>
-struct GetTypeReal<thrust::complex<double>> {
-    using type = double; /**< The return type specialization for std::complex<double>. */
-};
 namespace ModuleBase {
 template <typename T>
 struct GetTypeThrust {
@@ -41,16 +33,6 @@ struct GetTypeThrust<std::complex<double>> {
 };
 
 static cublasHandle_t cublas_handle = nullptr;
-
-static inline
-void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
-    cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
-}
-
-static inline
-void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
-    cublasErrcheck(cublasDdot(cublas_handle, n, x, incx, y, incy, &result));
-}
 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
