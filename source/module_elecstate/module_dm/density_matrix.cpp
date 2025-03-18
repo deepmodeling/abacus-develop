@@ -68,15 +68,15 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
     for (int is = 1; is <= this->_nspin; ++is)
     {
         int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
-        hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
+        hamilt::HContainer<double>* target_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
-        tmp_DMR->set_zero();
+        target_DMR->set_zero();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int i = 0; i < tmp_DMR->size_atom_pairs(); ++i)
+        for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
-            hamilt::AtomPair<double>& tmp_ap = tmp_DMR->get_atom_pair(i);
+            hamilt::AtomPair<double>& tmp_ap = target_DMR->get_atom_pair(i);
             int iat1 = tmp_ap.get_atom_i();
             int iat2 = tmp_ap.get_atom_j();
             // get global indexes of whole matrix for each atom in this process
@@ -233,15 +233,15 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
     int ld_hk = this->_paraV->nrow;
     int ld_hk2 = 2 * ld_hk;
-    hamilt::HContainer<std::complex<double>>* tmp_DMR = dmR_out;
+    hamilt::HContainer<std::complex<double>>* target_DMR = dmR_out;
     // set zero since this function is called in every scf step
-    tmp_DMR->set_zero();
+    target_DMR->set_zero();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < tmp_DMR->size_atom_pairs(); ++i)
+    for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
     {
-        auto& tmp_ap = tmp_DMR->get_atom_pair(i);
+        auto& tmp_ap = target_DMR->get_atom_pair(i);
         int iat1 = tmp_ap.get_atom_i();
         int iat2 = tmp_ap.get_atom_j();
         // get global indexes of whole matrix for each atom in this process
@@ -312,20 +312,20 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
     for (int is = 1; is <= this->_nspin; ++is)
     {
         int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
-        hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
+        hamilt::HContainer<double>* target_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
-        tmp_DMR->set_zero();
+        target_DMR->set_zero();
 
 #ifdef __DEBUG
-        // assert(tmp_DMR->is_gamma_only() == true);
+        // assert(target_DMR->is_gamma_only() == true);
         assert(this->_nk == 1);
 #endif
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int i = 0; i < tmp_DMR->size_atom_pairs(); ++i)
+        for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
-            hamilt::AtomPair<double>& tmp_ap = tmp_DMR->get_atom_pair(i);
+            hamilt::AtomPair<double>& tmp_ap = target_DMR->get_atom_pair(i);
             int iat1 = tmp_ap.get_atom_i();
             int iat2 = tmp_ap.get_atom_j();
             // get global indexes of whole matrix for each atom in this process
