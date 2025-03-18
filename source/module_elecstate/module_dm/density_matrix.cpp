@@ -117,32 +117,32 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         // set DMR element
-                        double* tmp_DMR_pointer = target_mat->get_pointer();
-                        std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
-                        double* DMK_real_pointer = nullptr;
-                        double* DMK_imag_pointer = nullptr;
+                        double* target_DMR_ptr = target_mat->get_pointer();
+                        std::complex<double>* tmp_DMK_ptr = this->_DMK[ik + ik_begin].data();
+                        double* DMK_real_ptr = nullptr;
+                        double* DMK_imag_ptr = nullptr;
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
-                        tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+                        tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                         for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
                         {
-                            DMK_real_pointer = (double*)tmp_DMK_pointer;
-                            DMK_imag_pointer = DMK_real_pointer + 1;
+                            DMK_real_ptr = (double*)tmp_DMK_ptr;
+                            DMK_imag_ptr = DMK_real_ptr + 1;
                             BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                                 kphase.real(),
-                                                DMK_real_pointer,
+                                                DMK_real_ptr,
                                                 ld_hk2,
-                                                tmp_DMR_pointer,
+                                                target_DMR_ptr,
                                                 1);
                             // "-" since i^2 = -1
                             BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                                 -kphase.imag(),
-                                                DMK_imag_pointer,
+                                                DMK_imag_ptr,
                                                 ld_hk2,
-                                                tmp_DMR_pointer,
+                                                target_DMR_ptr,
                                                 1);
-                            tmp_DMK_pointer += 1;
-                            tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                            tmp_DMK_ptr += 1;
+                            target_DMR_ptr += this->_paraV->get_col_size(iat2);
                         }
                     }
                 }
@@ -163,23 +163,23 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         // set DMR element
-                        std::complex<double>* tmp_DMR_pointer = tmp_DMR.data();
-                        std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
-                        double* DMK_real_pointer = nullptr;
-                        double* DMK_imag_pointer = nullptr;
+                        std::complex<double>* tmp_DMR_ptr = tmp_DMR.data();
+                        std::complex<double>* tmp_DMK_ptr = this->_DMK[ik + ik_begin].data();
+                        double* DMK_real_ptr = nullptr;
+                        double* DMK_imag_ptr = nullptr;
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
-                        tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+                        tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                         for (int mu = 0; mu < target_ap.get_row_size(); ++mu)
                         {
                             BlasConnector::axpy(target_ap.get_col_size(),
                                                 kphase,
-                                                tmp_DMK_pointer,
+                                                tmp_DMK_ptr,
                                                 ld_hk,
-                                                tmp_DMR_pointer,
+                                                tmp_DMR_ptr,
                                                 1);
-                            tmp_DMK_pointer += 1;
-                            tmp_DMR_pointer += target_ap.get_col_size();
+                            tmp_DMK_ptr += 1;
+                            tmp_DMR_ptr += target_ap.get_col_size();
                         }
                     }
                     int npol = 2;
@@ -194,16 +194,16 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                     }
                     std::complex<double> tmp[4];
                     double* target_DMR = target_mat->get_pointer();
-                    std::complex<double>* tmp_DMR_pointer = tmp_DMR.data();
+                    std::complex<double>* tmp_DMR_ptr = tmp_DMR.data();
                     for (int irow = 0; irow < target_ap.get_row_size(); irow += 2)
                     {
                         for (int icol = 0; icol < target_ap.get_col_size(); icol += 2)
                         {
                             // catch the 4 spin component value of one orbital pair
-                            tmp[0] = tmp_DMR_pointer[icol + step_trace[0]];
-                            tmp[1] = tmp_DMR_pointer[icol + step_trace[1]];
-                            tmp[2] = tmp_DMR_pointer[icol + step_trace[2]];
-                            tmp[3] = tmp_DMR_pointer[icol + step_trace[3]];
+                            tmp[0] = tmp_DMR_ptr[icol + step_trace[0]];
+                            tmp[1] = tmp_DMR_ptr[icol + step_trace[1]];
+                            tmp[2] = tmp_DMR_ptr[icol + step_trace[2]];
+                            tmp[3] = tmp_DMR_ptr[icol + step_trace[3]];
                             // transfer to Pauli matrix and save the real part
                             // save them back to the target_mat
                             target_DMR[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
@@ -212,7 +212,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                                 = -tmp[1].imag() + tmp[2].imag(); // (i * (rho_updown - rho_downup)).real()
                             target_DMR[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
                         }
-                        tmp_DMR_pointer += target_ap.get_col_size() * 2;
+                        tmp_DMR_ptr += target_ap.get_col_size() * 2;
                         target_DMR += target_ap.get_col_size() * 2;
                     }
                 }
@@ -270,23 +270,23 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
                 // set DMR element
-                std::complex<double>* tmp_DMR_pointer = target_mat->get_pointer();
-                const std::complex<double>* tmp_DMK_pointer = this->_DMK[ik].data();
-                double* DMK_real_pointer = nullptr;
-                double* DMK_imag_pointer = nullptr;
+                std::complex<double>* target_DMR_ptr = target_mat->get_pointer();
+                const std::complex<double>* tmp_DMK_ptr = this->_DMK[ik].data();
+                double* DMK_real_ptr = nullptr;
+                double* DMK_imag_ptr = nullptr;
                 // jump DMK to fill DMR
                 // DMR is row-major, DMK is column-major
-                tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+                tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
                 for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
                 {
                     BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                         kphase,
-                                        tmp_DMK_pointer,
+                                        tmp_DMK_ptr,
                                         ld_hk,
-                                        tmp_DMR_pointer,
+                                        target_DMR_ptr,
                                         1);
-                    tmp_DMK_pointer += 1;
-                    tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                    tmp_DMK_ptr += 1;
+                    target_DMR_ptr += this->_paraV->get_col_size(iat2);
                 }
             }
         }
@@ -352,20 +352,20 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             // k index
             double kphase = 1;
             // set DMR element
-            double* tmp_DMR_pointer = target_mat->get_pointer();
-            double* tmp_DMK_pointer = this->_DMK[0 + ik_begin].data();
+            double* target_DMR_ptr = target_mat->get_pointer();
+            double* tmp_DMK_ptr = this->_DMK[0 + ik_begin].data();
             // transpose DMK col=>row
-            tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+            tmp_DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
             for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
             {
                 BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                     kphase,
-                                    tmp_DMK_pointer,
+                                    tmp_DMK_ptr,
                                     ld_hk,
-                                    tmp_DMR_pointer,
+                                    target_DMR_ptr,
                                     1);
-                tmp_DMK_pointer += 1;
-                tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                tmp_DMK_ptr += 1;
+                target_DMR_ptr += this->_paraV->get_col_size(iat2);
             }
         }
     }
