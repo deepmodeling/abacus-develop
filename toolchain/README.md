@@ -299,6 +299,10 @@ export CPATH=$CPATH:/path/to/math_libs/1x.x/targets/x86_64-linux/include
 ```
 Just enough to build the abacus executable program by compiling it with `./build_abacus_gnu.sh`.
 
+You can refer to the link video for auxiliary compilation and installation.
+The first one is more complicated, but it doesn't seem to be affected by the CUDA toolkits version and needs to be manually downloaded. Among them, CUSOLPERMP requires installation from sources such as apt or yum, which is suitable for containers or local computers.
+The second one is relatively simple, using NVIDIA HPC_SDK for installation, but requires CUDA toolkits 12.4 and above, suitable for any environment, recommended for use.
+
 ### Shell problem
 
 If you encounter problem like:
