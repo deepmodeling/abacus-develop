@@ -76,9 +76,9 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
 #endif
         for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
-            hamilt::AtomPair<double>& tmp_ap = target_DMR->get_atom_pair(i);
-            int iat1 = tmp_ap.get_atom_i();
-            int iat2 = tmp_ap.get_atom_j();
+            hamilt::AtomPair<double>& target_ap = target_DMR->get_atom_pair(i);
+            int iat1 = target_ap.get_atom_i();
+            int iat2 = target_ap.get_atom_j();
             // get global indexes of whole matrix for each atom in this process
             int row_ap = this->_paraV->atom_begin_row[iat1];
             int col_ap = this->_paraV->atom_begin_col[iat2];
@@ -89,16 +89,16 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             std::vector<std::complex<double>> tmp_DMR;
             if (PARAM.inp.nspin == 4)
             {
-                tmp_DMR.resize(tmp_ap.get_size());
+                tmp_DMR.resize(target_ap.get_size());
             }
-            for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
+            for (int ir = 0; ir < target_ap.get_R_size(); ++ir)
             {
-                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
+                const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
+                hamilt::BaseMatrix<double>* target_mat = target_ap.find_matrix(r_index);
 #ifdef __DEBUG
-                if (tmp_matrix == nullptr)
+                if (target_mat == nullptr)
                 {
-                    std::cout << "tmp_matrix is nullptr" << std::endl;
+                    std::cout << "target_mat is nullptr" << std::endl;
                     continue;
                 }
 #endif
@@ -117,7 +117,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         // set DMR element
-                        double* tmp_DMR_pointer = tmp_matrix->get_pointer();
+                        double* tmp_DMR_pointer = target_mat->get_pointer();
                         std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
                         double* DMK_real_pointer = nullptr;
                         double* DMK_imag_pointer = nullptr;
@@ -150,7 +150,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                 // treat DMR as pauli matrix when NSPIN=4
                 if (PARAM.inp.nspin == 4)
                 {
-                    tmp_DMR.assign(tmp_ap.get_size(), std::complex<double>(0.0, 0.0));
+                    tmp_DMR.assign(target_ap.get_size(), std::complex<double>(0.0, 0.0));
                     for (int ik = 0; ik < this->_nk; ++ik)
                     {
                         if(ik_in >= 0 && ik_in != ik) { continue;
@@ -170,16 +170,16 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
                         tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
-                        for (int mu = 0; mu < tmp_ap.get_row_size(); ++mu)
+                        for (int mu = 0; mu < target_ap.get_row_size(); ++mu)
                         {
-                            BlasConnector::axpy(tmp_ap.get_col_size(),
+                            BlasConnector::axpy(target_ap.get_col_size(),
                                                 kphase,
                                                 tmp_DMK_pointer,
                                                 ld_hk,
                                                 tmp_DMR_pointer,
                                                 1);
                             tmp_DMK_pointer += 1;
-                            tmp_DMR_pointer += tmp_ap.get_col_size();
+                            tmp_DMR_pointer += target_ap.get_col_size();
                         }
                     }
                     int npol = 2;
@@ -189,15 +189,15 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                     {
                         for (int is2 = 0; is2 < npol; is2++)
                         {
-                            step_trace[is * npol + is2] = tmp_ap.get_col_size() * is + is2;
+                            step_trace[is * npol + is2] = target_ap.get_col_size() * is + is2;
                         }
                     }
                     std::complex<double> tmp[4];
-                    double* target_DMR = tmp_matrix->get_pointer();
+                    double* target_DMR = target_mat->get_pointer();
                     std::complex<double>* tmp_DMR_pointer = tmp_DMR.data();
-                    for (int irow = 0; irow < tmp_ap.get_row_size(); irow += 2)
+                    for (int irow = 0; irow < target_ap.get_row_size(); irow += 2)
                     {
-                        for (int icol = 0; icol < tmp_ap.get_col_size(); icol += 2)
+                        for (int icol = 0; icol < target_ap.get_col_size(); icol += 2)
                         {
                             // catch the 4 spin component value of one orbital pair
                             tmp[0] = tmp_DMR_pointer[icol + step_trace[0]];
@@ -205,15 +205,15 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                             tmp[2] = tmp_DMR_pointer[icol + step_trace[2]];
                             tmp[3] = tmp_DMR_pointer[icol + step_trace[3]];
                             // transfer to Pauli matrix and save the real part
-                            // save them back to the tmp_matrix
+                            // save them back to the target_mat
                             target_DMR[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
                             target_DMR[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();
                             target_DMR[icol + step_trace[2]]
                                 = -tmp[1].imag() + tmp[2].imag(); // (i * (rho_updown - rho_downup)).real()
                             target_DMR[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
                         }
-                        tmp_DMR_pointer += tmp_ap.get_col_size() * 2;
-                        target_DMR += tmp_ap.get_col_size() * 2;
+                        tmp_DMR_pointer += target_ap.get_col_size() * 2;
+                        target_DMR += target_ap.get_col_size() * 2;
                     }
                 }
             }
@@ -241,20 +241,20 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
 #endif
     for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
     {
-        auto& tmp_ap = target_DMR->get_atom_pair(i);
-        int iat1 = tmp_ap.get_atom_i();
-        int iat2 = tmp_ap.get_atom_j();
+        auto& target_ap = target_DMR->get_atom_pair(i);
+        int iat1 = target_ap.get_atom_i();
+        int iat2 = target_ap.get_atom_j();
         // get global indexes of whole matrix for each atom in this process
         int row_ap = this->_paraV->atom_begin_row[iat1];
         int col_ap = this->_paraV->atom_begin_col[iat2];
-        for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
+        for (int ir = 0; ir < target_ap.get_R_size(); ++ir)
         {
-            const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
-            auto* tmp_matrix = tmp_ap.find_matrix(r_index);
+            const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
+            auto* target_mat = target_ap.find_matrix(r_index);
 #ifdef __DEBUG
-            if (tmp_matrix == nullptr)
+            if (target_mat == nullptr)
             {
-                std::cout << "tmp_matrix is nullptr" << std::endl;
+                std::cout << "target_mat is nullptr" << std::endl;
                 continue;
             }
 #endif
@@ -270,7 +270,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
                 // set DMR element
-                std::complex<double>* tmp_DMR_pointer = tmp_matrix->get_pointer();
+                std::complex<double>* tmp_DMR_pointer = target_mat->get_pointer();
                 const std::complex<double>* tmp_DMK_pointer = this->_DMK[ik].data();
                 double* DMK_real_pointer = nullptr;
                 double* DMK_imag_pointer = nullptr;
@@ -325,9 +325,9 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
 #endif
         for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
-            hamilt::AtomPair<double>& tmp_ap = target_DMR->get_atom_pair(i);
-            int iat1 = tmp_ap.get_atom_i();
-            int iat2 = tmp_ap.get_atom_j();
+            hamilt::AtomPair<double>& target_ap = target_DMR->get_atom_pair(i);
+            int iat1 = target_ap.get_atom_i();
+            int iat2 = target_ap.get_atom_j();
             // get global indexes of whole matrix for each atom in this process
             int row_ap = this->_paraV->atom_begin_row[iat1];
             int col_ap = this->_paraV->atom_begin_col[iat2];
@@ -336,23 +336,23 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
                 throw std::string("Atom-pair not belong this process");
             }
             // R index
-            const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(0);
+            const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(0);
 #ifdef __DEBUG
-            assert(tmp_ap.get_R_size() == 1);
+            assert(target_ap.get_R_size() == 1);
             assert(r_index.x == 0 && r_index.y == 0 && r_index.z == 0);
 #endif
-            hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
+            hamilt::BaseMatrix<double>* target_mat = target_ap.find_matrix(r_index);
 #ifdef __DEBUG
-            if (tmp_matrix == nullptr)
+            if (target_mat == nullptr)
             {
-                std::cout << "tmp_matrix is nullptr" << std::endl;
+                std::cout << "target_mat is nullptr" << std::endl;
                 continue;
             }
 #endif
             // k index
             double kphase = 1;
             // set DMR element
-            double* tmp_DMR_pointer = tmp_matrix->get_pointer();
+            double* tmp_DMR_pointer = target_mat->get_pointer();
             double* tmp_DMK_pointer = this->_DMK[0 + ik_begin].data();
             // transpose DMK col=>row
             tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
