@@ -44,13 +44,14 @@ list(APPEND device_srcs
   module_base/module_device/device.cpp
   module_base/module_device/memory_op.cpp
   module_base/kernels/math_kernel_op.cpp
+  module_base/kernels/math_kernel_op_vec.cpp
 
   module_hamilt_pw/hamilt_pwdft/kernels/force_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/stress_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/wf_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.cpp
-  module_base/kernels/math_op.cpp
+  module_base/kernels/math_ylm_op.cpp
   module_hamilt_general/module_xc/kernels/xc_functional_op.cpp
 )
 
@@ -73,8 +74,9 @@ if(USE_CUDA)
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/stress_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/wf_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/vnl_op.cu
-    module_base/kernels/cuda/math_op.cu
+    module_base/kernels/cuda/math_ylm_op.cu
     module_base/kernels/cuda/math_kernel_op.cu
+    module_base/kernels/cuda/math_kernel_op_vec.cu
     module_hamilt_general/module_xc/kernels/cuda/xc_functional_op.cu
   )
 endif()
@@ -99,7 +101,8 @@ if(USE_ROCM)
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/wf_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/vnl_op.hip.cu
     module_base/kernels/rocm/math_kernel_op.hip.cu
-    module_base/kernels/rocm/math_op.hip.cu
+    module_base/kernels/rocm/math_kernel_op.hip_vec.cu
+    module_base/kernels/rocm/math_ylm_op.hip.cu
     module_hamilt_general/module_xc/kernels/rocm/xc_functional_op.hip.cu
   )
 endif()

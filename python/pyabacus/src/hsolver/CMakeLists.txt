@@ -12,7 +12,8 @@ list(APPEND _diago
     ${HSOLVER_PATH}/kernels/dngvd_op.cpp
     # dependency
     ${BASE_PATH}/kernels/math_kernel_op.cpp
-    ${BASE_PATH}/kernels/math_op.cpp
+    ${BASE_PATH}/kernels/math_kernel_op_vec.cpp
+    ${BASE_PATH}/kernels/math_ylm_op.cpp
     ${BASE_PATH}/module_device/device.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
     
