@@ -26,7 +26,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
-- [x] Support for GPU-PW and GPU-LCAO compilation (elpa, cusolvermp is developed), and `-DUSE_CUDA=1` is needed builder scripts.
+- [x] Support for GPU-PW and GPU-LCAO compilation (elpa, cusolvermp is developing), and `-DUSE_CUDA=1` is needed builder scripts.
 - [x] Support for AMD compiler and math lib  `AOCL` and `AOCC` (not fully complete due to flang and AOCC-ABACUS compliation error)
 - [ ] Support for more GPU device out of Nvidia.
 - [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
