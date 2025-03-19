@@ -20,7 +20,7 @@
 --with-intel=no \
 --with-openblas=install \
 --with-openmpi=install \
---with-cmake=system \
+--with-cmake=install \
 --with-scalapack=install \
 --with-libxc=install \
 --with-fftw=install \
