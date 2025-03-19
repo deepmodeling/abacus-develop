@@ -12,13 +12,15 @@
 # libtorch and libnpy are for deepks support, which can be =no
 # if you want to run EXX calculation, you should set --with-libri=install
 # mpich (and intel toolchain) is recommended for EXX support
-#export CUDA_PATH=/usr/local/cuda
+# gpu-lcao supporting modify: CUDA_PATH and --enable-cuda
+# export CUDA_PATH=/usr/local/cuda
+
 ./install_abacus_toolchain.sh \
 --with-gcc=system \
 --with-intel=no \
 --with-openblas=install \
 --with-openmpi=install \
---with-cmake=install \
+--with-cmake=system \
 --with-scalapack=install \
 --with-libxc=install \
 --with-fftw=install \
@@ -30,7 +32,8 @@
 --with-libri=no \
 --with-libcomm=no \
 --with-4th-openmpi=no \
-#--enable-cuda \
-#--gpu-ver=L40S \
+--enable-cuda \
+--gpu-ver=75 \
 | tee compile.log
-# if you want to use openmpi-version4: set --with-4th-openmpi=yes
+# to use openmpi-version4: set --with-4th-openmpi=yes
+# to enable gpu-lcao, add the following lines:
