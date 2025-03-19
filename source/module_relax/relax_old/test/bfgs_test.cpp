@@ -4,6 +4,7 @@
 #include "module_cell/unitcell.h"
 #include "module_base/matrix.h"
 #include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/matrix_methods.h"
 
 class BFGSTest : public ::testing::Test {
 protected:

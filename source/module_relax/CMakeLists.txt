@@ -19,6 +19,7 @@ add_library(
     relax_old/lattice_change_basic.cpp
     relax_old/lattice_change_cg.cpp
     relax_old/lattice_change_methods.cpp
+    relax_old/matrix_methods.cpp
 )
 
 if(ENABLE_COVERAGE)

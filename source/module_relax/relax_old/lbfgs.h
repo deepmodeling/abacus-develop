@@ -1,89 +1,125 @@
 #ifndef LBFGS_H
 #define LBFGS_H
 
-/**
- * @file bfgs.h
- * @author your name (you@domain.com)
- * @brief 
- * @version 0.1
- * @date 2024-11-28
- * 
- * @copyright Copyright (c) 2024
- * 
- */
-
 #include <vector>
 #include <tuple> 
-#include<algorithm>
-#include<cmath>
-#include"module_base/lapack_connector.h"
-
+#include <algorithm>
+#include <cmath>
+#include "module_base/lapack_connector.h"
+#include "matrix_methods.h"
+//#include "line_search.h"
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
 #include "module_esolver/esolver.h"
 #include "module_esolver/esolver_ks.h"
 
-
+/**
+ * @class LBFGS
+ * @brief Implements L-BFGS optimization algorithm for structural relaxation
+ */
 class LBFGS
 {
 public:
-    
-    double alpha;//initialize H,diagonal element is alpha
-    double maxstep;//every movement smaller than maxstep
-    int size;//number of etoms
-    int memory;
-    double damping;
-    double H0;
-    int iteration;
-    double energy;
-    double alpha_k;
-    double xtol;
-    double stpmin;
-    double stpmax;
-    bool bracket;
-    double xtrapl;
-    double xtrapu;
-    double old_stp;
-    bool no_update;
-    int task;
-    ModuleESolver::ESolver* solver;
-
-    
-    std::vector<std::vector<double>> H;
-    std::vector<double> force0;
-    std::vector<std::vector<double>> force;
-    std::vector<double> pos0;
-    std::vector<std::vector<double>> pos;
-    std::vector<double> pos_taud0;
-    std::vector<std::vector<double>> pos_taud;
-    std::vector<std::vector<double>> dpos;
-    std::vector<std::vector<double>> s;
-    std::vector<std::vector<double>> y;
-    std::vector<double> rho;
-    std::vector<int> isave;
-    std::vector<double> dsave;
-    std::vector<double> steplength;
+    /**
+     * @brief Initialize L-BFGS parameters
+     * @param _size Number of atoms in system
+     */
+    void allocate(const int _size);
 
     /**
-     * @brief 
-     * 
-     * @param _size 
+     * @brief Perform one L-BFGS relaxation step
+     * @param _force Current force
+     * @param ucell Unit cell to optimize
+     * @param etot Current total energy
+     * @param p_esolver  solver
      */
-    void allocate(const int _size);//initialize parameters
-    void relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot,ModuleESolver::ESolver* p_esolver);//
-    void PrepareStep(std::vector<std::vector<double>>& force,std::vector<std::vector<double>>& pos,std::vector<std::vector<double>>& H,std::vector<double>& pos0,std::vector<double>& force0,std::vector<std::vector<double>>& dpos,UnitCell& ucell,const double &etot);
-    void IsRestrain(std::vector<std::vector<double>>& dpos);
-    
+    void relax_step(const ModuleBase::matrix _force,
+                    UnitCell& ucell,
+                    const double &etot,
+                    ModuleESolver::ESolver* p_esolver);
 
 private:
-    bool sign;
-    
-    void CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell);
-    void GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos);
-    void GetPostaud(UnitCell& ucell,std::vector<std::vector<double>>& pos_taud);
+    //LineSearch l_search;
+    double alpha;                           ///< Initial Hessian diagonal element
+    double maxstep;                         ///< Maximum allowed step length
+    int size;                               ///< Number of atoms in system
+    int memory;                             ///< Number of previous steps to store
+    double H0;                              ///< Initial inverse Hessian approximation
+    int iteration;                          ///< Current iteration count
+    double energy;                          ///< Current system energy
+    double alpha_k;                         ///< Step size parameter
 
-    void Update(std::vector<std::vector<double>>& pos_taud, 
+    ModuleESolver::ESolver* solver;         ///< Pointer to electronic structure solver
+    std::vector<std::vector<double>> H;     ///< Inverse Hessian approximation
+    std::vector<double> force0;             ///< Previous step forces
+    std::vector<std::vector<double>> force;  ///< Force history
+    std::vector<double> pos0;                ///< Previous positions
+    std::vector<std::vector<double>> pos;   ///< Position history
+    std::vector<double> pos_taud0;           ///< Previous fractional positions
+    std::vector<std::vector<double>> pos_taud; ///< Fractional position history
+    std::vector<std::vector<double>> dpos;  ///< Position displacements
+    std::vector<std::vector<double>> s;     ///< Position difference vectors
+    std::vector<std::vector<double>> y;     ///< Force difference vectors
+    std::vector<double> rho;                ///< Scalar products for L-BFGS update
+    std::vector<double> steplength;         ///< Step lengths for each atom
+
+    /**
+     * @brief Prepare optimization step parameters
+     */
+    void prepare_step(std::vector<std::vector<double>>& force,
+                      std::vector<std::vector<double>>& pos,
+                      std::vector<std::vector<double>>& H,
+                      std::vector<double>& pos0,
+                      std::vector<double>& force0,
+                      std::vector<std::vector<double>>& dpos,
+                      UnitCell& ucell,
+                      const double &etot);
+
+    /**
+     * @brief Apply step size constraints
+     * @param dpos Position displacements to constrain
+     */
+    void is_restrain(std::vector<std::vector<double>>& dpos);
+
+    /**
+     * @brief Calculate maximum gradient component
+     * @param _force Current force matrix
+     * @param ucell Unit cell being optimized
+     */
+    void calculate_largest_grad(const ModuleBase::matrix& _force,
+                                UnitCell& ucell);
+
+    /**
+     * @brief Extract atomic positions from unit cell
+     * @param ucell Unit cell to read
+     * @param pos Output position vector
+     */
+    void get_pos(UnitCell& ucell,
+                 std::vector<std::vector<double>>& pos);
+
+    /**
+     * @brief Get fractional positions from unit cell
+     * @param ucell Unit cell to read
+     * @param pos_taud Output fractional positions
+     */
+    void get_pos_taud(UnitCell& ucell,
+                      std::vector<std::vector<double>>& pos_taud);
+
+    /**
+     * @brief Update L-BFGS history buffers
+     * @param pos_taud Current fractional positions
+     * @param pos_taud0 Previous fractional positions
+     * @param force Current forces
+     * @param force0 Previous forces
+     * @param ucell Unit cell being optimized
+     * @param iteration Current step number
+     * @param memory History buffer size
+     * @param s Position differences buffer
+     * @param y Force differences buffer
+     * @param rho Scalar products buffer
+     */
+    void update(std::vector<std::vector<double>>& pos_taud, 
                 std::vector<double>& pos_taud0, 
                 std::vector<double>& force,
                 std::vector<double>& force0, 
@@ -93,30 +129,22 @@ private:
                 std::vector<std::vector<double>>& s,
                 std::vector<std::vector<double>>& y,
                 std::vector<double>& rho);
-    double LineSearch(UnitCell& ucell,std::vector<std::vector<double>>& r,std::vector<std::vector<double>>& g,double e);
-    double Step(double stp,double f,double g,double c1,double c2,double xtol,std::vector<int>& isave,std::vector<double>& dsave);
-    void UpdateLineSearch(double& stx,double& fx,double& gx,double& sty,double& fy,double& gy,double& stp,double& fp,double& gp,double& stpmin,double& stpmax);
-    double DetermineStep(double stp);
-    void DetermineStep(std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,double& maxstep);
-    void UpdatePos(UnitCell& ucell);
-    void Save(int a,double b,double c,double d,double e,double f,double g,double h,double i,double j,double k,double l,double m,double n);
-    double GetEnergy(UnitCell& ucell,double stp);
-    std::vector<double> GetForce(UnitCell& ucell,double stp);
-    
 
-    // matrix method
-    std::vector<double> ReshapeMToV(std::vector<std::vector<double>>& matrix);
-    std::vector<std::vector<double>> MAddM(std::vector<std::vector<double>>& a, std::vector<std::vector<double>>& b);
-    std::vector<double> VSubV(std::vector<double>& a, std::vector<double>& b);
-    std::vector<double> VAddV(std::vector<double>& a, std::vector<double>& b);
-    std::vector<std::vector<double>> ReshapeVToM(std::vector<double>& matrix);
-    std::vector<double> DotInMAndV1(std::vector<std::vector<double>>& matrix, std::vector<double>& vec);
-    std::vector<double> DotInMAndV2(std::vector<std::vector<double>>& matrix, std::vector<double>& vec);
-    double DotInVAndV(std::vector<double>& vec1, std::vector<double>& vec2);
-    std::vector<std::vector<double>> OuterVAndV(std::vector<double>& a, std::vector<double>& b);
-    std::vector<std::vector<double>> MPlus(std::vector<std::vector<double>>& a, double b);
-    std::vector<std::vector<double>> MSubM(std::vector<std::vector<double>>& a, std::vector<std::vector<double>>& b);
-    std::vector<double> DotInVAndFloat(std::vector<double>& vec, double b); 
+    /**
+     * @brief Determine optimal step lengths
+     * @param steplength Output step lengths
+     * @param dpos Position displacements
+     * @param maxstep Maximum allowed step length
+     */
+    void determine_step(std::vector<double>& steplength,
+                       std::vector<std::vector<double>>& dpos,
+                       double& maxstep);
+
+    /**
+     * @brief Update atomic positions in unit cell
+     * @param ucell Unit cell to update
+     */
+    void update_pos(UnitCell& ucell);  
 };
 
-#endif // BFGS_H
+#endif
