@@ -267,6 +267,35 @@ public:
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
+    template <typename FPTYPE, typename Device>
+    void real_to_recip(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const Device* ctx=get_default_device_ctx(),
+                       const int ik=0,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE, typename Device>
+    void recip_to_real(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const Device* ctx=get_default_device_ctx(),
+                       const int ik=0,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+    template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
+    void real_to_recip(FPTYPE* in,
+                       std::complex<FPTYPE>* out,
+                       const Device* ctx=get_default_device_ctx(),
+                       const int ik=0,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
+    void recip_to_real(const std::complex<FPTYPE>* in,
+                       FPTYPE* out,
+                       const Device* ctx=get_default_device_ctx() ,
+                       const int ik=0,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
   protected:
     //gather planes and scatter sticks of all processors
     template <typename T>
@@ -282,15 +311,16 @@ public:
 
     using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
-    using syncmem_int_h2d_op
-        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
-
+    using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    // using default_device_cpu = base_device::DEVICE_CPU;
+    
     void set_device(std::string device_);
     void set_precision(std::string precision_);
 
 protected:
     std::string device = "cpu";
     std::string precision = "double";
+    static const base_device::DEVICE_CPU* get_default_device_ctx(); 
 };
 
 }

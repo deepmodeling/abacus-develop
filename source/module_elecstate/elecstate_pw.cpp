@@ -443,13 +443,12 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     {
         this->addusdens_g(becsum, rhog);
     }
-
     // transform back to real space using dense grids
     if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            this->charge->rhopw->recip2real(this->rhog[is], this->rho[is]);
+            this->charge->rhopw->recip_to_real(this->rhog[is], this->rho[is]);
         }
     }
 }
