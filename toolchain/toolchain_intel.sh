@@ -29,8 +29,11 @@ export CUDA_PATH=/usr/local/cuda
 --with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \
---with-intel-classic=yes \
---enable-cuda \
---gpu-ver=L40S \
+--with-intel-classic=no \
 | tee compile.log
-# if you are using AMD server: set --with-intel-classic=yes
+# for using AMD-CPU or GPU-version: set --with-intel-classic=yes
+# to enable gpu-lcao, add the following lines:
+# --enable-cuda \
+# --gpu-ver=75 \ 
+# one should check your gpu compute capability number 
+# and use it in --gpu-ver

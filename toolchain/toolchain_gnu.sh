@@ -32,8 +32,10 @@
 --with-libri=no \
 --with-libcomm=no \
 --with-4th-openmpi=no \
---enable-cuda \
---gpu-ver=75 \
 | tee compile.log
 # to use openmpi-version4: set --with-4th-openmpi=yes
 # to enable gpu-lcao, add the following lines:
+# --enable-cuda \
+# --gpu-ver=75 \ 
+# one should check your gpu compute capability number 
+# and use it in --gpu-ver

@@ -220,11 +220,13 @@ If you wants to use ABACUS GPU-LCAO by "cusolvermp" or "elpa", please compile ac
 
 1. For the elpa method, add
 ```shell
---enable-cuda
---gpu-ver=
 export CUDA-PATH=/path/to/CUDA
+# install_abacus_toolchain.sh part options
+--enable-cuda \
+--gpu-ver=(GPU-compability-number) \
 ```
-to the `toolchain_gnu.sh`, and then follow the normal step to install the dependencies using `./toolchain_gnu.sh`.
+to the `toolchain_*.sh`, and then follow the normal step to install the dependencies using `./toolchain_*.sh`. For checking the GPU compatibility number, you can refer to the [CUDA compatibility](https://developer.nvidia.com/cuda-gpus).
+
 Afterwards, make sure these option are enable in your `build_abacus_*.sh` script 
 ```shell
 -DUSE_ELPA=ON \
@@ -236,7 +238,7 @@ then just build the abacus executable program by compiling it with `./build_abac
 ```shell
 -DUSE_CUDA=ON \
 -DUSE_CUSOLVERMP=ON \
--D CAL_CUSOLVERMP_PATH=/path/to/math.libs/1x.x/target/x86_64-linux/lib
+-D CAL_CUSOLVERMP_PATH=/path/to/math.libs/1x.x/target/x86_64-linux/lib \
 ```
 to the `build.abacus_*.sh` file. add the following three items to the environment (assuming you are using hpcsdk):
 ```shell
