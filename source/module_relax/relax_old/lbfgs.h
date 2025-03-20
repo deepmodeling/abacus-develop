@@ -32,7 +32,7 @@ public:
      * @param _force Current force
      * @param ucell Unit cell to optimize
      * @param etot Current total energy
-     * @param p_esolver  solver
+     * @param p_esolver  Structure solver
      */
     void relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
@@ -50,7 +50,7 @@ private:
     double energy;                          ///< Current system energy
     double alpha_k;                         ///< Step size parameter
 
-    ModuleESolver::ESolver* solver;         ///< Pointer to electronic structure solver
+    ModuleESolver::ESolver* solver;         ///< Structure solver
     std::vector<std::vector<double>> H;     ///< Inverse Hessian approximation
     std::vector<double> force0;             ///< Previous step forces
     std::vector<std::vector<double>> force;  ///< Force history
@@ -77,7 +77,7 @@ private:
                       const double &etot);
 
     /**
-     * @brief Apply step size constraints
+     * @brief Judge if the cell is restrain
      * @param dpos Position displacements to constrain
      */
     void is_restrain(std::vector<std::vector<double>>& dpos);
