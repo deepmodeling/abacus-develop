@@ -7,7 +7,6 @@
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_base/kernels/dsp/dsp_connector.h"
-#include <hip/hip_runtime.h>
 #include <vector>
 
 using namespace hsolver;
@@ -257,20 +256,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             const int* unconv,
                                             std::vector<Real>* eigenvalue_iter)
 {
-    bool test_eigs = true;
-    bool test_precond = true;
-    bool test_norm = true;
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
-/***#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice) {
-        size_t free_mem, total_mem;
-        hipMemGetInfo(&free_mem, &total_mem);
-        std::cout << "\n[Memory Debug] Before operations - Free GPU memory: " << free_mem / 1024.0 / 1024.0 
-                  << " MB, Total: " << total_mem / 1024.0 / 1024.0 << " MB" << std::endl;
-        std::cout << "[Memory Debug] Dimensions - dim: " << dim << ", nbase: " << nbase 
-                  << ", notconv: " << notconv << std::endl;
-     }
-#endif***/
+
     for (size_t i = 0; i < notconv; i++)
     {
         if (unconv[i] != i)
@@ -301,72 +288,29 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim);
 
     // Eigenvalues operation section
-    if (test_eigs) {
-/***#if defined(__CUDA) || defined(__ROCM)
-        if (this->device == base_device::GpuDevice) {
-             size_t free_mem, total_mem;
-             hipMemGetInfo(&free_mem, &total_mem);
-             std::cout << "\n[Memory Debug] Before eigenvalues op - Free GPU memory: " << free_mem / 1024.0 / 1024.0 
-                       << " MB" << std::endl;
-         }
-#endif***/       
-        // Original implementation
-        std::vector<Real> e_temp_cpu(this->notconv, 0);
-        Real* e_temp_hd = e_temp_cpu.data();
-        if (this->device == base_device::GpuDevice)
-        {
-            e_temp_hd = nullptr;
-            try {
-                resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
-            } catch (const std::exception& e) {
-                std::cerr << "[Memory Debug] Failed to allocate e_temp_hd of size " 
-                          << (this->notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
-                throw;
-            }
-        }
+    std::vector<Real> e_temp_cpu(this->notconv, 0);
+    Real* e_temp_hd = e_temp_cpu.data();
+    if (this->device == base_device::GpuDevice)
+    {
+        e_temp_hd = nullptr;
+        resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
+    }
 
-        for (int m = 0; m < this->notconv; m++)
-        {
-            e_temp_cpu[m] = -(*eigenvalue_iter)[m];
-        }
+    for (int m = 0; m < this->notconv; m++)
+    {
+        e_temp_cpu[m] = -(*eigenvalue_iter)[m];
+    }
 
-        if (this->device == base_device::GpuDevice)
-        {
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), this->notconv);
-        }
-        
-        apply_eigenvalues_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
+    if (this->device == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), this->notconv);
+    }
+    
+    apply_eigenvalues_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
 
-        if (this->device == base_device::GpuDevice)
-        {
-            delmem_real_op()(this->ctx, e_temp_hd);
-        }
-    } else {
-        // Old implementation
-        std::vector<Real> e_temp_cpu(nbase, 0);
-        Real* e_temp_hd = e_temp_cpu.data();
-        if(this->device == base_device::GpuDevice)
-        {
-            e_temp_hd = nullptr;
-            resmem_real_op()(this->ctx, e_temp_hd, nbase);
-        }
-        for (int m = 0; m < notconv; m++)
-        {
-            e_temp_cpu.assign(nbase, (-1.0 * (*eigenvalue_iter)[m]));
-            if (this->device == base_device::GpuDevice)
-            {
-                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), nbase);
-            }
-            vector_mul_vector_op<T, Device>()(this->ctx,
-                                                    nbase,
-                                                    vcc + m * this->nbase_x,
-                                                    vcc + m * this->nbase_x,
-                                                    e_temp_hd);
-        }
-        if(this->device == base_device::GpuDevice)
-        {
-            delmem_real_op()(this->ctx, e_temp_hd);
-        }
+    if (this->device == base_device::GpuDevice)
+    {
+        delmem_real_op()(this->ctx, e_temp_hd);
     }
 
 #ifdef __DSP
@@ -390,133 +334,61 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim);
 
     // Precondition section
-    if (test_precond) {
-        // Original implementation
 #if defined(__CUDA) || defined(__ROCM)
-        if (this->device == base_device::GpuDevice)
-        {
-          /***  size_t free_mem, total_mem;
-            hipMemGetInfo(&free_mem, &total_mem);
-            std::cout << "\n[Memory Debug] Before precondition op - Free GPU memory: " << free_mem / 1024.0 / 1024.0  << " MB" << std::endl;***/
-            Real* eigenvalues_gpu = nullptr;
-            try {
-                resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
-                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu,(*eigenvalue_iter).data(), notconv);
-            } catch (const std::exception& e) {
-                std::cerr << "[Memory Debug] Failed to allocate eigenvalues_gpu of size " 
-                          << (notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
-                throw;
-             } 
-            precondition_op<T, Device>()(this->ctx,
-                                        this->dim,
-                                        psi_iter,
-                                        nbase,
-                                        notconv,
-                                        d_precondition,
-                                        eigenvalues_gpu);
-            delmem_real_op()(this->ctx, eigenvalues_gpu);
-        }
-        else
+    if (this->device == base_device::GpuDevice)
+    {
+        Real* eigenvalues_gpu = nullptr;
+        resmem_real_op()(this->ctx, eigenvalues_gpu, notconv);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalues_gpu,(*eigenvalue_iter).data(), notconv);
+        
+        precondition_op<T, Device>()(this->ctx,
+                                    this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    d_precondition,
+                                    eigenvalues_gpu);
+        delmem_real_op()(this->ctx, eigenvalues_gpu);
+    }
+    else
 #endif
-        {
-            precondition_op<T, Device>()(this->ctx,
-                                        this->dim,
-                                        psi_iter,
-                                        nbase,
-                                        notconv,
-                                        this->precondition.data(),
-                                        (*eigenvalue_iter).data());
-        }
-    } else {
-        // Old implementation
-        std::vector<Real> pre(this->dim, 0.0);
-        for (int m = 0; m < notconv; m++)
-        {
-            for (size_t i = 0; i < this->dim; i++)
-            {
-                double x = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
-                pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
-            }
-#if defined(__CUDA) || defined(__ROCM)
-            if (this->device == base_device::GpuDevice)
-            {
-                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, pre.data(), this->dim);
-                vector_div_vector_op<T, Device>()(this->ctx,
-                                                  this->dim,
-                                                  psi_iter + (nbase + m) * this->dim,
-                                                  psi_iter + (nbase + m) * this->dim,
-                                                  this->d_precondition);
-            }
-            else
-#endif
-            {
-                vector_div_vector_op<T, Device>()(this->ctx,
-                                                  this->dim,
-                                                  psi_iter + (nbase + m) * this->dim,
-                                                  psi_iter + (nbase + m) * this->dim,
-                                                  pre.data());
-            }
-        }
+    {
+        precondition_op<T, Device>()(this->ctx,
+                                    this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    this->precondition.data(),
+                                    (*eigenvalue_iter).data());
     }
 
     // Normalize section
-    if (test_norm) {
-        // Original implementation
 #if defined(__CUDA) || defined(__ROCM)
-        if (this->device == base_device::GpuDevice)
-        {
-            /***size_t free_mem, total_mem;
-            hipMemGetInfo(&free_mem, &total_mem);
-            std::cout << "\n[Memory Debug] Before normalize op - Free GPU memory: " << free_mem / 1024.0 / 1024.0  << " MB" << std::endl;***/
-            Real* psi_norm = nullptr;
-            try {
-                resmem_real_op()(this->ctx, psi_norm, notconv);
-                using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
-                setmem_real_op()(this->ctx, psi_norm, 0.0, notconv);
-//hipMemset(psi_norm, 0, notconv * sizeof(Real));
-            } catch (const std::exception& e){
-                std::cerr << "[Memory Debug] Failed to allocate psi_norm of size " 
-                          << (notconv * sizeof(Real)) << " bytes: " << e.what() << std::endl;
-                throw;
-            }
-            normalize_op<T, Device>()(this->ctx,
-                                    this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    psi_norm);
-            delmem_real_op()(this->ctx, psi_norm);
-        }
-        else
+    if (this->device == base_device::GpuDevice)
+    {
+        Real* psi_norm = nullptr;
+        resmem_real_op()(this->ctx, psi_norm, notconv);
+        using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+        setmem_real_op()(this->ctx, psi_norm, 0.0, notconv);
+        
+        normalize_op<T, Device>()(this->ctx,
+                                this->dim,
+                                psi_iter,
+                                nbase,
+                                notconv,
+                                psi_norm);
+        delmem_real_op()(this->ctx, psi_norm);
+    }
+    else
 #endif
-        {
-            Real* psi_norm = nullptr;
-            normalize_op<T, Device>()(this->ctx,
-                                    this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    psi_norm);
-        }
-    } else {
-        // Old implementation
-        std::vector<Real> psi_norm(notconv, 0.0);
-        for (size_t i = 0; i < notconv; i++)
-        {
-            psi_norm[i] = dot_real_op<T, Device>()(this->ctx,
-                                                   this->dim,
-                                                   psi_iter + (nbase + i) * this->dim,
-                                                   psi_iter + (nbase + i) * this->dim,
-                                                   true);
-            assert(psi_norm[i] > 0.0);
-            psi_norm[i] = sqrt(psi_norm[i]);
-
-            vector_div_constant_op<T, Device>()(this->ctx,
-                                                this->dim,
-                                                psi_iter + (nbase + i) * this->dim,
-                                                psi_iter + (nbase + i) * this->dim,
-                                                psi_norm[i]);
-        }
+    {
+        Real* psi_norm = nullptr;
+        normalize_op<T, Device>()(this->ctx,
+                                this->dim,
+                                psi_iter,
+                                nbase,
+                                notconv,
+                                psi_norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]

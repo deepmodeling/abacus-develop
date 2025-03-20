@@ -5,7 +5,6 @@
 
 #include <base/macros/macros.h>
 #include <cstring>
-#include <chrono>
 #include <iostream>
 #ifdef __MPI
 #include "mpi.h"
