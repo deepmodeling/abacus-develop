@@ -478,7 +478,7 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream& ifs, Atom_pseudo& pp)
     for (int nw = 0; nw < pp.nchi; nw++)
     {
         ifs >> pp.els[nw] >> pp.nn[nw] >> pp.lchi[nw] >> pp.jchi[nw] >> pp.oc[nw];
-        if (std::abs(pp.lchi[nw] - pp.jchi[nw] - 0.5) > 1e-7 && std::abs(pp.lchi[nw] - pp.jchi[nw] + 0.5) > 1e-7)
+        if (std::abs(std::abs(pp.lchi[nw] - pp.jchi[nw]) - 0.5) > 1e-7)
         {
             std::cout << "Ignore ADDINFO section" << std::endl;
             pp.has_so = false;
@@ -488,7 +488,7 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream& ifs, Atom_pseudo& pp)
     for (int nb = 0; nb < pp.nbeta; nb++)
     {
         ifs >> pp.lll[nb] >> pp.jjj[nb];
-        if (std::abs(pp.lll[nb] - pp.jjj[nb] - 0.5) > 1e-7 && std::abs(pp.lll[nb] - pp.jjj[nb] + 0.5) > 1e-7)
+        if (std::abs(std::abs(pp.lll[nb] - pp.jjj[nb]) - 0.5) > 1e-7)
         {
             std::cout << "Ignore ADDINFO section" << std::endl;
             pp.has_so = false;
