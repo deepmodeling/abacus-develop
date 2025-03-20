@@ -212,18 +212,18 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         # -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \ # add if needed
         ......
 ```
-which will enable GPU version of ABACUS, can be directly used for PW calculation.
+which will enable GPU version of ABACUS, and the `ks_solver cusolver` method can be directly used for PW and LCAO calculation.
 
 Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now, see discussion here [#2906](https://github.com/deepmodeling/abacus-develop/issues/2906) and [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
-If you wants to use ABACUS GPU-LCAO by "cusolvermp" or "elpa", please compile according to the following usage:
+If you wants to use ABACUS GPU-LCAO by `cusolvermp` or `elpa` for multiple-GPU calculation, please compile according to the following usage:
 
 1. For the elpa method, add
 ```shell
-export CUDA-PATH=/path/to/CUDA
+export CUDA_PATH=/path/to/CUDA
 # install_abacus_toolchain.sh part options
 --enable-cuda \
---gpu-ver=(GPU-compability-number) \
+--gpu-ver=(GPU-compatibility-number) \
 ```
 to the `toolchain_*.sh`, and then follow the normal step to install the dependencies using `./toolchain_*.sh`. For checking the GPU compatibility number, you can refer to the [CUDA compatibility](https://developer.nvidia.com/cuda-gpus).
 
@@ -234,7 +234,9 @@ Afterwards, make sure these option are enable in your `build_abacus_*.sh` script
 ```
 then just build the abacus executable program by compiling it with `./build_abacus_*.sh`.
 
-1. For the cusolvermp method, toolchain_gnu.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_*.sh`, and then add
+The ELPA method need more parameter setting, but it doesn't seem to be affected by the CUDA toolkits version, and it is no need to manually install and package. 
+
+2. For the cusolvermp method, toolchain_*.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_*.sh`, and then add
 ```shell
 -DUSE_CUDA=ON \
 -DUSE_CUSOLVERMP=ON \
@@ -249,8 +251,9 @@ export CPATH=$CPATH:/path/to/math_libs/1x.x/targets/x86_64-linux/include
 Just enough to build the abacus executable program by compiling it with `./build_abacus_*.sh`.
 
 You can refer to the linking video for auxiliary compilation and installation. [Bilibili](https://www.bilibili.com/video/BV1eqr5YuETN/).
-The first one is more complicated, but it doesn't seem to be affected by the CUDA toolkits version and needs to be manually downloaded. Among them, CUSOLPERMP requires installation from sources such as apt or yum, which is suitable for containers or local computers.
-The second one is relatively simple, using NVIDIA HPC_SDK for installation, but requires CUDA toolkits 12.4 and above, which is suitable for any environment and recommended for usage.
+
+The cusolverMP requires installation from sources such as apt or yum, which is suitable for containers or local computers.
+The second choice is using [NVIDIA HPC_SDK](https://developer.nvidia.com/hpc-sdk-downloads) for installation, which is relatively simple, but the package from NVIDIA HPC_SDK may not be suitable, especially for muitiple-GPU parallel running. To better use cusolvermp and its dependency (libcal, ucx, ucc) in multi-GPU running, please contact your server manager.
 
 After compiling, you can specify `device GPU` in INPUT file to use GPU version of ABACUS.
 
