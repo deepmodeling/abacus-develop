@@ -239,7 +239,7 @@ The ELPA method need more parameter setting, but it doesn't seem to be affected 
 2. For the cusolvermp method, toolchain_*.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_*.sh`, and then add
 ```shell
 -DUSE_CUDA=ON \
--DUSE_CUSOLVERMP=ON \
+-DENABLE_CUSOLVERMP=ON \
 -D CAL_CUSOLVERMP_PATH=/path/to/math.libs/1x.x/target/x86_64-linux/lib \
 ```
 to the `build.abacus_*.sh` file. add the following three items to the environment (assuming you are using hpcsdk):
