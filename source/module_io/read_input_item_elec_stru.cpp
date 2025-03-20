@@ -321,6 +321,17 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use k-point continuity for initializing wave functions";
+        read_sync_bool(input.use_k_continuity);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type != "pw") {
+                GlobalV::ofs_warning << "use_k_continuity only works for PW basis" << std::endl;
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("pw_diag_ndim");
         item.annotation = "dimension of workspace for Davidson diagonalization";
         read_sync_int(input.pw_diag_ndim);

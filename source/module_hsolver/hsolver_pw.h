@@ -35,10 +35,12 @@ class HSolverPW
               const int scf_iter_in,
               const int diag_iter_max_in,
               const double diag_thr_in,
-              const bool need_subspace_in)
+              const bool need_subspace_in,
+              const bool use_k_continuity_in = true)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
           use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
-          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in){};
+          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
+          use_k_continuity(use_k_continuity_in) {};
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -85,6 +87,8 @@ class HSolverPW
 
     const bool need_subspace; // for cg or dav_subspace
 
+    const bool use_k_continuity;
+
   protected:
     Device* ctx = {};
 
@@ -107,7 +111,6 @@ class HSolverPW
 #endif
 
     // K-point continuity related members
-    bool use_k_continuity = true;
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
