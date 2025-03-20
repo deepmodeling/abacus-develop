@@ -96,7 +96,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T>& psi,
+void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
                                                 elecstate::ElecState* pes,
                                                 const double tpiba,
                                                 const int nat)
