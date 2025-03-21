@@ -136,7 +136,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 Here is an example:
 
 ```bash
-CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2024.05.001/build -DCEREAL_INCLUDE_DIR=~/cereal/include
+CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build -DCEREAL_INCLUDE_DIR=~/cereal/include
 ```
 
 ## Build and Install
