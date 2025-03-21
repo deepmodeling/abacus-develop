@@ -45,6 +45,14 @@ struct set_recip_to_real_output_op {
         const FPTYPE factor,
         const std::complex<FPTYPE>* in,
         std::complex<FPTYPE>* out);
+
+    void operator() (
+        const Device* dev,
+        const int nrxx,
+        const bool add,
+        const FPTYPE factor,
+        const std::complex<FPTYPE>* in,
+        FPTYPE* out);
 };
 
 template <typename FPTYPE, typename Device>
@@ -70,6 +78,16 @@ struct set_real_to_recip_output_op {
         const int* box_index,
         const std::complex<FPTYPE>* in,
         std::complex<FPTYPE>* out);
+
+    void operator() (
+        const Device* dev,
+        const int npw_k,
+        const int nxyz,
+        const bool add,
+        const FPTYPE factor,
+        const int* box_index,
+        const std::complex<FPTYPE>* in,
+        FPTYPE* out);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -93,6 +111,13 @@ struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
+
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    const int nrxx,
+                    const bool add,
+                    const FPTYPE factor,
+                    const std::complex<FPTYPE>* in,
+                    FPTYPE* out);
 };
 
 template <typename FPTYPE>
@@ -106,6 +131,14 @@ struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    const int npw_k,
+                    const int nxyz,
+                    const bool add,
+                    const FPTYPE factor,
+                    const int* box_index,
+                    const std::complex<FPTYPE>* in,
+                    FPTYPE* out);
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -39,6 +39,29 @@ struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_CPU>
             }
         }
     }
+
+    void operator()(const base_device::DEVICE_CPU* /*dev*/,
+                    const int nrxx,
+                    const bool add,
+                    const FPTYPE factor,
+                    const std::complex<FPTYPE>* in,
+                    FPTYPE* out)
+    {
+        if (add)
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                out[ir] += factor * in[ir].real();
+            }
+        }
+        else
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                out[ir] = in[ir].real();
+            }
+        }
+    }
 };
 
 template <typename FPTYPE>
