@@ -20,8 +20,7 @@ void PW_Basis::real2recip_gpu(const FPTYPE* in,
     //                                                                       in,
     //                                                                       this->nrxx);
 
-    this->fft_bundle.fft3D_forward(ctx,
-                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
@@ -49,8 +48,7 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                                                                           in,
                                                                           this->nrxx);
 
-    this->fft_bundle.fft3D_forward(ctx,
-                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
@@ -83,8 +81,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                                                         this->ig2isz,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>());
-    this->fft_bundle.fft3D_backward(ctx,
-                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
@@ -115,8 +112,7 @@ template <typename FPTYPE>
                                                          this->ig2isz,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<FPTYPE>());
-    this->fft_bundle.fft3D_backward(ctx,
-                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
