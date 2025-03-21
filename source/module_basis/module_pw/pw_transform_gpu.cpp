@@ -3,7 +3,7 @@
 #include "module_basis/module_pw/kernels/pw_op.h"
 namespace ModulePW
 {
-// #if (defined(__CUDA) || defined(__ROCM))
+#if (defined(__CUDA) || defined(__ROCM))
 template <typename FPTYPE>
 void PW_Basis::real2recip_gpu(const FPTYPE* in,
                              std::complex<FPTYPE>* out,
@@ -159,5 +159,5 @@ template void PW_Basis::recip2real_gpu<float>(const std::complex<float>* in,
                                               const bool add,
                                               const float factor) const;
 
-// #endif
+#endif
 } // namespace ModulePW
