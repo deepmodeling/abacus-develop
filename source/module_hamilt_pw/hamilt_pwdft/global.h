@@ -255,9 +255,9 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
 //==========================================================
 namespace GlobalC
 {
-#ifdef __EXX
+//#ifdef __EXX
     extern Exx_Info exx_info;
-#endif
+//#endif
 } // namespace GlobalC
 
 #include "module_cell/parallel_kpoints.h"

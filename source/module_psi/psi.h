@@ -74,6 +74,9 @@ class Psi
     // size_t size() const {return this->psi.size();}
     size_t size() const;
 
+    // copy assignment operator
+    Psi& operator=(const Psi& psi_in);
+
     // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 

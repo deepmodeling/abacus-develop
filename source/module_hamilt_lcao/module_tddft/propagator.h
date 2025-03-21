@@ -84,6 +84,7 @@ ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::Devic
             data_ptr[i * n + i] = init_value<T>();
         }
     }
+#if ((defined __CUDA))
     else if (device == ct::DeviceType::GpuDevice)
     {
         // For GPU, we need to use a kernel to set the diagonal elements
@@ -94,6 +95,7 @@ ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::Devic
             ct::kernels::set_memory<T, ct::DEVICE_GPU>()(data_ptr + i * n + i, value, 1);
         }
     }
+#endif
 
     return tensor;
 }

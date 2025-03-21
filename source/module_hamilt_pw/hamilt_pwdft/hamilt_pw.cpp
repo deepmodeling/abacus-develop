@@ -11,6 +11,7 @@
 #include "operator_pw/meta_pw.h"
 #include "operator_pw/nonlocal_pw.h"
 #include "operator_pw/onsite_proj_pw.h"
+#include "operator_pw/op_exx_pw.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -120,6 +121,19 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         Operator<T, Device>* onsite_proj
             = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
         this->ops->add(onsite_proj);
+    }
+    if (GlobalC::exx_info.info_global.cal_exx)
+    {
+        auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell);
+        if (this->ops == nullptr)
+        {
+            this->ops = exx;
+        }
+        else
+        {
+            this->ops->add(exx);
+            // exx->set_psi(&this->psi);
+        }
     }
     return;
 }
@@ -379,6 +393,22 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         }
         delmem_complex_op()(ps);
         delmem_complex_op()(becp);
+    }
+}
+
+template<typename T, typename Device>
+void HamiltPW<T, Device>::set_exx_helper(Exx_Helper<T, Device> &exx_helper)
+{
+    auto op = this->ops;
+    while (op != nullptr)
+    {
+        if (op->get_cal_type() == calculation_type::pw_exx)
+        {
+            exx_helper.op_exx = reinterpret_cast<OperatorEXXPW<T, Device>*>(op);
+            exx_helper.set_op();
+
+        }
+        op = op->next_op;
     }
 }
 

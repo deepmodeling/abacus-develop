@@ -9,11 +9,20 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 
+template<typename FPTYPE, typename Device>
 class EleCond
 {
   public:
-    EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in, ModulePW::PW_Basis_K* p_wfcpw_in,
-            psi::Psi<std::complex<double>>* p_psi_in, pseudopot_cell_vnl* p_ppcell_in);
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+  public:
+    EleCond(UnitCell* p_ucell_in,
+            K_Vectors* p_kv_in,
+            elecstate::ElecState* p_elec_in,
+            ModulePW::PW_Basis_K* p_wfcpw_in,
+            psi::Psi<std::complex<FPTYPE>, Device>* p_psi_in,
+            pseudopot_cell_vnl* p_ppcell_in);
     ~EleCond(){};
 
     /**
@@ -27,16 +36,21 @@ class EleCond
      * @param nonlocal whether to include the nonlocal potential corrections for velocity operator
      * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
      */
-    void KG(const int& smear_type, const double& fwhmin, const double& wcut, const double& dw_in, const double& dt_in,
-            const bool& nonlocal, ModuleBase::matrix& wg);
+    void KG(const int& smear_type,
+            const double& fwhmin,
+            const double& wcut,
+            const double& dw_in,
+            const double& dt_in,
+            const bool& nonlocal,
+            ModuleBase::matrix& wg);
 
   protected:
-    pseudopot_cell_vnl* p_ppcell = nullptr;          ///< pointer to the pseudopotential
-    UnitCell* p_ucell = nullptr;                     ///< pointer to the unit cell
-    ModulePW::PW_Basis_K* p_wfcpw = nullptr;         ///< pointer to the plane wave basis
-    K_Vectors* p_kv = nullptr;                       ///< pointer to the k vectors
-    elecstate::ElecState* p_elec = nullptr;          ///< pointer to the electronic state
-    psi::Psi<std::complex<double>>* p_psi = nullptr; ///< pointer to the wavefunction
+    pseudopot_cell_vnl* p_ppcell = nullptr;                  ///< pointer to the pseudopotential
+    UnitCell* p_ucell = nullptr;                             ///< pointer to the unit cell
+    ModulePW::PW_Basis_K* p_wfcpw = nullptr;                 ///< pointer to the plane wave basis
+    K_Vectors* p_kv = nullptr;                               ///< pointer to the k vectors
+    elecstate::ElecState* p_elec = nullptr;                  ///< pointer to the electronic state
+    psi::Psi<std::complex<FPTYPE>, Device>* p_psi = nullptr; ///< pointer to the wavefunction
 
   protected:
     /**
@@ -52,8 +66,15 @@ class EleCond
      * @param ct12 C12(t)
      * @param ct22 C22(t)
      */
-    void jjresponse_ks(const int ik, const int nt, const double dt, const double decut, ModuleBase::matrix& wg,
-                       hamilt::Velocity& velop, double* ct11, double* ct12, double* ct22);
+    void jjresponse_ks(const int ik,
+                       const int nt,
+                       const double dt,
+                       const double decut,
+                       ModuleBase::matrix& wg,
+                       hamilt::Velocity<FPTYPE, Device>& velop,
+                       double* ct11,
+                       double* ct12,
+                       double* ct22);
     /**
      * @brief Calculate the conductivity using the response function
      *
@@ -67,8 +88,15 @@ class EleCond
      * @param ct12 C12 component of the response function
      * @param ct22 C22 component of the response function
      */
-    void calcondw(const int nt, const double dt, const int& smear_type, const double fwhmin, const double wcut,
-                  const double dw_in, double* ct11, double* ct12, double* ct22);
+    void calcondw(const int nt,
+                  const double dt,
+                  const int& smear_type,
+                  const double fwhmin,
+                  const double wcut,
+                  const double dw_in,
+                  double* ct11,
+                  double* ct12,
+                  double* ct22);
 };
 
 #endif // ELECOND_H

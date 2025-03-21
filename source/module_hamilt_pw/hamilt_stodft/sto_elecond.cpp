@@ -22,7 +22,7 @@ Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in,
                          hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
                          StoChe<double>& stoche,
                          Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
-    : EleCond(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
+    : EleCond<double, base_device::DEVICE_CPU>(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
     this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
@@ -149,7 +149,7 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
                               const int& bsize_psi,
                               std::vector<std::complex<float>>& j1,
                               std::vector<std::complex<float>>& j2,
-                              hamilt::Velocity& velop,
+                              hamilt::Velocity<double>& velop,
                               const int& ik,
                               const std::complex<double>& factor,
                               const int bandinfo[6])
@@ -580,7 +580,7 @@ void Sto_EleCond::sKG(const int& smear_type,
 
     // ik loop
     ModuleBase::timer::tick("Sto_EleCond", "kloop");
-    hamilt::Velocity velop(p_wfcpw, p_kv->isk.data(), p_ppcell, p_ucell, nonlocal);
+    hamilt::Velocity<double> velop(p_wfcpw, p_kv->isk.data(), p_ppcell, p_ucell, nonlocal);
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);

@@ -1,10 +1,12 @@
 #include "elecond.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/kernels/math_kernel_op.h"
+#include "module_base/parallel_device.h"
 #include "module_elecstate/occupy.h"
 #include "module_io/binstream.h"
+#include "module_parameter/parameter.h"
 
 #include <vector>
 
@@ -24,9 +26,13 @@
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
 
-EleCond::EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
-                 ModulePW::PW_Basis_K* p_wfcpw_in, psi::Psi<std::complex<double>>* p_psi_in,
-                 pseudopot_cell_vnl* p_ppcell_in)
+template <typename FPTYPE, typename Device>
+EleCond<FPTYPE, Device>::EleCond(UnitCell* p_ucell_in,
+                                 K_Vectors* p_kv_in,
+                                 elecstate::ElecState* p_elec_in,
+                                 ModulePW::PW_Basis_K* p_wfcpw_in,
+                                 psi::Psi<std::complex<FPTYPE>, Device>* p_psi_in,
+                                 pseudopot_cell_vnl* p_ppcell_in)
 {
     this->p_ppcell = p_ppcell_in;
     this->p_ucell = p_ucell_in;
@@ -36,8 +42,14 @@ EleCond::EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::ElecState*
     this->p_psi = p_psi_in;
 }
 
-void EleCond::KG(const int& smear_type, const double& fwhmin, const double& wcut, const double& dw_in,
-                 const double& dt_in, const bool& nonlocal, ModuleBase::matrix& wg)
+template <typename FPTYPE, typename Device>
+void EleCond<FPTYPE, Device>::KG(const int& smear_type,
+                                 const double& fwhmin,
+                                 const double& wcut,
+                                 const double& dw_in,
+                                 const double& dt_in,
+                                 const bool& nonlocal,
+                                 ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -72,7 +84,7 @@ void EleCond::KG(const int& smear_type, const double& fwhmin, const double& wcut
     std::vector<double> ct12(nt, 0);
     std::vector<double> ct22(nt, 0);
 
-    hamilt::Velocity velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
+    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
     double decut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
     std::cout << "Recommended dt: " << 0.25 * M_PI / decut << " a.u." << std::endl;
     for (int ik = 0; ik < nk; ++ik)
@@ -94,44 +106,79 @@ void EleCond::KG(const int& smear_type, const double& fwhmin, const double& wcut
     }
 }
 
-void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const double decut, ModuleBase::matrix& wg,
-                            hamilt::Velocity& velop, double* ct11, double* ct12, double* ct22)
+template <typename FPTYPE, typename Device>
+void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
+                                            const int nt,
+                                            const double dt,
+                                            const double decut,
+                                            ModuleBase::matrix& wg,
+                                            hamilt::Velocity<FPTYPE, Device>& velop,
+                                            double* ct11,
+                                            double* ct12,
+                                            double* ct22)
 {
     const int nbands = PARAM.inp.nbands;
-    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0) {
+    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0)
+    {
         return;
-}
-    const char transn = 'N';
-    const char transc = 'C';
+    }
     const int ndim = 3;
-    const int npwx = this->p_wfcpw->npwk_max;
+    const int npwk_max = this->p_wfcpw->npwk_max;
     const double ef = this->p_elec->eferm.ef;
     const int npw = this->p_kv->ngk[ik];
     const int reducenb2 = (nbands - 1) * nbands / 2;
     const bool gamma_only = false; // ABACUS do not support gamma_only yet.
-    std::complex<double>* levc = &(this->p_psi[0](ik, 0, 0));
-    std::vector<std::complex<double>> prevc(ndim * npwx * nbands);
-    std::vector<std::complex<double>> pij(nbands * nbands);
+    std::complex<FPTYPE>* levc = &(this->p_psi[0](ik, 0, 0));
+    psi::Psi<std::complex<FPTYPE>, Device> v_psi(1, ndim * nbands, npwk_max, npw, true);
+    std::complex<FPTYPE>* pij_d = nullptr;
+    resmem_complex_op()(pij_d, nbands * nbands);
+
     std::vector<double> pij2(reducenb2, 0);
     // px|right>
-    velop.act(this->p_psi, nbands * PARAM.globalv.npol, levc, prevc.data());
+    velop.act(this->p_psi, nbands * PARAM.globalv.npol, levc, v_psi.get_pointer());
+    std::complex<FPTYPE> one = 1.0;
+    std::complex<FPTYPE> zero = 0.0;
     for (int id = 0; id < ndim; ++id)
     {
+        ModuleBase::gemm_op<std::complex<FPTYPE>, Device>()('C',
+                                                            'N',
+                                                            nbands,
+                                                            nbands,
+                                                            npw,
+                                                            &one,
+                                                            levc,
+                                                            npwk_max,
+                                                            v_psi.get_pointer() + id * npwk_max * nbands,
+                                                            npwk_max,
+                                                            &zero,
+                                                            pij_d,
+                                                            nbands);
 
-        zgemm_(&transc, &transn, &nbands, &nbands, &npw, &ModuleBase::ONE, levc, &npwx,
-               prevc.data() + id * npwx * nbands, &npwx, &ModuleBase::ZERO, pij.data(), &nbands);
+        std::complex<FPTYPE>* pij_c = nullptr;
+        if(std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            pij_c = pij_d;
+        }
+        else
+        {
+            std::vector<std::complex<FPTYPE>> pij_h(nbands * nbands);
+            syncmem_complex_d2h_op()(pij_h.data(), pij_d, nbands * nbands);
+            pij_c = pij_h.data();
+        }
+        
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, pij.data(), nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+        Parallel_Common::reduce_data(pij_c, nbands * nbands, POOL_WORLD);
 #endif
-        if (!gamma_only) {
+        if (!gamma_only)
+        {
             for (int ib = 0, ijb = 0; ib < nbands; ++ib)
             {
                 for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
                 {
-                    pij2[ijb] += norm(pij[ib * nbands + jb]);
+                    pij2[ijb] += static_cast<double>(std::norm(pij_c[ib * nbands + jb]));
                 }
             }
-}
+        }
     }
 
     if (GlobalV::RANK_IN_POOL == 0)
@@ -185,11 +232,20 @@ void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const d
         ct12[it] += tmct12 / 2.0;
         ct22[it] += tmct22 / 2.0;
     }
+    delmem_complex_op()(pij_d);
     return;
 }
 
-void EleCond::calcondw(const int nt, const double dt, const int& smear_type, const double fwhmin, const double wcut,
-                       const double dw_in, double* ct11, double* ct12, double* ct22)
+template <typename FPTYPE, typename Device>
+void EleCond<FPTYPE, Device>::calcondw(const int nt,
+                                       const double dt,
+                                       const int& smear_type,
+                                       const double fwhmin,
+                                       const double wcut,
+                                       const double dw_in,
+                                       double* ct11,
+                                       double* ct12,
+                                       double* ct22)
 {
     double factor = FACTOR;
     const int ndim = 3;
@@ -260,3 +316,10 @@ void EleCond::calcondw(const int nt, const double dt, const int& smear_type, con
     std::cout << std::setprecision(6) << "Lorenz number: " << Lorent0 << " k_B^2/e^2" << std::endl;
     ofscond.close();
 }
+
+template class EleCond<double, base_device::DEVICE_CPU>;
+template class EleCond<float, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class EleCond<double, base_device::DEVICE_GPU>;
+template class EleCond<float, base_device::DEVICE_GPU>;
+#endif

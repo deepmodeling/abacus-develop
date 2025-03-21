@@ -1,7 +1,10 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
-#include "my_math.hpp"
+
+#include "module_base/scalapack_connector.h"
 #include "utils.h"
+
+#include "module_base/tool_quit.h"
 
 #include <cfloat>
 #include <complex>
@@ -53,8 +56,12 @@ int ELPA_Solver::generalized_eigenvector(double* A,
     {
         timer(myid, "decomposeRightMatrix", "1", t);
     }
-    if (allinfo != 0)
-        return allinfo;
+    if (allinfo != 0){
+        // if allinfo is still not 0 anyway, report error and quit
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("ELPA_Solver::generalized_eigenvector", "decomposeRightMatrix failed to decompose right matrix!\n info = " + std::to_string(allinfo));
+        }
+    }
 
     // transform A to A~
     if ((loglevel > 0 && myid == 0) || loglevel > 1)
@@ -70,7 +77,7 @@ int ELPA_Solver::generalized_eigenvector(double* A,
             t = -1;
             timer(myid, "A*U^-1", "2", t);
         }
-        Cpdgemm('T', 'N', nFull, 1.0, A, B, 0.0, dwork.data(), desc);
+        ScalapackConnector::gemm('T', 'N', nFull, nFull, nFull, 1.0, A, B, 0.0, dwork.data(), desc);
         if (loglevel > 1)
         {
             timer(myid, "A*U^-1", "2", t);
@@ -82,7 +89,7 @@ int ELPA_Solver::generalized_eigenvector(double* A,
             t = -1;
             timer(myid, "U^-T^(A*U^-1)", "3", t);
         }
-        Cpdgemm('T', 'N', nFull, 1.0, B, dwork.data(), 0.0, A, desc);
+        ScalapackConnector::gemm('T', 'N', nFull, nFull, nFull, 1.0, B, dwork.data(), 0.0, A, desc);
         if (loglevel > 1)
         {
             timer(myid, "U^-T^(A*U^-1)", "3", t);
@@ -96,7 +103,7 @@ int ELPA_Solver::generalized_eigenvector(double* A,
             t = -1;
             timer(myid, "B*A^T", "2", t);
         }
-        Cpdgemm('N', 'T', nFull, 1.0, B, A, 0.0, dwork.data(), desc);
+        ScalapackConnector::gemm('N', 'T', nFull, nFull, nFull, 1.0, B, A, 0.0, dwork.data(), desc);
         if (loglevel > 1)
         {
             timer(myid, "B*A^T", "2", t);
@@ -107,7 +114,7 @@ int ELPA_Solver::generalized_eigenvector(double* A,
             t = -1;
             timer(myid, "B*work^T = B*(B*A^T)^T", "3", t);
         }
-        Cpdgemm('N', 'T', nFull, 1.0, B, dwork.data(), 0.0, A, desc);
+        ScalapackConnector::gemm('N', 'T', nFull, nFull, nFull, 1.0, B, dwork.data(), 0.0, A, desc);
         if (loglevel > 1)
         {
             timer(myid, "B*work^T = B*(B*A^T)^T", "3", t);
@@ -176,7 +183,7 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
             t = -1;
             timer(myid, "pdpotrf_", "1", t);
         }
-        info = Cpdpotrf('U', nFull, B, desc);
+        info = ScalapackConnector::potrf('U', nFull, B, desc);
         if (loglevel > 1)
         {
             timer(myid, "pdpotrf_", "1", t);
@@ -223,7 +230,7 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
                 t = -1;
                 timer(myid, "pdpotrf_", "2", t);
             }
-            info = Cpdpotrf('U', nFull, B, desc);
+            info = ScalapackConnector::potrf('U', nFull, B, desc);
             if (loglevel > 1)
             {
                 timer(myid, "pdpotrf_", "2", t);
@@ -306,10 +313,19 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
             t = -1;
             timer(myid, "qevq=qev*q^T", "2", t);
         }
-        Cpdgemm('N', 'T', nFull, 1.0, dwork.data(), EigenVector, 0.0, B, desc);
+        ScalapackConnector::gemm('N', 'T', nFull, nFull, nFull, 1.0, dwork.data(), EigenVector, 0.0, B, desc);
         if (loglevel > 1)
         {
             timer(myid, "qevq=qev*q^T", "2", t);
+        }
+    }
+
+    // if allinfo is still not 0 anyway, report error and quit
+    if(allinfo != 0)
+    {
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("decomposeRightMatrix",
+                "Failed to decompose right matrix!\n info = " + std::to_string(allinfo));
         }
     }
     return allinfo;
@@ -326,7 +342,8 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, double* B, double* Eige
             t = -1;
             timer(myid, "Cpdtrmm", "1", t);
         }
-        Cpdtrmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
+        ScalapackConnector::trmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
+        //Cpdtrmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
         if (loglevel > 1)
         {
             timer(myid, "Cpdtrmm", "1", t);
@@ -340,7 +357,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, double* B, double* Eige
             t = -1;
             timer(myid, "Cpdgemm", "1", t);
         }
-        Cpdgemm('T', 'N', nFull, 1.0, B, dwork.data(), 0.0, EigenVector, desc);
+        ScalapackConnector::gemm('T', 'N', nFull, nFull, nFull, 1.0, B, dwork.data(), 0.0, EigenVector, desc);
         if (loglevel > 1)
         {
             timer(myid, "Cpdgemm", "1", t);
@@ -382,16 +399,16 @@ void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, dou
     }
 
     // R=V*D
-    Cpdsymm('R', 'U', nFull, nev, 1.0, D, V, 0.0, R, desc);
+    ScalapackConnector::symm('R', 'U', nFull, nev, 1.0, D, V, 0.0, R, desc);
     // R=A*V-V*D=A*V-R
-    Cpdsymm('L', 'U', nFull, nev, 1.0, A, V, -1.0, R, desc);
+    ScalapackConnector::symm('L', 'U', nFull, nev, 1.0, A, V, -1.0, R, desc);
     // calculate the maximum and mean value of sum_i{R(:,i)*R(:,i)}
     double sumError = 0;
     maxError = 0;
     for (int i = 1; i <= nev; ++i)
     {
         double E;
-        Cpddot(nFull, E, R, 1, i, 1, R, 1, i, 1, desc);
+        ScalapackConnector::dot(nFull, E, R, 1, i, 1, R, 1, i, 1, desc);
         // printf("myid: %d, i: %d, E: %lf\n", myid, i, E);
         sumError += E;
         maxError = maxError > E ? maxError : E;
@@ -439,18 +456,18 @@ void ELPA_Solver::verify(double* A,
     }
 
     // dwork=B*V
-    Cpdsymm('L', 'U', nFull, 1.0, B, V, 0.0, dwork.data(), desc);
+    ScalapackConnector::symm('L', 'U', nFull, nFull, 1.0, B, V, 0.0, dwork.data(), desc);
     // R=B*V*D=dwork*D
-    Cpdsymm('R', 'U', nFull, 1.0, D, dwork.data(), 0.0, R, desc);
+    ScalapackConnector::symm('R', 'U', nFull, nFull, 1.0, D, dwork.data(), 0.0, R, desc);
     // R=A*V-B*V*D=A*V-R
-    Cpdsymm('L', 'U', nFull, 1.0, A, V, -1.0, R, desc);
+    ScalapackConnector::symm('L', 'U', nFull, nFull, 1.0, A, V, -1.0, R, desc);
     // calculate the maximum and mean value of sum_i{R(:,i)*R(:,i)}
     double sumError = 0;
     maxError = 0;
     for (int i = 1; i <= nev; ++i)
     {
         double E;
-        Cpddot(nFull, E, R, 1, i, 1, R, 1, i, 1, desc);
+        ScalapackConnector::dot(nFull, E, R, 1, i, 1, R, 1, i, 1, desc);
         // printf("myid: %d, i: %d, E: %lf\n", myid, i, E);
         sumError += E;
         maxError = maxError > E ? maxError : E;
