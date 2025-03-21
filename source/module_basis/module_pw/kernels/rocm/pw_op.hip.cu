@@ -101,8 +101,7 @@ __global__ void set_real_to_recip_output(
 }
 
 template <typename FPTYPE>
-void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                    const int npwk,
+void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
                                                                     const int* box_index,
                                                                     const std::complex<FPTYPE>* in,
                                                                     std::complex<FPTYPE>* out)
@@ -118,8 +117,7 @@ void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_d
 }
 
 template <typename FPTYPE>
-void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int nrxx,
+void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int nrxx,
                                                                               const bool add,
                                                                               const FPTYPE factor,
                                                                               const std::complex<FPTYPE>* in,
@@ -137,8 +135,7 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
 }
 
 template <typename FPTYPE>
-void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int nrxx,
+void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int nrxx,
                                                                               const bool add,
                                                                               const FPTYPE factor,
                                                                               const std::complex<FPTYPE>* in,
@@ -156,8 +153,7 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
 }
 
 template <typename FPTYPE>
-void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int npwk,
+void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
                                                                               const int nxyz,
                                                                               const bool add,
                                                                               const FPTYPE factor,
@@ -179,8 +175,7 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
 }
 
 template <typename FPTYPE>
-void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int npwk,
+void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
                                                                               const int nxyz,
                                                                               const bool add,
                                                                               const FPTYPE factor,

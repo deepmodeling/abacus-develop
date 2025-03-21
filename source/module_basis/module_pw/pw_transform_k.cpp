@@ -361,8 +361,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    set_real_to_recip_output_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                                  npw_k,
+    set_real_to_recip_output_op<float, base_device::DEVICE_GPU>()(npw_k,
                                                                   this->nxyz,
                                                                   add,
                                                                   factor,
@@ -393,8 +392,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    set_real_to_recip_output_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_GPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -424,15 +422,13 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
 
-    set_3d_fft_box_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                        npw_k,
+    set_3d_fft_box_op<float, base_device::DEVICE_GPU>()(npw_k,
                                                         this->ig2ixyz_k + startig,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<float>());
     this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
 
-    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                                  this->nrxx,
+    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(this->nrxx,
                                                                   add,
                                                                   factor,
                                                                   this->fft_bundle.get_auxr_3d_data<float>(),
@@ -460,15 +456,13 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
 
-    set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                         npw_k,
+    set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(npw_k,
                                                          this->ig2ixyz_k + startig,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<double>());
     this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
 
-    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                                   this->nrxx,
+    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(this->nrxx,
                                                                    add,
                                                                    factor,
                                                                    this->fft_bundle.get_auxr_3d_data<double>(),

@@ -32,8 +32,7 @@ void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
                                    auxr);
     this->fft_bundle.resource_handler(0);
     // copy the result from the auxr to the out ,while consider the add
-    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_CPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_CPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -58,7 +57,7 @@ void PW_Basis_K::recip2real_dsp(const std::complex<FPTYPE>* in,
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
     // copy the mapping form the type of stick to the 3dfft
-    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(ctx, npw_k, this->ig2ixyz_k_cpu.data() + startig, in, auxr);
+    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(npw_k, this->ig2ixyz_k_cpu.data() + startig, in, auxr);
     // use 3d fft backward
     this->fft_bundle.resource_handler(1);
     this->fft_bundle.fft3D_backward(gpux, auxr, auxr);
@@ -107,7 +106,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     const int npw_k = this->npwk[ik];
 
     // copy the mapping form the type of stick to the 3dfft
-    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(ctx, npw_k, this->ig2ixyz_k_cpu.data() + startig, input, auxr);
+    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(npw_k, this->ig2ixyz_k_cpu.data() + startig, input, auxr);
 
     // use 3d fft backward
     this->fft_bundle.fft3D_backward(gpux, auxr, auxr);
@@ -120,8 +119,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     // 3d fft
     this->fft_bundle.fft3D_forward(gpux, auxr, auxr);
     // copy the result from the auxr to the out ,while consider the add
-    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,

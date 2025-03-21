@@ -19,7 +19,6 @@ struct set_3d_fft_box_op {
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
     void operator() (
-        const Device* dev,
         const int npwk,
         const int* box_index,
         const std::complex<FPTYPE>* in,
@@ -39,7 +38,6 @@ struct set_recip_to_real_output_op {
     /// Output Parameters
     /// @param out - output psi within the 3D box(in real space)
     void operator() (
-        const Device* dev,
         const int nrxx,
         const bool add,
         const FPTYPE factor,
@@ -47,7 +45,6 @@ struct set_recip_to_real_output_op {
         std::complex<FPTYPE>* out);
 
     void operator() (
-        const Device* dev,
         const int nrxx,
         const bool add,
         const FPTYPE factor,
@@ -70,7 +67,6 @@ struct set_real_to_recip_output_op {
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
     void operator() (
-        const Device* dev,
         const int npw_k,
         const int nxyz,
         const bool add,
@@ -80,7 +76,6 @@ struct set_real_to_recip_output_op {
         std::complex<FPTYPE>* out);
 
     void operator() (
-        const Device* dev,
         const int npw_k,
         const int nxyz,
         const bool add,
@@ -95,8 +90,7 @@ struct set_real_to_recip_output_op {
 template <typename FPTYPE>
 struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int npwk,
+    void operator()(const int npwk,
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
@@ -105,15 +99,13 @@ struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>
 template <typename FPTYPE>
 struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int nrxx,
+    void operator()(const int nrxx,
                     const bool add,
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
 
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int nrxx,
+    void operator()(const int nrxx,
                     const bool add,
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
@@ -123,16 +115,14 @@ struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
 template <typename FPTYPE>
 struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
 {
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int npw_k,
+    void operator()(const int npw_k,
                     const int nxyz,
                     const bool add,
                     const FPTYPE factor,
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
-    void operator()(const base_device::DEVICE_GPU* dev,
-                    const int npw_k,
+    void operator()(const int npw_k,
                     const int nxyz,
                     const bool add,
                     const FPTYPE factor,

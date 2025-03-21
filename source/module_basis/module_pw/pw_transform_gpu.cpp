@@ -3,7 +3,7 @@
 #include "module_basis/module_pw/kernels/pw_op.h"
 namespace ModulePW
 {
-#if (defined(__CUDA) || defined(__ROCM))
+// #if (defined(__CUDA) || defined(__ROCM))
 template <typename FPTYPE>
 void PW_Basis::real2recip_gpu(const FPTYPE* in,
                              std::complex<FPTYPE>* out,
@@ -24,8 +24,7 @@ void PW_Basis::real2recip_gpu(const FPTYPE* in,
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
-    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                                  npw,
+    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
                                                                   this->nxyz,
                                                                   add,
                                                                   factor,
@@ -54,8 +53,7 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
-    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                                   npw,
+    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -81,8 +79,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
         0,
         this->nxyz);
 
-    set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                        npw,
+    set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
                                                         this->ig2isz,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>());
@@ -90,8 +87,7 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
-    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                                  this->nrxx,
+    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
                                                                   add,
                                                                   factor,
                                                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
@@ -115,8 +111,7 @@ template <typename FPTYPE>
         0,
         this->nxyz);
 
-    set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                         npw,
+    set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
                                                          this->ig2isz,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<FPTYPE>());
@@ -124,8 +119,7 @@ template <typename FPTYPE>
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                     this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
-    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(ctx,
-                                                                   this->nrxx,
+    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
                                                                    add,
                                                                    factor,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
@@ -169,5 +163,5 @@ template void PW_Basis::recip2real_gpu<float>(const std::complex<float>* in,
                                               const bool add,
                                               const float factor) const;
 
-#endif
+// #endif
 } // namespace ModulePW
