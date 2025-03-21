@@ -34,6 +34,7 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
     this->rho_basis_smooth_ = rho_basis_smooth_in;
     this->fixed_mode = true;
     this->dynamic_mode = true;
+    this->use_gpu_ = (PARAM.inp.basis_type == "pw" && PARAM.inp.device == "gpu");
 
     // allocate memory for Potential.
     this->allocate();
@@ -49,21 +50,17 @@ Potential::~Potential()
         }
         this->components.clear();
     }
-    if (PARAM.inp.basis_type == "pw" && PARAM.inp.device == "gpu") {
-        if (PARAM.inp.precision == "single") {
-            delmem_sd_op()(s_veff_smooth);
-            delmem_sd_op()(s_vofk_smooth);
-        }
-        else {
-            delmem_dd_op()(d_veff_smooth);
-            delmem_dd_op()(d_vofk_smooth);
-        }
+    if (use_gpu_)
+    {
+        delmem_sd_op()(s_veff_smooth);
+        delmem_sd_op()(s_vofk_smooth);
+        delmem_dd_op()(d_veff_smooth);
+        delmem_dd_op()(d_vofk_smooth);
     }
-    else {
-        if (PARAM.inp.precision == "single") {
-            delmem_sh_op()(s_veff_smooth);
-            delmem_sh_op()(s_vofk_smooth);
-        }
+    else
+    {
+        delmem_sh_op()(s_veff_smooth);
+        delmem_sh_op()(s_vofk_smooth);
     }
 }
 
@@ -134,22 +131,28 @@ void Potential::allocate()
         this->vofk_smooth.create(PARAM.inp.nspin, nrxx_smooth);
         ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
     }
-    if (PARAM.inp.basis_type == "pw" && PARAM.inp.device == "gpu") {
-        if (PARAM.inp.precision == "single") {
+    if (use_gpu_)
+    {
+        if (PARAM.globalv.has_float_data)
+        {
             resmem_sd_op()(s_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
             resmem_sd_op()(s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
         }
-        else {
+        if (PARAM.globalv.has_double_data)
+        {
             resmem_dd_op()(d_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
             resmem_dd_op()(d_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
         }
     }
-    else {
-        if (PARAM.inp.precision == "single") {
+    else
+    {
+        if (PARAM.globalv.has_float_data)
+        {
             resmem_sh_op()(s_veff_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::sveff_smooth");
             resmem_sh_op()(s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::svofk_smooth");
         }
-        else {
+        if (PARAM.globalv.has_double_data)
+        {
             this->d_veff_smooth = this->veff_smooth.c;
             this->d_vofk_smooth = this->vofk_smooth.c;
         }
@@ -182,32 +185,25 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
-    if (PARAM.inp.basis_type == "pw" && PARAM.inp.device == "gpu") {
-        if (PARAM.inp.precision == "single") {
-            castmem_d2s_h2d_op()(s_veff_smooth,
-                                 this->veff_smooth.c,
-                                 this->veff_smooth.nr * this->veff_smooth.nc);
-            castmem_d2s_h2d_op()(s_vofk_smooth,
-                                 this->vofk_smooth.c,
-                                 this->vofk_smooth.nr * this->vofk_smooth.nc);
+    if (this->use_gpu_)
+    {
+        if (PARAM.globalv.has_float_data)
+        {
+            castmem_d2s_h2d_op()(s_veff_smooth, this->veff_smooth.c, this->veff_smooth.nr * this->veff_smooth.nc);
+            castmem_d2s_h2d_op()(s_vofk_smooth, this->vofk_smooth.c, this->vofk_smooth.nr * this->vofk_smooth.nc);
         }
-        else {
-            syncmem_d2d_h2d_op()(d_veff_smooth,
-                                 this->veff_smooth.c,
-                                 this->veff_smooth.nr * this->veff_smooth.nc);
-            syncmem_d2d_h2d_op()(d_vofk_smooth,
-                                 this->vofk_smooth.c,
-                                 this->vofk_smooth.nr * this->vofk_smooth.nc);
+        if (PARAM.globalv.has_double_data)
+        {
+            syncmem_d2d_h2d_op()(d_veff_smooth, this->veff_smooth.c, this->veff_smooth.nr * this->veff_smooth.nc);
+            syncmem_d2d_h2d_op()(d_vofk_smooth, this->vofk_smooth.c, this->vofk_smooth.nr * this->vofk_smooth.nc);
         }
     }
-    else {
-        if (PARAM.inp.precision == "single") {
-            castmem_d2s_h2h_op()(s_veff_smooth,
-                                 this->veff_smooth.c,
-                                 this->veff_smooth.nr * this->veff_smooth.nc);
-            castmem_d2s_h2h_op()(s_vofk_smooth,
-                                 this->vofk_smooth.c,
-                                 this->vofk_smooth.nr * this->vofk_smooth.nc);
+    else
+    {
+        if (PARAM.globalv.has_float_data)
+        {
+            castmem_d2s_h2h_op()(s_veff_smooth, this->veff_smooth.c, this->veff_smooth.nr * this->veff_smooth.nc);
+            castmem_d2s_h2h_op()(s_vofk_smooth, this->vofk_smooth.c, this->vofk_smooth.nr * this->vofk_smooth.nc);
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }

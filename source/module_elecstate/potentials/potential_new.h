@@ -220,6 +220,7 @@ class Potential : public PotBase
     const ModuleBase::matrix* vloc_ = nullptr;
     Structure_Factor* structure_factors_ = nullptr;
     surchem* solvent_ = nullptr;
+    bool use_gpu_ = false;
 };
 
 } // namespace elecstate

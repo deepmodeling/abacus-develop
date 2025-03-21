@@ -59,6 +59,13 @@ ESolver_KS<T, Device>::ESolver_KS()
     {
         fft_device = "cpu";
     }
+    std::string fft_precision = PARAM.inp.precision;
+#ifdef __ENABLE_FLOAT_FFTW
+    if (PARAM.inp.cal_cond && PARAM.inp.esolver_type == "sdft")
+    {
+        fft_precision = "mixing";
+    }
+#endif
     pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, PARAM.inp.precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 

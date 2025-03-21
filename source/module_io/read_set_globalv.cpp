@@ -65,9 +65,17 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
     {
         sys.all_ks_run = false;
     }
+    // set the has_double_data and has_float_data
+#ifdef __ENABLE_FLOAT_FFTW
+    bool float_cond = inp.cal_cond && inp.esolver_type == "sdft";
+#else
+    bool float_cond = false;
+#endif
+    sys.has_double_data = (inp.precision == "double") || (inp.precision == "mixing") || float_cond;
+    sys.has_float_data = (inp.precision == "float") || (inp.precision == "mixing") || float_cond;
 }
 
-/// @note Here para.inp has been synchronized of all ranks. 
+/// @note Here para.inp has not been synchronized of all ranks. 
 ///       Only para.inp in rank 0 is right. 
 ///       So we need to broadcast the results to all ranks.
 void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
