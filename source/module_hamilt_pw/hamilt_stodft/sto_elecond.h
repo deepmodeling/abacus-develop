@@ -78,8 +78,8 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
 
     hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
     hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt_sto_ = nullptr; ///< pointer to the Hamiltonian for sDFT
-    lowTYPE emin_sto_ = 0;                                                      ///< Emin of the Hamiltonian for sDFT
-    lowTYPE emax_sto_ = 0;                                                      ///< Emax of the Hamiltonian for sDFT
+    lowTYPE low_emin_ = 0;                                                      ///< Emin of the Hamiltonian for sDFT
+    lowTYPE low_emax_ = 0;                                                      ///< Emax of the Hamiltonian for sDFT
   protected:
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>
@@ -95,6 +95,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                      psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
                      psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
                      psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
+                     psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
                      psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
                      psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
 #ifdef __MPI
@@ -106,6 +107,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                      const int& bsize_psi,
                      std::complex<lowTYPE>* j1,
                      std::complex<lowTYPE>* j2,
+                     std::complex<lowTYPE>* tmpj,
                      hamilt::Velocity<lowTYPE, Device>& velop,
                      const int& ik,
                      const std::complex<lowTYPE>& factor,

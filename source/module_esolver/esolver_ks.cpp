@@ -66,7 +66,7 @@ ESolver_KS<T, Device>::ESolver_KS()
         fft_precision = "mixing";
     }
 #endif
-    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, PARAM.inp.precision);
+    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12

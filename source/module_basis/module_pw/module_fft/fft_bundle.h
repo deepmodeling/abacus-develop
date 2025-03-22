@@ -196,7 +196,6 @@ class FFT_Bundle
   private:
     int fft_mode = 0;
     bool float_flag = false;
-    bool float_define = true;
     bool double_flag = false;
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;

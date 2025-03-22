@@ -33,10 +33,11 @@ Sto_EleCond<FPTYPE, Device>::Sto_EleCond(UnitCell* p_ucell_in,
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
+    this->cond_dtbatch = PARAM.inp.cond_dtbatch;
 #ifdef __ENABLE_FLOAT_FFTW
     if(!std::is_same<FPTYPE, lowTYPE>::value)
     {
-        this->hamilt_sto_ = new hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->emin_sto_, &this->emax_sto_);
+        this->hamilt_sto_ = new hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->low_emin_, &this->low_emax_);
     }
 #endif
 }
@@ -149,6 +150,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                               psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
                                               psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
                                               psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
+                                              psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
                                               psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
                                               psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
 #ifdef __MPI
@@ -160,6 +162,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                               const int& bsize_psi,
                                               std::complex<lowTYPE>* j1,
                                               std::complex<lowTYPE>* j2,
+                                              std::complex<lowTYPE>* tmpj,
                                               hamilt::Velocity<lowTYPE, Device>& velop,
                                               const int& ik,
                                               const std::complex<lowTYPE>& factor,
@@ -180,8 +183,6 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
     const int allbands_sto = bandinfo[4];
     const int allbands = bandinfo[5];
     const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
-
-    psi::Psi<std::complex<lowTYPE>, Device> right_hchi(1, perbands_sto, npwx, npw, true);
 
     hamilt->hPsi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
     hamilt->hPsi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
@@ -261,8 +262,6 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
         }
     }
 
-    std::complex<lowTYPE>* tmpj = nullptr;
-    resmem_lcomplex_op()(tmpj, allbands_sto * perbands_sto);
     int remain = perbands_sto;
     int startnb = 0;
     while (remain > 0)
@@ -289,7 +288,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                                                      allbands_ks,
                                                                      npw,
                                                                      &float_factor,
-                                                                     batch_vchi.get_pointer(),
+                                                                     &batch_vchi(idnb, 0),
                                                                      npwx,
                                                                      kspsi_all.get_pointer(),
                                                                      npwx,
@@ -316,7 +315,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                                                      allbands_ks,
                                                                      npw,
                                                                      &float_factor,
-                                                                     batch_vhchi.get_pointer(),
+                                                                     &batch_vhchi(idnb, 0),
                                                                      npwx,
                                                                      kspsi_all.get_pointer(),
                                                                      npwx,
@@ -342,7 +341,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                                     allbands_sto,
                                                     npw,
                                                     &float_factor,
-                                                    batch_vchi.get_pointer(),
+                                                    &batch_vchi(idnb, 0),
                                                     npwx,
                                                     rightchi_all->get_pointer(),
                                                     npwx,
@@ -357,9 +356,9 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                                     allbands_sto,
                                                     npw,
                                                     &float_factor,
-                                                    batch_vhchi.get_pointer(),
+                                                    &batch_vhchi(idnb, 0),
                                                     npwx,
-                                                    righthchi_all->get_pointer(),
+                                                    rightchi_all->get_pointer(),
                                                     npwx,
                                                     &zero,
                                                     j2mat,
@@ -372,9 +371,9 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                                                     allbands_sto,
                                                     npw,
                                                     &float_factor,
-                                                    batch_vchi.get_pointer(),
+                                                    &batch_vchi(idnb, 0),
                                                     npwx,
-                                                    rightchi_all->get_pointer(),
+                                                    righthchi_all->get_pointer(),
                                                     npwx,
                                                     &zero,
                                                     tmpjmat,
@@ -470,7 +469,6 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
         Parallel_Common::reduce_data(j2, ndim * dim_jmatrix, POOL_WORLD);
     }
 #endif
-
     ModuleBase::timer::tick("Sto_EleCond", "cal_jmatrix");
 
     return;
@@ -550,9 +548,9 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
     std::complex<lowTYPE> zero = static_cast<std::complex<lowTYPE>>(0.0);
     std::complex<lowTYPE> imag_one = static_cast<std::complex<lowTYPE>>(ModuleBase::IMAG_UNIT);
     Sto_Func<lowTYPE> lowfunc;
-    lowTYPE low_emin = static_cast<lowTYPE>(*this->stofunc.Emin);
-    lowTYPE low_emax = static_cast<lowTYPE>(*this->stofunc.Emax);
-    lowfunc.set_E_range(&low_emin, &low_emax);
+    this->low_emin_ = static_cast<lowTYPE>(*this->stofunc.Emin);
+    this->low_emax_ = static_cast<lowTYPE>(*this->stofunc.Emax);
+    lowfunc.set_E_range(&low_emin_, &low_emax_);
     hamilt::HamiltSdftPW<lcomplex, Device>* p_low_hamilt = nullptr;
     if(hamilt_sto_ != nullptr)
     {
@@ -593,9 +591,9 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
         // std::complex<lowTYPE>* tmpcoef = batchcoef_ + (nbatch - 1) * cond_nche;
         // resmem_lcomplex_op()(batchmcoef_, cond_nche * nbatch);
         // std::complex<lowTYPE>* tmpmcoef = batchmcoef_ + (nbatch - 1) * cond_nche;
-        batchcoef.reshape({nbatch, cond_nche});
+        batchcoef.resize({nbatch, cond_nche});
         lcomplex* tmpcoef = batchcoef[nbatch-1].data<lcomplex>();
-        batchmcoef.reshape({nbatch, cond_nche});
+        batchmcoef.resize({nbatch, cond_nche});
         lcomplex* tmpmcoef = batchmcoef[nbatch-1].data<lcomplex>();
         
         cpymem_lcomplex_op()(tmpcoef, chet.coef_complex, cond_nche);
@@ -635,8 +633,8 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
 
         // get allbands_ks
         int cutib0 = 0;
-        double emin = static_cast<double>(*this->stofunc.Emin);
-        double emax = static_cast<double>(*this->stofunc.Emax);
+        const double emin = static_cast<double>(*this->stofunc.Emin);
+        const double emax = static_cast<double>(*this->stofunc.Emax);
         if (this->nbands_ks > 0)
         {
             double Emax_KS = std::max(emin, this->p_elec->ekb(ik, this->nbands_ks - 1));
@@ -697,7 +695,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
         //-----------------------------------------------------------
         if (GlobalV::MY_BNDGROUP == 0 && allbands_ks > 0)
         {
-            jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11.data(), ct12.data(), ct22.data());
+            this->jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11.data(), ct12.data(), ct22.data());
         }
 
         //-----------------------------------------------------------
@@ -823,11 +821,14 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
         ct::Tensor j2l(t_type, device_type, {ndim, dim_jmatrix});
         ct::Tensor j1r(t_type, device_type, {ndim, dim_jmatrix});
         ct::Tensor j2r(t_type, device_type, {ndim, dim_jmatrix});
+        ct::Tensor tmpj(t_type, device_type, {ndim, allbands_sto * perbands_sto});
         ModuleBase::Memory::record("SDFT::j1l", sizeof(lcomplex) * ndim * dim_jmatrix);
         ModuleBase::Memory::record("SDFT::j2l", sizeof(lcomplex) * ndim * dim_jmatrix);
         ModuleBase::Memory::record("SDFT::j1r", sizeof(lcomplex) * ndim * dim_jmatrix);
         ModuleBase::Memory::record("SDFT::j2r", sizeof(lcomplex) * ndim * dim_jmatrix);
+        ModuleBase::Memory::record("SDFT::tmpj", sizeof(lcomplex) * ndim * allbands_sto * perbands_sto);
         psi::Psi<lcomplex, Device> tmphchil(1, perbands_sto, npwx, npw, true);
+        psi::Psi<lcomplex, Device> tmphchir(1, perbands_sto, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::tmphchil/r", sto_memory_cost * 2);
 
         //------------------------  t loop  --------------------------
@@ -978,6 +979,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                         exptsmfchi,
                         exptsfchi,
                         tmphchil,
+                        tmphchir,
                         batch_vchi,
                         batch_vhchi,
 #ifdef __MPI
@@ -989,6 +991,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                         bsize_psi,
                         j1l.data<lcomplex>(),
                         j2l.data<lcomplex>(),
+                        tmpj.data<lcomplex>(),
                         low_velop,
                         ik,
                         imag_one,
@@ -1005,6 +1008,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                         expmtsmfchi,
                         expmtsfchi,
                         tmphchil,
+                        tmphchir,
                         batch_vchi,
                         batch_vhchi,
 #ifdef __MPI
@@ -1016,6 +1020,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
                         bsize_psi,
                         j1r.data<lcomplex>(),
                         j2r.data<lcomplex>(),
+                        tmpj.data<lcomplex>(),
                         low_velop,
                         ik,
                         one,
@@ -1028,21 +1033,30 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
             // Im(l_ij*r_ji) = Re(-il_ij * r_ji) = Re( ((il)^+_ji)^* * r_ji)=Re(((il)^+_i)^* * r^+_i)
             // ddot_real = real(A_i^* * B_i)
             ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
-            ct11[it] += static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data<lcomplex>() + st_per, j1r.data<lcomplex>() + st_per, false)
-                * this->p_kv->wk[ik] / 2.0);
-            double tmp12 = static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data<lcomplex>() + st_per, j2r.data<lcomplex>() + st_per, false));
+            ct11[it] += static_cast<double>(ModuleBase::dot_real_op<lcomplex, Device>()(num_per,
+                                                                                        j1l.data<lcomplex>() + st_per,
+                                                                                        j1r.data<lcomplex>() + st_per,
+                                                                                        false)
+                                            * this->p_kv->wk[ik] / 2.0);
+            double tmp12
+                = static_cast<double>(ModuleBase::dot_real_op<lcomplex, Device>()(num_per,
+                                                                                  j1l.data<lcomplex>() + st_per,
+                                                                                  j2r.data<lcomplex>() + st_per,
+                                                                                  false));
 
-            double tmp21 = static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data<lcomplex>() + st_per, j1r.data<lcomplex>() + st_per, false));
+            double tmp21
+                = static_cast<double>(ModuleBase::dot_real_op<lcomplex, Device>()(num_per,
+                                                                                  j2l.data<lcomplex>() + st_per,
+                                                                                  j1r.data<lcomplex>() + st_per,
+                                                                                  false));
 
             ct12[it] -= 0.5 * (tmp12 + tmp21) * this->p_kv->wk[ik] / 2.0;
 
-            ct22[it] += static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data<lcomplex>() + st_per, j2r.data<lcomplex>() + st_per, false)
-                * this->p_kv->wk[ik] / 2.0);
-
+            ct22[it] += static_cast<double>(ModuleBase::dot_real_op<lcomplex, Device>()(num_per,
+                                                                                        j2l.data<lcomplex>() + st_per,
+                                                                                        j2r.data<lcomplex>() + st_per,
+                                                                                        false)
+                                            * this->p_kv->wk[ik] / 2.0);
             ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
         }
         std::cout << std::endl;
