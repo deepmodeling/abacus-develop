@@ -443,7 +443,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     relax_old.o\
     relax.o\
-    line_search.o\
     bfgs.o\
     lbfgs.o\
     matrix_methods.o\
