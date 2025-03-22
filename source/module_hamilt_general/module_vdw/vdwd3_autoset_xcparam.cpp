@@ -69,7 +69,7 @@
 #include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
 
 // DFT-D3(BJ)
-const std::map<std::string, std::vector<double>> bj = {
+const std::pair<const char*, std::vector<double>> bj_data[] = {
     {"__default__", {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 0.3946, 0.3946, 3.2822, 4.8516, 4.8516, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.4298, 0.4298, 2.6996, 4.2359, 4.2359, 1.0, 14.0, 0.0}},
@@ -230,8 +230,10 @@ const std::map<std::string, std::vector<double>> bj = {
     {"dodhsep86", {0.69, 0.0, 0.0, 0.0, 5.4, 5.4, 1.0, 14.0, 0.0}},
     {"dodpbehb95", {0.67, 0.0, 0.0, 0.0, 6.0, 6.0, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> bj = {std::begin(bj_data), std::end(bj_data)};
+
 // DFT-D3(0)
-const std::map<std::string, std::vector<double>> zero = {
+const std::pair<const char*, std::vector<double>> zero_data[] = {
     {"__default__", {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"slaterdirac", {1.0, 0.999, 0.999, -1.957, 0.697, 0.697, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 1.139, 1.139, 1.683, 1.0, 1.0, 1.0, 14.0, 0.0}},
@@ -318,8 +320,10 @@ const std::map<std::string, std::vector<double>> zero = {
     {"mn15l", {1.0, 3.3388, 3.3388, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"pwp", {1.0, 2.104, 2.104, 0.8747, 1.0, 1.0, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> zero = {std::begin(zero_data), std::end(zero_data)};
+
 // DFT-D3M(BJ): not implemented for beta
-const std::map<std::string, std::vector<double>> bjm = {
+const std::pair<const char*, std::vector<double>> bjm_data[] = {
     {"__default__", {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 0.82185, 0.82185, 3.140281, 2.728151, 2.728151, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.448486, 0.448486, 1.875007, 3.610679, 3.610679, 1.0, 14.0, 0.0}},
@@ -330,8 +334,10 @@ const std::map<std::string, std::vector<double>> bjm = {
     {"b2plyp", {0.64, 0.486434, 0.486434, 0.67282, 3.656466, 3.656466, 1.0, 14.0, 0.0}},
     {"lcwpbe", {1.0, 0.563761, 0.563761, 0.906564, 3.59368, 3.59368, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> bjm = {std::begin(bjm_data), std::end(bjm_data)};
+
 // DFT-D3M(0): not implemented for beta
-const std::map<std::string, std::vector<double>> zerom = {
+const std::pair<const char*, std::vector<double>> zerom_data[] = {
     {"__default__", {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 1.23346, 1.23346, 1.945174, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 1.279637, 1.279637, 1.841686, 1.0, 1.0, 1.0, 14.0, 0.01437}},
@@ -342,8 +348,10 @@ const std::map<std::string, std::vector<double>> zerom = {
     {"b2plyp", {0.64, 1.313134, 1.313134, 0.717543, 1.0, 1.0, 1.0, 14.0, 0.016035}},
     {"lcwpbe", {1.0, 1.366361, 1.366361, 1.280619, 1.0, 1.0, 1.0, 14.0, 0.00316}},
 };
+const std::map<std::string, std::vector<double>> zerom = {std::begin(zerom_data), std::end(zerom_data)};
+
 // DFT-D3(OptimizedPower)
-const std::map<std::string, std::vector<double>> op = {
+const std::pair<const char*, std::vector<double>> op_data[] = {
     // {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
     {"__default__", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.425, 0.425, 1.31867, 3.5, 3.5, 1.0, 14.0, 2.0}},
@@ -361,6 +369,7 @@ const std::map<std::string, std::vector<double>> op = {
     {"ms2", {1.0, 0.7, 0.7, 0.90743, 4.0, 4.0, 1.0, 14.0, 2.0}},
     {"ms2h", {1.0, 0.65, 0.65, 1.69464, 4.75, 4.75, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> op = {std::begin(op_data), std::end(op_data)};
     
 std::vector<double> _search_impl(const std::string& xc,
                                  const std::map<std::string, std::vector<double>>& dict)
