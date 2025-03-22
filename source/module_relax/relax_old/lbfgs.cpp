@@ -114,24 +114,24 @@ void LBFGS::prepare_step(std::vector<std::vector<double>>& force,
     for(int i=loopmax-1;i>=0;i--)
     {
         a[i]=rho[i]*DotInVAndV(s[i],q);
-        auto temp=DotInVAndFloat(y[i],a[i]);
+        std::vector<double> temp=DotInVAndFloat(y[i],a[i]);
         q=VSubV(q,temp);
     }
     std::vector<double> z=DotInVAndFloat(q,H0);
     for(int i=0;i<loopmax;i++)
     {
         double b=rho[i]*DotInVAndV(y[i],z);
-        auto temp=DotInVAndFloat(s[i],a[i]-b);
+        std::vector<double> temp=DotInVAndFloat(s[i],a[i]-b);
         z=VAddV(z,temp);
     }
-    auto temp0=DotInVAndFloat(z,-1);
+    std::vector<double> temp0=DotInVAndFloat(z,-1);
     dpos=ReshapeVToM(temp0);
-    auto temp1=DotInVAndFloat(changedforce,-1);
+    std::vector<double> temp1=DotInVAndFloat(changedforce,-1);
     std::vector<std::vector<double>> g=ReshapeVToM(temp1);
     energy=etot;
     //alpha_k=l_search.line_search(ucell,pos,g,energy,maxstep,size,dpos,pos,solver);
-    //auto temp2=DotInVAndFloat(temp0,alpha_k);
-    auto temp2=DotInVAndFloat(temp0,1);
+    //std::vector<double> temp2=DotInVAndFloat(temp0,alpha_k);
+    std::vector<double> temp2=DotInVAndFloat(temp0,1);
     dpos=ReshapeVToM(temp2);
     for(int i = 0; i < size; i++)
     {
@@ -160,7 +160,7 @@ void LBFGS::update(std::vector<std::vector<double>>& pos_taud,
 {
     if(iteration>0)
     {
-        auto term=ReshapeMToV(pos_taud);
+        std::vector<double> term=ReshapeMToV(pos_taud);
         std::vector<double> dpos =VSubV(term, pos_taud0);
         for(int i=0;i<3*size;i++)
         {
@@ -221,7 +221,7 @@ void LBFGS::update(std::vector<std::vector<double>>& pos_taud,
 }
 void LBFGS::determine_step(std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,double& maxstep)
 {
-    auto maxsteplength = max_element(steplength.begin(), steplength.end());
+    std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
     if(a >= maxstep)
     {

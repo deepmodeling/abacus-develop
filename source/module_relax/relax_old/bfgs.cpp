@@ -12,7 +12,6 @@ void BFGS::allocate(const int _size)
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
     sign =true;
-    
     H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     
     for (int i = 0; i < 3*size; ++i) 
@@ -32,7 +31,6 @@ void BFGS::allocate(const int _size)
 
 
 void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
-
 {
     GetPos(ucell,pos);  
     GetPostaud(ucell,pos_taud);
@@ -171,7 +169,7 @@ void BFGS::Update(std::vector<double>& pos,
         return;
     }
     //std::vector<double> dpos=this->VSubV(pos,pos0);
-    auto term=ReshapeMToV(pos_taud);
+    std::vector<double> term=ReshapeMToV(pos_taud);
     std::vector<double> dpos = VSubV(term, pos_taud0);
     for(int i=0;i<3*size;i++)
     {
@@ -227,10 +225,10 @@ void BFGS::Update(std::vector<double>& pos,
     double a = DotInVAndV(dpos, dforce);
     std::vector<double> dg = DotInMAndV1(H, dpos);
     double b = DotInVAndV(dpos, dg);
-    auto term1=OuterVAndV(dforce, dforce);
-    auto term2=OuterVAndV(dg, dg);
-    auto term3=MPlus(term1, a);
-    auto term4=MPlus(term2, b);
+    std::vector<std::vector<double>> term1=OuterVAndV(dforce, dforce);
+    std::vector<std::vector<double>> term2=OuterVAndV(dg, dg);
+    std::vector<std::vector<double>> term3=MPlus(term1, a);
+    std::vector<std::vector<double>> term4=MPlus(term2, b);
     H = MSubM(H, term3);
     H = MSubM(H, term4);
 }
@@ -239,7 +237,7 @@ void BFGS::DetermineStep(std::vector<double>& steplength,
                          std::vector<std::vector<double>>& dpos,
                          double& maxstep)
 {
-    auto maxsteplength = max_element(steplength.begin(), steplength.end());
+    std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
     if(a >= maxstep)
     {
