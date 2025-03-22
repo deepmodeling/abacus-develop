@@ -446,6 +446,7 @@ OBJS_RELAXATION=bfgs_basic.o\
     bfgs.o\
     lbfgs.o\
     matrix_methods.o\
+    line_search.o\
     
 
 OBJS_SURCHEM=surchem.o\
