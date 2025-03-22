@@ -12,6 +12,9 @@
 #include "module_base/scalapack_connector.h"
 #include "utils.h"
 
+#include "module_base/tool_quit.h"
+
+
 extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 int ELPA_Solver::eigenvector(std::complex<double>* A, double* EigenValue, std::complex<double>* EigenVector)
@@ -55,8 +58,12 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
     {
         timer(myid, "decomposeRightMatrix", "1", t);
     }
-    if(allinfo != 0)
-        return allinfo;
+    if(allinfo != 0){
+        // if allinfo is still not 0 anyway, report error and quit
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("ELPA_Solver::generalized_eigenvector", "decomposeRightMatrix failed to decompose right matrix!\n info = " + std::to_string(allinfo));
+        }
+    }
 
     // transform A to A~
     if((loglevel>0 && myid==0) || loglevel>1)
@@ -294,6 +301,14 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
         if(loglevel>1)
         {
             timer(myid, "qevq=qev*q^T", "2", t);
+        }
+    }
+    // if allinfo is still not 0 anyway, report error and quit
+    if(allinfo != 0)
+    {
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("decomposeRightMatrix",
+                "Failed to decompose right matrix!\n info = " + std::to_string(allinfo));
         }
     }
     return allinfo;

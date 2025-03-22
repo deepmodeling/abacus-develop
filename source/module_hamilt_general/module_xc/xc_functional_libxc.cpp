@@ -82,13 +82,27 @@ std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::stri
         token = xc_func_in.substr(0, pos);
         int id = xc_functional_get_number(token.c_str());
         std::cout << "func,id" << token << " " << id << std::endl;
-        if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!"); }
+        if (id == -1) 
+		{
+			std::string message = "Unrecognized exchange-correlation functional '"+ xc_func_in +"'.\n"
+								  " Possible source: Pseudopotential file or dft_functional parameter.\n"
+								  " Please explicitly set dft_functional in INPUT,\n"
+								  " or verify the functional name is supported.";
+			ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",message);
+		}
         func_id.push_back(id);
         xc_func_in.erase(0, pos + delimiter.length());
     }
     int id = xc_functional_get_number(xc_func_in.c_str());
     std::cout << "func,id" << xc_func_in << " " << id << std::endl;
-    if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!"); }
+    if (id == -1)
+	{ 
+		std::string message = "Unrecognized exchange-correlation functional '"+ xc_func_in +"'.\n"
+							  " Possible source: Pseudopotential file or dft_functional parameter.\n"
+							  " Please explicitly set dft_functional in INPUT,\n"
+							  " or verify the functional name is supported.";
+		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",message);
+	}
     func_id.push_back(id);
 
     return std::make_pair(func_type, func_id);
