@@ -98,26 +98,27 @@ case "$with_elpa" in
           config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
         fi
       fi
+      # CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
       for TARGET in "cpu" "nvidia"; do
         [ "$TARGET" = "nvidia" ] && [ "$ENABLE_CUDA" != "__TRUE__" ] && continue
+        # disable cpu if cuda is enabled
+        [ "$TARGET" != "nvidia" ] && [ "$ENABLE_CUDA" = "__TRUE__" ] && continue
         echo "Installing from scratch into ${pkg_install_dir}/${TARGET}"
-
         mkdir -p "build_${TARGET}"
         cd "build_${TARGET}"
-        if [ "${with_amd}" != "__DONTUSE__" ]; then
-        echo "AMD compiler detected, enable special option operation"
+        if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_flang}" = "yes" ] ; then
+        echo "AMD fortran compiler detected, enable special option operation"
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-shared=yes \
           --enable-static=yes \
+          --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \
           ${config_flags} \
           --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
-          --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_75") \
-          CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
+          --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
           OMPI_MCA_plm_rsh_agent=/bin/false \
           FC=${MPIFC} \
           CC=${MPICC} \
@@ -138,16 +139,14 @@ case "$with_elpa" in
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-shared=yes \
           --enable-static=yes \
+          --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \
           ${config_flags} \
           --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
-          --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_75") \
-          CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
-          OMPI_MCA_plm_rsh_agent=/bin/false \
+          --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
           FC=${MPIFC} \
           CC=${MPICC} \
           CXX=${MPICXX} \
