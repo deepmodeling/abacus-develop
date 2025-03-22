@@ -1,6 +1,6 @@
 # Easy Installation
 
-This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or building with `make`, please refer to [the advanced installation guide](../advanced/install.md)** after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS(and possibly its requirements) from the source code using the latest compiler for the best performace. You can try [toolchain](#install-requirements-by-toolchain) to install ABACUS and dependencies in a source-code compilation way with convience. You can also deploy ABACUS **without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note that ABACUS only supports Linux; for Windows users, please consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker.
+This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or building with `make`, please refer to [the advanced installation guide](../advanced/install.md)** after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS (and possibly its requirements) from the source code using the latest compiler for the best performace. You can try [toolchain](#install-requirements-by-toolchain) to install ABACUS and dependencies in a source-code compilation way with convience. You can also deploy ABACUS **without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note that ABACUS only supports Linux; for Windows users, please consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker.
 
 ## Get ABACUS source code
 
@@ -79,7 +79,7 @@ git remote -v
 
 # Replace "origin" with "upstream" or the remote name corresponding to deepmodeling/abacus-develop if necessary
 git fetch origin
-git checkout v3.8.4 # Replace the tag with the latest version
+git checkout v3.x.x # Replace the tag with the latest version, like v3.10.0
 git describe --tags # Verify if the tag has been successfully checked out
 ```
 
@@ -106,7 +106,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 - `CMAKE_INSTALL_PREFIX`: the path of ABACUS binary to install; `/usr/local/bin/abacus` by default
 - Compilers
   - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
-  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpc`(for Intel MPI).
+  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpx`(for Intel toolkits) or `mpiicpc`(for classic Intel Compiler Classic MPI before 2024.0).
 - Requirements: Unless indicated, CMake will try to find under default paths.
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
@@ -136,7 +136,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 Here is an example:
 
 ```bash
-CXX=mpiicpc cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2016.05.004/build -DCEREAL_INCLUDE_DIR=~/cereal/include
+CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build -DCEREAL_INCLUDE_DIR=~/cereal/include
 ```
 
 ## Build and Install

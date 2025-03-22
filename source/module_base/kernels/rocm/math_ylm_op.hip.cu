@@ -1,6 +1,6 @@
-#include <cuda_runtime.h>
-#include "module_base/kernels/math_op.h"
+#include "module_base/kernels/math_ylm_op.h"
 
+#include <hip/hip_runtime.h>
 #include <base/macros/macros.h>
 
 namespace ModuleBase {
@@ -96,7 +96,7 @@ __global__ void cal_ylm_real(
             p[l1 * (lmax + 1) * ng + l * ng + ig] =
                     cost * l3 * p[l1 * (lmax + 1) * ng + l1 * ng + ig];
             FPTYPE x2 = (1.0 - cost * cost) > 0.0 ? (1.0 - cost * cost) : 0.0;
-            p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<FPTYPE>(l) / 2.0);//mohan modify 2007-10-13
+            p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<double>(l) / 2.0);//mohan modify 2007-10-13
             if (l % 2 == 1) {
                 p[l * (lmax + 1) * ng + l * ng + ig] *= -1;
             }
@@ -109,8 +109,8 @@ __global__ void cal_ylm_real(
         for (int m = 1; m <= l; m++) {
             // Y_lm, m > 0
             const FPTYPE same =
-                    c * sqrt(__fact<FPTYPE>(l - m) /
-                             __fact<FPTYPE>(l + m)) * SQRT2;
+                    c * sqrt(__fact<double>(l - m) /
+                             __fact<double>(l + m)) * SQRT2;
 
             ++lm;
             ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cos(m * phi);
@@ -136,7 +136,7 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   FPTYPE* ylm)
 {
     int block = (ng + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    cal_ylm_real<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_ylm_real<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         ng,
         lmax,
         SQRT2,
@@ -148,7 +148,7 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
         p,
         ylm);
 
-    cudaCheckOnDebug();
+    hipCheckOnDebug();
 }
 
 template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;

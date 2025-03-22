@@ -72,7 +72,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
 
     // haozhihan add
     // cpu operator
-    using vector_div_constant_op_cpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_mul_real_op_cpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using constantvector_addORsub_constantVector_op_cpu
@@ -81,7 +81,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
     using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
     // gpu operator
-    using vector_div_constant_op_gpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_mul_real_op_gpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using constantvector_addORsub_constantVector_op_gpu
@@ -117,10 +117,10 @@ class TestModuleHsolverMathKernel : public ::testing::Test
                                       {1.41257916e+00, 5.45282609e-01},
                                       {-1.29333636e-01, -5.04228492e-03}};
 
-    // (1) for test vector_div_constant_op
+    // (1) for test vector_mul_real_op
     const std::vector<std::complex<double>> input = L;
     const double constant = 5.5;
-    const std::vector<std::complex<double>> output_vector_div_constant_op = {{-0.11893203, -0.13492526},
+    const std::vector<std::complex<double>> output_vector_mul_real_op = {{-0.11893203, -0.13492526},
                                                                              {-0.40314756, 0.07734553},
                                                                              {0.61158728, -0.45754102},
                                                                              {-0.54274745, -0.09682102},
@@ -261,14 +261,14 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_cpu)
     EXPECT_LT(fabs(result - expected_result), 1e-12);
 }
 
-TEST_F(TestModuleHsolverMathKernel, vector_div_constant_op_cpu)
+TEST_F(TestModuleHsolverMathKernel, vector_mul_real_op_cpu)
 {
     std::vector<std::complex<double>> output(input.size());
-    vector_div_constant_op_cpu()(dim, output.data(), input.data(), constant);
+    vector_mul_real_op_cpu()(dim, output.data(), input.data(), 1.0 / constant);
     for (int i = 0; i < input.size(); i++)
     {
-        EXPECT_LT(fabs(output[i].imag() - output_vector_div_constant_op[i].imag()), 1e-8);
-        EXPECT_LT(fabs(output[i].real() - output_vector_div_constant_op[i].real()), 1e-8);
+        EXPECT_LT(fabs(output[i].imag() - output_vector_mul_real_op[i].imag()), 1e-8);
+        EXPECT_LT(fabs(output[i].real() - output_vector_mul_real_op[i].real()), 1e-8);
     }
 }
 
@@ -381,7 +381,7 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     delete_memory_op()(psi_R_dev);
 }
 
-TEST_F(TestModuleHsolverMathKernel, vector_div_constant_op_gpu)
+TEST_F(TestModuleHsolverMathKernel, vector_mul_real_op_gpu)
 {
     // in CPU
     std::vector<std::complex<double>> output(input.size());
@@ -393,14 +393,14 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_constant_op_gpu)
     // syn the input data in CPU to GPU
     synchronize_memory_op()(input_dev, input.data(), input.size());
     // run
-    vector_div_constant_op_gpu()(dim, output_dev, input_dev, constant);
+    vector_mul_real_op_gpu()(dim, output_dev, input_dev, 1.0 / constant);
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(output.data(), output_dev, output.size());
 
     for (int i = 0; i < input.size(); i++)
     {
-        EXPECT_LT(fabs(output[i].imag() - output_vector_div_constant_op[i].imag()), 1e-8);
-        EXPECT_LT(fabs(output[i].real() - output_vector_div_constant_op[i].real()), 1e-8);
+        EXPECT_LT(fabs(output[i].imag() - output_vector_mul_real_op[i].imag()), 1e-8);
+        EXPECT_LT(fabs(output[i].real() - output_vector_mul_real_op[i].real()), 1e-8);
     }
     delete_memory_op()(input_dev);
     delete_memory_op()(output_dev);

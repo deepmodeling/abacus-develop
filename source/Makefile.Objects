@@ -146,8 +146,9 @@ OBJS_BASE=abfs-vector3_order.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
-    math_op.o\
+    math_ylm_op.o\
     math_kernel_op.o\
+    math_kernel_op_vec.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
@@ -349,6 +350,7 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
     dngvd_op.o\
+    bpcg_kernel_op.o\
     diag_const_nums.o\
     diag_hs_para.o\
     diago_pxxxgvx.o\

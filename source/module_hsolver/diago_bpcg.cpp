@@ -1,17 +1,16 @@
-#include <limits>
-
 #include "module_hsolver/diago_bpcg.h"
-
-#include <ATen/kernels/blas.h>
-#include <ATen/kernels/lapack.h>
-
-#include <ATen/ops/einsum_op.h>
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
+
+#include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
+#include <ATen/ops/einsum_op.h>
+#include <limits>
 
 namespace hsolver {
 
@@ -100,7 +99,13 @@ void DiagoBPCG<T, Device>::line_minimize(
     ct::Tensor& psi_out,
     ct::Tensor& hpsi_out)
 {
-    line_minimize_with_block_op()(grad_in.data<T>(), hgrad_in.data<T>(), psi_out.data<T>(), hpsi_out.data<T>(), this->n_dim, this->n_basis, this->n_band_l);
+    line_minimize_with_block_op<T, Device>()(grad_in.data<T>(),
+                                             hgrad_in.data<T>(),
+                                             psi_out.data<T>(),
+                                             hpsi_out.data<T>(),
+                                             this->n_dim,
+                                             this->n_basis,
+                                             this->n_band_l);
 }
 
 
@@ -138,17 +143,16 @@ void DiagoBPCG<T, Device>::calc_grad_with_block(
         ct::Tensor& grad_out,
         ct::Tensor& grad_old_out)
 {
-    calc_grad_with_block_op()(
-			prec_in.data<Real>(), 
-			err_out.data<Real>(), 
-			beta_out.data<Real>(), 
-			psi_in.data<T>(), 
-			hpsi_in.data<T>(), 
-			grad_out.data<T>(), 
-			grad_old_out.data<T>(), 
-			this->n_dim, 
-			this->n_basis, 
-			this->n_band_l);
+    calc_grad_with_block_op<T, Device>()(prec_in.data<Real>(),
+                                         err_out.data<Real>(),
+                                         beta_out.data<Real>(),
+                                         psi_in.data<T>(),
+                                         hpsi_in.data<T>(),
+                                         grad_out.data<T>(),
+                                         grad_old_out.data<T>(),
+                                         this->n_dim,
+                                         this->n_basis,
+                                         this->n_band_l);
 }
 
 template<typename T, typename Device>
