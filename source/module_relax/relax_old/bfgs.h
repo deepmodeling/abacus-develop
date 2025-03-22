@@ -34,9 +34,6 @@ private:
     double maxstep;//every movement smaller than maxstep
     int size;//number of atoms
     
-    
-
-    
     void IsRestrain(std::vector<std::vector<double>>& dpos);//check if converged
     void CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell);
     void GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos);
