@@ -1,8 +1,10 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
-//#include "my_math.hpp"
+
 #include "module_base/scalapack_connector.h"
 #include "utils.h"
+
+#include "module_base/tool_quit.h"
 
 #include <cfloat>
 #include <complex>
@@ -54,8 +56,12 @@ int ELPA_Solver::generalized_eigenvector(double* A,
     {
         timer(myid, "decomposeRightMatrix", "1", t);
     }
-    if (allinfo != 0)
-        return allinfo;
+    if (allinfo != 0){
+        // if allinfo is still not 0 anyway, report error and quit
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("ELPA_Solver::generalized_eigenvector", "decomposeRightMatrix failed to decompose right matrix!\n info = " + std::to_string(allinfo));
+        }
+    }
 
     // transform A to A~
     if ((loglevel > 0 && myid == 0) || loglevel > 1)
@@ -311,6 +317,15 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
         if (loglevel > 1)
         {
             timer(myid, "qevq=qev*q^T", "2", t);
+        }
+    }
+
+    // if allinfo is still not 0 anyway, report error and quit
+    if(allinfo != 0)
+    {
+        if(myid == 0){
+            ModuleBase::WARNING_QUIT("decomposeRightMatrix",
+                "Failed to decompose right matrix!\n info = " + std::to_string(allinfo));
         }
     }
     return allinfo;

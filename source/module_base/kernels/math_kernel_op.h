@@ -19,6 +19,9 @@
 
 namespace ModuleBase {
 
+//---------------------------------------------------------------------------------
+//-----------------------------0. Tool Functions-----------------------------------
+//---------------------------------------------------------------------------------
 inline std::complex<double> set_real_tocomplex(const std::complex<double> &x) {
   return {x.real(), 0.0};
 }
@@ -43,83 +46,12 @@ inline double get_conj(const double &x) { return x; }
 
 inline float get_conj(const float &x) { return x; }
 
-template <typename T, typename Device> struct line_minimize_with_block_op {
-  /// @brief dot_real_op computes the dot product of the given complex
-  /// arrays(treated as float arrays). And there's may have MPI communications
-  /// while enabling planewave parallization strategy.
-  ///
-  /// Input Parameters
-  /// \param dev : the type of computing device
-  /// \param A : input array arr
-  /// \param dim : size of A
-  /// \param lda : leading dimention of A
-  /// \param batch : batch size, the size of the result array res
-  ///
-  /// \return res : the result vector
-  /// T : dot product result
-  void operator()(T *grad_out, T *hgrad_out, T *psi_out, T *hpsi_out,
-                  const int &n_basis, const int &n_basis_max,
-                  const int &n_band);
-};
 
-template <typename T, typename Device> struct calc_grad_with_block_op {
-  /// @brief dot_real_op computes the dot product of the given complex
-  /// arrays(treated as float arrays). And there's may have MPI communications
-  /// while enabling planewave parallization strategy.
-  ///
-  /// Input Parameters
-  /// \param dev : the type of computing device
-  /// \param A : input array arr
-  /// \param dim : size of A
-  /// \param lda : leading dimention of A
-  /// \param batch : batch size, the size of the result array res
-  ///
-  /// \return res : the result vector
-  /// T : dot product result
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(const Real *prec_in, Real *err_out, Real *beta_out,
-                  T *psi_out, T *hpsi_out, T *grad_out, T *grad_old_out,
-                  const int &n_basis, const int &n_basis_max,
-                  const int &n_band);
-};
-
-template <typename T, typename Device> struct dot_real_op {
-  using Real = typename GetTypeReal<T>::type;
-  /// @brief dot_real_op computes the dot product of the given complex
-  /// arrays(treated as float arrays). And there's may have MPI communications
-  /// while enabling planewave parallization strategy.
-  ///
-  /// Input Parameters
-  /// \param dim : array size
-  /// \param psi_L : input array A
-  /// \param psi_R : input array B
-  /// \param reduce : flag to control whether to perform the MPI communications
-  ///
-  /// \return
-  /// FPTYPE : dot product result
-  Real operator()(const int &dim, const T *psi_L,
-                  const T *psi_R, const bool reduce = true);
-};
-
-// vector operator: result[i] = vector[i] / constant
-template <typename T, typename Device> struct vector_div_constant_op {
-  using Real = typename GetTypeReal<T>::type;
-  /// @brief result[i] = vector[i] / constant
-  ///
-  /// Input Parameters
-  /// \param dim : array size
-  /// \param vector : input array
-  /// \param constant : input constant
-  ///
-  /// Output Parameters
-  /// \param result : output array
-  void operator()(const int dim, T *result, const T *vector,
-                  const Real constant);
-};
-
-// replace vector_div_constant_op : x = alpha * x
+//---------------------------------------------------------------------------------
+//-----------------------------1. Vector Operations--------------------------------
+//---------------------------------------------------------------------------------
 template <typename FPTYPE, typename Device> struct scal_op {
-  /// @brief x = alpha * x
+  /// @brief x = alpha * x, where alpha and x are complex numbers
   ///
   /// Input Parameters
   /// \param N : array size
@@ -132,6 +64,22 @@ template <typename FPTYPE, typename Device> struct scal_op {
   void operator()(const int &N,
                   const std::complex<FPTYPE> *alpha, std::complex<FPTYPE> *X,
                   const int &incx);
+};
+
+template <typename T, typename Device> struct vector_mul_real_op {
+  using Real = typename GetTypeReal<T>::type;
+  /// @brief result[i] = vector[i] * constant, where vector is complex number and constant is real number。
+  ///        It is different from the scal_op, which is used to multiply a complex number by a complex number.
+  ///
+  /// Input Parameters
+  /// \param dim : array size
+  /// \param vector : input array
+  /// \param constant : input constant
+  ///
+  /// Output Parameters
+  /// \param result : output array
+  /// \note Use mulitple instead of divide. It is faster.
+  void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
@@ -166,6 +114,24 @@ template <typename T, typename Device> struct vector_div_vector_op {
                   const Real *vector2);
 };
 
+//  compute Y = alpha * X + Y
+template <typename T, typename Device> struct axpy_op {
+  /// @brief Y = alpha * X + Y
+  ///
+  /// Input Parameters
+  /// \param N : array size
+  /// \param alpha : input constant alpha
+  /// \param X : input array X
+  /// \param incX : computing strip of X
+  /// \param Y : computing strip of Y
+  /// \param incY : computing strip of Y
+  ///
+  /// Output Parameters
+  /// \param Y : output array Y
+  void operator()(const int &N, const T *alpha, const T *X,
+                  const int &incX, T *Y, const int &incY);
+};
+
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T, typename Device>
 struct constantvector_addORsub_constantVector_op {
@@ -185,23 +151,28 @@ struct constantvector_addORsub_constantVector_op {
                   const Real constant1, const T *vector2, const Real constant2);
 };
 
-//  compute Y = alpha * X + Y
-template <typename T, typename Device> struct axpy_op {
-  /// @brief Y = alpha * X + Y
+template <typename T, typename Device> struct dot_real_op {
+  using Real = typename GetTypeReal<T>::type;
+  /// @brief dot_real_op computes the dot product of the given complex
+  /// arrays(treated as float arrays). And there's may have MPI communications
+  /// while enabling planewave parallization strategy.
   ///
   /// Input Parameters
-  /// \param N : array size
-  /// \param alpha : input constant alpha
-  /// \param X : input array X
-  /// \param incX : computing strip of X
-  /// \param Y : computing strip of Y
-  /// \param incY : computing strip of Y
+  /// \param dim : array size
+  /// \param psi_L : input array A
+  /// \param psi_R : input array B
+  /// \param reduce : flag to control whether to perform the MPI communications
   ///
-  /// Output Parameters
-  /// \param Y : output array Y
-  void operator()(const int &N, const T *alpha, const T *X,
-                  const int &incX, T *Y, const int &incY);
+  /// \return
+  /// FPTYPE : dot product result
+  Real operator()(const int &dim, const T *psi_L,
+                  const T *psi_R, const bool reduce = true);
 };
+
+
+//---------------------------------------------------------------------------------
+//-----------------------------2. Matrix Operations--------------------------------
+//---------------------------------------------------------------------------------
 
 // compute y = alpha * op(A) * x + beta * y
 template <typename T, typename Device> struct gemv_op {
@@ -314,24 +285,6 @@ template <typename T, typename Device> struct matrixCopy {
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-
-template <typename T>
-struct line_minimize_with_block_op<T, base_device::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(T *grad_out, T *hgrad_out, T *psi_out, T *hpsi_out,
-                  const int &n_basis, const int &n_basis_max,
-                  const int &n_band);
-};
-
-template <typename T>
-struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(const Real *prec_in, Real *err_out, Real *beta_out,
-                  T *psi_out, T *hpsi_out, T *grad_out, T *grad_old_out,
-                  const int &n_basis, const int &n_basis_max,
-                  const int &n_band);
-};
-
 // Partially specialize functor for base_device::GpuDevice.
 template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
@@ -341,10 +294,10 @@ template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
 
 // vector operator: result[i] = vector[i] / constant
 template <typename T>
-struct vector_div_constant_op<T, base_device::DEVICE_GPU> {
+struct vector_mul_real_op<T, base_device::DEVICE_GPU>
+{
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const int dim, T *result,
-                  const T *vector, const Real constant);
+  void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)

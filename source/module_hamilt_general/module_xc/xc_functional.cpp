@@ -263,7 +263,11 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id = std::get<1>(type_id);
         use_libxc = true;
 #else
-        ModuleBase::WARNING_QUIT("xc_functional.cpp","functional name not recognized!");
+        std::string message = "Unrecognized exchange-correlation functional '"+ xc_func +"'.\n"
+                              " Possible source: Pseudopotential file or dft_functional parameter.\n"
+                              " Please explicitly set dft_functional in INPUT,\n"
+                              " or verify the functional name is supported.";
+        ModuleBase::WARNING_QUIT("xc_functional.cpp",message);
 #endif
     }
 

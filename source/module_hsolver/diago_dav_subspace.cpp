@@ -366,20 +366,18 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // "normalize!!!" in order to improve numerical stability of subspace diagonalization
-    std::vector<Real> psi_norm(notconv, 0.0);
     for (size_t i = 0; i < notconv; i++)
     {
-        psi_norm[i] = ModuleBase::dot_real_op<T, Device>()(this->dim,
+        Real psi_norm = ModuleBase::dot_real_op<T, Device>()(this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            true);
-        assert(psi_norm[i] > 0.0);
-        psi_norm[i] = sqrt(psi_norm[i]);
-
-        ModuleBase::vector_div_constant_op<T, Device>()(this->dim,
-                                                        psi_iter + (nbase + i) * this->dim,
-                                                        psi_iter + (nbase + i) * this->dim,
-                                                        psi_norm[i]);
+        assert(psi_norm > 0.0);
+        psi_norm = sqrt(psi_norm);
+        ModuleBase::vector_mul_real_op<T, Device>()(this->dim,
+                                                       psi_iter + (nbase + i) * this->dim,
+                                                       psi_iter + (nbase + i) * this->dim,
+                                                       Real(1.0 / psi_norm));
     }
 
     // update hpsi[:, nbase:nbase+notconv]

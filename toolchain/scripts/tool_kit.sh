@@ -369,12 +369,13 @@ check_command() {
 }
 
 # check if directory exists
+# add more error msg by QuantumMisaka in 2025.03.19
 check_dir() {
   local __dir=$1
   if [ -d "$__dir" ]; then
     echo "Found directory $__dir"
   else
-    report_error "Cannot find $__dir"
+    report_error "Cannot find $__dir, please check your --with-PKG input to march options: [system|install|no|(path/to/pkg)]"
     return 1
   fi
 }
