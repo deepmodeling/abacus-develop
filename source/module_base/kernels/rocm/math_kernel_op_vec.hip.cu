@@ -87,7 +87,7 @@ void vector_mul_real_op<double, base_device::DEVICE_GPU>::operator()(const int d
 {
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<double>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_real_kernel<double>),
                        dim3(block),
                        dim3(thread),
                        0,
