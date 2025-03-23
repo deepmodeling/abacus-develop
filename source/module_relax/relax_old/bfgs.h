@@ -41,6 +41,7 @@ private:
     void Update(std::vector<double>& pos, std::vector<double>& force,std::vector<std::vector<double>>& H,UnitCell& ucell);//update hessian matrix
     void DetermineStep(std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,double& maxstep);//normalize large atomic displacements based on maxstep
     void UpdatePos(UnitCell& ucell);//update ucell with the new coordinates
+    
 };
 
 #endif // BFGS_H
