@@ -12,7 +12,6 @@ void BFGS::allocate(const int _size)
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
     sign =true;
-    
     H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     
     for (int i = 0; i < 3*size; ++i) 
@@ -32,7 +31,6 @@ void BFGS::allocate(const int _size)
 
 
 void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
-
 {
     GetPos(ucell,pos);  
     GetPostaud(ucell,pos_taud);
@@ -44,7 +42,6 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             force[i][j]=_force(i,j)*ModuleBase::Ry_to_eV/ModuleBase::BOHR_TO_A;
         }
     }
-    
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -68,35 +65,6 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     
     this->PrepareStep(force,pos,H,pos0,force0,steplength,dpos,ucell);
     this->DetermineStep(steplength,dpos,maxstep);
-    
-    /*std::cout<<"force"<<std::endl;
-    for(int i=0;i<size;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            std::cout<<force[i][j]<<' ';
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<"dpos"<<std::endl;
-    for(int i=0;i<size;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            std::cout<<dpos[i][j]<<' ';
-        }
-        std::cout<<std::endl;
-    }
-    std::cout<<"pos"<<std::endl;
-    for(int i=0;i<size;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            std::cout<<pos[i][j]<<' ';
-        }
-        std::cout<<std::endl;
-    }*/
-    
     this->UpdatePos(ucell);
     this->CalculateLargestGrad(_force,ucell);
     this->IsRestrain(dpos);  
@@ -142,8 +110,8 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
                        std::vector<std::vector<double>>& dpos,
                        UnitCell& ucell)
 {
-    std::vector<double> changedforce = this->ReshapeMToV(force);
-    std::vector<double> changedpos = this->ReshapeMToV(pos);
+    std::vector<double> changedforce = ReshapeMToV(force);
+    std::vector<double> changedpos = ReshapeMToV(pos);
     this->Update(changedpos, changedforce,H,ucell);
     
     //! call dysev
@@ -169,22 +137,13 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
             V[j][i] = H_flat[3*size*i + j];
         }
     }
-    std::vector<double> a=this->DotInMAndV2(V, changedforce);
+    std::vector<double> a=DotInMAndV2(V, changedforce);
     for(int i = 0; i < a.size(); i++)
     {
         a[i]/=std::abs(omega[i]);    
     }
-    std::vector<double> tmpdpos = this->DotInMAndV1(V, a);
-    dpos = this->ReshapeVToM(tmpdpos);
-    /*std::cout<<"dpos0"<<std::endl;
-    for(int i=0;i<size;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            std::cout<<dpos[i][j]<<' ';
-        }
-        std::cout<<std::endl;
-    }*/
+    std::vector<double> tmpdpos = DotInMAndV1(V, a);
+    dpos = ReshapeVToM(tmpdpos);
     for(int i = 0; i < size; i++)
     {
         double k = 0;
@@ -194,9 +153,9 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
         }
         steplength[i] = sqrt(k);
     }
-    pos0 = this->ReshapeMToV(pos);
-    pos_taud0=this->ReshapeMToV(pos_taud);
-    force0 = this->ReshapeMToV(force);
+    pos0 = ReshapeMToV(pos);
+    pos_taud0=ReshapeMToV(pos_taud);
+    force0 = ReshapeMToV(force);
 }
 
 void BFGS::Update(std::vector<double>& pos, 
@@ -210,8 +169,8 @@ void BFGS::Update(std::vector<double>& pos,
         return;
     }
     //std::vector<double> dpos=this->VSubV(pos,pos0);
-    auto term=this->ReshapeMToV(pos_taud);
-    std::vector<double> dpos = this->VSubV(term, pos_taud0);
+    std::vector<double> term=ReshapeMToV(pos_taud);
+    std::vector<double> dpos = VSubV(term, pos_taud0);
     for(int i=0;i<3*size;i++)
     {
         double shortest_move = dpos[i];
@@ -258,56 +217,28 @@ void BFGS::Update(std::vector<double>& pos,
             dpos[iat * 3 + 2] = move_ion_dr.z ;
         }
     }
-    /*std::cout<<"Printpos"<<std::endl;
-    for(int i=0;i<3*size;i++)
-    {
-        std::cout<<pos[i]<<' ';
-    }
-    std::cout<<std::endl;
-    std::cout<<"Printpos0"<<std::endl;
-    for(int i=0;i<3*size;i++)
-    {
-        std::cout<<pos0[i]<<' ';
-    }
-    std::cout<<std::endl;*/
-    /*std::cout<<"PrintDpos"<<std::endl;
-    for(int i=0;i<3*size;i++)
-    {
-        std::cout<<dpos[i]<<' ';
-    }
-    std::cout<<std::endl;*/
     if(*max_element(dpos.begin(), dpos.end()) < 1e-7)
     {
         return;
-    }
-    
-    std::vector<double> dforce = this->VSubV(force, force0);
-    double a = this->DotInVAndV(dpos, dforce);
-    std::vector<double> dg = this->DotInMAndV1(H, dpos);
-    double b = this->DotInVAndV(dpos, dg);
-    
-    /*std::cout<<"a"<<std::endl;
-    std::cout<<a<<std::endl;
-    std::cout<<"b"<<std::endl;
-    std::cout<<b<<std::endl;*/
-    auto term1=this->OuterVAndV(dforce, dforce);
-    auto term2=this->OuterVAndV(dg, dg);
-    auto term3=this->MPlus(term1, a);
-    auto term4=this->MPlus(term2, b);
-    H = this->MSubM(H, term3);
-    H = this->MSubM(H, term4);
+    } 
+    std::vector<double> dforce = VSubV(force, force0);
+    double a = DotInVAndV(dpos, dforce);
+    std::vector<double> dg = DotInMAndV1(H, dpos);
+    double b = DotInVAndV(dpos, dg);
+    std::vector<std::vector<double>> term1=OuterVAndV(dforce, dforce);
+    std::vector<std::vector<double>> term2=OuterVAndV(dg, dg);
+    std::vector<std::vector<double>> term3=MPlus(term1, a);
+    std::vector<std::vector<double>> term4=MPlus(term2, b);
+    H = MSubM(H, term3);
+    H = MSubM(H, term4);
 }
 
 void BFGS::DetermineStep(std::vector<double>& steplength,
                          std::vector<std::vector<double>>& dpos,
                          double& maxstep)
 {
-    auto maxsteplength = max_element(steplength.begin(), steplength.end());
+    std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
-    /*std::cout<<"maxstep"<<std::endl;
-    std::cout<<maxstep<<std::endl;
-    std::cout<<"maxsteplength"<<std::endl;
-    std::cout<<a<<std::endl;*/
     if(a >= maxstep)
     {
         double scale = maxstep / a;
@@ -332,8 +263,6 @@ void BFGS::UpdatePos(UnitCell& ucell)
             a[i*3+j]/=ModuleBase::BOHR_TO_A;
         }
     }
-    std::cout<<std::endl;
-    int k=0;
     unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);
@@ -417,127 +346,4 @@ void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell
                   << std::endl;
     }
 
-}
-// matrix methods
-
-std::vector<double> BFGS::ReshapeMToV(std::vector<std::vector<double>>& matrix) 
-{
-    int size = matrix.size();
-    std::vector<double> result;
-    result.reserve(3*size);
-    for (const auto& row : matrix) {
-        result.insert(result.end(), row.begin(), row.end());
-    }
-    return result;
-}
-
-std::vector<std::vector<double>> BFGS::MAddM(std::vector<std::vector<double>>& a, 
-                                             std::vector<std::vector<double>>& b) 
-{
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
-    {
-        for(int j = 0; j < a[0].size(); j++)
-        {
-            result[i][j] = a[i][j] + b[i][j];
-        }
-    }
-    return result;
-}
-
-std::vector<double> BFGS::VSubV(std::vector<double>& a, std::vector<double>& b) 
-{
-    std::vector<double> result = std::vector<double>(a.size(), 0.0);
-    for(int i = 0; i < a.size(); i++)
-    {
-        result[i] = a[i] - b[i];
-    }
-    return result;
-}
-
-std::vector<std::vector<double>> BFGS::ReshapeVToM(std::vector<double>& matrix) 
-{
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(matrix.size() / 3, std::vector<double>(3));
-    for(int i = 0; i < result.size(); i++)
-    {
-        for(int j = 0; j < 3; j++)
-        {
-            result[i][j] = matrix[i*3 + j];
-        }
-    }
-    return result;
-}
-
-std::vector<double> BFGS::DotInMAndV1(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
-{
-    std::vector<double> result(matrix.size(), 0.0);
-    for(int i = 0; i < result.size(); i++)
-    {
-        for(int j = 0; j < vec.size(); j++)
-        {
-            result[i] += matrix[i][j] * vec[j];
-        }
-    }
-    return result;
-}
-std::vector<double> BFGS::DotInMAndV2(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
-{
-    std::vector<double> result(matrix.size(), 0.0);
-    for(int i = 0; i < result.size(); i++)
-    {
-        for(int j = 0; j < vec.size(); j++)
-        {
-            result[i] += matrix[j][i] * vec[j];
-        }
-    }
-    return result;
-}
-
-double BFGS::DotInVAndV(std::vector<double>& vec1, std::vector<double>& vec2) 
-{
-    double result = 0.0;
-    for(int i = 0; i < vec1.size(); i++)
-    {
-        result += vec1[i] * vec2[i];
-    }
-    return result;
-}
-
-std::vector<std::vector<double>> BFGS::OuterVAndV(std::vector<double>& a, std::vector<double>& b) 
-{
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(b.size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
-    {
-        for(int j = 0; j < b.size(); j++)
-        {
-            result[i][j] = a[i] * b[j];
-        }
-    }
-    return result;
-}
-
-std::vector<std::vector<double>> BFGS::MPlus(std::vector<std::vector<double>>& a, double& b)
-{
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
-    {
-        for(int j = 0; j < a[0].size(); j++)
-        {
-            result[i][j] = a[i][j] / b;
-        }
-    }
-    return result;
-}
-
-std::vector<std::vector<double>> BFGS::MSubM(std::vector<std::vector<double>>& a, std::vector<std::vector<double>>& b)
-{
-    std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
-    for(int i = 0; i < a.size(); i++)
-    {
-        for(int j = 0; j < a[0].size(); j++)
-        {
-            result[i][j] = a[i][j] - b[i][j];
-        }
-    }
-    return result;
 }
