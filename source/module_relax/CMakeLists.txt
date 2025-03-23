@@ -8,6 +8,7 @@ add_library(
     relax_new/line_search.cpp
     
     relax_old/bfgs.cpp
+    relax_old/lbfgs.cpp
     relax_old/relax_old.cpp
     relax_old/bfgs_basic.cpp
     relax_old/ions_move_basic.cpp
@@ -18,6 +19,7 @@ add_library(
     relax_old/lattice_change_basic.cpp
     relax_old/lattice_change_cg.cpp
     relax_old/lattice_change_methods.cpp
+    relax_old/matrix_methods.cpp
 )
 
 if(ENABLE_COVERAGE)
