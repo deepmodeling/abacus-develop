@@ -200,12 +200,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
     {
         vec_rightf_all.resize(allbands_ks);
         rightf_all = vec_rightf_all.data();
-        Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(rightfact,
-                                                                   perbands_ks,
-                                                                   rightf_all,
-                                                                   ks_fact->nrecv,
-                                                                   ks_fact->displs,
-                                                                   BP_WORLD);
+        Parallel_Common::gatherv_data(rightfact, perbands_ks, rightf_all, ks_fact->nrecv, ks_fact->displs, BP_WORLD);
     }
 #endif
 
@@ -747,10 +742,7 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
         {
             for (int ib = 0; ib < perbands_ks; ++ib)
             {
-                for (int ig = 0; ig < npw; ++ig)
-                {
-                    kspsi(0, ib, ig) = this->p_psi[0](ib0_ks + ib, ig);
-                }
+                cpymem_complex_op()(&kspsi(0, ib, 0), &this->p_psi[0](ib0_ks + ib, 0), npw);
                 FPTYPE fi = this->stofunc.fd(FPTYPE(en[ib]));
                 expmtmf_fact[ib] = 1 - fi;
                 expmtf_fact[ib] = fi;

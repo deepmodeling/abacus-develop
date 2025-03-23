@@ -20,6 +20,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     using delmem_lcomplex_op = base_device::memory::delete_memory_op<std::complex<lowTYPE>, Device>;
     using cpymem_lcomplex_op = base_device::memory::synchronize_memory_op<std::complex<lowTYPE>, Device, Device>;
     using castmem_lcomplex_op = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
+    using cpymem_complex_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
   public:
     Sto_EleCond(UnitCell* p_ucell_in,
                 K_Vectors* p_kv_in,

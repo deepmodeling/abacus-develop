@@ -17,7 +17,7 @@
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
-    this->use_gpu_ = (this->use_gpu_);
+    this->use_gpu_ = (PARAM.inp.device == "gpu");
 }
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()

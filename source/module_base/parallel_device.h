@@ -165,7 +165,7 @@ void gatherv_dev(const T* sendbuf,
     T* sendbuf_cpu = o1.get(sendbuf, sendcount, tmp_sspace);
     T* recvbuf_cpu = o2.get(recvbuf, gather_space, tmp_rspace);
     o1.sync_d2h(sendbuf_cpu, sendbuf, sendcount);
-    gatherv_data(sendbuf_cpu, sendcount, recvbuf, recvcounts, displs, comm);
+    gatherv_data(sendbuf_cpu, sendcount, recvbuf_cpu, recvcounts, displs, comm);
     o2.sync_h2d(recvbuf, recvbuf_cpu, gather_space);
     o1.del(sendbuf_cpu);
     o2.del(recvbuf_cpu);
