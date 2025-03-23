@@ -328,7 +328,7 @@ export intel_classic="no"
 # and will lead to problem in force calculation
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
-# JamesMisaka by 2023.08
+# QuantumMisaka by 2023.08
 export intelmpi_classic="no"
 export with_ifx="yes" # whether ifx is used in oneapi
 export with_flang="no" # whether flang is used in aocc
@@ -397,7 +397,7 @@ while [ $# -ge 1 ]; do
           eval with_${ii}="__INSTALL__"
         fi
       done
-      # I'd like to use OpenMPI as default -- zhaoqing liu in 2023.09.17
+      # I'd like to use OpenMPI as default -- QuantumMisaka in 2023.09.17
       export MPI_MODE="openmpi"
       ;;
     --mpi-mode=*)
@@ -448,16 +448,7 @@ while [ $# -ge 1 ]; do
       ;;
     --gpu-ver=*)
       user_input="${1#*=}"
-      case "${user_input}" in
-        K20X | K40 | K80 | P100 | V100 | A100 | Mi50 | Mi100 | Mi250 | no)
-          export GPUVER="${user_input}"
-          ;;
-        *)
-          report_error ${LINENO} \
-            "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, Mi50, Mi100, Mi250, and no as options"
-          exit 1
-          ;;
-      esac
+      export GPUVER="${user_input}"
       ;;
     --target-cpu=*)
       user_input="${1#*=}"
@@ -684,7 +675,7 @@ else
   esac
 fi
 # If MATH_MODE is mkl ,then openblas, scalapack and fftw is not needed
-# zhaoqing in 2023-09-17
+# QuantumMisaka in 2023-09-17
 if [ "${MATH_MODE}" = "mkl" ]; then
   if [ "${with_openblas}" != "__DONTUSE__" ]; then
     echo "Using MKL, so openblas is disabled."
@@ -700,6 +691,17 @@ if [ "${MATH_MODE}" = "mkl" ]; then
   fi
 fi
 
+# Select the correct compute number based on the GPU architecture
+# QuantumMisaka in 2025-03-19
+export ARCH_NUM="${GPUVER//.}"
+if [[ "$ARCH_NUM" =~ ^[1-9][0-9]*$ ]] || [ $ARCH_NUM = "no" ]; then
+    echo "Notice: GPU compilation is enabled, and GPU compatibility is set via --gpu-ver to sm_${ARCH_NUM}."
+else
+    report_error ${LINENO} \
+        "When GPU compilation is enabled, the --gpu-ver variable should be properly set regarding to GPU compatibility. For check your GPU compatibility, visit https://developer.nvidia.com/cuda-gpus. For example: A100 -> 8.0 (or 80), V100 -> 7.0 (or 70), 4090 -> 8.9 (or 89)"
+    exit 1
+fi
+
 # If CUDA or HIP are enabled, make sure the GPU version has been defined.
 if [ "${ENABLE_CUDA}" = "__TRUE__" ] || [ "${ENABLE_HIP}" = "__TRUE__" ]; then
   if [ "${GPUVER}" = "no" ]; then
@@ -708,9 +710,10 @@ if [ "${ENABLE_CUDA}" = "__TRUE__" ] || [ "${ENABLE_HIP}" = "__TRUE__" ]; then
   fi
 fi
 
-# several packages require cmake.
-if [ "${with_scalapack}" = "__INSTALL__" ]; then
-  [ "${with_cmake}" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
+# ABACUS itself and some dependencies require cmake.
+if [ "${with_cmake}" = "__DONTUSE__" ]; then
+  report_error "CMake is required for ABACUS and some dependencies. Please enable it."
+  exit 1
 fi
 
 
@@ -815,45 +818,6 @@ fi
 # ------------------------------------------------------------------------
 
 echo "Compiling with $(get_nprocs) processes for target ${TARGET_CPU}."
-
-# Select the correct compute number based on the GPU architecture
-case ${GPUVER} in
-  K20X)
-    export ARCH_NUM="35"
-    ;;
-  K40)
-    export ARCH_NUM="35"
-    ;;
-  K80)
-    export ARCH_NUM="37"
-    ;;
-  P100)
-    export ARCH_NUM="60"
-    ;;
-  V100)
-    export ARCH_NUM="70"
-    ;;
-  A100)
-    export ARCH_NUM="80"
-    ;;
-  Mi50)
-    # TODO: export ARCH_NUM=
-    ;;
-  Mi100)
-    # TODO: export ARCH_NUM=
-    ;;
-  Mi250)
-    # TODO: export ARCH_NUM=
-    ;;
-  no)
-    export ARCH_NUM="no"
-    ;;
-  *)
-    report_error ${LINENO} \
-      "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, Mi50, Mi100, Mi250, and no as options"
-    exit 1
-    ;;
-esac
 
 write_toolchain_env ${INSTALLDIR}
 
