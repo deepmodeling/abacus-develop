@@ -188,7 +188,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     {
         const T *psi_nk = tmpsi_in + n_iband * nbasis;
         // retrieve \psi_nk in real space
-        wfcpw->recip_to_real<T,Device>( psi_nk, psi_nk_real, this->ik);
+        wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
 
         // for \psi_nk, get the pw of iq and band m
         auto q_points = get_q_points(this->ik);
@@ -208,7 +208,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 // if (has_real.find({iq, m_iband}) == has_real.end())
                 // {
                     const T* psi_mq = get_pw(m_iband, iq);
-                    wfcpw->recip_to_real<T,Device>( psi_mq, psi_mq_real, iq);
+                    wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
                 //     syncmem_complex_op()(this->ctx, this->ctx, psi_all_real + m_iband * wfcpw->nrxx, psi_mq_real, wfcpw->nrxx);
                 //     has_real[{iq, m_iband}] = true;
                 // }
@@ -271,7 +271,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         } // end of iq
         auto h_psi_nk = tmhpsi + n_iband * nbasis;
         Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip<T,Device>(h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw->nrxx);
         
     }
@@ -810,7 +810,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             psi.fix_kb(ik, n_iband);
             const T* psi_nk = psi.get_pointer();
             // retrieve \psi_nk in real space
-            wfcpw->recip_to_real<T,Device>( psi_nk, psi_nk_real, ik);
+            wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, ik);
 
             // for \psi_nk, get the pw of iq and band m
             // q_points is a vector of integers, 0 to nks-1
@@ -839,7 +839,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                     psi_.fix_kb(iq, m_iband);
                     const T* psi_mq = psi_.get_pointer();
                     // const T* psi_mq = get_pw(m_iband, iq);
-                    wfcpw->recip_to_real<T,Device>(psi_mq, psi_mq_real, iq);
+                    wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
 
                     T omega_inv = 1.0 / ucell->omega;
 

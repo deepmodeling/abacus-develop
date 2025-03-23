@@ -197,7 +197,7 @@ void ML_data::getF_KS1(
                 continue;
             }
 
-            pw_psi->recip_to_real<T,Device>( &psi->operator()(ibnd,0), wfcr, ik);
+            pw_psi->recip_to_real(ctx, &psi->operator()(ibnd,0), wfcr, ik);
             const double w1 = pelec->wg(ik, ibnd) / ucell.omega;
             
             // output one wf, to check KS equation
@@ -308,7 +308,7 @@ void ML_data::getF_KS2(
                 continue;
             }
 
-            pw_psi->recip_to_real<T,Device>( &psi->operator()(ibnd,0), wfcr, ik);
+            pw_psi->recip_to_real(ctx, &psi->operator()(ibnd,0), wfcr, ik);
             const double w1 = pelec->wg(ik, ibnd) / ucell.omega;
 
             if (pelec->ekb(ik,ibnd) > epsilonM)

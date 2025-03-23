@@ -96,7 +96,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                           << ik % (nks / nspin) + 1 << ", spin " << spin_index + 1 << std::endl;
 
                 psi->fix_k(ik);
-                pw_wfc->recip_to_real<std::complex<double>,Device>(&psi[0](ib, 0), wfcr.data(), ik);
+                pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr.data(), ik);
 
                 // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
                 double wg_sum_k = 0;
@@ -139,7 +139,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                           << ik % (nks / nspin) + 1 << ", spin " << spin_index + 1 << std::endl;
 
                 psi->fix_k(ik);
-                pw_wfc->recip_to_real<std::complex<double>,Device>( &psi[0](ib, 0), wfcr.data(), ik);
+                pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr.data(), ik);
 
                 double w1 = static_cast<double>(wk[ik] / ucell->omega);
 

@@ -76,26 +76,26 @@ TEST_F(PWTEST,test_other)
         }  
 #endif
 
-        pwktest.recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(rhog1, rhor1, ik);
+        pwktest.recip_to_real(ctx, rhog1, rhor1, ik);
         pwktest.recip2real(rhog2, rhor2, ik);
         for(int ir = 0 ; ir < nrxx; ++ir)
         {
             EXPECT_NEAR(std::abs(rhor1[ir]),std::abs(rhor2[ir]),1e-8);
         }
-        pwktest.real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(rhor1, rhog1, ik);
+        pwktest.real_to_recip(ctx, rhor1, rhog1, ik);
         pwktest.real2recip(rhor2, rhog2, ik);
         for(int ig = 0 ; ig < npwk; ++ig)
         {
             EXPECT_NEAR(std::abs(rhog1[ig]),std::abs(rhog2[ig]),1e-8);
         }
 #ifdef __ENABLE_FLOAT_FFTW
-        pwktest.recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(rhofg1, rhofr1, ik);
+        pwktest.recip_to_real(ctx, rhofg1, rhofr1, ik);
         pwktest.recip2real(rhofg2, rhofr2, ik);
         for(int ir = 0 ; ir < nrxx; ++ir)
         {
             EXPECT_NEAR(std::abs(rhofr1[ir]),std::abs(rhofr2[ir]),1e-6);
         }
-        pwktest.real_to_recip<std::complex<float>,base_device::DEVICE_CPU>(rhofr1, rhofg1, ik);
+        pwktest.real_to_recip(ctx, rhofr1, rhofg1, ik);
         pwktest.real2recip(rhofr2, rhofg2, ik);
         for(int ig = 0 ; ig < npwk; ++ig)
         {
