@@ -78,8 +78,7 @@ namespace ModulePW
 
 
     template <typename FPTYPE, typename Device>
-    void PW_Basis_K::real_to_recip(const Device* ctx,
-                       const std::complex<FPTYPE>* in,
+    void PW_Basis_K::real_to_recip(const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
                        const int ik,
                        const bool add,
@@ -91,8 +90,7 @@ namespace ModulePW
         }
     }
     template <typename FPTYPE, typename Device>
-    void PW_Basis_K::recip_to_real(const Device* ctx,
-                       const std::complex<FPTYPE>* in,
+    void PW_Basis_K::recip_to_real(const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
                        const int ik,
                        const bool add,
@@ -104,28 +102,24 @@ namespace ModulePW
         }
     }
 
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
-                                                                             const std::complex<double>* in,
+    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(const std::complex<double>* in,
                                                                              std::complex<double>* out,
                                                                              const int ik,
                                                                              const bool add,
                                                                              const double factor) const;
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
-                                                                             const std::complex<double>* in,
+    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(const std::complex<double>* in,
                                                                              std::complex<double>* out,
                                                                              const int ik,
                                                                              const bool add,
                                                                              const double factor) const;
 #if __CUDA || __ROCM
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
-                                                                             const std::complex<double>* in,
+    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_GPU>(const std::complex<double>* in,
                                                                              std::complex<double>* out,
                                                                              const int ik,
                                                                              const bool add,
                                                                              const double factor) const;
 
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
-                                                                             const std::complex<double>* in,
+    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_GPU>(const std::complex<double>* in,
                                                                              std::complex<double>* out,
                                                                              const int ik,
                                                                              const bool add,

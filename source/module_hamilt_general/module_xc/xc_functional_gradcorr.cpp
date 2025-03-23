@@ -644,8 +644,7 @@ void XC_Functional::grad_wfc(
 			rhog, porter.data<T>());    // Array of std::complex<double>
 
 		// bring the gdr from G --> R
-		Device * ctx = nullptr;
-		wfc_basis->recip_to_real(ctx, porter.data<T>(), porter.data<T>(), ik);
+		wfc_basis->recip_to_real<T,Device>(porter.data<T>(), porter.data<T>(), ik);
 
 		xc_functional_grad_wfc_solver(
             ipol, wfc_basis->nrxx,	// Integers
