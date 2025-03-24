@@ -104,7 +104,7 @@ if(USE_ROCM)
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/wf_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/vnl_op.hip.cu
     module_base/kernels/rocm/math_kernel_op.hip.cu
-    module_base/kernels/rocm/math_kernel_op.hip_vec.cu
+    module_base/kernels/rocm/math_kernel_op_vec.hip.cu
     module_base/kernels/rocm/math_ylm_op.hip.cu
     module_hamilt_general/module_xc/kernels/rocm/xc_functional_op.hip.cu
   )

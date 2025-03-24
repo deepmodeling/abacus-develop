@@ -33,5 +33,5 @@
 --with-4th-openmpi=no \
 --with-flang=no \
 | tee compile.log
-# if you want to use openmpi-version4: set --with-4th-openmpi=yes
+# to use openmpi-version4: set --with-4th-openmpi=yes
 # flang is not recommended to use in this stage
