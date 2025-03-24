@@ -352,10 +352,7 @@ public:
     void recip_to_real(TK* in,
                        TR* out,
                        const bool add = false,
-                       const typename GetTypeReal<TK>::type factor = 1.0) const
-    {
-        this->recip2real_gpu(in, out, add, factor);
-    };
+                       const typename GetTypeReal<TK>::type factor = 1.0) const;
 
     // template <typename FPTYPE,
     //         typename Device,
