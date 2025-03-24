@@ -36,7 +36,7 @@ class HSolverPW
               const int diag_iter_max_in,
               const double diag_thr_in,
               const bool need_subspace_in,
-              const bool use_k_continuity_in = true)
+              const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
           use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
