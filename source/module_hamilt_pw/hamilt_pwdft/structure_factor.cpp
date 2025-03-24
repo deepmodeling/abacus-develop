@@ -25,22 +25,20 @@ Structure_Factor::Structure_Factor()
 
 Structure_Factor::~Structure_Factor()
 {
-    if (device == "gpu") {
-        if (PARAM.inp.precision == "single") {
-            delmem_cd_op()(this->c_eigts1);
-            delmem_cd_op()(this->c_eigts2);
-            delmem_cd_op()(this->c_eigts3);
-        }
+    if (device == "gpu")
+    {
+        delmem_cd_op()(this->c_eigts1);
+        delmem_cd_op()(this->c_eigts2);
+        delmem_cd_op()(this->c_eigts3);
         delmem_zd_op()(this->z_eigts1);
         delmem_zd_op()(this->z_eigts2);
         delmem_zd_op()(this->z_eigts3);
     }
-    else {
-        if (PARAM.inp.precision == "single") {
-            delmem_ch_op()(this->c_eigts1);
-            delmem_ch_op()(this->c_eigts2);
-            delmem_ch_op()(this->c_eigts3);
-        }
+    else
+    {
+        delmem_ch_op()(this->c_eigts1);
+        delmem_ch_op()(this->c_eigts2);
+        delmem_ch_op()(this->c_eigts3);
         // There's no need to delete double precision pointers while in a CPU environment.
     }
 }
@@ -150,7 +148,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
         }
     }
     if (device == "gpu") {
-        if (PARAM.inp.precision == "single") {
+        if (PARAM.globalv.has_float_data) {
             resmem_cd_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_cd_op()(this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
@@ -166,7 +164,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
         syncmem_z2z_h2d_op()(this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
-        if (PARAM.inp.precision == "single") {
+        if (PARAM.globalv.has_float_data) {
             resmem_ch_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_ch_op()(this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_ch_op()(this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));

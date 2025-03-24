@@ -145,7 +145,7 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
 
-    if (PARAM.inp.exxace)
+    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
     {
         act_op_ace(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
@@ -722,7 +722,7 @@ void OperatorEXXPW<T, Device>::exx_divergence()
 template <typename T, typename Device>
 double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
 {
-    if (PARAM.inp.exxace)
+    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
     {
         return cal_exx_energy_ace(psi_);
     }

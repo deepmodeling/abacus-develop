@@ -141,7 +141,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using resmem_real_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
     using gemm_complex_op = ModuleBase::gemm_op<T, Device>;
-    using vec_add_vec_complex_op = ModuleBase::constantvector_addORsub_constantVector_op<T, Device>;
+    using vec_add_vec_complex_op = ModuleBase::vector_add_vector_op<T, Device>;
     using dot_op = ModuleBase::dot_real_op<T, Device>;
 };
 

@@ -47,24 +47,17 @@ void FFT_Bundle::initfft(int nx_in,
     assert(this->device == "cpu" || this->device == "gpu" || this->device == "dsp");
     assert(this->precision == "single" || this->precision == "double" || this->precision == "mixing");
 
-    if (this->precision == "single")
+    if (this->precision == "single" || this->precision == "mixing")
     {
+        float_flag = true;
 #if not defined(__ENABLE_FLOAT_FFTW)
         if (this->device == "cpu")
         {
-            float_define = false;
+            ModuleBase::WARNING_QUIT("FFT_Bundle", "Please enable float fftw in the cmake to use float fft");
         }
 #endif
-#if defined(__CUDA) || defined(__ROCM)
-        if (this->device == "gpu")
-        {
-            float_flag = float_define;
-        }
-#endif
-        float_flag = float_define;
-        double_flag = true;
     }
-    if (this->precision == "double")
+    if (this->precision == "double" || this->precision == "mixing")
     {
         double_flag = true;
     }

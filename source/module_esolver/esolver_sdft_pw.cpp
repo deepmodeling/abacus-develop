@@ -262,17 +262,6 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-}
-
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners(UnitCell& ucell)
-{
-
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
 
     if (this->method_sto == 2)
     {
@@ -280,7 +269,18 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_r
     }
     if (PARAM.inp.out_dos)
     {
-        Sto_DOS sto_dos(this->pw_wfc, &this->kv, this->pelec, this->psi, this->p_hamilt, this->stoche, &stowf);
+        if(!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_SDFT_PW", "DOS does not support complex float or GPU yet.");
+        }
+        Sto_DOS<Real, Device> sto_dos(
+            this->pw_wfc,
+            &this->kv,
+            this->pelec,
+            reinterpret_cast<psi::Psi<std::complex<double>>*>(this->psi),
+            reinterpret_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+            this->stoche,
+            reinterpret_cast<Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>*>(&stowf));
         sto_dos.decide_param(PARAM.inp.dos_nche,
                              PARAM.inp.emin_sto,
                              PARAM.inp.emax_sto,
@@ -295,15 +295,15 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_r
     // sKG cost memory, and it should be placed at the end of the program
     if (PARAM.inp.cal_cond)
     {
-        Sto_EleCond sto_elecond(&ucell,
-                                &this->kv,
-                                this->pelec,
-                                this->pw_wfc,
-                                this->psi,
-                                &this->ppcell,
-                                this->p_hamilt,
-                                this->stoche,
-                                &stowf);
+        Sto_EleCond<Real, Device> sto_elecond(&ucell,
+                                              &this->kv,
+                                              this->pelec,
+                                              this->pw_wfc,
+                                              this->kspw_psi,
+                                              &this->ppcell,
+                                              this->p_hamilt,
+                                              this->stoche,
+                                              &stowf);
         sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
         sto_elecond.sKG(PARAM.inp.cond_smear,
                         PARAM.inp.cond_fwhm,
