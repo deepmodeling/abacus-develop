@@ -30,4 +30,4 @@
 --with-libcomm=no \
 --with-intel-classic=no \
 | tee compile.log
-# if you are using AMD server: set --with-intel-classic=yes
+# for using AMD-CPU or GPU-version: set --with-intel-classic=yes

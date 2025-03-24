@@ -134,7 +134,7 @@ template <typename T, typename Device> struct axpy_op {
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T, typename Device>
-struct constantvector_addORsub_constantVector_op {
+struct vector_add_vector_op {
   using Real = typename GetTypeReal<T>::type;
   /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
   ///
@@ -315,7 +315,7 @@ template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>
-struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU> {
+struct vector_add_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
   void operator()(const int &dim, T *result,
                   const T *vector1, const Real constant1, const T *vector2,

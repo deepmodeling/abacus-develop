@@ -29,7 +29,7 @@ struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
     }
 };
 
-// template struct hpsi_norm_op<float, base_device::DEVICE_CPU>;
+template struct hpsi_norm_op<float, base_device::DEVICE_CPU>;
 template struct hpsi_norm_op<double, base_device::DEVICE_CPU>;
 
 } // namespace hamilt

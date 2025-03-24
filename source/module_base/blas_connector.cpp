@@ -820,7 +820,7 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
 	}
 	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
-		ModuleBase::constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+		ModuleBase::vector_add_vector_op<float, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
 #endif
 	}
 }
@@ -838,7 +838,7 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
 	}
 	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
-		ModuleBase::constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+		ModuleBase::vector_add_vector_op<double, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
 #endif
 	}
 }
@@ -856,7 +856,7 @@ void vector_add_vector(const int& dim, std::complex<float> *result, const std::c
 	}
 	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
-		ModuleBase::constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+		ModuleBase::vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
 #endif
 	}
 }
@@ -874,7 +874,7 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
 	}
 	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
-		ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+		ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
 #endif
 	}
 }

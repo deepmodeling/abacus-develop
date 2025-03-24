@@ -75,8 +75,8 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using vector_mul_real_op_cpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using constantvector_addORsub_constantVector_op_cpu
-        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_add_vector_op_cpu
+        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using axpy_op_cpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
     using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
     using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -84,8 +84,8 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using vector_mul_real_op_gpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using constantvector_addORsub_constantVector_op_gpu
-        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_add_vector_op_gpu
+        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using axpy_op_gpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
     using scal_op_gpu = ModuleBase::scal_op<double, base_device::DEVICE_GPU>;
     using gemv_op_gpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -174,12 +174,12 @@ class TestModuleHsolverMathKernel : public ::testing::Test
                                                                            {2.05256102, -1.39373474},
                                                                            {-0.10166335, -0.49934031}};
 
-    // (3) for test constantvector_addORsub_constantVector_op
+    // (3) for test vector_add_vector_op
     const double constant1 = 6.6;
     const double constant2 = 4.4;
     const std::vector<std::complex<double>> input1 = L;
     const std::vector<std::complex<double>> input2 = R;
-    const std::vector<std::complex<double>> output_constantvector_addORsub_constantVector_op
+    const std::vector<std::complex<double>> output_vector_add_vector_op
         = {{-5.05571797, -5.64586374},
            {-14.76279273, 4.05181248},
            {21.81709620, -17.11884992},
@@ -294,10 +294,10 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_vector_op_cpu)
     }
 }
 
-TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_cpu)
+TEST_F(TestModuleHsolverMathKernel, vector_add_vector_op_cpu)
 {
     std::vector<std::complex<double>> output(input.size());
-    constantvector_addORsub_constantVector_op_cpu()(dim,
+    vector_add_vector_op_cpu()(dim,
                                                     output.data(),
                                                     input1.data(),
                                                     constant1,
@@ -305,8 +305,8 @@ TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_cp
                                                     constant2);
     for (int i = 0; i < input.size(); i++)
     {
-        EXPECT_LT(fabs(output[i].imag() - output_constantvector_addORsub_constantVector_op[i].imag()), 1e-8);
-        EXPECT_LT(fabs(output[i].real() - output_constantvector_addORsub_constantVector_op[i].real()), 1e-8);
+        EXPECT_LT(fabs(output[i].imag() - output_vector_add_vector_op[i].imag()), 1e-8);
+        EXPECT_LT(fabs(output[i].real() - output_vector_add_vector_op[i].real()), 1e-8);
     }
 }
 
@@ -478,7 +478,7 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_vector_op_gpu)
     delete_memory_op()(output_dev);
 }
 
-TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_gpu)
+TEST_F(TestModuleHsolverMathKernel, vector_add_vector_op_gpu)
 {
     // in CPU
     std::vector<std::complex<double>> output(input.size());
@@ -498,7 +498,7 @@ TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_gp
     synchronize_memory_op()(input2_dev, input2.data(), input.size());
 
     // run
-    constantvector_addORsub_constantVector_op_gpu()(dim,
+    vector_add_vector_op_gpu()(dim,
                                                     output_dev,
                                                     input1_dev,
                                                     constant1,
@@ -510,8 +510,8 @@ TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_gp
 
     for (int i = 0; i < input.size(); i++)
     {
-        EXPECT_LT(fabs(output[i].imag() - output_constantvector_addORsub_constantVector_op[i].imag()), 1e-8);
-        EXPECT_LT(fabs(output[i].real() - output_constantvector_addORsub_constantVector_op[i].real()), 1e-8);
+        EXPECT_LT(fabs(output[i].imag() - output_vector_add_vector_op[i].imag()), 1e-8);
+        EXPECT_LT(fabs(output[i].real() - output_vector_add_vector_op[i].real()), 1e-8);
     }
 
     delete_memory_op()(input1_dev);

@@ -4,6 +4,8 @@
 #include "ions_move_methods.h"
 #include "lattice_change_methods.h"
 #include "module_cell/unitcell.h"
+#include "module_esolver/esolver.h"
+#include "module_esolver/esolver_ks.h"
 
 class Relax_old
 {
@@ -15,7 +17,8 @@ class Relax_old
                     ModuleBase::matrix force,
                     ModuleBase::matrix stress,
                     int& force_step,
-                    int& stress_step);
+                    int& stress_step,
+                    ModuleESolver::ESolver* p_esolver);
 
   private:
     Ions_Move_Methods IMM;
@@ -28,7 +31,8 @@ class Relax_old
                   const ModuleBase::matrix& ionic_force,
                   const double& total_energy,
                   UnitCell& ucell,
-                  int& jstep);
+                  int& jstep,
+                  ModuleESolver::ESolver* p_esolver);
     bool do_cellrelax(const int& istep,
                       const int& stress_step,
                       const ModuleBase::matrix& stress,

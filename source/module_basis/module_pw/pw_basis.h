@@ -289,10 +289,11 @@ public:
     void set_precision(std::string precision_);
 
 protected:
-    std::string device = "cpu";
-    std::string precision = "double";
+  std::string device = "cpu";       ///< cpu or gpu
+  std::string precision = "double"; ///< single, double, mixing
+  bool double_data_ = true;         ///<  if has double data
+  bool float_data_ = false;         ///< if has float data
 };
-
 }
 #endif // PWBASIS_H
 

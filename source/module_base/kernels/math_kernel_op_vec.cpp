@@ -92,7 +92,7 @@ struct axpy_op<T, base_device::DEVICE_CPU>
 
 
 template <typename T>
-struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
+struct vector_add_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& dim,
@@ -167,9 +167,9 @@ template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct axpy_op<double, base_device::DEVICE_CPU>;
 
-template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<double, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
