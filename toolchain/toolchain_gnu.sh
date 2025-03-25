@@ -27,12 +27,11 @@
 --with-elpa=install \
 --with-cereal=install \
 --with-rapidjson=install \
---with-libtorch=install \
---with-libnpy=install \
---with-libri=install \
---with-libcomm=install \
+--with-libtorch=no \
+--with-libnpy=no \
+--with-libri=no \
+--with-libcomm=no \
 --with-4th-openmpi=no \
---pack-run \
 | tee compile.log
 # to use openmpi-version4: set --with-4th-openmpi=yes
 # to enable gpu-lcao, add the following lines:
