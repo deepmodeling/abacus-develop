@@ -43,7 +43,7 @@ case "$with_cereal" in
             echo "===> Notice: This version of CEREAL is downloaded in GitHub Release, which will always be out-of-date version <==="
             download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
         fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
         echo "Installing from scratch into ${pkg_install_dir}"

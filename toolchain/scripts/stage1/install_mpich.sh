@@ -47,7 +47,7 @@ case "${with_mpich}" in
         #download_pkg_from_ABACUS_org "${mpich_sha256}" "${mpich_pkg}"
         download_pkg_from_url "${mpich_sha256}" "${mpich_pkg}" "${url}"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       echo "Installing from scratch into ${pkg_install_dir} for MPICH device ${MPICH_DEVICE}"
@@ -76,7 +76,7 @@ case "${with_mpich}" in
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
     fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
         echo "--pack-run mode specified, skip system check"
     else
     check_dir "${pkg_install_dir}/bin"

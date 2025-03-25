@@ -44,7 +44,7 @@ case "$with_libcomm" in
             echo "===> Notice: This version of LibComm is downloaded in GitHub Release, which will always be out-of-date version <==="
             download_pkg_from_url "${libcomm_sha256}" "${filename}" "${url}"
         fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
         echo "Installing from scratch into ${pkg_install_dir}"

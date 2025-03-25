@@ -27,13 +27,13 @@ case "${with_aocl}" in
   __INSTALL__)
     echo "==================== Installing AOCL ===================="
     report_error ${LINENO} "To install AOCL, please contact your system administrator."
-    if [ "${pack_run}" != "__TRUE__" ]; then
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
         exit 1
     fi
     ;;
   __SYSTEM__)
     echo "==================== Finding AOCL from system paths ===================="
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
         echo "--pack-run mode specified, skip system check"
     else
         check_lib -lblis "AOCL"

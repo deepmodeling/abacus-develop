@@ -655,7 +655,7 @@ download_pkg_from_ABACUS_org() {
   if ! wget ${DOWNLOADER_FLAGS} $__url; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
-    if [ "${pack_run}" != "__TRUE__" ]; then
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
         return 1
     fi
   fi
@@ -675,7 +675,7 @@ download_pkg_from_url() {
   if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
-    if [ "${pack_run}" != "__TRUE__" ]; then
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
         return 1
     fi
   fi

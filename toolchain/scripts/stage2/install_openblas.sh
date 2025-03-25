@@ -41,7 +41,7 @@ case "${with_openblas}" in
       else
         download_pkg_from_ABACUS_org "${openblas_sha256}" "${openblas_pkg}"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       echo "Installing from scratch into ${pkg_install_dir}"

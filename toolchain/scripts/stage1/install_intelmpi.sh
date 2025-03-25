@@ -27,7 +27,7 @@ case "${with_intelmpi}" in
   __INSTALL__)
     echo "==================== Installing Intel MPI ===================="
     echo '__INSTALL__ is not supported; please manually install Intel MPI'
-    if [ "${pack_run}" != "__TRUE__" ]; then
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
         exit 1
     fi
     ;;
@@ -36,17 +36,17 @@ case "${with_intelmpi}" in
     check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
     if [ "${intel_classic}" = "yes" ]; then
     # if intel compiler used as classic, so as intelmpi
-        export intelmpi_classic="yes"
+        export INTELMPI_CLASSIC="yes"
     fi
     if [ "${with_intel}" != "__DONTUSE__" ]; then
-        if [ "${intelmpi_classic}" = "yes" ]; then
+        if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
             check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
             check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
             check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
         else
             check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicx))" || exit 1
             check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpx))" || exit 1
-            if [ "${with_ifx}" == "yes" ]; then
+            if [ "${WITH_IFX}" == "yes" ]; then
                 check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
             else
                 check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
@@ -75,14 +75,14 @@ case "${with_intelmpi}" in
     check_dir "${pkg_install_dir}/include"
     check_command ${pkg_install_dir}/bin/mpiexec "intel" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
     if [ "${with_intel}" != "__DONTUSE__" ]; then
-        if [ "${intelmpi_classic}" = "yes" ]; then
+        if [ "${INTELMPI_CLASSIC}" = "yes" ]; then
             check_command ${pkg_install_dir}/bin/mpiicc "intel" && MPICC="${pkg_install_dir}/bin/mpiicc" || exit 1
             check_command ${pkg_install_dir}/bin/mpiicpc "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpc" || exit 1
             check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
         else
             check_command ${pkg_install_dir}/bin/mpiicx "intel" && MPICC="${pkg_install_dir}/bin/mpiicx" || exit 1
             check_command ${pkg_install_dir}/bin/mpiicpx "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpx" || exit 1
-            if [ "${with_ifx}" = "yes" ]; then
+            if [ "${WITH_IFX}" = "yes" ]; then
                 check_command ${pkg_install_dir}/bin/mpiifx "intel" && MPIFC="${pkg_install_dir}/bin/mpiifx" || exit 1
             else
                 check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
@@ -107,7 +107,7 @@ if [ "${with_intelmpi}" != "__DONTUSE__" ]; then
   else
     I_MPI_CXX="icpx"
     I_MPI_CC="icx"
-    if [ "${with_ifx}" = "yes" ]; then
+    if [ "${WITH_IFX}" = "yes" ]; then
       I_MPI_FC="ifx"
     else
       I_MPI_FC="ifort"

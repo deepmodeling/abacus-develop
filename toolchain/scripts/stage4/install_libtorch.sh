@@ -53,7 +53,7 @@ case "${with_libtorch}" in
             url=https://download.pytorch.org/libtorch/cpu/${archive_file}
             download_pkg_from_url "${libtorch_sha256}" "${filename}" "${url}"
         fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
         echo "Installing from scratch into ${pkg_install_dir}"

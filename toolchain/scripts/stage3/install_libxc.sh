@@ -43,7 +43,7 @@ case "$with_libxc" in
         libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
         download_pkg_from_url  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       echo "Installing from scratch into ${pkg_install_dir}"

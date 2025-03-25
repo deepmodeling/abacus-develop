@@ -68,7 +68,7 @@ case "$with_elpa" in
       else
         download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       [ -d elpa-${elpa_ver} ] && rm -rf elpa-${elpa_ver}
@@ -109,7 +109,7 @@ case "$with_elpa" in
         echo "Installing from scratch into ${pkg_install_dir}/${TARGET}"
         mkdir -p "build_${TARGET}"
         cd "build_${TARGET}"
-        if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_flang}" = "yes" ] ; then
+        if [ "${with_amd}" != "__DONTUSE__" ] && [ "${WITH_FLANG}" = "yes" ] ; then
         echo "AMD fortran compiler detected, enable special option operation"
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \

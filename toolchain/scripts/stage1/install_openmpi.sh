@@ -10,7 +10,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-if [ "${openmpi_4th}" = "yes" ]; then
+if [ "${OPENMPI_4TH}" = "yes" ]; then
     openmpi_ver="4.1.6"
     openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 else
@@ -49,7 +49,7 @@ case "${with_openmpi}" in
       else
         download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       echo "Installing from scratch into ${pkg_install_dir}"
@@ -91,7 +91,7 @@ case "${with_openmpi}" in
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
     fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
         echo "--pack-run mode specified, skip system check"
     else
     check_dir "${pkg_install_dir}/bin"

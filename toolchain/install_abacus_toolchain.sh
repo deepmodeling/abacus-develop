@@ -330,11 +330,11 @@ export intel_classic="no"
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
 # QuantumMisaka by 2023.08
-export pack_run="__FALSE__"
-export intelmpi_classic="no"
-export with_ifx="yes" # whether ifx is used in oneapi
-export with_flang="no" # whether flang is used in aocc
-export openmpi_4th="no" # whether openmpi downgrade
+export PACK_RUN="__FALSE__"
+export INTELMPI_CLASSIC="no"
+export WITH_IFX="yes" # whether ifx is used in oneapi
+export WITH_FLANG="no" # whether flang is used in aocc
+export OPENMPI_4TH="no" # whether openmpi downgrade
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -464,7 +464,7 @@ while [ $# -ge 1 ]; do
       dry_run="__TRUE__"
       ;;
     --pack-run)
-      pack_run="__TRUE__"
+      PACK_RUN="__TRUE__"
       ;;
     --enable-tsan*)
       enable_tsan=$(read_enable $1)
@@ -519,7 +519,7 @@ while [ $# -ge 1 ]; do
       fi
       ;;
     --with-4th-openmpi*)
-      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
+      OPENMPI_4TH=$(read_with "${1}" "no") # default new openmpi
       ;;
     --with-openmpi*)
       with_openmpi=$(read_with "${1}")
@@ -537,19 +537,19 @@ while [ $# -ge 1 ]; do
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
     --with-intel-mpi-clas*)
-      intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
+      INTELMPI_CLASSIC=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
     --with-intel*)  # must be read after items above
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-ifx*)
-      with_ifx=$(read_with "${1}" "yes") # default yes
+      WITH_IFX=$(read_with "${1}" "yes") # default yes
       ;;
     --with-amd*)
       with_amd=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-flang*)
-      with_flang=$(read_with "${1}" "no")
+      WITH_FLANG=$(read_with "${1}" "no")
       ;;
     --with-aocl*)
       with_aocl=$(read_with "${1}" "__SYSTEM__")
@@ -840,7 +840,6 @@ if [ "${dry_run}" = "__TRUE__" ]; then
   echo "Wrote only configuration files (--dry-run)."
 else
   echo "# Leak suppressions" > ${INSTALLDIR}/lsan.supp
-  echo "pack_run: ${pack_run}"
   ./scripts/stage0/install_stage0.sh
   ./scripts/stage1/install_stage1.sh
   ./scripts/stage2/install_stage2.sh

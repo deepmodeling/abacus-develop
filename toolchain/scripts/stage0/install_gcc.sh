@@ -42,7 +42,7 @@ case "${with_gcc}" in
       else
         download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
       fi
-    if [ "${pack_run}" = "__TRUE__" ]; then
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
       [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
