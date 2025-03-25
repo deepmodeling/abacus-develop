@@ -1,3 +1,7 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
+
+#include <set>
 
 void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out)
 {

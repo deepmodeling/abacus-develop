@@ -1,3 +1,6 @@
+#include "symmetry.h"
+
+using namespace ModuleSymmetry;
 
 void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running)
 {

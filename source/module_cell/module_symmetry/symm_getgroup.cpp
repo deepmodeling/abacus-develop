@@ -1,3 +1,6 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
+
 void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, 
 		const int& nop, const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, 
 		ModuleBase::Vector3<double>* gtrans, double* pos, double* rotpos, 

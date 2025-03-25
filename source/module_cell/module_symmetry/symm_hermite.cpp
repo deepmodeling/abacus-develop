@@ -1,3 +1,5 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
 
 void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, 
 		ModuleBase::Matrix3 &h3, 

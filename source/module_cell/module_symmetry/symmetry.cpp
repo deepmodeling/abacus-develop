@@ -1,14 +1,7 @@
 #include <memory>
 #include <array>
-#include <set>
-#include "module_parameter/parameter.h"
 #include "symmetry.h"
-#include "module_parameter/parameter.h"
-#include "module_base/libm/libm.h"
-#include "module_base/mathzone.h"
-#include "module_base/constants.h"
-#include "module_base/timer.h"
-#include "module_io/output.h"
+
 namespace ModuleSymmetry
 {
 int Symmetry::symm_flag = 0;
@@ -346,4 +339,6 @@ bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
         }
     }
     return all_mbl;
+}
+
 }

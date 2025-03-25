@@ -1,3 +1,6 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
+
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
     bool no_diff = false;

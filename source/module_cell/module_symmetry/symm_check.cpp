@@ -1,3 +1,5 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
 
 bool Symmetry::checksym(const ModuleBase::Matrix3 &s, 
 		ModuleBase::Vector3<double>& gtrans,

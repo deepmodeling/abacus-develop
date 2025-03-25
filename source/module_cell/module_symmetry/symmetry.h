@@ -1,8 +1,14 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
+
 #include "module_cell/unitcell_data.h"
 #include "module_cell/atom_spec.h"
+#include "module_base/timer.h"
+#include "module_parameter/parameter.h"
+#include "module_base/mathzone.h"
+#include "module_base/constants.h"
+#include "module_io/output.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry

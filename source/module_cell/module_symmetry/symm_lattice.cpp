@@ -1,3 +1,6 @@
+#include "symmetry.h"
+using namespace ModuleSymmetry;
+
 //---------------------------------------------------
 // The lattice will be transformed to a 'standard
 // cystallographic setting', the relation between
