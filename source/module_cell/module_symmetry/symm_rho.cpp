@@ -2,6 +2,7 @@
 using namespace ModuleSymmetry;
 
 #include "module_base/libm/libm.h"
+#include "module_parameter/parameter.h"
 
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
