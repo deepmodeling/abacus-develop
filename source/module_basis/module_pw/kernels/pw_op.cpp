@@ -5,8 +5,7 @@ namespace ModulePW {
 template <typename FPTYPE>
 struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*dev*/,
-                    const int npwk,
+    void operator()(const int npwk,
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out)
@@ -21,8 +20,7 @@ struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*dev*/,
-                    const int nrxx,
+    void operator()(const int nrxx,
                     const bool add,
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
@@ -39,13 +37,34 @@ struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_CPU>
             }
         }
     }
+
+    void operator()(const int nrxx,
+                    const bool add,
+                    const FPTYPE factor,
+                    const std::complex<FPTYPE>* in,
+                    FPTYPE* out)
+    {
+        if (add)
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                out[ir] += factor * in[ir].real();
+            }
+        }
+        else
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                out[ir] = in[ir].real();
+            }
+        }
+    }
 };
 
 template <typename FPTYPE>
 struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*dev*/,
-                    const int npw_k,
+    void operator()(const int npw_k,
                     const int nxyz,
                     const bool add,
                     const FPTYPE factor,

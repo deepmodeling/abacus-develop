@@ -161,7 +161,7 @@ public:
     
     #endif
 
-    template <typename FPTYPE, typename Device>
+     template <typename FPTYPE, typename Device>
     void real_to_recip(const Device* ctx,
                        const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
@@ -175,6 +175,76 @@ public:
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void real_to_recip(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+      #if defined(__DSP)
+        this->recip2real_dsp(in, out, ik, add, factor);
+      #else
+        this->real2recip(in,out,ik,add,factor);
+      #endif
+    }
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void recip_to_real(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+      
+      #if defined(__DSP)
+        this->recip2real_dsp(in,out,ik,add,factor);
+      #else
+        this->recip2real(in,out,ik,add,factor);
+      #endif
+    }
+    template <typename FPTYPE>
+    void real2recip_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+                    
+    template <typename FPTYPE>
+    void recip2real_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+    template <typename FPTYPE,
+              typename Device,
+              typename std::enable_if<!std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void real_to_recip(const FPTYPE* in,
+                       FPTYPE* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<FPTYPE>::type factor = 1.0) const
+    {
+        this->real2recip_gpu(in, out, ik, add, factor);
+    }
+
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_GPU>::value, int>::type = 0>
+    void recip_to_real(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+        this->recip2real_gpu(in, out, ik, add, factor);
+    }
 
   public:
     //operator:

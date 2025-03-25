@@ -142,6 +142,7 @@ void test_deepks<T>::check_pdm()
                            this->ld.lmaxd,
                            this->ld.inl2l,
                            this->ld.inl_index,
+                           kv.kvec_d,
                            p_elec_DM,
                            this->ld.phialpha,
                            ucell,

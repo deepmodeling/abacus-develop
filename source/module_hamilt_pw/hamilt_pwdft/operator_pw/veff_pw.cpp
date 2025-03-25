@@ -62,7 +62,7 @@ void Veff<OperatorPW<T, Device>>::act(
         if (npol == 1)
         {
             // wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real<T,Device>(tmpsi_in, this->porter, this->ik);
             // NOTICE: when MPI threads are larger than number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
@@ -76,7 +76,7 @@ void Veff<OperatorPW<T, Device>>::act(
                 // }
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip<T,Device>(this->porter, tmhpsi, this->ik, true);
             // wfcpw->convolution(this->ctx,
             // this->ik,
             // this->veff_col,
@@ -89,8 +89,8 @@ void Veff<OperatorPW<T, Device>>::act(
         {
             // T *porter1 = new T[wfcpw->nmaxgr];
             // fft to real space and doing things.
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in + max_npw, this->porter1, this->ik);
+            wfcpw->recip_to_real<T,Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real<T,Device>(tmpsi_in + max_npw, this->porter1, this->ik);
             if(this->veff_col != 0)
             {
                 /// denghui added at 20221109
@@ -114,8 +114,8 @@ void Veff<OperatorPW<T, Device>>::act(
                 // }
             }
             // (3) fft back to G space.
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + max_npw, this->ik, true);
+            wfcpw->real_to_recip<T,Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip<T,Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
         }
         tmhpsi += max_npw * npol;
         tmpsi_in += max_npw * npol;
