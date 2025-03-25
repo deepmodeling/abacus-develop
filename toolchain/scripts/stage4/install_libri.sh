@@ -54,6 +54,7 @@ case "$with_libri" in
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     fi
+    LIBRI_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBRI from system paths NOW ===================="

@@ -55,6 +55,7 @@ case "$with_libnpy" in
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     fi
+    LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBNPY from system paths NOW ===================="

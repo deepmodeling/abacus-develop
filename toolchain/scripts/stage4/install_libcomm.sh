@@ -54,6 +54,7 @@ case "$with_libcomm" in
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     fi
+    LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBCOMM from system paths NOW ===================="
