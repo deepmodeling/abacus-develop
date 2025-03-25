@@ -38,8 +38,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                         const Grid_Driver& GridD,
                                         torch::Tensor& v_delta_precalc)
 {
-    ModuleBase::TITLE("DeePKS_domain", "calc_v_delta_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_v_delta_precalc");
+    ModuleBase::TITLE("DeePKS_domain", "cal_v_delta_precalc");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
 
@@ -230,7 +230,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     //  std::cout<<"calculate v_delta_precalc time:\t"<<(double)(t_end.tv_sec-t_start.tv_sec) +
     //  (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0<<std::endl;
 
-    ModuleBase::timer::tick("DeePKS_domain", "calc_v_delta_precalc");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_v_delta_precalc");
     return;
 }
 

@@ -39,7 +39,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
     // These variables are frequently used in the following code
-    const int inlmax = orb.Alpha[0].getTotal_nchi() * nat;
+    const int nlmax = orb.Alpha[0].getTotal_nchi();
+    const int inlmax = nlmax * nat;
     const int lmaxd = orb.get_lmax_d();
     const int nmaxd = ld->nmaxd;
 
@@ -62,7 +63,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
         DeePKS_domain::cal_pdm<
-            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
+            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
 
         DeePKS_domain::check_pdm(inlmax, inl2l, pdm); // print out the projected dm for NSCF calculaiton
 
@@ -311,6 +312,35 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     hamilt::Output_HContainer<TR> out_hr(h_deltaR, ofs_hr, sparse_threshold, precision);
                     out_hr.write();
                     ofs_hr.close();
+                }
+
+                const std::string file_vdrpre = PARAM.globalv.global_out_dir + "deepks_vdrpre.csr";
+                std::vector<hamilt::HContainer<TR>*> h_deltaR_pre(inlmax);
+                for (int i = 0; i < inlmax; i++)
+                {
+                    h_deltaR_pre[i] = new hamilt::HContainer<TR>(*hR_tot);
+                    h_deltaR_pre[i]->set_zero();
+                }
+                // DeePKS_domain::cal_vdr_precalc<TR>();
+                if (rank == 0)
+                {
+                    std::ofstream ofs_hrp(file_vdrpre, std::ios::out);
+                    for (int iat = 0; iat < nat; iat++)
+                    {
+                        ofs_hrp << "- Index of atom: " << iat << std::endl;
+                        for (int nl = 0; nl < nlmax; nl++)
+                        {
+                            int inl = iat * nlmax + nl;
+                            ofs_hrp << "-- Index of nl: " << nl << std::endl;
+                            ofs_hrp << "Matrix Dimension of H_delta(R): " << h_deltaR_pre[inl]->get_nbasis() << std::endl;
+                            ofs_hrp << "Matrix number of H_delta(R): " << h_deltaR_pre[inl]->size_R_loop() << std::endl;
+                            hamilt::Output_HContainer<TR> out_hrp(h_deltaR_pre[inl], ofs_hrp, sparse_threshold, precision);
+                            out_hrp.write();
+                            ofs_hrp << std::endl;
+                        }
+                        ofs_hrp << std::endl;
+                    }
+                    ofs_hrp.close();
                 }
             }
         }

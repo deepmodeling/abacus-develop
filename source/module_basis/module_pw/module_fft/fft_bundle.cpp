@@ -220,30 +220,26 @@ void FFT_Bundle::fftxyc2r(std::complex<double>* in, double* out) const
 }
 
 template <>
-void FFT_Bundle::fft3D_forward(const base_device::DEVICE_GPU* ctx,
-                               std::complex<float>* in,
+void FFT_Bundle::fft3D_forward(std::complex<float>* in,
                                std::complex<float>* out) const
 {
     fft_float->fft3D_forward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_forward(const base_device::DEVICE_GPU* ctx,
-                               std::complex<double>* in,
+void FFT_Bundle::fft3D_forward(std::complex<double>* in,
                                std::complex<double>* out) const
 {
     fft_double->fft3D_forward(in, out);
 }
 
 template <>
-void FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
-                                std::complex<float>* in,
+void FFT_Bundle::fft3D_backward(std::complex<float>* in,
                                 std::complex<float>* out) const
 {
     fft_float->fft3D_backward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
-                                std::complex<double>* in,
+void FFT_Bundle::fft3D_backward(std::complex<double>* in,
                                 std::complex<double>* out) const
 {
     fft_double->fft3D_backward(in, out);
