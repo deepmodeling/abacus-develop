@@ -115,13 +115,14 @@ OPTIONS:
 --target-cpu              Compile for the specified target CPU (e.g. haswell or generic), i.e.
                           do not optimize for the actual host system which is the default (native)
 --dry-run                 Write only config files, but don't actually build packages.
+--pack-run                Only check and install required packages without actually unpack and build packages 
 
 The --enable-FEATURE options follow the rules:
   --enable-FEATURE=yes    Enable this particular feature
   --enable-FEATURE=no     Disable this particular feature
   --enable-FEATURE        The option keyword alone is equivalent to
                           --enable-FEATURE=yes
-  ===== NOTICE: THESE FEATURE AER NOT INCLUDED IN ABACUS =====
+  ===== NOTICE: THESE GPU FEATURE IS ON TESTING =====
   --enable-cuda           Turn on GPU (CUDA) support (can be combined
                           with --enable-opencl).
                           Default = no
@@ -329,6 +330,7 @@ export intel_classic="no"
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
 # QuantumMisaka by 2023.08
+export pack_run="__FALSE__"
 export intelmpi_classic="no"
 export with_ifx="yes" # whether ifx is used in oneapi
 export with_flang="no" # whether flang is used in aocc
@@ -460,6 +462,9 @@ while [ $# -ge 1 ]; do
       ;;
     --dry-run)
       dry_run="__TRUE__"
+      ;;
+    --pack-run)
+      pack_run="__TRUE__"
       ;;
     --enable-tsan*)
       enable_tsan=$(read_enable $1)
@@ -835,12 +840,12 @@ if [ "${dry_run}" = "__TRUE__" ]; then
   echo "Wrote only configuration files (--dry-run)."
 else
   echo "# Leak suppressions" > ${INSTALLDIR}/lsan.supp
+  echo "pack_run: ${pack_run}"
   ./scripts/stage0/install_stage0.sh
   ./scripts/stage1/install_stage1.sh
   ./scripts/stage2/install_stage2.sh
   ./scripts/stage3/install_stage3.sh
   ./scripts/stage4/install_stage4.sh
-fi
 
 cat << EOF
 ========================== usage =========================
@@ -858,5 +863,6 @@ or you can modify the builder scripts to suit your needs.
 """
 EOF
 
+fi
 
 #EOF

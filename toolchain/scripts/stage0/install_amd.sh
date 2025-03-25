@@ -27,7 +27,9 @@ case "${with_amd}" in
   __INSTALL__)
     echo "==================== Installing the AMD compiler ======================"
     echo "__INSTALL__ is not supported; please install the AMD compiler manually"
-    exit 1
+    if [ "${pack_run}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding AMD compiler from system paths ===================="

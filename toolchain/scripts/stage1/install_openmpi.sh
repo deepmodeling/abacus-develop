@@ -49,6 +49,9 @@ case "${with_openmpi}" in
       else
         download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
+    if [ "${pack_run}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
       tar -xjf ${openmpi_pkg}
@@ -87,6 +90,10 @@ case "${with_openmpi}" in
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
+    fi
+    if [ "${pack_run}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     check_dir "${pkg_install_dir}/bin"
     check_dir "${pkg_install_dir}/lib"
     check_dir "${pkg_install_dir}/include"
@@ -98,6 +105,7 @@ case "${with_openmpi}" in
     MPIF77="${MPIFC}"
     OPENMPI_CFLAGS="-I'${pkg_install_dir}/include'"
     OPENMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding OpenMPI from system paths ===================="

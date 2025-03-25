@@ -42,6 +42,9 @@ case "${with_gcc}" in
       else
         download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
       fi
+    if [ "${pack_run}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
       tar -xzf gcc-${gcc_ver}.tar.gz
 
@@ -114,6 +117,7 @@ case "${with_gcc}" in
       fi
       cd ../..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
+    fi
     fi
     check_install ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
     check_install ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1

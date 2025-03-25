@@ -26,6 +26,9 @@ case "${with_intel}" in
   __INSTALL__)
     echo "==================== Installing the Intel compiler ===================="
     echo "__INSTALL__ is not supported; please install the Intel compiler manually"
+    if [ "${pack_run}" != "__TRUE__" ]; then
+        exit 1
+    fi
     exit 1
     ;;
   __SYSTEM__)

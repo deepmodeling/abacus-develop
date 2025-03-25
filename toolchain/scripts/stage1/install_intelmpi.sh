@@ -27,7 +27,9 @@ case "${with_intelmpi}" in
   __INSTALL__)
     echo "==================== Installing Intel MPI ===================="
     echo '__INSTALL__ is not supported; please manually install Intel MPI'
-    exit 1
+    if [ "${pack_run}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding Intel MPI from system paths ===================="

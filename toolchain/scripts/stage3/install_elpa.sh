@@ -68,6 +68,9 @@ case "$with_elpa" in
       else
         download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
       fi
+    if [ "${pack_run}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       [ -d elpa-${elpa_ver} ] && rm -rf elpa-${elpa_ver}
       tar -xzf ${elpa_pkg}
 
@@ -170,6 +173,7 @@ case "$with_elpa" in
       cd ..
       
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
     fi
     [ "$enable_openmp" != "yes" ] && elpa_dir_openmp=""
     ELPA_CFLAGS="-I'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/include/elpa${elpa_dir_openmp}-${elpa_ver}/modules' -I'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/include/elpa${elpa_dir_openmp}-${elpa_ver}/elpa'"
