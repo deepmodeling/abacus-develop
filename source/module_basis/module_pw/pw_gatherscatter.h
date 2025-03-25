@@ -14,7 +14,7 @@ namespace ModulePW
 template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
-    ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+    //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     
     if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
     {
@@ -32,7 +32,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+        //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
         return;
     }
 #ifdef __MPI
@@ -55,10 +55,15 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
-    if(typeid(T) == typeid(double))
-	    MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
-    else if(typeid(T) == typeid(float))
-        MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
+	if(typeid(T) == typeid(double))
+	{
+		MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
+	}
+	else if(typeid(T) == typeid(float))
+	{
+		MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
+	}
+
     // change (nz,ns) to (numz[ip],ns, poolnproc)
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -80,7 +85,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 	}
    
 #endif
-    ModuleBase::timer::tick(this->classname, "gatherp_scatters");
+    //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     return;
 }
 
@@ -94,7 +99,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+    //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
@@ -147,10 +152,15 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 
 	//exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
-    if(typeid(T) == typeid(double))
-	    MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
-    else if(typeid(T) == typeid(float))
-        MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
+	if(typeid(T) == typeid(double))
+	{
+		MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
+	}
+	else if(typeid(T) == typeid(float))
+	{
+		MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
+	}
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(T))
 #endif
@@ -175,7 +185,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 	}
 
 #endif
-    ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+    //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     return;
 }
 

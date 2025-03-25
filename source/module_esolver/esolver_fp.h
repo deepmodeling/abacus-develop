@@ -56,7 +56,7 @@ class ESolver_FP: public ESolver
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
 
-    //! Something to do after hamilt2density function in each iter loop.
+    //! Something to do after hamilt2rho function in each iter loop.
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
 
     //! ------------------------------------------------------------------------------

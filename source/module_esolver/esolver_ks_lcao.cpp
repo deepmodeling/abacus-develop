@@ -739,9 +739,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
+void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
 
     // i1) reset energy
     this->pelec->f_en.eband = 0.0;
@@ -781,11 +781,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_hamilt2density(*this->pelec, this->pv, iter);
+            this->exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
         else
         {
-            this->exc->exx_hamilt2density(*this->pelec, this->pv, iter);
+            this->exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
     }
 #endif
