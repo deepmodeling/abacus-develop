@@ -43,7 +43,9 @@ case "${with_cmake}" in
       if [ -f $cmake_pkg ]; then
         echo "$cmake_pkg is found"
       else
-        download_pkg_from_ABACUS_org "${cmake_sha256}" "$cmake_pkg"
+        #download_pkg_from_ABACUS_org "${cmake_sha256}" "$cmake_pkg"
+        url="https://cmake.org/files/v${cmake_ver%.*}/${cmake_pkg}"
+        download_pkg_from_url "${cmake_sha256}" "${cmake_pkg}" "${url}"
       fi
       if [ "${PACK_RUN}" = "__TRUE__" ]; then
         echo "--pack-run mode specified, skip installation"
