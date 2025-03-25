@@ -461,6 +461,14 @@ OBJS_SURCHEM=surchem.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symmetry_basic.o\
+    symm_analysis.o\
+    symm_check.o\
+    symm_getgroup.o\
+    symm_hermite.o\
+    symm_lattice.o\
+    symm_magnetic.o\
+    symm_pricell.o\
+    symm_rho.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
