@@ -27,17 +27,23 @@ case "${with_aocl}" in
   __INSTALL__)
     echo "==================== Installing AOCL ===================="
     report_error ${LINENO} "To install AOCL, please contact your system administrator."
-    exit 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding AOCL from system paths ===================="
-    check_lib -lblis "AOCL"
-    check_lib -lflame "AOCL"
-    AOCL_LIBS="-lblis -lflame"
-    add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
-    add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
-    add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
-    add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
+        check_lib -lblis "AOCL"
+        check_lib -lflame "AOCL"
+        AOCL_LIBS="-lblis -lflame"
+        add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
+        add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
+        add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
+        add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
+    fi
     ;;
   __DONTUSE__) ;;
 

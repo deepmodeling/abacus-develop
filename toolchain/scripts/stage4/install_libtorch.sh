@@ -53,6 +53,9 @@ case "${with_libtorch}" in
             url=https://download.pytorch.org/libtorch/cpu/${archive_file}
             download_pkg_from_url "${libtorch_sha256}" "${filename}" "${url}"
         fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d libtorch ] && rm -rf libtorch
         [ -d ${pkg_install_dir} ] && rm -rf ${pkg_install_dir}
@@ -62,7 +65,7 @@ case "${with_libtorch}" in
 
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
-    
+    fi
     LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
     LIBTORCH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
     ;;
