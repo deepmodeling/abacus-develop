@@ -251,7 +251,14 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (this->istep == 0 && PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+    if (this->istep == 0
+        && PARAM.inp.calculation != "nscf"
+        && this->two_level_step != nullptr && *this->two_level_step == 0
+        && PARAM.inp.init_wfc != "file"
+        && !this->restart)
+    {
+        return;
+    }  //in the non-exx loop, do nothing 
     if (this->add_hexx_type == Add_Hexx_Type::k) { return; }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
