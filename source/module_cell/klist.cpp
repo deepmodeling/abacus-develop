@@ -134,7 +134,7 @@ void K_Vectors::set(const UnitCell& ucell,
     {
         // output kpoints file
         std::stringstream skpt;
-        skpt << PARAM.globalv.global_readin_dir << "kpoints";
+        skpt << PARAM.globalv.global_out_dir << "KPT.info"; //mohan modified 20250325
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
