@@ -71,7 +71,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
         // set zero since this function is called in every scf step
         target_DMR->set_zero();
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
 #endif
         for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
@@ -233,12 +233,11 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
 
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR_full");
     int ld_hk = this->_paraV->nrow;
-    int ld_hk2 = 2 * ld_hk;
     hamilt::HContainer<std::complex<double>>* target_DMR = dmR_out;
     // set zero since this function is called in every scf step
     target_DMR->set_zero();
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
 #endif
     for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
     {
@@ -336,7 +335,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
         assert(this->_nk == 1);
 #endif
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
 #endif
         for (int i = 0; i < target_DMR->size_atom_pairs(); ++i)
         {
