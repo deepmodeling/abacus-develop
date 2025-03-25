@@ -148,7 +148,11 @@ by running these scripts after loading `gcc` or `intel-mkl-mpi`
 environment. 
 
 The toolchain installation process can be interrupted at anytime.
-just re-run *toolchain_\*.sh*, toolchain itself may fix it
+just re-run *toolchain_\*.sh*, toolchain itself may fix it. If you encouter some problem, you can always remove some package in the interrupted points and re-run the toolchain.
+
+Some useful options:
+- `--dry-run`: just run the main install scripts for environment setting, without any package downloading or installation.
+- `--pack-run`: just run the install scripts without any package building, which helps user to download and check the packages, paticularly for offline installation to a server.
 
 If compliation is successful, a message will be shown like this:
 
