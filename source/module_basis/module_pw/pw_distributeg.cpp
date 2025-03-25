@@ -189,23 +189,31 @@ void PW_Basis::get_ig2isz_is2fftixy(
             for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz)
             {
                 int z = iz;
-                if (z < 0) { z += this->nz;
-}
+                if (z < 0)
+                {
+                    z += this->nz;
+                }
                 this->ig2isz[pw_filled] = st_move * this->nz + z;
                 pw_filled++;
             }
             this->is2fftixy[st_move] = ixy;
             st_move++;
-            if(xprime && ixy/fftny == 0) { ng_xeq0 = pw_filled;
-}
+            if (xprime && ixy / fftny == 0)
+            {
+                ng_xeq0 = pw_filled;
+            }
         }
-        if (st_move == this->nst && pw_filled == this->npw) { break;
-}
+        if (st_move == this->nst && pw_filled == this->npw)
+        {
+            break;
+        }
     }
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
         resmem_int_op()(d_is2fftixy, this->nst);
         syncmem_int_h2d_op()(this->d_is2fftixy, this->is2fftixy, this->nst);
+        resmem_int_op()(ig2isz_gpu,this->npw);
+        syncmem_int_h2d_op()(ig2isz_gpu, ig2isz, this->npw);
     }
 #endif
     return;

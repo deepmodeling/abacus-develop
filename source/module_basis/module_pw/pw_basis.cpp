@@ -15,6 +15,7 @@ PW_Basis::PW_Basis()
 
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
+    std::cout<<"the device is "<<device<<"\n";
     this->fft_bundle.setfft("cpu",this->precision);
     this->double_data_ = (this->precision == "double") || (this->precision == "mixing");
     this->float_data_ = (this->precision == "single") || (this->precision == "mixing");

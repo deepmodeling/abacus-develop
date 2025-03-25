@@ -104,6 +104,7 @@ public:
 #endif
 
     int *ig2isz=nullptr; // map ig to (is, iz).
+    int *ig2isz_gpu = nullptr;
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
@@ -352,7 +353,10 @@ public:
     void recip_to_real(TK* in,
                        TR* out,
                        const bool add = false,
-                       const typename GetTypeReal<TK>::type factor = 1.0) const;
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->recip2real_gpu(in,out,add,factor);
+                       };
 
     // template <typename FPTYPE,
     //         typename Device,
@@ -404,7 +408,10 @@ public:
     void real_to_recip(TR* in,
                        TK* out,
                        const bool add = false,
-                       const typename GetTypeReal<TK>::type factor = 1.0) const;
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->real2recip_gpu(in,out,add,factor);
+                       };
 
   protected:
     //gather planes and scatter sticks of all processors

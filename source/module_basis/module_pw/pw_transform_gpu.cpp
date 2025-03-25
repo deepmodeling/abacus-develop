@@ -11,14 +11,13 @@ void PW_Basis::real2recip_gpu(const FPTYPE* in,
                              const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
-    assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
-    base_device::DEVICE_GPU* ctx;
-    // base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
-    //                                            base_device::DEVICE_GPU,
-    //                                            base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-    //                                                                       in,
-    //                                                                       this->nrxx);
+    const size_t size = this->nrxx; 
+    base_device::memory::synchronize_memory_op<FPTYPE,
+                                               base_device::DEVICE_GPU,
+                                               base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+                                                                          in,
+                                                                          size);
 
     this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
@@ -39,9 +38,7 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                              const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
-    assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
-    base_device::DEVICE_GPU* ctx;
     base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
                                                base_device::DEVICE_GPU,
                                                base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
@@ -68,17 +65,16 @@ void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                              const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
-    assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
-    base_device::DEVICE_GPU* ctx;
+    std::cout<<"here begin the test\n";
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
         this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
         0,
         this->nxyz);
-
+    std::cout<<"here finish the memory set\n";
     set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw,
-                                                        this->ig2isz,
+                                                        this->ig2isz_gpu,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>());
     this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
@@ -98,9 +94,7 @@ template <typename FPTYPE>
                                  const bool add,
                                  const FPTYPE factor) const
 {
-    base_device::DEVICE_GPU* ctx;
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
-    assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(

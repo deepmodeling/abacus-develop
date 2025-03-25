@@ -1,9 +1,9 @@
 #include "charge_mixing.h"
-
+#include "module_base/module_device/memory_op.h"
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+#include "cuda.h"
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     std::complex<double>* rhog_in = nullptr;
@@ -244,10 +244,22 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             // use rhodpw for double_grid
             // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
-            this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
+            printf("here is the use of rho fft\n");
+            this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_CPU>(chr->rhog[is], chr->rho[is]);
         }
     }
+    std::vector<std::complex<double>> test(this->rhodpw->nxyz);
+    std::complex<double>* test_in;
+    double* test_out;
 
+    std::vector<double>* out1;
+    std::vector<double>* out2;
+    size_t size = rhodpw->nxyz * sizeof(double);
+    cudaMalloc((void**)&test_out,size);
+    cudaMalloc((void**)&test_in,size*2);
+    std::fill (test.begin(),test.end(),1);
+    // this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_CPU>(test.data(),out1.data());
+    this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_GPU>(test_in,test_out);
     // For kinetic energy density
     if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
