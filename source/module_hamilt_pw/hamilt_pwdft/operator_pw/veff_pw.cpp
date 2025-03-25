@@ -47,7 +47,7 @@ void Veff<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "VeffPW");
+    ModuleBase::timer::tick("Operator", "veff_pw");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
@@ -99,7 +99,7 @@ void Veff<OperatorPW<T, Device>>::act(
 #ifdef __DSP
     wfcpw->fft_bundle.resource_handler(0);
 #endif
-    ModuleBase::timer::tick("Operator", "VeffPW");
+    ModuleBase::timer::tick("Operator", "veff_pw");
 }
 
 template<typename T, typename Device>
