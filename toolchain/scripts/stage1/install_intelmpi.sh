@@ -33,6 +33,9 @@ case "${with_intelmpi}" in
     ;;
   __SYSTEM__)
     echo "==================== Finding Intel MPI from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
     if [ "${intel_classic}" = "yes" ]; then
     # if intel compiler used as classic, so as intelmpi
@@ -63,6 +66,7 @@ case "${with_intelmpi}" in
     add_lib_from_paths INTELMPI_LDFLAGS "libmpi.*" $LIB_PATHS
     check_lib -lmpi "intelmpi"
     check_lib -lmpicxx "intelmpi"
+    fi
     ;;
   __DONTUSE__)
     # Nothing to do

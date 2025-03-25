@@ -33,6 +33,9 @@ case "${with_intel}" in
     ;;
   __SYSTEM__)
     echo "==================== Finding Intel compiler from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     if [ "${intel_classic}" = "yes" ]; then
       check_command icc "intel" && CC="$(realpath $(command -v icc))" || exit 1
       check_command icpc "intel" && CXX="$(realpath $(command -v icpc))" || exit 1
@@ -45,6 +48,7 @@ case "${with_intel}" in
       else
         check_command ifort "intel" && FC="$(realpath $(command -v ifort))" || exit 1
       fi
+    fi
     fi
     F90="${FC}"
     F77="${FC}"

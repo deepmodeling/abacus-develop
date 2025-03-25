@@ -33,6 +33,9 @@ case "${with_amd}" in
     ;;
   __SYSTEM__)
     echo "==================== Finding AMD compiler from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     check_command clang "amd" && CC="$(realpath $(command -v clang))" || exit 1
     check_command clang++ "amd" && CXX="$(realpath $(command -v clang++))" || exit 1
     if [ "${WITH_FLANG}" = "yes" ]; then
@@ -40,6 +43,7 @@ case "${with_amd}" in
     else
         check_command gfortran "gcc" && FC="gfortran" || exit 1
         add_lib_from_paths GCC_LDFLAGS "libgfortran.*" ${LIB_PATHS}
+    fi
     fi
     F90="${FC}"
     F77="${FC}"
