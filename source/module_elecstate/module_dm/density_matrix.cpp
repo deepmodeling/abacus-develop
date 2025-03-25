@@ -82,6 +82,9 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             // get global indexes of whole matrix for each atom in this process
             int row_ap = this->_paraV->atom_begin_row[iat1];
             int col_ap = this->_paraV->atom_begin_col[iat2];
+            const int row_size = this->_paraV->get_row_size(iat1);
+            const int col_size = this->_paraV->get_col_size(iat2);
+            const int r_size = target_ap.get_R_size();
             if (row_ap == -1 || col_ap == -1)
             {
                 throw std::string("Atom-pair not belong this process");
@@ -91,7 +94,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             {
                 tmp_DMR.resize(target_ap.get_size());
             }
-            for (int ir = 0; ir < target_ap.get_R_size(); ++ir)
+            for (int ir = 0; ir < r_size; ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
                 hamilt::BaseMatrix<double>* target_mat = target_ap.find_matrix(r_index);
@@ -124,25 +127,25 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                         // jump DMK to fill DMR
                         // DMR is row-major, DMK is column-major
                         DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
-                        for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                        for (int mu = 0; mu < row_size; ++mu)
                         {
                             DMK_real_ptr = (double*)DMK_ptr;
                             DMK_imag_ptr = DMK_real_ptr + 1;
-                            BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                            BlasConnector::axpy(col_size,
                                                 kphase.real(),
                                                 DMK_real_ptr,
                                                 ld_hk2,
                                                 target_DMR_ptr,
                                                 1);
                             // "-" since i^2 = -1
-                            BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                            BlasConnector::axpy(col_size,
                                                 -kphase.imag(),
                                                 DMK_imag_ptr,
                                                 ld_hk2,
                                                 target_DMR_ptr,
                                                 1);
                             DMK_ptr += 1;
-                            target_DMR_ptr += this->_paraV->get_col_size(iat2);
+                            target_DMR_ptr += col_size;
                         }
                     }
                 }
@@ -247,7 +250,10 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
         // get global indexes of whole matrix for each atom in this process
         int row_ap = this->_paraV->atom_begin_row[iat1];
         int col_ap = this->_paraV->atom_begin_col[iat2];
-        for (int ir = 0; ir < target_ap.get_R_size(); ++ir)
+        const int row_size = this->_paraV->get_row_size(iat1);
+        const int col_size = this->_paraV->get_col_size(iat2);
+        const int r_size = target_ap.get_R_size();
+        for (int ir = 0; ir < r_size; ++ir)
         {
             const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
             auto* target_mat = target_ap.find_matrix(r_index);
@@ -277,16 +283,16 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
                 // jump DMK to fill DMR
                 // DMR is row-major, DMK is column-major
                 DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
-                for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                for (int mu = 0; mu < row_size; ++mu)
                 {
-                    BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                    BlasConnector::axpy(col_size,
                                         kphase,
                                         DMK_ptr,
                                         ld_hk,
                                         target_DMR_ptr,
                                         1);
                     DMK_ptr += 1;
-                    target_DMR_ptr += this->_paraV->get_col_size(iat2);
+                    target_DMR_ptr += col_size;
                 }
             }
         }
@@ -331,6 +337,9 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             // get global indexes of whole matrix for each atom in this process
             int row_ap = this->_paraV->atom_begin_row[iat1];
             int col_ap = this->_paraV->atom_begin_col[iat2];
+            const int row_size = this->_paraV->get_row_size(iat1);
+            const int col_size = this->_paraV->get_col_size(iat2);
+            const int r_size = target_ap.get_R_size();
             if (row_ap == -1 || col_ap == -1)
             {
                 throw std::string("Atom-pair not belong this process");
@@ -338,7 +347,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             // R index
             const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(0);
 #ifdef __DEBUG
-            assert(target_ap.get_R_size() == 1);
+            assert(r_size == 1);
             assert(r_index.x == 0 && r_index.y == 0 && r_index.z == 0);
 #endif
             hamilt::BaseMatrix<double>* target_mat = target_ap.find_matrix(r_index);
@@ -356,16 +365,16 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             double* DMK_ptr = this->_DMK[0 + ik_begin].data();
             // transpose DMK col=>row
             DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
-            for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+            for (int mu = 0; mu < row_size; ++mu)
             {
-                BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                BlasConnector::axpy(col_size,
                                     kphase,
                                     DMK_ptr,
                                     ld_hk,
                                     target_DMR_ptr,
                                     1);
                 DMK_ptr += 1;
-                target_DMR_ptr += this->_paraV->get_col_size(iat2);
+                target_DMR_ptr += col_size;
             }
         }
     }
