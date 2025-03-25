@@ -185,7 +185,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
-            XC_Functional::set_xc_first_loop(ucell);
+            if (PARAM.inp.init_wfc != "file")
+            {   // if init_wfc==file, directly enter the EXX loop
+                XC_Functional::set_xc_first_loop(ucell);
+            }
+
             // initialize 2-center radial tables for EXX-LRI
             if (GlobalC::exx_info.info_ri.real_number)
             {
@@ -607,7 +611,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // electrons number.
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (iter == 1)
+        int exx_two_level_step = 0;
+#ifdef __EXX
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            // the following steps are only needed in the first outer exx loop
+            exx_two_level_step = GlobalC::exx_info.info_ri.real_number ?
+                this->exd->two_level_step
+                : this->exc->two_level_step;
+        }
+#endif 
+        if (iter == 1 && exx_two_level_step == 0)
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
 
