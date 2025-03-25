@@ -635,9 +635,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
-        GlobalV::ofs_running << "(for reciprocal lattice: )" << std::endl;
-          ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
+						  nullptr);
+		GlobalV::ofs_running << "\n For reciprocal-space lattice:" << std::endl;
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", recip_brav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
 
@@ -680,7 +680,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                               ucell.atoms,
                               false,
                               nullptr);
-            GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
+            GlobalV::ofs_running << "\n For k vectors:" << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", k_brav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", k_brav_name);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", k_brav_type);

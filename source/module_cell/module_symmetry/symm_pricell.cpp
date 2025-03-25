@@ -110,7 +110,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     int ntrans=ptrans.size();
     if (ntrans <= 1)
     {
-        GlobalV::ofs_running<<" Original cell was already a primitive cell."<<std::endl;
+        GlobalV::ofs_running<<"\n Original cell was already a primitive cell."<<std::endl;
         this->p1=this->a1;
         this->p2=this->a2;
         this->p3=this->a3;
