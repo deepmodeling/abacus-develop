@@ -15,6 +15,7 @@
 #include "deepks_spre.h"
 #include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
+#include "deepks_vdrpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
