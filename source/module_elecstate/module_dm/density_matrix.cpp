@@ -166,13 +166,10 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                     if(PARAM.inp.nspin != 4)
                     {
                         double* target_DMR_mat = target_DMR_mat_vec[ir];
-                        for(int irow = 0; irow < row_size; ++irow)
+                        for(int i = 0; i < mat_size; i++)
                         {
-                            for(int icol = 0; icol < col_size; ++icol)
-                            {
-                                target_DMR_mat[irow * col_size + icol] += kphase.real() * tmp_DMK_mat[irow * col_size + icol].real() 
-                                    - kphase.imag() * tmp_DMK_mat[irow * col_size + icol].imag();
-                            }
+                            target_DMR_mat[i] += kphase.real() * tmp_DMK_mat[i].real() 
+                                    - kphase.imag() * tmp_DMK_mat[i].imag();
                         }
                     } else if(PARAM.inp.nspin == 4)
                     {
