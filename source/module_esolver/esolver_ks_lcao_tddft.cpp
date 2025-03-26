@@ -87,7 +87,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::before_all_runners(UnitCell& ucell, const In
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
+void ESolver_KS_LCAO_TDDFT<Device>::hamilt2rho_single(UnitCell& ucell,
                                                           const int istep,
                                                           const int iter,
                                                           const double ethr)

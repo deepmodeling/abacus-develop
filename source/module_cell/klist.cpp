@@ -52,7 +52,7 @@ void K_Vectors::set(const UnitCell& ucell,
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " | Setup K-points                                                     |" << std::endl;
@@ -61,7 +61,7 @@ void K_Vectors::set(const UnitCell& ucell,
     ofs << " | We treat the spin as another set of k-points.                      |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
 
     ofs << "\n SETUP K-POINTS" << std::endl;
 

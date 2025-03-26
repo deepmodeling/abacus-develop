@@ -26,7 +26,6 @@
 void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_line");
-    ModuleBase::timer::tick("Driver", "driver_line");
 
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
@@ -93,6 +92,5 @@ void Driver::driver_run()
 
     //! 6: output the json file
     Json::create_Json(&ucell, PARAM);
-    ModuleBase::timer::tick("Driver", "driver_line");
     return;
 }

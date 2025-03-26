@@ -12,8 +12,8 @@ namespace elecstate
 
 void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
-    ModuleBase::TITLE("PotXC", "cal_v_eff");
-    ModuleBase::timer::tick("PotXC", "cal_v_eff");
+    ModuleBase::TITLE("PotXC", "cal_veff");
+    ModuleBase::timer::tick("PotXC", "cal_veff");
     const int nrxx_current = chg->nrxx;
     
     //----------------------------------------------------------
@@ -41,7 +41,7 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
     }
-    ModuleBase::timer::tick("PotXC", "cal_v_eff");
+    ModuleBase::timer::tick("PotXC", "cal_veff");
 }
 
 } // namespace elecstate

@@ -11,7 +11,7 @@
 namespace elecstate {
 void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     // read in non-local pseudopotential and ouput the projectors.
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
            ">>>>"
         << std::endl;
@@ -54,7 +54,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<"
         << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
 
     read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
 

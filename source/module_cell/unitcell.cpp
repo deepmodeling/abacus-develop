@@ -214,7 +214,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 
         if (ok) 
         {
-            log << "\n\n\n\n";
+            log << "\n\n";
             log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                    ">>>>>>>>>>>>"
                 << std::endl;
@@ -254,7 +254,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
             log << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                    "<<<<<<<<<<<<"
                 << std::endl;
-            log << "\n\n\n\n";
+            log << "\n\n";
 
             log << " READING UNITCELL INFORMATION" << std::endl;
             //========================

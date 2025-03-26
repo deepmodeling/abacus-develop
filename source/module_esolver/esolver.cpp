@@ -95,7 +95,7 @@ std::string determine_type()
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
     }
 
-    GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
+    GlobalV::ofs_running << "\n The esolver type: " << esolver_type << std::endl;
 
     auto device_info = PARAM.inp.device;
 

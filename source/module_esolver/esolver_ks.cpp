@@ -343,25 +343,25 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 }
 
 //------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS: hamilt2density_single
+//! the 5th function of ESolver_KS: hamilt2rho_single
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
+    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
     // Temporarily, before HSolver is constructed, it should be overrided by
     // LCAO, PW, SDFT and TDDFT.
     // After HSolver is constructed, LCAO, PW, SDFT should delete their own
-    // hamilt2density_single() and use:
-    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
+    // hamilt2rho_single() and use:
+    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
 }
 
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     // 7) use Hamiltonian to obtain charge density
-    this->hamilt2density_single(ucell, istep, iter, diag_ethr);
+    this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
     // 8) for MPI: STOGROUP? need to rewrite
     //<Temporary> It may be changed when more clever parallel algorithm is
@@ -398,7 +398,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
                                                      diag_ethr,
                                                      PARAM.inp.nelec);
 
-                this->hamilt2density_single(ucell, istep, iter, diag_ethr);
+                this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
                 drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
@@ -458,7 +458,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         this->iter_init(ucell, istep, iter);
 
         // 6) use Hamiltonian to obtain charge density
-        this->hamilt2density(ucell, istep, iter, diag_ethr);
+        this->hamilt2rho(ucell, istep, iter, diag_ethr);
 
         // 7) finish scf iterations
         this->iter_finish(ucell, istep, iter, conv_esolver);
