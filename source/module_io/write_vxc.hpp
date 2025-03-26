@@ -30,16 +30,6 @@ struct TGint<std::complex<double>>
 namespace ModuleIO
 {
 
-inline void gint_vl(Gint_Gamma& gg, Gint_inout& io)
-{
-    gg.cal_vlocal(&io, false);
-};
-
-inline void gint_vl(Gint_k& gk, Gint_inout& io, ModuleBase::matrix& wg)
-{
-    gk.cal_gint(&io);
-};
-
 inline void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
 {
     std::ofstream ofs;
@@ -134,6 +124,8 @@ std::vector<double> orbital_energy(const int ik, const int nbands, const std::ve
     return e;
 }
 
+#ifndef SET_GINT_POINTER_H
+#define SET_GINT_POINTER_H
 // mohan update 2024-04-01
 template <typename T>
 void set_gint_pointer(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<T>::type*& gint);
@@ -153,6 +145,7 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
 {
     gint = &gint_k;
 }
+#endif
 
 inline void write_orb_energy(const K_Vectors& kv,
     const int nspin0, const int nbands,
@@ -223,7 +216,7 @@ void write_Vxc(const int nspin,
     // 2. allocate AO-matrix
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
-    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
+    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(ucell, pv));
     for (int is = 0; is < nspin0; ++is) {
         vxcs_R_ao[is].set_zero();
         if (std::is_same<TK, double>::value) { vxcs_R_ao[is].fix_gamma(); }

@@ -12,10 +12,12 @@
 namespace hamilt
 {
     using TAC = std::pair<int, std::array<int, 3>>;
+
     // allocate according to the read-in HexxR, used in nscf
     template <typename Tdata, typename TR>
-    inline void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
-        HContainer<TR>* hR)
+    void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+        HContainer<TR>* hR,
+        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
     {
         auto* pv = hR->get_paraV();
         bool need_allocate = false;
@@ -27,7 +29,10 @@ namespace hamilt
                 const int& iat1 = Htmp2.first.first;
                 if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
                 {
-                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(Htmp2.first.second);
+                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
+                        (cell_nearest ?
+                            cell_nearest->get_cell_nearest_discrete(iat0, iat1, Htmp2.first.second)
+                            : Htmp2.first.second));
                     BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
                     if (HlocR == nullptr)
                     { // add R to HContainer
@@ -40,11 +45,12 @@ namespace hamilt
         }
         if (need_allocate) { hR->allocate(nullptr, true); }
     }
+
     /// allocate according to BvK cells, used in scf
     template <typename TR>
-    inline void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
+    void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
         const std::array<int, 3>& Rs_period,
-        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr)
+        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
     {
         auto* pv = hR->get_paraV();
         auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
@@ -154,18 +160,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             const std::array<int, 3> Rs_period = { this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2] };
             if (this->use_cell_nearest)
             {
-                // set cell_nearest
-                std::map<int, std::array<double, 3>> atoms_pos;
-                for (int iat = 0; iat < ucell.nat; ++iat) {
-                    atoms_pos[iat] = RI_Util::Vector3_to_array3(
-                        ucell.atoms[ucell.iat2it[iat]]
-                        .tau[ucell.iat2ia[iat]]);
-                }
-                const std::array<std::array<double, 3>, 3> latvec
-                    = { RI_Util::Vector3_to_array3(ucell.a1),
-                       RI_Util::Vector3_to_array3(ucell.a2),
-                       RI_Util::Vector3_to_array3(ucell.a3) };
-                this->cell_nearest.init(atoms_pos, latvec, Rs_period);
+                this->cell_nearest = init_cell_nearest(ucell, Rs_period);
                 reallocate_hcontainer(ucell.nat, this->hR, Rs_period, &this->cell_nearest);
             }
             else { reallocate_hcontainer(ucell.nat, this->hR, Rs_period); }
