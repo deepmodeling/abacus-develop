@@ -23,7 +23,7 @@ namespace unitcell
         assert(std::regex_search(Coordinate, pattern));
         bool direct = (Coordinate == "Direct");
         std::string table;
-        table += direct? "DIRECT COORDINATES\n": FmtCore::format("CARTESIAN COORDINATES ( UNIT = %20.12f Bohr ).\n", lat0);
+        table += direct? "DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr ).\n", lat0);
         table += FmtCore::format("%8s%10s%10s%10s%8s%8s%8s%8s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
         for(int it = 0; it < ntype; it++)
         {

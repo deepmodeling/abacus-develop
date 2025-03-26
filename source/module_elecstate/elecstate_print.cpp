@@ -273,7 +273,7 @@ void print_band(const ModuleBase::matrix& ekb,
         {
             GlobalV::ofs_running << std::setprecision(6);
             GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << klist->isk[ik] + 1
-                                 << " K-point=" << ik + 1 << std::endl;
+                                 << " k-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
@@ -317,7 +317,7 @@ void print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
-    GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
+    GlobalV::ofs_running << " Electron density error is " << scf_thr << std::endl;
 
     if (PARAM.inp.basis_type == "pw")
     {
@@ -327,6 +327,7 @@ void print_etot(const Magnetism& magnet,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
+
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
@@ -384,7 +385,7 @@ void print_etot(const Magnetism& magnet,
         }
 
 #ifdef __DEEPKS
-        if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
+        if (PARAM.inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
@@ -399,6 +400,7 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.f_en.etot_harris);
     }
 
+    // print out the Fermi energy if needed
     if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
@@ -411,6 +413,8 @@ void print_etot(const Magnetism& magnet,
         titles.push_back("E_Fermi");
         energies_Ry.push_back(elec.eferm.ef);
     }
+
+    // print out the band gap if needed
     if (PARAM.inp.out_bandgap)
     {
         if (!PARAM.globalv.two_fermi)
@@ -430,13 +434,21 @@ void print_etot(const Magnetism& magnet,
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
         return ener * ModuleBase::Ry_to_eV;
     });
+
+    // for each SCF step, we print out energy
     FmtTable table({"Energy", "Rydberg", "eV"},
                    titles.size(),
                    {"%-14s", "%20.10f", "%20.10f"},
                    {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+
+    // print out the titles
     table << titles << energies_Ry << energies_eV;
+
     GlobalV::ofs_running << table.str() << std::endl;
-    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16
+
+
+    
+    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
     {
         std::vector<double> mag;
         switch (PARAM.inp.nspin)
