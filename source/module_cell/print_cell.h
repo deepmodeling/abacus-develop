@@ -8,7 +8,8 @@ namespace unitcell
     void print_tau(Atom* atoms,
                    const std::string& Coordinate,
                    const int ntype,
-                   const double lat0);
+                   const double lat0,
+                   std::ofstream &ofs);
     
       /**
      * @brief UnitCell class is too heavy, this function would be moved

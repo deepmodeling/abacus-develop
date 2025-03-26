@@ -12,7 +12,7 @@ namespace unitcell
                    const std::string& Coordinate,
                    const int ntype,
                    const double lat0,
-                   ofstream &ofs)
+                   std::ofstream &ofs)
     {
         ModuleBase::TITLE("UnitCell", "print_tau");
         // assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom"); // this line causes abort in unittest ReadAtomPositionsCACXY.

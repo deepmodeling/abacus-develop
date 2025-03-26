@@ -112,7 +112,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     //--------------------------------------------
     // Print out the structure file.
     //--------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
 
     return;
 }
@@ -217,7 +217,7 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     //-----------------------------------------------------------
     // Print the structure.
     //-----------------------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
     return;
 }
 
