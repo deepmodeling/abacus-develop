@@ -300,7 +300,11 @@ void timer::print_all(std::ofstream &ofs)
 
 	std::vector<std::string> titles = {"CLASS_NAME", "NAME", "TIME/s", "CALLS", "AVG/s", "PER/%"};
 	std::vector<std::string> formats = {"%-10s", "%-10s", "%6.2f", "%8d", "%6.2f", "%6.2f"};
-	FmtTable time_statistics(titles, pers.size(), formats, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+	FmtTable time_statistics(/*titles=*/titles, 
+							 /*nrows=*/pers.size(), 
+							 /*formats=*/formats, 
+							 /*indent=*/0, 
+							 /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
 	time_statistics << class_names << names << times << calls << avgs << pers;
 	const std::string table = "TIME STATISTICS\n" + time_statistics.str();
 	std::cout<<table<<std::endl;

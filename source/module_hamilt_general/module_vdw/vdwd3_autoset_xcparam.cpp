@@ -493,7 +493,10 @@ void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
         if (plog != nullptr) // logging the autoset
         {
             param = {s6, s8, a1, a2};
-            FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
+            FmtTable vdwd3tab(/*titles=*/{"Parameters", "Original", "Autoset"}, 
+                              /*nrows=*/4, 
+                              /*formats=*/{"%10s", "%10s", "%10.4f"}, 
+                              /*indent=*/0);
             const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
             vdwd3tab << items << flag << param;
             (*plog) << "\nDFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
