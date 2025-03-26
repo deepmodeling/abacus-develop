@@ -299,6 +299,12 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_xc2");
+        item.annotation = "output exchange-correlation matrix in NAO representation";
+        read_sync_bool(input.out_mat_xc2);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_eband_terms");
         item.annotation = "output the band energy terms separately";
         read_sync_bool(input.out_eband_terms);

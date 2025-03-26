@@ -489,30 +489,32 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &this->pv,
-                                    *this->psi,
-                                    ucell,
-                                    this->sf,
-                                    this->solvent,
-                                    *this->pw_rho,
-                                    *this->pw_rhod,
-                                    this->locpp.vloc,
-                                    this->chr,
-                                    this->GG,
-                                    this->GK,
-                                    this->kv,
-                                    orb_.cutoffs(),
-                                    this->pelec->wg,
-                                    this->gd
+            PARAM.globalv.nlocal,
+            GlobalV::DRANK,
+            &this->pv,
+            *this->psi,
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->GG,
+            this->GK,
+            this->kv,
+            orb_.cutoffs(),
+            this->pelec->wg,
+            this->gd
 #ifdef __EXX
-                                    ,
-                                    this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-                                    this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+            ,
+            this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
 #endif
         );
-
+    }
+    if (PARAM.inp.out_mat_xc2)
+    {
         ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
             &this->pv,
             ucell,
