@@ -385,8 +385,9 @@ void Memory::print_all(std::ofstream &ofs)
 	Parallel_Reduce::reduce_all(Memory::total_gpu);
 #endif
 #endif
-	ofs <<"\n NAME-------------------------|MEMORY(MB)--------" << std::endl;
-	ofs <<std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
+	ofs <<"\n NAME-------------------------|MEMORY(MB)------------------" << std::endl;
+    ofs << std::right;
+	ofs << std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
     
     assert(n_memory>0);
 
@@ -440,7 +441,7 @@ void Memory::print_all(std::ofstream &ofs)
 		return;
 	}
 
-	ofs <<"\n NAME-------------------------|GPU MEMORY(MB)----" << std::endl;
+	ofs <<"\n NAME-------------------------|GPU MEMORY(MB)--------------" << std::endl;
 	ofs <<std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total_gpu << std::endl;
     
     assert(n_memory>0);

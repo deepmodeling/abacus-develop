@@ -733,19 +733,14 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
             GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
             ModuleIO::print_stress("OVERLAP  STRESS", soverlap, PARAM.inp.test_stress, ry);
-            // test
             ModuleIO::print_stress("T        STRESS", stvnl_dphi, PARAM.inp.test_stress, ry);
             ModuleIO::print_stress("VNL      STRESS", svnl_dbeta, PARAM.inp.test_stress, ry);
-
             ModuleIO::print_stress("T_VNL    STRESS", stvnl, PARAM.inp.test_stress, ry);
-
             ModuleIO::print_stress("VL_dPHI  STRESS", svl_dphi, PARAM.inp.test_stress, ry);
             ModuleIO::print_stress("VL_dVL   STRESS", sigmadvl, PARAM.inp.test_stress, ry);
             ModuleIO::print_stress("HAR      STRESS", sigmahar, PARAM.inp.test_stress, ry);
-
             ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
             ModuleIO::print_stress("cc       STRESS", sigmacc, PARAM.inp.test_stress, ry);
-            //		ModuleIO::print_stress("NLCC       STRESS",sigmacc,PARAM.inp.test_stress,ry);
             ModuleIO::print_stress("XC       STRESS", sigmaxc, PARAM.inp.test_stress, ry);
             if (vdw_solver != nullptr)
             {
@@ -760,11 +755,13 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, PARAM.inp.test_stress, ry);
             }
             ModuleIO::print_stress("TOTAL    STRESS", scs, PARAM.inp.test_stress, ry);
-
         } // end of test
+
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
+
         // print total stress
-        ModuleIO::print_stress("TOTAL-STRESS", scs, true, ry);
+        bool screen = false;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen, ry);
 
         double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
