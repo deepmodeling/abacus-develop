@@ -191,6 +191,8 @@ public:
      * 
      * @param titles titles, its size should be the same as the number of columns
      * @param nrows number of rows
+     * @param fmts format strings for each column, its size should be the same as the number of columns
+     * @param indent indent for each column, default is 0
      * @param aligns Alignments instance, for alignment of values and titles, e.g. {Align::LEFT, Align::RIGHT} for left alignment of values and right alignment of titles
      * @param frames Frames instance, can be constructed with initializer_list<char> like {'-', '-', '-', ' ', ' '}, for up, middle, down, left and right frames
      * @param delimiters Delimiters instance, can be constructed with initializer_list<char> like {'-', ' '}, for horizontal and vertical delimiters
