@@ -556,7 +556,7 @@ bool read_atom_positions(UnitCell& ucell,
 
     if (unitcell::check_tau(ucell.atoms, ucell.ntype, ucell.lat0))
     {
-        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
         return true;
     }
     return false;

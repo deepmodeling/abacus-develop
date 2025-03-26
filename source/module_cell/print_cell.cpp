@@ -11,7 +11,8 @@ namespace unitcell
     void print_tau(Atom* atoms,
                    const std::string& Coordinate,
                    const int ntype,
-                   const double lat0)
+                   const double lat0,
+                   ofstream &ofs)
     {
         ModuleBase::TITLE("UnitCell", "print_tau");
         // assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom"); // this line causes abort in unittest ReadAtomPositionsCACXY.
@@ -43,7 +44,7 @@ namespace unitcell
             }
         }
         table += "\n";
-        GlobalV::ofs_running << table << std::endl;
+        ofs << table << std::endl;
         return;
     }
 
