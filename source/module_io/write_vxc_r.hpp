@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
+#include "module_io/write_HS_sparse.h"
 #ifdef __EXX
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_ri/RI_2D_Comm.h"
