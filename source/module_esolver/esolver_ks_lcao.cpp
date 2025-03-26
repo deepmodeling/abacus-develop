@@ -637,13 +637,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                                          this->pelec->nelec_spin,
                                          this->pelec->skip_weights);
 
-            if (!PARAM.inp.dm_to_rho)
-            {
-                auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
-                elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
-                _pelec->DM->cal_DMR();
-            }
+            auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+            elecstate::calEBand(_pelec->ekb, _pelec->wg, _pelec->f_en);
+            elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
+            _pelec->DM->cal_DMR();
+
             this->pelec->psiToRho(*this->psi);
             this->pelec->skip_weights = false;
 
