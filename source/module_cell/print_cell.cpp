@@ -31,9 +31,8 @@ namespace unitcell
                 const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
                 const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
                 const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
-                table += FmtCore::format(" %-s%-5d%10.3f%10.3f%10.3f%8.3f%8.3f%8.3f%8.3f\n", 
+                table += FmtCore::format("%8s%10.3f%10.3f%10.3f%8.3f%8.3f%8.3f%8.3f\n", 
                                         atoms[it].label, 
-                                        ia+1, 
                                         x, 
                                         y, 
                                         z, 
