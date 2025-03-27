@@ -54,7 +54,7 @@ void output_vacuum_level(const UnitCell* ucell,
 /// @param name force term name
 /// @param force atomic forces
 /// @param ry true if the unit of force is a.u.
-void print_force(std::ofstream& ofs_running,
+void print_force(std::ofstream& ofs,
                  const UnitCell& cell,
                  const std::string& name,
                  const ModuleBase::matrix& force,

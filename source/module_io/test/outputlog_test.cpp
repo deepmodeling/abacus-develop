@@ -302,9 +302,10 @@ TEST(PrintStress, PrintStress)
     stress(2, 1) = 0.0;
     stress(2, 2) = 0.0;
 
-    GlobalV::ofs_running.open("running_stress.txt");
-    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
-    GlobalV::ofs_running.close();
+
+    std::ofstream ofs("running_stress.txt");
+    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, ofs);
+    ofs.close();
 
     std::ifstream ifs("running_stress.txt");
     std::string output_str;
