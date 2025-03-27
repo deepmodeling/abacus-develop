@@ -48,17 +48,17 @@ class ESolver_KS : public ESolver_FP
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
-    //! Something to do before hamilt2density function in each iter loop.
+    //! Something to do before hamilt2rho function in each iter loop.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
-    //! Something to do after hamilt2density function in each iter loop.
+    //! Something to do after hamilt2rho function in each iter loop.
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;

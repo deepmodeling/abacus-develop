@@ -173,6 +173,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                    this->ld->lmaxd,
                                    this->ld->inl2l,
                                    this->ld->inl_index,
+                                   this->kvec_d,
                                    this->DM,
                                    this->ld->phialpha,
                                    *this->ucell,

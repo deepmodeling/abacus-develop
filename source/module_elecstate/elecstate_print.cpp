@@ -58,7 +58,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"scalapack_gvx", "GV"},
            {"cusolver", "CU"},
            {"bpcg", "BP"},
-           {"pexsi", "PE"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+           {"pexsi", "PE"},
+           {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
     std::vector<std::string> td_fmt
@@ -429,10 +430,11 @@ void print_etot(const Magnetism& magnet,
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
         return ener * ModuleBase::Ry_to_eV;
     });
-    FmtTable table({"Energy", "Rydberg", "eV"},
-                   titles.size(),
-                   {"%-14s", "%20.10f", "%20.10f"},
-                   {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
+                   /*nrows=*/titles.size(),
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*indents=*/0,
+                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
     if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16

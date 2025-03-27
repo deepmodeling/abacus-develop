@@ -38,7 +38,7 @@ AddTest(
 AddTest(
   TARGET bfgs_test
   LIBS parameter ${math_libs} base device 
-  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp ${cell_source_files}
+  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp ../matrix_methods.cpp ${cell_source_files}
 )
 
 AddTest(

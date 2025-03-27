@@ -1,12 +1,12 @@
 INPUT_PARAMETERS
 #Parameters	(System)
-suffix                  autotest
+suffix          autotest
 
 nbands			4
 stru_file		STRU
 kpoint_file		KPT
-pseudo_dir	../../PP_ORB
-calculation             scf 		
+pseudo_dir	    ../../PP_ORB
+calculation     scf 		
 latname			sc
 #Parameters (PW)
 ecutwfc			25.0              # Rydberg

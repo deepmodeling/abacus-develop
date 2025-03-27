@@ -40,7 +40,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     bool read_kin_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
-        GlobalV::ofs_running << " try to read charge from file" << std::endl;
+        GlobalV::ofs_running << " Read electron density from file" << std::endl;
 
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
@@ -48,7 +48,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
-            GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
+            GlobalV::ofs_running << " Read electron density from file: " << binary.str() << std::endl;
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 rhopw->recip2real(rhog[is], rho[is]);
@@ -67,24 +67,24 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     this->rho[is],
                     ucell.nat))
                 {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                    GlobalV::ofs_running << " Read electron density from file: " << ssc.str() << std::endl;
                 }
                 else if (is > 0)    // nspin=2 or 4
                 {
                     if (is == 1)    // failed at the second spin
                     {
-                        std::cout << "Incomplete charge density file!" << std::endl;
+                        std::cout << "Incomplete electron density file!" << std::endl;
                         read_error = true;
                         break;
                     }
                     else if (is == 2)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+                        GlobalV::ofs_running << " Didn't read in the electron density but would rearrange it later. "
                             << std::endl;
                     }
                     else if (is == 3)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+                        GlobalV::ofs_running << " rearrange electron density " << std::endl;
                         for (int ir = 0; ir < this->rhopw->nrxx; ir++)
                         {
                             this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
@@ -229,7 +229,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     this->rho[is],
                     ucell.nat))
                 {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                    GlobalV::ofs_running << " Read in the electron density: " << ssc.str() << std::endl;
                 }
             }
         }
@@ -261,17 +261,6 @@ void Charge::set_rho_core(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Charge","set_rho_core");
     ModuleBase::timer::tick("Charge","set_rho_core");
-
-    // double eps = 1.e-10;
-    //----------------------------------------------------------
-    // LOCAL VARIABLES :
-    // counter on mesh points
-    // counter on atomic types
-    // counter on g vectors
-    //----------------------------------------------------------
-    // int ir = 0;
-    // int it = 0;
-    // int ig = 0;
 
     bool bl = false;
     for (int it = 0; it<ucell.ntype; it++)
@@ -378,6 +367,7 @@ void Charge::set_rho_core_paw()
     this->rhopw->real2recip(this->rho_core,this->rhog_core);
 #endif
 }
+
 
 void Charge::non_linear_core_correction
 (

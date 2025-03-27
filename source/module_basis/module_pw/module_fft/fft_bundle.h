@@ -188,15 +188,14 @@ class FFT_Bundle
     template <typename FPTYPE>
     void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out) const;
 
-    template <typename FPTYPE, typename Device>
-    void fft3D_forward(const Device* ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
-    template <typename FPTYPE, typename Device>
-    void fft3D_backward(const Device* ctx, std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fft3D_forward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
+    template <typename FPTYPE>
+    void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
   private:
     int fft_mode = 0;
     bool float_flag = false;
-    bool float_define = true;
     bool double_flag = false;
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
