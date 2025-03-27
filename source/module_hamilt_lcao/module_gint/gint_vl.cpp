@@ -19,7 +19,7 @@
 #include <mkl_service.h>
 #endif
 
-
+// this is a thread-safe function
 void Gint::cal_meshball_vlocal(
 	const int na_grid,  					    // how many atoms on this (i,j,k) grid
 	const int LD_pool,
@@ -36,6 +36,7 @@ void Gint::cal_meshball_vlocal(
     const int lgd_now = this->gridt->lgd;
 
 	const int mcell_index = this->gridt->bcell_start[grid_index];
+    std::vector<double> hr_tmp;
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
 		const int bcell1 = mcell_index + ia1;
@@ -80,7 +81,9 @@ void Gint::cal_meshball_vlocal(
 				}
 				const int m = tmp_matrix->get_row_size();
 				const int n = tmp_matrix->get_col_size();
-                
+                hr_tmp.resize(m * n);
+                ModuleBase::GlobalFunc::ZEROS(hr_tmp.data(), m*n);
+
 				int cal_pair_num=0;
                 for(int ib=first_ib;ib<last_ib; ++ib)
                 {
@@ -91,7 +94,8 @@ void Gint::cal_meshball_vlocal(
                     dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
                         &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
                         &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                        &beta, tmp_matrix->get_pointer(), &n); 
+                        &beta, hr_tmp.data(), &n); 
+                    tmp_matrix->add_array_ts(hr_tmp.data());
                 }
                 else
                 {
@@ -103,7 +107,8 @@ void Gint::cal_meshball_vlocal(
                             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
                                 &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
                                 &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, tmp_matrix->get_pointer(), &n);                          
+                                &beta, hr_tmp.data(), &n);      
+                            tmp_matrix->add_array_ts(hr_tmp.data());            
                         }
                     }
                 }
