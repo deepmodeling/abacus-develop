@@ -20,6 +20,7 @@ if(ENABLE_LCAO)
       lcao_after_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
+      esolver_dm2rho.cpp
   )
 endif()
 

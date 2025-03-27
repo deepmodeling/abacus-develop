@@ -266,6 +266,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_after_scf.o\
       esolver_gets.o\
       lcao_others.o\
+      esolver_dm2rho.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\

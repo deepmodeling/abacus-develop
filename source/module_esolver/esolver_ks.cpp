@@ -439,13 +439,6 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     // 2) before_scf (electronic iteration loops)
     this->before_scf(ucell, istep);
 
-    // 3) write charge density
-    if (PARAM.inp.dm_to_rho)
-    {
-        ModuleBase::timer::tick(this->classname, "runner");
-        return; // nothing further is needed
-    }
-
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // 4) SCF iterations

@@ -245,16 +245,15 @@ void print_force(std::ofstream& ofs_running,
         }
     }
 
-    // titles: titles for each column
-    // atom_label.size(): number of lines in this table
-    // format for each value in the column
-	FmtTable fmt(titles, 
-			 atom_label.size(), 
-			 {"%8s", "%20.10f", "%20.10f", "%20.10f"},
-			 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
 
-    fmt << atom_label << force_x << force_y << force_z;
-    table = fmt.str();
+    FmtTable fmt(/*titles=*/titles, 
+                 /*nrows=*/atom_label.size(), 
+                 /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
+                 0,
+			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+
+	fmt << atom_label << force_x << force_y << force_z;
+	table = fmt.str();
     ofs_running << table << std::endl;
 
 	if (PARAM.inp.test_force) 
@@ -300,8 +299,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
 
     double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
 
-    FmtTable fmt(titles, 3, {"%20.10f", "%20.10f", "%20.10f"}, 
-    {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+    FmtTable fmt(/*titles=*/titles, 
+                 /*nrows=*/3, 
+                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 0,
+                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
 
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
