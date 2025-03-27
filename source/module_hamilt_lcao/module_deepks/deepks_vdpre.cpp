@@ -220,8 +220,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     std::vector<torch::Tensor> v_delta_precalc_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        torch::Tensor gevdm_complex = gevdm[nl].to(dtype);
-        v_delta_precalc_vector.push_back(at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_vector[nl], gevdm[nl]}));
+        torch::Tensor gevdm_totype = gevdm[nl].to(dtype);
+        v_delta_precalc_vector.push_back(at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_vector[nl], gevdm_totype}));
     }
 
     v_delta_precalc = torch::cat(v_delta_precalc_vector, -1);
@@ -296,6 +296,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
     phialpha_out = torch::zeros({nat, nlmax, nks, nlocal, mmax}, dtype);
+    auto accessor
+        = phialpha_out.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
 
     DeePKS_domain::iterate_ad1(
         ucell,
@@ -348,13 +350,13 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                             {
                                 if constexpr (std::is_same<TK, double>::value)
                                 {
-                                    phialpha_out[iat][nl][ik][iw1_all][m1] = overlap->get_value(iw1, ib + m1);
+                                    accessor[iat][nl][ik][iw1_all][m1] = overlap->get_value(iw1, ib + m1);
                                 }
                                 else
                                 {
                                     c10::complex<double> tmp;
                                     tmp = overlap->get_value(iw1, ib + m1) * kphase;
-                                    phialpha_out.index_put_({iat, nl, ik, iw1_all, m1}, tmp);
+                                    accessor[iat][nl][ik][iw1_all][m1] += tmp;
                                 }
                             }
                             ib += nm;

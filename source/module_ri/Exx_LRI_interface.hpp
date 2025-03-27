@@ -122,7 +122,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const K_Vectors& kv, 
                                                    const int& iter)
 {
-    std::cout << "iter=" << iter << std::endl;
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0 || PARAM.inp.init_wfc == "file") // non separate loop case

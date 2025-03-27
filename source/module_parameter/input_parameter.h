@@ -376,6 +376,7 @@ struct Input_para
     bool out_mat_dh = false;
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
+    bool out_mat_xc2 = false;   ///< output exchange-correlation matrix Vxc(R) in NAO representation.
     bool out_eband_terms = false; ///< output the band energy terms separately
     bool out_hr_npz = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.

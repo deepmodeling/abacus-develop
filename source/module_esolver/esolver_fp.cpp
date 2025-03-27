@@ -152,20 +152,10 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                double* data = nullptr;
-                if (PARAM.inp.dm_to_rho)
-                {
-                    data = this->chr.rho[is];
-                    this->pw_rhod->real2recip(this->chr.rho[is], this->chr.rhog[is]);
-                }
-                else
-                {
-                    data = this->chr.rho_save[is];
-                    this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                }
+                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
                 std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_vdata_palgrid(Pgrid,
-                                              data,
+                                              this->chr.rho_save[is],
                                               is,
                                               PARAM.inp.nspin,
                                               istep,
@@ -381,19 +371,16 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     {
         if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
         {
-            std::complex<double>** rhog_tot
-                = (PARAM.inp.dm_to_rho) ? this->chr.rhog : this->chr.rhog_save;
-            double** rhor_tot = (PARAM.inp.dm_to_rho) ? this->chr.rho : this->chr.rho_save;
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
+                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
             ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,
                                  PARAM.inp.nspin,
                                  ucell.GT,
-                                 rhog_tot,
+                                 this->chr.rhog_save,
                                  GlobalV::MY_POOL,
                                  GlobalV::RANK_IN_POOL,
                                  GlobalV::NPROC_IN_POOL);

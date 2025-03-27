@@ -33,6 +33,7 @@
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_vxc.hpp"
+#include "module_io/write_vxc_r.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 //--------------temporary----------------------------
@@ -488,27 +489,49 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &this->pv,
-                                    *this->psi,
-                                    ucell,
-                                    this->sf,
-                                    this->solvent,
-                                    *this->pw_rho,
-                                    *this->pw_rhod,
-                                    this->locpp.vloc,
-                                    this->chr,
-                                    this->GG,
-                                    this->GK,
-                                    this->kv,
-                                    orb_.cutoffs(),
-                                    this->pelec->wg,
-                                    this->gd
+            PARAM.globalv.nlocal,
+            GlobalV::DRANK,
+            &this->pv,
+            *this->psi,
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->GG,
+            this->GK,
+            this->kv,
+            orb_.cutoffs(),
+            this->pelec->wg,
+            this->gd
 #ifdef __EXX
-                                    ,
-                                    this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-                                    this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+            ,
+            this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+#endif
+        );
+    }
+    if (PARAM.inp.out_mat_xc2)
+    {
+        ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
+            &this->pv,
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->GG,
+            this->GK,
+            this->kv,
+            orb_.cutoffs(),
+            this->gd
+#ifdef __EXX
+            , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
 #endif
         );
     }
@@ -637,13 +660,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                                          this->pelec->nelec_spin,
                                          this->pelec->skip_weights);
 
-            if (!PARAM.inp.dm_to_rho)
-            {
-                auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
-                elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
-                _pelec->DM->cal_DMR();
-            }
+            auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+            elecstate::calEBand(_pelec->ekb, _pelec->wg, _pelec->f_en);
+            elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
+            _pelec->DM->cal_DMR();
+
             this->pelec->psiToRho(*this->psi);
             this->pelec->skip_weights = false;
 
