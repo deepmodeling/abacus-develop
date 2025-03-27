@@ -69,73 +69,6 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
     return;
 }
 
-template <typename TK, typename TH>
-void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
-                                  const std::vector<std::vector<TK>>& h_in,
-                                  std::vector<TH>& h_out,
-                                  const int nlocal,
-                                  const int nks)
-{
-    ModuleBase::TITLE("DeePKS_domain", "collect_h_tot");
-
-    // construct the total H matrix
-    for (int k = 0; k < nks; k++)
-    {
-#ifdef __MPI
-        int ir = 0;
-        int ic = 0;
-        for (int i = 0; i < nlocal; i++)
-        {
-            std::vector<TK> lineH(nlocal - i, TK(0.0));
-
-            ir = pv.global2local_row(i);
-            if (ir >= 0)
-            {
-                // data collection
-                for (int j = i; j < nlocal; j++)
-                {
-                    ic = pv.global2local_col(j);
-                    if (ic >= 0)
-                    {
-                        int iic = 0;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                        {
-                            iic = ir + ic * pv.nrow;
-                        }
-                        else
-                        {
-                            iic = ir * pv.ncol + ic;
-                        }
-                        lineH[j - i] = h_in[k][iic];
-                    }
-                }
-            }
-            else
-            {
-                // do nothing
-            }
-
-            Parallel_Reduce::reduce_all(lineH.data(), nlocal - i);
-
-            for (int j = i; j < nlocal; j++)
-            {
-                h_out[k](i, j) = lineH[j - i];
-                h_out[k](j, i) = h_out[k](i, j); // H is a symmetric matrix
-            }
-        }
-#else
-        for (int i = 0; i < nlocal; i++)
-        {
-            for (int j = i; j < nlocal; j++)
-            {
-                h_out[k](i, j) = h_in[k][i * nlocal + j];
-                h_out[k](j, i) = h_out[k](i, j); // H is a symmetric matrix
-            }
-        }
-#endif
-    }
-}
-
 template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::vector<ModuleBase::matrix>& dm_hl,
                                                                      const std::vector<std::vector<double>>& h_delta,
                                                                      //  std::vector<double>& o_delta,
@@ -149,20 +82,6 @@ template void DeePKS_domain::cal_o_delta<std::complex<double>, ModuleBase::Compl
     // std::vector<double>& o_delta,
     ModuleBase::matrix& o_delta,
     const Parallel_Orbitals& pv,
-    const int nks);
-
-template void DeePKS_domain::collect_h_mat<double, ModuleBase::matrix>(
-    const Parallel_Orbitals& pv,
-    const std::vector<std::vector<double>>& h_in,
-    std::vector<ModuleBase::matrix>& h_out,
-    const int nlocal,
-    const int nks);
-
-template void DeePKS_domain::collect_h_mat<std::complex<double>, ModuleBase::ComplexMatrix>(
-    const Parallel_Orbitals& pv,
-    const std::vector<std::vector<std::complex<double>>>& h_in,
-    std::vector<ModuleBase::ComplexMatrix>& h_out,
-    const int nlocal,
     const int nks);
 
 #endif

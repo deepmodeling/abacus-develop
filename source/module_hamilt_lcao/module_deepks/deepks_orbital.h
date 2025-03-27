@@ -20,9 +20,8 @@ namespace DeePKS_domain
 // which is defind as sum_mu,nu rho^{hl}_mu,nu <chi_mu|alpha>V(D)<alpha|chi_nu>
 // where rho^{hl}_mu,nu = C_{L\mu}C_{L\nu} - C_{H\mu}C_{H\nu}, L for LUMO, H for HOMO
 
-// There are 2 subroutines in this file:
+// There are 1 subroutines in this file:
 // 1. cal_o_delta, which is used for O_delta calculation
-// 2. collect_h_mat, which collect H(k) data from different processes
 
 template <typename TK, typename TH>
 void cal_o_delta(const std::vector<TH>& dm_hl,
@@ -31,14 +30,6 @@ void cal_o_delta(const std::vector<TH>& dm_hl,
                  ModuleBase::matrix& o_delta,
                  const Parallel_Orbitals& pv,
                  const int nks);
-
-// Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
-template <typename TK, typename TH>
-void collect_h_mat(const Parallel_Orbitals& pv,
-                   const std::vector<std::vector<TK>>& h_in,
-                   std::vector<TH>& h_out,
-                   const int nlocal,
-                   const int nks);
 } // namespace DeePKS_domain
 
 #endif
