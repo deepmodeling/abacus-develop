@@ -113,7 +113,6 @@ TEST_F(NHC_test, second_half)
 {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
-    ;
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00035596392702161582, doublethreshold);
     EXPECT_NEAR(mdrun->pos[0].y, 0.00026566987683715606, doublethreshold);
@@ -146,7 +145,7 @@ TEST_F(NHC_test, write_restart)
 {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
-    ;
+    
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -210,14 +209,12 @@ TEST_F(NHC_test, restart)
 
 TEST_F(NHC_test, print_md)
 {
-    std::ofstream ofs("running.log");
+    std::ofstream ofs("running_nhchain.log");
     mdrun->print_md(ofs, true);
     ofs.close();
 
-    std::ifstream ifs("running.log");
+    std::ifstream ifs("running_nhchain.log");
     std::string output_str;
-    getline(ifs, output_str);
-    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
@@ -239,5 +236,5 @@ TEST_F(NHC_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-    remove("running.log");
+    //remove("running_nhchain.log");
 }
