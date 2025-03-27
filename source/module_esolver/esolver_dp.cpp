@@ -136,7 +136,7 @@ void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
-    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
 
     // external stress
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

@@ -104,7 +104,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     {
         stress = lj_virial;
 
-        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
 
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

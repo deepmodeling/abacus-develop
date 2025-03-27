@@ -262,7 +262,8 @@ void print_force(std::ofstream& ofs_running,
 	}
 }
 
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
+void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
+  const bool screen, const bool ry, std::ofstream &ofs)
 {
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
@@ -284,7 +285,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     std::vector<double> stress_z;
     std::string table;
 
-    GlobalV::ofs_running << " " << title << std::endl;
+    ofs << " " << title << std::endl;
 
     std::vector<std::string> titles({"Stress_x", "Stress_y", "Stress_z"});
     for (int i = 0; i < 3; i++)
@@ -306,10 +307,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
 
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
-    GlobalV::ofs_running << table;
+    ofs << table;
     if (name == "TOTAL-STRESS")
     {
-        GlobalV::ofs_running << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
+        ofs << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit
                              << std::endl;
     }
@@ -326,9 +327,9 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     return;
 }
 
-void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname)
+void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std::string& basisname)
 {
-    ofs_running << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
                 << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 
