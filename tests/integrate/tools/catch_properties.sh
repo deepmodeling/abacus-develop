@@ -77,27 +77,31 @@ word="driver_line"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
 test -e $1 && rm $1
-#--------------------------------------------
+
+#------------------------------------------------------------
 # if NOT non-self-consistent calculations or linear response
-#--------------------------------------------
+#------------------------------------------------------------
 is_lr=0
 if [ ! -z $esolver_type ] && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
 	is_lr=1
 fi
 
+#----------------------------
+# total energy information
+#----------------------------
 if [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
 && [ $is_lr == 0 ]; then
-	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
 	echo "etotref $etot" >>$1
 	echo "etotperatomref $etotperatom" >>$1
 fi
 
-
-#echo $etot
+#----------------------------
+# force information
 #echo "hasforce:"$has_force
+#----------------------------
 if ! test -z "$has_force" && [ $has_force == 1 ]; then
 	nn3=`echo "$natom + 1" |bc`
 	#nn1=`echo "$natom + 1" |bc`

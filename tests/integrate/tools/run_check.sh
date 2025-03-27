@@ -1,6 +1,7 @@
 #!/bin/bash
 
-
+# check_out: checking the output information
+# input: result.out
 check_out(){
 	outfile=$1
 	worddir=`awk '{print $1}' $outfile`
@@ -43,7 +44,7 @@ echo "Begin testing the example with $NP cores"
 #parallel test
 mpirun -np $NP $exec_path > log.txt
 
-test -d OUT.autotest || echo "Some errors happened in ABACUS!"
+test -d OUT.autotest || echo "Some errors occured in ABACUS!"
 
 test -d OUT.autotest || exit 0
 

@@ -546,7 +546,7 @@ bool read_atom_positions(UnitCell& ucell,
 
     
     ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs_running,"total number of atoms",ucell.nat);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"TOTAL ATOM NUMBER",ucell.nat);
 
     if (ucell.nat == 0)
     {
