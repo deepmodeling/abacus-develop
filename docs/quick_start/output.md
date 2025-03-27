@@ -14,7 +14,7 @@ For a complete list of input parameters, please consult this [instruction](../ad
 
 `running_scf.log` contains information on nearly all function calls made during the execution of ABACUS.
 
-## *KPT*
+## *KPT.info*
 
 This file contains the information of all generated k-points, as well as the list of k-points actually used for calculations after considering symmetry.
 

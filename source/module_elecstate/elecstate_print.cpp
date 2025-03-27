@@ -430,10 +430,11 @@ void print_etot(const Magnetism& magnet,
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
         return ener * ModuleBase::Ry_to_eV;
     });
-    FmtTable table({"Energy", "Rydberg", "eV"},
-                   titles.size(),
-                   {"%-14s", "%20.10f", "%20.10f"},
-                   {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
+                   /*nrows=*/titles.size(),
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*indents=*/0,
+                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
     if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16

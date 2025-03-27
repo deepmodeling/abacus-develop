@@ -63,8 +63,8 @@ public:
                           const K_Vectors& kv, 
                           const int& iter);
 
-    /// @brief in hamilt2density: calculate Hexx and Eexx
-    void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
+    /// @brief in hamilt2rho: calculate Hexx and Eexx
+    void exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
 
     /// @brief in iter_finish: write Hexx, do something according to whether SCF is converged
     void exx_iter_finish(const K_Vectors& kv, 

@@ -26,10 +26,16 @@ case "${with_intel}" in
   __INSTALL__)
     echo "==================== Installing the Intel compiler ===================="
     echo "__INSTALL__ is not supported; please install the Intel compiler manually"
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        exit 1
+    fi
     exit 1
     ;;
   __SYSTEM__)
     echo "==================== Finding Intel compiler from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     if [ "${intel_classic}" = "yes" ]; then
       check_command icc "intel" && CC="$(realpath $(command -v icc))" || exit 1
       check_command icpc "intel" && CXX="$(realpath $(command -v icpc))" || exit 1
@@ -37,11 +43,12 @@ case "${with_intel}" in
     else
       check_command icx "intel" && CC="$(realpath $(command -v icx))" || exit 1
       check_command icpx "intel" && CXX="$(realpath $(command -v icpx))" || exit 1
-      if [ "${with_ifx}" = "yes" ]; then
+      if [ "${WITH_IFX}" = "yes" ]; then
         check_command ifx "intel" && FC="$(realpath $(command -v ifx))" || exit 1
       else
         check_command ifort "intel" && FC="$(realpath $(command -v ifort))" || exit 1
       fi
+    fi
     fi
     F90="${FC}"
     F77="${FC}"
@@ -62,7 +69,7 @@ case "${with_intel}" in
     else
       check_command ${pkg_install_dir}/bin/icx "intel" && CC="${pkg_install_dir}/bin/icx" || exit 1
       check_command ${pkg_install_dir}/bin/icpx "intel" && CXX="${pkg_install_dir}/bin/icpx" || exit 1
-      if [ "${with_ifx}" = "yes" ]; then
+      if [ "${WITH_IFX}" = "yes" ]; then
         check_command ${pkg_install_dir}/bin/ifx "intel" && FC="${pkg_install_dir}/bin/ifx" || exit 1
       else
         check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1

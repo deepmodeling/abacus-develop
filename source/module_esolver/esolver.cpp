@@ -5,6 +5,7 @@
 #include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
+#include "esolver_dm2rho.h"
 #include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
@@ -95,7 +96,7 @@ std::string determine_type()
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
     }
 
-    GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
+    GlobalV::ofs_running << "\n The esolver type: " << esolver_type << std::endl;
 
     auto device_info = PARAM.inp.device;
 
@@ -204,11 +205,25 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
         else if (PARAM.inp.nspin < 4)
         {
-            return new ESolver_KS_LCAO<std::complex<double>, double>();
+            if (PARAM.inp.dm_to_rho)
+            {
+                return new ESolver_DM2rho<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
+            }
         }
         else
         {
-            return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            if (PARAM.inp.dm_to_rho)
+            {
+                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            }
         }
     }
     else if (esolver_type == "ksdft_lcao_tddft")

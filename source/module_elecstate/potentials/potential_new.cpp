@@ -163,7 +163,8 @@ void Potential::allocate()
 void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::tick("Potential", "update_from_charge");
+
     if (!this->fixed_done)
     {
         this->cal_fixed_v(this->v_effective_fixed.data());
@@ -216,13 +217,14 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     }
 #endif
 
-    ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::tick("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("Potential", "cal_fixed_v");
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
+
     this->v_effective_fixed.assign(this->v_effective_fixed.size(), 0.0);
     for (size_t i = 0; i < this->components.size(); i++)
     {
@@ -237,10 +239,11 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 
 void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
-    ModuleBase::TITLE("Potential", "cal_v_eff");
+    ModuleBase::TITLE("Potential", "cal_veff");
+    ModuleBase::timer::tick("Potential", "cal_veff");
+
     const int nspin_current = this->v_effective.nr;
     const int nrxx = this->v_effective.nc;
-    ModuleBase::timer::tick("Potential", "cal_v_eff");
     // first of all, set v_effective to zero.
     this->v_effective.zero_out();
 
@@ -264,7 +267,7 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_v_eff");
+    ModuleBase::timer::tick("Potential", "cal_veff");
 }
 
 void Potential::init_pot(int istep, const Charge*const chg)
@@ -278,8 +281,6 @@ void Potential::init_pot(int istep, const Charge*const chg)
 
     this->update_from_charge(chg, this->ucell_);
 
-    // plots
-    // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);
     ModuleBase::timer::tick("Potential", "init_pot");
     return;
 }

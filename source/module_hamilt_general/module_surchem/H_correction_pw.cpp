@@ -14,41 +14,49 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
                                          const double* vlocal,
                                          Structure_Factor* sf)
 {
-    ModuleBase::TITLE("surchem", "v_correction");
-    ModuleBase::timer::tick("surchem", "v_correction");
+    ModuleBase::TITLE("surchem", "v_cor");
+    ModuleBase::timer::tick("surchem", "v_cor");
 
-    double* Porter = new double[rho_basis->nrxx];
-    for (int i = 0; i < rho_basis->nrxx; i++)
-        Porter[i] = 0.0;
+    assert(rho_basis->nrxx>0);
+   
+    double* porter = new double[rho_basis->nrxx];
+	for (int i = 0; i < rho_basis->nrxx; i++)
+	{
+		porter[i] = 0.0;
+	}
     const int nspin0 = (nspin == 2) ? 2 : 1;
-    for (int is = 0; is < nspin0; is++)
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-            Porter[ir] += rho[is][ir];
+	for (int is = 0; is < nspin0; is++)
+	{
+		for (int ir = 0; ir < rho_basis->nrxx; ir++)
+		{
+			porter[ir] += rho[is][ir];
+		}
+	}
 
-    complex<double>* Porter_g = new complex<double>[rho_basis->npw];
-    ModuleBase::GlobalFunc::ZEROS(Porter_g, rho_basis->npw);
+    complex<double>* porter_g = new complex<double>[rho_basis->npw];
+    ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);
 
-    rho_basis->real2recip(Porter, Porter_g);
+    rho_basis->real2recip(porter, porter_g);
 
-    complex<double>* N = new complex<double>[rho_basis->npw];
-    complex<double>* TOTN = new complex<double>[rho_basis->npw];
-    complex<double>* PS_TOTN = new complex<double>[rho_basis->npw];
+    complex<double>* n = new complex<double>[rho_basis->npw];
+    complex<double>* total_n = new complex<double>[rho_basis->npw];
+    complex<double>* ps_totn = new complex<double>[rho_basis->npw];
 
-    cal_totn(cell, rho_basis, Porter_g, N, TOTN, vlocal);
+    cal_totn(cell, rho_basis, porter_g, n, total_n, vlocal);
 
-    cal_pseudo(cell, pgrid, rho_basis, Porter_g, PS_TOTN, sf);
+    cal_pseudo(cell, pgrid, rho_basis, porter_g, ps_totn, sf);
 
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
 
-    v += cal_vel(cell, rho_basis, TOTN, PS_TOTN, nspin);
-    v += cal_vcav(cell, rho_basis, PS_TOTN, nspin);
+    v += cal_vel(cell, rho_basis, total_n, ps_totn, nspin);
+    v += cal_vcav(cell, rho_basis, ps_totn, nspin);
 
-    delete[] Porter;
-    delete[] Porter_g;
-    delete[] N;
-    delete[] PS_TOTN;
-    delete[] TOTN;
+    delete[] porter;
+    delete[] porter_g;
+    delete[] n;
+    delete[] ps_totn;
+    delete[] total_n;
 
-    ModuleBase::timer::tick("surchem", "v_correction");
+    ModuleBase::timer::tick("surchem", "v_cor");
     return v;
 }

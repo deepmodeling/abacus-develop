@@ -48,7 +48,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void others(UnitCell& ucell, const int istep) override;
 
-    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt(const UnitCell& ucell);
     virtual void deallocate_hamilt();

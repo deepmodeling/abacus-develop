@@ -41,7 +41,9 @@ case "${with_openblas}" in
       else
         download_pkg_from_ABACUS_org "${openblas_sha256}" "${openblas_pkg}"
       fi
-
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d OpenBLAS-${openblas_ver} ] && rm -rf OpenBLAS-${openblas_ver}
       tar -zxf ${openblas_pkg}
@@ -112,6 +114,7 @@ case "${with_openblas}" in
         install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage2/$(basename ${SCRIPT_NAME})"
+    fi
     fi
     OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
     OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
