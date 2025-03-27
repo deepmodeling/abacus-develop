@@ -12,7 +12,6 @@ if(ENABLE_DEEPKS)
       deepks_vdelta.cpp
       deepks_vdpre.cpp
       deepks_vdrpre.cpp
-      deepks_hmat.cpp
       deepks_pdm.cpp
       deepks_phialpha.cpp
       LCAO_deepks_io.cpp
