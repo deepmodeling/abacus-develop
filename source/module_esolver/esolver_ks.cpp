@@ -550,7 +550,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                               this->pelec->klist,
                               ik, 
                               PARAM.inp.printe, 
-                              iter);
+                              iter,
+                              GlobalV::ofs_running);
     }
 
     // compute magnetization, only for LSDA(spin==2)

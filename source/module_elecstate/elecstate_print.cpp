@@ -250,13 +250,16 @@ void print_band(const ModuleBase::matrix& ekb,
                 const K_Vectors* klist,
                 const int& ik,
                 const int& printe,
-                const int& iter)
+                const int& iter,
+                std::ofstream &ofs)
 {
+    const double largest_eig = 1.0e10;
+
     // check the band energy.
     bool wrong = false;
     for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
     {
-        if (std::abs(ekb(ik, ib)) > 1.0e10)
+        if (std::abs(ekb(ik, ib)) > largest_eig)
         {
             GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
             wrong = true;
@@ -271,18 +274,18 @@ void print_band(const ModuleBase::matrix& ekb,
     {
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
-            GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << klist->isk[ik] + 1
+            ofs << std::setprecision(6);
+            ofs << " Energy (eV) & Occupations for spin=" << klist->isk[ik] + 1
                                  << " k-point=" << ik + 1 << std::endl;
-            GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
+            ofs << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
-                GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
+                ofs << " " << std::setw(6) << ib + 1 << std::setw(15)
                                      << ekb(ik, ib) * ModuleBase::Ry_to_eV;
                 // for the first electron iteration, we don't have the energy
                 // spectrum, so we can't get the occupations.
-                GlobalV::ofs_running << std::setw(15) << wg(ik, ib);
-                GlobalV::ofs_running << std::endl;
+                ofs << std::setw(15) << wg(ik, ib);
+                ofs << std::endl;
             }
         }
     }
