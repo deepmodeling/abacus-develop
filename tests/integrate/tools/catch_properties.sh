@@ -103,11 +103,12 @@ fi
 # echo "hasforce:"$has_force
 #----------------------------
 if ! test -z "$has_force" && [ $has_force == 1 ]; then
-	nn3=`echo "$natom + 1" |bc`
+	nn3=`echo "$natom + 3" |bc`
+    # echo "nn3=$nn3"
     # check the last step result
     grep -A$nn3 "TOTAL-FORCE" $running_path |awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
 	total_force=`sum_file force.txt`
-	rm force.txt
+    rm force.txt
 	echo "totalforceref $total_force" >>$1
 fi
 
@@ -116,7 +117,7 @@ fi
 # echo "has_stress:"$has_stress
 #-------------------------------
 if ! test -z "$has_stress" && [  $has_stress == 1 ]; then
-    grep -A4 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
+    grep -A6 "TOTAL-STRESS" $running_path| awk 'NF==3' | tail -3> stress.txt
 	total_stress=`sum_file stress.txt`
 	rm stress.txt
 	echo "totalstressref $total_stress" >>$1
