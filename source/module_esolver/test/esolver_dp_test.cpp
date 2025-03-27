@@ -20,6 +20,7 @@
  *   - ESolver_DP::post_process()
  *   - ESolver_DP::type_map()
  */
+
 namespace ModuleIO
 {
 void print_force(std::ofstream& ofs_running,
@@ -29,9 +30,15 @@ void print_force(std::ofstream& ofs_running,
                  bool ry = true)
 {
 }
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
+
+void print_stress(const std::string& name, 
+		const ModuleBase::matrix& scs, 
+		const bool screen, 
+		const bool ry,
+		std::ofstream &ofs)
 {
 }
+
 } // namespace ModuleIO
 
 class ESolverDPTest : public ::testing::Test
