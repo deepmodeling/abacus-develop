@@ -5,7 +5,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"

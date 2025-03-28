@@ -16,13 +16,13 @@ template<typename TR>
 void folding_HR(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
-                const int ncol,
+                const int hk_ld,
                 const int hk_type);
 
 void folding_HR(const hamilt::HContainer<double>& hR,
                 double* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
-                const int ncol,
+                const int hk_ld,
                 const int hk_type);
 
 #ifdef __MPI

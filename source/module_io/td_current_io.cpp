@@ -8,7 +8,7 @@
 #include "module_base/tool_threading.h"
 #include "module_base/vector3.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/module_tddft/td_current.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"

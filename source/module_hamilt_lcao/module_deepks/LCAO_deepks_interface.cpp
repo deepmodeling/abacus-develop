@@ -314,34 +314,18 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     ofs_hr.close();
                 }
 
-                const std::string file_vdrpre = PARAM.globalv.global_out_dir + "deepks_vdrpre.csr";
-                std::vector<hamilt::HContainer<TR>*> h_deltaR_pre(inlmax);
-                for (int i = 0; i < inlmax; i++)
-                {
-                    h_deltaR_pre[i] = new hamilt::HContainer<TR>(*hR_tot);
-                    h_deltaR_pre[i]->set_zero();
-                }
-                // DeePKS_domain::cal_vdr_precalc<TR>();
-                if (rank == 0)
-                {
-                    std::ofstream ofs_hrp(file_vdrpre, std::ios::out);
-                    for (int iat = 0; iat < nat; iat++)
-                    {
-                        ofs_hrp << "- Index of atom: " << iat << std::endl;
-                        for (int nl = 0; nl < nlmax; nl++)
-                        {
-                            int inl = iat * nlmax + nl;
-                            ofs_hrp << "-- Index of nl: " << nl << std::endl;
-                            ofs_hrp << "Matrix Dimension of H_delta(R): " << h_deltaR_pre[inl]->get_nbasis() << std::endl;
-                            ofs_hrp << "Matrix number of H_delta(R): " << h_deltaR_pre[inl]->size_R_loop() << std::endl;
-                            hamilt::Output_HContainer<TR> out_hrp(h_deltaR_pre[inl], ofs_hrp, sparse_threshold, precision);
-                            out_hrp.write();
-                            ofs_hrp << std::endl;
-                        }
-                        ofs_hrp << std::endl;
-                    }
-                    ofs_hrp.close();
-                }
+                torch::Tensor phialpha_r_out;
+                torch::Tensor R_query;
+                DeePKS_domain::prepare_phialpha_r(nlocal, lmaxd, inlmax, nat, phialpha, ucell, orb, *ParaV, GridD, phialpha_r_out, R_query);
+                const std::string file_phialpha_r = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
+                const std::string file_R_query = PARAM.globalv.global_out_dir + "deepks_R_query.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
+                LCAO_deepks_io::save_tensor2npy<int>(file_R_query, R_query, rank);
+
+                torch::Tensor gevdm_out;
+                DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
+                const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
             }
         }
 

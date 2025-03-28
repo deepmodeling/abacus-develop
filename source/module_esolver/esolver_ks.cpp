@@ -106,21 +106,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     //! 1) initialize "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
 
-    //! 2) setup the charge mixing parameters
-    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
-                         PARAM.inp.mixing_beta,
-                         PARAM.inp.mixing_ndim,
-                         PARAM.inp.mixing_gg0,
-                         PARAM.inp.mixing_tau,
-                         PARAM.inp.mixing_beta_mag,
-                         PARAM.inp.mixing_gg0_mag,
-                         PARAM.inp.mixing_gg0_min,
-                         PARAM.inp.mixing_angle,
-                         PARAM.inp.mixing_dmr,
-                         ucell.omega,
-                         ucell.tpiba);
-    p_chgmix->init_mixing();
-
     /// PAW Section
 #ifdef USE_PAW
     if (PARAM.inp.use_paw)
@@ -201,7 +186,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 #endif
     /// End PAW
 
-    //! 4) it has been established that
+    //! 3) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
     if (PARAM.inp.use_paw)
@@ -213,6 +198,21 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+
+    //! 4) setup the charge mixing parameters
+    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
+                         PARAM.inp.mixing_beta,
+                         PARAM.inp.mixing_ndim,
+                         PARAM.inp.mixing_gg0,
+                         PARAM.inp.mixing_tau,
+                         PARAM.inp.mixing_beta_mag,
+                         PARAM.inp.mixing_gg0_mag,
+                         PARAM.inp.mixing_gg0_min,
+                         PARAM.inp.mixing_angle,
+                         PARAM.inp.mixing_dmr,
+                         ucell.omega,
+                         ucell.tpiba);
+    p_chgmix->init_mixing();
 
     //! 5) ESolver depends on the Symmetry module
     // symmetry analysis should be performed every time the cell is changed
