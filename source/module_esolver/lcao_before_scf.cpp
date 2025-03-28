@@ -251,57 +251,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->cal_DMR();
     }
 
-    if (PARAM.inp.dm_to_rho)
-    {
-        // file name of DM
-        std::string zipname = "output_DM0.npz";
-        elecstate::DensityMatrix<TK, double>* dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-      
-        // read DM from file
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
-
-        // if nspin=2, need extra reading
-        if (PARAM.inp.nspin == 2)
-        {
-            zipname = "output_DM1.npz";
-            ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
-        }
-
-        elecstate::calculate_weights(this->pelec->ekb,
-                                     this->pelec->wg,
-                                     this->pelec->klist,
-                                     this->pelec->eferm,
-                                     this->pelec->f_en,
-                                     this->pelec->nelec_spin,
-                                     this->pelec->skip_weights);
-      
-        this->pelec->psiToRho(*this->psi);
-
-        int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
-
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-
-            // write electron density
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->chr.rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          fn,
-                                          this->pelec->eferm.get_efval(is),
-                                          &(ucell),
-                                          3,
-                                          1);
-        }
-
-        // why we need to return here? mohan add 2025-03-10
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
-        return;
-    }
-
     // 16) the electron charge density should be symmetrized,
     // here is the initialization
     Symmetry_rho srho;

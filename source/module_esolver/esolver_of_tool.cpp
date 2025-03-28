@@ -528,7 +528,9 @@ void ESolver_OF::print_info(const bool conv_esolver)
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {
         return energy * ModuleBase::Ry_to_eV;
     });
-    FmtTable table({"Energy", "Rydberg", "eV"}, titles.size(), {"%20s", "%20.12f", "%20.12f"});
+    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"}, 
+                   /*nrows=*/titles.size(), 
+                   /*formats=*/{"%20s", "%20.12f", "%20.12f"}, 0);
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
 }

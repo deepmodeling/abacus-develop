@@ -191,17 +191,22 @@ public:
      * 
      * @param titles titles, its size should be the same as the number of columns
      * @param nrows number of rows
-     * @param aligns Alignments instance, can be constructed with initializer_list<char> like {'r', 'c'}, for right and center alignment for values and titles
+     * @param fmts format strings for each column, its size should be the same as the number of columns
+     * @param indent indent for each column, default is 0
+     * @param aligns Alignments instance, for alignment of values and titles, e.g. {Align::LEFT, Align::RIGHT} for left alignment of values and right alignment of titles
      * @param frames Frames instance, can be constructed with initializer_list<char> like {'-', '-', '-', ' ', ' '}, for up, middle, down, left and right frames
      * @param delimiters Delimiters instance, can be constructed with initializer_list<char> like {'-', ' '}, for horizontal and vertical delimiters
      */
     FmtTable(const std::vector<std::string>& titles, 
-             const size_t& nrows, 
+             const size_t nrows, 
              const std::vector<std::string>& fmts,
+             const size_t indent = 0,
              const Alignments& aligns = {},
              const Frames& frames = {},
-             const Delimiters& delimiters = {}): titles_(titles), data_(nrows, titles.size()), fmts_(fmts), aligns_(aligns), frames_(frames), delimiters_(delimiters)
-    { assert(titles.size() == fmts.size()); };
+             const Delimiters& delimiters = {}): 
+             titles_(titles), data_(nrows, titles.size()), // data
+             fmts_(fmts), indent_(indent), aligns_(aligns), frames_(frames), delimiters_(delimiters) // styles
+    { assert(titles.size() == fmts.size()||titles.size() == 0); };
     ~FmtTable() {};
     /**
      * @brief import data from std::vector
@@ -269,14 +274,15 @@ public:
      */
     std::string concat_title(const std::vector<std::string>& titles) const
     {
-        std::string dst;
+        std::string dst = "";
         // first sum width of all titles
         size_t width = std::accumulate(titles.begin(), titles.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
         // add width of delimiters
         width += titles.size() - 1;
         // add width of left and right frames
         width += 2;
-        dst += std::string(width, frames_.up_) + "\n" + std::string(1, frames_.l_);
+        dst += std::string(indent_, ' ') + std::string(width, frames_.up_) + "\n"; // first line: the upper frame
+        dst += std::string(indent_, ' ') + std::string(1, frames_.l_); // second line: the left frame + titles + right frame
         for(size_t i = 0; i < titles.size(); i++)
         {
             dst += titles[i];
@@ -284,7 +290,8 @@ public:
                 dst += delimiters_.v_;
             }
         }
-        dst += std::string(1, frames_.r_) + "\n" + std::string(width, frames_.mid_) + "\n";
+        dst += std::string(1, frames_.r_) + "\n";
+        dst += std::string(indent_, ' ') + std::string(width, frames_.mid_) + "\n"; // third line: the middle frame
         return dst;
     }
     /**
@@ -303,10 +310,10 @@ public:
         width += row.size() - 1;
         // for the left and right frame
         width += 2;
-        if (pos == 't') {
-            dst += std::string(width, frames_.up_) + "\n";
+        if (pos == 't') { // 't' for top
+            dst += std::string(indent_, ' ') + std::string(width, frames_.up_) + "\n";
         }
-        dst += std::string(1, frames_.l_);
+        dst += std::string(indent_, ' ') + std::string(1, frames_.l_);
         for(size_t i = 0; i < row.size(); i++)
         {
             dst += row[i];
@@ -315,8 +322,8 @@ public:
             }
         }
         dst += std::string(1, frames_.r_) + "\n";
-        if (pos == 'b') {
-            dst += std::string(width, frames_.dw_) + "\n";
+        if (pos == 'b') { // 'b' for bottom
+            dst += std::string(indent_, ' ') + std::string(width, frames_.dw_) + "\n"; // the last line
         }
         return dst;
     }
@@ -397,6 +404,7 @@ private:
     std::vector<std::string> titles_;
     NDArray<std::string> data_; // data
     std::vector<std::string> fmts_; // format strings for each column
+    size_t indent_ = 0; // indent for each column
 };
 
 #endif
