@@ -3,7 +3,7 @@
 #include "utils/lr_util.h"
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
-#include "module_lr/module_pot/pot_hxc_lrtd.h"
+#include "module_lr/potentials/pot_hxc_lrtd.h"
 #include "module_lr/hsolver_lrtd.hpp"
 #include "module_lr/lr_spectrum.h"
 #include <memory>

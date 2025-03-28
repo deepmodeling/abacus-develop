@@ -15,7 +15,7 @@
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_lr/module_pot/pot_hxc_lrtd.h"
+#include "module_lr/potentials/pot_hxc_lrtd.h"
 #include "module_lr/hamilt_casida.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
