@@ -84,34 +84,11 @@ void Gint::cal_meshball_vlocal(
                 hr_tmp.resize(m * n);
                 ModuleBase::GlobalFunc::ZEROS(hr_tmp.data(), m*n);
 
-				int cal_pair_num=0;
-                for(int ib=first_ib;ib<last_ib; ++ib)
-                {
-                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
-                }
-                if(cal_pair_num>ib_length/4)
-                {
-                    dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
-                        &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
-                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                        &beta, hr_tmp.data(), &n); 
-                    tmp_matrix->add_array_ts(hr_tmp.data());
-                }
-                else
-                {
-                    for(int ib=first_ib; ib<last_ib; ++ib)
-                    {
-                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
-                        {
-                            int k=1;
-                            dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-                                &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
-                                &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, hr_tmp.data(), &n);      
-                            tmp_matrix->add_array_ts(hr_tmp.data());            
-                        }
-                    }
-                }
+                dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
+                    &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
+                    &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
+                    &beta, hr_tmp.data(), &n); 
+                tmp_matrix->add_array_ts(hr_tmp.data());
 			}
 		}
 	}
