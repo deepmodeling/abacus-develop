@@ -32,7 +32,11 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
-    int atom_index = 0;
+    #pragma omp parallel
+    {
+    std::vector<double> stress_local(6, 0);
+    ModuleBase::matrix force_local(force.nr, force.nc);
+    #pragma omp for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         if(!this->constraint_atom_list[iat0])
@@ -133,8 +137,8 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
-            double* force_tmp1 = (cal_force) ? &force(iat1, 0) : nullptr;
-            double* force_tmp2 = (cal_force) ? &force(iat0, 0) : nullptr;
+            double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
+            double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
@@ -183,11 +187,26 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                              this->nspin,
                                              dis1,
                                              dis2,
-                                             stress_tmp.data());
+                                             stress_local.data());
                     }
                 }
             }
         }
+    }
+    #pragma omp critical
+    {
+        if(cal_force)
+        {
+            force += force_local;
+        }
+        if(cal_stress)
+        {
+            for(int i = 0; i < 6; i++)
+            {
+                stress_tmp[i] += stress_local[i];
+            }
+        }
+    }
     }
 
     if (cal_force)

@@ -188,7 +188,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 		{
 			const double v_tmp = ModuleBase::e2 * vrho[ir*nspin+is] * sgn[ir*nspin+is];
 			v(is,ir) += v_tmp;
-			vtxc += v_tmp * rho[ir*nspin+is];
+			vtxc += v_tmp * (rho[ir*nspin+is] - 1.0/nspin*chr->rho_core[ir]);
 		}
 	}
 
@@ -204,7 +204,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 		{
 			for( std::size_t ir=0; ir<nrxx; ++ir )
 			{
-				rvtxc += dh[is][ir] * rho[ir*nspin+is];
+				rvtxc += dh[is][ir] * (rho[ir*nspin+is] - 1.0/nspin*chr->rho_core[ir]);
 				v(is,ir) -= dh[is][ir];
 			}
 		}

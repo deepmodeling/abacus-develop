@@ -119,7 +119,7 @@ void DFTU::write_occup_m(const UnitCell& ucell,
                     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         double sum0[2];
-                        for (int is = 0; is < 2; is++)
+                        for (int is = 0; is < PARAM.inp.nspin; is++)
                         {
                             if(diag)// diagonalization for local occupation matrix and print the eigenvalues
                             {
@@ -144,19 +144,22 @@ void DFTU::write_occup_m(const UnitCell& ucell,
                                 ofs << std::setw(12) << std::setprecision(8) << std::fixed
                                     << sum0[is] << std::endl;
                             }
-                            ofs << "spin"
-                                << "  " << is << std::endl;
-                            for (int m0 = 0; m0 < 2 * l + 1; m0++)
+                            else
                             {
-                                for (int m1 = 0; m1 < 2 * l + 1; m1++)
+                                ofs << "spin"
+                                    << "  " << is << std::endl;
+                                for (int m0 = 0; m0 < 2 * l + 1; m0++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                        << locale[iat][l][n][is](m0, m1);
+                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
+                                    {
+                                        ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                            << locale[iat][l][n][is](m0, m1);
+                                    }
+                                    ofs << std::endl;
                                 }
-                                ofs << std::endl;
                             }
                         }
-                        if(diag)
+                        if(diag && PARAM.inp.nspin == 2)
                         {
                             ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[0] - sum0[1] << std::endl;
                         }

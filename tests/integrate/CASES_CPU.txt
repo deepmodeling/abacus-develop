@@ -72,6 +72,7 @@
 109_PW_CR_fix_c
 109_PW_CR_moveatoms
 110_PW_SY
+110_PW_DOJO_SY
 110_PW_SY_symmetry
 110_PW_SY_symmetry_6K
 110_PW_SY_symmetry_LiRh
@@ -183,6 +184,7 @@
 216_NO_scan_Si2
 217_NO_out_pot
 217_NO_out_pot_nscf
+218_NO_mixing_tau
 219_NO_out_elf
 220_NO_KP_MD_MSST
 #220_NO_KP_MD_MSST_level2
@@ -228,7 +230,7 @@
 311_NO_GO_elec_minus
 311_NO_GO_S2_elec_minus
 312_NO_GO_wfc_file
-#312_NO_GO_wfc_get_wf
+312_NO_GO_wfc_get_wf
 312_NO_GO_wfc_get_pchg
 312_NO_GO_wfc_out
 313_NO_GO_mulliken

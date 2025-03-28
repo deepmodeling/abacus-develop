@@ -16,7 +16,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(this->bxyz, 0);
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
@@ -102,7 +102,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1, 0);
     std::vector<int> block_size(max_size, 0);
     std::vector<int> vindex(bxyz, 0);
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
     {
         const int na_grid = this->gridt->how_many_atoms[grid_index];

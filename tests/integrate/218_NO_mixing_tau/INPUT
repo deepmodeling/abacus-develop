@@ -1,0 +1,37 @@
+INPUT_PARAMETERS RUNNING ABACUS-DFT
+
+#Parameters (1.General)
+suffix                  autotest  # suffix of OUTPUT DIR
+nspin                   2   #  1/2/4 4 for SOC
+symmetry                0   #  0/1  1 for open, default
+esolver_type            ksdft  # ksdft, ofdft, sdft, tddft, lj, dp
+dft_functional          MGGA_X_R2SCAN+MGGA_C_R2SCAN  # same as upf file, can be lda/pbe/scan/hf/pbe0/hse
+ks_solver             genelpa  # default for ksdft-lcao
+vdw_method              none  # d3 , d3_bj, none
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+
+#Parameters (2.Iteration)
+calculation             scf  # scf relax cell-relax md
+ecutwfc                 20
+scf_thr                 1e-7
+printe 1
+#Parameters (3.Basis)
+basis_type              lcao  # lcao or pw
+gamma_only            1  # 0/1, replace KPT
+
+#Parameters (4.Smearing)
+smearing_method         cold    # mp/gaussian/cold/fixed
+smearing_sigma          0.008  # Rydberg
+
+nx 3 
+ny 3 
+nz 3 
+
+#Parameters (5.Mixing)
+mixing_type             broyden  # pulay/broyden
+mixing_ndim             20
+mixing_beta             0.4  # for metal: 0.05-0.4
+mixing_gg0              1.0  # only for metal
+mixing_tau              true
+
