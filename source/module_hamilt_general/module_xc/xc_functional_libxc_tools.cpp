@@ -127,7 +127,6 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 	const std::vector<double> &sigma)
 {
 	std::vector<double> sgn(nrxx*nspin, 1.0);
-	const double grho_threshold2 = grho_threshold*grho_threshold;
 	// in the case of GGA correlation for polarized case,
 	// a cutoff for grho is required to ensure that libxc gives reasonable results
 	if(nspin==2 && func.info->family != XC_FAMILY_LDA && func.info->kind==XC_CORRELATION)
@@ -137,9 +136,9 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 		#endif
 		for( int ir=0; ir<nrxx; ++ir )
 		{
-			if ( rho[ir*2]<rho_threshold || std::abs(sigma[ir*3])<grho_threshold2 )
+			if ( rho[ir*2]<rho_threshold || std::sqrt(std::abs(sigma[ir*3]))<grho_threshold )
 				sgn[ir*2] = 0.0;
-			if ( rho[ir*2+1]<rho_threshold || std::abs(sigma[ir*3+2])<grho_threshold2 )
+			if ( rho[ir*2+1]<rho_threshold || std::sqrt(std::abs(sigma[ir*3+2]))<grho_threshold )
 				sgn[ir*2+1] = 0.0;
 		}
 	}
