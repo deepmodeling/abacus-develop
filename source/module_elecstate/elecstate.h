@@ -5,7 +5,7 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
-#include "potentials/potential_new.h"
+#include "module_pot/potential_new.h"
 
 namespace elecstate
 {
