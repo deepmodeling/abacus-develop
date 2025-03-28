@@ -91,16 +91,6 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
     this->atom_begin_col[nat] = this->ncol;
 }
 
-// Get the number of columns of the parallel orbital matrix
-int Parallel_Orbitals::get_col_size()const
-{
-    return this->ncol;
-}
-// Get the number of rows of the parallel orbital matrix
-int Parallel_Orbitals::get_row_size()const
-{
-    return this->nrow;
-}
 // Get the number of columns of the orbital matrix of the iat-th atom
 int Parallel_Orbitals::get_col_size(int iat) const
 {
