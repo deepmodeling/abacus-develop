@@ -28,8 +28,7 @@
 #include <sstream>
 #include <unordered_map>
 
-namespace ModuleESolver
-{
+using namespace ModuleESolver;
 
 void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
@@ -136,7 +135,7 @@ void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
-    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
 
     // external stress
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
@@ -197,12 +196,9 @@ void ESolver_DP::type_map(const UnitCell& ucell)
                                          "The label " + ucell.atoms[it].label + " is not found in the type map.");
             }
             atype[iat] = label[ucell.atoms[it].label];
-            // if (ia == 0)
-            //     std::cout << "type: " << atype[iat] << std::endl;
             iat++;
         }
     }
     assert(ucell.nat == iat);
 }
 #endif
-} // namespace ModuleESolver
