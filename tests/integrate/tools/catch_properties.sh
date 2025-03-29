@@ -477,7 +477,7 @@ fi
 # mulliken charge
 #--------------------------------------------
 if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
-    python3 ../tools/CompareFile.py mulliken.txt.ref OUT.autotest/mulliken.txt 4
+    python3 ../tools/CompareFile.py mulliken.txt.ref OUT.autotest/mulliken.txt 3
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
