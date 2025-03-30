@@ -260,18 +260,19 @@ TEST(PrintForce, PrintForce)
     std::string output_str;
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("test"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" test"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("---------------------------------------------------------------------------"));
-
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,"    Atoms              Force_x              Force_y              Force_z");
+                testing::HasSubstr("-------------------------------------------------------------------------"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("---------------------------------------------------------------------------"));
+                testing::HasSubstr("    Atoms              Force_x              Force_y              Force_z"));
+
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str,
+                testing::HasSubstr("-------------------------------------------------------------------------"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
@@ -283,10 +284,10 @@ TEST(PrintForce, PrintForce)
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("---------------------------------------------------------------------------"));
+                testing::HasSubstr("-------------------------------------------------------------------------"));
 
     ifs.close();
-    //std::remove("running_force.txt");
+    std::remove("running_force.txt");
 }
 
 TEST(PrintStress, PrintStress)
@@ -310,23 +311,33 @@ TEST(PrintStress, PrintStress)
     std::ifstream ifs("running_stress.txt");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-STRESS (KBAR)"));
+
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("TOTAL-STRESS (KBAR)                                           "));
+    EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("             Stress_x             Stress_y             Stress_z"));
+
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("   147105.2279754489    294210.4559508978    441315.6839263467"));
+
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
+
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
+
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE: 49035.075992 KBAR"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
     ifs.close();
-    //std::remove("running_stress.txt");
+    std::remove("running_stress.txt");
 }
 
 int main(int argc, char** argv)
