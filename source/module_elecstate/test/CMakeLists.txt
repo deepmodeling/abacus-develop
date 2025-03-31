@@ -75,7 +75,7 @@ AddTest(
 AddTest(
   TARGET potentials_new
   LIBS parameter  ${math_libs} base device planewave_serial
-  SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
+  SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
 )
 
 AddTest(

@@ -7,7 +7,7 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"

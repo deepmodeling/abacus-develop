@@ -11,7 +11,8 @@ namespace unitcell
     void print_tau(Atom* atoms,
                    const std::string& Coordinate,
                    const int ntype,
-                   const double lat0)
+                   const double lat0,
+                   std::ofstream &ofs)
     {
         ModuleBase::TITLE("UnitCell", "print_tau");
         // assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom"); // this line causes abort in unittest ReadAtomPositionsCACXY.
@@ -22,7 +23,7 @@ namespace unitcell
         assert(std::regex_search(Coordinate, pattern));
         bool direct = (Coordinate == "Direct");
         std::string table;
-        table += direct? "DIRECT COORDINATES\n": FmtCore::format("CARTESIAN COORDINATES ( UNIT = %20.12f Bohr ).\n", lat0);
+        table += direct? "DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr ).\n", lat0);
         table += FmtCore::format("%8s%10s%10s%10s%8s%8s%8s%8s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
         for(int it = 0; it < ntype; it++)
         {
@@ -43,7 +44,7 @@ namespace unitcell
             }
         }
         table += "\n";
-        GlobalV::ofs_running << table << std::endl;
+        ofs << table << std::endl;
         return;
     }
 

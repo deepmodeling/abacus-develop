@@ -54,7 +54,7 @@ void output_vacuum_level(const UnitCell* ucell,
 /// @param name force term name
 /// @param force atomic forces
 /// @param ry true if the unit of force is a.u.
-void print_force(std::ofstream& ofs_running,
+void print_force(std::ofstream& ofs,
                  const UnitCell& cell,
                  const std::string& name,
                  const ModuleBase::matrix& force,
@@ -64,7 +64,11 @@ void print_force(std::ofstream& ofs_running,
 /// @param name stress term name
 /// @param f stress components
 /// @param ry true if the unit of force is a.u.
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry);
+void print_stress(const std::string& name, 
+		const ModuleBase::matrix& scs, 
+		const bool screen, 
+		const bool ry,
+		std::ofstream &ofs);
 
 /// @brief write head for scf iteration
 /// @param ofs_running output stream

@@ -514,7 +514,9 @@ bool read_atom_positions(UnitCell& ucell,
                         ucell.atoms[it].m_loc_[ia].x = 1.0;
                         ucell.atoms[it].m_loc_[ia].y = 1.0;
                         ucell.atoms[it].m_loc_[ia].z = 1.0;
-                        ucell.atoms[it].mag[ia] = sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)+pow(ucell.atoms[it].m_loc_[ia].y,2)+pow(ucell.atoms[it].m_loc_[ia].z,2));
+						ucell.atoms[it].mag[ia] = sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)
+								+pow(ucell.atoms[it].m_loc_[ia].y,2)
+								+pow(ucell.atoms[it].m_loc_[ia].z,2));
                         ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0, 1.0, 1.0);
                     }
                 }
@@ -535,13 +537,14 @@ bool read_atom_positions(UnitCell& ucell,
         // End Autoset magnetization
     }   // end scan_begin
 
-//check if any atom can move in MD
+    //check if any atom can move in MD
     if(!ucell.if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
         return false;
     } 
 
+    
     ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_running,"TOTAL ATOM NUMBER",ucell.nat);
 
@@ -556,7 +559,7 @@ bool read_atom_positions(UnitCell& ucell,
 
     if (unitcell::check_tau(ucell.atoms, ucell.ntype, ucell.lat0))
     {
-        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
         return true;
     }
     return false;

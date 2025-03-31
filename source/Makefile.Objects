@@ -35,7 +35,7 @@ VPATH=./src_global:\
 ./module_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
-./module_elecstate/potentials:\
+./module_elecstate/module_pot:\
 ./module_elecstate/module_charge:\
 ./module_elecstate/module_dm:\
 ./module_psi:\

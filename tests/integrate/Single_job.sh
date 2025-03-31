@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#input parameter: 
-	#none: run and check for this example;
-	#debug: copy the scripts to debug, then run and check this example;
-	#other: run this example and generate reference file.
+# The note for using the script.
+# input parameter: 
+	#'none': run and check for this example;
+	#'debug': copy scripts to debug, then run and check this example;
+	#'other': run this example and generate reference file.
 
 if test -z $1
 then

@@ -119,6 +119,12 @@ class AtomPair
     void set_zero();
 
     /**
+     * @brief get begin index of this AtomPair
+    */
+    int get_begin_row() const { return this->row_ap; }
+    int get_begin_col() const { return this->col_ap; }
+
+    /**
      * @brief get col_size for this AtomPair
     */
     int get_col_size() const;

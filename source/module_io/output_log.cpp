@@ -223,7 +223,10 @@ void print_force(std::ofstream& ofs_running,
     std::vector<double> force_y;
     std::vector<double> force_z;
     std::string table;
-    std::vector<std::string> titles({name, "", "", ""});
+
+    ofs_running << " " << name << std::endl;
+
+    std::vector<std::string> titles({"Atoms", "Force_x", "Force_y", "Force_z"});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -242,16 +245,25 @@ void print_force(std::ofstream& ofs_running,
         }
     }
 
+
     FmtTable fmt(/*titles=*/titles, 
                  /*nrows=*/atom_label.size(), 
-                 /*formats=*/{"%10s", "%20.10f", "%20.10f", "%20.10f"}, 0);
-    fmt << atom_label << force_x << force_y << force_z;
-    table = fmt.str();
+                 /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
+                 0,
+			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+
+	fmt << atom_label << force_x << force_y << force_z;
+	table = fmt.str();
     ofs_running << table << std::endl;
-    if (PARAM.inp.test_force) { std::cout << table << std::endl;
+
+	if (PARAM.inp.test_force) 
+	{ 
+		std::cout << table << std::endl;
+	}
 }
-}
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
+
+void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
+  const bool screen, const bool ry, std::ofstream &ofs)
 {
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
@@ -272,7 +284,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     std::vector<double> stress_y;
     std::vector<double> stress_z;
     std::string table;
-    std::vector<std::string> titles({title, "", ""});
+
+    ofs << " " << title << std::endl;
+
+    std::vector<std::string> titles({"Stress_x", "Stress_y", "Stress_z"});
     for (int i = 0; i < 3; i++)
     {
         double sx = scs(i, 0) * unit_transform;
@@ -287,14 +302,16 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
 
     FmtTable fmt(/*titles=*/titles, 
                  /*nrows=*/3, 
-                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 0);
+                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 0,
+                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
-    GlobalV::ofs_running << table;
+    ofs << table;
     if (name == "TOTAL-STRESS")
     {
-        GlobalV::ofs_running << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit
-                             << std::endl
+        ofs << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
+                             << std::setprecision(6) << pressure << unit
                              << std::endl;
     }
     if (screen)
@@ -302,16 +319,17 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         std::cout << table;
         if (name == "TOTAL-STRESS")
         {
-            std::cout << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit << std::endl
+            std::cout << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
+                      << std::setprecision(6) << pressure << unit
                       << std::endl;
         }
     }
     return;
 }
 
-void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname)
+void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std::string& basisname)
 {
-    ofs_running << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
                 << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 

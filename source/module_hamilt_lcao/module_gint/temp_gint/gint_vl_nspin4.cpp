@@ -34,7 +34,6 @@ void Gint_vl_nspin4::cal_hr_gint_()
         PhiOperator phi_op;
         std::vector<double> phi;
         std::vector<double> phi_vldr3;
-        std::vector<HContainer<double>> hr_gint_part_thread(nspin_, *hr_gint_part_[0]);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -50,17 +49,7 @@ void Gint_vl_nspin4::cal_hr_gint_()
             for(int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
-                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hr_gint_part_thread[is]);
-            }
-        }
-#pragma omp critical
-        {
-            for(int is = 0; is < nspin_; is++)
-            {
-                {
-                    BlasConnector::axpy(hr_gint_part_thread[is].get_nnr(), 1.0, hr_gint_part_thread[is].get_wrapper(),
-                                        1, hr_gint_part_[is]->get_wrapper(), 1);
-                }
+                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_part_[is]);
             }
         }
     }

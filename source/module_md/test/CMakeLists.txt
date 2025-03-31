@@ -44,6 +44,7 @@ list(APPEND depend_files
   ../../module_cell/module_neighbor/sltk_grid.cpp
   ../../module_cell/module_neighbor/sltk_grid_driver.cpp
   ../../module_io/output.cpp
+  ../../module_io/output_log.cpp
   ../../module_io/print_info.cpp
   ../../module_io/cif_io.cpp
   ../../module_esolver/esolver_lj.cpp
