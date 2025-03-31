@@ -87,7 +87,7 @@ void vector_mul_real_op<double, base_device::DEVICE_GPU>::operator()(const int d
 {
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<double>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_real_kernel<double>),
                        dim3(block),
                        dim3(thread),
                        0,
@@ -275,7 +275,7 @@ void vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operat
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>
-void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
+void vector_add_vector_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                                        T* result,
                                                                                        const T* vector1,
                                                                                        const Real constant1,
@@ -365,10 +365,10 @@ template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GP
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-template struct constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct vector_add_vector_op<float, base_device::DEVICE_GPU>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct vector_add_vector_op<double, base_device::DEVICE_GPU>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct dot_real_op<double, base_device::DEVICE_GPU>;

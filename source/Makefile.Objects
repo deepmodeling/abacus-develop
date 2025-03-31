@@ -35,7 +35,7 @@ VPATH=./src_global:\
 ./module_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
-./module_elecstate/potentials:\
+./module_elecstate/module_pot:\
 ./module_elecstate/module_charge:\
 ./module_elecstate/module_dm:\
 ./module_psi:\
@@ -208,7 +208,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_orbpre.o\
         deepks_vdelta.o\
         deepks_vdpre.o\
-        deepks_hmat.o\
+        deepks_vdrpre.o\
         deepks_pdm.o\
         deepks_phialpha.o\
         LCAO_deepks_io.o\
@@ -266,6 +266,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_after_scf.o\
       esolver_gets.o\
       lcao_others.o\
+      esolver_dm2rho.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\
@@ -443,8 +444,10 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     relax_old.o\
     relax.o\
-    line_search.o\
     bfgs.o\
+    lbfgs.o\
+    matrix_methods.o\
+    line_search.o\
     
 
 OBJS_SURCHEM=surchem.o\
@@ -459,6 +462,14 @@ OBJS_SURCHEM=surchem.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symmetry_basic.o\
+    symm_analysis.o\
+    symm_check.o\
+    symm_getgroup.o\
+    symm_hermite.o\
+    symm_lattice.o\
+    symm_magnetic.o\
+    symm_pricell.o\
+    symm_rho.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\

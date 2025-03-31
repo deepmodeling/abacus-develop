@@ -8,9 +8,9 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"       // Taoni add 2025-02-20
-#include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
-#include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
+#include "module_elecstate/module_pot/efield.h"           // liuyu add 2022-05-18
+#include "module_elecstate/module_pot/gatefield.h"        // liuyu add 2022-09-13
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
@@ -729,42 +729,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
             }
 
+            const bool screen = PARAM.inp.test_stress;
+
             GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
             GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-            ModuleIO::print_stress("OVERLAP  STRESS", soverlap, PARAM.inp.test_stress, ry);
-            // test
-            ModuleIO::print_stress("T        STRESS", stvnl_dphi, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("VNL      STRESS", svnl_dbeta, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("T_VNL    STRESS", stvnl, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("VL_dPHI  STRESS", svl_dphi, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("VL_dVL   STRESS", sigmadvl, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("HAR      STRESS", sigmahar, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("cc       STRESS", sigmacc, PARAM.inp.test_stress, ry);
-            //		ModuleIO::print_stress("NLCC       STRESS",sigmacc,PARAM.inp.test_stress,ry);
-            ModuleIO::print_stress("XC       STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+            ModuleIO::print_stress("OVERLAP  STRESS", soverlap, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("T        STRESS", stvnl_dphi, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VNL      STRESS", svnl_dbeta, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("T_VNL    STRESS", stvnl, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VL_dPHI  STRESS", svl_dphi, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VL_dVL   STRESS", sigmadvl, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("HAR      STRESS", sigmahar, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("cc       STRESS", sigmacc, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_stress("VDW      STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("VDW      STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.sc_mag_switch)
             {
-                ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, screen, ry, GlobalV::ofs_running);
             }
-            ModuleIO::print_stress("TOTAL    STRESS", scs, PARAM.inp.test_stress, ry);
-
+            ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
         } // end of test
+
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
+
         // print total stress
-        ModuleIO::print_stress("TOTAL-STRESS", scs, true, ry);
+        bool screen = false;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen, ry, GlobalV::ofs_running);
 
         double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

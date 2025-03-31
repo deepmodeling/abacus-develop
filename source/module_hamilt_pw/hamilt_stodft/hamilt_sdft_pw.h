@@ -10,8 +10,9 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class HamiltSdftPW : public HamiltPW<T, Device>
 {
   public:
+    using Real = typename GetTypeReal<T>::type;
     /**
-     * @brief Construct a new Hamilt Sdft P W object
+     * @brief Construct a new HamiltSdftPW object
      *
      * @param pot_in potential
      * @param wfc_basis pw basis for wave functions
@@ -26,19 +27,13 @@ class HamiltSdftPW : public HamiltPW<T, Device>
                  pseudopot_cell_vnl* nlpp,
                  const UnitCell* ucell,
                  const int& npol,
-                 double* emin_in,
-                 double* emax_in);
+                 Real* emin_in,
+                 Real* emax_in);
     /**
-     * @brief Destroy the Hamilt Sdft P W object
+     * @brief Destroy the HamiltSdftPW object
      *
      */
     ~HamiltSdftPW(){};
-
-    // void update_emin_emax(const double& emin, const double& emax)
-    // {
-    //     this->emin = &emin;
-    //     this->emax = &emax;
-    // }
 
     /**
      * @brief Calculate \hat{H}|psi>
@@ -58,8 +53,8 @@ class HamiltSdftPW : public HamiltPW<T, Device>
      */
     void hPsi_norm(const T* psi_in, T* hpsi, const int& nbands = 1);
 
-    double* emin = nullptr; ///< Emin of the Hamiltonian
-    double* emax = nullptr; ///< Emax of the Hamiltonian
+    Real* emin = nullptr; ///< Emin of the Hamiltonian
+    Real* emax = nullptr; ///< Emax of the Hamiltonian
 
   private:
     int npwk_max = 0;      ///< maximum number of plane waves

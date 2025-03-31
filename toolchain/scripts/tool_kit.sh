@@ -369,12 +369,13 @@ check_command() {
 }
 
 # check if directory exists
+# add more error msg by QuantumMisaka in 2025.03.19
 check_dir() {
   local __dir=$1
   if [ -d "$__dir" ]; then
     echo "Found directory $__dir"
   else
-    report_error "Cannot find $__dir"
+    report_error "Cannot find $__dir, please check your --with-PKG input to march options: [system|install|no|(path/to/pkg)]"
     return 1
   fi
 }
@@ -654,7 +655,9 @@ download_pkg_from_ABACUS_org() {
   if ! wget ${DOWNLOADER_FLAGS} $__url; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
-    return 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        return 1
+    fi
   fi
   # checksum
   checksum "$__filename" "$__sha256"
@@ -672,7 +675,9 @@ download_pkg_from_url() {
   if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
-    return 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        return 1
+    fi
   fi
   # checksum
   checksum "$__filename" "$__sha256"

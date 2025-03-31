@@ -2,7 +2,7 @@
 #include <vector>
 
 #define private public
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 // mock functions

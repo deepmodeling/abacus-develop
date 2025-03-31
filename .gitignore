@@ -22,3 +22,5 @@ time.json
 __pycache__
 abacus.json
 *.npy
+toolchain/install/
+toolchain/abacus_env.sh

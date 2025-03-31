@@ -106,7 +106,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 - `CMAKE_INSTALL_PREFIX`: the path of ABACUS binary to install; `/usr/local/bin/abacus` by default
 - Compilers
   - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
-  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpc`(for Intel MPI).
+  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpx`(for Intel toolkits) or `mpiicpc`(for classic Intel Compiler Classic MPI before 2024.0).
 - Requirements: Unless indicated, CMake will try to find under default paths.
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
@@ -136,7 +136,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 Here is an example:
 
 ```bash
-CXX=mpiicpc cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2016.05.004/build -DCEREAL_INCLUDE_DIR=~/cereal/include
+CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build -DCEREAL_INCLUDE_DIR=~/cereal/include
 ```
 
 ## Build and Install

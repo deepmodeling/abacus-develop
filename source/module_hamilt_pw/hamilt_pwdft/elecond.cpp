@@ -155,15 +155,16 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
                                                             nbands);
 
         std::complex<FPTYPE>* pij_c = nullptr;
+        std::vector<std::complex<FPTYPE>> pij_h_;
         if(std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
             pij_c = pij_d;
         }
         else
         {
-            std::vector<std::complex<FPTYPE>> pij_h(nbands * nbands);
-            syncmem_complex_d2h_op()(pij_h.data(), pij_d, nbands * nbands);
-            pij_c = pij_h.data();
+            pij_h_.resize(nbands * nbands);
+            syncmem_complex_d2h_op()(pij_h_.data(), pij_d, nbands * nbands);
+            pij_c = pij_h_.data();
         }
         
 #ifdef __MPI

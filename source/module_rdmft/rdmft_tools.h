@@ -11,7 +11,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/parallel_2d.h"

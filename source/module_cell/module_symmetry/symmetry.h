@@ -3,16 +3,24 @@
 
 #include "module_cell/unitcell_data.h"
 #include "module_cell/atom_spec.h"
+#include "module_base/timer.h"
+#include "module_base/mathzone.h"
+#include "module_base/constants.h"
+#include "module_io/output.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry
 {
+
 class Symmetry : public Symmetry_Basic
 {
+
 public:
-    Symmetry() {
-        this->epsilon = 1e-6;
-    };
+
+	Symmetry() 
+	{
+		this->epsilon = 1e-6;
+	};
     ~Symmetry() {};
 
 	//symmetry flag for levels
@@ -82,19 +90,42 @@ public:
 
     bool all_mbl = true;    ///< whether all the atoms are movable in all the directions
 
-    int standard_lat(ModuleBase::Vector3<double>& a, ModuleBase::Vector3<double>& b, ModuleBase::Vector3<double>& c, double* celconst)const;
+    int standard_lat(ModuleBase::Vector3<double>& a, 
+                     ModuleBase::Vector3<double>& b, 
+                     ModuleBase::Vector3<double>& c, 
+                     double* celconst)const;
 
-	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
-        ModuleBase::Vector3<double>& v01, ModuleBase::Vector3<double>& v02, ModuleBase::Vector3<double>& v03,
-        double* cel_const, double* pre_const, int& real_brav, std::string& bravname, const Atom* atoms,
-        bool convert_atoms, double* newpos = nullptr)const;
+	void lattice_type(ModuleBase::Vector3<double> &v1,
+                      ModuleBase::Vector3<double> &v2,
+					  ModuleBase::Vector3<double> &v3, 
+					  ModuleBase::Vector3<double> &v01, 
+                      ModuleBase::Vector3<double> &v02, 
+                      ModuleBase::Vector3<double> &v03,
+					  double* cel_const, 
+                      double* pre_const, 
+                      int& real_brav, 
+                      std::string& bravname, 
+                      const Atom* atoms,
+					  bool convert_atoms, 
+                      double* newpos = nullptr)const;
 
-    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
-        const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-        double* pos, double* rotpos, int* index, const int ntype, const int itmin_type, const int itmin_start, int* istart, int* na)const;
-    bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-        double* pos, double* rotpos, int* index, const int itmin_type,
-        const int ntype, const int itmin_start, int* istart, int* na)const;
+	void getgroup(int& nrot, 
+			int& nrotk, 
+			std::ofstream& ofs_running, 
+			const int& nop,
+			const ModuleBase::Matrix3* symop, 
+			ModuleBase::Matrix3* gmatrix, 
+			ModuleBase::Vector3<double>* gtrans,
+			double* pos, double* rotpos, int* index, 
+			const int ntype, const int itmin_type, const int itmin_start, 
+			int* istart, int* na)const;
+
+	bool checksym(const ModuleBase::Matrix3 &s, 
+			ModuleBase::Vector3<double>& gtrans,
+			double* pos, double* rotpos, int* index, 
+			const int itmin_type, const int ntype, const int itmin_start, 
+			int* istart, int* na)const;
+
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 
@@ -102,28 +133,37 @@ public:
 	/// Symmetrize the charge density, the forces, and the stress
 	/// -----------------------
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
+
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
+
     /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
     void symmetrize_vec3_nat(double* v)const;   // force
+
     /// symmetrize a 3*3 tensor, which can be stress or variation of unitcell in cell-relax
     void symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const; // stress
 
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
 	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
+
 	void gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
+
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
+
 	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const;
+
 	void hermite_normal_form(const ModuleBase::Matrix3 &s, ModuleBase::Matrix3 &H, ModuleBase::Matrix3 &b) const;
+
     int get_rotated_atom(int isym, int iat)const
     {
         if (!this->isym_rotiat_.empty()) { return this->isym_rotiat_[isym][iat]; }
         else { return -1; }
     }
+
 	private:
 
     /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
@@ -138,12 +178,14 @@ public:
     // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
+
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
         int& real_brav, double* cel_const, double* tmp_const)const;
 
-    /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
+    /// Loop the magmom of each atoms in its type when NSPIN>1. 
+    /// If not all the same, primitive cells should not be looped in rhog_symmetry.
     bool magmom_same_check(const Atom* atoms)const;
 
     /// Analyze magnetic group without time-reversal symmetry 

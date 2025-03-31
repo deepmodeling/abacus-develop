@@ -590,7 +590,11 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
     const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
     const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
     const std::vector<std::string> orb_names = {"s", "p", "d", "f", "g"};
-    FmtTable table(title, this->ucell->nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+    FmtTable table(/*titles=*/title, 
+                   /*nrows=*/this->ucell->nat, 
+                   /*formats=*/fmts, 
+                   /*indent=*/0, 
+                   /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
     // parameters for mag output
     int occ_index = 0;
     for(int iat=0;iat<this->ucell->nat;iat++)

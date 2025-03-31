@@ -99,22 +99,23 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         p_symm->symmetrize_mat3(sigmatot, ucell.lat);
     }
 
-    bool ry = false;
-    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
+    const bool ry = false;
+    const bool screen = PARAM.inp.test_stress;
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
-    if (PARAM.inp.test_stress)
+    if (screen)
     {
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
     return;

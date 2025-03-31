@@ -39,7 +39,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
     // These variables are frequently used in the following code
-    const int inlmax = orb.Alpha[0].getTotal_nchi() * nat;
+    const int nlmax = orb.Alpha[0].getTotal_nchi();
+    const int inlmax = nlmax * nat;
     const int lmaxd = orb.get_lmax_d();
     const int nmaxd = ld->nmaxd;
 
@@ -62,7 +63,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
         DeePKS_domain::cal_pdm<
-            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
+            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
 
         DeePKS_domain::check_pdm(inlmax, inl2l, pdm); // print out the projected dm for NSCF calculaiton
 
@@ -312,6 +313,19 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     out_hr.write();
                     ofs_hr.close();
                 }
+
+                torch::Tensor phialpha_r_out;
+                torch::Tensor R_query;
+                DeePKS_domain::prepare_phialpha_r(nlocal, lmaxd, inlmax, nat, phialpha, ucell, orb, *ParaV, GridD, phialpha_r_out, R_query);
+                const std::string file_phialpha_r = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
+                const std::string file_R_query = PARAM.globalv.global_out_dir + "deepks_R_query.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
+                LCAO_deepks_io::save_tensor2npy<int>(file_R_query, R_query, rank);
+
+                torch::Tensor gevdm_out;
+                DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
+                const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
             }
         }
 

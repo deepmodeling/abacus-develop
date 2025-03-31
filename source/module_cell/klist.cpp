@@ -52,7 +52,7 @@ void K_Vectors::set(const UnitCell& ucell,
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " | Setup K-points                                                     |" << std::endl;
@@ -61,7 +61,7 @@ void K_Vectors::set(const UnitCell& ucell,
     ofs << " | We treat the spin as another set of k-points.                      |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
 
     ofs << "\n SETUP K-POINTS" << std::endl;
 
@@ -134,7 +134,7 @@ void K_Vectors::set(const UnitCell& ucell,
     {
         // output kpoints file
         std::stringstream skpt;
-        skpt << PARAM.globalv.global_readin_dir << "kpoints";
+        skpt << PARAM.globalv.global_out_dir << "KPT.info"; //mohan modified 20250325
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
@@ -635,9 +635,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
-        GlobalV::ofs_running << "(for reciprocal lattice: )" << std::endl;
-          ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
+						  nullptr);
+		GlobalV::ofs_running << "\n For reciprocal-space lattice:" << std::endl;
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", recip_brav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
 
@@ -680,7 +680,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                               ucell.atoms,
                               false,
                               nullptr);
-            GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
+            GlobalV::ofs_running << "\n For k vectors:" << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", k_brav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", k_brav_name);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", k_brav_type);
@@ -989,7 +989,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot_ibz", nkstot_ibz);
 
     table.clear();
-    table += "K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
+    table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY:\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n", "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz");
     for (int ik = 0; ik < nkstot_ibz; ik++)
     {
@@ -1094,7 +1094,7 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Ma
         kd_done = true;
     }
     std::string table;
-    table += "K-POINTS DIRECT COORDINATES\n";
+    table += " K-POINTS DIRECT COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
     for (int i = 0; i < nkstot; i++)
     {
@@ -1331,7 +1331,7 @@ void K_Vectors::print_klists(std::ofstream& ofs)
         ModuleBase::WARNING_QUIT("print_klists", "nkstot < nks");
     }
     std::string table;
-    table += "K-POINTS CARTESIAN COORDINATES\n";
+    table += " K-POINTS CARTESIAN COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "CARTESIAN_X", "CARTESIAN_Y", "CARTESIAN_Z", "WEIGHT");
     for (int i = 0; i < nks; i++)
     {
@@ -1345,7 +1345,7 @@ void K_Vectors::print_klists(std::ofstream& ofs)
     GlobalV::ofs_running << "\n" << table << std::endl;
 
     table.clear();
-    table += "K-POINTS DIRECT COORDINATES\n";
+    table += " K-POINTS DIRECT COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
     for (int i = 0; i < nks; i++)
     {

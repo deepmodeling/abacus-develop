@@ -352,9 +352,19 @@ if(USE_CUDA)
     endif()
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
+      find_library(CAL_LIBRARY
+          NAMES cal
+          PATHS ${CAL_CUSOLVERMP_PATH}
+          NO_DEFAULT_PATH
+      )
+      find_library(CUSOLVERMP_LIBRARY
+          NAMES cusolverMp
+          PATHS ${CAL_CUSOLVERMP_PATH}
+          NO_DEFAULT_PATH
+      )
       target_link_libraries(${ABACUS_BIN_NAME}
-          cal
-          cusolverMp
+          ${CAL_LIBRARY}
+          ${CUSOLVERMP_LIBRARY}
       )
     endif()
   endif()

@@ -55,10 +55,11 @@ class PhiOperator
         const double* phi,
         double* result) const;
     
+    // this is a thread-safe function
     void phi_mul_phi_vldr3(
         const double* phi,
         const double* phi_vldr3,
-        HContainer<double>* hr) const;
+        HContainer<double>& hr) const;
     
     void phi_dot_phi_dm(
         const double* phi,

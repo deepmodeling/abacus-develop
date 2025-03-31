@@ -148,25 +148,29 @@ void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double
     }
 }
 
+// this is a thread-safe function
 void PhiOperator::phi_mul_phi_vldr3(
     const double* phi,
     const double* phi_vldr3,
-    HContainer<double>* hr) const
+    HContainer<double>& hr) const
 {
     const char transa='N', transb='T';
     const double alpha=1, beta=1;
 
+    std::vector<double> tmp_hr;
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
         const auto& r_i = atom_i->get_R();
         const int iat_i = atom_i->get_iat();
+        const int m = atoms_phi_len_[i];
 
         for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atom(j);
             const auto& r_j = atom_j->get_R();
             const int iat_j = atom_j->get_iat();
+            const int n = atoms_phi_len_[j];
 
             // only calculate the upper triangle matrix
             if(iat_i > iat_j)
@@ -174,8 +178,11 @@ void PhiOperator::phi_mul_phi_vldr3(
                 continue;
             }
 
+            tmp_hr.resize(m * n);
+            ModuleBase::GlobalFunc::ZEROS(tmp_hr.data(), m*n);
+
             // FIXME may be r = r_j - r_i
-            const auto result = hr->find_matrix(iat_i, iat_j, r_i-r_j);
+            const auto result = hr.find_matrix(iat_i, iat_j, r_i-r_j);
 
             if(result == nullptr)
             {
@@ -191,8 +198,10 @@ void PhiOperator::phi_mul_phi_vldr3(
                 continue;
             }
 
-            dgemm_(&transa, &transb, &atoms_phi_len_[j], &atoms_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx * cols_ + atoms_startidx_[j]],
-                &cols_,&phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, result->get_pointer(), &atoms_phi_len_[j]);
+            dgemm_(&transa, &transb, &n, &m, &len, &alpha, &phi_vldr3[start_idx * cols_ + atoms_startidx_[j]],
+                &cols_,&phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, tmp_hr.data(), &n);
+
+            result->add_array_ts(tmp_hr.data());
         }
     }
 }

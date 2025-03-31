@@ -59,7 +59,14 @@ ESolver_KS<T, Device>::ESolver_KS()
     {
         fft_device = "cpu";
     }
-    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, PARAM.inp.precision);
+    std::string fft_precision = PARAM.inp.precision;
+#ifdef __ENABLE_FLOAT_FFTW
+    if (PARAM.inp.cal_cond && PARAM.inp.esolver_type == "sdft")
+    {
+        fft_precision = "mixing";
+    }
+#endif
+    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
@@ -98,21 +105,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     //! 1) initialize "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
-
-    //! 2) setup the charge mixing parameters
-    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
-                         PARAM.inp.mixing_beta,
-                         PARAM.inp.mixing_ndim,
-                         PARAM.inp.mixing_gg0,
-                         PARAM.inp.mixing_tau,
-                         PARAM.inp.mixing_beta_mag,
-                         PARAM.inp.mixing_gg0_mag,
-                         PARAM.inp.mixing_gg0_min,
-                         PARAM.inp.mixing_angle,
-                         PARAM.inp.mixing_dmr,
-                         ucell.omega,
-                         ucell.tpiba);
-    p_chgmix->init_mixing();
 
     /// PAW Section
 #ifdef USE_PAW
@@ -194,7 +186,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 #endif
     /// End PAW
 
-    //! 4) it has been established that
+    //! 3) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
     if (PARAM.inp.use_paw)
@@ -206,6 +198,21 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+
+    //! 4) setup the charge mixing parameters
+    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
+                         PARAM.inp.mixing_beta,
+                         PARAM.inp.mixing_ndim,
+                         PARAM.inp.mixing_gg0,
+                         PARAM.inp.mixing_tau,
+                         PARAM.inp.mixing_beta_mag,
+                         PARAM.inp.mixing_gg0_mag,
+                         PARAM.inp.mixing_gg0_min,
+                         PARAM.inp.mixing_angle,
+                         PARAM.inp.mixing_dmr,
+                         ucell.omega,
+                         ucell.tpiba);
+    p_chgmix->init_mixing();
 
     //! 5) ESolver depends on the Symmetry module
     // symmetry analysis should be performed every time the cell is changed
@@ -336,25 +343,25 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 }
 
 //------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS: hamilt2density_single
+//! the 5th function of ESolver_KS: hamilt2rho_single
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
+    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
     // Temporarily, before HSolver is constructed, it should be overrided by
     // LCAO, PW, SDFT and TDDFT.
     // After HSolver is constructed, LCAO, PW, SDFT should delete their own
-    // hamilt2density_single() and use:
-    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
+    // hamilt2rho_single() and use:
+    ModuleBase::timer::tick(this->classname, "hamilt2rho_single");
 }
 
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     // 7) use Hamiltonian to obtain charge density
-    this->hamilt2density_single(ucell, istep, iter, diag_ethr);
+    this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
     // 8) for MPI: STOGROUP? need to rewrite
     //<Temporary> It may be changed when more clever parallel algorithm is
@@ -391,7 +398,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
                                                      diag_ethr,
                                                      PARAM.inp.nelec);
 
-                this->hamilt2density_single(ucell, istep, iter, diag_ethr);
+                this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
                 drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
@@ -432,13 +439,6 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     // 2) before_scf (electronic iteration loops)
     this->before_scf(ucell, istep);
 
-    // 3) write charge density
-    if (PARAM.inp.dm_to_rho)
-    {
-        ModuleBase::timer::tick(this->classname, "runner");
-        return; // nothing further is needed
-    }
-
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // 4) SCF iterations
@@ -451,7 +451,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         this->iter_init(ucell, istep, iter);
 
         // 6) use Hamiltonian to obtain charge density
-        this->hamilt2density(ucell, istep, iter, diag_ethr);
+        this->hamilt2rho(ucell, istep, iter, diag_ethr);
 
         // 7) finish scf iterations
         this->iter_finish(ucell, istep, iter, conv_esolver);
@@ -550,7 +550,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                               this->pelec->klist,
                               ik, 
                               PARAM.inp.printe, 
-                              iter);
+                              iter,
+                              GlobalV::ofs_running);
     }
 
     // compute magnetization, only for LSDA(spin==2)

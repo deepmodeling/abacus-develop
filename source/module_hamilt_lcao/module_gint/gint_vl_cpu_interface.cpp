@@ -19,7 +19,6 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     {   /**
         * @brief When in OpenMP, it points to a newly allocated memory,
         */
-        hamilt::HContainer<double> hRGint_thread(*hRGint_kernel);
         std::vector<int> block_iw(max_size,0);
         std::vector<int> block_index(max_size+1,0);
         std::vector<int> block_size(max_size,0);
@@ -74,19 +73,8 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
             this->cal_meshball_vlocal(
                 na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, 
                 cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
-                &hRGint_thread);
+                hRGint_kernel);
         }
-
-    #pragma omp critical
-        {
-            BlasConnector::axpy(hRGint_thread.get_nnr(),
-                                1.0,
-                                hRGint_thread.get_wrapper(),
-                                1,
-                                hRGint_kernel->get_wrapper(),
-                                1);
-        }
-
         ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
     }
@@ -112,9 +100,6 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
 
 #pragma omp parallel 
 {
-    hamilt::HContainer<double> pvdpRx_thread(pvdpRx_reduced[inout->ispin]);
-    hamilt::HContainer<double> pvdpRy_thread(pvdpRy_reduced[inout->ispin]);
-    hamilt::HContainer<double> pvdpRz_thread(pvdpRz_reduced[inout->ispin]);
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
@@ -159,34 +144,13 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
 	//and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
                                     grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
-                                    dpsir_ylm_x.get_ptr_2D(), &pvdpRx_thread);
+                                    dpsir_ylm_x.get_ptr_2D(), &this->pvdpRx_reduced[inout->ispin]);
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
                                     grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
-                                    dpsir_ylm_y.get_ptr_2D(), &pvdpRy_thread);
+                                    dpsir_ylm_y.get_ptr_2D(), &this->pvdpRy_reduced[inout->ispin]);
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
                                     grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
-                                    dpsir_ylm_z.get_ptr_2D(), &pvdpRz_thread);
-    }
-    #pragma omp critical(gint_k)
-    {
-        BlasConnector::axpy(nnrg,
-                            1.0,
-                            pvdpRx_thread.get_wrapper(),
-                            1,
-                            this->pvdpRx_reduced[inout->ispin].get_wrapper(),
-                            1);
-        BlasConnector::axpy(nnrg,
-                            1.0,
-                            pvdpRy_thread.get_wrapper(),
-                            1,
-                            this->pvdpRy_reduced[inout->ispin].get_wrapper(),
-                            1);
-        BlasConnector::axpy(nnrg,
-                            1.0,
-                            pvdpRz_thread.get_wrapper(),
-                            1,
-                            this->pvdpRz_reduced[inout->ispin].get_wrapper(),
-                            1);
+                                    dpsir_ylm_z.get_ptr_2D(), &this->pvdpRz_reduced[inout->ispin]);
     }
 }
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
@@ -210,7 +174,6 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
 {
     // define HContainer here to reference.
     //Under the condition of gamma_only, hRGint will be instantiated.
-    hamilt::HContainer<double> hRGint_thread(*hRGint_kernel);
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
@@ -282,28 +245,18 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         //and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(
             na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
-            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), &hRGint_thread);
+            psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hRGint_kernel);
         //integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
         //and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(
             na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
-            dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), &hRGint_thread);
+            dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), hRGint_kernel);
         this->cal_meshball_vlocal(
             na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
-            dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), &hRGint_thread);
+            dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), hRGint_kernel);
         this->cal_meshball_vlocal(
             na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
-            dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), &hRGint_thread);
-    }
-
-#pragma omp critical
-    {
-        BlasConnector::axpy(nnrg,
-                            1.0,
-                            hRGint_thread.get_wrapper(),
-                            1,
-                            hRGint_kernel->get_wrapper(),
-                            1);
+            dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), hRGint_kernel);
     }
 }
 

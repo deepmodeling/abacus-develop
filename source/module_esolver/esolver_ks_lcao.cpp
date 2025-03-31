@@ -33,6 +33,7 @@
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_vxc.hpp"
+#include "module_io/write_vxc_r.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 //--------------temporary----------------------------
@@ -185,7 +186,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
-            XC_Functional::set_xc_first_loop(ucell);
+            if (PARAM.inp.init_wfc != "file")
+            {   // if init_wfc==file, directly enter the EXX loop
+                XC_Functional::set_xc_first_loop(ucell);
+            }
+
             // initialize 2-center radial tables for EXX-LRI
             if (GlobalC::exx_info.info_ri.real_number)
             {
@@ -484,27 +489,49 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &this->pv,
-                                    *this->psi,
-                                    ucell,
-                                    this->sf,
-                                    this->solvent,
-                                    *this->pw_rho,
-                                    *this->pw_rhod,
-                                    this->locpp.vloc,
-                                    this->chr,
-                                    this->GG,
-                                    this->GK,
-                                    this->kv,
-                                    orb_.cutoffs(),
-                                    this->pelec->wg,
-                                    this->gd
+            PARAM.globalv.nlocal,
+            GlobalV::DRANK,
+            &this->pv,
+            *this->psi,
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->GG,
+            this->GK,
+            this->kv,
+            orb_.cutoffs(),
+            this->pelec->wg,
+            this->gd
 #ifdef __EXX
-                                    ,
-                                    this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-                                    this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+            ,
+            this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+#endif
+        );
+    }
+    if (PARAM.inp.out_mat_xc2)
+    {
+        ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
+            &this->pv,
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->GG,
+            this->GK,
+            this->kv,
+            orb_.cutoffs(),
+            this->gd
+#ifdef __EXX
+            , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
 #endif
         );
     }
@@ -607,7 +634,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // electrons number.
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (iter == 1)
+        int exx_two_level_step = 0;
+#ifdef __EXX
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            // the following steps are only needed in the first outer exx loop
+            exx_two_level_step = GlobalC::exx_info.info_ri.real_number ?
+                this->exd->two_level_step
+                : this->exc->two_level_step;
+        }
+#endif 
+        if (iter == 1 && exx_two_level_step == 0)
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
 
@@ -623,13 +660,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                                          this->pelec->nelec_spin,
                                          this->pelec->skip_weights);
 
-            if (!PARAM.inp.dm_to_rho)
-            {
-                auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
-                elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
-                _pelec->DM->cal_DMR();
-            }
+            auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+            elecstate::calEBand(_pelec->ekb, _pelec->wg, _pelec->f_en);
+            elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
+            _pelec->DM->cal_DMR();
+
             this->pelec->psiToRho(*this->psi);
             this->pelec->skip_weights = false;
 
@@ -725,9 +760,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
+void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
 
     // i1) reset energy
     this->pelec->f_en.eband = 0.0;
@@ -767,11 +802,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_hamilt2density(*this->pelec, this->pv, iter);
+            this->exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
         else
         {
-            this->exc->exx_hamilt2density(*this->pelec, this->pv, iter);
+            this->exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
     }
 #endif

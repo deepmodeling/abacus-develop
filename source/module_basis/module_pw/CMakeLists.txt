@@ -30,6 +30,7 @@ list(APPEND objects
     pw_distributer.cpp
     pw_init.cpp
     pw_transform.cpp
+    pw_transform_gpu.cpp
     pw_transform_k.cpp
     module_fft/fft_bundle.cpp
     module_fft/fft_cpu.cpp

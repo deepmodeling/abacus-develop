@@ -17,6 +17,7 @@
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
+    this->use_gpu_ = (PARAM.inp.device == "gpu");
 }
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
@@ -32,25 +33,19 @@ void pseudopot_cell_vnl::release_memory()
     if (this->nhm <= 0 || memory_released) {
         return;
 }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
-        if (PARAM.inp.precision == "single")
-        {
-            delmem_sd_op()(this->s_deeq);
-            delmem_sd_op()(this->s_nhtol);
-            delmem_sd_op()(this->s_nhtolm);
-            delmem_sd_op()(this->s_indv);
-            delmem_sd_op()(this->s_tab);
-            delmem_sd_op()(this->s_qq_nt);
-            delmem_cd_op()(this->c_deeq_nc);
-            delmem_cd_op()(this->c_vkb);
-            delmem_cd_op()(this->c_qq_so);
-        }
-        else
-        {
-            delmem_zd_op()(this->z_deeq_nc);
-            delmem_zd_op()(this->z_qq_so);
-        }
+        delmem_sd_op()(this->s_deeq);
+        delmem_sd_op()(this->s_nhtol);
+        delmem_sd_op()(this->s_nhtolm);
+        delmem_sd_op()(this->s_indv);
+        delmem_sd_op()(this->s_tab);
+        delmem_sd_op()(this->s_qq_nt);
+        delmem_cd_op()(this->c_deeq_nc);
+        delmem_cd_op()(this->c_vkb);
+        delmem_cd_op()(this->c_qq_so);
+        delmem_zd_op()(this->z_deeq_nc);
+        delmem_zd_op()(this->z_qq_so);
         delmem_dd_op()(this->d_deeq);
         delmem_zd_op()(this->z_vkb);
         delmem_dd_op()(this->d_tab);
@@ -61,18 +56,15 @@ void pseudopot_cell_vnl::release_memory()
     }
     else
     {
-        if (PARAM.inp.precision == "single")
-        {
-            delmem_sh_op()(this->s_deeq);
-            delmem_sh_op()(this->s_nhtol);
-            delmem_sh_op()(this->s_nhtolm);
-            delmem_sh_op()(this->s_indv);
-            delmem_sh_op()(this->s_tab);
-            delmem_sh_op()(this->s_qq_nt);
-            delmem_ch_op()(this->c_deeq_nc);
-            delmem_ch_op()(this->c_vkb);
-            delmem_ch_op()(this->c_qq_so);
-        }
+        delmem_sh_op()(this->s_deeq);
+        delmem_sh_op()(this->s_nhtol);
+        delmem_sh_op()(this->s_nhtolm);
+        delmem_sh_op()(this->s_indv);
+        delmem_sh_op()(this->s_tab);
+        delmem_sh_op()(this->s_qq_nt);
+        delmem_ch_op()(this->c_deeq_nc);
+        delmem_ch_op()(this->c_vkb);
+        delmem_ch_op()(this->c_qq_so);
         // There's no need to delete double precision pointers while in a CPU environment.
     }
     memory_released = true;
@@ -154,9 +146,9 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         this->deeq_nc.create(PARAM.inp.nspin, ucell.nat, this->nhm, this->nhm);
         this->qq_nt.create(ntype, this->nhm, this->nhm);
         this->qq_so.create(ntype, 4, this->nhm, this->nhm);
-        if (PARAM.inp.device == "gpu")
+        if (this->use_gpu_)
         {
-            if (PARAM.inp.precision == "single")
+            if (PARAM.globalv.has_float_data)
             {
                 resmem_sd_op()(s_deeq, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_sd_op()(s_nhtol, ntype * this->nhm);
@@ -166,7 +158,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                 resmem_cd_op()(c_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_cd_op()(c_qq_so, ntype * 4 * this->nhm * this->nhm);
             }
-            else
+            if (PARAM.globalv.has_double_data)
             {
                 resmem_zd_op()(z_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_zd_op()(z_qq_so, ntype * 4 * this->nhm * this->nhm);
@@ -179,7 +171,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         }
         else
         {
-            if (PARAM.inp.precision == "single")
+            if (PARAM.globalv.has_float_data)
             {
                 resmem_sh_op()(s_deeq,
                                PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm,
@@ -193,7 +185,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                                "VNL::c_deeq_nc");
                 resmem_ch_op()(c_qq_so, ntype * 4 * this->nhm * this->nhm, "VNL::c_qq_so");
             }
-            else
+            if (PARAM.globalv.has_double_data)
             {
                 this->z_deeq_nc = this->deeq_nc.ptr;
                 this->z_qq_so = this->qq_so.ptr;
@@ -269,9 +261,9 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             ModuleBase::Memory::record("VNL::tab_at", ntype * nchix_nc * PARAM.globalv.nqx * sizeof(double));
         }
     }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             resmem_sd_op()(s_tab, this->tab.getSize());
             resmem_cd_op()(c_vkb, nkb * npwx);
@@ -281,7 +273,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     }
     else
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             resmem_sh_op()(s_tab, this->tab.getSize());
             resmem_ch_op()(c_vkb, nkb * npwx);
@@ -299,115 +291,6 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
 // Calculates beta functions (Kleinman-Bylander projectors),
 // with structure factor, for all atoms, in reciprocal space
 //----------------------------------------------------------
-void pseudopot_cell_vnl::getvnl(const int& ik, const UnitCell& ucell, ModuleBase::ComplexMatrix& vkb_in) const
-{
-    if (PARAM.inp.use_paw) {
-        return;
-}
-    if (PARAM.inp.test_pp) {
-        ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
-}
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
-
-    if (lmaxkb < 0)
-    {
-        return;
-    }
-
-    const int npw = this->wfcpw->npwk[ik];
-
-    // When the internal memory is large enough, it is better to make vkb1 be the number of pseudopot_cell_vnl.
-    // We only need to initialize it once as long as the cell is unchanged.
-    ModuleBase::matrix vkb1(nhm, npw);
-    double* vq = new double[npw];
-    const int x1 = (lmaxkb + 1) * (lmaxkb + 1);
-
-    ModuleBase::matrix ylm(x1, npw);
-    ModuleBase::Memory::record("VNL::ylm", x1 * npw * sizeof(double));
-    ModuleBase::Vector3<double>* gk = new ModuleBase::Vector3<double>[npw];
-    for (int ig = 0; ig < npw; ig++)
-    {
-        gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
-    }
-
-    ModuleBase::YlmReal::Ylm_Real(cpu_ctx, x1, npw, reinterpret_cast<double*>(gk), ylm.c);
-
-    using Device = base_device::DEVICE_CPU;
-    Device* ctx = {};
-    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<double>, Device>;
-    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<double>, Device>;
-    std::complex<double>* sk = nullptr;
-    resmem_complex_op()(sk, ucell.nat * npw, "VNL::sk");
-    this->psf->get_sk(ctx, ik, this->wfcpw, sk);
-
-    int jkb = 0, iat = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        // calculate beta in G-space using an interpolation table
-        const int nbeta = ucell.atoms[it].ncpp.nbeta;
-        const int nh = ucell.atoms[it].ncpp.nh;
-
-        if (PARAM.inp.test_pp > 1) {
-            ModuleBase::GlobalFunc::OUT("nbeta", nbeta);
-}
-
-        for (int nb = 0; nb < nbeta; nb++)
-        {
-            if (PARAM.inp.test_pp > 1) {
-                ModuleBase::GlobalFunc::OUT("ib", nb);
-}
-            for (int ig = 0; ig < npw; ig++)
-            {
-                const double gnorm = gk[ig].norm() * ucell.tpiba;
-
-                vq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(this->tab,
-                                                                       it,
-                                                                       nb,
-                                                                       PARAM.globalv.nqx,
-                                                                       PARAM.globalv.dq,
-                                                                       gnorm);
-            }
-
-            // add spherical harmonic part
-            for (int ih = 0; ih < nh; ih++)
-            {
-                if (nb == this->indv(it, ih))
-                {
-                    const int lm = static_cast<int>(nhtolm(it, ih));
-                    for (int ig = 0; ig < npw; ig++)
-                    {
-                        vkb1(ih, ig) = ylm(lm, ig) * vq[ig];
-                    }
-                }
-            } // end ih
-        }     // end nbeta
-
-        // vkb1 contains all betas including angular part for type nt
-        // now add the structure factor and factor (-i)^l
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            for (int ih = 0; ih < nh; ih++)
-            {
-                std::complex<double> pref = pow(ModuleBase::NEG_IMAG_UNIT, nhtol(it, ih)); //?
-                std::complex<double>* pvkb = &vkb_in(jkb, 0);
-                for (int ig = 0; ig < npw; ig++)
-                {
-                    pvkb[ig] = vkb1(ih, ig) * sk[iat * npw + ig] * pref;
-                }
-                ++jkb;
-            } // end ih
-            iat++;
-        } // end ia
-    }     // enddo
-
-    delete[] gk;
-    delete[] vq;
-    delmem_complex_op()(sk);
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
-
-    return;
-} // end subroutine getvnl
-
 template <typename FPTYPE, typename Device>
 void pseudopot_cell_vnl::getvnl(Device* ctx, 
                                 const UnitCell& ucell,
@@ -466,7 +349,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     {
         _gk[ig] = this->wfcpw->getgpluskcar(ik, ig);
     }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
         resmem_int_op()(atom_nh, ucell.ntype);
         resmem_int_op()(atom_nb, ucell.ntype);
@@ -483,7 +366,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         atom_nh = h_atom_nh;
         atom_nb = h_atom_nb;
         atom_na = h_atom_na;
-        if (PARAM.inp.precision == "single")
+        if (std::is_same<FPTYPE, float>::value)
         {
             resmem_var_op()(gk, npw * 3);
             castmem_var_h2h_op()(gk, reinterpret_cast<double*>(_gk), npw * 3);
@@ -530,11 +413,11 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     delmem_var_op()(ylm);
     delmem_var_op()(vkb1);
     delmem_complex_op()(sk);
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    if (this->use_gpu_ || std::is_same<FPTYPE, float>::value)
     {
         delmem_var_op()(gk);
     }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
         delmem_int_op()(atom_nh);
         delmem_int_op()(atom_nb);
@@ -868,9 +751,9 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         delete[] aux;
         delete[] jl;
     }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2d_op()(this->s_indv, this->indv.c, this->indv.nr * this->indv.nc);
             castmem_d2s_h2d_op()(this->s_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
@@ -879,7 +762,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             castmem_d2s_h2d_op()(this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
             castmem_z2c_h2d_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         }
-        else
+        if (PARAM.globalv.has_double_data)
         {
             syncmem_z2z_h2d_op()(this->z_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         }
@@ -894,7 +777,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     }
     else
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2h_op()(this->s_indv, this->indv.c, this->indv.nr * this->indv.nc);
             castmem_d2s_h2h_op()(this->s_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
@@ -1486,9 +1369,9 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
             }
         }
     }
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu_)
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2d_op()(this->s_deeq,
                                  this->deeq.ptr,
@@ -1497,7 +1380,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                  this->deeq_nc.ptr,
                                  PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
-        else
+        if (PARAM.globalv.has_double_data)
         {
             syncmem_z2z_h2d_op()(this->z_deeq_nc,
                                  this->deeq_nc.ptr,
@@ -1509,7 +1392,7 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
     }
     else
     {
-        if (PARAM.inp.precision == "single")
+        if (PARAM.globalv.has_float_data)
         {
             castmem_d2s_h2h_op()(this->s_deeq,
                                  this->deeq.ptr,

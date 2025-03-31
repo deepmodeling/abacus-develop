@@ -34,7 +34,7 @@ void Exx_Helper<T, Device>::set_psi(psi::Psi<T, Device> *psi_)
     if (psi_ == nullptr)
         return;
     op_exx->set_psi(*psi_);
-    if (PARAM.inp.exxace)
+    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
     {
         op_exx->construct_ace();
     }

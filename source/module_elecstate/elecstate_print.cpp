@@ -2,9 +2,9 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
+#include "module_elecstate/module_pot/H_Hartree_pw.h"
+#include "module_elecstate/module_pot/efield.h"
+#include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_parameter/parameter.h"
@@ -58,7 +58,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"scalapack_gvx", "GV"},
            {"cusolver", "CU"},
            {"bpcg", "BP"},
-           {"pexsi", "PE"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+           {"pexsi", "PE"},
+           {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
     std::vector<std::string> td_fmt
@@ -249,13 +250,16 @@ void print_band(const ModuleBase::matrix& ekb,
                 const K_Vectors* klist,
                 const int& ik,
                 const int& printe,
-                const int& iter)
+                const int& iter,
+                std::ofstream &ofs)
 {
+    const double largest_eig = 1.0e10;
+
     // check the band energy.
     bool wrong = false;
     for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
     {
-        if (std::abs(ekb(ik, ib)) > 1.0e10)
+        if (std::abs(ekb(ik, ib)) > largest_eig)
         {
             GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
             wrong = true;
@@ -270,18 +274,18 @@ void print_band(const ModuleBase::matrix& ekb,
     {
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
-            GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << klist->isk[ik] + 1
-                                 << " K-point=" << ik + 1 << std::endl;
-            GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
+            ofs << std::setprecision(6);
+            ofs << " Energy (eV) & Occupations for spin=" << klist->isk[ik] + 1
+                                 << " k-point=" << ik + 1 << std::endl;
+            ofs << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
-                GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
+                ofs << " " << std::setw(6) << ib + 1 << std::setw(15)
                                      << ekb(ik, ib) * ModuleBase::Ry_to_eV;
                 // for the first electron iteration, we don't have the energy
                 // spectrum, so we can't get the occupations.
-                GlobalV::ofs_running << std::setw(15) << wg(ik, ib);
-                GlobalV::ofs_running << std::endl;
+                ofs << std::setw(15) << wg(ik, ib);
+                ofs << std::endl;
             }
         }
     }
@@ -316,7 +320,7 @@ void print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
-    GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
+    GlobalV::ofs_running << " Electron density error is " << scf_thr << std::endl;
 
     if (PARAM.inp.basis_type == "pw")
     {
@@ -326,6 +330,7 @@ void print_etot(const Magnetism& magnet,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
+
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
@@ -383,7 +388,7 @@ void print_etot(const Magnetism& magnet,
         }
 
 #ifdef __DEEPKS
-        if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
+        if (PARAM.inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
@@ -398,6 +403,7 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.f_en.etot_harris);
     }
 
+    // print out the Fermi energy if needed
     if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
@@ -410,6 +416,8 @@ void print_etot(const Magnetism& magnet,
         titles.push_back("E_Fermi");
         energies_Ry.push_back(elec.eferm.ef);
     }
+
+    // print out the band gap if needed
     if (PARAM.inp.out_bandgap)
     {
         if (!PARAM.globalv.two_fermi)
@@ -429,13 +437,21 @@ void print_etot(const Magnetism& magnet,
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
         return ener * ModuleBase::Ry_to_eV;
     });
-    FmtTable table({"Energy", "Rydberg", "eV"},
-                   titles.size(),
-                   {"%-14s", "%20.10f", "%20.10f"},
-                   {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+
+    // for each SCF step, we print out energy
+    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
+                   /*nrows=*/titles.size(),
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*indents=*/0,
+                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
+    // print out the titles
     table << titles << energies_Ry << energies_eV;
+
     GlobalV::ofs_running << table.str() << std::endl;
-    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16
+
+
+    
+    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
     {
         std::vector<double> mag;
         switch (PARAM.inp.nspin)

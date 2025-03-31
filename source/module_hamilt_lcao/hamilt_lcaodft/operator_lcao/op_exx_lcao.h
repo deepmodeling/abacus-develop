@@ -73,6 +73,22 @@ public:
       std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 };
 
+using TAC = std::pair<int, std::array<int, 3>>;
+
+RI::Cell_Nearest<int, int, 3, double, 3> init_cell_nearest(const UnitCell& ucell, const std::array<int, 3>& Rs_period);
+
+// allocate according to the read-in HexxR, used in nscf
+template <typename Tdata, typename TR>
+void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+    HContainer<TR>* hR,
+    const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
+
+/// allocate according to BvK cells, used in scf
+template <typename TR>
+void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
+    const std::array<int, 3>& Rs_period,
+    const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
+
 } // namespace hamilt
 #endif // __EXX
 #include "op_exx_lcao.hpp"

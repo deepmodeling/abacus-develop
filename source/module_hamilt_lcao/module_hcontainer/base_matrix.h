@@ -2,6 +2,7 @@
 #define BASE_MATRIX_H
 
 #include <iostream>
+#include <mutex>
 
 namespace hamilt
 {
@@ -107,6 +108,15 @@ class BaseMatrix
     */
     void set_size(const int& col_size_in, const int& row_size_in);
 
+    void add_array_ts(T* array)
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        for (int i = 0; i < nrow_local * ncol_local; ++i)
+        {
+            value_begin[i] += array[i];
+        }
+    }
+
   private:
     bool allocated = false;
 
@@ -118,6 +128,8 @@ class BaseMatrix
 
     // int current_multiple = 0;
 
+    // for thread safe
+    mutable std::mutex mtx;
     // number of rows and columns
     int nrow_local = 0;
     int ncol_local = 0;

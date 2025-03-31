@@ -36,7 +36,6 @@ void berryphase::get_occupation_bands()
         ModuleBase::WARNING_QUIT("berryphase::get_occupation_bands",
                                  "not enough bands for berryphase, increase band numbers.");
     }
-    // GlobalV::ofs_running << "the berryphase's occ_nbands is " << occ_nbands << std::endl;
 }
 
 #ifdef __LCAO
@@ -214,25 +213,6 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 
         nppstr = mp_z + 1;
     }
-
-    // test by jingan
-    /*
-    GlobalV::ofs_running << "direction is " << direction << std::endl;
-    GlobalV::ofs_running << "nppstr = " << nppstr << std::endl;
-    GlobalV::ofs_running << "total std::string is " << total_string << std::endl;
-    for(int istring = 0; istring < total_string; istring++)
-    {
-        GlobalV::ofs_running << " the std::string is " << istring << std::endl;
-        for(int count = 0; count < nppstr; count++)
-        {
-            GlobalV::ofs_running << "(" << kv.kvec_c[ k_index[istring][count] ].x << ","
-                               << kv.kvec_c[ k_index[istring][count] ].y << ","
-                               << kv.kvec_c[ k_index[istring][count] ].z << ")" << std::endl;
-        }
-
-    }
-    */
-    // test by jingan
 }
 
 #include "../module_base/complexmatrix.h"
@@ -251,7 +231,6 @@ double berryphase::stringPhase(const UnitCell& ucell,
     int ik_2 = 0;
     ModuleBase::Vector3<double> G(0.0, 0.0, 0.0);
     ModuleBase::Vector3<double> dk = kv.kvec_c[k_index[index_str][1]] - kv.kvec_c[k_index[index_str][0]];
-    // GlobalV::ofs_running << "the std::string index is " << index_str << std::endl;
 
     for (int k_start = 0; k_start < (nppstr - 1); k_start++)
     {
@@ -351,45 +330,11 @@ double berryphase::stringPhase(const UnitCell& ucell,
         {
             if (PARAM.inp.nspin != 4)
             {
-                // std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
                 zeta = zeta * lcao_method.det_berryphase(ucell,ik_1, ik_2, dk, nbands, *(this->paraV), psi_in, kv);
-                // test by jingan
-                // GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
-                // test by jingan
             }
             else
             {
             }
-
-            // test by jingan
-            /*
-            for (int mb = 0; mb < nbands; mb++)
-            {
-
-                for (int nb = 0; nb < nbands; nb++)
-                {
-
-                    mat(nb, mb) = lcao_method.unkdotp_LCAO(ik_1,ik_2,nb,mb,dk,kv);
-                }
-            }
-
-            std::complex<double> det(1.0,0.0);
-            int info = 0;
-            int *ipiv = new int[nbands];
-            LapackConnector::zgetrf(nbands, nbands, mat, nbands, ipiv, &info);
-            for (int ib = 0; ib < nbands; ib++)
-            {
-                if (ipiv[ib] != (ib+1)) det = -det * mat(ib,ib);
-                else det = det * mat(ib,ib);
-            }
-
-            zeta = zeta*det;
-
-            GlobalV::ofs_running << "methon 2: det = " << det << std::endl;
-
-            delete[] ipiv;
-            */
-            // test by jingan
         }
 #endif
     }
@@ -441,9 +386,6 @@ void berryphase::Berry_Phase(const UnitCell& ucell,
         dtheta = atan2(cphik[istring].imag(), cphik[istring].real());
         phik[istring] = (theta0 + dtheta) / (2 * ModuleBase::PI);
         phik_ave = phik_ave + wistring[istring] * phik[istring];
-        // test by jingan
-        // GlobalV::ofs_running << "phik[" << istring << "] = " << phik[istring] << std::endl;
-        // test by jingan
     }
 
     if (PARAM.inp.nspin == 1)
@@ -466,7 +408,6 @@ void berryphase::Berry_Phase(const UnitCell& ucell,
         mod_elec_tot = 1;
     }
 
-    // GlobalV::ofs_running << "Berry_Phase end " << std::endl;
 }
 
 void berryphase::Macroscopic_polarization(const UnitCell& ucell,
@@ -574,20 +515,16 @@ void berryphase::Macroscopic_polarization(const UnitCell& ucell,
         polarization_ion[2] = polarization_ion[2] - 2.0 * round(polarization_ion[2] / 2.0);
     }
 
-    // delete[] mod_ion;
-    // delete[] pdl_ion_R1;
-    // delete[] pdl_ion_R2;
-    // delete[] pdl_ion_R3;
-
     // ion polarization	end
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-    if ((!lodd) && (PARAM.inp.nspin == 1)) {
-        modulus = 2;
-    } else {
-        modulus = 1;
-    }
+	if ((!lodd) && (PARAM.inp.nspin == 1)) 
+	{
+		modulus = 2;
+	} else {
+		modulus = 1;
+	}
 
     // test by jingan
     // GlobalV::ofs_running << "ion polarization end" << std::endl;
@@ -735,8 +672,6 @@ void berryphase::Macroscopic_polarization(const UnitCell& ucell,
         break;
     }
     }
-
-    // GlobalV::ofs_running << "the Macroscopic_polarization is over" << std::endl;
 
     return;
 }

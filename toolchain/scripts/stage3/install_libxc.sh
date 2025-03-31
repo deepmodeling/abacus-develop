@@ -43,6 +43,9 @@ case "$with_libxc" in
         libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
         download_pkg_from_url  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
       fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
       tar -xjf ${libxc_pkg}
@@ -64,6 +67,7 @@ case "$with_libxc" in
       make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       cd ../..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
     fi
     LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
     LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"

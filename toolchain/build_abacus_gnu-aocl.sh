@@ -18,7 +18,7 @@ cd $ABACUS_DIR
 ABACUS_DIR=$(pwd)
 #AOCLhome=/opt/aocl  # user can specify this parameter
 
-BUILD_DIR=build_abacus_gnu
+BUILD_DIR=build_abacus_aocl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR

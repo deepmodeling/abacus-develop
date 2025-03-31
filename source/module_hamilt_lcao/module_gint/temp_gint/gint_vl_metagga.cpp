@@ -39,7 +39,6 @@ void Gint_vl_metagga::cal_hr_gint_()
         std::vector<double> dphi_x_vldr3;
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
-        HContainer<double> hr_gint_local(*hr_gint_);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -62,15 +61,10 @@ void Gint_vl_metagga::cal_hr_gint_()
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_x.data(), dphi_x_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_y.data(), dphi_y_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_z.data(), dphi_z_vldr3.data());
-            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hr_gint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hr_gint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hr_gint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hr_gint_local);
-        }
-#pragma omp critical
-        {
-            BlasConnector::axpy(hr_gint_local.get_nnr(), 1.0, hr_gint_local.get_wrapper(),
-                                1, hr_gint_->get_wrapper(), 1);
+            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_);
+            phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), *hr_gint_);
+            phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), *hr_gint_);
+            phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), *hr_gint_);
         }
     }
 }
