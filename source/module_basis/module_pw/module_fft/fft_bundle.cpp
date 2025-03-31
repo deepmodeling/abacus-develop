@@ -87,7 +87,6 @@ void FFT_Bundle::initfft(int nx_in,
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
     }
-    printf("the device is %s\n",device.c_str());
     if (device == "gpu")
     {
 #if defined(__ROCM)

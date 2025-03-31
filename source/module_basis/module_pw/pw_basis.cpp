@@ -69,7 +69,6 @@ void PW_Basis::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
-    printf("here is the flag\n");
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 
