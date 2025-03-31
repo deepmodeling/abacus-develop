@@ -273,36 +273,51 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     }
                 }
                 // prepare DM from DMR
-                std::vector<double> dm_array(row_size * col_size, 0.0);
-                const double* dm_current = nullptr;
                 int dRx = 0, dRy = 0, dRz = 0;
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    dRx = dR2.x - dR1.x;
-                    dRy = dR2.y - dR1.y;
-                    dRz = dR2.z - dR1.z;
+                    dRx = dR1.x - dR2.x;
+                    dRy = dR1.y - dR2.y;
+                    dRz = dR1.z - dR2.z;
                 }
-                // dm_k
+                ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
+
+                hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
+                dm_pair.allocate(nullptr, true);
                 auto dm_k = dm->get_DMK_vector();
-                const int nrow = pv.nrow;
-                for (int ir = 0; ir < row_size; ir++)
+
+                if constexpr (std::is_same<TK, double>::value) // for gamma-only
                 {
-                    for (int ic = 0; ic < col_size; ic++)
+                    for (int is = 0; is < dm_k.size(); is++)
                     {
-                        int iglob = (pv.atom_begin_row[ibt1] + ir) + nrow * (pv.atom_begin_col[ibt2] + ic);
-                        int iloc = ir * col_size + ic;
-                        std::complex<double> tmp = 0.0;
-                        for(int ik = 0; ik < dm_k.size(); ik++) // dm_k.size() == _nk * _nspin
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            const double arg = (kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
-                            const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
-                            tmp += dm_k[ik][iglob] * kphase;
+                            dm_pair.add_from_matrix(dm_k[is].data(), pv.get_row_size(), 1.0, 1);
                         }
-                        dm_array[iloc] += tmp.real();
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm_k[is].data(), pv.get_col_size(), 1.0, 0);
+                        }
+                    }
+                }
+                else // for multi-k
+                {
+                    for (int ik = 0; ik < dm_k.size(); ik++)
+                    {
+                        const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                        const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        {
+                            dm_pair.add_from_matrix(dm_k[ik].data(), pv.get_row_size(), kphase, 1);
+                        }
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm_k[ik].data(), pv.get_col_size(), kphase, 0);
+                        }
                     }
                 }
 
-                dm_current = dm_array.data();
+                const double* dm_current = dm_pair.get_pointer();
                 // use s_2t and dm_current to get g_1dmt
                 // dgemm_: C = alpha * A * B + beta * C
                 // C = g_1dmt, A = dm_current, B = s_2t

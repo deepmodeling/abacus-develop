@@ -78,9 +78,9 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
             int dRz = 0;
             if constexpr (std::is_same<TK, std::complex<double>>::value)
             {
-                dRx = (dR2 - dR1).x;
-                dRy = (dR2 - dR1).y;
-                dRz = (dR2 - dR1).z;
+                dRx = (dR1 - dR2).x;
+                dRy = (dR1 - dR2).y;
+                dRz = (dR1 - dR2).z;
             }
             ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
