@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
+#ifndef HAMILT_LCAO_H 
+#define HAMILT_LCAO_H 
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/klist.h"
@@ -41,7 +41,6 @@ class HamiltLCAO : public Hamilt<TK>
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
                elecstate::Potential* pot_in,
-               const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
@@ -132,7 +131,6 @@ class HamiltLCAO : public Hamilt<TK>
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
   private:
-    const K_Vectors* kv = nullptr;
 
     // Real space Hamiltonian
     HContainer<TR>* hR = nullptr;
