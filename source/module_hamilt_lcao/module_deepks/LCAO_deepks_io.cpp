@@ -8,6 +8,10 @@
 
 #include <mpi.h>
 
+/// Ry2Hartree : convert Ry to Hartree, for energy, force, stress, orbital and Hamiltonian, which is consistent with deepks-kit.
+/// only used in save_npy_e, save_npy_h and save_matrix2npy
+static const double Ry2Hartree = 2.0;
+
 template <typename TK>
 void LCAO_deepks_io::print_dm(const int nks, const int nlocal, const int nrow, const std::vector<std::vector<TK>>& dm)
 {
@@ -146,7 +150,8 @@ void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, cons
 
     // save energy in .npy format
     const long unsigned eshape[] = {1};
-    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e);
+    double e_hartree = e / Ry2Hartree;
+    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e_hartree);
     return;
 }
 
@@ -173,7 +178,7 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                npy_h.push_back(hamilt[k](i, j));
+                npy_h.push_back(hamilt[k](i, j)/ Ry2Hartree);
             }
         }
     }
@@ -226,7 +231,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = i; j < nc; ++j)
             {
-                scaled_data[index] = matrix(i, j) * scale;
+                scaled_data[index] = (matrix(i, j) * scale) / Ry2Hartree;
                 index++;
             }
         }
@@ -238,7 +243,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = 0; j <= i; ++j)
             {
-                scaled_data[index] = matrix(i, j) * scale;
+                scaled_data[index] = (matrix(i, j) * scale) / Ry2Hartree;
                 index++;
             }
         }
@@ -249,7 +254,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = 0; j < nc; ++j)
             {
-                scaled_data[i * nc + j] = matrix(i, j) * scale;
+                scaled_data[i * nc + j] = (matrix(i, j) * scale) / Ry2Hartree;
             }
         }
     }
