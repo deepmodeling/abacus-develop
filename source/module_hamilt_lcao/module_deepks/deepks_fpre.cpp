@@ -70,14 +70,15 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
             int dRz = 0;
             if constexpr (std::is_same<TK, std::complex<double>>::value)
             {
-                dRx = (dR2 - dR1).x;
-                dRy = (dR2 - dR1).y;
-                dRz = (dR2 - dR1).z;
+                dRx = (dR1 - dR2).x;
+                dRy = (dR1 - dR2).y;
+                dRz = (dR1 - dR2).z;
             }
             ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
             hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
-            dm_pair.allocate(nullptr, 1);
+            dm_pair.allocate(nullptr, true);
+            // not support nspin = 2 now
             for (int ik = 0; ik < nks; ik++)
             {
                 TK kphase = TK(0);

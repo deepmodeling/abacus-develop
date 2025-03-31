@@ -197,15 +197,15 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         {
                             hamilt::AtomPair<double> dm_pair(ibt1,
                                                              ibt2,
-                                                             (dR2 - dR1).x,
-                                                             (dR2 - dR1).y,
-                                                             (dR2 - dR1).z,
+                                                             (dR1 - dR2).x,
+                                                             (dR1 - dR2).y,
+                                                             (dR1 - dR2).z,
                                                              &pv);
 
                             dm_pair.allocate(&dm_array[ik * row_size * col_size], 0);
 
                             const double arg
-                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR2 - dR1)) * ModuleBase::TWO_PI;
+                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
 
                             double sinp, cosp;
 

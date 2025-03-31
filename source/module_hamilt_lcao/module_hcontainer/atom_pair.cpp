@@ -701,7 +701,7 @@ void AtomPair<T>::add_from_matrix(const std::complex<T>* hk,
             hk_real_pointer = (T*)hk_tmp;
             hk_imag_pointer = hk_real_pointer+1;
             BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, 2, hr_tmp, 1);
-            BlasConnector::axpy(this->col_size, kphase.imag(), hk_imag_pointer, 2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, -kphase.imag(), hk_imag_pointer, 2, hr_tmp, 1);
             hk_tmp += ld_hk;
             hr_tmp += this->col_size;
         }
@@ -715,7 +715,7 @@ void AtomPair<T>::add_from_matrix(const std::complex<T>* hk,
             hk_real_pointer = (T*)hk_tmp;
             hk_imag_pointer = hk_real_pointer+1;
             BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, ld_hk_2, hr_tmp, 1);
-            BlasConnector::axpy(this->col_size, kphase.imag(), hk_imag_pointer, ld_hk_2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, -kphase.imag(), hk_imag_pointer, ld_hk_2, hr_tmp, 1);
             hk_tmp ++;
             hr_tmp += this->col_size;
         }

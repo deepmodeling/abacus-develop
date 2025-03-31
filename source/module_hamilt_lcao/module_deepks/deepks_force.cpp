@@ -102,9 +102,9 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                 int dRz = 0;
                 if constexpr (std::is_same<TK, std::complex<double>>::value) // for multi-k
                 {
-                    dRx = dR2.x - dR1.x;
-                    dRy = dR2.y - dR1.y;
-                    dRz = dR2.z - dR1.z;
+                    dRx = dR1.x - dR2.x;
+                    dRy = dR1.y - dR2.y;
+                    dRz = dR1.z - dR2.z;
                 }
                 ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
