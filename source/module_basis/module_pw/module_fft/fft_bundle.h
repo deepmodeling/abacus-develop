@@ -199,7 +199,7 @@ class FFT_Bundle
     bool double_flag = false;
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
-    std::shared_ptr<FFT_BASE<double>> fft_double_test = nullptr;
+
     std::string device = "cpu";
     std::string precision = "double";
 };

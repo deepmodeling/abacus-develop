@@ -87,8 +87,7 @@ void FFT_Bundle::initfft(int nx_in,
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
     }
-    fft_double_test = make_unique<FFT_CUDA<double>>();
-    fft_double_test->initfft(nx_in,ny_in,nz_in);
+    printf("the device is %s\n",device.c_str());
     if (device == "gpu")
     {
 #if defined(__ROCM)
@@ -110,7 +109,6 @@ void FFT_Bundle::setupFFT()
     if (double_flag)
     {
         fft_double->setupFFT();
-        fft_double_test->setupFFT();
     }
     if (float_flag)
     {
@@ -232,7 +230,7 @@ template <>
 void FFT_Bundle::fft3D_forward(std::complex<double>* in,
                                std::complex<double>* out) const
 {
-    fft_double_test->fft3D_forward(in, out);
+    fft_double->fft3D_forward(in, out);
 }
 
 template <>
@@ -245,7 +243,7 @@ template <>
 void FFT_Bundle::fft3D_backward(std::complex<double>* in,
                                 std::complex<double>* out) const
 {
-    fft_double_test->fft3D_backward(in, out);
+    fft_double->fft3D_backward(in, out);
 }
 
 // access the real space data
@@ -290,6 +288,6 @@ std::complex<float>* FFT_Bundle::get_auxr_3d_data() const
 template <>
 std::complex<double>* FFT_Bundle::get_auxr_3d_data() const
 {
-    return fft_double_test->get_auxr_3d_data();
+    return fft_double->get_auxr_3d_data();
 }
 } // namespace ModulePW

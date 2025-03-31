@@ -15,7 +15,6 @@ PW_Basis::PW_Basis()
 
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
-    std::cout<<"the device is "<<device<<"\n";
     this->fft_bundle.setfft("cpu",this->precision);
     this->double_data_ = (this->precision == "double") || (this->precision == "mixing");
     this->float_data_ = (this->precision == "single") || (this->precision == "mixing");
@@ -60,6 +59,7 @@ void PW_Basis::setuptransform()
     this->distribute_g();
     this->getstartgr();
     this->fft_bundle.clear();
+    
     if(this->xprime)    
     {
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
@@ -69,6 +69,7 @@ void PW_Basis::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
+    printf("here is the flag\n");
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 
