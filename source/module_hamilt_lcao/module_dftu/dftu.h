@@ -1,7 +1,3 @@
-//==========================================================
-// Author: Xin Qu
-// DATE : 2019-12-10
-//==========================================================
 #ifndef DFTU_H
 #define DFTU_H
 
@@ -187,7 +183,7 @@ private:
                           const int dim1,
                           const int dim2,
                           std::complex<double>* mat_k,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+                          const ModuleBase::Vector3<double>& kvec_d);
 
     /**
      * @brief new function of folding_S_matrix
@@ -195,7 +191,7 @@ private:
      * use HContainer as input and output in mat_k
     */
 	void folding_matrix_k_new(const int ik, 
-			std::vector<ModuleBase::Vector3<double>>& kvec_d,
+			const ModuleBase::Vector3<double>& kvec_d,
 			hamilt::Hamilt<std::complex<double>>* p_ham);
 
     //=============================================================
@@ -220,7 +216,7 @@ private:
                     const int ik,
                     const std::complex<double>* rho_VU,
                     ModuleBase::matrix& force_dftu,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+                    const ModuleBase::Vector3<double>& kvec_d);
 
    void cal_stress_k(const UnitCell& ucell,
                      const Grid_Driver& gd,
@@ -229,7 +225,7 @@ private:
                      const int ik,
                      const std::complex<double>* rho_VU,
                      ModuleBase::matrix& stress_dftu,
-                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+                     const ModuleBase::Vector3<double>& kvec_d);
 
    void cal_force_gamma(const UnitCell& ucell,
                         const double* rho_VU,

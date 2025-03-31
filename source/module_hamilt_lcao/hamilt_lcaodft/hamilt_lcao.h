@@ -140,39 +140,40 @@ class HamiltLCAO : public Hamilt<TK>
      * @return void
      */
 	void updateSk(const int ik, 
-			std::vector<ModuleBase::Vector3<double>>& kvec_d,
+			const ModuleBase::Vector3<double>& kvec_d,
 			const int hk_type = 0);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
-    // void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
   private:
 
-    // Real space Hamiltonian
+    //! Real space Hamiltonian H(R), where R is the Bravis lattice vector
     HContainer<TR>* hR = nullptr;
+
+    //! Real space overlap matrix S(R), where R is the Bravis lattice vector
     HContainer<TR>* sR = nullptr;
 
 #ifdef __DEEPKS
     HContainer<TR>* V_delta_R = nullptr;
 #endif
 
+    //! Hamiltonian and overlap matrices for a specific k point
     HS_Matrix_K<TK>* hsk = nullptr;
 
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;
+
     int refresh_times = 1;
 
-    /// current_spin for NSPIN=2, 0: hamiltonian for spin up, 1: hamiltonian for spin down
+    //! current_spin for NSPIN=2 case 
+    //! 0: Hamiltonian for spin up, 
+    //! 1: Hamiltonian for spin down
     int current_spin = 0;
 
     const int istep = 0;
-
-    // sk and hk will be refactored to HamiltLCAO later
-    // std::vector<TK> sk;
-    // std::vector<TK> hk;
 };
 
 } // namespace hamilt

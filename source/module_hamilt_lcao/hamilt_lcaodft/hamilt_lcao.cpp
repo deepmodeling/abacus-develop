@@ -53,10 +53,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 {
     this->classname = "HamiltLCAO";
 
-    // Real space Hamiltonian is inited with template TR
-    // this->hR = new HContainer<TR>(paraV);
+    // initialize the overlap matrix
     this->sR = new HContainer<TR>(paraV);
-    // this->hsk = new HS_Matrix_K<TK>(paraV);
 
     this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                kv.kvec_d,
@@ -350,7 +348,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
             Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->hR,
-                                                                             kv,
+                                                                             &kv,
                                                                              &ucell,
                                                                              orb.cutoffs(),
                                                                              &grid_d,
@@ -419,6 +417,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         this->getOperator()->add(exx);
     }
 #endif
+
     // if NSPIN==2, HR should be separated into two parts, save HR into this->hRS2
     int memory_fold = 1;
     if (PARAM.inp.nspin == 2)
@@ -499,7 +498,7 @@ Operator<TK>*& HamiltLCAO<TK, TR>::getOperator()
 template <typename TK, typename TR>
 void HamiltLCAO<TK, TR>::updateSk(
 		const int ik, 
-		std::vector<ModuleBase::Vector3<double>>& kvec_d,
+		const ModuleBase::Vector3<double>& kvec_d,
 		const int hk_type)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateSk");
@@ -510,12 +509,12 @@ void HamiltLCAO<TK, TR>::updateSk(
     if (hk_type == 1) // collumn-major matrix for SK
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
-		hamilt::folding_HR(*this->sR, this->getSk(), kvec_d[ik], nrow, 1);
+		hamilt::folding_HR(*this->sR, this->getSk(), kvec_d, nrow, 1);
 	}
 	else if (hk_type == 0) // row-major matrix for SK
 	{
         const int ncol = this->hsk->get_pv()->get_col_size();
-        hamilt::folding_HR(*this->sR, this->getSk(), kvec_d[ik], ncol, 0);
+        hamilt::folding_HR(*this->sR, this->getSk(), kvec_d, ncol, 0);
     }
 	else
 	{

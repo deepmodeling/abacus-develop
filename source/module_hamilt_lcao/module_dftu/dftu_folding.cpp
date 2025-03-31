@@ -133,7 +133,7 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                             const int dim1,
                             const int dim2,
                             std::complex<double>* mat_k,
-                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                            const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
@@ -224,7 +224,7 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                     // dR is the index of box in Crystal coordinates
                     //------------------------------------------------
                     ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
-                    const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    const double arg = (kvec_d * dR) * ModuleBase::TWO_PI;
                     const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 
                     //--------------------------------------------------
@@ -279,7 +279,7 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
 }
 
 void DFTU::folding_matrix_k_new(const int ik,
-    std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    const ModuleBase::Vector3<double>& kvec_d,
     hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
@@ -307,7 +307,7 @@ void DFTU::folding_matrix_k_new(const int ik,
         else
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
-                        ->updateSk(ik, hk_type);
+                        ->updateSk(ik, kvec_d, hk_type);
         }
     }
 }
