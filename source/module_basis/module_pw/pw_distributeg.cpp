@@ -208,12 +208,23 @@ void PW_Basis::get_ig2isz_is2fftixy(
             break;
         }
     }
+    std::vector<int> ig2ixyz(this->npw);
+    for (int igl = 0; igl < this->npw; ++igl)
+    {
+        int isz = this->ig2isz[igl];
+        int iz = isz % this->nz;
+        int is = isz / this->nz;
+        int ixy = this->is2fftixy[is];
+        int iy = ixy % this->ny;
+        int ix = ixy / this->ny;
+        ig2ixyz[igl] = iz + iy * nz + ix * ny * nz;
+    }
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
         resmem_int_op()(d_is2fftixy, this->nst);
         syncmem_int_h2d_op()(this->d_is2fftixy, this->is2fftixy, this->nst);
-        resmem_int_op()(ig2isz_gpu,this->npw);
-        syncmem_int_h2d_op()(ig2isz_gpu, ig2isz, this->npw);
+        resmem_int_op()(ig2ixyz_gpu,this->npw);
+        syncmem_int_h2d_op()(ig2ixyz_gpu, ig2ixyz.data(), this->npw);
     }
 #endif
     return;
