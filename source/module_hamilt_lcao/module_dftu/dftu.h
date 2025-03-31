@@ -194,7 +194,9 @@ private:
      * only for Hamiltonian now, for force and stress will be developed later
      * use HContainer as input and output in mat_k
     */
-   void folding_matrix_k_new(const int ik, hamilt::Hamilt<std::complex<double>>* p_ham);
+	void folding_matrix_k_new(const int ik, 
+			std::vector<ModuleBase::Vector3<double>>& kvec_d,
+			hamilt::Hamilt<std::complex<double>>* p_ham);
 
     //=============================================================
     // In dftu_force.cpp
