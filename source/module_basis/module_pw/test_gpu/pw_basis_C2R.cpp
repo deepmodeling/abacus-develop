@@ -14,7 +14,7 @@
 #include "pw_test.h"
 
 using namespace std;
-TEST_F(PWTEST, recip_to_real_C2C_double)
+TEST_F(PWTEST, recip_to_real_double)
 {
     cout << "dividemthd 1, gamma_only: off, check fft between double and complex" << endl;
     ModulePW::PW_Basis pwtest("gpu", precision_flag);
@@ -102,7 +102,7 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     MPI_Bcast(tmp, 2 * nx * ny * nz, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
     // const int size = nx * ny * nz;
-    complex<double>* h_rhog = new complex<double>[npw];
+    complex<double>* h_rhog  = new complex<double>[npw];
     complex<double>* h_rhogout = new complex<double>[npw];
     complex<double>* d_rhog;
     complex<double>* d_rhogr;
@@ -125,21 +125,29 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     }
     cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<double>), cudaMemcpyHostToDevice);
 
-    std::complex<double>* h_rhor = new std::complex<double>[nrxx];
-    std::complex<double>* d_rhor;
-    cudaMalloc((void**)&d_rhor, nrxx * sizeof(std::complex<double>));
-    pwtest.recip_to_real<std::complex<double>, std::complex<double>, base_device::DEVICE_GPU>(d_rhog, d_rhor);
-    cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(std::complex<double>), cudaMemcpyDeviceToHost);
+    double* h_rhor = new double[nrxx];
+    double* d_rhor;
+    cudaMalloc((void**)&d_rhor, nrxx * sizeof(double));
+    pwtest.recip_to_real<std::complex<double>, double, base_device::DEVICE_GPU>(d_rhog, d_rhor);
+    cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(double), cudaMemcpyDeviceToHost);
 
     int startiz = pwtest.startz_current;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-6);
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-6);
+            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz], 1e-6);
         }
     }
+
+    pwtest.real_to_recip<double,std::complex<double>,base_device::DEVICE_GPU>(d_rhor,d_rhog);
+    cudaMemcpy(h_rhogout,d_rhog,npw * sizeof(complex<double>),cudaMemcpyDeviceToHost);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(h_rhog[ig].real(), h_rhogout[ig].real(), 1e-6);
+        EXPECT_NEAR(h_rhog[ig].imag(), h_rhogout[ig].imag(), 1e-6);
+    }
+
     delete[] h_rhog;
     delete[] h_rhogout;
     delete[] h_rhor;
@@ -150,7 +158,7 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     cudaFree(d_rhor);
 }
 
-TEST_F(PWTEST, recip_to_real_C2C_float)
+TEST_F(PWTEST, recip_to_real_float)
 {
     cout << "dividemthd 1, gamma_only: off, check fft between double and complex" << endl;
     ModulePW::PW_Basis pwtest("gpu", precision_flag);
@@ -256,25 +264,34 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<float>), cudaMemcpyHostToDevice);
     cudaMemcpy(d_rhogout, h_rhogout, npw * sizeof(complex<float>), cudaMemcpyHostToDevice);
 
-    std::complex<float>* h_rhor = new std::complex<float>[nrxx];
-    std::complex<float>* d_rhor;
-    cudaMalloc((void**)&d_rhor, nrxx * sizeof(std::complex<float>));
-    pwtest.recip_to_real<std::complex<float>, std::complex<float>, base_device::DEVICE_GPU>(d_rhog, d_rhor);
-    cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(std::complex<float>), cudaMemcpyDeviceToHost);
+    float* h_rhor = new float[nrxx];
+    float* h_rhogrout = new float[nrxx];
+    float* d_rhor;
+    cudaMalloc((void**)&d_rhor, nrxx * sizeof(float));
+    pwtest.recip_to_real<std::complex<float>, float, base_device::DEVICE_GPU>(d_rhog, d_rhor);
+    cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(float), cudaMemcpyDeviceToHost);
 
     int startiz = pwtest.startz_current;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-4);
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-4);
+            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz], 1e-6);
         }
+    }
+
+    pwtest.real_to_recip<float,std::complex<float>,base_device::DEVICE_GPU>(d_rhor,d_rhog);
+    cudaMemcpy(h_rhogout,d_rhog,npw * sizeof(complex<float>),cudaMemcpyDeviceToHost);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(h_rhog[ig].real(), h_rhogout[ig].real(), 1e-6);
+        EXPECT_NEAR(h_rhog[ig].imag(), h_rhogout[ig].imag(), 1e-6);
     }
     delete[] h_rhog;
     delete[] h_rhogout;
     delete[] h_rhor;
     delete[] tmp;
+    delete[] h_rhogrout;
     cudaFree(d_rhog);
     cudaFree(d_rhogr);
     cudaFree(d_rhogout);
