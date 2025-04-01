@@ -47,7 +47,7 @@ class HamiltLCAO : public Hamilt<TK>
                const Grid_Driver& grid_d,
 			   const Parallel_Orbitals* paraV,
 			   elecstate::Potential* pot_in,
-			   const K_Vectors& kv,
+			   const K_Vectors& kv_in,
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
@@ -70,7 +70,7 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
-               const K_Vectors& kv,
+               const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,
                const std::vector<double>& orb_cutoff);
 
@@ -129,7 +129,7 @@ class HamiltLCAO : public Hamilt<TK>
     void refresh() override;
 
     // for target K point, update consequence of hPsi() and matrix()
-    void updateHk(const int ik, const int isk);
+    virtual void updateHk(const int ik) override;
 
     /**
      * @brief special for LCAO, update SK only
@@ -148,6 +148,8 @@ class HamiltLCAO : public Hamilt<TK>
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
   private:
+
+    const K_Vectors* kv = nullptr;
 
     //! Real space Hamiltonian H(R), where R is the Bravis lattice vector
     HContainer<TR>* hR = nullptr;
