@@ -5,9 +5,9 @@
 #include "module_base/tool_quit.h"
 
 #include <cassert>
-// #if defined(__CUDA)
+#if defined(__CUDA)
 #include "fft_cuda.h"
-// #endif
+#endif
 #if defined(__ROCM)
 #include "fft_rocm.h"
 #endif
