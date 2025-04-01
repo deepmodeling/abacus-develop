@@ -15,7 +15,7 @@ orbital_dir	../../PP_ORB
 calculation             scf  # scf relax cell-relax md
 ecutwfc                 20
 scf_thr                 1e-7
-printe 1
+
 #Parameters (3.Basis)
 basis_type              lcao  # lcao or pw
 gamma_only            1  # 0/1, replace KPT
@@ -33,5 +33,5 @@ mixing_type             broyden  # pulay/broyden
 mixing_ndim             20
 mixing_beta             0.4  # for metal: 0.05-0.4
 mixing_gg0              1.0  # only for metal
-mixing_tau              true
+#mixing_tau              true
 
