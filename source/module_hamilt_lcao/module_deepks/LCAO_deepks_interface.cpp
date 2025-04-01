@@ -53,6 +53,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     bool init_pdm = ld->init_pdm;
     double E_delta = ld->E_delta;
     double e_delta_band = ld->e_delta_band;
+    hamilt::HContainer<double>* dmr = ld->dm_r;
 
     const int nspin = PARAM.inp.nspin;
 
@@ -62,8 +63,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
+        DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
+
         DeePKS_domain::cal_pdm<
-            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
+            TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dmr, phialpha, ucell, orb, GridD, *ParaV, pdm);
 
         DeePKS_domain::check_pdm(inlmax, inl2l, pdm); // print out the projected dm for NSCF calculaiton
 
@@ -158,10 +161,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             if (PARAM.inp.deepks_scf
                 && !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
             {
-                std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
                 torch::Tensor gdmx;
                 DeePKS_domain::cal_gdmx<
-                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dm_vec, ucell, orb, *ParaV, GridD, gdmx);
+                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dmr, ucell, orb, *ParaV, GridD, gdmx);
 
                 torch::Tensor gvx;
                 DeePKS_domain::cal_gvx(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmx, gvx, rank);
@@ -182,10 +184,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             if (PARAM.inp.deepks_scf
                 && !PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
             {
-                std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
                 torch::Tensor gdmepsl;
                 DeePKS_domain::cal_gdmepsl<
-                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dm_vec, ucell, orb, *ParaV, GridD, gdmepsl);
+                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dmr, ucell, orb, *ParaV, GridD, gdmepsl);
 
                 torch::Tensor gvepsl;
                 DeePKS_domain::cal_gvepsl(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmepsl, gvepsl, rank);
@@ -316,7 +317,17 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 torch::Tensor phialpha_r_out;
                 torch::Tensor R_query;
-                DeePKS_domain::prepare_phialpha_r(nlocal, lmaxd, inlmax, nat, phialpha, ucell, orb, *ParaV, GridD, phialpha_r_out, R_query);
+                DeePKS_domain::prepare_phialpha_r(nlocal,
+                                                  lmaxd,
+                                                  inlmax,
+                                                  nat,
+                                                  phialpha,
+                                                  ucell,
+                                                  orb,
+                                                  *ParaV,
+                                                  GridD,
+                                                  phialpha_r_out,
+                                                  R_query);
                 const std::string file_phialpha_r = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
                 const std::string file_R_query = PARAM.globalv.global_out_dir + "deepks_R_query.npy";
                 LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
