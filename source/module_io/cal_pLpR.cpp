@@ -11,34 +11,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_parameter/parameter.h"
-
-void _radial_indexing(const UnitCell& ucell,
-                      std::vector<std::tuple<int, int, int, int, int>>& lin2comp,
-                      std::map<std::tuple<int, int, int, int, int>, int>& comp2lin)
-{
-    int i = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        const Atom& atom = ucell.atoms[it];
-        const int lmax = atom.nwl;
-        for (int ia = 0; ia < atom.na; ia++)
-        {
-            for (int l = 0; l < lmax; l++)
-            {
-                const int nzeta = atom.l_nchi[l];
-                for (int iz = 0; iz < nzeta; iz++)
-                {
-                    for (int m = -l; m <= l; m++)
-                    {
-                        lin2comp.push_back(std::make_tuple(it, ia, l, iz, m));
-                        comp2lin[std::make_tuple(it, ia, l, iz, m)] = i;
-                        i++;
-                    }
-                }
-            }
-        }
-    }
-}
+#include "module_io/cal_pLpR.h"
 
 /**
  * 
@@ -58,22 +31,22 @@ double _lminus_on_ylm(const int l, const int m)
     return std::sqrt((l + m) * (l - m + 1));
 }
 
-void _cal_pLzpR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
-                const int it, const int ia, const int il, const int iz, const int mi,
-                const int jt, const int ja, const int jl, const int jz, const int mj,
-                const ModuleBase::Vector3<double>& vR,
-                std::complex<double>& val)
+std::complex<double> ModuleIO::cal_LzijR(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    const int it, const int ia, const int il, const int iz, const int mi,
+    const int jt, const int ja, const int jl, const int jz, const int mj,
+    const ModuleBase::Vector3<double>& vR)
 {
     double val_ = 0;
     calculator->calculate(it, il, iz, mi, jt, jl, jz, mj, vR, &val_);
-    val = std::complex<double>(mi) * val_;
+    return std::complex<double>(mi) * val_;
 }
 
-void _cal_pLypR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
-                const int it, const int ia, const int il, const int iz, const int im,
-                const int jt, const int ja, const int jl, const int jz, const int jm,
-                const ModuleBase::Vector3<double>& vR,
-                std::complex<double>& val)
+std::complex<double> ModuleIO::cal_LyijR(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    const int it, const int ia, const int il, const int iz, const int im,
+    const int jt, const int ja, const int jl, const int jz, const int jm,
+    const ModuleBase::Vector3<double>& vR)
 {
     // Ly = -i/2 * (L+ - L-)
     const double plus_ = _lplus_on_ylm(jl, jm);
@@ -89,14 +62,14 @@ void _cal_pLypR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
         calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &val_minus);
         val_minus *= minus_;
     }
-    val = std::complex<double>(0, -0.5) * (val_plus - val_minus);
+    return std::complex<double>(0, -0.5) * (val_plus - val_minus);
 }
 
-void _cal_pLxpR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
-                const int it, const int ia, const int il, const int iz, const int im,
-                const int jt, const int ja, const int jl, const int jz, const int jm,
-                const ModuleBase::Vector3<double>& vR,
-                std::complex<double>& val)
+std::complex<double> ModuleIO::cal_LxijR(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    const int it, const int ia, const int il, const int iz, const int im,
+    const int jt, const int ja, const int jl, const int jz, const int jm,
+    const ModuleBase::Vector3<double>& vR)
 {   
     // Lx = 1/2 * (L+ + L-)
     const double plus_ = _lplus_on_ylm(jl, jm);
@@ -112,84 +85,78 @@ void _cal_pLxpR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
         calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &val_minus);
         val_minus *= minus_;
     }
-    val = std::complex<double>(0.5) * (val_plus + val_minus);
+    return std::complex<double>(0.5) * (val_plus + val_minus);
 }
 
-void _cal_pLpR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
-               const int it, const int ia, const int il, const int iz, const int im,
-               const int jt, const int ja, const int jl, const int jz, const int jm,
-               const ModuleBase::Vector3<double>& vR,
-               std::complex<double>& val,
-               const char dir = 'z')
+ModuleIO::AngularMomentumExpectationCalculator::AngularMomentumExpectationCalculator(
+    const std::string& orbital_dir,
+    const UnitCell& ucell,
+    const double& search_radius,
+    const int tdestructor,
+    const int tgrid,
+    const int tatom,
+    const bool searchpbc,
+    std::ofstream* ptr_log)
 {
-    switch (dir)
+    std::vector<std::string> forb(ucell.ntype);
+    for (int i = 0; i < ucell.ntype; ++i)
     {
-    case 'z':
-        _cal_pLzpR(calculator, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR, val);
-        break;
-    case 'y':
-        _cal_pLypR(calculator, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR, val);
-        break;
-    case 'x':
-        _cal_pLxpR(calculator, it, ia, il, iz, im, jt, ja, jl, jz, jm, vR, val);
-        break;
-    default:
-        break;
+        forb[i] = orbital_dir + ucell.orbital_fn[i];
     }
+    this->orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    this->orb_->build(ucell.ntype, forb.data(), 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt(true);
+    this->orb_->set_transformer(sbt);
+
+    const double rcut_max = orb_->rcut_max();
+    const int ngrid = int(rcut_max / 0.01) + 1;
+    const double cutoff = 2.0 * rcut_max;
+    this->orb_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
+
+    this->calculator_ = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
+    this->calculator_->tabulate(*orb_, *orb_, 'S', ngrid, cutoff);
+
+    // Initialize Ylm coefficients
+    ModuleBase::Ylm::set_coefficients();
+
+    // ofs_running
+    this->ofs_ = ptr_log;
+
+    // for neighbor list search
+    this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));
+    atom_arrange::search(
+        searchpbc,
+        *ofs_,
+        *neighbor_searcher_,
+        ucell,
+        search_radius,
+        tatom);
 }
 
-// calculate the matrix of <phi_i|Lx/Ly/Lz|phi_j>
-void calculate(const std::unique_ptr<TwoCenterIntegrator>& calculator,
-               const UnitCell& ucell,
-               const double rcut_max,
-               std::vector<double>& out,
-               std::ofstream* ptrlog = nullptr)
+void ModuleIO::AngularMomentumExpectationCalculator::calculate(
+    std::ofstream* ofs,
+    const UnitCell& ucell,
+    const char dir)
 {
-    // I follow the void ESolver_LJ::runner to find the neighboring atoms
-    const int t_atom = PARAM.inp.test_atom_input;
-    const int t_deconstructor = PARAM.inp.test_deconstructor;
-    const int t_grid = PARAM.inp.test_grid;
-    Grid_Driver neighbor_searcher(t_deconstructor, t_grid);
-    atom_arrange::search(PARAM.inp.search_pbc, 
-                         *(ptrlog), 
-                         neighbor_searcher, 
-                         ucell, 
-                         rcut_max,
-                         t_atom);
-    
-    // calculate the matrix elements
-    
-}
-
-/**
- * @brief Write a 2D matrix to a plain text file.
- * 
- * @tparam T the type of the matrix elements
- * @param matrix the matrix that will be written
- * @param ncols the number of columns of the matrix
- * @param ofs the output file stream
- * @param oflog the log file stream
- * @param rank the identifier to distinguish different MPI processes
- */
-template <typename T>
-void _write_plain_matrix(const std::vector<T>& matrix, 
-                         const int ncols,
-                         std::ofstream& ofs,
-                         std::ofstream& oflog,
-                         const int precision = 8,
-                         const int rank = 0)
-{
-    if (!ofs.good()) {
+    if (ofs == nullptr)
+    {
         return;
     }
-
-    if (rank == 0) {
-        for (int i = 0; i < matrix.size(); i++) {
-            ofs << std::setw(precision + 6) << std::right << std::scientific << matrix[i];
-            if ((i + 1) % ncols == 0) {
-                ofs << std::endl;
-            } else {
-                ofs << " ";
+    ModuleBase::Vector3<double> ri, rj, dr;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        const Atom& atyp_i = ucell.atoms[it];
+        for (int ia = 0; ia < atyp_i.na; ia++)
+        {
+            ri = atyp_i.tau[ia];
+            neighbor_searcher_->Find_atom(ucell, ri, it, ia);
+            for (int ia_adj = 0; ia_adj < neighbor_searcher_->getAdjacentNum(); ia_adj++)
+            {
+                rj = neighbor_searcher_->getAdjacentTau(ia_adj);
+                int jt = neighbor_searcher_->getType(ia_adj);
+                dr = (ri - rj) * ucell.lat0;
+                const ModuleBase::Vector3<int> iR = neighbor_searcher_->getBox(ia_adj);
             }
         }
     }
