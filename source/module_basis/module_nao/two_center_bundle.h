@@ -28,7 +28,7 @@ class TwoCenterBundle
     void tabulate(const double lcao_ecut, const double lcao_dk, const double lcao_dr, const double lcao_rmax);
 
     /**
-     * @brief Overwrites the content of a LCAO_Orbitals object (e.g. GlobalC::ORB)
+     * @brief Overwrites the content of a LCAO_Orbitals object (e.g. ORB)
      * with the current object.
      *
      * This function provides an interface to the corresponding object in the old module_ao.
