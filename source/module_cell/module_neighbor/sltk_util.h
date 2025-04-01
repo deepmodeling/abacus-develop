@@ -7,9 +7,6 @@
 
 static struct { template<typename T> operator T*() const { return static_cast<T*>(0); } } NullPtr;
 
-static const double Pi = 3.1415926535897932384626433832795;
-
-
 /*** Function ***/
 template<typename exception>
 static inline void affirm(const bool b)

@@ -176,19 +176,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 	
 	double *aux1 = new double[msh];
 
-	// for tests
-	/*
-	for(ir=0; ir<msh; ir++)
-	{
-		aux[ir] = r[ir] * zp_in * e2 / ucell.omega;
-	}
-	ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
-	vloc_1d[0] *= 4*3.1415926;
-	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/rho_basis->npw << std::endl;
-	std::cout << "  vloc_1d[0]=" <<  vloc_1d[0]/rho_basis->nxyz << std::endl;
-	*/
-
-	// (1)
+    // (1)
 	if(rho_basis->gg_uniq[0] < 1.0e-8)
 	{
 		double *aux = new double[msh];

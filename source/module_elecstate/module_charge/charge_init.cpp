@@ -196,8 +196,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::cout << " Charge::init_rho: init kinetic energy density from rho." << std::endl;
             }
-            const double pi = 3.141592653589790;
-            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            const double fact = (3.0 / 5.0) * pow(3.0 * ModuleBase::PI * ModuleBase::PI, 2.0 / 3.0);
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
