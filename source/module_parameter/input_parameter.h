@@ -261,7 +261,7 @@ struct Input_para
     //==========================================================
     // DeepKS -- added by caoyu and mohan
     //==========================================================
-    bool deepks_out_labels = false;   ///< (need libnpy) prints energy and force labels and
+    int deepks_out_labels = 0;   ///< (need libnpy) prints energy and force labels and
                                       ///< descriptors for training, wenfei 2022-1-12
     bool deepks_scf = false;          ///< (need libnpy and libtorch) if set to true, a trained model
                                       ///< would be needed to calculate V_delta and F_delta

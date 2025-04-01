@@ -9,8 +9,8 @@ void ReadInput::item_deepks()
 {
     {
         Input_Item item("deepks_out_labels");
-        item.annotation = ">0 compute descriptor for deepks";
-        read_sync_bool(input.deepks_out_labels);
+        item.annotation = ">0 compute descriptor for deepks. 1 used during training, 2 used for label production";
+        read_sync_int(input.deepks_out_labels);
         this->add_item(item);
     }
     {
@@ -60,7 +60,7 @@ void ReadInput::item_deepks()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.deepks_out_unittest)
             {
-                para.input.deepks_out_labels = true;
+                para.input.deepks_out_labels = 1;
                 para.input.deepks_scf = true;
 
             }
