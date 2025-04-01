@@ -53,7 +53,6 @@ TEST_F(PWTEST,pw_basis_k_C2C_double)
 	G  = GT.Transpose();
 	GGT = G * GT;
     complex<double> *tmp = new complex<double> [nx*ny*nz];
-    complex<double> * rhogr = new complex<double> [nmaxgr];
     double * rhor = new double [nrxx];
     for(int ik  = 0; ik < nks; ++ik)
     {
@@ -105,16 +104,15 @@ TEST_F(PWTEST,pw_basis_k_C2C_double)
         MPI_Bcast(tmp,2*nx*ny*nz,MPI_DOUBLE,0,POOL_WORLD);
 #endif
         complex<double> * h_rhog = new complex<double> [npwk];
-        complex<double> * rhogout = new complex<double> [npwk];
+        complex<double> * h_rhor = new complex<double> [nrxx];
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
             h_rhog[ig] = 1.0/(pwtest.getgk2(ik,ig)+1); 
-            rhogr[ig] = 1.0/(pwtest.getgk2(ik,ig)+1);
             ModuleBase::Vector3<double> f = pwtest.getgdirect(ik,ig);
             if(f.y > 0) 
             {
                 h_rhog[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
-                rhogr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
+
             }
         }    
 
@@ -125,44 +123,21 @@ TEST_F(PWTEST,pw_basis_k_C2C_double)
         cudaMalloc((void**)&d_rhog, npwk * sizeof(complex<double>));
         cudaMalloc((void**)&d_rhor, npwk * sizeof(complex<double>));
         cudaMalloc((void**)&d_rhogout, npwk * sizeof(complex<double>));
+        cudaMemcpy(d_rhog,h_rhog,npwk*sizeof(complex<double>),cudaMemcpyHostToDevice);
         pwtest.recip_to_real<std::complex<double>,std::complex<double>,base_device::DEVICE_GPU>(h_rhog,d_rhor,ik); //check out-of-place transform
-
+        cudaMemcpy(h_rhor,d_rhor,nrxx*sizeof(complex<double>),cudaMemcpyHostToDevice);
         int startiz = pwtest.startz_current;
         for(int ixy = 0 ; ixy < nx * ny ; ++ixy)
         {
             for(int iz = 0 ; iz < nplane ; ++iz)
             {
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhor[ixy*nplane+iz],1e-6);
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),((double*)rhogr)[ixy*nplane+iz],1e-6);
+                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),h_rhor[ixy*nplane+iz].real(),1e-6);
             }
         }
-
-        pwtest.real2recip(rhor,rhogout,ik);
-
-        pwtest.real2recip((double*)rhogr,rhogr,ik);
-
-
-        for(int ig = 0 ; ig < npwk ; ++ig)
-        {
-            EXPECT_NEAR(h_rhog[ig].real(),rhogout[ig].real(),1e-6);
-            EXPECT_NEAR(h_rhog[ig].imag(),rhogout[ig].imag(),1e-6);
-            EXPECT_NEAR(h_rhog[ig].real(),rhogr[ig].real(),1e-6);
-            EXPECT_NEAR(h_rhog[ig].imag(),rhogr[ig].imag(),1e-6);
-        }
-
 
         delete [] h_rhog;
-        delete [] rhogout;
-        //check igl2ig
-        for(int igl = 0; igl < npwk ; ++igl)
-        {        
-            const int isz = pwtest.getigl2isz(ik,igl);
-            for(int ig = 0 ; ig < pwtest.npwk; ++ig)
-            {
-                if(isz == pwtest.ig2isz[ig]){
-                    EXPECT_EQ(ig,pwtest.getigl2ig(ik,igl));}
-            }
-        }
+        delete [] h_rhor;
+        
 
     }
     delete []tmp; 

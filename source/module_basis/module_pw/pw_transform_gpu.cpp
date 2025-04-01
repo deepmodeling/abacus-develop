@@ -40,7 +40,6 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                                                base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                           in,
                                                                           this->nrxx);
-
     this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
