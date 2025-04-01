@@ -276,6 +276,21 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_l");
+        item.annotation = "output the expectation values of angular momentum operators";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
+            }
+            para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_l[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+        };
+        sync_intvec(input.out_mat_l, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
         read_sync_bool(input.out_mat_dh);

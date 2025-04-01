@@ -66,6 +66,8 @@
 #include <memory>
 #include "module_cell/unitcell.h"
 #include "module_basis/module_nao/two_center_integrator.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 
 namespace ModuleIO
 {
@@ -115,7 +117,8 @@ namespace ModuleIO
 
             void calculate(std::ofstream* ofs, 
                            const UnitCell& ucell, 
-                           const char dir = 'x');
+                           const char dir = 'x',
+                           const int precision = 10);
 
         private:
             // ofsrunning

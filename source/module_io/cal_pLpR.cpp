@@ -12,7 +12,7 @@
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_parameter/parameter.h"
 #include "module_io/cal_pLpR.h"
-
+#include "module_base/formatter.h"
 /**
  * 
  * FIXME: the following part will be transfered to TwoCenterIntegrator soon
@@ -137,12 +137,28 @@ ModuleIO::AngularMomentumExpectationCalculator::AngularMomentumExpectationCalcul
 void ModuleIO::AngularMomentumExpectationCalculator::calculate(
     std::ofstream* ofs,
     const UnitCell& ucell,
-    const char dir)
+    const char dir,
+    const int precision)
 {
     if (ofs == nullptr)
     {
         return;
     }
+    // an easy sanity check
+    assert(dir == 'x' || dir == 'y' || dir == 'z');
+
+    // it, ia, il, iz, im, iRx, iRy, iRz, jt, ja, jl, jz, jm
+    // the iRx, iRy, iRz are the indices of the supercell in which the two-center-integral
+    // it and jt are indexes of atomtypes,
+    // ia and ja are indexes of atoms within the atomtypes,
+    // il and jl are indexes of the angular momentum,
+    // iz and jz are indexes of the zeta functions
+    // im and jm are indexes of the magnetic quantum numbers.
+    std::string fmtstr = "%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d";
+    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e";
+    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
+    FmtCore fmt(fmtstr);
+
     ModuleBase::Vector3<double> ri, rj, dr;
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -155,8 +171,51 @@ void ModuleIO::AngularMomentumExpectationCalculator::calculate(
             {
                 rj = neighbor_searcher_->getAdjacentTau(ia_adj);
                 int jt = neighbor_searcher_->getType(ia_adj);
+                const Atom& atyp_j = ucell.atoms[jt];
+                int ja = neighbor_searcher_->getNatom(ia_adj);
                 dr = (ri - rj) * ucell.lat0;
                 const ModuleBase::Vector3<int> iR = neighbor_searcher_->getBox(ia_adj);
+                // the two-center-integral
+
+                for (int li = 0; li < atyp_i.nwl + 1; li++)
+                {
+                    for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++)
+                    {
+                        for (int mi = -li; mi <= li; mi++)
+                        {
+                            for (int lj = 0; lj < atyp_j.nwl + 1; lj++)
+                            {
+                                for (int jz = 0; jz < atyp_j.l_nchi[lj]; jz++)
+                                {
+                                    for (int mj = -lj; mj <= lj; mj++)
+                                    {
+                                        std::complex<double> val = 0;
+                                        if (dir == 'x')
+                                        {
+                                            val = cal_LxijR(calculator_, 
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                        }
+                                        else if (dir == 'y')
+                                        {
+                                            val = cal_LyijR(calculator_, 
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                        }
+                                        else if (dir == 'z')
+                                        {
+                                            val = cal_LzijR(calculator_, 
+                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
+                                        }
+                                        *ofs_ << fmt.format(
+                                            it, ia, li, iz, mi,
+                                            iR.x, iR.y, iR.z,
+                                            jt, ja, lj, jz, mj,
+                                            val.real(), val.imag());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
