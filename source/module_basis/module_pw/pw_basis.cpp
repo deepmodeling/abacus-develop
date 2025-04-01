@@ -43,6 +43,7 @@ PW_Basis:: ~PW_Basis()
     if (this->device == "gpu")
     {
         delmem_int_op()(this->d_is2fftixy);
+        delmem_int_op()(this->ig2ixyz_gpu);
     }
 #endif
 }
