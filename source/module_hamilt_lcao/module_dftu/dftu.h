@@ -318,8 +318,8 @@ void dftu_cal_occup_m(const int iter,
 
 } // namespace ModuleDFTU
 
-// namespace GlobalC
-// {
-// 	extern ModuleDFTU::DFTU dftu;
-// }
+namespace GlobalC
+{
+	extern ModuleDFTU::DFTU dftu;
+}
 #endif
