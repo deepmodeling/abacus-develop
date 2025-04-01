@@ -417,6 +417,20 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
     } // end deepks_out_labels
 
+    if (PARAM.inp.deepks_out_labels == 2)
+    {
+        // output atom.npy and box.npy
+        torch::Tensor atom_out;
+        DeePKS_domain::prepare_atom(ucell, atom_out);
+        const std::string file_atom = PARAM.globalv.global_out_dir + "deepks_atom.npy";
+        LCAO_deepks_io::save_tensor2npy<double>(file_atom, atom_out, rank);
+
+        torch::Tensor box_out;
+        DeePKS_domain::prepare_box(ucell, box_out);
+        const std::string file_box = PARAM.globalv.global_out_dir + "deepks_box.npy";
+        LCAO_deepks_io::save_tensor2npy<double>(file_box, box_out, rank);
+    }
+
     /// print out deepks information to the screen
     if (PARAM.inp.deepks_scf)
     {
