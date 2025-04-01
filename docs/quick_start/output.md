@@ -10,8 +10,8 @@ Different from `INPUT` given by the users, `OUT.suffix/INPUT` contains all param
 > 1. **User-specified parameters** (explicitly defined in your input file or command-line arguments, overriding default parameters).
 > 2. **System default parameters** (automatically applied when not explicitly provided by the user).
 
-This file ensures calculations can be fully reproduced, even if default values change in future ABACUS versions.
 
+This file ensures calculations can be fully reproduced, even if default values change in future ABACUS versions.
 Also notice that in rare cases, a small number of parameters may be dynamically reset to appropriate values during runtime.
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
