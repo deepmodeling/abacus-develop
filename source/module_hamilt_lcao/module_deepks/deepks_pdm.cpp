@@ -126,7 +126,7 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if constexpr (std::is_same<TK, std::complex<double>>::value)
+            if (std::is_same<TK, std::complex<double>>::value)
             {
                 dRx = (dR1 - dR2).x;
                 dRy = (dR1 - dR2).y;
@@ -140,26 +140,20 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
 
             for (int ik = 0; ik < dmk.size(); ik++)
             {
-                TK kphase = TK(0);
-                if constexpr (std::is_same<TK, double>::value)
+                std::complex<double> kphase = std::complex<double>(1, 0);
+                if (std::is_same<TK, std::complex<double>>::value)
                 {
-                    kphase = 1.0;
+                    const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
+                    kphase = std::complex<double>(cos(arg), sin(arg));
                 }
-                else
-                {
-                    const double arg
-                        = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
-                    double sinp, cosp;
-                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    kphase = TK(cosp, sinp);
-                }
+                TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), kphase, 1);
+                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
                 }
                 else
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), kphase, 0);
+                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
                 }
             }
         }
@@ -356,7 +350,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 }
                 // prepare DM from DMR
                 int dRx = 0, dRy = 0, dRz = 0;
-                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                if (std::is_same<TK, std::complex<double>>::value)
                 {
                     dRx = dR1.x - dR2.x;
                     dRy = dR1.y - dR2.y;

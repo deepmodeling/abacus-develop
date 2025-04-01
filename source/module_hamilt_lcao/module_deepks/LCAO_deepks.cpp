@@ -242,7 +242,7 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if constexpr (std::is_same<T, std::complex<double>>::value)
+            if (std::is_same<T, std::complex<double>>::value)
             {
                 dRx = (dR1 - dR2).x;
                 dRy = (dR1 - dR2).y;
@@ -258,7 +258,7 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
 template <typename T>
 void LCAO_Deepks<T>::dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks)
 {
-    DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, this->pv, this->e_delta_band);
+    DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, PARAM.inp.nspin, this->pv, this->e_delta_band);
 }
 
 template class LCAO_Deepks<double>;

@@ -100,7 +100,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                 int dRx = 0;
                 int dRy = 0;
                 int dRz = 0;
-                if constexpr (std::is_same<TK, std::complex<double>>::value) // for multi-k
+                if (std::is_same<TK, std::complex<double>>::value) // for multi-k
                 {
                     dRx = dR1.x - dR2.x;
                     dRy = dR1.y - dR2.y;

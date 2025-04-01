@@ -67,7 +67,7 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if constexpr (std::is_same<TK, std::complex<double>>::value)
+            if (std::is_same<TK, std::complex<double>>::value)
             {
                 dRx = (dR1 - dR2).x;
                 dRy = (dR1 - dR2).y;

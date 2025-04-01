@@ -56,6 +56,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     hamilt::HContainer<double>* dmr = ld->dm_r;
 
     const int nspin = PARAM.inp.nspin;
+    const int nk = nks / nspin;
 
     // Note : update PDM and all other quantities with the current dm
     // DeePKS PDM and descriptor
@@ -221,30 +222,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 std::vector<TH> dm_bandgap;
 
                 // Calculate O_delta
-                if constexpr (std::is_same<TK, double>::value) // for gamma only
+                wg_hl.create(nks, PARAM.inp.nbands);
+                dm_bandgap.resize(nks);
+                wg_hl.zero_out();
+                for (int iks = 0; iks < nks; ++iks)
                 {
-                    wg_hl.create(nspin, PARAM.inp.nbands);
-                    dm_bandgap.resize(nspin);
-                    for (int is = 0; is < nspin; ++is)
-                    {
-                        wg_hl.zero_out();
-                        wg_hl(is, nocc - 1) = -1.0;
-                        wg_hl(is, nocc) = 1.0;
-                        elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
-                    }
+                    wg_hl(iks, nocc - 1) = -1.0;
+                    wg_hl(iks, nocc) = 1.0;
                 }
-                else // for multi-k
-                {
-                    wg_hl.create(nks, PARAM.inp.nbands);
-                    dm_bandgap.resize(nks);
-                    wg_hl.zero_out();
-                    for (int ik = 0; ik < nks; ik++)
-                    {
-                        wg_hl(ik, nocc - 1) = -1.0;
-                        wg_hl(ik, nocc) = 1.0;
-                    }
-                    elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
-                }
+                elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
 
                 ModuleBase::matrix o_delta(nks, 1);
 
@@ -265,7 +251,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                            *ParaV,
                                                            GridD,
                                                            orbital_precalc);
-                DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks);
+                DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks, nspin);
 
                 // save obase and orbital_precalc
                 const std::string file_orbpre = PARAM.globalv.global_out_dir + "deepks_orbpre.npy";
@@ -431,7 +417,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     /// print out deepks information to the screen
     if (PARAM.inp.deepks_scf)
     {
-        DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, ParaV, e_delta_band);
+        DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, nspin, ParaV, e_delta_band);
         std::cout << "E_delta_band = " << std::setprecision(8) << e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN = " << std::setprecision(8) << E_delta << " Ry"
