@@ -134,7 +134,7 @@ bool ModuleIO::calculate_dos(const int& is,
                 //----------------------------------------------------------
                 // EXPLAIN : if en
                 //----------------------------------------------------------
-                Gauss = exp(-de2 / b / b) / sqrt(3.1415926) / b;
+                Gauss = exp(-de2 / b / b) / sqrt(ModuleBase::PI) / b;
                 dos_smearing[j] += dos[i] * Gauss;
             }
         }
