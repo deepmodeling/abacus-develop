@@ -21,6 +21,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       const int& nlocal,
                                                       const ModuleBase::matrix& ekb,
                                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                      const std::vector<int>& isk, // mohan add 2025-04-01
                                                       const UnitCell& ucell,
                                                       const LCAO_Orbitals& orb,
                                                       const Grid_Driver& GridD,
@@ -337,8 +338,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             for (int ik = 0; ik < nks; ik++)
             {
                 h_tot[ik].create(nlocal, nlocal);
-                p_ham->updateHk(ik);
+
+                p_ham->updateHk(ik, isk[ik]);
+
                 const TK* hk_ptr = p_ham->getHk();
+
                 for (int i = 0; i < ParaV->nloc; i++)
                 {
                     h_mat[ik][i] = hk_ptr[i];

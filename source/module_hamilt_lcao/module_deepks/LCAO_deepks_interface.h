@@ -37,6 +37,7 @@ class LCAO_Deepks_Interface
                            const int& nlocal,
                            const ModuleBase::matrix& ekb,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                           const std::vector<int>& isk, // mohan add 2025-04-01
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const Grid_Driver& GridD,

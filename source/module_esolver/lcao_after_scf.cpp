@@ -221,6 +221,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                            PARAM.globalv.nlocal,
                                            this->pelec->ekb,
                                            this->pelec->klist->kvec_d,
+                                           this->pelec->klist->isk,
                                            ucell,
                                            orb_,
                                            this->gd,
