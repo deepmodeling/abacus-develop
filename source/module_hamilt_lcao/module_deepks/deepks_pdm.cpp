@@ -121,7 +121,7 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                 return; // to next loop
             }
 
-            hamilt::AtomPair dm_pair = dmr_deepks->get_atom_pair(ibt1, ibt2);
+            hamilt::AtomPair<double> dm_pair = dmr_deepks->get_atom_pair(ibt1, ibt2);
 
             int dRx = 0;
             int dRy = 0;
