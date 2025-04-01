@@ -57,15 +57,6 @@ void QUIT(int ret)
     std::cout<<" See output information in : "<<PARAM.globalv.global_out_dir<<std::endl;
 #endif
 
-#ifdef _OPENMP // merge all threads of one process into one thread
-	if (omp_in_parallel())
-	{
-		omp_set_num_threads(1);
-		std::cout << "Terminating ABACUS with multithreading environment." << std::endl;
-	}
-	assert(!omp_in_parallel()); /* avoid the case that death thread calls fork() */
-#endif
-
 #ifdef __MPI /* if it is MPI run, finalize first, then exit */
 	std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
 	Parallel_Global::finalize_mpi();
