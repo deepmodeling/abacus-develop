@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "cuda.h"
+
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     std::complex<double>* rhog_in = nullptr;
