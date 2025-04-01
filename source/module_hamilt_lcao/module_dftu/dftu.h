@@ -191,7 +191,6 @@ private:
      * use HContainer as input and output in mat_k
     */
 	void folding_matrix_k_new(const int ik, 
-			const ModuleBase::Vector3<double>& kvec_d,
 			hamilt::Hamilt<std::complex<double>>* p_ham);
 
     //=============================================================

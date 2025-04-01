@@ -236,15 +236,19 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
-                        if (mu < 0) { continue;
-}
+						if (mu < 0) 
+						{
+							continue;
+						}
 
                         for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
-                            if (nu < 0) { continue;
-}
+							if (nu < 0) 
+							{ 
+								continue;
+							}
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -279,7 +283,6 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
 }
 
 void DFTU::folding_matrix_k_new(const int ik,
-    const ModuleBase::Vector3<double>& kvec_d,
     hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
@@ -295,19 +298,19 @@ void DFTU::folding_matrix_k_new(const int ik,
     if(PARAM.globalv.gamma_only_local)
     {
         dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)
-                    ->updateSk(ik, kvec_d, hk_type);
+                    ->updateSk(ik, hk_type);
     }
     else
     {
         if(PARAM.inp.nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
-                        ->updateSk(ik, kvec_d, hk_type);
+                        ->updateSk(ik, hk_type);
         }
         else
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
-                        ->updateSk(ik, kvec_d, hk_type);
+                        ->updateSk(ik, hk_type);
         }
     }
 }

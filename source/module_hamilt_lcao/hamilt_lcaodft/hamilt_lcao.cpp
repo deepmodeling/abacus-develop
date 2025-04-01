@@ -500,7 +500,6 @@ Operator<TK>*& HamiltLCAO<TK, TR>::getOperator()
 template <typename TK, typename TR>
 void HamiltLCAO<TK, TR>::updateSk(
 		const int ik, 
-		const ModuleBase::Vector3<double>& kvec_d,
 		const int hk_type)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateSk");
@@ -511,12 +510,12 @@ void HamiltLCAO<TK, TR>::updateSk(
     if (hk_type == 1) // collumn-major matrix for SK
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
-		hamilt::folding_HR(*this->sR, this->getSk(), kvec_d, nrow, 1);
+		hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], nrow, 1);
 	}
 	else if (hk_type == 0) // row-major matrix for SK
 	{
         const int ncol = this->hsk->get_pv()->get_col_size();
-        hamilt::folding_HR(*this->sR, this->getSk(), kvec_d, ncol, 0);
+        hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], ncol, 0);
     }
 	else
 	{

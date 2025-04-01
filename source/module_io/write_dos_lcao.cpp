@@ -455,7 +455,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                     if (PARAM.inp.nspin == 4)
                     {
                         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
-                              ->updateSk(ik, kv.kvec_d[ik], hk_type);
+                              ->updateSk(ik, hk_type);
 
                         sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
                               ->getSk();
@@ -463,7 +463,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                     else
                     {
                         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
-                             ->updateSk(ik, kv.kvec_d[ik], hk_type);
+                             ->updateSk(ik, hk_type);
 
                         sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
                              ->getSk();
