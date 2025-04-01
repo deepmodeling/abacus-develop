@@ -1,7 +1,9 @@
 #include "paw_cell.h"
+
+#include "module_base/constants.h"
+#include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
 #include "module_parameter/parameter.h"
-#include "module_base/tool_quit.h"
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #endif
@@ -176,9 +178,6 @@ void Paw_Cell::set_paw_k(
 {
     ModuleBase::TITLE("Paw_Element","set_paw_k");
 
-    const double pi = 3.141592653589793238462643383279502884197;
-    const double twopi = 2.0 * pi;
-
     this -> npw = npw_in;
     this -> npwx = npwx_in;
 
@@ -190,7 +189,7 @@ void Paw_Cell::set_paw_k(
         {
             arg += atom_coord[iat][i] * kpt[i];
         }
-        arg *= twopi;
+        arg *= ModuleBase::TWO_PI;
         const std::complex<double> kphase = std::complex<double>(cos(arg), -sin(arg));
 
         struc_fact[iat].resize(npw);
@@ -326,9 +325,6 @@ std::vector<double> Paw_Cell::calc_ylm(const int lmax, const double * r)
     std::vector<std::complex<double>> phase;
     phase.resize(lmax+1);
 
-    const double pi = 3.141592653589793238462643383279502884197;
-    const double fourpi = 4.0 * pi;
-
     // set zero
     for(int i = 0; i < size_ylm; i++)
     {
@@ -336,7 +332,7 @@ std::vector<double> Paw_Cell::calc_ylm(const int lmax, const double * r)
     }
 
     // l = 0
-    ylm[0] = 1.0/std::sqrt(fourpi);
+    ylm[0] = 1.0 / std::sqrt(ModuleBase::FOUR_PI);
 
     if(rr>tol)
     {
@@ -361,8 +357,8 @@ std::vector<double> Paw_Cell::calc_ylm(const int lmax, const double * r)
         {
             const int l0 = l*l + l;
             double fact  = 1.0/double(l*(l+1));
-            const double ylmcst = std::sqrt(double(2*l+1)/fourpi);
-            
+            const double ylmcst = std::sqrt(double(2 * l + 1) / ModuleBase::FOUR_PI);
+
             // m = 0
             ylm[l0] = ylmcst*Paw_Cell::ass_leg_pol(l,0,ctheta);
             
