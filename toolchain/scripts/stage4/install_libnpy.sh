@@ -43,14 +43,10 @@ case "$with_libnpy" in
         # download from github.com and checksum
             echo "===> Notice: This version of Libnpy is downloaded in GitHub Release, which will always be out-of-date version <==="
             download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
-            # echo "wget $url -O $filename"
-            # if ! wget $url -O $filename; then
-            # report_error "failed to download $url"
-            # recommend_offline_installation $filename $url
-            # fi
-            # # checksum
-            # checksum "$filename" "$libnpy_sha256"
         fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
@@ -58,6 +54,8 @@ case "$with_libnpy" in
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
+    fi
+    LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBNPY from system paths NOW ===================="

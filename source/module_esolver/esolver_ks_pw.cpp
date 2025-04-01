@@ -450,12 +450,12 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
+void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell,
                                                      const int istep,
                                                      const int iter,
                                                      const double ethr)
 {
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -524,7 +524,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
         srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
     }
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 }
 
 // Temporary, it should be rewritten with Hamilt class.

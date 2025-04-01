@@ -115,13 +115,14 @@ OPTIONS:
 --target-cpu              Compile for the specified target CPU (e.g. haswell or generic), i.e.
                           do not optimize for the actual host system which is the default (native)
 --dry-run                 Write only config files, but don't actually build packages.
+--pack-run                Only check and install required packages without actually unpack and build packages 
 
 The --enable-FEATURE options follow the rules:
   --enable-FEATURE=yes    Enable this particular feature
   --enable-FEATURE=no     Disable this particular feature
   --enable-FEATURE        The option keyword alone is equivalent to
                           --enable-FEATURE=yes
-  ===== NOTICE: THESE FEATURE AER NOT INCLUDED IN ABACUS =====
+  ===== NOTICE: THESE GPU FEATURE IS ON TESTING =====
   --enable-cuda           Turn on GPU (CUDA) support (can be combined
                           with --enable-opencl).
                           Default = no
@@ -329,10 +330,11 @@ export intel_classic="no"
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
 # QuantumMisaka by 2023.08
-export intelmpi_classic="no"
-export with_ifx="yes" # whether ifx is used in oneapi
-export with_flang="no" # whether flang is used in aocc
-export openmpi_4th="no" # whether openmpi downgrade
+export PACK_RUN="__FALSE__"
+export INTELMPI_CLASSIC="no"
+export WITH_IFX="yes" # whether ifx is used in oneapi
+export WITH_FLANG="no" # whether flang is used in aocc
+export OPENMPI_4TH="no" # whether openmpi downgrade
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -461,6 +463,9 @@ while [ $# -ge 1 ]; do
     --dry-run)
       dry_run="__TRUE__"
       ;;
+    --pack-run)
+      PACK_RUN="__TRUE__"
+      ;;
     --enable-tsan*)
       enable_tsan=$(read_enable $1)
       if [ "${enable_tsan}" = "__INVALID__" ]; then
@@ -514,7 +519,7 @@ while [ $# -ge 1 ]; do
       fi
       ;;
     --with-4th-openmpi*)
-      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
+      OPENMPI_4TH=$(read_with "${1}" "no") # default new openmpi
       ;;
     --with-openmpi*)
       with_openmpi=$(read_with "${1}")
@@ -532,19 +537,19 @@ while [ $# -ge 1 ]; do
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
     --with-intel-mpi-clas*)
-      intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
+      INTELMPI_CLASSIC=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
     --with-intel*)  # must be read after items above
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-ifx*)
-      with_ifx=$(read_with "${1}" "yes") # default yes
+      WITH_IFX=$(read_with "${1}" "yes") # default yes
       ;;
     --with-amd*)
       with_amd=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-flang*)
-      with_flang=$(read_with "${1}" "no")
+      WITH_FLANG=$(read_with "${1}" "no")
       ;;
     --with-aocl*)
       with_aocl=$(read_with "${1}" "__SYSTEM__")
@@ -840,7 +845,6 @@ else
   ./scripts/stage2/install_stage2.sh
   ./scripts/stage3/install_stage3.sh
   ./scripts/stage4/install_stage4.sh
-fi
 
 cat << EOF
 ========================== usage =========================
@@ -858,5 +862,6 @@ or you can modify the builder scripts to suit your needs.
 """
 EOF
 
+fi
 
 #EOF

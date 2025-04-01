@@ -122,7 +122,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const K_Vectors& kv, 
                                                    const int& iter)
 {
-    std::cout << "iter=" << iter << std::endl;
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0 || PARAM.inp.init_wfc == "file") // non separate loop case
@@ -157,7 +156,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const  int iter)
+void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const  int iter)
 {
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)

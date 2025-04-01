@@ -47,9 +47,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
             }
         }
     }
-    // if(GlobalV::MY_RANK!=0) std::cout.clear();
-    // std::cout<<"Hello"<<std::endl;
-    // if(GlobalV::MY_RANK!=0) std::cout.setstate(ios::failbit);
+
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 

@@ -33,7 +33,6 @@ void Gint_vl::cal_hr_gint_()
         PhiOperator phi_op;
         std::vector<double> phi;
         std::vector<double> phi_vldr3;
-        HContainer<double> hr_gint_local(*hr_gint_);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -47,12 +46,7 @@ void Gint_vl::cal_hr_gint_()
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hr_gint_local);
-        }
-#pragma omp critical
-        {
-            BlasConnector::axpy(hr_gint_local.get_nnr(), 1.0, hr_gint_local.get_wrapper(),
-                                1, hr_gint_->get_wrapper(), 1);
+            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_);
         }
     }
 }

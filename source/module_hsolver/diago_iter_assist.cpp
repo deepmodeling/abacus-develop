@@ -28,8 +28,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                                                            // of evc, if set to 0, n_band = nstart, default 0
 )
 {
-    ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace");
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::TITLE("DiagoAssist", "diag_subspace");
+    ModuleBase::timer::tick("DiagoAssist", "diag_subspace");
 
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -143,7 +143,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     delmem_complex_op()(scc);
     delmem_complex_op()(vcc);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoAssist", "diag_subspace");
 }
 
 template <typename T, typename Device>

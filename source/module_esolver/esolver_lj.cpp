@@ -5,6 +5,7 @@
 #include "module_io/output_log.h"
 #include "module_io/cif_io.h"
 
+
 namespace ModuleESolver
 {
 
@@ -104,7 +105,9 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     {
         stress = lj_virial;
 
-        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+        const bool screen = true;
+        const bool ry = false;
+        ModuleIO::print_stress("TOTAL-STRESS", stress, screen, ry, GlobalV::ofs_running);
 
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

@@ -11,8 +11,13 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO", "setup_parameters");
 
-    if(PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="relax" || PARAM.inp.calculation=="cell-relax" || PARAM.inp.calculation=="nscf"
-	        || PARAM.inp.calculation=="get_pchg" || PARAM.inp.calculation=="get_wf" || PARAM.inp.calculation=="md")
+	if(PARAM.inp.calculation=="scf" 
+			|| PARAM.inp.calculation=="relax" 
+			|| PARAM.inp.calculation=="cell-relax" 
+			|| PARAM.inp.calculation=="nscf"
+			|| PARAM.inp.calculation=="get_pchg" 
+			|| PARAM.inp.calculation=="get_wf" 
+			|| PARAM.inp.calculation=="md")
 	{
 		std::cout << " ---------------------------------------------------------" << std::endl;
 		if(PARAM.inp.calculation=="scf")
@@ -203,7 +208,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
                   << std::endl;
     }
 
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
            ">>>>"
         << std::endl;
@@ -231,10 +236,13 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ofs << " | is 'npw' in each processor.                                     "
            "   |"
         << std::endl;
+    ofs << " |                                                                 "
+           "   |"
+        << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<"
         << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << "\n SETUP THE PLANE WAVE BASIS" << std::endl;
 
     double ecut = 4 * PARAM.inp.ecutwfc;
@@ -317,7 +325,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
 
 void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs)
 {
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
            ">>>>"
         << std::endl;
@@ -345,10 +353,13 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
     ofs << " | each k-point is 'npwk[ik]' in each processor                    "
            "   |"
         << std::endl;
+    ofs << " |                                                                 "
+           "   |"
+        << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<"
         << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
     double ecut = inp.ecutwfc;

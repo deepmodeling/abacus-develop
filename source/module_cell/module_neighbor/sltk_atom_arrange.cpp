@@ -74,8 +74,9 @@ void atom_arrange::search(const bool pbc_flag,
         ModuleBase::WARNING_QUIT("atom_arrange::search", " search_radius_bohr < 0,forbidden");
     }
 
-    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius is (Bohr))", search_radius_bohr);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr))", ucell.lat0);
+    ofs_in << " SEARCH ADJACENT ATOMS" << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius is (Bohr)", search_radius_bohr);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr)", ucell.lat0);
 
     assert(ucell.nat > 0);
 

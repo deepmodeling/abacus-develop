@@ -132,10 +132,10 @@ void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, con
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
+void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2density");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
+    ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -207,7 +207,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
 #ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
 }
 
 template <typename T, typename Device>
