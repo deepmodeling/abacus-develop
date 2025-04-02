@@ -111,8 +111,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     }
 
     double a = bcoeff;
-    double c = 2 * 3.141592653;
-    double b = sqrt(c) * a;
+    double b = sqrt(ModuleBase::TWO_PI) * a;
 
     std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 
@@ -428,8 +427,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         }
 
         double a = bcoeff;
-        double c = 2 * 3.141592653;
-        double b = sqrt(c) * a;
+        double b = sqrt(ModuleBase::TWO_PI) * a;
 
         std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 

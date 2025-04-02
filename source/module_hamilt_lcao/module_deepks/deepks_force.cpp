@@ -11,7 +11,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 
 template <typename TK>
-void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
+void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Grid_Driver& GridD,
@@ -100,51 +100,14 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                 int dRx = 0;
                 int dRy = 0;
                 int dRz = 0;
-                if constexpr (std::is_same<TK, std::complex<double>>::value) // for multi-k
+                if (std::is_same<TK, std::complex<double>>::value) // for multi-k
                 {
                     dRx = dR1.x - dR2.x;
                     dRy = dR1.y - dR2.y;
                     dRz = dR1.z - dR2.z;
                 }
                 ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
-
-                hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
-
-                dm_pair.allocate(nullptr, true);
-
-                if constexpr (std::is_same<TK, double>::value) // for gamma-only
-                {
-                    for (int is = 0; is < dm.size(); is++)
-                    {
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                        {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
-                        }
-                        else
-                        {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_col_size(), 1.0, 0);
-                        }
-                    }
-                }
-                else // for multi-k
-                {
-                    for (int ik = 0; ik < nks; ik++)
-                    {
-                        const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                        double sinp = 0;
-                        double cosp = 0;
-                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                        const std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                        {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
-                        }
-                        else
-                        {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
-                        }
-                    }
-                }
+                const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
 
                 hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
                 hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
@@ -162,7 +125,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
                 assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
-                const double* dm_current = dm_pair.get_pointer();
                 for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1)
                 {
                     for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2)
@@ -217,7 +179,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                 }
                             }
                         }
-                        
+
                         // HF term is minus, only one projector for each atom force.
                         f_delta_local(iat, 0) -= 2.0 * *dm_current * nlm[0];
                         f_delta_local(iat, 1) -= 2.0 * *dm_current * nlm[1];
@@ -277,7 +239,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                     }
                                 }
                             }
-                            
+
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
                                 for (int jpol = ipol; jpol < 3; jpol++)
@@ -286,7 +248,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                         += *dm_current * (nlm[ipol] * r2[jpol] + nlm_t[ipol] * r1[jpol]);
                                 }
                             }
-
                         }
                         dm_current++;
                     } // iw2
@@ -294,15 +255,14 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
             }         // ad2
         }             // ad1
     }                 // iat
-    if(isstress)
+    if (isstress)
     {
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = ipol; jpol < 3; jpol++)
             {
                 #pragma omp atomic
-                svnl_dalpha(ipol, jpol)
-                    += svnl_dalpha_local(ipol, jpol);
+                svnl_dalpha(ipol, jpol) += svnl_dalpha_local(ipol, jpol);
             }
         }
     }
@@ -364,7 +324,7 @@ void DeePKS_domain::check_f_delta(const int nat, ModuleBase::matrix& f_delta, Mo
     return;
 }
 
-template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<double>>& dm,
+template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Grid_Driver& GridD,
@@ -378,7 +338,7 @@ template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<d
                                                  const bool isstress,
                                                  ModuleBase::matrix& svnl_dalpha);
 
-template void DeePKS_domain::cal_f_delta<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
+template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HContainer<double>* dmr,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Grid_Driver& GridD,

@@ -26,7 +26,7 @@ namespace DeePKS_domain
 // 2. check_f_delta, which prints F_delta into F_delta.dat for checking
 
 template <typename TK>
-void cal_f_delta(const std::vector<std::vector<TK>>& dm,
+void cal_f_delta(const hamilt::HContainer<double>* dmr,
                  const UnitCell& ucell,
                  const LCAO_Orbitals& orb,
                  const Grid_Driver& GridD,

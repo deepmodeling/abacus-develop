@@ -1,15 +1,18 @@
-#include <cassert>
-#include <iostream>
-#include "module_parameter/parameter.h"
-#include <sstream>
-#include <cmath>
 #include "ORB_nonlocal_lm.h"
-#include "module_base/math_integral.h"
+
+#include "module_base/constants.h"
 #include "module_base/global_function.h"
-#include "module_base/mathzone.h" /// use Polynomial_Interpolation_xy, Spherical_Bessel
+#include "module_base/math_integral.h"
+#include "module_base/math_polyint.h"
+#include "module_base/math_sphbes.h"
+#include "module_base/mathzone.h"      /// use Polynomial_Interpolation_xy, Spherical_Bessel
 #include "module_base/mathzone_add1.h" /// use SplineD2
-#include "module_base/math_sphbes.h" // mohan add 2021-05-06
-#include "module_base/math_polyint.h" // mohan add 2021-05-06
+#include "module_parameter/parameter.h"
+
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <sstream>
 
 Numerical_Nonlocal_Lm::Numerical_Nonlocal_Lm()
 {
@@ -178,84 +181,13 @@ void Numerical_Nonlocal_Lm::set_NL_proj(
 	return;
 }
 
-/*
-// extra_uniform currently does not work, because
-// beta[ir] = this->beta_r[ir]/r_radial[ir];
-// does not work for ir==0, and this formula is not stable for small r.
-//
-// If one really needs beta (in what circumstance?), one should do
-// extrapolation to reach r=0.
-
-void Numerical_Nonlocal_Lm::extra_uniform(const double &dr_uniform_in)
-{
-	assert(dr_uniform_in>0.0);
-	this->dr_uniform = dr_uniform_in;
-	this->nr_uniform = static_cast<int>(rcut/dr_uniform) + 10;
-
-//	std::cout << " nr_uniform = " << nr_uniform << std::endl;
-	
-	delete[] this->beta_uniform;
-	this->beta_uniform = new double[nr_uniform];
-	ModuleBase::GlobalFunc::ZEROS (this->beta_uniform, nr_uniform);
-
-	// mohan fix bug 2011-04-14
-	// the beta_r is beta*r.
-	// and beta is beta!!!
-	double* beta = new double[nr];
-	ModuleBase::GlobalFunc::ZEROS(beta,nr);
-	for(int ir=0; ir<nr; ir++)
-	{
-		assert(r_radial[ir]>0.0);
-		beta[ir] = this->beta_r[ir]/r_radial[ir];
-	}
-
-	for (int ir = 0; ir < this->nr_uniform; ir++)
-	{
-		double rnew = ir * dr_uniform;
-		this->beta_uniform[ir] = ModuleBase::PolyInt::Polynomial_Interpolation_xy(this->r_radial, beta, this->nr, rnew); 
-    }
-	delete[] beta;
-
-	delete[] this->dbeta_uniform;
-	this->dbeta_uniform = new double[nr_uniform];
-	ModuleBase::GlobalFunc::ZEROS(this->dbeta_uniform, nr_uniform);
-	
-	double* y2 = new double[nr];
-	ModuleBase::Mathzone_Add1::SplineD2 (r_radial, beta_r, nr, 0.0, 0.0, y2);
-
-	double* rad = new double[nr_uniform];
-	for (int ir = 0; ir < nr_uniform; ir++)
-	{
-		rad[ir] = ir*dr_uniform;
-	}
-	
-	double* tmp = new double[nr_uniform];
-	double* tmp1 = new double[nr_uniform];
-	ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_radial, beta_r, y2, 
-					nr, rad, nr_uniform, tmp, dbeta_uniform);
-
-	for(int ir= 0 ; ir<nr_uniform; ir++)
-	{
-		//assert(dbeta_uniform[ir]==beta_uniform[ir]);
-	}
-
-	delete [] y2;
-	delete [] rad;	
-	delete [] tmp;
-	delete [] tmp1;
-	return;
-}
-*/
-
 void Numerical_Nonlocal_Lm::get_kradial()
 {
     //ModuleBase::TITLE("Numerical_Nonlocal_Lm","get_kradial");
     double *jl = new double[nr];
     double *integrated_func = new double[nr];
 
-	// mohan add constant of pi, 2021-04-26
-	const double pi = 3.14159265358979323846;
-    const double pref = sqrt( 2.0 / pi );
+    const double pref = sqrt(2.0 / ModuleBase::PI);
 
     for (int ik = 0; ik < nk; ik++)
     {

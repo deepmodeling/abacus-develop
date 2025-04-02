@@ -268,10 +268,8 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
-        const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
-
         // No need to update E_delta since it have been done in LCAO_Deepks_Interface in after_scf
-        DeePKS_domain::cal_f_delta<std::complex<double>>(dm_k,
+        DeePKS_domain::cal_f_delta<std::complex<double>>(ld.dm_r,
                                                          ucell,
                                                          orb,
                                                          gd,
