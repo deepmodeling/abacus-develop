@@ -439,7 +439,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             std::vector<TH> s_tot(nks);
             DeePKS_domain::get_h_tot<TK, TH, TR>(*ParaV, p_ham, s_tot, nlocal, nks, 'S');
             const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_overlap.npy";
-            LCAO_deepks_io::save_npy_h<TK, TH>(s_tot, file_stot, nlocal, nks, rank);
+            LCAO_deepks_io::save_npy_h<TK, TH>(s_tot, file_stot, nlocal, nks, rank, 1.0);// don't need unit_scale for overlap
         }
     }
 
