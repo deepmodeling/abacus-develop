@@ -26,6 +26,7 @@
 #include "module_io/nscf_band.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
+#include "module_io/out_ldos.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_dos_pw.h"
@@ -894,6 +895,11 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
                                  << std::endl;
         }
+    }
+
+    if (PARAM.inp.out_ldos)
+    {
+        ModuleIO::out_ldos(this->pelec, this->psi[0], this->Pgrid, ucell);
     }
 
     //! 4) Print out band structure information

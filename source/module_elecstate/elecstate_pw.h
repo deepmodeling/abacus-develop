@@ -35,6 +35,9 @@ class ElecStatePW : public ElecState
 
     virtual void cal_tau(const psi::Psi<T, Device>& psi);
 
+    //! calculate local density of states
+    virtual void cal_ldos(const psi::Psi<T, Device>& psi, std::vector<double>& ldos) const;
+
     //! calculate becsum for uspp
     void cal_becsum(const psi::Psi<T, Device>& psi);
 

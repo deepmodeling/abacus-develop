@@ -235,6 +235,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_TDDFT_pw.o\
     pot_xc.o\
     cal_ux.o\
+    cal_ldos.o\
     read_orb.o\
     cal_nelec_nband.o\
     read_pseudo.o\

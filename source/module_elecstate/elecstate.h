@@ -61,6 +61,15 @@ class ElecState
         return;
     }
 
+    virtual void cal_ldos(const psi::Psi<std::complex<double>>& psi, std::vector<double>& ldos) const
+    {
+        return;
+    }
+    virtual void cal_ldos(const psi::Psi<double>& psi, std::vector<double>& ldos) const
+    {
+        return;
+    }
+
     // update charge density for next scf step
     // in this function, 1. input rho for construct Hamilt and 2. calculated rho from Psi will mix to 3. new charge
     // density rho among these rho,
