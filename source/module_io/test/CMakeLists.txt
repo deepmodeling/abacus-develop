@@ -278,7 +278,6 @@ AddTest(
   ../../module_basis/module_nao/pswfc_radials.cpp
   ../../module_basis/module_nao/atomic_radials.cpp
   ../../module_basis/module_nao/sphbes_radials.cpp
-  ../../module_basis/module_nao/projgen.cpp
   ../../module_basis/module_nao/two_center_integrator.cpp
   ../../module_basis/module_nao/two_center_table.cpp
   ../../module_basis/module_nao/real_gaunt_table.cpp

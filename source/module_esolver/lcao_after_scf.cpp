@@ -25,6 +25,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_io/cal_pLpR.h"
 #include "module_parameter/parameter.h"
 
 //--------------temporary----------------------------
@@ -479,6 +480,26 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
     {
         RA.delete_grid();
+    }
+
+    if (PARAM.inp.out_mat_l[0])
+    {
+        ModuleIO::AngularMomentumExpectationCalculator mylcalculator(
+            PARAM.inp.orbital_dir,
+            ucell,
+            PARAM.inp.search_radius,
+            PARAM.inp.test_deconstructor,
+            PARAM.inp.test_grid,
+            PARAM.inp.test_atom_input,
+            PARAM.inp.search_pbc,
+            &GlobalV::ofs_running,
+            GlobalV::MY_RANK
+        );
+        mylcalculator.calculate(PARAM.inp.suffix,
+                                PARAM.inp.read_file_dir,
+                                ucell,
+                                PARAM.inp.out_mat_l[1],
+                                GlobalV::MY_RANK);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");

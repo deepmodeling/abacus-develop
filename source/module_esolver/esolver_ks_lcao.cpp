@@ -563,26 +563,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 #endif
         );
     }
-
-    if (PARAM.inp.out_mat_l[0])
-    {
-        ModuleIO::AngularMomentumExpectationCalculator mylcalculator(
-            PARAM.inp.orbital_dir,
-            GlobalC::ucell,
-            PARAM.inp.search_radius,
-            PARAM.inp.test_deconstructor,
-            PARAM.inp.test_grid,
-            PARAM.inp.test_atom_input,
-            PARAM.inp.search_pbc,
-            &GlobalV::ofs_running,
-            GlobalV::MY_RANK
-        );
-        mylcalculator.calculate(PARAM.inp.suffix,
-                                PARAM.inp.read_file_dir,
-                                GlobalC::ucell,
-                                PARAM.inp.out_mat_l[1],
-                                GlobalV::MY_RANK);
-    }
   
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
