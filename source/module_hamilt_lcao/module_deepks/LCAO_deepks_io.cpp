@@ -8,10 +8,6 @@
 
 #include <mpi.h>
 
-/// Ry2Hartree : convert Ry to Hartree, for energy, force, stress, orbital and Hamiltonian, which is consistent with deepks-kit.
-/// only used in save_npy_e, save_npy_h and save_matrix2npy
-static const double Ry2Hartree = 2.0;
-
 template <typename TK>
 void LCAO_deepks_io::print_dm(const int nks, const int nlocal, const int nrow, const std::vector<std::vector<TK>>& dm)
 {
@@ -140,7 +136,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
 }
 
 // saves energy in numpy format
-void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, const int rank)
+void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, const int rank, const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_e");
     if (rank != 0)
@@ -150,7 +146,7 @@ void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, cons
 
     // save energy in .npy format
     const long unsigned eshape[] = {1};
-    double e_hartree = e / Ry2Hartree;
+    double e_hartree = e * unit_scale;
     npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e_hartree);
     return;
 }
@@ -160,7 +156,8 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
                                 const std::string& h_file,
                                 const int nlocal,
                                 const int nks,
-                                const int rank)
+                                const int rank,
+                                const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_h");
     if (rank != 0)
@@ -178,7 +175,7 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                npy_h.push_back(hamilt[k](i, j)/ Ry2Hartree);
+                npy_h.push_back(hamilt[k](i, j) * unit_scale);
             }
         }
     }
@@ -191,7 +188,8 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
                                      const ModuleBase::matrix& matrix,
                                      const int rank,
                                      const double& scale,
-                                     const char mode)
+                                     const char mode,
+                                     const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_matrix2npy");
 
@@ -237,7 +235,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = i; j < nc; ++j)
             {
-                scaled_data[index] = (matrix(i, j) * scale) / Ry2Hartree;
+                scaled_data[index] = (matrix(i, j) * scale) * unit_scale;
                 index++;
             }
         }
@@ -249,7 +247,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = 0; j <= i; ++j)
             {
-                scaled_data[index] = (matrix(i, j) * scale) / Ry2Hartree;
+                scaled_data[index] = (matrix(i, j) * scale) * unit_scale;
                 index++;
             }
         }
@@ -260,7 +258,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = 0; j < nc; ++j)
             {
-                scaled_data[i * nc + j] = (matrix(i, j) * scale) / Ry2Hartree;
+                scaled_data[i * nc + j] = (matrix(i, j) * scale) * unit_scale;
             }
         }
     }
@@ -316,13 +314,15 @@ template void LCAO_deepks_io::save_npy_h<double>(const std::vector<ModuleBase::m
                                                  const std::string& h_file,
                                                  const int nlocal,
                                                  const int nks,
-                                                 const int rank);
+                                                 const int rank,
+                                                 const double unit_scale);
 
 template void LCAO_deepks_io::save_npy_h<std::complex<double>>(const std::vector<ModuleBase::ComplexMatrix>& hamilt,
                                                                const std::string& h_file,
                                                                const int nlocal,
                                                                const int nks,
-                                                               const int rank);
+                                                               const int rank,
+                                                               const double unit_scale);
 
 template void LCAO_deepks_io::save_tensor2npy<int>(const std::string& file_name,
                                                    const torch::Tensor& tensor,
