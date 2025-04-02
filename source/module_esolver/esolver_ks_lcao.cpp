@@ -30,11 +30,11 @@
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
 
-//be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
+// be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_vxc.hpp"
 #include "module_io/write_vxc_r.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -179,15 +179,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 7) initialize exact exchange calculations
 #ifdef __EXX
-    if (PARAM.inp.calculation == "scf" 
-        || PARAM.inp.calculation == "relax" 
-        || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             if (PARAM.inp.init_wfc != "file")
-            {   // if init_wfc==file, directly enter the EXX loop
+            { // if init_wfc==file, directly enter the EXX loop
                 XC_Functional::set_xc_first_loop(ucell);
             }
 
@@ -307,7 +305,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     return;
 }
 
-
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::cal_energy()
 {
@@ -315,7 +312,6 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 
     return this->pelec->f_en.etot;
 }
-
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
@@ -460,7 +456,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                 this->pelec->ekb,
                                 this->kv);
         }
-    } 
+    }
 
     // 4) write projected band structure by jiyy-2022-4-20
     if (PARAM.inp.out_proj_band)
@@ -489,49 +485,50 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-            PARAM.globalv.nlocal,
-            GlobalV::DRANK,
-            &this->pv,
-            *this->psi,
-            ucell,
-            this->sf,
-            this->solvent,
-            *this->pw_rho,
-            *this->pw_rhod,
-            this->locpp.vloc,
-            this->chr,
-            this->GG,
-            this->GK,
-            this->kv,
-            orb_.cutoffs(),
-            this->pelec->wg,
-            this->gd
+                                    PARAM.globalv.nlocal,
+                                    GlobalV::DRANK,
+                                    &this->pv,
+                                    *this->psi,
+                                    ucell,
+                                    this->sf,
+                                    this->solvent,
+                                    *this->pw_rho,
+                                    *this->pw_rhod,
+                                    this->locpp.vloc,
+                                    this->chr,
+                                    this->GG,
+                                    this->GK,
+                                    this->kv,
+                                    orb_.cutoffs(),
+                                    this->pelec->wg,
+                                    this->gd
 #ifdef __EXX
-            ,
-            this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+                                    ,
+                                    this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+                                    this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
 #endif
         );
     }
     if (PARAM.inp.out_mat_xc2)
     {
         ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
-            &this->pv,
-            ucell,
-            this->sf,
-            this->solvent,
-            *this->pw_rho,
-            *this->pw_rhod,
-            this->locpp.vloc,
-            this->chr,
-            this->GG,
-            this->GK,
-            this->kv,
-            orb_.cutoffs(),
-            this->gd
+                                      &this->pv,
+                                      ucell,
+                                      this->sf,
+                                      this->solvent,
+                                      *this->pw_rho,
+                                      *this->pw_rhod,
+                                      this->locpp.vloc,
+                                      this->chr,
+                                      this->GG,
+                                      this->GK,
+                                      this->kv,
+                                      orb_.cutoffs(),
+                                      this->gd
 #ifdef __EXX
-            , this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+                                      ,
+                                      this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
+                                      this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
 #endif
         );
     }
@@ -568,7 +565,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
-
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const int iter)
@@ -639,11 +635,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             // the following steps are only needed in the first outer exx loop
-            exx_two_level_step = GlobalC::exx_info.info_ri.real_number ?
-                this->exd->two_level_step
-                : this->exc->two_level_step;
+            exx_two_level_step
+                = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
         }
-#endif 
+#endif
         if (iter == 1 && exx_two_level_step == 0)
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
@@ -742,6 +737,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         this->p_hamilt->refresh();
     }
+    if (iter == 1 && istep == 0)
+    {
+        // initialize DMR
+        this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    }
 #endif
 
     if (PARAM.inp.vl_in_h)
@@ -757,7 +757,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         dm->save_DMR();
     }
 }
-
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
@@ -822,7 +821,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
-
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
 {
@@ -839,7 +837,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
         this->pelec->cal_converged();
     }
 }
-
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
@@ -878,6 +875,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
         ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
+        DeePKS_domain::update_dmr(this->kv.kvec_d, dm, ucell, orb_, this->pv, this->gd, ld.dm_r);
         this->pelec->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
         this->pelec->f_en.edeepks_delta = ld.E_delta;
     }
