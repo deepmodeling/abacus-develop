@@ -1171,7 +1171,7 @@ TEST_F(UcellTestReadStru, ReadAtomSpecies)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
-    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running, ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
@@ -1185,7 +1185,7 @@ TEST_F(UcellTestReadStru, ReadAtomSpeciesWarning1)
     std::string fn = "./support/STRU_MgO_Warning1";
     std::ifstream ifa(fn.c_str());
     std::ofstream ofs_running;
-    ofs_running.open("read_atom_species.tmp");
+    ofs_running.open("read_atom_species.txt");
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
@@ -1195,7 +1195,7 @@ TEST_F(UcellTestReadStru, ReadAtomSpeciesWarning1)
     EXPECT_THAT(output, testing::HasSubstr("unrecongnized pseudo type."));
     ofs_running.close();
     ifa.close();
-    remove("read_atom_species.tmp");
+    //remove("read_atom_species.txt");
 }
 
 TEST_F(UcellTestReadStru, ReadLatticeConstantWarning1)

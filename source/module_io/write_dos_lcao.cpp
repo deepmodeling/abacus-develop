@@ -446,15 +446,25 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                 {
                     // calculate SK for current k point
                     const std::complex<double>* sk = nullptr;
+
+                    // collumn-major matrix
+                    const int hk_type = 1; 
+
                     if (PARAM.inp.nspin == 4)
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
-                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
+                              ->updateSk(ik, hk_type);
+
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
+                              ->getSk();
                     }
                     else
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, 1);
-                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
+                             ->updateSk(ik, hk_type);
+
+                        sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
+                             ->getSk();
                     }
 
                     psi->fix_k(ik);
@@ -545,128 +555,125 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
         if (GlobalV::MY_RANK == 0)
         {
-            {
-                std::stringstream ps;
-                ps << PARAM.globalv.global_out_dir << "TDOS";
-                std::ofstream out(ps.str().c_str());
-                if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
-                {
+			std::stringstream ps;
+			ps << PARAM.globalv.global_out_dir << "TDOS";
+			std::ofstream ofs1(ps.str().c_str());
+			if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
+			{
 
-                    for (int n = 0; n < npoints; ++n)
-                    {
-                        double y = 0.0;
-                        double en = emin + n * de_ev;
-                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
-                        {
-                            y += pdos[0](i, n);
-                        }
+				for (int n = 0; n < npoints; ++n)
+				{
+					double y = 0.0;
+					double en = emin + n * de_ev;
+					for (int i = 0; i < PARAM.globalv.nlocal; i++)
+					{
+						y += pdos[0](i, n);
+					}
 
-                        out << std::setw(20) << en << std::setw(30) << y << std::endl;
-                    }
-                }
-                else if (PARAM.inp.nspin == 2)
-                {
-                    for (int n = 0; n < npoints; ++n)
-                    {
-                        double y = 0.0;
-                        double z = 0.0;
-                        double en = emin + n * de_ev;
-                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
-                        {
-                            y += pdos[0](i, n);
-                            z += pdos[1](i, n);
-                        }
+					ofs1 << std::setw(20) << en << std::setw(30) << y << std::endl;
+				}
+			}
+			else if (PARAM.inp.nspin == 2)
+			{
+				for (int n = 0; n < npoints; ++n)
+				{
+					double y = 0.0;
+					double z = 0.0;
+					double en = emin + n * de_ev;
+					for (int i = 0; i < PARAM.globalv.nlocal; i++)
+					{
+						y += pdos[0](i, n);
+						z += pdos[1](i, n);
+					}
 
-                        out << std::setw(20) << en << std::setw(30) << y << std::setw(30) << z << std::endl;
-                    }
-                }
-                out.close();
-            }
+					ofs1 << std::setw(20) << en << std::setw(30) << y << std::setw(30) << z << std::endl;
+				}
+			}
+			ofs1.close();
 
             /* decomposed Mulliken charge */
 
-            {
-                std::stringstream as;
-                as << PARAM.globalv.global_out_dir << "PDOS";
-                std::ofstream out(as.str().c_str());
+			std::stringstream as;
+			as << PARAM.globalv.global_out_dir << "PDOS";
+			std::ofstream ofs2(as.str().c_str());
 
-                out << "<pdos>" << std::endl;
-                out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
-                if (PARAM.inp.nspin == 4)
-                {
-                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
-                }
-                else
-                {
-                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
-                }
-                out << "<energy_values units=\"eV\">" << std::endl;
+			ofs2 << "<pdos>" << std::endl;
+			ofs2 << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
+			if (PARAM.inp.nspin == 4)
+			{
+				ofs2 << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
+			}
+			else
+			{
+				ofs2 << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+			}
+			ofs2 << "<energy_values units=\"eV\">" << std::endl;
 
-                for (int n = 0; n < npoints; ++n)
-                {
-                    double y = 0.0;
-                    double en = emin + n * de_ev;
-                    out << std::setw(20) << en << std::endl;
-                }
-                out << "</energy_values>" << std::endl;
-                for (int i = 0; i < ucell.nat; i++)
-                {
-                    int a = ucell.iat2ia[i];
-                    int t = ucell.iat2it[i];
-                    Atom* atom1 = &ucell.atoms[t];
-                    const int s0 = ucell.itiaiw2iwt(t, a, 0);
-                    for (int j = 0; j < atom1->nw; ++j)
-                    {
-                        const int L1 = atom1->iw2l[j];
-                        const int N1 = atom1->iw2n[j];
-                        const int m1 = atom1->iw2m[j];
-                        const int w = ucell.itiaiw2iwt(t, a, j);
+			for (int n = 0; n < npoints; ++n)
+			{
+				double y = 0.0;
+				double en = emin + n * de_ev;
+				ofs2 << std::setw(20) << en << std::endl;
+			}
+			ofs2 << "</energy_values>" << std::endl;
+			for (int i = 0; i < ucell.nat; i++)
+			{
+				int a = ucell.iat2ia[i];
+				int t = ucell.iat2it[i];
+				Atom* atom1 = &ucell.atoms[t];
+				const int s0 = ucell.itiaiw2iwt(t, a, 0);
+				for (int j = 0; j < atom1->nw; ++j)
+				{
+					const int L1 = atom1->iw2l[j];
+					const int N1 = atom1->iw2n[j];
+					const int m1 = atom1->iw2m[j];
+					const int w = ucell.itiaiw2iwt(t, a, j);
 
-                        // out << "</energy_values>" <<std::endl;
-                        out << "<orbital" << std::endl;
-                        out << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
-                        out << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
-                        out << std::setw(8) << "species=\"" << ucell.atoms[t].label << "\"" << std::endl;
-                        out << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
-                        out << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
-                        out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
-                        out << ">" << std::endl;
-                        out << "<data>" << std::endl;
-                        if (PARAM.inp.nspin == 1)
-                        {
-                            for (int n = 0; n < npoints; ++n)
-                            {
-                                out << std::setw(13) << pdos[0](w, n) << std::endl;
-                            } // n
-                        }
-                        else if (PARAM.inp.nspin == 2)
-                        {
-                            for (int n = 0; n < npoints; ++n)
-                            {
-                                out << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
-                            } // n
-                        }
-                        else if (PARAM.inp.nspin == 4)
-                        {
-                            int w0 = w - s0;
-                            for (int n = 0; n < npoints; ++n)
-                            {
-                                out << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
-                            } // n
-                        }
+					// ofs2 << "</energy_values>" <<std::endl;
+					ofs2 << "<orbital" << std::endl;
+					ofs2 << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
+					ofs2 << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
+					ofs2 << std::setw(8) << "species=\"" << ucell.atoms[t].label << "\"" << std::endl;
+					ofs2 << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
+					ofs2 << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
+					ofs2 << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
+					ofs2 << ">" << std::endl;
+					ofs2 << "<data>" << std::endl;
+					if (PARAM.inp.nspin == 1)
+					{
+						for (int n = 0; n < npoints; ++n)
+						{
+							ofs2 << std::setw(13) << pdos[0](w, n) << std::endl;
+						} // n
+					}
+					else if (PARAM.inp.nspin == 2)
+					{
+						for (int n = 0; n < npoints; ++n)
+						{
+							ofs2 << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
+						} // n
+					}
+					else if (PARAM.inp.nspin == 4)
+					{
+						int w0 = w - s0;
+						for (int n = 0; n < npoints; ++n)
+						{
+							ofs2 << std::setw(20) << pdos[0](s0 + 2 * w0, n) + pdos[0](s0 + 2 * w0 + 1, n) << std::endl;
+						} // n
+					}
 
-                        out << "</data>" << std::endl;
-                        out << "</orbital>" << std::endl;
-                    } // j
-                }     // i
+					ofs2 << "</data>" << std::endl;
+					ofs2 << "</orbital>" << std::endl;
+				} // j
+			}     // i
 
-                out << "</pdos>" << std::endl;
-                out.close();
-            }
-            ModuleIO::write_orb_info(&(ucell));
+			ofs2 << "</pdos>" << std::endl;
+			ofs2.close();
+			ModuleIO::write_orb_info(&(ucell));
         }
         delete[] pdos;
-    }
+    }// end PARAM.inp.out_dos == 2 
+
     // output the DOS file.
     for (int is = 0; is < nspin0; ++is)
     {
