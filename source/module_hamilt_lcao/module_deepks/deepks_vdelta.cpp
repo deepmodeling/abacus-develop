@@ -106,10 +106,6 @@ void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
                     }
                 }
             }
-            else
-            {
-                // do nothing
-            }
 
             Parallel_Reduce::reduce_all(lineH.data(), nlocal - i);
 

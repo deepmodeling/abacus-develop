@@ -274,33 +274,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     std::vector<torch::Tensor> orbital_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        std::vector<torch::Tensor> kammv;
-        for (int iks = 0; iks < nks; ++iks)
-        {
-            std::vector<torch::Tensor> ammv;
-            for (int iat = 0; iat < nat; ++iat)
-            {
-                int inl = iat * nlmax + nl;
-                int nm = 2 * inl2l[inl] + 1;
-                std::vector<double> mmv;
-
-                for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
-                {
-                    for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
-                    {
-                        mmv.push_back(accessor[iks][inl][m1][m2]);
-                    }
-                }
-                torch::Tensor mm
-                    = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
-
-                ammv.push_back(mm);
-            }
-            torch::Tensor amm = torch::stack(ammv, 0);
-            kammv.push_back(amm);
-        }
-        torch::Tensor kamm = torch::stack(kammv, 0);
-        orbital_pdm_vector.push_back(kamm);
+        int nm = 2 * inl2l[nl] + 1;
+        torch::Tensor orbital_pdm_sliced = orbital_pdm.slice(1, nl, inlmax, nlmax)
+                                                    .slice(2, 0, nm, 1)
+                                                    .slice(3, 0, nm, 1); 
+        orbital_pdm_vector.push_back(orbital_pdm_sliced);
     }
 
     assert(orbital_pdm_vector.size() == nlmax);
