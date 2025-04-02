@@ -43,10 +43,6 @@ Fcoef::~Fcoef()
 {
 }
 
-namespace GlobalC
-{
-	Parallel_Kpoints Pkpoints;
-	UnitCell ucell;
-}
+
 
 #endif

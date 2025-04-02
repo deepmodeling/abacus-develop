@@ -26,11 +26,6 @@ Magnetism::~Magnetism(){}
 
 bool berryphase::berry_phase_flag=false;
 
-namespace GlobalC
-{
-	Parallel_Kpoints Pkpoints;
-	UnitCell ucell;
-}
 
 /************************************************
  *  unit test of print_info.cpp
