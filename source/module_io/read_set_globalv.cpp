@@ -23,7 +23,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
         }
     }
     /// set deepks_setorb
-    if (inp.deepks_scf || inp.deepks_out_labels)
+    if (inp.deepks_scf || inp.deepks_out_labels==1)
     {
         sys.deepks_setorb = true;
     }

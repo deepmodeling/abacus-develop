@@ -58,7 +58,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
     // Note : update PDM and all other quantities with the current dm
     // DeePKS PDM and descriptor
-    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
+    if (PARAM.inp.deepks_out_labels==1 || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
@@ -78,17 +78,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                         descriptor,
                                         rank);
 
-        if (PARAM.inp.deepks_out_labels == 1)
-        {
-            LCAO_deepks_io::save_npy_d(nat,
-                                       des_per_atom,
-                                       inlmax,
-                                       inl2l,
-                                       PARAM.inp.deepks_equiv,
-                                       descriptor,
-                                       PARAM.globalv.global_out_dir,
-                                       rank); // libnpy needed
-        }
+        LCAO_deepks_io::save_npy_d(nat,
+                                    des_per_atom,
+                                    inlmax,
+                                    inl2l,
+                                    PARAM.inp.deepks_equiv,
+                                    descriptor,
+                                    PARAM.globalv.global_out_dir,
+                                    rank); // libnpy needed
 
         if (PARAM.inp.deepks_scf)
         {
