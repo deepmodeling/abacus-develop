@@ -28,7 +28,6 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
-#include "module_io/cal_pLpR.h"
 #include "module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
