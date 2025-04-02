@@ -765,7 +765,15 @@ void ModuleIO::save_sparse(
             }
         }
 
-        output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
+        if (smat.count(R_coor))
+        {
+            output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
+        }
+        else
+        {
+            std::map<size_t, std::map<size_t, Tdata>> empty_map;
+            output_single_R(ofs, empty_map, sparse_thr, binary, pv, reduce);
+        }
         ++count;
     }
     if (!reduce || GlobalV::DRANK == 0) {
