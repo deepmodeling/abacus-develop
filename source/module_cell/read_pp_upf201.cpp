@@ -109,7 +109,9 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
 
 void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, std::string* val)
 {
-    std::string txt, word;
+    std::string txt;
+    std::string word;
+
     // get long txt
     ifs >> txt;
     while (ifs >> word)
@@ -128,26 +130,32 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     while (1)
     {
         pos = txt.find("=", pos);
-        if (pos == std::string::npos)
-            break;
-        pos++;
+		if (pos == std::string::npos)
+		{
+			break;
+		}
+		pos++;
         n++;
     }
 
+    std::cout << "n=" << n << std::endl;
+
     // get name & value
     pos = 0;
-    size_t pos2, ll;
+    size_t pos2=0;
+    size_t ll=0;
     for (int i = 0; i < n; ++i)
     {
         pos2 = txt.find("=", pos);
         for (; pos2 > pos; --pos2) // There may be a space before "=";
         {
-            if (txt.substr(pos2 - 1, 1) != " ")
-                break;
+			if (txt.substr(pos2 - 1, 1) != " ")
+			{
+				break;
+			}
         }
         ll = pos2 - pos;
         name[i] = txt.substr(pos, ll);
-        // std::cout<<i<<" "<<name[i]<<std::endl;
         std::string mark;
         bool findmark = false;
         for (int j = 0; j < 100; ++j) // The mark can be ' or " or .
@@ -160,10 +168,12 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
                 break;
             }
         }
-        if (!findmark)
-            ModuleBase::WARNING_QUIT(
-                "Pseudopot_upf::getnameval",
-                "The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
+		if (!findmark)
+		{
+			ModuleBase::WARNING_QUIT(
+					"Pseudopot_upf::getnameval",
+					"The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
+		}
         pos = pos2;
         pos2 = txt.find(mark, pos);
         ll = pos2 - pos;
@@ -172,24 +182,33 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         val[i] = tmpval;
         pos = pos2 + 1;
         for (int j = 0; j < 100; ++j)
-        {
-            if (txt.substr(pos, 1) == " " || txt.substr(pos, 1) == ",")
-                pos++;
-            else
-                break;
+		{
+			if (txt.substr(pos, 1) == " " || txt.substr(pos, 1) == ",")
+			{
+				pos++;
+			}
+			else
+			{
+				break;
+			}
         }
-        // std::cout<<name[i]<<"=\""<<val[i]<<"\""<<std::endl;
+        //std::cout<<name[i]<<"=\""<<val[i]<<"\""<<std::endl;
     }
     return;
 }
 
 void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& pp)
 {
-    if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
-        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "Found no PP_HEADER");
-    std::string name[50];
-    std::string val[50];
-    int nparameter;
+	if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
+	{
+		ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "Found no PP_HEADER");
+	}
+ 
+    const int max_n = 100;
+    std::string name[max_n];
+    std::string val[max_n];
+    int nparameter=0;
+
     this->getnameval(ifs, nparameter, name, val);
 
     for (int ip = 0; ip < nparameter; ++ip)
@@ -347,12 +366,17 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
 
 void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
 {
-    std::string name[50];
-    std::string val[50];
-    int nparameter;
+    const int max_n = 100;
+    std::string name[max_n];
+    std::string val[max_n];
+    int nparameter=0;
+
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_MESH", true, false))
     {
         this->getnameval(ifs, nparameter, name, val);
+
+std::cout << "read mesh, nparameter=" << nparameter << std::endl;
+
         for (int ip = 0; ip < nparameter; ++ip)
         {
             if (name[ip] == "dx")
@@ -362,6 +386,9 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
             else if (name[ip] == "mesh")
             {
                 pp.mesh = atoi(val[ip].c_str());
+
+std::cout << "mesh=" << pp.mesh << std::endl;
+
                 this->mesh_changed = false;
                 if (pp.mesh % 2 == 0)
                 {
@@ -437,9 +464,12 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
         return;
     }
     std::string word;
-    std::string name[50];
-    std::string val[50];
-    int nparameter;
+
+    const int max_n = 100;
+    std::string name[max_n];
+    std::string val[max_n];
+    int nparameter=0;
+
     this->kbeta = std::vector<int>(pp.nbeta);
     pp.lll = std::vector<int>(pp.nbeta);
     this->els_beta = std::vector<std::string>(pp.nbeta);
@@ -680,9 +710,12 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
 void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp)
 {
     std::string word;
-    std::string name[50];
-    std::string val[50];
-    int nparameter;
+
+    const int max_n = 100;
+    std::string name[max_n];
+    std::string val[max_n];
+    int nparameter=0;
+
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_PSWFC>");
     pp.els = std::vector<std::string>(pp.nchi, "");
     pp.lchi = std::vector<int>(pp.nchi, 0);
@@ -815,9 +848,12 @@ void Pseudopot_upf::read_pseudo_upf201_fullwfc(std::ifstream& ifs)
 void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
 {
     std::string word;
-    std::string name[50];
-    std::string val[50];
-    int nparameter;
+
+    const int max_n = 100;
+    std::string name[max_n];
+    std::string val[max_n];
+    int nparameter=0;
+
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_SPIN_ORB>");
     pp.jchi = std::vector<double>(pp.nchi, 0.0);
     pp.jjj = std::vector<double>(pp.nbeta, 0.0);
