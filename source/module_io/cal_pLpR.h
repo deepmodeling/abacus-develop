@@ -71,18 +71,75 @@
 
 namespace ModuleIO
 {
+    /**
+     * @brief calculate the <phi_i|Lz|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
     std::complex<double> cal_LzijR(
         const std::unique_ptr<TwoCenterIntegrator>& calculator,
         const int it, const int ia, const int il, const int iz, const int mi,
         const int jt, const int ja, const int jl, const int jz, const int mj,
         const ModuleBase::Vector3<double>& vR);
 
+    /**
+     * @brief calculate the <phi_i|Ly|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
     std::complex<double> cal_LyijR(
         const std::unique_ptr<TwoCenterIntegrator>& calculator,
         const int it, const int ia, const int il, const int iz, const int im,
         const int jt, const int ja, const int jl, const int jz, const int jm,
         const ModuleBase::Vector3<double>& vR);
 
+    /**
+     * @brief calculate the <phi_i|Lx|phi_j> matrix elements, in which the Lz
+     * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
+     * atomic orbitals (NAOs).
+     * 
+     * @param calculator the std::unique_ptr<TwoCenterIntegrator> instance
+     * @param it atomtype index of the first atom
+     * @param ia atomic index of the first atom within the atomtype
+     * @param il angular momentum index of the first atom
+     * @param iz zeta function index of the first atom
+     * @param mi magnetic quantum number of the first atom
+     * @param jt atomtype index of the second atom
+     * @param ja atomic index of the second atom within the atomtype
+     * @param jl angular momentum index of the second atom
+     * @param jz zeta function index of the second atom
+     * @param mj magnetic quantum number of the second atom
+     * @param vR the vector from the first atom to the second atom
+     * @return std::complex<double> 
+     */
     std::complex<double> cal_LxijR(
         const std::unique_ptr<TwoCenterIntegrator>& calculator,
         const int it, const int ia, const int il, const int iz, const int im,
@@ -103,7 +160,20 @@ namespace ModuleIO
     class AngularMomentumExpectationCalculator
     {
         public:
-            AngularMomentumExpectationCalculator() = delete; // the default constructor is meaningless
+            // the default constructor is meaningless
+            AngularMomentumExpectationCalculator() = delete;
+            /**
+             * @brief Construct a new Angular Momentum Expectation Calculator object
+             * 
+             * @param orbital_dir the directory of the orbital file
+             * @param ucell the unit cell object
+             * @param search_radius the search radius for the neighboring atoms
+             * @param tdestructor test flag, for destructor
+             * @param tgrid test flag, for grid
+             * @param tatom test flag, for atom input
+             * @param searchpbc 
+             * @param ptr_log pointer to the ofstream object for logging
+             */
             AngularMomentumExpectationCalculator(
                 const std::string& orbital_dir,
                 const UnitCell& ucell,
@@ -112,13 +182,15 @@ namespace ModuleIO
                 const int tgrid,
                 const int tatom,
                 const bool searchpbc,
-                std::ofstream* ptr_log = nullptr);
+                std::ofstream* ptr_log = nullptr,
+                const int rank = 0);
             ~AngularMomentumExpectationCalculator() = default;
 
-            void calculate(std::ofstream* ofs, 
-                           const UnitCell& ucell, 
-                           const char dir = 'x',
-                           const int precision = 10);
+            void calculate(const std::string& prefix,
+                           const std::string& outdir,
+                           const UnitCell& ucell,
+                           const int precision = 10,
+                           const int rank = 0);
 
         private:
             // ofsrunning
@@ -132,5 +204,21 @@ namespace ModuleIO
 
             // neighboring searcher
             std::unique_ptr<Grid_Driver> neighbor_searcher_;
+
+            /**
+             * @brief calculate the <phi_i|Lx/Ly/Lz|phi_j> matrix elements. Due to
+             * the large size of the matrix, the result will be printed to file
+             * directly.
+             * 
+             * @param ofs pointer to the ofstream object for printing, if nullptr,
+             *            the result will not be printed
+             * @param ucell the unit cell object
+             * @param dir the direction of the angular momentum operator, 'x', 'y' or 'z'
+             * @param precision the precision of the output, default is 10
+             */
+            void kernel(std::ofstream* ofs, 
+                        const UnitCell& ucell, 
+                        const char dir = 'x',
+                        const int precision = 10);
     };
 } // namespace ModuleIO

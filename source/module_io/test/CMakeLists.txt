@@ -242,7 +242,7 @@ add_test(NAME orb_io_test_parallel
 if(ENABLE_LCAO)
 AddTest(
   TARGET cal_pLpR_test
-  LIBS parameter base ${math_libs} device
+  LIBS parameter base ${math_libs} device neighbor
   SOURCES 
   cal_pLpR_test.cpp 
   ../cal_pLpR.cpp

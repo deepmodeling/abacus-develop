@@ -13,6 +13,7 @@
 #include "module_parameter/parameter.h"
 #include "module_io/cal_pLpR.h"
 #include "module_base/formatter.h"
+#include "module_base/parallel_common.h"
 /**
  * 
  * FIXME: the following part will be transfered to TwoCenterIntegrator soon
@@ -96,51 +97,81 @@ ModuleIO::AngularMomentumExpectationCalculator::AngularMomentumExpectationCalcul
     const int tgrid,
     const int tatom,
     const bool searchpbc,
-    std::ofstream* ptr_log)
+    std::ofstream* ptr_log,
+    const int rank)
 {
-    std::vector<std::string> forb(ucell.ntype);
-    for (int i = 0; i < ucell.ntype; ++i)
+    
+    // ofs_running
+    this->ofs_ = ptr_log;
+    *ofs_ << "\n\n\n\n";
+    *ofs_ << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *ofs_ << " |                                                                    |" << std::endl;
+    *ofs_ << " |  Angular momentum expectation value calculation:                   |" << std::endl;
+    *ofs_ << " |  This is a post-processing step. The expectation value of operator |" << std::endl;
+    *ofs_ << " |  Lx, Ly, Lz (<a|L|b>, in which a and b are ABACUS numerical atomic |" << std::endl;
+    *ofs_ << " |  orbitals) will be calculated.                                     |" << std::endl;
+    *ofs_ << " |  The result will be printed to file with name ${suffix}_Lx/y/z.dat |" << std::endl;
+    *ofs_ << " |                                                                    |" << std::endl;
+    *ofs_ << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    *ofs_ << "\n\n\n\n";
+
+    int ntype_ = ucell.ntype;
+#ifdef __MPI
+    Parallel_Common::bcast_int(ntype_);
+#endif
+    std::vector<std::string> forb(ntype_);
+    if (rank == 0)
     {
-        forb[i] = orbital_dir + ucell.orbital_fn[i];
+        for (int i = 0; i < ucell.ntype; ++i)
+        {
+            forb[i] = orbital_dir + ucell.orbital_fn[i];
+        }
     }
+#ifdef __MPI
+    Parallel_Common::bcast_string(forb.data(), ntype_);
+#endif
+    
     this->orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     this->orb_->build(ucell.ntype, forb.data(), 'o');
-
+    
     ModuleBase::SphericalBesselTransformer sbt(true);
     this->orb_->set_transformer(sbt);
-
+    
     const double rcut_max = orb_->rcut_max();
     const int ngrid = int(rcut_max / 0.01) + 1;
     const double cutoff = 2.0 * rcut_max;
     this->orb_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
-
+    
     this->calculator_ = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     this->calculator_->tabulate(*orb_, *orb_, 'S', ngrid, cutoff);
-
+    
     // Initialize Ylm coefficients
     ModuleBase::Ylm::set_coefficients();
-
-    // ofs_running
-    this->ofs_ = ptr_log;
-
+    
     // for neighbor list search
+    double temp = -1.0;
+    temp = atom_arrange::set_sr_NL(*ofs_,
+                                   PARAM.inp.out_level,
+                                   search_radius,
+                                   ucell.infoNL.get_rcutmax_Beta(),
+                                   PARAM.globalv.gamma_only_local);
+    temp = std::max(temp, search_radius);
     this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));
-    atom_arrange::search(
-        searchpbc,
-        *ofs_,
-        *neighbor_searcher_,
-        ucell,
-        search_radius,
-        tatom);
+    atom_arrange::search(searchpbc,
+                         *ofs_,
+                         *neighbor_searcher_,
+                         ucell,
+                         temp,
+                         tatom);
 }
 
-void ModuleIO::AngularMomentumExpectationCalculator::calculate(
+void ModuleIO::AngularMomentumExpectationCalculator::kernel(
     std::ofstream* ofs,
     const UnitCell& ucell,
     const char dir,
     const int precision)
 {
-    if (ofs == nullptr)
+    if (!ofs->is_open())
     {
         return;
     }
@@ -205,7 +236,8 @@ void ModuleIO::AngularMomentumExpectationCalculator::calculate(
                                             val = cal_LzijR(calculator_, 
                                                 it, ia, li, iz, mi, jt, ja, lj, jz, mj, dr);
                                         }
-                                        *ofs_ << fmt.format(
+
+                                        *ofs << fmt.format(
                                             it, ia, li, iz, mi,
                                             iR.x, iR.y, iR.z,
                                             jt, ja, lj, jz, mj,
@@ -218,5 +250,42 @@ void ModuleIO::AngularMomentumExpectationCalculator::calculate(
                 }
             }
         }
+    }
+}
+
+void ModuleIO::AngularMomentumExpectationCalculator::calculate(
+    const std::string& prefix,
+    const std::string& outdir,
+    const UnitCell& ucell,
+    const int precision,
+    const int rank)
+{
+    if (rank != 0)
+    {
+        return;
+    }
+    std::ofstream ofout;
+    const std::string dir = "xyz";
+    const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm <a|L|b>\n"
+                              "# it: atomtype index of the first atom\n"
+                              "# ia: atomic index of the first atom within the atomtype\n"
+                              "# il: angular momentum index of the first atom\n"
+                              "# iz: zeta function index of the first atom\n"
+                              "# im: magnetic quantum number of the first atom\n"
+                              "# iRx, iRy, iRz: the indices of the supercell\n"
+                              "# jt: atomtype index of the second atom\n"
+                              "# ja: atomic index of the second atom within the atomtype\n"
+                              "# jl: angular momentum index of the second atom\n"
+                              "# jz: zeta function index of the second atom\n"
+                              "# jm: magnetic quantum number of the second atom\n"
+                              "# <a|L|b>: the value of the matrix element\n";
+    
+    for (char d : dir)
+    {
+        std::string fn = outdir + prefix + "_L" + d + ".dat";
+        ofout.open(fn, std::ios::out);
+        ofout << title;
+        this->kernel(&ofout, ucell, d, precision);
+        ofout.close();
     }
 }

@@ -1253,9 +1253,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             PARAM.inp.test_grid,
             PARAM.inp.test_atom_input,
             PARAM.inp.search_pbc,
-            &GlobalV::ofs_running
+            &GlobalV::ofs_running,
+            GlobalV::MY_RANK
         );
-        
+        mylcalculator.calculate(PARAM.inp.suffix,
+                                PARAM.inp.read_file_dir,
+                                GlobalC::ucell,
+                                PARAM.inp.out_mat_l[1],
+                                GlobalV::MY_RANK);
     }
 
     // add by jingan in 2018.11.7
