@@ -562,7 +562,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 #endif
         );
     }
-  
+
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
 
