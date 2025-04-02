@@ -112,17 +112,6 @@ void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_
     cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice));
 }
 
-template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator()(
-    std::complex<FPTYPE>* arr_out,
-    const FPTYPE* arr_in,
-    const size_t size)
-{
-    const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out,arr_in,size);
-    // cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice));
-}
-
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
 {

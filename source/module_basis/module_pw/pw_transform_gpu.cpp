@@ -10,7 +10,7 @@ void PW_Basis::real2recip_gpu(const FPTYPE* in, std::complex<FPTYPE>* out, const
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
     assert(this->poolnproc == 1);
     const size_t size = this->nrxx;
-    base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
+    base_device::memory::cast_memory_op<std::complex<FPTYPE>, FPTYPE,base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
         this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
         in,
         size);
