@@ -1,3 +1,4 @@
+#include "elecstate_lcao.h"
 #include "elecstate_pw.h"
 
 namespace elecstate
@@ -9,7 +10,6 @@ void ElecStatePW<T, Device>::cal_ldos(const psi::Psi<T, Device>& psi, std::vecto
     const double emin = PARAM.inp.stm_bias < 0 ? PARAM.inp.stm_bias : 0;
     const double emax = PARAM.inp.stm_bias > 0 ? PARAM.inp.stm_bias : 0;
 
-    ldos.resize(this->basis->nrxx);
     std::vector<T> wfcr(this->basis->nrxx);
 
     for (int ik = 0; ik < this->klist->get_nks(); ++ik)
@@ -37,4 +37,20 @@ template class ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>;
 template class ElecStatePW<std::complex<float>, base_device::DEVICE_GPU>;
 template class ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
+
+// lcao multi-k case
+template <>
+void ElecStateLCAO<std::complex<double>>::cal_ldos(const psi::Psi<std::complex<double>>& psi,
+                                                   std::vector<double>& ldos) const
+{
+}
+
+// lcao Gamma_only case
+template <>
+void ElecStateLCAO<double>::cal_ldos(const psi::Psi<double>& psi, std::vector<double>& ldos) const
+{
+}
+
+template class ElecStateLCAO<double>;               // Gamma_only case
+template class ElecStateLCAO<std::complex<double>>; // multi-k case
 } // namespace elecstate

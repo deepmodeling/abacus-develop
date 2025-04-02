@@ -1,15 +1,16 @@
 #ifndef OUT_LDOS_H
 #define OUT_LDOS_H
 
-#include "module_elecstate/elecstate_pw.h"
+#include "module_elecstate/elecstate.h"
 #include "module_io/cube_io.h"
 
 namespace ModuleIO
 {
-void out_ldos(const elecstate::ElecState* pelec,
-              const psi::Psi<std::complex<double>>& psi,
-              const Parallel_Grid& pgrid,
-              const UnitCell& ucell)
+template <typename T>
+inline void out_ldos(const elecstate::ElecState* pelec,
+                     const psi::Psi<T>& psi,
+                     const Parallel_Grid& pgrid,
+                     const UnitCell& ucell)
 {
     std::vector<double> ldos(pelec->charge->nrxx);
 
