@@ -9,7 +9,6 @@
 #include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
 #include "module_io/nscf_band.h"
-#include "module_io/out_ldos.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"

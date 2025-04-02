@@ -48,9 +48,6 @@ class ElecStateLCAO : public ElecState
     //  const double* getRho(int spin) const override;
     virtual void cal_tau(const psi::Psi<TK>& psi) override;
 
-    //! calculate local density of states
-    virtual void cal_ldos(const psi::Psi<TK>& psi, std::vector<double>& ldos) const;
-
     // update charge density for next scf step
     // void getNewRho() override;
 

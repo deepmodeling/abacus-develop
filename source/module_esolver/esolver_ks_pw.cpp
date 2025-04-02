@@ -22,10 +22,10 @@
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_io/berryphase.h"
+#include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/out_ldos.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_dos_pw.h"
@@ -855,7 +855,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     // out ldos
     if (PARAM.inp.out_ldos)
     {
-        ModuleIO::out_ldos(this->pelec, this->psi[0], this->Pgrid, ucell);
+        ModuleIO::cal_ldos(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
+                           this->psi[0],
+                           this->Pgrid,
+                           ucell);
     }
 
     //! 5) Calculate the spillage value, used to generate numerical atomic orbitals

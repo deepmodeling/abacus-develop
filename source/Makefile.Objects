@@ -235,7 +235,6 @@ OBJS_ELECSTAT=elecstate.o\
     H_TDDFT_pw.o\
     pot_xc.o\
     cal_ux.o\
-    cal_ldos.o\
     read_orb.o\
     cal_nelec_nband.o\
     read_pseudo.o\
@@ -498,6 +497,7 @@ OBJS_IO=input_conv.o\
     write_dos_pw.o\
     nscf_band.o\
     cal_dos.o\
+    cal_ldos.o\
     cif_io.o\
     dos_nao.o\
     numerical_descriptor.o\
