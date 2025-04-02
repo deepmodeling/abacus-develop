@@ -138,8 +138,6 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         n++;
     }
 
-    std::cout << "n=" << n << std::endl;
-
     // get name & value
     pos = 0;
     size_t pos2=0;
@@ -375,8 +373,6 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
     {
         this->getnameval(ifs, nparameter, name, val);
 
-std::cout << "read mesh, nparameter=" << nparameter << std::endl;
-
         for (int ip = 0; ip < nparameter; ++ip)
         {
             if (name[ip] == "dx")
@@ -386,8 +382,6 @@ std::cout << "read mesh, nparameter=" << nparameter << std::endl;
             else if (name[ip] == "mesh")
             {
                 pp.mesh = atoi(val[ip].c_str());
-
-std::cout << "mesh=" << pp.mesh << std::endl;
 
                 this->mesh_changed = false;
                 if (pp.mesh % 2 == 0)
