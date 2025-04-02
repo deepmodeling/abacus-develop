@@ -218,6 +218,12 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         shape[0] = nr;
         shape[1] = nc;
     }
+    else if (mode == 'F') //flat
+    {
+        size = nr * nc;
+        shape.resize(1);
+        shape[0] = size;
+    }
     else
     {
         ModuleBase::WARNING_QUIT("save_matrix2npy", "Invalid mode! Support only 'U', 'L', 'N'.");
@@ -248,7 +254,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
             }
         }
     }
-    else // normal
+    else // normal or flat
     {
         for (int i = 0; i < nr; ++i)
         {
