@@ -1,4 +1,6 @@
+#ifdef __LCAO
 #include "elecstate_lcao.h"
+#endif
 #include "elecstate_pw.h"
 
 namespace elecstate
@@ -38,6 +40,7 @@ template class ElecStatePW<std::complex<float>, base_device::DEVICE_GPU>;
 template class ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
+#ifdef __LCAO
 // lcao multi-k case
 template <>
 void ElecStateLCAO<std::complex<double>>::cal_ldos(const psi::Psi<std::complex<double>>& psi,
@@ -53,4 +56,5 @@ void ElecStateLCAO<double>::cal_ldos(const psi::Psi<double>& psi, std::vector<do
 
 template class ElecStateLCAO<double>;               // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case
+#endif
 } // namespace elecstate
