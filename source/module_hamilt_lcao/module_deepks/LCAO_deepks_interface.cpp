@@ -334,8 +334,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             for (int ik = 0; ik < nks; ik++)
             {
                 h_tot[ik].create(nlocal, nlocal);
+
                 p_ham->updateHk(ik);
+
                 const TK* hk_ptr = p_ham->getHk();
+
                 for (int i = 0; i < ParaV->nloc; i++)
                 {
                     h_mat[ik][i] = hk_ptr[i];
