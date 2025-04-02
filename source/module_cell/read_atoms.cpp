@@ -32,8 +32,6 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     {
         ModuleBase::GlobalFunc::READ_VALUE(ifpos, Coordinate);
 
-        std::cout << "Coordinate=" << Coordinate << std::endl;
-
         if(Coordinate != "Cartesian" 
             && Coordinate != "Direct" 
             && Coordinate != "Cartesian_angstrom"
@@ -75,9 +73,6 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             //=======================================
             ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.atoms[it].label);
 
-            std::cout << "label=" << ucell.atoms[it].label << std::endl;
-
-
             if(ucell.atoms[it].label != ucell.atom_label[it])
             {
                 ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
@@ -113,7 +108,6 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                 {
                     ucell.atoms[it].nw = 0;
                     ucell.atoms[it].nwl = 2;
-                    //std::cout << ucell.lmaxmax << std::endl;
                     if ( ucell.lmaxmax != 2 )
                     {
                         ucell.atoms[it].nwl = ucell.lmaxmax;

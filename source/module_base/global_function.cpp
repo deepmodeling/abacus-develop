@@ -135,7 +135,7 @@ bool SCAN_BEGIN(std::ifstream &ifs,
 			if (SearchName == TargetName)
 			{
 				find = true;
-				std::cout << " search name = " << SearchName << std::endl;
+				//std::cout << " search name = " << SearchName << std::endl;
 				return find;
 			}
 		}

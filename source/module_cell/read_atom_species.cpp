@@ -369,7 +369,6 @@ bool read_lattice_constant(std::ifstream& ifa,
         }
         else
         { 
-            std::cout << "latname is : " << latName << std::endl;
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","latname not supported!");
         }
     }
