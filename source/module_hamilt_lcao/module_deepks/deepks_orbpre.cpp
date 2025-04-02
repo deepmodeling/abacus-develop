@@ -187,11 +187,12 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                     for (int ik = 0; ik < dm_hl.size(); ik++)
                     {
                         dm_pair.allocate(&dm_array[ik * row_size * col_size], 0);
-                        
+
                         std::complex<double> kphase = std::complex<double>(1, 0);
                         if (std::is_same<TK, std::complex<double>>::value)
                         {
-                            const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
+                            const double arg
+                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
                             kphase = std::complex<double>(cos(arg), sin(arg));
                         }
                         TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
@@ -275,9 +276,8 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     for (int nl = 0; nl < nlmax; ++nl)
     {
         int nm = 2 * inl2l[nl] + 1;
-        torch::Tensor orbital_pdm_sliced = orbital_pdm.slice(1, nl, inlmax, nlmax)
-                                                    .slice(2, 0, nm, 1)
-                                                    .slice(3, 0, nm, 1); 
+        torch::Tensor orbital_pdm_sliced
+            = orbital_pdm.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
         orbital_pdm_vector.push_back(orbital_pdm_sliced);
     }
 

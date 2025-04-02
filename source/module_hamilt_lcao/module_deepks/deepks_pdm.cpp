@@ -138,7 +138,9 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             ModuleBase::Vector3<int> dR(dRx, dRy, dRz);
 
             // avoid duplicate calculation
-            if (std::find(calculated_pairs.begin(), calculated_pairs.end(), std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z)) != calculated_pairs.end())
+            if (std::find(calculated_pairs.begin(), calculated_pairs.end(),
+                          std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z))
+                != calculated_pairs.end())
             {
                 return;
             }

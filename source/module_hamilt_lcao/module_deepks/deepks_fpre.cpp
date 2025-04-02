@@ -212,10 +212,8 @@ void DeePKS_domain::cal_gvx(const int nat,
         for (int nl = 0; nl < nlmax; ++nl)
         {
             int nm = 2 * inl2l[nl] + 1;
-            torch::Tensor gdmx_sliced = gdmx.slice(2, nl, inlmax, nlmax)
-                                           .slice(3, 0, nm, 1)
-                                           .slice(4, 0, nm, 1)
-                                           .permute({1, 0, 2, 3, 4});
+            torch::Tensor gdmx_sliced
+                = gdmx.slice(2, nl, inlmax, nlmax).slice(3, 0, nm, 1).slice(4, 0, nm, 1).permute({1, 0, 2, 3, 4});
             gdmr.push_back(gdmx_sliced);
         }
 
