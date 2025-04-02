@@ -340,9 +340,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
         log,
         "Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",
         G);
-    //	OUT(log,"lattice center x",latcenter.x);
-    //	OUT(log,"lattice center y",latcenter.y);
-    //	OUT(log,"lattice center z",latcenter.z);
 
     //===================================
     // set index for iat2it, iat2ia
@@ -350,18 +347,21 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->set_iat2itia();
 
 #ifdef USE_PAW
-    if (PARAM.inp.use_paw) {
+    if (PARAM.inp.use_paw) 
+    {
         GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
 
-        int* typat;
-        double* xred;
+        int* typat = nullptr;
+        double* xred = nullptr;
 
         typat = new int[nat];
         xred = new double[nat * 3];
 
         int iat = 0;
-        for (int it = 0; it < ntype; it++) {
-            for (int ia = 0; ia < atoms[it].na; ia++) {
+        for (int it = 0; it < ntype; it++) 
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++) 
+            {
                 typat[iat] = it + 1; // Fortran index starts from 1 !!!!
                 xred[iat * 3 + 0] = atoms[it].taud[ia].x;
                 xred[iat * 3 + 1] = atoms[it].taud[ia].y;
@@ -384,7 +384,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
 }
 
 
-void UnitCell::set_iat2iwt(const int& npol_in) {
+void UnitCell::set_iat2iwt(const int& npol_in) 
+{
 #ifdef __DEBUG
     assert(npol_in == 1 || npol_in == 2);
     assert(this->nat > 0);
@@ -394,8 +395,11 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
     this->npol = npol_in;
     int iat = 0;
     int iwt = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        for (int ia = 0; ia < atoms[it].na; ia++) {
+
+    for (int it = 0; it < this->ntype; it++) 
+    {
+        for (int ia = 0; ia < atoms[it].na; ia++) 
+        {
             this->iat2iwt[iat] = iwt;
             iwt += atoms[it].nw * this->npol;
             ++iat;
@@ -407,25 +411,31 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 
 
 // check if any atom can be moved
-bool UnitCell::if_atoms_can_move() const {
-    for (int it = 0; it < this->ntype; it++) {
+bool UnitCell::if_atoms_can_move() const 
+{
+    for (int it = 0; it < this->ntype; it++) 
+    {
         Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) {
-                return true;
-}
-        }
-    }
+		for (int ia = 0; ia < atom->na; ia++) 
+		{
+			if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) 
+			{
+				return true;
+			}
+		}
+	}
     return false;
 }
 
 // check if lattice vector can be changed
-bool UnitCell::if_cell_can_change() const {
-    // need to be fixed next
-    if (this->lc[0] || this->lc[1] || this->lc[2]) {
-        return true;
-    }
-    return false;
+bool UnitCell::if_cell_can_change() const 
+{
+	// need to be fixed next
+	if (this->lc[0] || this->lc[1] || this->lc[2]) 
+	{
+		return true;
+	}
+	return false;
 }
 
 void UnitCell::setup(const std::string& latname_in,
@@ -498,7 +508,8 @@ void UnitCell::setup(const std::string& latname_in,
 }
 
 
-void UnitCell::compare_atom_labels(std::string label1, std::string label2) {
+void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) 
+{
     if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {
         atom_in ai;
@@ -515,22 +526,30 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2) {
         {
             std::string stru_label = "";
             std::string psuedo_label = "";
-            for (int ip = 0; ip < label1.length(); ip++) {
-                if (!(isdigit(label1[ip]) || label1[ip] == '_')) {
-                    stru_label += label1[ip];
-                } else {
-                    break;
-                }
-            }
-            stru_label[0] = toupper(stru_label[0]);
+			for (int ip = 0; ip < label1.length(); ip++) 
+			{
+				if (!(isdigit(label1[ip]) || label1[ip] == '_')) 
+				{
+					stru_label += label1[ip];
+				} 
+				else 
+				{
+					break;
+				}
+			}
+			stru_label[0] = toupper(stru_label[0]);
 
-            for (int ip = 0; ip < label2.length(); ip++) {
-                if (!(isdigit(label2[ip]) || label2[ip] == '_')) {
-                    psuedo_label += label2[ip];
-                } else {
-                    break;
-                }
-            }
+			for (int ip = 0; ip < label2.length(); ip++) 
+			{
+				if (!(isdigit(label2[ip]) || label2[ip] == '_')) 
+				{
+					psuedo_label += label2[ip];
+				} 
+				else 
+				{
+					break;
+				}
+			}
             psuedo_label[0] = toupper(psuedo_label[0]);
 
             if (!(stru_label == psuedo_label
