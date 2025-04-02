@@ -2,11 +2,6 @@
 // TEST for FFT
 //---------------------------------------------
 #include "../pw_basis_k.h"
-#ifdef __MPI
-#include "module_base/parallel_global.h"
-#include "mpi.h"
-#include "test_tool.h"
-#endif
 #include "cuda_runtime.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -30,6 +25,12 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
     bool xprime = false;
     //--------------------------------------------------
 #ifdef __MPI
+const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
     // init //real parameter
@@ -173,6 +174,12 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
     bool xprime = false;
     //--------------------------------------------------
 #ifdef __MPI
+const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
     // init //real parameter

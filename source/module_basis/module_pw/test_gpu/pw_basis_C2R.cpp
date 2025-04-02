@@ -3,9 +3,7 @@
 //---------------------------------------------
 #include "../pw_basis.h"
 #ifdef __MPI
-#include "module_base/parallel_global.h"
 #include "mpi.h"
-#include "test_tool.h"
 #endif
 #include "cuda_runtime.h"
 #include "fftw3.h"
@@ -30,6 +28,13 @@ TEST_F(PWTEST, recip_to_real_double)
 
     // init
 #ifdef __MPI
+
+    const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
     pwtest.initgrids(lat0, latvec, wfcecut);
@@ -172,6 +177,12 @@ TEST_F(PWTEST, recip_to_real_float)
     bool xprime = false;
 
 #ifdef __MPI
+const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
 #endif
     pwtest.initgrids(lat0, latvec, wfcecut);

@@ -1,5 +1,4 @@
 #ifdef __MPI
-#include "test_tool.h"
 #include "mpi.h"
 #endif
 #ifdef _OPENMP
@@ -46,9 +45,10 @@ int main(int argc, char **argv)
 #endif
     device_flag = "cpu";
 #ifdef __MPI
-    int nproc, myrank,mypool;
-    setupmpi(argc,argv,nproc, myrank);
-    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+    int nproc, myrank ,mypool;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 #else
     nproc_in_pool = kpar = 1;
     rank_in_pool = 0;
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 #ifdef __MPI
-    finishmpi();
+    MPI_Finalize();   
 #endif  
 #ifdef _OPENMP
 	fftw_cleanup_threads();
