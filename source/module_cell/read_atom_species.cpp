@@ -13,6 +13,7 @@ bool read_atom_species(std::ifstream& ifa,
                       UnitCell& ucell)
 {
     ModuleBase::TITLE("UnitCell","read_atom_species");
+
     const int ntype = ucell.ntype;
     std::string word;
 
@@ -21,7 +22,6 @@ bool read_atom_species(std::ifstream& ifa,
     //==========================================
     if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES") )
     {    
-        ifa.ignore(300, '\n');
         ModuleBase::GlobalFunc::OUT(ofs_running,"ntype",ntype);
         for (int i = 0;i < ntype;i++)
         {
@@ -153,16 +153,21 @@ bool read_lattice_constant(std::ifstream& ifa,
 
     if(latName=="none")
     {
+        // check the existence of keyword "LATTICE_PARAMETERS"
         if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa,
                                                "LATTICE_PARAMETERS",
                                                true,
                                                false)) 
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "do not use LATTICE_PARAMETERS without explicit specification of lattice type");
         }
+
+        // check the existence of keyword "LATTICE_VECTORS"
         if( !ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","Please set LATTICE_VECTORS in STRU file");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "Please set LATTICE_VECTORS in STRU file");
         }
         else if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
         {
@@ -184,7 +189,8 @@ bool read_lattice_constant(std::ifstream& ifa,
                                                true,
                                                false)) 
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","do not use LATTICE_VECTORS along with explicit specification of lattice type");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "do not use LATTICE_VECTORS along with explicit specification of lattice type");
         }
         if(latName=="sc")
         {//simple-cubic, ibrav = 1

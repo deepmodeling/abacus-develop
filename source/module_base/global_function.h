@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
+#ifndef GLOBAL_FUNCTION_H
+#define GLOBAL_FUNCTION_H
 
 #include "blas_connector.h"
 #include "global_function-func_each_2.h" // Peize Lin add 2016-09-07

@@ -104,9 +104,11 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
     return;
 }
 
-bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart, const bool ifwarn)
+bool SCAN_BEGIN(std::ifstream &ifs, 
+                const std::string &TargetName, 
+                const bool restart, 
+                const bool ifwarn)
 {
-    std::string SearchName;
     bool find = false;
     if (restart)
     {
@@ -114,15 +116,31 @@ bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool re
         ifs.seekg(0);
     }
     ifs.rdstate();
-    while (ifs.good())
+
+    std::string line;
+    while (std::getline(ifs,line))
     {
-        ifs >> SearchName;
-        if (SearchName == TargetName)
+        //! obtain the first character, should not be #
+        size_t first_char_pos = line.find_first_not_of(" \t");
+        if (first_char_pos != std::string::npos && line[first_char_pos] == '#') 
         {
-            find = true;
-            break;
-        }
-    }
+            continue;
+        } 
+
+        //! search in each line
+        std::istringstream iss(line);
+        std::string SearchName;
+        while (iss >> SearchName)
+		{
+			if (SearchName == TargetName)
+			{
+				find = true;
+				std::cout << " search name = " << SearchName << std::endl;
+				return find;
+			}
+		}
+	}
+
     if (!find && ifwarn)
     {
         GlobalV::ofs_warning << " In SCAN_BEGIN, can't find: " << TargetName << " block." << std::endl;

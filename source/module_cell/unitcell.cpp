@@ -180,8 +180,10 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) 
+{
     ModuleBase::TITLE("UnitCell", "setup_cell");
+
     // (1) init mag
     assert(ntype > 0);
     delete[] magnet.start_magnetization;
@@ -203,7 +205,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->pseudo_fn.resize(ntype);
     this->pseudo_type.resize(ntype);
     this->orbital_fn.resize(ntype);
-    if (GlobalV::MY_RANK == 0) {
+
+    if (GlobalV::MY_RANK == 0) 
+    {
         // open "atom_unitcell" file.
         std::ifstream ifa(fn.c_str(), std::ios::in);
         if (!ifa) 
@@ -268,7 +272,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = unitcell::read_atom_positions(*this,ifa, log, GlobalV::ofs_warning);
+            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning);
         }
     }
 #ifdef __MPI
@@ -295,15 +299,23 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     // Firstly, latvec must be read in.
     //========================================================
     assert(lat0 > 0.0);
-    this->omega = latvec.Det() * this->lat0 * lat0 * lat0;
+    this->omega = latvec.Det() * this->lat0 * this->lat0 * this->lat0;
+
+    std::cout << "latvec.det=" << latvec.Det() << std::endl;
+    std::cout << "lat0=" << lat0 << std::endl;
+
+
     if (this->omega < 0)
     {
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         std::cout << " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
-        GlobalV::ofs_warning << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        GlobalV::ofs_warning << 
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        GlobalV::ofs_warning << 
+        " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
+        GlobalV::ofs_warning << 
+        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         this->omega = std::abs(this->omega);
     }
     else if (this->omega == 0)
