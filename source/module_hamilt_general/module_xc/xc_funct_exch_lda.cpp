@@ -35,15 +35,14 @@ void XC_Functional::slater1(const double &rs, double &ex, double &vx)
 // Slater exchange with alpha=2/3 and Relativistic exchange
 void XC_Functional::slater_rxc(const double &rs, double &ex, double &vx)
 {
-	static const double pi = 3.14159265358979;
     const double trd = 1.0 / 3.0;
     //const double ftrd = 4.0 / 3.0;
     //const double tftm = pow(2.0, ftrd) - 2.0;
-    const double a0 = pow((4.0 / (9.0 * pi)), trd);
+    const double a0 = pow((4.0 / (9.0 * ModuleBase::PI)), trd);
     // X-alpha parameter:
     const double alp = 2 * trd;
 
-    double vxp = -3 * alp / (2 * pi * a0 * rs);
+    double vxp = -3 * alp / (2 * ModuleBase::PI * a0 * rs);
     double exp = 3 * vxp / 4;
     const double beta = 0.014 / rs;
     const double sb = sqrt(1 + beta * beta);
@@ -53,7 +52,7 @@ void XC_Functional::slater_rxc(const double &rs, double &ex, double &vx)
     exp = exp * (1.0 - 1.5 * x * x);
     vx = vxp;
     ex = exp;
-	return;	
+    return;
 }
 
 // Slater exchange with alpha=2/3, spin-polarized case
@@ -107,20 +106,18 @@ void XC_Functional::slater_rxc_spin( const double &rho, const double &z,
         return;
     }
 
-	const double pi = 3.141592653589790;
-
-	const double trd = 1.0 / 3.0;
+    const double trd = 1.0 / 3.0;
 	const double ftrd = 4.0 / 3.0;
 	double tftm = pow(2.0, ftrd) - 2;
-	double a0 = pow((4 / (9 * pi)), trd);
+    double a0 = pow((4 / (9 * ModuleBase::PI)), trd);
 
-	double alp = 2 * trd;
+    double alp = 2 * trd;
 
 	double fz = (pow((1 + z), ftrd) + pow((1 - z), ftrd) - 2) / tftm;
 	double fzp = ftrd * (pow((1 + z), trd) - pow((1 - z), trd)) / tftm;
 
-    double rs = pow((3 / (4 * pi * rho)), trd);
-    double vxp = -3 * alp / (2 * pi * a0 * rs);
+    double rs = pow((3 / (4 * ModuleBase::PI * rho)), trd);
+    double vxp = -3 * alp / (2 * ModuleBase::PI * a0 * rs);
     double exp = 3 * vxp / 4;
 
     double beta = 0.014 / rs;

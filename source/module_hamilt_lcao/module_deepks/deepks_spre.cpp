@@ -21,7 +21,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
                                 const ModuleBase::IntArray* inl_index,
-                                const std::vector<std::vector<TK>>& dm,
+                                const hamilt::HContainer<double>* dmr,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
@@ -72,11 +72,10 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                 return; // to next loop
             }
 
-            double* dm_current = nullptr;
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if constexpr (std::is_same<TK, std::complex<double>>::value)
+            if (std::is_same<TK, std::complex<double>>::value)
             {
                 dRx = (dR1 - dR2).x;
                 dRy = (dR1 - dR2).y;
@@ -84,33 +83,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
             }
             ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
-            hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
-            dm_pair.allocate(nullptr, 1);
-            for (int ik = 0; ik < nks; ik++)
-            {
-                TK kphase = TK(0);
-                if constexpr (std::is_same<TK, double>::value)
-                {
-                    kphase = 1.0;
-                }
-                else
-                {
-                    const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                    double sinp, cosp;
-                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    kphase = TK(cosp, sinp);
-                }
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                {
-                    dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
-                }
-                else
-                {
-                    dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
-                }
-            }
-
-            dm_current = dm_pair.get_pointer();
+            const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
 
             hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
             hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
@@ -322,7 +295,7 @@ template void DeePKS_domain::cal_gdmepsl<double>(const int lmaxd,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
                                                  const ModuleBase::IntArray* inl_index,
-                                                 const std::vector<std::vector<double>>& dm,
+                                                 const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Parallel_Orbitals& pv,
@@ -335,7 +308,7 @@ template void DeePKS_domain::cal_gdmepsl<std::complex<double>>(const int lmaxd,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
                                                                const ModuleBase::IntArray* inl_index,
-                                                               const std::vector<std::vector<std::complex<double>>>& dm,
+                                                               const hamilt::HContainer<double>* dmr,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Parallel_Orbitals& pv,

@@ -96,8 +96,7 @@ double &sx, double &v1x, double &v2x)
     
 	// numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
     const double third = 1.0 / 3.0;
-    const double pi = 3.14159265358979323846;
-    const double c1 = 0.750 / pi;
+    const double c1 = 0.750 / ModuleBase::PI;
     const double c2 = 3.0936677262801360;
     const double c5 = 4.0 * third;
     // parameters of the functional
@@ -196,11 +195,10 @@ void XC_Functional::wcx(const double &rho,const double &grho, double &sx, double
   // exchange energy gradient part
   double dxunif, dfx, f1, f2, f3, dfx1, x1, x2, x3, dxds1, dxds2, dxds3;
   // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
-  double third, c1, c2, c5, teneightyone;	// c6
-  const double pi = 3.14159265358979323846;
+  double third, c1, c2, c5, teneightyone; // c6
 
   third = 1.0/3.0;
-  c1 = 0.75/pi;
+  c1 = 0.75 / ModuleBase::PI;
   c2 = 3.093667726280136;
   c5 = 4.0 * third;
   teneightyone = 0.123456790123;

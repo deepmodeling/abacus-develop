@@ -266,6 +266,7 @@ void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::
     {
         return;
     }
+    using T_tensor = typename std::conditional<std::is_same<T, std::complex<double>>::value, c10::complex<double>, T>::type;
     const int dim = tensor.dim();
     std::vector<long unsigned> shape(dim);
     for (int i = 0; i < dim; i++)
@@ -275,17 +276,11 @@ void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::
 
     std::vector<T> data(tensor.numel());
 
-    if constexpr (std::is_same<T, std::complex<double>>::value)
+    T_tensor* data_ptr_tensor = tensor.data_ptr<T_tensor>();
+    T* data_ptr = reinterpret_cast<T*>(data_ptr_tensor);
+    for (size_t i = 0; i < tensor.numel(); ++i)
     {
-        auto tensor_data = tensor.data_ptr<c10::complex<double>>();
-        for (size_t i = 0; i < tensor.numel(); ++i)
-        {
-            data[i] = std::complex<double>(tensor_data[i].real(), tensor_data[i].imag());
-        }
-    }
-    else
-    {
-        std::memcpy(data.data(), tensor.data_ptr<T>(), tensor.numel() * sizeof(T));
+        data[i] = data_ptr[i];
     }
 
     npy::SaveArrayAsNumpy(file_name, false, shape.size(), shape.data(), data);

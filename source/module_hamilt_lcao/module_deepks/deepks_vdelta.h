@@ -21,6 +21,7 @@ template <typename TK>
 void cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
                       const std::vector<std::vector<TK>>& V_delta,
                       const int nks,
+                      const int nspin,
                       const Parallel_Orbitals* pv,
                       double& e_delta_band);
 

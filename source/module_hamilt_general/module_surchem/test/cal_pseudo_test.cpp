@@ -37,7 +37,6 @@ TEST_F(cal_pseudo_test, gauss_charge)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -58,26 +57,26 @@ TEST_F(cal_pseudo_test, gauss_charge)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     complex<double>* N = new complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
 
     Structure_Factor sf;
     sf.nbspline = -1;
 
-    solvent_model.gauss_charge(ucell, pgrid, GlobalC::rhopw, N, &sf);
+    solvent_model.gauss_charge(ucell, pgrid, &pwtest, N, &sf);
 
     EXPECT_NEAR(N[14].real(), 0.002, 1e-9);
     EXPECT_NEAR(N[16].real(), -0.001573534, 1e-9);
@@ -92,7 +91,6 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     device_flag = "cpu";
     Setcell::setupcell(ucell);
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -113,18 +111,18 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
 
     Structure_Factor sf;
     sf.nbspline = -1;
@@ -137,7 +135,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     }
 
     complex<double>* PS_TOTN = new complex<double>[npw];
-    solvent_model.cal_pseudo(ucell, pgrid, GlobalC::rhopw, Porter_g, PS_TOTN, &sf);
+    solvent_model.cal_pseudo(ucell, pgrid, &pwtest, Porter_g, PS_TOTN, &sf);
 
     EXPECT_NEAR(PS_TOTN[16].real(), 0.098426466, 1e-9);
     EXPECT_NEAR(PS_TOTN[14].real(), 0.102, 1e-9);

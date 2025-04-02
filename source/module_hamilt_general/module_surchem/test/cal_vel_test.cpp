@@ -77,7 +77,6 @@ TEST_F(cal_vel_test, eps_pot)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -96,17 +95,17 @@ TEST_F(cal_vel_test, eps_pot)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     double* vwork = new double[nrxx];
     double* eprime = new double[nrxx];
     double* PS_TOTN_real = new double[nrxx];
@@ -143,7 +142,7 @@ TEST_F(cal_vel_test, eps_pot)
     ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
     double* phisq = new double[nrxx];
 
-    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, &pwtest, ucell.tpiba);
 
     for (int ir = 0; ir < nrxx; ir++)
     {
@@ -175,7 +174,7 @@ TEST_F(cal_vel_test, cal_vel)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
+    
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -194,17 +193,17 @@ TEST_F(cal_vel_test, cal_vel)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
 
     complex<double>* TOTN = new complex<double>[npw];
     complex<double>* PS_TOTN = new complex<double>[npw];
@@ -221,7 +220,7 @@ TEST_F(cal_vel_test, cal_vel)
     solvent_model.TOTN_real = new double[nrxx];
     solvent_model.delta_phi = new double[nrxx];
 
-    solvent_model.cal_vel(ucell, GlobalC::rhopw, TOTN, PS_TOTN, nspin);
+    solvent_model.cal_vel(ucell, &pwtest, TOTN, PS_TOTN, nspin);
 
     EXPECT_NEAR(solvent_model.Vel(0, 0), 0.0532168705, 1e-10);
     EXPECT_NEAR(solvent_model.Vel(0, 1), 0.0447818244, 1e-10);

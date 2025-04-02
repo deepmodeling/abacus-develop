@@ -1,11 +1,12 @@
-#include "paw_element.h"
-#include "module_base/tool_title.h"
+#include "module_base/constants.h"
 #include "module_base/tool_quit.h"
+#include "module_base/tool_title.h"
+#include "paw_element.h"
 
 double Paw_Element::get_ptilde(const int istate_in, const double q_in, const double omega)
 {
     // multiply by a factor 4pi / sqrt(omega)
-    const double factor = 4.0 * 3.141592653589793238462643383279502884197 / std::sqrt(omega);
+    const double factor = ModuleBase::FOUR_PI / std::sqrt(omega);
 
     return this->splint(qgrid, ptilde_q[istate_in], d2ptilde_q[istate_in], q_in) * factor;
 }
@@ -17,9 +18,6 @@ void Paw_Element::transform_ptilde()
     // Defining the q grid; I will be following Quantum Espresso here
     double dq = 0.01;
     int    nq = int( (std::sqrt(ecutwfc) / dq + 4) * cell_factor );
-
-    const double pi = 3.141592653589793238462643383279502884197;
-    const double twopi = 2.0 * pi;
 
     std::vector<double> integrand;
     integrand.resize(nr);
@@ -49,7 +47,7 @@ void Paw_Element::transform_ptilde()
         {
             for(int ir = 0; ir < nr; ir ++)
             {
-                integrand[ir] = twopi * ptilde_r[istate][ir] * std::pow(rr[ir],3);
+                integrand[ir] = ModuleBase::TWO_PI * ptilde_r[istate][ir] * std::pow(rr[ir], 3);
             }
             yp1 = this -> simpson_integration(integrand) / 3.0;
         }
@@ -60,7 +58,7 @@ void Paw_Element::transform_ptilde()
             double x = rr[ir] * double(nq - 1) * dq;
 
             this -> spherical_bessel_function(l,x,bes,besp,1);
-            integrand[ir] = twopi * besp * ptilde_r[istate][ir] * std::pow(rr[ir],3);
+            integrand[ir] = ModuleBase::TWO_PI * besp * ptilde_r[istate][ir] * std::pow(rr[ir], 3);
         }
 
         ypn = this -> simpson_integration(integrand);
