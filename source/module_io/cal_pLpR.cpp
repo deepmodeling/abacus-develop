@@ -89,7 +89,7 @@ std::complex<double> ModuleIO::cal_LxijR(
     return std::complex<double>(0.5) * (val_plus + val_minus);
 }
 
-ModuleIO::AngularMomentumExpectationCalculator::AngularMomentumExpectationCalculator(
+ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     const std::string& orbital_dir,
     const UnitCell& ucell,
     const double& search_radius,
@@ -165,7 +165,7 @@ ModuleIO::AngularMomentumExpectationCalculator::AngularMomentumExpectationCalcul
                          tatom);
 }
 
-void ModuleIO::AngularMomentumExpectationCalculator::kernel(
+void ModuleIO::AngularMomentumCalculator::kernel(
     std::ofstream* ofs,
     const UnitCell& ucell,
     const char dir,
@@ -253,7 +253,7 @@ void ModuleIO::AngularMomentumExpectationCalculator::kernel(
     }
 }
 
-void ModuleIO::AngularMomentumExpectationCalculator::calculate(
+void ModuleIO::AngularMomentumCalculator::calculate(
     const std::string& prefix,
     const std::string& outdir,
     const UnitCell& ucell,

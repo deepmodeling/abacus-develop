@@ -482,24 +482,27 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         RA.delete_grid();
     }
 
+    //------------------------------------------------------------------
+    //! 20) calculate expectation of angular momentum operator in LCAO basis
+    //------------------------------------------------------------------
     if (PARAM.inp.out_mat_l[0])
     {
-        ModuleIO::AngularMomentumExpectationCalculator mylcalculator(
-            PARAM.inp.orbital_dir,
-            ucell,
-            PARAM.inp.search_radius,
-            PARAM.inp.test_deconstructor,
-            PARAM.inp.test_grid,
-            PARAM.inp.test_atom_input,
-            PARAM.inp.search_pbc,
-            &GlobalV::ofs_running,
-            GlobalV::MY_RANK
+        ModuleIO::AngularMomentumCalculator mylcalculator(
+            /*orbital_dir=*/PARAM.inp.orbital_dir,
+            /*ucell=*/ucell,
+            /*search_radius=*/PARAM.inp.search_radius,
+            /*test_deconstructor=*/PARAM.inp.test_deconstructor,
+            /*test_grid=*/PARAM.inp.test_grid,
+            /*test_atom_input=*/PARAM.inp.test_atom_input,
+            /*search_pbc=*/PARAM.inp.search_pbc,
+            /*ofs=*/&GlobalV::ofs_running,
+            /*rank=*/GlobalV::MY_RANK
         );
-        mylcalculator.calculate(PARAM.inp.suffix,
-                                PARAM.inp.read_file_dir,
-                                ucell,
-                                PARAM.inp.out_mat_l[1],
-                                GlobalV::MY_RANK);
+        mylcalculator.calculate(/*suffix=*/PARAM.inp.suffix,
+                                /*outdir=*/PARAM.globalv.global_out_dir,
+                                /*ucell=*/ucell,
+                                /*precision=*/PARAM.inp.out_mat_l[1],
+                                /*rank=*/GlobalV::MY_RANK);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");

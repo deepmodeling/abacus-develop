@@ -157,11 +157,11 @@ namespace ModuleIO
     // im and jm are indexes of the magnetic quantum numbers.
     // The output is a complex number, which is the value of the matrix element.
     // Always the matrix is quite large, so direct print to file.
-    class AngularMomentumExpectationCalculator
+    class AngularMomentumCalculator
     {
         public:
             // the default constructor is meaningless
-            AngularMomentumExpectationCalculator() = delete;
+            AngularMomentumCalculator() = delete;
             /**
              * @brief Construct a new Angular Momentum Expectation Calculator object
              * 
@@ -174,7 +174,7 @@ namespace ModuleIO
              * @param searchpbc 
              * @param ptr_log pointer to the ofstream object for logging
              */
-            AngularMomentumExpectationCalculator(
+            AngularMomentumCalculator(
                 const std::string& orbital_dir,
                 const UnitCell& ucell,
                 const double& search_radius,
@@ -184,7 +184,7 @@ namespace ModuleIO
                 const bool searchpbc,
                 std::ofstream* ptr_log = nullptr,
                 const int rank = 0);
-            ~AngularMomentumExpectationCalculator() = default;
+            ~AngularMomentumCalculator() = default;
 
             void calculate(const std::string& prefix,
                            const std::string& outdir,
