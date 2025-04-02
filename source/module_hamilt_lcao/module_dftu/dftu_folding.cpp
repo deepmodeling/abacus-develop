@@ -133,7 +133,7 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                             const int dim1,
                             const int dim2,
                             std::complex<double>* mat_k,
-                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                            const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
@@ -224,7 +224,7 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                     // dR is the index of box in Crystal coordinates
                     //------------------------------------------------
                     ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
-                    const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    const double arg = (kvec_d * dR) * ModuleBase::TWO_PI;
                     const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 
                     //--------------------------------------------------
@@ -236,15 +236,19 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
-                        if (mu < 0) { continue;
-}
+						if (mu < 0) 
+						{
+							continue;
+						}
 
                         for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
-                            if (nu < 0) { continue;
-}
+							if (nu < 0) 
+							{ 
+								continue;
+							}
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -293,22 +297,23 @@ void DFTU::folding_matrix_k_new(const int ik,
     // get SR and fold to mat_k
     if(PARAM.globalv.gamma_only_local)
     {
-        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
+        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)
+                    ->updateSk(ik, hk_type);
     }
     else
     {
         if(PARAM.inp.nspin != 4)
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
+                        ->updateSk(ik, hk_type);
         }
         else
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
+                        ->updateSk(ik, hk_type);
         }
     }
 }
-
-    
 
 } // namespace ModuleDFTU
 #endif // __LCAO
