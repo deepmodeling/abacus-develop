@@ -35,7 +35,6 @@ TEST_F(cal_totn_test, cal_totn)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -56,19 +55,19 @@ TEST_F(cal_totn_test, cal_totn)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     complex<double>* N = new complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
     complex<double>* TOTN = new complex<double>[npw];
@@ -88,7 +87,7 @@ TEST_F(cal_totn_test, cal_totn)
         vloc[i] = 0.1;
     }
 
-    solvent_model.cal_totn(ucell, GlobalC::rhopw, Porter_g, N, TOTN, vloc);
+    solvent_model.cal_totn(ucell, &pwtest, Porter_g, N, TOTN, vloc);
 
     EXPECT_NEAR(TOTN[0].real(), -0.0999496256, 1e-10);
     EXPECT_NEAR(TOTN[0].imag(), -1.299621928166352e-7, 1e-10);
@@ -107,7 +106,6 @@ TEST_F(cal_totn_test, induced_charge)
     Setcell::setupcell(ucell);
     
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -126,19 +124,19 @@ TEST_F(cal_totn_test, induced_charge)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
     double fac;
-    fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (ucell.tpiba2 * GlobalC::rhopw->gg[0]);
+    fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (ucell.tpiba2 * pwtest.gg[0]);
     complex<double> delta_phi{-2.0347933860e-05, 4.5900395826e-07};
     complex<double> induced_charge;
     induced_charge = -delta_phi / fac;

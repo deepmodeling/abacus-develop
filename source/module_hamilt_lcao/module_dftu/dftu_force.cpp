@@ -209,11 +209,11 @@ void DFTU::force_stress(const UnitCell& ucell,
 
             if (PARAM.inp.cal_force)
             {
-                cal_force_k(ucell, gd, fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d);
+                cal_force_k(ucell, gd, fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d[ik]);
             }
             if (PARAM.inp.cal_stress)
             {
-                cal_stress_k(ucell, gd, fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d);
+                cal_stress_k(ucell, gd, fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d[ik]);
             }
         } // ik
     }
@@ -256,7 +256,7 @@ void DFTU::cal_force_k(const UnitCell& ucell,
                        const int ik,
                        const std::complex<double>* rho_VU,
                        ModuleBase::matrix& force_dftu,
-                       const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                       const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "cal_force_k");
     ModuleBase::timer::tick("DFTU", "cal_force_k");
@@ -386,7 +386,7 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
                         const int ik,
                         const std::complex<double>* rho_VU,
                         ModuleBase::matrix& stress_dftu,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                        const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "cal_stress_k");
     ModuleBase::timer::tick("DFTU", "cal_stress_k");

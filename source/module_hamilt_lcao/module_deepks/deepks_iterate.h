@@ -1,6 +1,8 @@
 #ifndef DEEPKS_ITER_H
 #define DEEPKS_ITER_H
 
+#include "module_parameter/parameter.h"
+
 #ifdef __DEEPKS
 
 #include "module_base/complexmatrix.h"
@@ -12,7 +14,6 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
-#include "module_parameter/parameter.h"
 
 #include <functional>
 

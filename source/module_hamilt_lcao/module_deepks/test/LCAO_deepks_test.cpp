@@ -137,19 +137,27 @@ void test_deepks<T>::check_pdm()
     this->read_dm(kv.nkstot);
     this->set_dm_new();
     this->set_p_elec_DM();
-    DeePKS_domain::cal_pdm(this->ld.init_pdm,
-                           this->ld.inlmax,
-                           this->ld.lmaxd,
-                           this->ld.inl2l,
-                           this->ld.inl_index,
-                           kv.kvec_d,
-                           p_elec_DM,
-                           this->ld.phialpha,
-                           ucell,
-                           ORB,
-                           Test_Deepks::GridD,
-                           ParaO,
-                           this->ld.pdm);
+    this->ld.init_DMR(ucell, ORB, ParaO, Test_Deepks::GridD);
+    DeePKS_domain::update_dmr(kv.kvec_d,
+                              p_elec_DM->get_DMK_vector(),
+                              ucell,
+                              ORB,
+                              ParaO,
+                              Test_Deepks::GridD,
+                              this->ld.dm_r);
+    DeePKS_domain::cal_pdm<T>(this->ld.init_pdm,
+                              this->ld.inlmax,
+                              this->ld.lmaxd,
+                              this->ld.inl2l,
+                              this->ld.inl_index,
+                              kv.kvec_d,
+                              this->ld.dm_r,
+                              this->ld.phialpha,
+                              ucell,
+                              ORB,
+                              Test_Deepks::GridD,
+                              ParaO,
+                              this->ld.pdm);
     DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl2l, this->ld.pdm);
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
@@ -157,18 +165,18 @@ void test_deepks<T>::check_pdm()
 template <typename T>
 void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
 {
-    DeePKS_domain::cal_gdmx(this->ld.lmaxd,
-                            this->ld.inlmax,
-                            kv.nkstot,
-                            kv.kvec_d,
-                            this->ld.phialpha,
-                            this->ld.inl_index,
-                            dm_new,
-                            ucell,
-                            ORB,
-                            ParaO,
-                            Test_Deepks::GridD,
-                            gdmx);
+    DeePKS_domain::cal_gdmx<T>(this->ld.lmaxd,
+                               this->ld.inlmax,
+                               kv.nkstot,
+                               kv.kvec_d,
+                               this->ld.phialpha,
+                               this->ld.inl_index,
+                               this->ld.dm_r,
+                               ucell,
+                               ORB,
+                               ParaO,
+                               Test_Deepks::GridD,
+                               gdmx);
     DeePKS_domain::check_gdmx(gdmx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
@@ -199,18 +207,18 @@ void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
 template <typename T>
 void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl)
 {
-    DeePKS_domain::cal_gdmepsl(this->ld.lmaxd,
-                               this->ld.inlmax,
-                               kv.nkstot,
-                               kv.kvec_d,
-                               this->ld.phialpha,
-                               this->ld.inl_index,
-                               dm_new,
-                               ucell,
-                               ORB,
-                               ParaO,
-                               Test_Deepks::GridD,
-                               gdmepsl);
+    DeePKS_domain::cal_gdmepsl<T>(this->ld.lmaxd,
+                                  this->ld.inlmax,
+                                  kv.nkstot,
+                                  kv.kvec_d,
+                                  this->ld.phialpha,
+                                  this->ld.inl_index,
+                                  this->ld.dm_r,
+                                  ucell,
+                                  ORB,
+                                  ParaO,
+                                  Test_Deepks::GridD,
+                                  gdmepsl);
     DeePKS_domain::check_gdmepsl(gdmepsl);
 
     for (int i = 0; i < 6; i++)
@@ -382,7 +390,7 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
     svnl_dalpha.create(3, 3);
     const int cal_stress = 1;
     const int nks = kv.nkstot;
-    DeePKS_domain::cal_f_delta<T>(dm_new,
+    DeePKS_domain::cal_f_delta<T>(this->ld.dm_r,
                                   ucell,
                                   ORB,
                                   Test_Deepks::GridD,
