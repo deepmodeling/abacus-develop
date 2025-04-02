@@ -144,6 +144,12 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_ldos");
+        item.annotation = "output local density of states";
+        read_sync_bool(input.out_ldos);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
         read_sync_bool(input.out_mul);

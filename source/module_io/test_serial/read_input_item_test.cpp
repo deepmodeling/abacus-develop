@@ -391,6 +391,16 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // stm_bias
+        auto it = find_label("stm_bias", readinput.input_lists);
+        param.input.out_ldos = true;
+        param.input.stm_bias = 0.0;
+
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // out_band
         auto it = find_label("out_band", readinput.input_lists);
         it->second.str_values = {"1"};

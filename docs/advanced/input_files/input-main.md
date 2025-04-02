@@ -140,6 +140,7 @@
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
+    - [out\_ldos](#out_ldos)
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
@@ -174,6 +175,7 @@
     - [dos\_emin\_ev](#dos_emin_ev)
     - [dos\_emax\_ev](#dos_emax_ev)
     - [dos\_nche](#dos_nche)
+    - [stm\_bias](#stm_bias)
   - [NAOs](#naos)
     - [bessel\_nao\_ecut](#bessel_nao_ecut)
     - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
@@ -1706,6 +1708,12 @@ These variables are used to control the output of properties.
     - lcao-only: output the density of states (DOS) and the projected density of states (PDOS)
 - **Default**: 0
 
+### out_ldos
+
+- **Type**: Boolean
+- **Description**: Whether to output the local density of states for given bias in cube file format, which is controlled by [stm_bias](#stm_bias). 
+- **Default**: False
+
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
@@ -1955,8 +1963,15 @@ These variables are used to control the calculation of DOS. [Detailed introducti
 ### dos_nche
 
 - **Type**: Integer
-The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
+- **Description**: The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
 - **Default**: 100
+
+### stm_bias
+
+- **Type**: Real
+- **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos).
+- **Default**: 1.0
+- **Unit**: V
 
 [back to top](#full-list-of-input-keywords)
 
