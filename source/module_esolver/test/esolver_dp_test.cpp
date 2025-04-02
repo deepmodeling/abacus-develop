@@ -20,19 +20,6 @@
  *   - ESolver_DP::post_process()
  *   - ESolver_DP::type_map()
  */
-namespace ModuleIO
-{
-void print_force(std::ofstream& ofs_running,
-                 const UnitCell& cell,
-                 const std::string& name,
-                 const ModuleBase::matrix& force,
-                 bool ry = true)
-{
-}
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
-{
-}
-} // namespace ModuleIO
 
 class ESolverDPTest : public ::testing::Test
 {
@@ -52,29 +39,20 @@ class ESolverDPTest : public ::testing::Test
         ucell.atoms = new Atom[2];
         ucell.atoms[0].na = 1;
         ucell.atoms[1].na = 1;
-        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-        ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
-        ucell.atoms[0].taud[0] = {0.0, 0.0, 0.0};
-        ucell.atoms[1].taud[0] = {0.0, 0.0, 0.0};
+        ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+        ucell.atoms[1].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
-        ucell.atom_label = new std::string[2];
+        ucell.atom_label.resize(ucell.ntype);
         ucell.atom_label[0] = "Cu";
         ucell.atom_label[1] = "Al";
-        esolver->before_all_runners(inp, ucell);
+        esolver->before_all_runners(ucell, inp);
     }
 
     void TearDown() override
     {
         // Clean up after each test
         delete esolver;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
-        for (int i = 0; i < 2; ++i)
-        {
-            delete[] ucell.atoms[i].taud;
-        }
         delete[] ucell.atoms;
-        delete[] ucell.atom_label;
     }
 
     ModuleESolver::ESolver_DP* esolver;
@@ -92,7 +70,6 @@ TEST_F(ESolverDPTest, InitCase1)
         for (int j = 0; j < 3; ++j)
         {
             EXPECT_DOUBLE_EQ(esolver->dp_virial(i, j), 0.0);
-            EXPECT_DOUBLE_EQ(esolver->cell[3 * i + j], 0.0);
         }
     }
     for (int i = 0; i < ucell.nat; ++i)
@@ -100,7 +77,6 @@ TEST_F(ESolverDPTest, InitCase1)
         for (int j = 0; j < 3; ++j)
         {
             EXPECT_DOUBLE_EQ(esolver->dp_force(i, j), 0.0);
-            EXPECT_DOUBLE_EQ(esolver->coord[3 * i + j], 0.0);
         }
     }
     EXPECT_EQ(esolver->atype[0], 0);
@@ -113,7 +89,9 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->runner(istep, ucell), ::testing::ExitedWithCode(0), "");
+
+    EXPECT_EXIT(esolver->runner(ucell, istep), ::testing::ExitedWithCode(1), "");
+
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }
@@ -141,7 +119,7 @@ TEST_F(ESolverDPTest, CalForce)
         }
     }
 
-    esolver->cal_force(force);
+    esolver->cal_force(ucell, force);
 
     // Check the results
     for (int i = 0; i < ucell.nat; ++i)
@@ -165,7 +143,7 @@ TEST_F(ESolverDPTest, CalStress)
         }
     }
 
-    esolver->cal_stress(stress);
+    esolver->cal_stress(ucell, stress);
 
     // Check the results
     for (int i = 0; i < 3; ++i)
@@ -184,11 +162,12 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->after_all_runners();
+    esolver->after_all_runners(ucell);
     GlobalV::ofs_running.close();
 
-    std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "
-                                  "--------------------------------------------\n\n\n";
+    std::string expected_output
+        = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
+          "--------------------------------------------\n\n\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();

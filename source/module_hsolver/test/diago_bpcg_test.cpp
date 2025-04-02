@@ -46,8 +46,9 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
     char tmp_c1 = 'V', tmp_c2 = 'U';
     zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
     end = clock();
-    if (outtime)
+    if (outtime) {
         std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+}
     delete[] rwork;
     delete[] work2;
 }
@@ -78,7 +79,8 @@ class DiagoBPCGPrepare
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix;
-        if(mypnum == 0)  lapackEigen(npw, ev, e_lapack, false);
+        if(mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
+}
         // initial guess of psi by perturbing lapack psi
         ModuleBase::ComplexMatrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -97,7 +99,7 @@ class DiagoBPCGPrepare
         double *en = new double[npw];
         int ik = 1;
 	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr);
+	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
 	    int* ngk = new int [1];
 	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<double>> psi;
@@ -130,10 +132,34 @@ class DiagoBPCGPrepare
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
-        bpcg.init_iter(psi_local);
-        bpcg.diag(ha,psi_local,en); 
-        bpcg.diag(ha,psi_local,en); 
-        bpcg.diag(ha,psi_local,en); 
+        using T = std::complex<double>;
+        const int dim = DIAGOTEST::npw;
+        const std::vector<T> &h_mat = DIAGOTEST::hmatrix_local;
+        auto hpsi_func = [h_mat, dim](T *psi_in, T *hpsi_out,
+                                const int ld_psi, const int nvec) {
+            auto one = std::make_unique<T>(1.0);
+            auto zero = std::make_unique<T>(0.0);
+            const T *one_ = one.get();
+            const T *zero_ = zero.get();
+
+            base_device::DEVICE_CPU *ctx = {};
+            // hpsi_out(dim * nvec) = h_mat(dim * dim) * psi_in(dim * nvec)
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'N', 'N',
+                dim, nvec, dim,
+                one_,
+                h_mat.data(), dim,
+                psi_in, ld_psi,
+                zero_,
+                hpsi_out, ld_psi);
+        };
+        const int ndim = psi_local.get_current_ngk();
+        bpcg.init_iter(nband, nband, npw, ndim);
+        std::vector<double> ethr_band(nband, 1e-5);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete [] DIAGOTEST::npw_local;
@@ -219,36 +245,20 @@ TEST(DiagoBPCGTest, Hamilt)
     }
 }*/
 
-// bpcg for a 2x2 matrix
-#ifdef __MPI
-#else
-TEST(DiagoBPCGTest, TwoByTwo)
-{
-    int dim = 2;
-    int nband = 2;
-    ModuleBase::ComplexMatrix hm(2, 2);
-    hm(0, 0) = std::complex<double>{4.0, 0.0};
-    hm(0, 1) = std::complex<double>{1.0, 0.0};
-    hm(1, 0) = std::complex<double>{1.0, 0.0};
-    hm(1, 1) = std::complex<double>{3.0, 0.0};
-    // nband, npw, sub, sparsity, reorder, eps, maxiter, threshold
-    DiagoBPCGPrepare dcp(nband, dim, 0, true, 1e-4, 50, 1e-10);
-    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
-    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
-    HPsi<std::complex<double>> hpsi;
-    hpsi.create(nband, dim);
-    DIAGOTEST::hmatrix = hm;
-    DIAGOTEST::npw = dim;
-    dcp.CompareEigen(hpsi.precond());
-}
-#endif
 
 TEST(DiagoBPCGTest, readH)
 {
     // read Hamilt matrix from file data-H
     std::vector<std::complex<double>> hm;
     std::ifstream ifs;
-    ifs.open("H-KPoints-Si64.dat");
+    std::string filename = "H-KPoints-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
     int dim = DIAGOTEST::npw;
@@ -273,6 +283,7 @@ int main(int argc, char **argv)
 	int nproc_in_pool, kpar=1, mypool, rank_in_pool;
     setupmpi(argc,argv,nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+    MPI_Comm_split(MPI_COMM_WORLD,myrank,0,&BP_WORLD);
     GlobalV::NPROC_IN_POOL = nproc;
 #else
 	MPI_Init(&argc, &argv);	
@@ -280,7 +291,8 @@ int main(int argc, char **argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) delete listeners.Release(listeners.default_result_printer());
+    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
+}
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

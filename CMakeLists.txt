@@ -12,6 +12,7 @@ project(
 
 option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
+option(ENABLE_MLKEDF "Enable Machine Learning based KEDF for OFDFT" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for ABACUS." OFF)
 option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
@@ -40,6 +41,8 @@ option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 option(USE_DSP "Enable DSP usage." OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
+option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -124,6 +127,14 @@ if (USE_DSP)
   set(USE_ELPA OFF)
   set(ENABLE_LCAO OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
+endif()
+
+if (USE_CUDA_ON_DCU)
+  add_compile_definitions(__CUDA_ON_DCU)
+endif()
+
+if (USE_CUDA_MPI)
+  add_compile_definitions(__CUDA_MPI)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -230,6 +241,9 @@ if(ENABLE_LCAO)
     add_compile_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
+  if(NEW_GINT)
+    add_compile_definitions(__NEW_GINT)
+  endif()
 else()
   set(ENABLE_DEEPKS OFF)
   set(ENABLE_LIBRI OFF)
@@ -248,8 +262,12 @@ if(ENABLE_MPI)
 endif()
 
 if (USE_DSP)
-  target_link_libraries(${ABACUS_BIN_NAME} ${DIR_MTBLAS_LIBRARY})
   add_compile_definitions(__DSP)
+  target_link_libraries(${ABACUS_BIN_NAME} ${OMPI_LIBRARY1})
+  include_directories(${MTBLAS_FFT_DIR}/libmtblas/include)
+  include_directories(${MT_HOST_DIR}/include)
+  target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
 
 find_package(Threads REQUIRED)
@@ -334,9 +352,19 @@ if(USE_CUDA)
     endif()
     if (ENABLE_CUSOLVERMP)
       add_compile_definitions(__CUSOLVERMP)
+      find_library(CAL_LIBRARY
+          NAMES cal
+          PATHS ${CAL_CUSOLVERMP_PATH}
+          NO_DEFAULT_PATH
+      )
+      find_library(CUSOLVERMP_LIBRARY
+          NAMES cusolverMp
+          PATHS ${CAL_CUSOLVERMP_PATH}
+          NO_DEFAULT_PATH
+      )
       target_link_libraries(${ABACUS_BIN_NAME}
-          cal
-          cusolverMp
+          ${CAL_LIBRARY}
+          ${CUSOLVERMP_LIBRARY}
       )
     endif()
   endif()
@@ -420,12 +448,8 @@ else()
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-
-  if(ENABLE_LCAO)
-    find_package(ScaLAPACK REQUIRED)
-    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-  endif()
-
+  find_package(ScaLAPACK REQUIRED)
+  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -466,10 +490,29 @@ if(ENABLE_DEEPKS)
   add_compile_definitions(__DEEPKS)
 endif()
 
+if(ENABLE_MLKEDF)
+  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf)
+
+  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
+  if(NOT libnpy_SOURCE_DIR)
+    include(FetchContent)
+    FetchContent_Declare(
+      libnpy
+      GIT_REPOSITORY https://github.com/llohse/libnpy.git
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE)
+    FetchContent_MakeAvailable(libnpy)
+  else()
+    include_directories(${libnpy_INCLUDE_DIR})
+  endif()
+  include_directories(${libnpy_SOURCE_DIR}/include)
+  add_compile_definitions(__MLKEDF)
+endif()
+
 # Torch uses outdated components to detect CUDA arch, causing failure on
 # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
 # "major.minor" if required.
-if(ENABLE_DEEPKS OR DEFINED Torch_DIR)
+if(ENABLE_DEEPKS OR ENABLE_MLKEDF OR DEFINED Torch_DIR)
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
@@ -709,10 +752,13 @@ target_link_libraries(
   hamilt_stodft
   psi
   psi_initializer
+  psi_overall_init
   esolver
   vdw
   device
-  container)
+  container
+  dftu
+  deltaspin)
 if(ENABLE_LCAO)
   target_link_libraries(
     ${ABACUS_BIN_NAME}
@@ -720,11 +766,10 @@ if(ENABLE_LCAO)
     tddft
     orb
     gint
-    dftu
     hcontainer
-    deltaspin
     numerical_atomic_orbitals
-    lr)
+    lr
+    rdmft)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()

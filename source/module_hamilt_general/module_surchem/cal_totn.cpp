@@ -33,7 +33,7 @@ void surchem::cal_totn(const UnitCell& cell,
     return;
 }
 
-void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho)
+void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const
 {
     std::complex<double> *delta_phig = new complex<double>[rho_basis->npw];
     std::complex<double> *induced_rhog = new complex<double>[rho_basis->npw];

@@ -37,6 +37,7 @@ add_library(
     mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
+    para_gemm.cpp
     realarray.cpp
     sph_bessel_recursive-d1.cpp
     sph_bessel_recursive-d2.cpp
@@ -53,6 +54,8 @@ add_library(
     parallel_device.cpp
     spherical_bessel_transformer.cpp
     cubic_spline.cpp
+    parallel_2d.cpp
+    projgen.cpp
     module_mixing/mixing_data.cpp
     module_mixing/mixing.cpp
     module_mixing/plain_mixing.cpp
@@ -62,7 +65,10 @@ add_library(
 )
 
 target_link_libraries(base PUBLIC container)
-
+if (USE_DSP)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a)
+endif()
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)

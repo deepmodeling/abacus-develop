@@ -60,25 +60,25 @@ TYPED_TEST(SparseMatrixTest, InsertWarning)
 {
     // case 1
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sm.insert(2, -1, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sm.insert(2, -1, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     // test output on screen
     EXPECT_THAT(output, testing::HasSubstr("row or col index out of range"));
     // case 2
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sm.insert(-1, 0, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sm.insert(-1, 0, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     // test output on screen
     EXPECT_THAT(output, testing::HasSubstr("row or col index out of range"));
     // case 3
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sm.insert(2, 4, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sm.insert(2, 4, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     // test output on screen
     EXPECT_THAT(output, testing::HasSubstr("row or col index out of range"));
     // case 4
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sm.insert(4, 2, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sm.insert(4, 2, static_cast<TypeParam>(3.0)), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     // test output on screen
     EXPECT_THAT(output, testing::HasSubstr("row or col index out of range"));

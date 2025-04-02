@@ -45,7 +45,6 @@ struct Input_para
     double erf_sigma = 0.1;             ///< the width of the energy step for reciprocal vectors
     int fft_mode = 0;                   ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
     std::string init_wfc = "atomic";    ///< "file","atomic","random"
-    bool psi_initializer = false;       ///< whether use psi_initializer to initialize wavefunctions
     int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
@@ -86,8 +85,10 @@ struct Input_para
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
     int pw_diag_nmax = 50;
     double pw_diag_thr = 0.01; ///< used in cg method
+    bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;      ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;     ///< mohan add 2012-03-31
+    int diag_subspace = 0; // 0: Lapack, 1: elpa, 2: scalapack
 
     std::string smearing_method = "gauss"; ///< "gauss",
                                            ///< "mp","methfessel-paxton"
@@ -118,6 +119,7 @@ struct Input_para
     bool scf_os_stop = false;  ///< whether to stop scf when oscillation is detected
     double scf_os_thr = -0.01;  ///< drho threshold for oscillation
     int scf_os_ndim = 0;       ///< number of old iterations used for oscillation detection
+    int sc_os_ndim = 5;       ///< number of old iterations used for oscillation detection in Spin-Constrained DFT
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
@@ -152,7 +154,7 @@ struct Input_para
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
-    int relax_nmax = 1;        ///< number of max ionic iter
+    int relax_nmax = -1;       ///< number of max ionic iter
     double relax_cg_thr = 0.5; ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double force_thr = -1;     ///< threshold of force in unit (Ry/Bohr)
     double force_thr_ev = -1;  ///< threshold of force in unit (eV/Angstrom)
@@ -163,7 +165,7 @@ struct Input_para
     double press3 = 0;
     double relax_bfgs_w1 = 0.01;     ///< wolfe condition 1
     double relax_bfgs_w2 = 0.5;      ///< wolfe condition 2
-    double relax_bfgs_rmax = 0.8;    ///< trust radius max
+    double relax_bfgs_rmax = 0.2;    ///< trust radius max
     double relax_bfgs_rmin = 1e-05;  ///< trust radius min
     double relax_bfgs_init = 0.5;    ///< initial move
     std::string fixed_axes = "None"; ///< which axes are fixed
@@ -206,6 +208,42 @@ struct Input_para
                                                  ///< formula. Only usable for WT KEDF.
     std::string of_kernel_file = "WTkernel.txt"; ///< The name of WT kernel file.
 
+    // ML KEDF, sunliang added on 2022-11-07
+    bool of_ml_gene_data = false;                ///< Generate training data or not
+    // device
+    std::string of_ml_device = "cpu";                      ///< Run NN on GPU or CPU
+    int of_ml_feg = 0;                                     ///< The Free Electron Gas limit: 0: no, 3: yes
+    // kernel
+    int of_ml_nkernel = 1;                                 ///< Number of kernels
+    std::vector<int> of_ml_kernel = {1};                   ///< Type of kernel, 1 for wt, 2 for yukawa, and 3 for TKK
+    std::vector<double> of_ml_kernel_scaling = {1.0};      ///< Scaling parameter of kernel, w(r-r') = lambda^3 * w(lambda (r-r')), lambda = 1/scaling
+    std::vector<double> of_ml_yukawa_alpha = {1.0};        ///< Parameter alpha of yukawa kernel
+    std::vector<std::string> of_ml_kernel_file = {"none"}; ///< The file of TKK
+    // semi-local descriptors
+    bool of_ml_gamma = false;                    ///< Descriptor: gamma = (rho / rho0)^(1/3)
+    bool of_ml_p = false;                        ///< Descriptor: p = |nabla rho|^2 / [2 (3 pi^2)^(1/3) rho^(4/3)]^2
+    bool of_ml_q = false;                        ///< Descriptor: q = nabla^2 rho / [4 (3 pi^2)^(2/3) rho^(5/3)]
+    bool of_ml_tanhp = false;                    ///< Descriptor: tanhp = tanh(chi_p * p)
+    bool of_ml_tanhq = false;                    ///< Descriptor: tanhq = tanh(chi_q * q)
+    double of_ml_chi_p = 1.0;                    ///< Hyperparameter: tanhp = tanh(chi_p * p)
+    double of_ml_chi_q = 1.0;                    ///< Hyperparameter: tanhq = tanh(chi_q * q)
+    // non-local descriptors
+    // of_ml_gammanl should be a vector of bool, but here we use a vector of int for convinience
+    std::vector<int> of_ml_gammanl = {0};        ///< Descriptor: gammanl = int{gamma(r') * w(r-r') dr'}
+    std::vector<int> of_ml_pnl = {0};            ///< Descriptor: pnl = int{p(r') * w(r-r') dr'}
+    std::vector<int> of_ml_qnl = {0};            ///< Descriptor: qnl = int{q(r') * w(r-r') dr'}
+    std::vector<int> of_ml_xi = {0};             ///< Descriptor: xi = int{rho(r')^(1/3) * w(r-r') dr'} / rho^(1/3)
+    std::vector<int> of_ml_tanhxi = {0};         ///< Descriptor: tanhxi = tanh(chi_xi * xi)
+    std::vector<int> of_ml_tanhxi_nl = {0};      ///< Descriptor: tanhxi_nl = int{tanhxi(r') * w(r-r') dr'}
+    std::vector<int> of_ml_tanh_pnl = {0};       ///< Descriptor: tanh_pnl = tanh(chi_pnl * pnl)
+    std::vector<int> of_ml_tanh_qnl = {0};       ///< Descriptor: tanh_qnl = tanh(chi_qnl * qnl)
+    std::vector<int> of_ml_tanhp_nl = {0};       ///< Descriptor: tanhp_nl = int{tanhp(r') * w(r-r') dr'}
+    std::vector<int> of_ml_tanhq_nl = {0};       ///< Descriptor: tanhq_nl = int{tanhq(r') * w(r-r') dr'}
+    std::vector<double> of_ml_chi_xi = {1.0};    ///< Hyperparameter: tanhpxi = tanh(chi_xi * xi)
+    std::vector<double> of_ml_chi_pnl = {1.0};   ///< Hyperparameter: tanh_pnl = tanh(chi_pnl * pnl)
+    std::vector<double> of_ml_chi_qnl = {1.0};   ///< Hyperparameter: tanh_qnl = tanh(chi_qnl * qnl)
+    bool of_ml_local_test = false;               ///< Test: read in the density, and output the F and Pauli potential
+
     // ==============   #Parameters (7.stochastic DFT) ===========================
     int method_sto = 2;        ///< different methods for sdft, 1: slow, less memory 2:
                                ///< fast, more memory
@@ -242,9 +280,10 @@ struct Input_para
     double bessel_descriptor_sigma = 0.1;           ///< spherical bessel smearing_sigma
 
     // ==============   #Parameters (9.rt-tddft) ===========================
-    double td_force_dt = 0.02;      ///<"fs"
-    bool td_vext = false;           ///< add extern potential or not
-    std::string td_vext_dire = "1"; ///< vext direction
+    double td_force_dt = 0.02;           ///<"fs"
+    bool td_vext = false;                ///< add extern potential or not
+    // std::string td_vext_dire = "1";   ///< vext direction
+    std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
 
     bool init_vecpot_file = false; ///< initialize the vector potential, though file or integral
     double td_print_eij = -1.0;    ///< threshold to output Eij elements
@@ -299,6 +338,7 @@ struct Input_para
 
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1; ///< the number of 2-particle states to be solved
+    std::vector<std::string> lr_init_xc_kernel = {};    ///< The method to initalize the xc kernel
     int nocc = -1;      ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;      ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
@@ -308,12 +348,12 @@ struct Input_para
     bool lr_unrestricted = false; ///< whether to use the unrestricted construction for LR-TDDFT
     std::vector<double> abs_wavelen_range = {}; ///< the range of wavelength(nm) to output the absorption spectrum
     double abs_broadening = 0.01;                     ///< the broadening (eta) for LR-TDDFT absorption spectrum
+    std::string abs_gauge = "length";               ///< whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT
     std::string ri_hartree_benchmark = "none"; ///< whether to use the RI approximation for the Hartree potential in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
     std::vector<int> aims_nbasis = {};  ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
     bool out_stru = false;                ///< outut stru file each ion step
-    int out_freq_elec = 0;                ///< the frequency ( >= 0) of electronic iter to output charge
-                                          ///< 0: output only when converged
+    int out_freq_elec = 0;                ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
@@ -337,6 +377,7 @@ struct Input_para
     bool out_mat_dh = false;
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
+    bool out_mat_xc2 = false;   ///< output exchange-correlation matrix Vxc(R) in NAO representation.
     bool out_eband_terms = false; ///< output the band energy terms separately
     bool out_hr_npz = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
@@ -529,7 +570,8 @@ struct Input_para
     int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
-    std::string sc_file = "none";   ///< file name for Deltaspin (json format)
+    double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
+    double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================
@@ -590,5 +632,16 @@ struct Input_para
     int  test_pp = 0;                ///< variables for test_pp only
     int  test_relax_method = false;  ///< variables for test_relax_method only
     int  test_deconstructor = false; ///< variables for test_deconstructor only
+
+    // ==============   #Parameters (21.RDMFT) =====================
+    // RDMFT    jghan added on 2024-07-06
+    bool rdmft = false;                           // rdmft, reduced density matrix funcional theory
+    double rdmft_power_alpha = 0.656;             // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
+    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
+
+    // ==============   #Parameters (22.EXX PW) =====================
+    // EXX for planewave basis, rhx0820 2025-03-10
+    bool exxace = true;                          // exxace, exact exchange for planewave basis
+
 };
 #endif

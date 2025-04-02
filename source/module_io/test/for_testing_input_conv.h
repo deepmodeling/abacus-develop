@@ -7,16 +7,15 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"
+#include "module_elecstate/module_pot/efield.h"
+#include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_io/berryphase.h"
 #include "module_io/restart.h"
@@ -31,17 +30,10 @@
 #undef private
 bool berryphase::berry_phase_flag = false;
 
-double module_tddft::Evolve_elec::td_force_dt;
-bool module_tddft::Evolve_elec::td_vext;
-std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
-bool module_tddft::Evolve_elec::out_dipole;
-bool module_tddft::Evolve_elec::out_efield;
 bool TD_Velocity::out_current;
 bool TD_Velocity::out_current_k;
 bool TD_Velocity::out_vecpot;
 bool TD_Velocity::init_vecpot_file;
-double module_tddft::Evolve_elec::td_print_eij;
-int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
 bool elecstate::Gatefield::relax = false;
 bool elecstate::Gatefield::block = false;
@@ -166,58 +158,9 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-WF_atomic::WF_atomic()
-{
-}
-WF_atomic::~WF_atomic()
-{
-}
-wavefunc::wavefunc()
-{
-}
-wavefunc::~wavefunc()
-{
-}
 UnitCell::UnitCell()
 {
-    Coordinate = "Direct";
-    latName = "none";
-    lat0 = 0.0;
-    lat0_angstrom = 0.0;
-
-    bool init_vel;
-
-    ntype = 0;
-    nat = 0;
-    namax = 0;
-    nwmax = 0;
-
-    iat2it = nullptr;
-    iat2ia = nullptr;
-    iwt2iat = nullptr;
-    iwt2iw = nullptr;
-
     itia2iat.create(1, 1);
-    lc = new int[3];
-
-    latvec = ModuleBase::Matrix3();
-    latvec_supercell = ModuleBase::Matrix3();
-    G = ModuleBase::Matrix3();
-    GT = ModuleBase::Matrix3();
-    GGT = ModuleBase::Matrix3();
-    invGGT = ModuleBase::Matrix3();
-
-    tpiba = 0.0;
-    tpiba2 = 0.0;
-    omega = 0.0;
-
-    atom_label = new std::string[1];
-    atom_mass = nullptr;
-    pseudo_fn = new std::string[1];
-    pseudo_type = new std::string[1];
-    orbital_fn = new std::string[1];
-
-    set_atom_flag = false;
 }
 UnitCell::~UnitCell() {}
 #ifdef __LCAO
@@ -318,14 +261,8 @@ void current_md_info(const int& my_rank,
 } // namespace MD_func
 
 namespace GlobalC {
-UnitCell ucell;
-wavefunc wf;
-ModuleSymmetry::Symmetry symm;
-Structure_Factor sf;
 ModuleDFTU::DFTU dftu;
 Restart restart;
-pseudopot_cell_vnl ppcell;
-Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
 #ifdef __PEXSI

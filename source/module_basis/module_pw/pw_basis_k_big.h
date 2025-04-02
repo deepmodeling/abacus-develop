@@ -30,8 +30,13 @@ public:
         by = by_in;
         bz = bz_in;
     }
-    int bx,by,bz;
-    int nbx, nby, nbz;
+    int bx=0;
+    int by=0;
+    int bz=0;
+    int nbx=0;
+    int nby=0;
+    int nbz=0;
+
     virtual void distribute_r()
     {
         bx = (bx == 0) ? 2 : bx;
@@ -51,7 +56,8 @@ public:
         for(int ip = 0 ; ip < this->poolnproc ; ++ip)
         {
             this->numz[ip] = npbz*this->bz;
-            if(ip < modbz)   this->numz[ip]+=this->bz;
+            if(ip < modbz) {   this->numz[ip]+=this->bz;
+}
             if(ip < this->poolnproc - 1)   this->startz[ip+1] = this->startz[ip] + numz[ip];
             if(ip == this->poolrank) 
             {

@@ -20,7 +20,6 @@ void XC_Functional::hcth(const double rho, const double grho, double &sx, double
     // real(kind=DP) :: rho, grho, sx, v1x, v2x
 
     // parameter :
-    const double pi = 3.14159265358979323846;
     double o3 = 1.00 / 3.00;
     double o34 = 4.00 / 3.00;
     double fr83 = 8.0 / 3.0;
@@ -33,7 +32,7 @@ void XC_Functional::hcth(const double rho, const double grho, double &sx, double
     dgaa_drho, dgab_drho, dgx_drho, dgaa_dgr, dgab_dgr, dgx_dgr;
 
     r3q2 = std::pow(2.0, (-o3));
-    r3pi = std::pow((3.0 / pi), o3);
+    r3pi = std::pow((3.0 / ModuleBase::PI), o3);
     //.....coefficients for pwf correlation......................................
     cg0[1] = 0.0310910;
     cg0[2] = 0.2137000;

@@ -1,7 +1,7 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
 #include "module_parameter/parameter.h"
-#include "unitcell.h"
+#include "module_elecstate/cal_nelec_nband.h"
 class CalAtomsInfo
 {
   public:
@@ -58,7 +58,7 @@ class CalAtomsInfo
         }
 
         // calculate the total number of electrons
-        cal_nelec(atoms, ntype, para.input.nelec);
+        elecstate::cal_nelec(atoms, ntype, para.input.nelec);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
@@ -67,7 +67,22 @@ class CalAtomsInfo
             nelec_spin[0] = (para.inp.nelec + para.inp.nupdown ) / 2.0;
             nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
         }
-        cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
+        elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
+        // calculate the number of nbands_local
+        para.sys.nbands_l = para.inp.nbands;
+        if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel
+        {
+            para.sys.nbands_l = para.inp.nbands / para.inp.bndpar;
+            if (GlobalV::MY_BNDGROUP < para.inp.nbands % para.inp.bndpar)
+            {
+                para.sys.nbands_l++;
+            }
+        }
+        // temporary code
+        if (GlobalV::MY_BNDGROUP == 0 || para.inp.ks_solver == "bpcg")
+        {
+            para.sys.ks_run = true;
+        }
         return;
     }
 };

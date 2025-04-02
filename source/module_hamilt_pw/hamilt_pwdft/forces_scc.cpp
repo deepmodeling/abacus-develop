@@ -1,5 +1,4 @@
 #include "forces.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 #include "stress_func.h"
 // new
@@ -9,8 +8,8 @@
 #include "module_base/mathzone.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
+#include "module_elecstate/module_pot/efield.h"
+#include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
@@ -25,9 +24,10 @@
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
-                                           ModulePW::PW_Basis* rho_basis,
+                                           const ModulePW::PW_Basis* const rho_basis,
                                            const ModuleBase::matrix& vnew,
                                            const bool vnew_exist,
+                                           const bool* numeric,
                                            const UnitCell& ucell_in) {
     ModuleBase::TITLE("Forces", "cal_force_scc");
     ModuleBase::timer::tick("Forces", "cal_force_scc");
@@ -85,7 +85,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     for (int nt = 0; nt < ucell_in.ntype; nt++) {
         //		Here we compute the G.ne.0 term
         const int mesh = ucell_in.atoms[nt].ncpp.msh;
-        this->deriv_drhoc_scc(GlobalC::ppcell.numeric,
+        this->deriv_drhoc_scc(numeric,
                             mesh,
                             ucell_in.atoms[nt].ncpp.r.data(),
                             ucell_in.atoms[nt].ncpp.rab.data(),
@@ -147,7 +147,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
                                               const FPTYPE* rab,
                                               const FPTYPE* rhoc,
                                               FPTYPE* drhocg,
-                                              ModulePW::PW_Basis* rho_basis,
+                                              const ModulePW::PW_Basis* const rho_basis,
                                               const UnitCell& ucell_in) {
     int igl0 = 0;
     double gx = 0;
@@ -190,28 +190,26 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     double *aux_d = nullptr;
     double *drhocg_d = nullptr;
     if (this->device == base_device::GpuDevice) {
-        resmem_var_op()(this->ctx, r_d, mesh);
-        resmem_var_op()(this->ctx, rhoc_d, mesh);
-        resmem_var_op()(this->ctx, rab_d, mesh);
+        resmem_var_op()(r_d, mesh);
+        resmem_var_op()(rhoc_d, mesh);
+        resmem_var_op()(rab_d, mesh);
 
-        resmem_var_op()(this->ctx, aux_d, mesh);
-        resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg);
-        resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+        resmem_var_op()(aux_d, mesh);
+        resmem_var_op()(gx_arr_d, rho_basis->ngg);
+        resmem_var_op()(drhocg_d, rho_basis->ngg);
 
-        syncmem_var_h2d_op()(this->ctx,
-                             this->cpu_ctx,
-                             gx_arr_d,
+        syncmem_var_h2d_op()(gx_arr_d,
                              gx_arr.data(),
                              rho_basis->ngg);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, rhoc, mesh);
+        syncmem_var_h2d_op()(r_d, r, mesh);
+        syncmem_var_h2d_op()(rab_d, rab, mesh);
+        syncmem_var_h2d_op()(rhoc_d, rhoc, mesh);
     }
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
 			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,2);
-		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+		syncmem_var_d2h_op()(drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
@@ -219,11 +217,11 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
 
 	}
 
-    delmem_var_op()(this->ctx, r_d);
-    delmem_var_op()(this->ctx, rhoc_d);
-    delmem_var_op()(this->ctx, rab_d);
-    delmem_var_op()(this->ctx, gx_arr_d);
-    delmem_var_op()(this->ctx, drhocg_d);
+    delmem_var_op()(r_d);
+    delmem_var_op()(rhoc_d);
+    delmem_var_op()(rab_d);
+    delmem_var_op()(gx_arr_d);
+    delmem_var_op()(drhocg_d);
     return;
 }
 

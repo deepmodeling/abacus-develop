@@ -1,6 +1,6 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include <fstream>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
@@ -29,7 +29,7 @@ public:
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(2D division)
     ///---------------------------------------
-    int nnr;
+    int nnr=1;
 	int *nlocdim;
 	int *nlocstart;
     
@@ -73,14 +73,14 @@ public:
      * get_col_size(iat) : number of columns of Hamiltonian matrix in atom iat
      * get_row_size(iat) : number of rows of Hamiltonian matrix in atom iat
     */
-    int get_col_size()const;
-    int get_row_size()const;
+    int get_col_size()const { return this->ncol; };
+    int get_row_size()const { return this->nrow; };
     int get_col_size(int iat) const;
     int get_row_size(int iat) const;
 
     int get_nbands() const;
 
-    int nbands = 0;
+    int nbands;
 
     /**
      * @brief gather global indexes of orbitals in this processor

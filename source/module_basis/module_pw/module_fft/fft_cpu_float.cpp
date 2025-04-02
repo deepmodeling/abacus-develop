@@ -267,11 +267,11 @@ void FFT_CPU<float>::setupFFT()
 }
 
 template <>
-void FFT_CPU<float>::clearfft(fftw_plan& plan)
+void FFT_CPU<float>::clearfft(fftwf_plan& plan)
 {
     if (plan)
     {
-        fftw_destroy_plan(plan);
+        fftwf_destroy_plan(plan);
         plan = nullptr;
     }
 }
@@ -279,18 +279,18 @@ void FFT_CPU<float>::clearfft(fftw_plan& plan)
 template <>
 void FFT_CPU<float>::cleanFFT()
 {
-    clearfft(planzfor);
-    clearfft(planzbac);
-    clearfft(planxfor1);
-    clearfft(planxbac1);
-    clearfft(planxfor2);
-    clearfft(planxbac2);
-    clearfft(planyfor);
-    clearfft(planybac);
-    clearfft(planxr2c);
-    clearfft(planxc2r);
-    clearfft(planyr2c);
-    clearfft(planyc2r);
+    clearfft(planfzfor);
+    clearfft(planfzbac);
+    clearfft(planfxfor1);
+    clearfft(planfxbac1);
+    clearfft(planfxfor2);
+    clearfft(planfxbac2);
+    clearfft(planfyfor);
+    clearfft(planfybac);
+    clearfft(planfxr2c);
+    clearfft(planfxc2r);
+    clearfft(planfyr2c);
+    clearfft(planfyc2r);
 }
 
 

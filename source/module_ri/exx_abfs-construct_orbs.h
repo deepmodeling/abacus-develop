@@ -4,6 +4,7 @@
 #include "exx_abfs.h"
 
 #include <limits>
+#include "module_cell/unitcell.h"
 #include "../module_basis/module_ao/ORB_atomic_lm.h"
 
 	class LCAO_Orbitals;
@@ -19,12 +20,14 @@ public:
 		const double kmesh_times );
 
 	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom( 
+		const UnitCell &ucell,
         const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const double kmesh_times_mot,
 		const double times_threshold=0);
 		
 	static void print_orbs_size(
+		const UnitCell& ucell,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		std::ostream &os);		
 		
@@ -41,6 +44,7 @@ private:
 		const double norm_threshold = std::numeric_limits<double>::min() );
 
 	static std::vector<std::vector<std::vector<std::vector<double>>>> pca(
+		const UnitCell &ucell,
         const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,

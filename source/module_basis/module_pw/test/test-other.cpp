@@ -27,7 +27,7 @@ TEST_F(PWTEST,test_other)
     pwtest.initgrids(3, latvec, 2, 10, 10);
     pwtest.initparameters(false, 20, 3); //distribute_type = 3
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(pwtest.setuptransform(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(pwtest.setuptransform(), ::testing::ExitedWithCode(1), "");
     string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
 

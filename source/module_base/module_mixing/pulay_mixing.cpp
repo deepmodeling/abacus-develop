@@ -28,13 +28,13 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
                                  std::function<void(FPTYPE*, const FPTYPE*, const FPTYPE*)> mix,
                                  const bool& need_calcoef)
 {
-    const size_t length = mdata.length;
+    const std::size_t length = mdata.length;
     std::vector<FPTYPE> F_tmp(length);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-    for (int i = 0; i < length; ++i)
+    for (std::size_t i = 0; i < length; ++i)
     {
         F_tmp[i] = data_out[i] - data_in[i];
     }
@@ -69,7 +69,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-        for (int i = 0; i < length; ++i)
+        for (std::size_t i = 0; i < length; ++i)
         {
             FP_F[i] = F_tmp[i];
         }
@@ -81,7 +81,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-        for (int i = 0; i < length; ++i)
+        for (std::size_t i = 0; i < length; ++i)
         {
             FP_startF[i] = F_tmp[i];
         }
@@ -103,7 +103,7 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
         ModuleBase::WARNING_QUIT(
             "Pulay_mixing",
             "One Pulay_Mixing object can only bind one Mixing_Data object to calculate coefficients");
-    const int length = mdata.length;
+    const std::size_t length = mdata.length;
     FPTYPE* FP_F = static_cast<FPTYPE*>(F);
 
     if (mdata.ndim_use > 1)

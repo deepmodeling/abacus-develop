@@ -15,6 +15,7 @@ void write_elf(
     const double* const* rho,
     const double* const* tau,
     ModulePW::PW_Basis* rho_basis,
+    const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision)
 {
@@ -89,7 +90,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+        ModuleIO::write_vdata_palgrid(pgrid,
             elf[0].data(),
             is,
             nspin,
@@ -107,7 +108,7 @@ void write_elf(
             std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is + 1) + ".cube";
             int ispin = is + 1;
 
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(pgrid,
                 elf[is].data(),
                 ispin,
                 nspin,
@@ -128,7 +129,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+        ModuleIO::write_vdata_palgrid(pgrid,
             elf_tot.data(),
             is,
             nspin,

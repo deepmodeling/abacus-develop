@@ -19,36 +19,33 @@ Driver::Driver()
 
 Driver::~Driver()
 {
-    // Release the device memory within singleton object GlobalC::ppcell
-    // before the main function exits.
-    GlobalC::ppcell.release_memory();
 }
 
 void Driver::init()
 {
-    ModuleBase::TITLE("Driver", "init");
+    // 1) Let's start by printing a title.
+    ModuleBase::TITLE("Driver", "ABACUS_begins");
 
+    // 2) Print the current time, since it may run a long time.
     time_t time_start = std::time(nullptr);
     ModuleBase::timer::start();
 
-    // (1) read the input parameters.
-    // INPUT should be initalized here and then pass to atomic world, mohan
-    // 2024-05-12 INPUT should not be GlobalC, mohan 2024-05-12
-    Driver::reading();
-
-    // (2) welcome to the atomic world!
+    // 3) Welcome to the atomic world! Let's do some fancy stuff here.
     this->atomic_world();
 
-    // (3) output information
+    // 4) All timers recorders are printed.
+    ModuleBase::timer::finish(GlobalV::ofs_running);
+
+    // 5) All memory recorders are printed.
+    ModuleBase::Memory::print_all(GlobalV::ofs_running);
+
+    // 6) Print the final time, hopefully it will not cost too long. 
     time_t time_finish = std::time(nullptr);
     ModuleIO::print_time(time_start, time_finish);
 
-    // (4) close all of the running logs
+    // 7) Clean up: close all of the running logs
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog,PARAM.inp.calculation);
 
-    // (5) output the json file
-    // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
-    Json::create_Json(&GlobalC::ucell, PARAM);
 }
 
 void Driver::print_start_info()
@@ -158,9 +155,9 @@ void Driver::reading()
                                 GlobalV::MY_RANK,
                                 PARAM.inp.bndpar,
                                 GlobalV::KPAR,
-                                GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
@@ -175,16 +172,13 @@ void Driver::reading()
 void Driver::atomic_world()
 {
     ModuleBase::TITLE("Driver", "atomic_world");
-    //--------------------------------------------------
-    // choose basis sets:
-    // pw: plane wave basis set
-    // lcao_in_pw: LCAO expaned by plane wave basis set
-    // lcao: linear combination of atomic orbitals
-    //--------------------------------------------------
+    ModuleBase::timer::tick("Driver", "atomic_world");
+
+    // reading information 
+    this->reading();
 
     // where the actual stuff is done
     this->driver_run();
 
-    ModuleBase::timer::finish(GlobalV::ofs_running);
-    ModuleBase::Memory::print_all(GlobalV::ofs_running);
+    ModuleBase::timer::tick("Driver", "atomic_world");
 }

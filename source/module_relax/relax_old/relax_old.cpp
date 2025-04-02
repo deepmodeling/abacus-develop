@@ -3,7 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
-
+#include "module_cell/update_cell.h"
 void Relax_old::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.
@@ -28,7 +28,8 @@ bool Relax_old::relax_step(const int& istep,
                            ModuleBase::matrix force,
                            ModuleBase::matrix stress,
                            int& force_step,
-                           int& stress_step)
+                           int& stress_step,
+                           ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Relax_old", "relax_step");
 
@@ -49,7 +50,7 @@ bool Relax_old::relax_step(const int& istep,
     {
         // do relax calculation and generate next structure
         bool converged = false;
-        converged = this->do_relax(istep, force, energy, ucell, force_step);
+        converged = this->do_relax(istep, force, energy, ucell, force_step,p_esolver);
         if (!converged)
         {
             ucell.ionic_position_updated = true;
@@ -70,7 +71,7 @@ bool Relax_old::relax_step(const int& istep,
             force_step = 1;
             stress_step++;
             ucell.cell_parameter_updated = true;
-            ucell.setup_cell_after_vc(GlobalV::ofs_running);
+            unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
         }
         return converged;
@@ -129,10 +130,11 @@ bool Relax_old::do_relax(const int& istep,
                          const ModuleBase::matrix& ionic_force,
                          const double& total_energy,
                          UnitCell& ucell,
-                         int& jstep)
+                         int& jstep,
+                         ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Relax_old", "do_relax");
-    IMM.cal_movement(istep, jstep, ionic_force, total_energy, ucell);
+    IMM.cal_movement(istep, jstep, ionic_force, total_energy, ucell,p_esolver);
     ++jstep;
     return IMM.get_converged();
 }

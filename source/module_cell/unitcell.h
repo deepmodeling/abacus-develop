@@ -15,15 +15,14 @@
 // provide the basic information about unitcell.
 class UnitCell {
   public:
-    Atom* atoms;
+    Atom* atoms = nullptr;
 
-    bool set_atom_flag; // added on 2009-3-8 by mohan
-    Magnetism magnet;   // magnetism Yu Liu 2021-07-03
-    void cal_ux();
-    bool judge_parallel(double a[3], ModuleBase::Vector3<double> b);
+    bool set_atom_flag = false;                     // added on 2009-3-8 by mohan
+    Magnetism magnet;                               // magnetism Yu Liu 2021-07-03
     std::vector<std::vector<double>> atom_mulliken; //[nat][nspin]
-    int n_mag_at;
+    int n_mag_at = 0;
 
+    Lattice lat;
     std::string& Coordinate = lat.Coordinate;
     std::string& latName = lat.latName;
     double& lat0 = lat.lat0;
@@ -33,7 +32,6 @@ class UnitCell {
     double& omega = lat.omega;
     int*& lc = lat.lc;
 
-    Lattice lat;
     ModuleBase::Matrix3& latvec = lat.latvec;
     ModuleBase::Vector3<double>&a1 = lat.a1, &a2 = lat.a2, &a3 = lat.a3;
     ModuleBase::Vector3<double>& latcenter = lat.latcenter;
@@ -80,7 +78,6 @@ class UnitCell {
   private:
     std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
     int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
-    const int test_unitcell = 0;
                   // ----------------- END of iat2iwt part -----------------
 
   public:
@@ -183,15 +180,15 @@ class UnitCell {
     // nelec : total number of electrons
     // lmaxmax : revert from INPUT
     //============================================================
-    int meshx;
-    int natomwfc;
-    int lmax;
-    int nmax;
-    int nmax_total; // mohan add 2009-09-10
-    int lmax_ppwf;
-    int lmaxmax;   // liuyu 2021-07-04
-    bool init_vel; // liuyu 2021-07-15
-                   // double nelec;
+    int meshx = 0;
+    int natomwfc = 0;
+    int lmax = 0;
+    int nmax = 0;
+    int nmax_total = 0; // mohan add 2009-09-10
+    int lmax_ppwf = 0;
+    int lmaxmax = 0;   // liuyu 2021-07-04
+    bool init_vel = false; // liuyu 2021-07-15
+                       // double nelec;
 
   private:
     ModuleBase::Matrix3 stress; // calculate stress on the cell
@@ -200,32 +197,14 @@ class UnitCell {
     UnitCell();
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
-    void print_cell_xyz(const std::string& fn) const;
 
-    void update_pos_tau(const double* pos);
-    void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
-    void update_pos_taud(double* posd_in);
-    void update_vel(const ModuleBase::Vector3<double>* vel_in);
-    void periodic_boundary_adjustment();
-    void bcast_atoms_tau();
-    bool judge_big_cell() const;
+    std::vector<double>      atom_mass;
+    std::vector<std::string> atom_label;
+    std::vector<std::string> pseudo_fn;
+    std::vector<std::string> pseudo_type;
 
-    void update_stress(ModuleBase::matrix& scs); // updates stress
-    void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
-
-    double* atom_mass;
-    std::string* atom_label;
-    std::string* pseudo_fn;
-    std::string* pseudo_type; // pseudopotential types for each elements,
-                              // sunliang added 2022-09-15.
-    std::string* orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
-    std::string
-        descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
-
-#ifdef __MPI
-    void bcast_unitcell();
-    void bcast_unitcell2();
-#endif
+    std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
+    std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 
     void set_iat2itia();
 
@@ -236,69 +215,14 @@ class UnitCell {
                          // 2021-09-07
 #endif
 
-    /// @brief read number of numerical orbitals for each angular momentum
-    /// @param it index of atom type
-    /// @param orb_file orbital filename
-    /// @param ofs_running ofstream
-    /// @param atom Atom instance stored in UnitCell
-    void read_orb_file(int it,
-                       std::string& orb_file,
-                       std::ofstream& ofs_running,
-                       Atom* atom);
-    int read_atom_species(
-        std::ifstream& ifa,
-        std::ofstream&
-            ofs_running); // read in the atom information for each type of atom
-    bool read_atom_positions(
-        std::ifstream& ifpos,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning); // read in atomic positions
-
-    void read_pseudo(std::ofstream& ofs);
-    int find_type(const std::string& label);
-    void print_tau() const;
-    /**
-     * @brief UnitCell class is too heavy, this function would be moved
-     * elsewhere. Print STRU file respect to given setting
-     *
-     * @param fn STRU file name
-     * @param nspin PARAM.inp.nspin feed in
-     * @param direct true for direct coords, false for cartesian coords
-     * @param vol true for printing velocities
-     * @param magmom true for printing Mulliken population analysis produced
-     * magmom
-     * @param orb true for printing NUMERICAL_ORBITAL section
-     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
-     * @param iproc GlobalV::MY_RANK feed in
-     */
-    void print_stru_file(const std::string& fn,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0) const;
-    void check_dtau();
-    void setup_cell_after_vc(std::ofstream& log); // LiuXh add 20180515
-
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
-    void remake_cell();
-
-    // read in pseudopotential from files for each type of atom
-    void read_cell_pseudopots(const std::string& fn, std::ofstream& log);
 
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions
     // cal_nwfc     : calculate total number of local basis and lmax
     // cal_meshx	: calculate max number of mesh points in pp file
     //================================================================
-    void cal_nwfc(std::ofstream& log);
-    void cal_meshx();
-    void cal_natomwfc(std::ofstream& log);
-    void print_unitcell_pseudo(const std::string& fn);
-    bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
@@ -328,25 +252,12 @@ class UnitCell {
     /// @brief get lnchiCounts, which is a vector of element type with the
     /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
+    /// @brief get target magnetic moment for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_target_mag() const;
+    /// @brief get lagrange multiplier for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_lambda() const;
+    /// @brief get constrain for deltaspin
+    std::vector<ModuleBase::Vector3<int>> get_constrain() const;
 };
-
-/**
- * @brief calculate the total number of electrons in system
- *
- * @param atoms [in] atom pointer
- * @param ntype [in] number of atom types
- * @param nelec [out] total number of electrons
- */
-void cal_nelec(const Atom* atoms, const int& ntype, double& nelec);
-
-/**
- * @brief Calculate the number of bands.
- *
- * @param nelec [in] total number of electrons
- * @param nlocal [in] total number of local basis
- * @param nelec_spin [in] number of electrons for each spin
- * @param nbands  [out] number of bands
- */
-void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
 
 #endif // unitcell class

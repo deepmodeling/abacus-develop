@@ -9,19 +9,23 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Matrix_Orbs11::init(const int mode, const LCAO_Orbitals& orb, const double kmesh_times, const double rmesh_times)
+void Matrix_Orbs11::init(const int mode, 
+                         const UnitCell& ucell,
+                         const LCAO_Orbitals& orb, 
+                         const double kmesh_times, 
+                         const double rmesh_times)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
     ModuleBase::timer::tick("Matrix_Orbs11", "init");
 
     int Lmax_used, Lmax;
-
+    this->lat0 = &ucell.lat0;
     const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
+        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
@@ -65,12 +69,12 @@ void Matrix_Orbs11::init_radial(const std::vector<std::vector<std::vector<Numeri
                             center2_orb11_s[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
                                 Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, this->MGT)));
-}
-}
-}
-}
-}
-}
+                        }
+                    }
+                }
+            }
+        }
+    }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
@@ -90,12 +94,12 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
                                                                   orb_B.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
                                                                   this->MGT)));
-}
-}
-}
-}
-}
-}
+                        }
+                    }
+                }
+            }
+        }
+    }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
@@ -110,12 +114,12 @@ void Matrix_Orbs11::init_radial_table()
                     for (auto& coE: coD.second) {
                         for (auto& coF: coE.second) {
                             coF.second.init_radial_table();
-}
-}
-}
-}
-}
-}
+                        }
+                    }
+                }
+            }
+        }
+    }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial_table");
 }
 
@@ -123,6 +127,7 @@ void Matrix_Orbs11::init_radial_table(const std::map<size_t, std::map<size_t, st
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init_radial_table_Rs");
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial_table");
+    const double lat0 = *this->lat0;
     for (const auto& RsA: Rs) {
         for (const auto& RsB: RsA.second)
         {
@@ -133,21 +138,21 @@ void Matrix_Orbs11::init_radial_table(const std::map<size_t, std::map<size_t, st
                 std::set<size_t> radials;
                 for (const double& R: RsB.second)
                 {
-                    const double position = R * GlobalC::ucell.lat0 / lcao_dr_;
+                    const double position = R * lat0 / lcao_dr_;
                     const size_t iq = static_cast<size_t>(position);
                     for (size_t i = 0; i != 4; ++i) {
                         radials.insert(iq + i);
-}
+                    }
                 }
                 for (auto& coC: *center2_orb11_sAB) {
                     for (auto& coD: coC.second) {
                         for (auto& coE: coD.second) {
                             for (auto& coF: coE.second) {
                                 coF.second.init_radial_table(radials);
-}
-}
-}
-}
+                            }
+                        }
+                    }
+                }
             }
         }
 }

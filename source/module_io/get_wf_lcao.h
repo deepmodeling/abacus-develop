@@ -17,10 +17,12 @@ class IState_Envelope
     ~IState_Envelope();
 
     /// For gamma_only
-    void begin(const psi::Psi<double>* psid,
+    void begin(const UnitCell& ucell,
+               const psi::Psi<double>* psid,
                const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
                const ModulePW::PW_Basis_Big* pw_big,
+               const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gg,
                const int& out_wfc_pw,
@@ -36,10 +38,12 @@ class IState_Envelope
                const std::string& global_out_dir);
 
     /// tmp, delete after Gint is refactored.
-    void begin(const psi::Psi<double>* psid,
+    void begin(const UnitCell& ucell,
+               const psi::Psi<double>* psid,
                const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
                const ModulePW::PW_Basis_Big* pw_big,
+               const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_k& gg,
                const int& out_wfc_pw,
@@ -58,10 +62,12 @@ class IState_Envelope
     };
 
     /// For multi-k
-    void begin(const psi::Psi<std::complex<double>>* psi,
+    void begin(const UnitCell& ucell,
+               const psi::Psi<std::complex<double>>* psi,
                const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
                const ModulePW::PW_Basis_Big* pw_big,
+               const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_k& gk,
                const int& out_wfc_pw,
@@ -77,10 +83,12 @@ class IState_Envelope
                const std::string& global_out_dir);
 
     /// tmp, delete after Gint is refactored.
-    void begin(const psi::Psi<std::complex<double>>* psi,
+    void begin(const UnitCell& ucell,
+               const psi::Psi<std::complex<double>>* psi,
                const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
                const ModulePW::PW_Basis_Big* pw_big,
+               const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gk,
                const int& out_wfc_pw,

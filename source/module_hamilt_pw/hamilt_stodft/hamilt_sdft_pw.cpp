@@ -9,10 +9,12 @@ template <typename T, typename Device>
 HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       K_Vectors* p_kv,
+                                      pseudopot_cell_vnl* nlpp,
+                                      const UnitCell* ucell,
                                       const int& npol,
-                                      double* emin_in,
-                                      double* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv), ngk(p_kv->ngk)
+                                      Real* emin_in,
+                                      Real* emax_in)
+    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp,ucell), ngk(p_kv->ngk)
 {
     this->classname = "HamiltSdftPW";
     this->npwk_max = wfc_basis->npwk_max;
@@ -51,7 +53,6 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     const int ik = this->ops->get_ik();
     const int npwk_max = this->npwk_max;
     const int npwk = this->ngk[ik];
-    using Real = typename GetTypeReal<T>::type;
     const Real emin = *this->emin;
     const Real emax = *this->emax;
     const Real Ebar = (emin + emax) / 2;
@@ -61,10 +62,10 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi_norm");
 }
 
-// template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-// template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class HamiltSdftPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 

@@ -3,6 +3,7 @@
 #include "gint_vl_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
+#include "module_base/vector3.h"
 namespace GintKernel
 {
 
@@ -97,19 +98,15 @@ void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
         {
             const int iat1 = gridt.which_atom[bcell_start_index + atom1];
             const int uc1 = gridt.which_unitcell[bcell_start_index + atom1];
-            const int rx1 = gridt.ucell_index2x[uc1];
-            const int ry1 = gridt.ucell_index2y[uc1];
-            const int rz1 = gridt.ucell_index2z[uc1];
+            const ModuleBase::Vector3<int> r1 = gridt.get_ucell_coords(uc1);
             const int it1 = ucell.iat2it[iat1];
 
             for (int atom2 = 0; atom2 < atom_num; atom2++)
             {
                 const int iat2 = gridt.which_atom[bcell_start_index + atom2];
                 const int uc2 = gridt.which_unitcell[bcell_start_index + atom2];
-                const int rx2 = gridt.ucell_index2x[uc2];
-                const int ry2 = gridt.ucell_index2y[uc2];
-                const int rz2 = gridt.ucell_index2z[uc2];
-                int offset = hRGint->find_matrix_offset(iat1, iat2, rx1-rx2, ry1-ry2, rz1-rz2);
+                const ModuleBase::Vector3<int> r2 = gridt.get_ucell_coords(uc2);
+                int offset = hRGint->find_matrix_offset(iat1, iat2, r1-r2);
                 if (offset == -1)
                 {
                     continue;

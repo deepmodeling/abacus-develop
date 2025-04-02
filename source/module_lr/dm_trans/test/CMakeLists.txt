@@ -3,7 +3,6 @@ AddTest(
   TARGET dm_trans_test
   LIBS parameter psi base ${math_libs} device container
   SOURCES dm_trans_test.cpp ../../utils/lr_util.cpp ../dm_trans_parallel.cpp ../dm_trans_serial.cpp
-  ../../../module_basis/module_ao/parallel_2d.cpp
   # ../../../module_base/module_container/ATen/core/tensor.cpp
   # ../../../module_base/module_container/ATen/core/tensor_shape.cpp
   # ../../../module_base/module_container/ATen/core/tensor_buffer.cpp

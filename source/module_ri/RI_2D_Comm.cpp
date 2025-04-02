@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 // judge[is] = {s0, s1}
-auto RI_2D_Comm::get_2D_judge(const Parallel_2D& pv)
+auto RI_2D_Comm::get_2D_judge(const UnitCell& ucell, const Parallel_2D& pv)
 -> std::vector<std::tuple<std::set<TA>, std::set<TA>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","get_2D_judge");
@@ -24,7 +24,7 @@ auto RI_2D_Comm::get_2D_judge(const Parallel_2D& pv)
 	{
         const int iwt0 = pv.local2global_row(iwt0_2D);
 		int iat0=0;int iw0_b=0;int is0_b=0;
-		std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(iwt0);
+		std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt0);
 		iat0_list[is0_b].insert(iat0);
 	}
 
@@ -33,7 +33,7 @@ auto RI_2D_Comm::get_2D_judge(const Parallel_2D& pv)
 	{
         const int iwt1 = pv.local2global_col(iwt1_2D);
 		int iat1=0;int iw1_b=0;int is1_b=0;
-		std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(iwt1);
+		std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt1);
 		iat1_list[is1_b].insert(iat1);
 	}
 

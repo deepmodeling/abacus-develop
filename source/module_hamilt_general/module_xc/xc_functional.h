@@ -20,6 +20,8 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/unitcell.h"
 
+#include <map> // added by jghan, 2024-10-10
+
 class XC_Functional
 {
 	public:
@@ -62,12 +64,22 @@ class XC_Functional
 //		func_type, which is as specified in get_func_type
 //		use_libxc, whether to use LIBXC. The rule is to NOT use it for functionals that we already have.
 
-	static int get_func_type();
+    static int get_func_type()
+    {
+        return func_type;
+    };
     static void set_xc_type(const std::string xc_func_in);
 
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
-    static double get_hybrid_alpha();
+    static double get_hybrid_alpha()
+    {
+        return hybrid_alpha;
+    };
+    static bool get_ked_flag()
+    {
+        return ked_flag;
+    };
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -75,10 +87,15 @@ class XC_Functional
 
 	static std::vector<int> func_id; // libxc id of functional
 	static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
-	static bool use_libxc;
+    static bool ked_flag; // whether the functional has kinetic energy density
+    static bool use_libxc;
 
-	//exx_hybrid_alpha for mixing exx in hybrid functional:
-	static double hybrid_alpha;
+    // exx_hybrid_alpha for mixing exx in hybrid functional:
+    static double hybrid_alpha;
+
+	// added by jghan, 2024-07-07
+	// as a scaling factor for different xc-functionals
+	static std::map<int, double> scaling_factor_xc;
 
 	public:
 	static std::vector<int> get_func_id() { return func_id; }
@@ -162,7 +179,7 @@ class XC_Functional
                          ModulePW::PW_Basis* rhopw,
                          const UnitCell* ucell,
                          std::vector<double>& stress_gga,
-                         const bool is_stress = 0);
+                         const bool is_stress = false);
 	template <typename T, typename Device,
           typename Real = typename GetTypeReal<T>::type>
 	static void grad_wfc(

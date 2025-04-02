@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # gcc 13 is good
 gcc_ver="13.2.0"
 gcc_sha256="8cb4be3796651976f94b9356fa08d833524f62420d6292c5033a9a26af315078"
-# use gcc 14 with caution
+# use gcc 14 with caution, do not compatible with GPU-ABACUS
 #gcc_ver="14.2.0"
 #gcc_sha256="7d376d445f93126dc545e2c0086d0f647c3094aae081cdb78f42ce2bc25e7293"
 
@@ -40,8 +40,13 @@ case "${with_gcc}" in
       if [ -f gcc-${gcc_ver}.tar.gz ]; then
         echo "gcc-${gcc_ver}.tar.gz is found"
       else
-        download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
+        #download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
+        url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
+        download_pkg_from_url "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
       fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
       tar -xzf gcc-${gcc_ver}.tar.gz
 
@@ -115,13 +120,18 @@ case "${with_gcc}" in
       cd ../..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
     fi
-    check_install ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
-    check_install ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
-    check_install ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
-    F90="${FC}"
-    F77="${FC}"
-    GCC_CFLAGS="-I'${pkg_install_dir}/include'"
-    GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
+    fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
+        check_install ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
+        check_install ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
+        check_install ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
+        F90="${FC}"
+        F77="${FC}"
+        GCC_CFLAGS="-I'${pkg_install_dir}/include'"
+        GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding GCC from system paths ===================="

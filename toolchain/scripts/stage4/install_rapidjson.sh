@@ -42,14 +42,10 @@ case "$with_rapidjson" in
         # download from github.com and checksum
             echo "===> Notice: This version of rapidjson is downloaded in GitHub Release, which will always be out-of-date version <==="
             download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
-            # echo "wget $url -O $filename"
-            # if ! wget $url -O $filename; then
-            # report_error "failed to download $url"
-            # recommend_offline_installation $filename $url
-            # fi
-            # # checksum
-            # checksum "$filename" "$rapidjson_sha256"
         fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
@@ -59,6 +55,8 @@ case "$with_rapidjson" in
         cp ${pkg_install_dir}/RapidJSONConfig.cmake.in ${pkg_install_dir}/RapidJSONConfig.cmake
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
+    fi
+    RAPIDJSON_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding RAPIDJSON from system paths NOW ===================="

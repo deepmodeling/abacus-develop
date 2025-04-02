@@ -1,7 +1,7 @@
 #include "math_ylmreal.h"
 
 #include "constants.h"
-#include "module_base/kernels/math_op.h"
+#include "module_base/kernels/math_ylm_op.h"
 #include "module_base/libm/libm.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_base/array_pool.h"
@@ -327,7 +327,7 @@ void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE
         ModuleBase::WARNING_QUIT("YLM_REAL","l>30 or l<0");
     }
     FPTYPE * p = nullptr, * phi = nullptr, * cost = nullptr;
-    resmem_var_op()(ctx, p, (lmax + 1) * (lmax + 1) * ng, "YlmReal::Ylm_Real");
+    resmem_var_op()(p, (lmax + 1) * (lmax + 1) * ng, "YlmReal::Ylm_Real");
 
     cal_ylm_real_op()(
         ctx,
@@ -342,9 +342,9 @@ void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE
         p,
         ylm);
 
-    delmem_var_op()(ctx, p);
-    delmem_var_op()(ctx, phi);
-    delmem_var_op()(ctx, cost);
+    delmem_var_op()(p);
+    delmem_var_op()(phi);
+    delmem_var_op()(cost);
 } // end subroutine ylmr2
 
 //==========================================================

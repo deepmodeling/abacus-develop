@@ -73,6 +73,7 @@ public:
 
   private:
     bool mesh_changed = false; // if the mesh is even, it will be changed to odd
+    void skip_number(std::ifstream& ifs, bool mesh_changed); // skip the last number if the mesh is even
 
     int set_pseudo_type(const std::string& fn, std::string& type);
     std::string& trim(std::string& in_str);

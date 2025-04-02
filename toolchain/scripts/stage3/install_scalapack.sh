@@ -41,6 +41,9 @@ case "$with_scalapack" in
       else
         download_pkg_from_ABACUS_org "${scalapack_sha256}" "${scalapack_pkg}"
       fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d scalapack-${scalapack_ver} ] && rm -rf scalapack-${scalapack_ver}
       tar -xzf ${scalapack_pkg}
@@ -67,6 +70,7 @@ case "$with_scalapack" in
 
       popd > /dev/null
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
     fi
     SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     ;;

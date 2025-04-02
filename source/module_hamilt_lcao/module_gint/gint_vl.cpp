@@ -8,6 +8,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/array_pool.h"
+#include "module_base/vector3.h"
 //#include <mkl_cblas.h>
 
 #ifdef _OPENMP
@@ -18,11 +19,10 @@
 #include <mkl_service.h>
 #endif
 
-
+// this is a thread-safe function
 void Gint::cal_meshball_vlocal(
 	const int na_grid,  					    // how many atoms on this (i,j,k) grid
 	const int LD_pool,
-	const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 	const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
 	const int grid_index,                       // index of grid group, for tracing global atom index
@@ -36,23 +36,20 @@ void Gint::cal_meshball_vlocal(
     const int lgd_now = this->gridt->lgd;
 
 	const int mcell_index = this->gridt->bcell_start[grid_index];
+    std::vector<double> hr_tmp;
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
 		const int bcell1 = mcell_index + ia1;
 		const int iat1 = this->gridt->which_atom[bcell1];
 		const int id1 = this->gridt->which_unitcell[bcell1];
-		const int r1x = this->gridt->ucell_index2x[id1];
-		const int r1y = this->gridt->ucell_index2y[id1];
-		const int r1z = this->gridt->ucell_index2z[id1];
+		const ModuleBase::Vector3<int> r1 = this->gridt->get_ucell_coords(id1);
 
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int bcell2 = mcell_index + ia2;
 			const int iat2= this->gridt->which_atom[bcell2];
 			const int id2 = this->gridt->which_unitcell[bcell2];
-			const int r2x = this->gridt->ucell_index2x[id2];
-			const int r2y = this->gridt->ucell_index2y[id2];
-			const int r2z = this->gridt->ucell_index2z[id2];
+			const ModuleBase::Vector3<int> r2 = this->gridt->get_ucell_coords(id2);
 
 			if(iat1<=iat2)
 			{
@@ -77,45 +74,21 @@ void Gint::cal_meshball_vlocal(
                 const int ib_length = last_ib-first_ib;
                 if(ib_length<=0) { continue; }
 
-				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
-				const int dRx = r1x - r2x;
-            	const int dRy = r1y - r2y;
-            	const int dRz = r1z - r2z;
-
-				const auto tmp_matrix = hR->find_matrix(iat1, iat2, dRx, dRy, dRz);
+				const auto tmp_matrix = hR->find_matrix(iat1, iat2, r1-r2);
 				if (tmp_matrix == nullptr)
 				{
 					continue;
 				}
 				const int m = tmp_matrix->get_row_size();
 				const int n = tmp_matrix->get_col_size();
-                
-				int cal_pair_num=0;
-                for(int ib=first_ib;ib<last_ib; ++ib)
-                {
-                    cal_pair_num += cal_flag[ib][ia1] && cal_flag[ib][ia2];
-                }
-                if(cal_pair_num>ib_length/4)
-                {
-                    dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
-                        &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
-                        &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                        &beta, tmp_matrix->get_pointer(), &n); 
-                }
-                else
-                {
-                    for(int ib=first_ib; ib<last_ib; ++ib)
-                    {
-                        if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
-                        {
-                            int k=1;
-                            dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-                                &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
-                                &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, tmp_matrix->get_pointer(), &n);                          
-                        }
-                    }
-                }
+                hr_tmp.resize(m * n);
+                ModuleBase::GlobalFunc::ZEROS(hr_tmp.data(), m*n);
+
+                dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
+                    &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
+                    &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
+                    &beta, hr_tmp.data(), &n); 
+                tmp_matrix->add_array_ts(hr_tmp.data());
 			}
 		}
 	}

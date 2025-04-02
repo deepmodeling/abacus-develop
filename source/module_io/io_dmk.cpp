@@ -139,7 +139,7 @@ bool ModuleIO::read_dmk(const int nspin,
 
     int nlocal = pv.get_global_row_size();
     bool gamma_only = std::is_same<double, T>::value;
-    std::vector<std::vector<T>> dmk_global;
+    std::vector<std::vector<T>> dmk_global(nspin * nk, std::vector<T>(nlocal * nlocal,0));
 
     // write a lambda function to check the consistency of the data
     auto check_consistency = [&](const std::string& fn,
@@ -160,8 +160,6 @@ bool ModuleIO::read_dmk(const int nspin,
     bool read_success = true;
     std::string tmp;
     if (my_rank == 0) {
-        dmk_global.resize(nspin * nk, std::vector<T>(nlocal * nlocal));
-
         for (int ispin = 0; ispin < nspin; ispin++) {
             for (int ik = 0; ik < nk; ik++) {
                 std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, ik);

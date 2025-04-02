@@ -75,17 +75,13 @@ public:
 				this->lmaxmax,
 				this->init_vel,
 				this->fixed_axes);
-		delete[] ucell->atom_label;
-		delete[] ucell->atom_mass;
-		delete[] ucell->pseudo_fn;
-		delete[] ucell->pseudo_type;
-		delete[] ucell->orbital_fn;
+		
 		delete[] ucell->magnet.start_magnetization; //mag set here
-		ucell->atom_label = new std::string[ucell->ntype];
-		ucell->atom_mass = new double[ucell->ntype];
-		ucell->pseudo_fn = new std::string[ucell->ntype];
-		ucell->pseudo_type = new std::string[ucell->ntype];
-		ucell->orbital_fn = new std::string[ucell->ntype];
+		ucell->atom_label.resize(ucell->ntype);
+		ucell->atom_mass.resize(ucell->ntype);
+		ucell->pseudo_fn.resize(ucell->ntype);
+		ucell->pseudo_type.resize(ucell->ntype);
+		ucell->orbital_fn.resize(ucell->ntype);
 		ucell->magnet.start_magnetization = new double[ucell->ntype]; //mag set here
 		ucell->magnet.ux_[0] = 0.0; // ux_ set here
 		ucell->magnet.ux_[1] = 0.0;
@@ -109,7 +105,7 @@ public:
 		ucell->latvec.e13 = this->latvec[2];
 		ucell->latvec.e21 = this->latvec[3];
 		ucell->latvec.e22 = this->latvec[4];
-	       	ucell->latvec.e23 = this->latvec[5];
+	    ucell->latvec.e23 = this->latvec[5];
 		ucell->latvec.e31 = this->latvec[6];
 		ucell->latvec.e32 = this->latvec[7];
 		ucell->latvec.e33 = this->latvec[8];
@@ -137,8 +133,7 @@ public:
 			ucell->atoms[it].label = this->elements[it];
 			ucell->atoms[it].nw = 0;
 			ucell->atoms[it].nwl = 2;
-			delete[] ucell->atoms[it].l_nchi;
-			ucell->atoms[it].l_nchi = new int[ ucell->atoms[it].nwl+1];
+			ucell->atoms[it].l_nchi.resize(ucell->atoms[it].nwl+1);
 			for(int L=0; L<ucell->atoms[it].nwl+1; L++)
 			{
 				ucell->atoms[it].l_nchi[L] = 1;
@@ -146,24 +141,15 @@ public:
 			}
 			ucell->atoms[it].na = this->natom[it];
 			//coordinates and related physical quantities
-			delete[] ucell->atoms[it].tau;
-			delete[] ucell->atoms[it].dis;
-			delete[] ucell->atoms[it].taud;
-			delete[] ucell->atoms[it].vel;
-			delete[] ucell->atoms[it].mag;
-			delete[] ucell->atoms[it].angle1;
-			delete[] ucell->atoms[it].angle2;
-			delete[] ucell->atoms[it].m_loc_;
-			delete[] ucell->atoms[it].mbl;
-			ucell->atoms[it].tau = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].dis = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].taud = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].vel = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].mag = new double[ucell->atoms[it].na];
-			ucell->atoms[it].angle1 = new double[ucell->atoms[it].na];
-			ucell->atoms[it].angle2 = new double[ucell->atoms[it].na];
-			ucell->atoms[it].m_loc_ = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].mbl = new ModuleBase::Vector3<int>[ucell->atoms[it].na];
+			ucell->atoms[it].tau.resize(ucell->atoms[it].na);
+			ucell->atoms[it].dis.resize(ucell->atoms[it].na);
+			ucell->atoms[it].taud.resize(ucell->atoms[it].na);
+			ucell->atoms[it].vel.resize(ucell->atoms[it].na);
+			ucell->atoms[it].mag.resize(ucell->atoms[it].na);
+			ucell->atoms[it].angle1.resize(ucell->atoms[it].na);
+			ucell->atoms[it].angle2.resize(ucell->atoms[it].na);
+			ucell->atoms[it].m_loc_.resize(ucell->atoms[it].na);
+			ucell->atoms[it].mbl.resize(ucell->atoms[it].na);
 			ucell->atoms[it].mass = ucell->atom_mass[it]; // mass set here
 			for(int ia=0; ia<ucell->atoms[it].na; ++ia)
 			{

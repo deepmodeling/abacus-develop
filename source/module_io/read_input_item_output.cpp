@@ -21,9 +21,13 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_freq_elec");
-        item.annotation = "the frequency ( >= 0) of electronic iter to output "
-                          "charge density and wavefunction. 0: "
-                          "output only when converged";
+        item.annotation = "the frequency of electronic iter to output charge density and wavefunction ";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.out_freq_elec <= 0)
+            {
+                para.input.out_freq_elec = para.input.scf_nmax;
+            }
+        };
         read_sync_int(input.out_freq_elec);
         this->add_item(item);
     }
@@ -40,18 +44,18 @@ void ReadInput::item_output()
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_chg(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) {
-                return std::stoi(s);
-            });
-            // assign non-negative values to para.input.out_chg
-            std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
+            }
+            para.input.out_chg[0] = (item.str_values[0] == "-1")? -1: assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-                                        ? 1
-                                        : para.input.out_chg[0];
+                                     ? 1
+                                     : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -183,6 +187,7 @@ void ReadInput::item_output()
             }
         };
         sync_string(input.out_level);
+        add_bool_bcast(sys.out_md_control);
         this->add_item(item);
     }
     {
@@ -306,6 +311,12 @@ void ReadInput::item_output()
         Input_Item item("out_mat_xc");
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         read_sync_bool(input.out_mat_xc);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_xc2");
+        item.annotation = "output exchange-correlation matrix in NAO representation";
+        read_sync_bool(input.out_mat_xc2);
         this->add_item(item);
     }
     {

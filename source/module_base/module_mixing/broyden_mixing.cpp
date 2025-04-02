@@ -104,15 +104,20 @@ template void Broyden_Mixing::tem_cal_coef(
 template <class FPTYPE>
 void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
 {
-    ModuleBase::TITLE("Charge_Mixing", "Simplified_Broyden_mixing");
-    ModuleBase::timer::tick("Charge", "Broyden_mixing");
-    if (address != &mdata && address != nullptr)
-        ModuleBase::WARNING_QUIT(
-            "Broyden_mixing",
-            "One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
-    const int length = mdata.length;
+    ModuleBase::TITLE("Broyden_Mixing", "Simplified_Broyden_mixing");
+    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
+
+	if (address != &mdata && address != nullptr)
+	{
+		ModuleBase::WARNING_QUIT(
+				"Broyden_mixing",
+				"One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
+	}
+
+	const int length = mdata.length;
     FPTYPE* FP_dF = static_cast<FPTYPE*>(dF);
     FPTYPE* FP_F = static_cast<FPTYPE*>(F);
+
     if (ndim_cal_dF > 0)
     {
         ModuleBase::matrix beta_tmp(ndim_cal_dF, ndim_cal_dF);
@@ -140,7 +145,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         double* work = new double[ndim_cal_dF];   // workspace
         int* iwork = new int[ndim_cal_dF];   // ipiv
         char uu = 'U';
-        int info;
+        int info = 0;
         int m = 1;
         // gamma means the coeficients for mixing
         // but now gamma store <dFi|Fm>, namely c
@@ -150,10 +155,25 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
             FPTYPE* dFi = FP_dF + i * length;
             gamma[i] = inner_product(dFi, FP_F);
         }
-        // solve aG = c 
-        dsysv_(&uu, &ndim_cal_dF, &m, beta_tmp.c, &ndim_cal_dF, iwork, gamma.data(), &ndim_cal_dF, work, &ndim_cal_dF, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
+
+		// solve aG = c 
+		dsysv_(&uu, 
+				&ndim_cal_dF, 
+				&m, 
+				beta_tmp.c, 
+				&ndim_cal_dF, 
+				iwork, 
+				gamma.data(), 
+				&ndim_cal_dF, 
+				work, 
+				&ndim_cal_dF, 
+				&info);
+
+		if (info != 0)
+		{
+			ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
+		}
+
         // after solving, gamma store the coeficients for mixing
         coef[mdata.start] = 1 + gamma[dFindex_move(0)];
         for (int i = 1; i < ndim_cal_dF; ++i)
@@ -178,6 +198,6 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     {
         dFnext[i] = FP_F[i];
     }
-    ModuleBase::timer::tick("Charge", "Broyden_mixing");
+    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
 };
 } // namespace Base_Mixing

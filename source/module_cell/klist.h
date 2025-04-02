@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
-
+#include "parallel_kpoints.h"
 #include <vector>
 
 class K_Vectors
@@ -19,17 +19,20 @@ public:
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nmp[3];                 /// Number of Monhorst-Pack
+    int nmp[3]={0};                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
     /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
     /// dim: [iks_ibz][(isym, kvec_d)]
     std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
-    K_Vectors();
-    ~K_Vectors();
+    K_Vectors(){};
+    ~K_Vectors(){};
     K_Vectors& operator=(const K_Vectors&) = default;
     K_Vectors& operator=(K_Vectors&& rhs) = default;
+
+    Parallel_Kpoints para_k; ///< parallel for kpoints
+
 
     /**
      * @brief Set up the k-points for the system.
@@ -50,7 +53,8 @@ public:
      *       it will output a warning and suggest possible solutions.
      * @note Only available for nspin = 1 or 2 or 4.
      */
-    void set(const ModuleSymmetry::Symmetry& symm,
+    void set(const UnitCell& ucell,
+        const ModuleSymmetry::Symmetry& symm,
         const std::string& k_file_name,
         const int& nspin,
         const ModuleBase::Matrix3& reciprocal_vec,
@@ -102,23 +106,6 @@ public:
      */
     void set_after_vc(const int& nspin, const ModuleBase::Matrix3& reciprocal_vec, const ModuleBase::Matrix3& latvec);
 
-    /**
-     * @brief Gets the global index of a k-point.
-     *
-     * This function gets the global index of a k-point based on its local index and the process pool ID.
-     * The global index is used when the k-points are distributed among multiple process pools.
-     *
-     * @param nkstot The total number of k-points.
-     * @param ik The local index of the k-point.
-     *
-     * @return int Returns the global index of the k-point.
-     *
-     * @note The function calculates the global index by dividing the total number of k-points (nkstot) by the number of
-     * process pools (KPAR), and adding the remainder if the process pool ID (MY_POOL) is less than the remainder.
-     * @note The function is declared as inline for efficiency.
-     */
-    static int get_ik_global(const int& ik, const int& nkstot);
-
     int get_nks() const
     {
         return this->nks;
@@ -153,19 +140,20 @@ public:
     {
         this->nkstot_full = value;
     }
+    std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
 
-private:
-    int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
-    int nkstot;      /// number of symmetry-reduced k points in full k mesh
-    int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+  private:
+    int nks = 0;         ///< number of symmetry-reduced k points in this pool(processor, up+dw)
+    int nkstot = 0;      ///< number of symmetry-reduced k points in full k mesh
+    int nkstot_full = 0; ///< number of k points before symmetry reduction in full k mesh
 
-    int nspin;
-    bool kc_done;
-    bool kd_done;
-    double koffset[3];   // used only in automatic k-points.
-    std::string k_kword; // LiuXh add 20180619
-    int k_nkstot;        // LiuXh add 20180619
-    bool is_mp = false;  // Monkhorst-Pack
+    int nspin = 0;
+    bool kc_done = false;
+    bool kd_done = false;
+    double koffset[3] = {0.0}; // used only in automatic k-points.
+    std::string k_kword;       // LiuXh add 20180619
+    int k_nkstot = 0;          // LiuXh add 20180619
+    bool is_mp = false;        // Monkhorst-Pack
 
     /**
      * @brief Resize the k-point related vectors according to the new k-point number.
@@ -204,7 +192,8 @@ private:
      * @note If the k-points type is Line mode and the symmetry flag is 1, it will quit with a warning.
      * @note If the number of k-points is greater than 100000, it will quit with a warning.
      */
-    bool read_kpoints(const std::string& fn); // return 0: something wrong.
+    bool read_kpoints(const UnitCell& ucell,
+                      const std::string& fn); // return 0: something wrong.
 
     /**
      * @brief Adds k-points linearly between special points.
@@ -283,8 +272,8 @@ private:
      * be recalculated.
      */
     void update_use_ibz(const int& nkstot_ibz,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
-        const std::vector<double>& wk_ibz);
+                        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+                        const std::vector<double>& wk_ibz);
 
     /**
      * @brief Sets both the direct and Cartesian k-vectors.
@@ -389,5 +378,11 @@ private:
      * @note The function uses the FmtCore::format function to format the output.
      */
     void print_klists(std::ofstream& fn);
+
+    /**
+     * @brief Gets the global index of a k-point.
+     * @return this->ik2iktot[ik]
+     */
+    void cal_ik_global();
 };
 #endif // KVECT_H

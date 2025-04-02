@@ -1,6 +1,7 @@
 etotref -204.1062806122546
 etotperatomref -102.0531403061
 CompareVXC_pass 0
+CompareVXC_R_pass 0
 CompareOrbXC_pass 0
 CompareOrbKinetic_pass 0
 CompareOrbVL_pass 0

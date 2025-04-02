@@ -26,11 +26,6 @@ Magnetism::~Magnetism(){}
 
 bool berryphase::berry_phase_flag=false;
 
-namespace GlobalC
-{
-	Parallel_Kpoints Pkpoints;
-	UnitCell ucell;
-}
 
 /************************************************
  *  unit test of print_info.cpp
@@ -66,7 +61,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	ucell = utp.SetUcellInfo();
 	std::string k_file = "./support/KPT";
 	kv->nspin = 1;
-	kv->read_kpoints(k_file);
+	kv->read_kpoints(*ucell,k_file);
 	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};

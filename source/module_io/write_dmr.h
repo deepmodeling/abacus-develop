@@ -45,6 +45,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool out_csr,
                const bool out_npz,
                const bool append,
+               const int* iat2iwt,
+               const int* nat,
                const int istep);
 } // namespace ModuleIO
 

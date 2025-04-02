@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+#Parameters	(System)
+suffix                  autotest
+
+nbands			2
+stru_file		STRU
+kpoint_file		KPT
+pseudo_dir	../../PP_ORB
+pw_seed         1
+calculation             scf
+#Parameters (PW)
+ecutwfc			10.0              # Rydberg
+#Parameters (electronic)
+basis_type		pw 	
+scf_thr			1e-3
+smearing_method fixed
+
+cal_force			0
+cal_stress			1
+
+dft_functional          pbe0
+symmetry -1

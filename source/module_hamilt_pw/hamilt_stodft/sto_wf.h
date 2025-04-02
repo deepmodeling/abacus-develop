@@ -30,10 +30,10 @@ class Stochastic_WF
     int* nchip = nullptr; ///< The number of stochatic orbitals in current process of each k point.
     int nchip_max = 0;    ///< Max number of stochastic orbitals among all k points.
     int nks = 0;          ///< number of k-points
-    int* ngk = nullptr;   ///< ngk in klist
     int npwx = 0;         ///< max ngk[ik] in all processors
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
+    std::vector<int> ngk;   ///< ngk in klist
   public:
     // Tn(H)|chi>
     psi::Psi<T, Device>* chiallorder = nullptr;

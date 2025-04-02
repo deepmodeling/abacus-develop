@@ -5,9 +5,9 @@ LATTICE_CONSTANT
 10.2
 
 LATTICE_VECTORS
-0.5 0.5 0 #latvec1
+0 0.5 0.5 #latvec1
 0.5 0 0.5 #latvec2
-0 0.5 0.5 #latvec3
+0.5 0.5 0 #latvec3
 
 ATOMIC_POSITIONS
 Cartesian

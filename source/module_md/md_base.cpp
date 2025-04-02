@@ -1,11 +1,10 @@
 #include "md_base.h"
-
 #include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
 #include "module_io/print_info.h"
-
+#include "module_cell/update_cell.h"
 MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) : mdp(param_in.mdp), ucell(unit_in)
 {
     my_rank = param_in.globalv.myrank;
@@ -112,7 +111,7 @@ void MD_base::update_pos()
     MPI_Bcast(pos, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
-    ucell.update_pos_taud(pos);
+    unitcell::update_pos_taud(ucell.lat,pos,ucell.ntype,ucell.nat,ucell.atoms);
 
     return;
 }
@@ -143,7 +142,7 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 
 void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    if (my_rank)
+    if (my_rank!=0)
     {
         return;
     }
@@ -159,6 +158,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
         press += stress(i, i) / 3;
     }
 
+    // screen output
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
     std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
@@ -183,9 +183,9 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
 
+    // running_log output
     ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8) << std::endl;
-    ofs << std::endl;
+    ofs << std::setprecision(8);
     ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
     ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
@@ -214,9 +214,6 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     {
         MD_func::print_stress(ofs, virial, stress);
     }
-
-    ofs << std::endl;
-    ofs << std::endl;
 
     return;
 }

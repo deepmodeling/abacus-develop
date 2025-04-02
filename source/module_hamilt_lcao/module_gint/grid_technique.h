@@ -1,7 +1,6 @@
 #ifndef GRID_TECHNIQUE_H
 #define GRID_TECHNIQUE_H
 
-#include "grid_index.h"
 #include "grid_meshball.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -30,9 +29,9 @@ class Grid_Technique : public Grid_MeshBall {
     // record how many atoms on each grid.
     std::vector<int> how_many_atoms;
     // max atom on grid
-    int max_atom;
+    int max_atom=0;
     // sum of how_many_atoms
-    int total_atoms_on_grid;
+    int total_atoms_on_grid=0;
     std::vector<int> start_ind;
 
     //------------------------------------
@@ -55,8 +54,8 @@ class Grid_Technique : public Grid_MeshBall {
     //------------------------------------
     // 3: which atom on local grid.
     //------------------------------------
-    int lnat; // local nat.
-    int lgd;  // local grid dimension.  lgd * lgd symmetry matrix.
+    int lnat=0; // local nat.
+    int lgd=0;  // local grid dimension.  lgd * lgd symmetry matrix.
     std::vector<bool> in_this_processor;
     std::vector<int> trace_iat;
     std::vector<int> trace_lo; // trace local orbital.
@@ -69,26 +68,23 @@ class Grid_Technique : public Grid_MeshBall {
     int nnrg = 0;
 
     // UnitCell and LCAO_Obrbitals
-    const UnitCell* ucell;
-    const LCAO_Orbitals* orb;
+    const UnitCell* ucell=nullptr;
+    const LCAO_Orbitals* orb=nullptr;
 
     // UnitCell parameters
-    int nwmax;
-    int nr_max;
-    int ntype;
+    int nwmax=0;
+    int nr_max=0;
+    int ntype=0;
 
     // LCAO Orbitals
-    double dr_uniform;
+    double dr_uniform={0.0};
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    // indexes for nnrg -> orbital index + R index
-    std::vector<gridIntegral::gridIndex> nnrg_index;
-
     // Determine whether the grid point integration is initialized.
-    bool init_malloced;
+    bool init_malloced=false;
 
     bool get_init_malloced() const { return init_malloced; }
 
@@ -108,7 +104,7 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
-                      Grid_Driver& gd,
+                      const Grid_Driver& gd,
                       const double& dr_uniform,
                       const std::vector<double>& rcuts,
                       const std::vector<std::vector<double>>& psi_u,
@@ -132,35 +128,20 @@ class Grid_Technique : public Grid_MeshBall {
     // store the information of atom pairs on this processor, used to initialize hcontainer.
     // The meaning of ijr can be referred to in the get_ijr_info function in hcontainer.cpp.
     std::vector<int> ijr_info;
-    int maxB1;
-    int maxB2;
-    int maxB3;
-
-    int minB1;
-    int minB2;
-    int minB3;
-
-    int nB1;
-    int nB2;
-    int nB3;
-
-    int nbox;
 
     void cal_max_box_index();
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
-                            const int& startz_current,
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
     // initialize the ijr_info and nnrg
-    void init_ijr_and_nnrg(const UnitCell& ucell, Grid_Driver& gd);
+    void init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver& gd);
     void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
-                      const int& nplane,
-                      const int& startz_current);
+                      const int& nplane);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
   public:

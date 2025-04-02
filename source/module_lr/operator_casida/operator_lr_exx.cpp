@@ -65,7 +65,7 @@ namespace LR
         for (auto cell : this->BvK_cells)
         {
             std::complex<double> frac = RI::Global_Func::convert<std::complex<double>>(std::exp(
-                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (this->kv.kvec_c.at(ik) * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (this->kv.kvec_c.at(ik) * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
             for (int it1 = 0;it1 < ucell.ntype;++it1)
                 for (int ia1 = 0; ia1 < ucell.atoms[it1].na; ++ia1)
                     for (int it2 = 0;it2 < ucell.ntype;++it2)
@@ -89,11 +89,17 @@ namespace LR
     }
 
     template<typename T>
-    void OperatorLREXX<T>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
+    void OperatorLREXX<T>::act(const int nbands, 
+                               const int nbasis, 
+                               const int npol, 
+                               const T* psi_in, 
+                               T* hpsi, 
+                               const int ngk_ik, 
+                               const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLREXX", "act");
         // convert parallel info to LibRI interfaces
-        std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(this->pmat);
+        std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,this->pmat);
 
         // suppose Cs，Vs, have already been calculated in the ion-step of ground state
         // and DM_trans has been calculated in hPsi() outside.
@@ -107,7 +113,7 @@ namespace LR
         // if multi-k, DM_trans(TR=double) -> Ds_trans(TR=T=complex<double>)
         std::vector<std::map<TA, std::map<TAC, RI::Tensor<T>>>> Ds_trans =
             aims_nbasis.empty() ?
-            RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, this->pmat, 1)
+            RI_2D_Comm::split_m2D_ktoR<T>(ucell,this->kv, DMk_trans_pointer, this->pmat, 1)
             : RI_Benchmark::split_Ds(DMk_trans_vector, aims_nbasis, ucell); //0.5 will be multiplied
         // LR_Util::print_CV(Ds_trans[0], "Ds_trans in OperatorLREXX", 1e-10);
         // 2. cal_Hs

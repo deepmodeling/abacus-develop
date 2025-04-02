@@ -62,11 +62,26 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
     return nupdown;
 }
 
+inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
+{
+    // set up 2-center table
+#ifdef USE_NEW_TWO_CENTER
+    two_center_bundle.tabulate();
+#else
+    two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+#endif
+    if (PARAM.inp.vnl_in_h)
+    {
+        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    }
+}
+
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::parameter_check()const
 {
-    std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg" };
-    std::set<std::string> xc_kernels = { "rpa", "lda", "pbe", "hf" , "hse" };
+    const std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg" };
+    const std::set<std::string> xc_kernels = { "rpa", "lda", "pwlda", "pbe", "hf" , "hse" };
     if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
 }
@@ -104,7 +119,13 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     GlobalV::ofs_running << "number of excited states to be solved: " << this->nstates << std::endl;
     if (input.ri_hartree_benchmark == "aims" && !input.aims_nbasis.empty())
     {
-        this->nbasis = [&]() -> int { int nbas = 0; for (int it = 0;it < ucell.ntype;++it) { nbas += ucell.atoms[it].na * input.aims_nbasis[it]; };return nbas;}();
+        // calculate total number of basis funcs, see https://en.cppreference.com/w/cpp/algorithm/inner_product
+        this->nbasis = std::inner_product(input.aims_nbasis.begin(), /* iterator1.begin */
+                                          input.aims_nbasis.end(),  /* iterator1.end */
+                                          ucell.atoms,  /* iterator2.begin */
+                                          0,  /* init value */
+                                          std::plus<int>(), /* iter op1 */
+                                          [](const int& a, const Atom& b) { return a * b.na; }); /* iter op2 */
         std::cout << "nbasis from aims: " << this->nbasis << std::endl;
     }
 }
@@ -140,9 +161,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be set to `lr` to skip the KS calculation.");
 }
 
+    this->gd = std::move(ks_sol.gd);
+
     // xc kernel
-    this->xc_kernel = inp.xc_kernel;
-    std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
+    this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
     //kv
     this->kv = std::move(ks_sol.kv);
 
@@ -173,9 +195,13 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     if (this->nbands == PARAM.inp.nbands) { move_gs(); }
     else    // copy the part of ground state info according to paraC_
     {
-        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), 
+                                       this->paraC_.get_col_size(), 
+                                       this->paraC_.get_row_size(),
+                                       this->kv.ngk,
+                                       true);
         this->eig_ks.create(this->kv.get_nks(), this->nbands);
-        const int start_band = this->nocc_max - std::max(nocc[0], nocc[1]);
+        const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
         for (int ik = 0;ik < this->kv.get_nks();++ik)
         {
             Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
@@ -210,8 +236,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     if (xc_kernel == "hf" || xc_kernel == "hse")
     {
         // if the same kernel is calculated in the esolver_ks, move it
-        std::string dft_functional = input.dft_functional;
-        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional.begin(), tolower);
+        std::string dft_functional = LR_Util::tolower(input.dft_functional);
         if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional) {
             this->move_exx_lri(ks_sol.exx_lri_double);
         } else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
@@ -220,15 +245,19 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         {
             // set ccp_type according to the xc_kernel
             if (xc_kernel == "hf") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
-            else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse; }
+            else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, this->kv, ks_sol.orb_);
-            this->exx_lri->cal_exx_ions(input.out_ri_cv);
+            this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, ks_sol.orb_);
+            this->exx_lri->cal_exx_ions(ucell,input.out_ri_cv);
         }
     }
 #endif
     this->pelec = new elecstate::ElecStateLCAO<T>();
     orb_cutoff_ = ks_sol.orb_.cutoffs();
+    if (LR_Util::tolower(input.abs_gauge) == "velocity")
+    {
+        this->two_center_bundle_ = std::move(ks_sol.two_center_bundle_);
+    }
 }
 
 template <typename T, typename TR>
@@ -239,31 +268,34 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
-    this->xc_kernel = inp.xc_kernel;
-    std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
+    this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
 
     // necessary steps in ESolver_FP
-    ESolver_FP::before_all_runners(inp, ucell);
+    ESolver_FP::before_all_runners(ucell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        GlobalC::ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::setup_parameters(ucell, this->kv);
 
     this->parameter_check();
 
     /// read orbitals and build the interpolation table
-    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data());
 
     LCAO_Orbitals orb;
     two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
     orb_cutoff_ = orb.cutoffs();
+    if (LR_Util::tolower(input.abs_gauge) == "velocity")
+    {
+        setup_2center_table(this->two_center_bundle_, orb, ucell);
+    }
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
@@ -281,8 +313,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
     this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
-        this->paraMat_.ncol_bands,
-        this->paraMat_.get_row_size());
+                                   this->paraMat_.ncol_bands,
+                                   this->paraMat_.get_row_size(), 
+                                   this->kv.ngk,
+                                   true);
     this->read_ks_wfc();
     if (nspin == 2)
     {
@@ -300,7 +334,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
-    GlobalC::Pgrid.init(this->pw_rho->nx,
+    Pgrid.init(this->pw_rho->nx,
         this->pw_rho->ny,
         this->pw_rho->nz,
         this->pw_rho->nplane,
@@ -312,19 +346,18 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->init_pot(chg_gs);
 
     // search adjacent atoms and init Gint
-    std::cout << "ucell.infoNL.get_rcutmax_Beta(): " << GlobalC::ucell.infoNL.get_rcutmax_Beta() << std::endl;
     double search_radius = -1.0;
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
         orb.get_rcutmax_Phi(),
-        GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+        ucell.infoNL.get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
     atom_arrange::search(PARAM.inp.search_pbc,
-        GlobalV::ofs_running,
-        GlobalC::GridD,
-        this->ucell,
-        search_radius,
-        PARAM.inp.test_atom_input);
+                         GlobalV::ofs_running,
+                         this->gd,
+                         this->ucell,
+                         search_radius,
+                         PARAM.inp.test_atom_input);
     this->set_gint();
     this->gint_->gridt = &this->gt_;
 
@@ -335,30 +368,30 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb, psi_u, dpsi_u, d2psi_u);
     this->gt_.set_pbc_grid(this->pw_rho->nx,
-        this->pw_rho->ny,
-        this->pw_rho->nz,
-        this->pw_big->bx,
-        this->pw_big->by,
-        this->pw_big->bz,
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbz,
-        this->pw_big->nbxx,
-        this->pw_big->nbzp_start,
-        this->pw_big->nbzp,
-        this->pw_rho->ny,
-        this->pw_rho->nplane,
-        this->pw_rho->startz_current,
-        GlobalC::ucell,
-        GlobalC::GridD,
-        dr_uniform,
-        rcuts,
-        psi_u,
-        dpsi_u,
-        d2psi_u,
-        PARAM.inp.nstream);
+                           this->pw_rho->ny,
+                           this->pw_rho->nz,
+                           this->pw_big->bx,
+                           this->pw_big->by,
+                           this->pw_big->bz,
+                           this->pw_big->nbx,
+                           this->pw_big->nby,
+                           this->pw_big->nbz,
+                           this->pw_big->nbxx,
+                           this->pw_big->nbzp_start,
+                           this->pw_big->nbzp,
+                           this->pw_rho->ny,
+                           this->pw_rho->nplane,
+                           this->pw_rho->startz_current,
+                           ucell,
+                           this->gd,
+                           dr_uniform,
+                           rcuts,
+                           psi_u,
+                           dpsi_u,
+                           d2psi_u,
+                           PARAM.inp.nstream);
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -382,7 +415,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->startz_current,
         &ucell,
         &orb);
-    this->gint_->initialize_pvpR(ucell, &GlobalC::GridD, 1);    // always use nspin=1 for transition density
+    this->gint_->initialize_pvpR(ucell, &this->gd, 1); // always use nspin=1 for transition density
 
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
@@ -390,10 +423,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     {
         // set ccp_type according to the xc_kernel
         if (xc_kernel == "hf") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
-        else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse; }
+        else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
         this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-        this->exx_lri->init(MPI_COMM_WORLD, this->kv, orb);
-        this->exx_lri->cal_exx_ions(input.out_ri_cv);
+        this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, orb);
+        this->exx_lri->cal_exx_ions(ucell,input.out_ri_cv);
     }
     // else
 #endif
@@ -401,7 +434,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
+void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::tick("ESolver_LR", "runner");
@@ -429,11 +462,26 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
                 if (input.lr_solver != "lapack") { pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is); }
             }
             std::cout << "Solving spin-conserving excitation for open-shell system." << std::endl;
-            HamiltULR<T> hulr(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, orb_cutoff_, GlobalC::GridD, *this->psi_ks, this->eig_ks,
+            HamiltULR<T> hulr(xc_kernel,
+                              nspin,
+                              this->nbasis,
+                              this->nocc,
+                              this->nvirt,
+                              this->ucell,
+                              orb_cutoff_,
+                              this->gd,
+                              *this->psi_ks,
+                              this->eig_ks,
 #ifdef __EXX
-                this->exx_lri, this->exx_info.info_global.hybrid_alpha,
+                              this->exx_lri,
+                              this->exx_info.info_global.hybrid_alpha,
 #endif
-                this->gint_, this->pot, this->kv, this->paraX_, this->paraC_, this->paraMat_);
+                              this->gint_,
+                              this->pot,
+                              this->kv,
+                              this->paraX_,
+                              this->paraC_,
+                              this->paraMat_);
             LR::HSolver::solve(hulr, this->X[0].template data<T>(), nloc_per_band, nstates, this->pelec->ekb.c, this->input.lr_solver, this->input.lr_thr, precondition);
             if (input.out_wfc_lr) { write_states("openshell", this->pelec->ekb.c, this->X[0].template data<T>(), nloc_per_band, nstates); }
         }
@@ -445,12 +493,29 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
             for (int is = 0;is < nspin;++is)
             {
                 std::cout << "Calculating " << spin_types[is] << " excitations" << std::endl;
-                HamiltLR<T> hlr(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, orb_cutoff_, GlobalC::GridD, *this->psi_ks, this->eig_ks,
+                HamiltLR<T> hlr(xc_kernel,
+                                nspin,
+                                this->nbasis,
+                                this->nocc,
+                                this->nvirt,
+                                this->ucell,
+                                orb_cutoff_,
+                                this->gd,
+                                *this->psi_ks,
+                                this->eig_ks,
 #ifdef __EXX
-                    this->exx_lri, this->exx_info.info_global.hybrid_alpha,
+                                this->exx_lri,
+                                this->exx_info.info_global.hybrid_alpha,
 #endif
-                    this->gint_, this->pot[is], this->kv, this->paraX_, this->paraC_, this->paraMat_,
-                    spin_types[is], input.ri_hartree_benchmark, (input.ri_hartree_benchmark == "aims" ? input.aims_nbasis : std::vector<int>({})));
+                                this->gint_,
+                                this->pot[is],
+                                this->kv,
+                                this->paraX_,
+                                this->paraC_,
+                                this->paraMat_,
+                                spin_types[is],
+                                input.ri_hartree_benchmark,
+                                (input.ri_hartree_benchmark == "aims" ? input.aims_nbasis : std::vector<int>({})));
                 // solve the Casida equation
                 LR::HSolver::solve(hlr, this->X[is].template data<T>(), nloc_per_band, nstates,
                     this->pelec->ekb.c + is * nstates, this->input.lr_solver, this->input.lr_thr, precondition/*,
@@ -482,7 +547,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners()
+void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine
@@ -500,11 +565,20 @@ void LR::ESolver_LR<T, TR>::after_all_runners()
     for (int is = 0;is < this->X.size();++is)
     {
         LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, this->gint_, *this->pw_rho, *this->psi_ks,
-            this->ucell, this->kv, GlobalC::GridD, this->orb_cutoff_,
+            this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
-            &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell);
+            &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,
+            LR_Util::tolower(input.abs_gauge));
         spectrum.transition_analysis(spin_types[is]);
-        spectrum.optical_absorption(freq, input.abs_broadening, spin_types[is]);
+        if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
+        {
+            spectrum.optical_absorption_method1(freq, input.abs_broadening);
+            // =============================================== for test ====================================================
+            // spectrum.optical_absorption_method2(freq, input.abs_broadening);
+            // spectrum.test_transition_dipoles_velocity_ks(eig_ks.c);
+            // spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_ks.dat");
+            // =============================================== for test ====================================================
+        }
     }
 }
 
@@ -588,11 +662,11 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         using ST = PotHxcLR::SpinType;
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, ST::S1);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, ST::S1, input.lr_init_xc_kernel);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, openshell ? ST::S2_updown : ST::S2_singlet);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, openshell ? ST::S2_updown : ST::S2_triplet);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
+        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");
@@ -639,7 +713,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
-        if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+        if (ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,
             GlobalV::ofs_running,
             ssc.str(),

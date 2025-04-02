@@ -36,6 +36,9 @@ template <class T> class Vector3
     Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z){}; // Peize Lin add 2018-07-16   
     explicit Vector3(const std::array<T,3> &v) :x(v[0]), y(v[1]), z(v[2]){}
 
+    template <typename U>
+    explicit Vector3(const Vector3<U>& other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)), z(static_cast<T>(other.z)) {}
+
     Vector3(Vector3<T> &&v) noexcept : x(v.x), y(v.y), z(v.z) {}
 
     /**
@@ -361,6 +364,22 @@ template <class T> inline Vector3<T> cross(const Vector3<T> &u, const Vector3<T>
 //	         (u.y * (-v.x * w.z + v.z * w.x)) +
 //	         (u.z * (v.x * w.y - v.y * w.x)));
 // }
+
+// Overload the < operator for sorting
+template <class T> bool operator<(const Vector3<T> &u, const Vector3<T> &v)
+{
+    if (u.x < v.x)
+        return true;
+    if (u.x > v.x)
+        return false;
+    if (u.y < v.y)
+        return true;
+    if (u.y > v.y)
+        return false;
+    if (u.z < v.z)
+        return true;
+    return false;
+}
 
 // whether m1 != m2
 template <class T> inline bool operator!=(const Vector3<T> &u, const Vector3<T> &v)

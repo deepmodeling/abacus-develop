@@ -1,0 +1,22 @@
+ATOMIC_SPECIES
+Fe 1.000 Fe.upf
+
+NUMERICAL_ORBITAL
+Fe_gga_6au_100Ry_4s2p2d1f.orb
+
+LATTICE_CONSTANT
+8.190
+
+LATTICE_VECTORS
+ 1.00    0.50     0.50
+ 0.50    1.00     0.50
+ 0.50    0.50     1.00
+ATOMIC_POSITIONS
+Direct
+
+Fe
+0.0
+2
+0.00            0.00            0.00         mag  1.0 1.0 1.0
+0.51            0.51            0.51         mag  1.0 1.0 1.0
+

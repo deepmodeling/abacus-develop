@@ -25,7 +25,9 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const double& mixing_gg0_mag_in,
                                const double& mixing_gg0_min_in,
                                const double& mixing_angle_in,
-                               const bool& mixing_dmr_in)
+                               const bool& mixing_dmr_in,
+                               double& omega_in,
+                               double& tpiba_in)
 {
     // get private mixing parameters
     this->mixing_mode = mixing_mode_in;
@@ -38,7 +40,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_gg0_min = mixing_gg0_min_in;
     this->mixing_angle = mixing_angle_in;
     this->mixing_dmr = mixing_dmr_in;
-
+    this->omega = &omega_in;
+    this->tpiba = &tpiba_in;
     // check the paramters
     if (this->mixing_beta > 1.0 || this->mixing_beta < 0.0)
     {
@@ -55,22 +58,24 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     // print into running.log
-    GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
-    GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
-    GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0_min: "<< PARAM.inp.mixing_gg0_min <<std::endl;
+    GlobalV::ofs_running<<"\n ----------- Charge Mixing Parameters ------------"<<std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_type", this->mixing_mode);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta", this->mixing_beta);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0", this->mixing_gg0);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_min", PARAM.inp.mixing_gg0_min);
+
     if (PARAM.inp.nspin==2 || PARAM.inp.nspin==4)
     {
-        GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
-        GlobalV::ofs_running<<"mixing_gg0_mag: "<< PARAM.inp.mixing_gg0_mag <<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta_mag", this->mixing_beta_mag);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_mag", PARAM.inp.mixing_gg0_mag);
     }
     if (PARAM.inp.mixing_angle > 0)
     {
-        GlobalV::ofs_running<<"mixing_angle: "<< PARAM.inp.mixing_angle <<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_angle", PARAM.inp.mixing_angle);
     }
-    GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
-    GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_ndim", this->mixing_ndim);
 
     return;
 }
@@ -141,7 +146,7 @@ void Charge_Mixing::init_mixing()
     }
     
     // initailize tau_mdata
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         if (PARAM.inp.scf_thr_type == 1)
         {
@@ -177,7 +182,7 @@ void Charge_Mixing::mix_reset()
     this->mixing->reset();
     this->rho_mdata.reset();
     // initailize tau_mdata
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         this->tau_mdata.reset();
     }
@@ -190,7 +195,6 @@ void Charge_Mixing::mix_reset()
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold)
 {
     ModuleBase::TITLE("Charge_Mixing", "if_scf_oscillate");
-    ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
 
     if(this->_drho_history.size() == 0)
     {
@@ -238,7 +242,4 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     }
 
     return false;
-
-    ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
-  
 }

@@ -92,8 +92,8 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
         ucell.atoms[i].label = coord[i].atomname;
         ucell.atoms[i].ncpp.psd = coord[i].atomname;
         ucell.atoms[i].na = coord[i].coordinate.size();
-        ucell.atoms[i].tau = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
-        ucell.atoms[i].taud = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
+        ucell.atoms[i].tau.resize(ucell.atoms[i].na);
+        ucell.atoms[i].taud.resize(ucell.atoms[i].na);
         for (int j = 0; j < ucell.atoms[i].na; j++)
         {
             std::vector<double> this_atom = coord[i].coordinate[j];
@@ -136,11 +136,6 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
 
 void ClearUcell(UnitCell &ucell)
 {
-    for (int i = 0; i < ucell.ntype; i++)
-    {
-        delete[] ucell.atoms[i].tau;
-        delete[] ucell.atoms[i].taud;
-    }
     delete[] ucell.atoms;
 }
 
@@ -196,7 +191,9 @@ TEST_F(vdwd2Test, D2Default)
 TEST_F(vdwd2Test, WrongVdwType)
 {
     input.vdw_method = "d2d3";
-    EXPECT_EQ(vdw::make_vdw(ucell, input),nullptr);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT( vdw::make_vdw(ucell, input); ,::testing::ExitedWithCode(1), "");
+    std::string output = testing::internal::GetCapturedStdout();
 }
 
 TEST_F(vdwd2Test, OneAtomWarning)
@@ -240,8 +237,8 @@ TEST_F(vdwd2Test, D2ReadFileError)
     vdw::Vdwd2 vdwd2_test(ucell);
     
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(vdwd2_test.parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(0), "");
-    EXPECT_EXIT(vdwd2_test.parameter().R0_input(input.vdw_R0_file, input.vdw_R0_unit), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(vdwd2_test.parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(vdwd2_test.parameter().R0_input(input.vdw_R0_file, input.vdw_R0_unit), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
 }
 
@@ -271,8 +268,8 @@ TEST_F(vdwd2Test, D2WrongUnit)
     vdw::Vdwd2 vdwd2_test(ucell);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(vdwd2_test.parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(0), "");
-    EXPECT_EXIT(vdwd2_test.parameter().R0_input(input.vdw_R0_file, input.vdw_R0_unit), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(vdwd2_test.parameter().C6_input(input.vdw_C6_file, input.vdw_C6_unit), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(vdwd2_test.parameter().R0_input(input.vdw_R0_file, input.vdw_R0_unit), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
 }
 
@@ -303,7 +300,7 @@ TEST_F(vdwd2Test, D2R0ZeroQuit)
     vdwd2_test.parameter().R0_["Si"] = 0.0;
     
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(vdwd2_test.get_energy(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(vdwd2_test.get_energy(), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
 }
 
@@ -380,7 +377,7 @@ class vdwd3Test: public testing::Test
 TEST_F(vdwd3Test, D30Default)
 {
     vdw::Vdwd3 vdwd3_test(ucell);
-    vdwd3_test.parameter().initial_parameters(input);
+    vdwd3_test.parameter().initial_parameters("pbe", input);
 
     EXPECT_EQ(vdwd3_test.parameter().s6(), 1.0);
     EXPECT_EQ(vdwd3_test.parameter().s18(), 0.7875);
@@ -399,7 +396,8 @@ TEST_F(vdwd3Test, D30UnitA)
     input.vdw_cn_thr_unit = "A";
     vdw::Vdwd3 vdwd3_test(ucell);
 
-    vdwd3_test.parameter().initial_parameters(input);
+    const std::string xc = "pbe";
+    vdwd3_test.parameter().initial_parameters(xc, input);
 
     EXPECT_EQ(vdwd3_test.parameter().rthr2(), std::pow(95/ModuleBase::BOHR_TO_A, 2));
     EXPECT_EQ(vdwd3_test.parameter().cn_thr2(), std::pow(40/ModuleBase::BOHR_TO_A, 2));   
@@ -410,7 +408,8 @@ TEST_F(vdwd3Test, D30Period)
     input.vdw_cutoff_type = "period";
     vdw::Vdwd3 vdwd3_test(ucell);
 
-    vdwd3_test.parameter().initial_parameters(input);
+    const std::string xc = "pbe";
+    vdwd3_test.parameter().initial_parameters(xc, input);
     vdwd3_test.init();
     std::vector<int> rep_vdw_ref = {input.vdw_cutoff_period.x, input.vdw_cutoff_period.y, input.vdw_cutoff_period.z};
 

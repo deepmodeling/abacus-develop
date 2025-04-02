@@ -8,7 +8,8 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
-                                           pseudopot_cell_vnl* nlpp,
+                                           const pseudopot_cell_vl& locpp,
+                                           const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
                                            ModuleSymmetry::Symmetry* p_symm,
                                            Structure_Factor* p_sf,
@@ -45,6 +46,12 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // vdw stress
     ModuleBase::matrix sigmavdw;
     sigmavdw.create(3, 3);
+    // DFT+U and DeltaSpin stress
+    ModuleBase::matrix sigmaonsite;
+    sigmaonsite.create(3, 3);
+    // EXX PW stress
+    ModuleBase::matrix sigmaexx;
+    sigmaexx.create(3, 3);
 
     for (int i = 0; i < 3; i++)
     {
@@ -59,6 +66,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
             sigmaewa(i, j) = 0.0;
             sigmaxcc(i, j) = 0.0;
             sigmavdw(i, j) = 0.0;
+            sigmaonsite(i, j) = 0.0;
+            sigmaexx(i, j) = 0.0;
         }
     }
 
@@ -66,20 +75,21 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
 
     // hartree contribution
-    this->stress_har(sigmahar, rho_basis, 1, pelec->charge);
+    this->stress_har(ucell, sigmahar, rho_basis, 1, pelec->charge);
 
     // ewald contribution
-    this->stress_ewa(sigmaewa, rho_basis, 1);
+    this->stress_ewa(ucell, sigmaewa, rho_basis, 1);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(sigmaxc, rho_basis, pelec->charge);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge);
+    if (XC_Functional::get_ked_flag())
     {
-        this->stress_mgga(sigmaxc,
+        this->stress_mgga(ucell,
+                          sigmaxc,
                           this->pelec->wg,
                           this->pelec->pot->get_effective_vofk(),
                           pelec->charge,
@@ -89,10 +99,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, p_sf, 1, pelec->charge);
+    this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
@@ -100,11 +110,24 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // add US term from augmentation charge derivatives
     if (PARAM.globalv.use_uspp)
     {
-        this->stress_us(sigmanl, rho_basis, &GlobalC::ppcell, ucell);
+        this->stress_us(sigmanl, rho_basis, nlpp, ucell);
     }
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
+
+    // DFT+U and DeltaSpin stress
+    if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+    {
+        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
+    }
+
+    // EXX PW stress
+    if (GlobalC::exx_info.info_global.cal_exx)
+    {
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell);
+    }
+
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
@@ -112,7 +135,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         {
             sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
                                    + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol);
+                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol)
+                                   + sigmaexx(ipol, jpol);
         }
     }
 
@@ -121,23 +145,31 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         p_symm->symmetrize_mat3(sigmatot, ucell.lat);
     }
 
-    bool ry = false;
-    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
+    const bool ry = false;
+    const bool screen = PARAM.inp.test_stress;
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
-    if (PARAM.inp.test_stress)
+    if (screen)
     {
-        ry = true;
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
-        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
+        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        {
+            ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, screen, ry, GlobalV::ofs_running);
+        }
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            ModuleIO::print_stress("EXX    STRESS", sigmaexx, screen, ry, GlobalV::ofs_running);
+        }
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
     ModuleBase::timer::tick("Stress_PW", "cal_stress");
     return;

@@ -3,14 +3,21 @@
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/klist.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+
 #include <vector>
+
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
@@ -27,26 +34,38 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
-      using TAC = std::pair<int, std::array<int, 3>>;
-      HamiltLCAO(Gint_Gamma* GG_in,
-          Gint_k* GK_in,
-          const Parallel_Orbitals* paraV,
-          elecstate::Potential* pot_in,
-          const K_Vectors& kv_in,
-          const TwoCenterBundle& two_center_bundle,
-          const LCAO_Orbitals& orb,
-          elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __EXX
-          , const int istep
-          , int* exx_two_level_step = nullptr
-          , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
-          , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+    using TAC = std::pair<int, std::array<int, 3>>;
+    HamiltLCAO(Gint_Gamma* GG_in,
+               Gint_k* GK_in,
+               const UnitCell& ucell,
+               const Grid_Driver& grid_d,
+               const Parallel_Orbitals* paraV,
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in,
+               const TwoCenterBundle& two_center_bundle,
+               const LCAO_Orbitals& orb,
+               elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+               ,
+               LCAO_Deepks<TK>* ld_in
 #endif
-      );
+#ifdef __EXX
+               ,
+               const int istep,
+               int* exx_two_level_step = nullptr,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+#endif
+    );
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb, const std::vector<double>& orb_cutoff);
+    HamiltLCAO(const UnitCell& ucell,
+               const Grid_Driver& grid_d,
+               const Parallel_Orbitals* paraV,
+               const K_Vectors& kv_in,
+               const TwoCenterIntegrator& intor_overlap_orb,
+               const std::vector<double>& orb_cutoff);
 
     ~HamiltLCAO()
     {
@@ -62,14 +81,36 @@ class HamiltLCAO : public Hamilt<TK>
     /// get pointer of Operator<TK> ops
     Operator<TK>*& getOperator();
     /// get hk-pointer
-    TK* getHk() const{return this->hsk->get_hk();}
+    TK* getHk() const
+    {
+        return this->hsk->get_hk();
+    }
     /// get sk-pointer
-    TK* getSk() const{return this->hsk->get_sk();}
-    int get_size_hsk() const{return this->hsk->get_size();}
+    TK* getSk() const
+    {
+        return this->hsk->get_sk();
+    }
+    int get_size_hsk() const
+    {
+        return this->hsk->get_size();
+    }
     /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
-    HContainer<TR>*& getHR(){return this->hR;}
+    HContainer<TR>*& getHR()
+    {
+        return this->hR;
+    }
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
-    HContainer<TR>*& getSR(){return this->sR;}
+    HContainer<TR>*& getSR()
+    {
+        return this->sR;
+    }
+#ifdef __DEEPKS
+    /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
+    HContainer<TR>*& get_V_delta_R()
+    {
+        return this->V_delta_R;
+    }
+#endif
     /// refresh the status of HR
     void refresh() override;
 
@@ -96,6 +137,10 @@ class HamiltLCAO : public Hamilt<TK>
     // Real space Hamiltonian
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
+
+#ifdef __DEEPKS
+    HContainer<TR>* V_delta_R = nullptr;
+#endif
 
     HS_Matrix_K<TK>* hsk = nullptr;
     // special case for NSPIN=2 , data of HR should be separated into two parts

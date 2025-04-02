@@ -14,7 +14,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     hamilt::HContainer<TR>* hR_in,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
-    Grid_Driver* GridD_in,
+    const Grid_Driver* GridD_in,
     const TwoCenterIntegrator* intor)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
 {
@@ -40,7 +40,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::~EkineticNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("EkineticNew", "initialize_HR");
     ModuleBase::timer::tick("EkineticNew", "initialize_HR");
@@ -51,7 +51,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1, I1;
+        int T1=0;
+        int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
@@ -111,7 +112,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1, I1;
+        int T1=0; 
+        int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = this->adjs_all[iat1];
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -160,12 +162,12 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
     const int npol = this->ucell->get_npol();
 
-    const int* iw2l1 = atom1.iw2l;
-    const int* iw2n1 = atom1.iw2n;
-    const int* iw2m1 = atom1.iw2m;
-    const int* iw2l2 = atom2.iw2l;
-    const int* iw2n2 = atom2.iw2n;
-    const int* iw2m2 = atom2.iw2m;
+    const int* iw2l1 = atom1.iw2l.data();
+    const int* iw2n1 = atom1.iw2n.data();
+    const int* iw2m1 = atom1.iw2m.data();
+    const int* iw2l2 = atom2.iw2l.data();
+    const int* iw2n2 = atom2.iw2n.data();
+    const int* iw2m2 = atom2.iw2m.data();
 
     // ---------------------------------------------
     // calculate the Ekinetic matrix for each pair of orbitals

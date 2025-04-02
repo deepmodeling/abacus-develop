@@ -3,7 +3,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -39,7 +39,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      hamilt::HContainer<TR>* hR_in,
                                      const UnitCell* ucell_in,
                                      const LCAO_Orbitals& orb,
-                                     Grid_Driver* GridD_in);
+                                     const Grid_Driver* GridD_in);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
     /**
@@ -59,7 +59,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
     /// shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
-    Grid_Driver* Grid = nullptr;
+    const Grid_Driver* Grid = nullptr;
 
     bool allocated = false;
 
@@ -70,7 +70,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in);
+    void initialize_HR(const Grid_Driver* GridD_in);
 
     /**
      * @brief initialize HR_tmp

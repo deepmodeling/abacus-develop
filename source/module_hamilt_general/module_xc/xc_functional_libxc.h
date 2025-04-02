@@ -7,9 +7,13 @@
 #include "module_base/vector3.h"
 
 #include <xc.h>
+#include <xc_funcs.h>
 
 #include <tuple>
 #include <vector>
+
+#include <map> // added by jghan, 2024-10-10
+#include <utility>
 
 class Charge;
 
@@ -33,12 +37,13 @@ namespace XC_Functional_Libxc
 //  xc_functional_libxc_vxc.cpp
 //-------------------
 
-    extern std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
-        const std::vector<int> &func_id,
-        const int &nrxx, // number of real-space grid
-        const double &omega, // volume of cell
-        const double tpiba,
-        const Charge* const chr); // charge density
+	extern std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
+		const std::vector<int> &func_id,
+		const int &nrxx, // number of real-space grid
+		const double &omega, // volume of cell
+		const double tpiba,
+		const Charge* const chr, // charge density
+		const std::map<int, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
 
     // for mGGA functional
     extern std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(

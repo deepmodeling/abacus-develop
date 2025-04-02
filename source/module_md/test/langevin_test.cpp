@@ -49,7 +49,7 @@ class Langevin_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(param_in.inp, ucell);
+        p_esolver->before_all_runners(ucell, param_in.inp);
 
         mdrun = new Langevin(param_in, ucell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
@@ -163,14 +163,12 @@ TEST_F(Langevin_test, restart)
 
 TEST_F(Langevin_test, print_md)
 {
-    std::ofstream ofs("running.log");
+    std::ofstream ofs("running_langevin.log");
     mdrun->print_md(ofs, true);
     ofs.close();
 
-    std::ifstream ifs("running.log");
+    std::ifstream ifs("running_langevin.log");
     std::string output_str;
-    getline(ifs, output_str);
-    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
@@ -192,5 +190,5 @@ TEST_F(Langevin_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-    remove("running.log");
+    remove("running_langevin.log");
 }

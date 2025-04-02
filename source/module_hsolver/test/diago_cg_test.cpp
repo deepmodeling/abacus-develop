@@ -104,7 +104,7 @@ class DiagoCGPrepare
         double *en = new double[npw];
         int ik = 1;
 	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr);
+	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
 	    int* ngk = new int [1];
 	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<double>> psi;
@@ -158,7 +158,7 @@ class DiagoCGPrepare
             auto psi_wrapper = psi::Psi<std::complex<double>>(
                 psi_in.data<std::complex<double>>(), 1, 
                 ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
-                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1));
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), true);
             psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
             using hpsi_info = typename hamilt::Operator<std::complex<double>>::hpsi_info;
             hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<std::complex<double>>());
@@ -176,7 +176,7 @@ class DiagoCGPrepare
             psi_local.get_pointer(), 
             ct::DataType::DT_COMPLEX_DOUBLE, 
             ct::DeviceType::CpuDevice,
-            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_nbas()});
+            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_ngk()});
         auto eigen_tensor = ct::TensorMap(
             en,
             ct::DataType::DT_DOUBLE,
@@ -186,9 +186,10 @@ class DiagoCGPrepare
             precondition_local,
             ct::DataType::DT_DOUBLE, 
             ct::DeviceType::CpuDevice,
-            ct::TensorShape({static_cast<int>(psi_local.get_current_nbas())})).slice({0}, {psi_local.get_current_nbas()});
-    
-        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+            ct::TensorShape({static_cast<int>(psi_local.get_current_ngk())})).slice({0}, {psi_local.get_current_ngk()});
+
+        std::vector<double> ethr_band(nband, 1e-5);
+        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, prec_tensor);
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi_local.get_pointer(), psi_tensor, {psi_local.get_nbands(), psi_local.get_nbasis()}).sync(psi_tensor);
         /**************************************************************/
@@ -308,7 +309,14 @@ TEST(DiagoCGTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<std::complex<double>> hm;
     std::ifstream ifs;
-    ifs.open("H-KPoints-Si64.dat");
+    std::string filename = "H-KPoints-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
     int dim = DIAGOTEST::npw;

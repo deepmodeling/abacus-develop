@@ -6,7 +6,7 @@
 #include <pybind11/numpy.h>
 
 #include "module_hsolver/diago_dav_subspace.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/module_device/types.h"
 
 #include "./py_diago_dav_subspace.hpp"
@@ -67,6 +67,13 @@ void bind_hsolver(py::module& m)
                 where the initial precision of eigenvalue calculation can be coarse.
                 If false, it indicates a non-self-consistent field (non-SCF) calculation,
                 where high precision in eigenvalue calculation is required from the start.
+            comm_info : diag_comm_info
+                The communicator information.
+            diago_subspace : int
+                The method to solve the generalized eigenvalue problem.
+                0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
+            nb2d : int
+                The block size in 2d block cyclic distribution if use elpa or scalapack.
         )pbdoc", 
         "mm_op"_a, 
         "precond_vec"_a, 
@@ -76,7 +83,9 @@ void bind_hsolver(py::module& m)
         "need_subspace"_a, 
         "diag_ethr"_a, 
         "scf_type"_a, 
-        "comm_info"_a)
+        "comm_info"_a,
+        "diago_subspace"_a,
+        "nb2d"_a)
         .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
         )pbdoc", "psi_in"_a)
@@ -121,6 +130,8 @@ void bind_hsolver(py::module& m)
                 eigenvectors to be calculated.
             tol : double
                 The tolerance for the convergence.
+            diag_ethr: np.ndarray
+                The tolerance vector.
             max_iter : int
                 The maximum number of iterations.
             use_paw : bool
@@ -130,6 +141,7 @@ void bind_hsolver(py::module& m)
         "precond_vec"_a, 
         "dav_ndim"_a, 
         "tol"_a, 
+        "diag_ethr"_a,
         "max_iter"_a, 
         "use_paw"_a, 
         "comm_info"_a)
@@ -155,7 +167,9 @@ void bind_hsolver(py::module& m)
             for invoking this class is a function defined in _hsolver.py, 
             which uses this class to perform the calculations.
         )pbdoc")
-        .def("diag", &py_hsolver::PyDiagoCG::diag, R"pbdoc(
+        .def("diag",
+             &py_hsolver::PyDiagoCG::diag,
+             R"pbdoc(
             Diagonalize the linear operator using the Conjugate Gradient Method.
 
             Parameters
@@ -176,6 +190,7 @@ void bind_hsolver(py::module& m)
         "mm_op"_a,
         "max_iter"_a,
         "tol"_a,
+        "diag_ethr"_a,  
         "need_subspace"_a,
         "scf_type"_a,
         "nproc_in_pool"_a)

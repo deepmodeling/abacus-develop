@@ -101,9 +101,10 @@ public:
 
     int diag(
         std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
-        std::vector<double> precond_vec,
+        std::vector<double>& precond_vec,
         int dav_ndim,
         double tol,
+        std::vector<double>& diag_ethr,
         int max_iter,
         bool use_paw,
         hsolver::diag_comm_info comm_info
@@ -134,7 +135,7 @@ public:
             const int nrow, 
             const int nbands
         ) {
-            syncmem_op()(this->ctx, this->ctx, spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
+            syncmem_op()(spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
         };
 
         obj = std::make_unique<hsolver::DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>>(
@@ -146,7 +147,7 @@ public:
             comm_info
         );
 
-        return obj->diag(hpsi_func, spsi_func, nbasis, psi, eigenvalue, tol, max_iter);
+        return obj->diag(hpsi_func, spsi_func, nbasis, psi, eigenvalue, diag_ethr, max_iter);
     }
 
 private:

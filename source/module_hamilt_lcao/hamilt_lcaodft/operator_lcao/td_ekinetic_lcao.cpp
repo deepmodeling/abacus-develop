@@ -6,7 +6,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
@@ -20,7 +20,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
                                              const K_Vectors* kv_in,
                                              const UnitCell* ucell_in,
                                              const std::vector<double>& orb_cutoff,
-                                             Grid_Driver* GridD_in,
+                                             const Grid_Driver* GridD_in,
                                              const TwoCenterIntegrator* intor)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), orb_cutoff_(orb_cutoff), kv(kv_in), intor_(intor)
 {
@@ -136,9 +136,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
-    int T1, I1;
+    int T1=0;
+    int I1=0;
     this->ucell->iat2iait(iat1, &I1, &T1);
-    int T2, I2;
+    int T2=0;
+    int I2=0;
     this->ucell->iat2iait(iat2, &I2, &T2);
     Atom& atom1 = this->ucell->atoms[T1];
     Atom& atom2 = this->ucell->atoms[T2];
@@ -148,12 +150,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
     const int npol = this->ucell->get_npol();
 
-    const int* iw2l1 = atom1.iw2l;
-    const int* iw2n1 = atom1.iw2n;
-    const int* iw2m1 = atom1.iw2m;
-    const int* iw2l2 = atom2.iw2l;
-    const int* iw2n2 = atom2.iw2n;
-    const int* iw2m2 = atom2.iw2m;
+    const int* iw2l1 = atom1.iw2l.data();
+    const int* iw2n1 = atom1.iw2n.data();
+    const int* iw2m1 = atom1.iw2m.data();
+    const int* iw2l2 = atom2.iw2l.data();
+    const int* iw2n2 = atom2.iw2n.data();
+    const int* iw2m2 = atom2.iw2m.data();
     // ---------------------------------------------
     // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
     // in principle, only dtau is needed in this function
@@ -220,10 +222,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         hr_mat_p += (npol - 1) * col_indexes.size();
         if (current_mat_p != nullptr)
         {
-            for (int dir = 0; dir < 3; dir++) {
-                current_mat_p[dir] += (npol - 1) * col_indexes.size();
-}
-        }
+			for (int dir = 0; dir < 3; dir++) 
+			{
+				current_mat_p[dir] += (npol - 1) * col_indexes.size();
+			}
+		}
     }
 }
 // init two center integrals and vector potential for td_ekintic term
@@ -244,7 +247,7 @@ void hamilt::TDEkinetic<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {

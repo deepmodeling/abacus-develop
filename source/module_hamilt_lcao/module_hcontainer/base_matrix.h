@@ -2,6 +2,7 @@
 #define BASE_MATRIX_H
 
 #include <iostream>
+#include <mutex>
 
 namespace hamilt
 {
@@ -52,7 +53,14 @@ class BaseMatrix
      * @param nu column index
      * @param value value to be added
      */
-    void add_element(int mu, int nu, const T& value);
+    void add_element(int mu, int nu, const T& value)
+    {
+        #ifdef __DEBUG
+        assert(this->value_begin != nullptr);
+        #endif
+            int index = mu * this->ncol_local + nu;
+            value_begin[index] += value;
+    };
 
     // for inside matrix
     /**
@@ -62,12 +70,19 @@ class BaseMatrix
      * @param j_col column index
      * @return T&
      */
-    T& get_value(const size_t& i_row, const size_t& j_col) const;
+    T& get_value(const size_t& i_row, const size_t& j_col) const
+    {
+        #ifdef __DEBUG
+        assert(this->value_begin != nullptr);
+        #endif
+            int index = i_row * this->ncol_local + j_col;
+            return value_begin[index];
+    };
 
     /**
      * @brief get pointer of value from a submatrix
      */
-    T* get_pointer() const;
+    T* get_pointer() const { return value_begin; };
 
     // operator= for copy assignment
     BaseMatrix& operator=(const BaseMatrix& other);
@@ -80,7 +95,7 @@ class BaseMatrix
     */
     size_t get_memory_size() const;
 
-        /**
+    /**
      * @brief get col_size for this matrix
     */
     int get_col_size() const {return ncol_local;};
@@ -88,6 +103,19 @@ class BaseMatrix
      * @brief get row_size for this matrix
     */
     int get_row_size() const {return nrow_local;};
+    /**
+     * @brief set col_size and row_size
+    */
+    void set_size(const int& col_size_in, const int& row_size_in);
+
+    void add_array_ts(T* array)
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        for (int i = 0; i < nrow_local * ncol_local; ++i)
+        {
+            value_begin[i] += array[i];
+        }
+    }
 
   private:
     bool allocated = false;
@@ -100,6 +128,8 @@ class BaseMatrix
 
     // int current_multiple = 0;
 
+    // for thread safe
+    mutable std::mutex mtx;
     // number of rows and columns
     int nrow_local = 0;
     int ncol_local = 0;

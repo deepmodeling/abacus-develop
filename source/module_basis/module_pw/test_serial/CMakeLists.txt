@@ -9,8 +9,6 @@ remove_definitions(-D__DEEPKS)
 add_library(
     planewave_serial
     OBJECT
-    ../fft.cpp
-    ../module_fft/fft_base.cpp
     ../module_fft/fft_bundle.cpp
     ../module_fft/fft_cpu.cpp
     ../pw_basis.cpp

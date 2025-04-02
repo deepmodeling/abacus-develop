@@ -44,19 +44,74 @@ class Stochastic_Iter
               StoChe<Real, Device>& stoche,
               hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
 
-    void sum_stoband(Stochastic_WF<T, Device>& stowf,
+    /**
+     * @brief sum demet and eband energies for each k point and each band
+     * 
+     * @param stowf stochastic wave function
+     * @param pes elecstate
+     * @param pHamilt hamiltonian
+     * @param wfc_basis wfc pw basis
+     */
+    void sum_stoeband(Stochastic_WF<T, Device>& stowf,
                      elecstate::ElecStatePW<T, Device>* pes,
                      hamilt::Hamilt<T, Device>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);
 
+    /**
+     * @brief calculate the density
+     * 
+     * @param ucell reference to unit cell
+     * @param stowf stochastic wave function
+     * @param pes elecstate
+     * @param wfc_basis wfc pw basis
+     */
+    void cal_storho(const UnitCell& ucell,
+                    Stochastic_WF<T, Device>& stowf,
+                    elecstate::ElecStatePW<T, Device>* pes,
+                    ModulePW::PW_Basis_K* wfc_basis);
+
+    /**
+     * @brief calculate total number of electrons
+     * 
+     * @param pes elecstate
+     * @return double 
+     */
     double calne(elecstate::ElecState* pes);
 
+    /**
+     * @brief solve ne(mu) = ne_target and get chemical potential mu
+     * 
+     * @param iter scf iteration index
+     * @param pes elecstate
+     */
     void itermu(const int iter, elecstate::ElecState* pes);
 
+    /**
+     * @brief orthogonalize stochastic wave functions with KS wave functions
+     * 
+     * @param ik k point index
+     * @param psi KS wave functions
+     * @param stowf stochastic wave functions
+     */
     void orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf);
 
+    /**
+     * @brief check emax and emin
+     * 
+     * @param ik k point index
+     * @param istep ion step index
+     * @param iter scf iteration index
+     * @param stowf stochastic wave functions
+     */
     void checkemm(const int& ik, const int istep, const int iter, Stochastic_WF<T, Device>& stowf);
 
+    /**
+     * @brief check precision of Chebyshev expansion
+     * 
+     * @param ref reference value
+     * @param thr threshold
+     * @param info information
+     */
     void check_precision(const double ref, const double thr, const std::string info);
 
     ModuleBase::Chebyshev<double, Device>* p_che = nullptr;
@@ -66,15 +121,15 @@ class Stochastic_Iter
 
     double mu0; // chemical potential; unit in Ry
     bool change;
-    double targetne;
+    double targetne=0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
     bool check = false;
-    double th_ne;
-    double KS_ne;
+    double th_ne=0.0;
+    double KS_ne=0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
@@ -86,7 +141,7 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
-    K_Vectors* pkv;
+    K_Vectors* pkv=nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]
@@ -108,7 +163,7 @@ class Stochastic_Iter
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using castmem_d2z_op = base_device::memory::cast_memory_op<T, Real, Device, Device>;
     using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
-    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemv_op = ModuleBase::gemv_op<T, Device>;
 };
 
 #endif // Eelectrons_Iter

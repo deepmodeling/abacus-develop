@@ -26,14 +26,10 @@ void define_fcc_cell(UnitCell& ucell)
     ucell.set_atom_flag = true;
     ucell.ntype = 2;
     ucell.lat0 = 1.889726124565062;
-    ucell.atoms[0].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[1].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[1].tau[0] = ModuleBase::Vector3<double>(2.0, 2.0, 2.0);
-    ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[1].taud[0] = ModuleBase::Vector3<double>(0.25, 0.25, 0.25);
+    ucell.atoms[0].tau.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[1].tau.resize(1, ModuleBase::Vector3<double>(2.0, 2.0, 2.0));
+    ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[1].taud.resize(1, ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
     ucell.atoms[0].na = 1;
     ucell.atoms[1].na = 1;
     ucell.atoms[0].nwl = 2;
@@ -53,10 +49,10 @@ void define_fcc_cell(UnitCell& ucell)
     ucell.GT = ucell.latvec.Inverse();
     ucell.G = ucell.GT.Transpose();
     ucell.GGT = ucell.G * ucell.GT;
-    ucell.orbital_fn = new std::string[2];
+    ucell.orbital_fn.resize(2);
     ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
     ucell.orbital_fn[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
-    ucell.pseudo_fn = new std::string[2];
+    ucell.pseudo_fn.resize(2);
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
     ucell.pseudo_fn[1] = "../../../../tests/PP_ORB/C.LDA.UPF";
 
@@ -74,10 +70,8 @@ void define_sc_cell(UnitCell& ucell)
     ucell.set_atom_flag = true;
     ucell.ntype = 1;
     ucell.lat0 = 1.889726124565062;
-    ucell.atoms[0].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    ucell.atoms[0].tau.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     ucell.atoms[0].na = 1;
     ucell.atoms[0].nwl = 2;
     ucell.a1 = ModuleBase::Vector3<double>(8.0, 0.0, 0.0);
@@ -92,9 +86,9 @@ void define_sc_cell(UnitCell& ucell)
     ucell.GT = ucell.latvec.Inverse();
     ucell.G = ucell.GT.Transpose();
     ucell.GGT = ucell.G * ucell.GT;
-    ucell.orbital_fn = new std::string[1];
+    ucell.orbital_fn.resize(1);
     ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
-    ucell.pseudo_fn = new std::string[1];
+    ucell.pseudo_fn.resize(1);
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
 
     PARAM.sys.global_out_dir = "./";
@@ -186,7 +180,7 @@ TEST_F(toQOTest, BuildNao)
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
-    tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn, 0);
+    tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn.data(), 0);
     EXPECT_EQ(tqo.p_nao()->nchi(), 10); // not (l, m)-resoluted
     EXPECT_EQ(tqo.nphi(), 26); // (l, m)-resoluted
 }
@@ -201,9 +195,9 @@ TEST_F(toQOTest, RadialCollectionIndexing)
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
-    tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn, 0);
-    // ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
-    // ucell.orbital_fn[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
+    tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn.data(), 0);
+    // ucell.orbital_fn.data()[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
+    // ucell.orbital_fn.data()[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
     // test1 1Si, 1C
     std::vector<int> natoms = {1, 1};
     std::map<std::tuple<int,int,int,int,int>,int> index;
@@ -315,7 +309,7 @@ TEST_F(toQOTest, RadialCollectionIndexing)
 
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -369,7 +363,7 @@ TEST_F(toQOTest, BuildHydrogenMinimal)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -413,7 +407,7 @@ TEST_F(toQOTest, ScanSupercellForAtom)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype,     // ntype
                   "./",            // orbital_dir
-                  ucell.orbital_fn,// orbital_fn
+                  ucell.orbital_fn.data(),// orbital_fn
                   0);              // rank
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
     for(int itype = 0; itype < ucell.ntype; itype++)
@@ -422,7 +416,7 @@ TEST_F(toQOTest, ScanSupercellForAtom)
     }
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -467,11 +461,11 @@ TEST_F(toQOTest, ScanSupercellFCC)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -492,12 +486,12 @@ TEST_F(toQOTest, ScanSupercellSC1)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     PARAM.input.qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -518,7 +512,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
     for(int itype = 0; itype < ucell.ntype; itype++)
@@ -527,7 +521,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
     }
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -880,7 +874,7 @@ TEST_F(toQOTest, BuildHydrogenFull)
     PARAM.input.qo_thr = 1e-10;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  {},
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1067,7 +1061,7 @@ TEST_F(toQOTest, BuildPswfcPartial1)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1087,7 +1081,7 @@ TEST_F(toQOTest, BuildPswfcPartial2)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1107,7 +1101,7 @@ TEST_F(toQOTest, BuildPswfcPartial3)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1128,7 +1122,7 @@ TEST_F(toQOTest, BuildPswfcAll)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1149,13 +1143,13 @@ TEST_F(toQOTest, ScanSupercellSC2)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     PARAM.input.qo_screening_coeff[0] = 0.1; // use this to control the tailing of radial function
     PARAM.input.qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1175,13 +1169,13 @@ TEST_F(toQOTest, ScanSupercellSC3)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     PARAM.input.qo_screening_coeff[0] = 0.25; // use this to control the tailing of radial function
     PARAM.input.qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1202,13 +1196,13 @@ TEST_F(toQOTest, ScanSupercellSC4)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
-                  ucell.orbital_fn,
+                  ucell.orbital_fn.data(),
                   0);
     PARAM.input.qo_screening_coeff[0] = 0.5; // use this to control the tailing of radial function
     PARAM.input.qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 ucell.pseudo_fn.data(),
                  PARAM.input.qo_screening_coeff,
                  PARAM.input.qo_thr,
                  GlobalV::ofs_running,
@@ -1227,8 +1221,8 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
              PARAM.input.qo_screening_coeff);
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
     kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
-    ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.orbital_fn.data()[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.orbital_fn.data()[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     //PARAM.input.qo_thr = 1e-10;
     tqo.initialize(PARAM.sys.global_out_dir,

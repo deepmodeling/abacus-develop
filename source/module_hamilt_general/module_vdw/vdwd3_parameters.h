@@ -27,7 +27,8 @@ class Vdwd3Parameters : public VdwParameters
      * @param input Parameter instance
      * @param plog optional, for logging the parameter setting process
      */
-    void initial_parameters(const Input_para &input, 
+    void initial_parameters(const std::string& xc,
+                            const Input_para& input, 
                             std::ofstream* plog = nullptr); // for logging the parameter autoset
 
     inline const std::string &version() const { return version_; }
@@ -56,13 +57,13 @@ class Vdwd3Parameters : public VdwParameters
   private:
     std::string version_;
 
-    bool abc_; // third-order term?
-    double rthr2_; // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
-    double cn_thr2_; // R^2 distance to cutoff for CN_calculation (a.u.)
-    double s6_;
-    double rs6_;
-    double s18_;
-    double rs18_;
+    bool abc_=false; // third-order term?
+    double rthr2_=0.0; // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
+    double cn_thr2_=0.0; // R^2 distance to cutoff for CN_calculation (a.u.)
+    double s6_=0.0;
+    double rs6_=0.0;
+    double s18_=0.0;
+    double rs18_=0.0;
 
     static constexpr size_t max_elem_ = 94;
     static constexpr double k1_ = 16.0, k2_ = 4.0 / 3.0, k3_ = -4.0;
@@ -73,6 +74,20 @@ class Vdwd3Parameters : public VdwParameters
     std::vector<double> r2r4_;
     std::vector<double> rcov_;
     std::vector<std::vector<double>> r0ab_;
+
+    static void _vdwd3_autoset_xcparam(const std::string& xc_in,
+                                       const std::string& d3method,
+                                       const std::string& s6_in,
+                                       const std::string& s8_in,
+                                       const std::string& a1_in,
+                                       const std::string& a2_in,
+                                       double& s6,
+                                       double& s8,
+                                       double& a1,
+                                       double& a2,
+                                       std::ofstream* plog = nullptr);
+
+    static std::string _vdwd3_xcname(const std::string& xcpattern);
 
     void init_C6();
     void init_r2r4();

@@ -138,7 +138,8 @@ void Gint::prep_grid(const Grid_Technique& gt,
     return;
 }
 
-void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int& nspin) {
+void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, const int& nspin)
+{
     ModuleBase::TITLE("Gint", "initialize_pvpR");
 
     int npol = 1;
