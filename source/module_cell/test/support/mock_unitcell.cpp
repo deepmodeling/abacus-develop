@@ -17,15 +17,23 @@ UnitCell::~UnitCell() {
         delete[] atoms;
     }
 }
+
 void UnitCell::print_cell(std::ofstream& ofs) const {}
+
 void UnitCell::set_iat2itia() {}
+
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
+
 bool UnitCell::if_atoms_can_move() const { return true; }
+
 bool UnitCell::if_cell_can_change() const { return true; }
+
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
                      const std::string& fixed_axes_in) {}
+
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
-void UnitCell::compare_atom_labels(std::string label1, std::string label2) {}
+
+void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) {}

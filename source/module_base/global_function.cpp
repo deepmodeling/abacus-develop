@@ -104,7 +104,38 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
     return;
 }
 
+
 bool SCAN_BEGIN(std::ifstream &ifs, 
+                const std::string &TargetName, 
+                const bool restart, 
+                const bool ifwarn)
+{
+    std::string SearchName;
+    bool find = false;
+    if (restart)
+    {
+        ifs.clear();
+        ifs.seekg(0);
+    }
+    ifs.rdstate();
+    while (ifs.good())
+    {
+        ifs >> SearchName;
+        if (SearchName == TargetName)
+        {
+            find = true;
+            break;
+        }
+    }
+    if (!find && ifwarn)
+    {
+        GlobalV::ofs_warning << " In SCAN_BEGIN, can't find: " << TargetName << " block." << std::endl;
+    }
+    return find;
+}
+
+
+bool SCAN_LINE_BEGIN(std::ifstream &ifs, 
                 const std::string &TargetName, 
                 const bool restart, 
                 const bool ifwarn)
@@ -143,7 +174,7 @@ bool SCAN_BEGIN(std::ifstream &ifs,
 
     if (!find && ifwarn)
     {
-        GlobalV::ofs_warning << " In SCAN_BEGIN, can't find: " << TargetName << " block." << std::endl;
+        GlobalV::ofs_warning << " In SCAN_LINE_BEGIN, can't find: " << TargetName << " block." << std::endl;
     }
     return find;
 }

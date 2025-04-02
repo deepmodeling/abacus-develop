@@ -28,7 +28,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     std::string& Coordinate  = ucell.Coordinate;
     const int    ntype       = ucell.ntype;
 
-    if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
         ModuleBase::GlobalFunc::READ_VALUE(ifpos, Coordinate);
 
