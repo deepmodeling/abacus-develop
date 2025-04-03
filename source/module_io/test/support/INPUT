@@ -65,6 +65,7 @@ out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
+out_ldos                       True #output local density of states
 out_band                       0 #output energy and band structure
 out_proj_band                  FaLse #output projected band structure
 restart_save                   f #print to disk every step for restart
@@ -179,6 +180,7 @@ dos_edelta_ev                  0.01 #delta energy for dos
 dos_scale                      0.01 #scale dos range by
 dos_sigma                      0.07 #gauss b coefficeinet(default=0.07)
 dos_nche                       100 #orders of Chebyshev expansions for dos
+stm_bias                       2.0 #bias voltage used to calculate ldos
 
 #Parameters (9.Molecular dynamics)
 md_type                        nvt #choose ensemble

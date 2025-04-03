@@ -22,8 +22,8 @@
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_io/berryphase.h"
+#include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
-#include "module_io/nscf_band.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -825,53 +825,9 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    //! 1) Output information to screen
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    ESolver_KS<T, Device>::after_all_runners(ucell);
 
-    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0)
-    {
-        GlobalV::ofs_running << "\n\n\n\n";
-        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Post-processing of data:                   "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
-                                "output here.             |"
-                             << std::endl;
-        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
-                                "charge analysis can be done. |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
-                                "surface information can be    |"
-                             << std::endl;
-        GlobalV::ofs_running << " | done here.                                 "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
-                             << std::endl;
-        GlobalV::ofs_running << "\n\n\n\n";
-    }
-
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
-
-    //! 2) Print occupation numbers into istate.info
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
     //! 3) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
@@ -896,22 +852,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
         }
     }
 
-    //! 4) Print out band structure information
-    if (PARAM.inp.out_band[0])
+    // out ldos
+    if (PARAM.inp.out_ldos)
     {
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                PARAM.inp.nbands,
-                                0.0,
-                                PARAM.inp.out_band[1],
-                                this->pelec->ekb,
-                                this->kv);
-        }
+        ModuleIO::cal_ldos(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
+                           this->psi[0],
+                           this->Pgrid,
+                           ucell);
     }
 
     //! 5) Calculate the spillage value, used to generate numerical atomic orbitals

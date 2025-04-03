@@ -2,16 +2,17 @@
 
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
+#include "module_elecstate/elecstate_print.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hsolver/hsolver.h"
 #include "module_io/cube_io.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
+#include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_print.h"
-#include "module_hsolver/hsolver.h"
 
 #include <ctime>
 #include <iostream>
@@ -721,6 +722,69 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     if (istep % PARAM.inp.out_interval == 0)
     {
         elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
+    }
+}
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
+{
+    ESolver_FP::after_all_runners(ucell);
+
+    // 1) write information
+    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
+    {
+        GlobalV::ofs_running << "\n\n\n\n";
+        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
+                             << std::endl;
+        GlobalV::ofs_running << " |                                            "
+                                "                        |"
+                             << std::endl;
+        GlobalV::ofs_running << " | Post-processing of data:                   "
+                                "                        |"
+                             << std::endl;
+        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
+                                "output here.             |"
+                             << std::endl;
+        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
+                                "charge analysis can be done. |"
+                             << std::endl;
+        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
+                                "surface information can be    |"
+                             << std::endl;
+        GlobalV::ofs_running << " | done here.                                 "
+                                "                        |"
+                             << std::endl;
+        GlobalV::ofs_running << " |                                            "
+                                "                        |"
+                             << std::endl;
+        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
+                             << std::endl;
+        GlobalV::ofs_running << "\n\n\n\n";
+    }
+
+    // 2) write information
+    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
+
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+
+    // 3) print out band information
+    if (PARAM.inp.out_band[0])
+    {
+        for (int is = 0; is < nspin0; is++)
+        {
+            std::stringstream ss2;
+            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
+            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
+            ModuleIO::nscf_band(is,
+                                ss2.str(),
+                                PARAM.inp.nbands,
+                                0.0,
+                                PARAM.inp.out_band[1],
+                                this->pelec->ekb,
+                                this->kv);
+        }
     }
 }
 

@@ -46,6 +46,7 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 PW basis:
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - By default, CUDA architectures 60, 70, 75, 80, 86, and 89 are compiled (if supported). It can be overriden using the CMake variable [`CMAKE_CUDA_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html) or the environmental variable [`CUDAARCHS`](https://cmake.org/cmake/help/latest/envvar/CUDAARCHS.html).
+
 LCAO basis:
 - Unless there is a specific reason, avoid using multiple GPUs, as it can be slower than using a single GPU. This is because the generalized eigenvalue solution of the LCAO basis set will incur additional communication overhead when calculated on multiple cards. When the memory limit of a GPU card makes it insufficient to complete the task, it is recommended to use multiple cards for calculation.
 - When using elpa on GPUs, some ELPA internal logs will be output.

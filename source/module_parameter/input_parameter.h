@@ -363,6 +363,7 @@ struct Input_para
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
+    bool out_ldos = false;                ///< ldos calculation
     bool out_mul = false;                 ///< qifeng add 2019-9-10
     bool out_proj_band = false;           ///< projected band structure calculation jiyy add 2022-05-11
     std::string out_level = "ie";         ///< control the output information.
@@ -371,6 +372,7 @@ struct Input_para
     bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
+    std::vector<int> out_mat_l  = {0, 8}; ///< output L matrix in local basis.
     bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
                                           ///< S(R) matrix in local basis.
     bool out_mat_dh = false;
@@ -412,6 +414,7 @@ struct Input_para
     double dos_scale = 0.01;
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
+    double stm_bias = 1.0;   ///< bias voltage for STM
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions
