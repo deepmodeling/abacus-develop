@@ -100,6 +100,8 @@ class OperatorLCAO : public Operator<TK> {
     // protected:
     // Hamiltonian matrices which are calculated in OperatorLCAO
     HS_Matrix_K<TK>* hsk = nullptr;
+
+    // kvec_d
     const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 
   protected:

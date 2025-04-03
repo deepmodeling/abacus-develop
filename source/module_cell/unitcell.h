@@ -233,7 +233,7 @@ class UnitCell {
 
     /// @brief check consistency between two atom labels from STRU and pseudo or
     /// orb file
-    void compare_atom_labels(std::string label1, std::string label2);
+    void compare_atom_labels(const std::string &label1, const std::string &label2);
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atom_Counts() const;
     /// @brief get orbitalCounts, which is a map from element type to orbital
