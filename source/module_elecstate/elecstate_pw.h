@@ -46,11 +46,11 @@ class ElecStatePW : public ElecState
     T** rhog = nullptr;     // [Device] [spin][nrxx] rhog
     Real** kin_r = nullptr; // [Device] [spin][nrxx] kin_r
 
+    ModulePW::PW_Basis_K* basis = nullptr;
+
   protected:
 
     ModulePW::PW_Basis* rhopw_smooth = nullptr;
-
-    ModulePW::PW_Basis_K* basis = nullptr;
 
     UnitCell* ucell = nullptr;
 

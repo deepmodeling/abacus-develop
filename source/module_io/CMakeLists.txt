@@ -3,6 +3,7 @@ list(APPEND objects
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
+    cal_ldos.cpp
     cif_io.cpp
     write_dos_pw.cpp
     nscf_band.cpp
@@ -68,6 +69,7 @@ if(ENABLE_LCAO)
       output_dmk.cpp
       output_mulliken.cpp
       io_npz.cpp
+      cal_pLpR.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

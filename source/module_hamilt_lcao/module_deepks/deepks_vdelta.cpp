@@ -106,10 +106,6 @@ void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
                     }
                 }
             }
-            else
-            {
-                // do nothing
-            }
 
             Parallel_Reduce::reduce_all(lineH.data(), nlocal - i);
 
@@ -146,12 +142,11 @@ template void DeePKS_domain::cal_e_delta_band<std::complex<double>>(
     const Parallel_Orbitals* pv,
     double& e_delta_band);
 
-template void DeePKS_domain::collect_h_mat<double, ModuleBase::matrix>(
-    const Parallel_Orbitals& pv,
-    const std::vector<std::vector<double>>& h_in,
-    std::vector<ModuleBase::matrix>& h_out,
-    const int nlocal,
-    const int nks);
+template void DeePKS_domain::collect_h_mat<double, ModuleBase::matrix>(const Parallel_Orbitals& pv,
+                                                                       const std::vector<std::vector<double>>& h_in,
+                                                                       std::vector<ModuleBase::matrix>& h_out,
+                                                                       const int nlocal,
+                                                                       const int nks);
 
 template void DeePKS_domain::collect_h_mat<std::complex<double>, ModuleBase::ComplexMatrix>(
     const Parallel_Orbitals& pv,

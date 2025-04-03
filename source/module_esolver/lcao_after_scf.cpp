@@ -25,6 +25,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_io/cal_pLpR.h"
 #include "module_parameter/parameter.h"
 
 //--------------temporary----------------------------
@@ -479,6 +480,29 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
     {
         RA.delete_grid();
+    }
+
+    //------------------------------------------------------------------
+    //! 20) calculate expectation of angular momentum operator in LCAO basis
+    //------------------------------------------------------------------
+    if (PARAM.inp.out_mat_l[0])
+    {
+        ModuleIO::AngularMomentumCalculator mylcalculator(
+            /*orbital_dir=*/PARAM.inp.orbital_dir,
+            /*ucell=*/ucell,
+            /*search_radius=*/PARAM.inp.search_radius,
+            /*test_deconstructor=*/PARAM.inp.test_deconstructor,
+            /*test_grid=*/PARAM.inp.test_grid,
+            /*test_atom_input=*/PARAM.inp.test_atom_input,
+            /*search_pbc=*/PARAM.inp.search_pbc,
+            /*ofs=*/&GlobalV::ofs_running,
+            /*rank=*/GlobalV::MY_RANK
+        );
+        mylcalculator.calculate(/*suffix=*/PARAM.inp.suffix,
+                                /*outdir=*/PARAM.globalv.global_out_dir,
+                                /*ucell=*/ucell,
+                                /*precision=*/PARAM.inp.out_mat_l[1],
+                                /*rank=*/GlobalV::MY_RANK);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");

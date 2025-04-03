@@ -140,6 +140,7 @@
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
+    - [out\_ldos](#out_ldos)
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
@@ -154,6 +155,7 @@
     - [out\_mat\_dh](#out_mat_dh)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
+    - [out\_mat\_l](#out_mat_l)
     - [out\_eband\_terms](#out_eband_terms)
     - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
     - [dm\_to\_rho](#dm_to_rho)
@@ -174,6 +176,7 @@
     - [dos\_emin\_ev](#dos_emin_ev)
     - [dos\_emax\_ev](#dos_emax_ev)
     - [dos\_nche](#dos_nche)
+    - [stm\_bias](#stm_bias)
   - [NAOs](#naos)
     - [bessel\_nao\_ecut](#bessel_nao_ecut)
     - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
@@ -1706,6 +1709,12 @@ These variables are used to control the output of properties.
     - lcao-only: output the density of states (DOS) and the projected density of states (PDOS)
 - **Default**: 0
 
+### out_ldos
+
+- **Type**: Boolean
+- **Description**: Whether to output the local density of states for given bias in cube file format, which is controlled by [stm_bias](#stm_bias). 
+- **Default**: False
+
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
@@ -1806,6 +1815,13 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Availability**: Numerical atomic orbital (NAO) basis
 - **Description**: Whether to print the exchange-correlation matrices in **numerical orbital representation** (unit: Ry): $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format (the same format as [out_mat_hs2](../elec_properties/hs_matrix.md#out_mat_hs2)) in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
 - **Default**: False
+
+### out_mat_l
+
+- **Type**: Boolean [Integer\](optional)
+- **Availability**: Numerical atomic orbital (NAO) basis
+- **Description**: Whether to print the expectation value of the angular momentum operator $\hat{L}_x$, $\hat{L}_y$, and $\hat{L}_z$ in the basis of the localized atomic orbitals. The files are named `OUT.${suffix}/${suffix}_Lx.dat`, `OUT.${suffix}/${suffix}_Ly.dat`, and `OUT.${suffix}/${suffix}_Lz.dat`. The second integer controls the precision of the output.
+- **Default**: False 8
 
 ### out_eband_terms
 
@@ -1955,8 +1971,15 @@ These variables are used to control the calculation of DOS. [Detailed introducti
 ### dos_nche
 
 - **Type**: Integer
-The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
+- **Description**: The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
 - **Default**: 100
+
+### stm_bias
+
+- **Type**: Real
+- **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos).
+- **Default**: 1.0
+- **Unit**: V
 
 [back to top](#full-list-of-input-keywords)
 

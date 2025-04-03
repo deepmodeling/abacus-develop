@@ -12,7 +12,6 @@
 #include "module_io/dos_nao.h"
 #include "module_io/io_dmk.h"
 #include "module_io/io_npz.h"
-#include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_log.h"
 #include "module_io/output_mat_sparse.h"
@@ -393,70 +392,9 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-
-    // 1) write information
-    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
-    {
-        GlobalV::ofs_running << "\n\n\n\n";
-        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Post-processing of data:                   "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
-                                "output here.             |"
-                             << std::endl;
-        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
-                                "charge analysis can be done. |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
-                                "surface information can be    |"
-                             << std::endl;
-        GlobalV::ofs_running << " | done here.                                 "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
-                             << std::endl;
-        GlobalV::ofs_running << "\n\n\n\n";
-    }
-
-    // 2) write information
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
-    {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-    }
+    ESolver_KS<TK>::after_all_runners(ucell);
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-
-    // 3) print out band information
-    if (PARAM.inp.out_band[0])
-    {
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                PARAM.inp.nbands,
-                                0.0,
-                                PARAM.inp.out_band[1],
-                                this->pelec->ekb,
-                                this->kv);
-        }
-    }
 
     // 4) write projected band structure by jiyy-2022-4-20
     if (PARAM.inp.out_proj_band)
