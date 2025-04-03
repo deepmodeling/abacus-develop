@@ -106,7 +106,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                         if (std::is_same<TK, std::complex<double>>::value)
                         {
                             const double arg
-                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
+                                = (kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
                             kphase = std::complex<double>(cos(arg), sin(arg));
                         }
                         TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
@@ -268,7 +268,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                     std::complex<double> kphase = std::complex<double>(1.0, 0.0);
                     if (std::is_same<TK, std::complex<double>>::value)
                     {
-                        const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
+                        const double arg = (kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
                         kphase = std::complex<double>(cos(arg), sin(arg));
                     }
                     TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
