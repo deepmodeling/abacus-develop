@@ -122,7 +122,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                     {
                                         TK_tensor tmp = overlap_1->get_value(iw1, ib + m1)
                                                         * overlap_2->get_value(iw2, ib + m2) * *kpase_ptr;
-                                        accessor[ik][iw1][iw2][inl][m1][m2] += tmp;
+                                        accessor[ik][iw1_all][iw2_all][inl][m1][m2] += tmp;
                                     }
                                 }
                                 ib += nm;
@@ -282,7 +282,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                             for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
                             {
                                 TK_tensor tmp = overlap->get_value(iw1, ib + m1) * *kpase_ptr;
-                                accessor[iat][nl][ik][iw1_local][m1] += tmp;
+                                accessor[iat][nl][ik][iw1_all][m1] += tmp;
                             }
                             ib += nm;
                             nl++;
