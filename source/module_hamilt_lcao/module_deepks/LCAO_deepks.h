@@ -86,6 +86,9 @@ class LCAO_Deepks
     // index 0 for itself and index 1-3 for derivatives over x,y,z
     std::vector<hamilt::HContainer<double>*> phialpha;
 
+    // density matrix in real space
+    hamilt::HContainer<double>* dm_r = nullptr;
+
     // projected density matrix
     // [tot_Inl][2l+1][2l+1], here l is corresponding to inl;
     // [nat][nlm*nlm] for equivariant version
@@ -134,6 +137,12 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
+
+    /// Initialize the dm_r container
+    void init_DMR(const UnitCell& ucell,
+                  const LCAO_Orbitals& orb,
+                  const Parallel_Orbitals& pv,
+                  const Grid_Driver& GridD);
 
     //! a temporary interface for cal_e_delta_band
     void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);

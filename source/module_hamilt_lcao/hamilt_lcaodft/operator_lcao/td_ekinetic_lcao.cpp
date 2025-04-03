@@ -31,6 +31,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
     // initialize HR to get adjs info.
     this->initialize_HR(Grid);
 }
+
 template <typename TK, typename TR>
 TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
 {
@@ -40,12 +41,14 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
     }
     TD_Velocity::td_vel_op = nullptr;
 }
+
 // term A^2*S
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc,const TR& overlap, int nnr)
 {
     return;
 }
+
 // term A^2*S
 template <>
 void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(std::complex<double>* Hloc,
@@ -57,6 +60,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(
     Hloc[nnr] += tmp;
     return;
 }
+
 // term A dot ∇
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hloc,
@@ -384,8 +388,11 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
         int spin_tot = PARAM.inp.nspin;
+
         if (spin_tot == 4)
-            ;
+        {
+
+        }
         else if (!output_hR_done && TD_Velocity::out_mat_R)
         {
             for (int spin_now = 0; spin_now < spin_tot; spin_now++)
@@ -398,6 +405,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
             }
             output_hR_done = true;
         }
+
         // folding inside HR to HK
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {

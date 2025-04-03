@@ -82,8 +82,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
-        int T0=0;
-        int I0=0;
+        int T0 = 0;
+        int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -174,7 +174,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                    this->ld->inl2l,
                                    this->ld->inl_index,
                                    this->kvec_d,
-                                   this->DM,
+                                   this->ld->dm_r,
                                    this->ld->phialpha,
                                    *this->ucell,
                                    *ptr_orb_,
@@ -242,8 +242,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(
     const Parallel_Orbitals* paraV = this->hR->get_paraV();
     const int npol = this->ucell->get_npol();
     auto tau0 = ucell->get_tau(iat0);
-    int T0=0;
-    int I0=0;
+    int T0 = 0;
+    int I0 = 0;
     ucell->iat2iait(iat0, &I0, &T0);
     AdjacentAtomInfo& adjs = this->adjs_all[iat0];
     nlm_in.resize(adjs.adj_num + 1);
@@ -307,8 +307,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
-        int T0=0;
-        int I0=0;
+        int T0 = 0;
+        int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo& adjs = this->adjs_all[iat0];
 
@@ -370,8 +370,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             this->pre_calculate_nlm(iat0, nlm_on_the_fly);
         }
 
-        std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat = 
-          is_on_the_fly ? nlm_on_the_fly : nlm_tot[iat0];
+        std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat
+            = is_on_the_fly ? nlm_on_the_fly : nlm_tot[iat0];
 
         // 2. calculate <phi_I|beta>D<beta|phi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
@@ -499,7 +499,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
         hr_in += (npol - 1) * col_size;
     }
 }
-
 
 // contributeHk()
 template <typename TK, typename TR>
