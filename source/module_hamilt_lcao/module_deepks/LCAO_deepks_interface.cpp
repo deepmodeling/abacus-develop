@@ -217,7 +217,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
 
             const std::string file_otot = PARAM.globalv.global_out_dir +
-            (PARAM.inp.deepks_out_labels == 1 ? "deepks_otot.npy" : "deepks_orbital.npy");
+                                         (PARAM.inp.deepks_out_labels == 1 ? "deepks_otot.npy" : "deepks_orbital.npy");
             LCAO_deepks_io::save_matrix2npy(file_otot, o_tot, rank); // Unit: Hartree
 
             if (PARAM.inp.deepks_out_labels == 1)// don't need these when deepks_out_labels == 2
@@ -227,37 +227,37 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     ModuleBase::matrix wg_hl;
                     std::vector<TH> dm_bandgap;
 
-                // Calculate O_delta
-                wg_hl.create(nks, PARAM.inp.nbands);
-                dm_bandgap.resize(nks);
-                wg_hl.zero_out();
-                for (int iks = 0; iks < nks; ++iks)
-                {
-                    wg_hl(iks, nocc - 1) = -1.0;
-                    wg_hl(iks, nocc) = 1.0;
-                }
-                elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
+                    // Calculate O_delta
+                    wg_hl.create(nks, PARAM.inp.nbands);
+                    dm_bandgap.resize(nks);
+                    wg_hl.zero_out();
+                    for (int iks = 0; iks < nks; ++iks)
+                    {
+                        wg_hl(iks, nocc - 1) = -1.0;
+                        wg_hl(iks, nocc) = 1.0;
+                    }
+                    elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
 
                     ModuleBase::matrix o_delta(nks, 1);
 
-                // calculate and save orbital_precalc: [nks,NAt,NDscrpt]
-                torch::Tensor orbital_precalc;
-                DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
-                                                           lmaxd,
-                                                           inlmax,
-                                                           nat,
-                                                           nks,
-                                                           inl2l,
-                                                           kvec_d,
-                                                           phialpha,
-                                                           gevdm,
-                                                           inl_index,
-                                                           ucell,
-                                                           orb,
-                                                           *ParaV,
-                                                           GridD,
-                                                           orbital_precalc);
-                DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks, nspin);
+                    // calculate and save orbital_precalc: [nks,NAt,NDscrpt]
+                    torch::Tensor orbital_precalc;
+                    DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
+                                                            lmaxd,
+                                                            inlmax,
+                                                            nat,
+                                                            nks,
+                                                            inl2l,
+                                                            kvec_d,
+                                                            phialpha,
+                                                            gevdm,
+                                                            inl_index,
+                                                            ucell,
+                                                            orb,
+                                                            *ParaV,
+                                                            GridD,
+                                                            orbital_precalc);
+                    DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks, nspin);
 
                     // save obase and orbital_precalc
                     const std::string file_orbpre = PARAM.globalv.global_out_dir + "deepks_orbpre.npy";
