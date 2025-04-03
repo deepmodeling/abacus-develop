@@ -211,36 +211,10 @@ void DeePKS_domain::cal_gvx(const int nat,
         int nlmax = inlmax / nat;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            std::vector<torch::Tensor> bmmv;
-            for (int ibt = 0; ibt < nat; ++ibt)
-            {
-                std::vector<torch::Tensor> xmmv;
-                for (int i = 0; i < 3; ++i)
-                {
-                    std::vector<torch::Tensor> ammv;
-                    for (int iat = 0; iat < nat; ++iat)
-                    {
-                        int inl = iat * nlmax + nl;
-                        int nm = 2 * inl2l[inl] + 1;
-                        std::vector<double> mmv;
-                        for (int m1 = 0; m1 < nm; ++m1)
-                        {
-                            for (int m2 = 0; m2 < nm; ++m2)
-                            {
-                                mmv.push_back(accessor[i][ibt][inl][m1][m2]);
-                            }
-                        } // nm^2
-                        torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64))
-                                               .reshape({nm, nm}); // nm*nm
-                        ammv.push_back(mm);
-                    }
-                    torch::Tensor amm = torch::stack(ammv, 0); // nat*nm*nm
-                    xmmv.push_back(amm);
-                }
-                torch::Tensor bmm = torch::stack(xmmv, 0); // 3*nat*nm*nm
-                bmmv.push_back(bmm);
-            }
-            gdmr.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+            int nm = 2 * inl2l[nl] + 1;
+            torch::Tensor gdmx_sliced
+                = gdmx.slice(2, nl, inlmax, nlmax).slice(3, 0, nm, 1).slice(4, 0, nm, 1).permute({1, 0, 2, 3, 4});
+            gdmr.push_back(gdmx_sliced);
         }
 
         assert(gdmr.size() == nlmax);
