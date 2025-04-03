@@ -138,7 +138,7 @@ void DeePKS_domain::get_h_tot(const Parallel_Orbitals& pv,
                               const char matrix_type) // 'H' for H(k), 'S' for S(k)
 {
     ModuleBase::TITLE("DeePKS_domain", "get_h_tot");
-    TK* (hamilt::HamiltLCAO<TK, TR>::*getMatrixFunc)() const = nullptr; 
+    TK* (hamilt::HamiltLCAO<TK, TR>::*getMatrixFunc)() const = nullptr;
     if (matrix_type == 'H')
     {
         getMatrixFunc = &hamilt::HamiltLCAO<TK, TR>::getHk;
@@ -150,7 +150,7 @@ void DeePKS_domain::get_h_tot(const Parallel_Orbitals& pv,
     else
     {
         throw std::invalid_argument("Invalid matrix_type. Use 'H' for H(k) or 'S' for S(k).");
-    }    
+    }
     std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.nloc));
     for (int ik = 0; ik < nks; ik++)
     {
@@ -192,24 +192,23 @@ template void DeePKS_domain::collect_h_mat<std::complex<double>, ModuleBase::Com
     const int nlocal,
     const int nks);
 
-template void DeePKS_domain::get_h_tot<double, ModuleBase::matrix, double>
-    (const Parallel_Orbitals& pv,
-    hamilt::HamiltLCAO<double, double>* p_ham,
-    std::vector<ModuleBase::matrix>& h_tot,
-    const int nlocal,
-    const int nks,
-    const char matrix_type);
+template void DeePKS_domain::get_h_tot<double, ModuleBase::matrix, double>(const Parallel_Orbitals& pv,
+                                                                           hamilt::HamiltLCAO<double, double>* p_ham,
+                                                                           std::vector<ModuleBase::matrix>& h_tot,
+                                                                           const int nlocal,
+                                                                           const int nks,
+                                                                           const char matrix_type);
 
-template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, double>
-    (const Parallel_Orbitals& pv,
+template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, double>(
+    const Parallel_Orbitals& pv,
     hamilt::HamiltLCAO<std::complex<double>, double>* p_ham,
     std::vector<ModuleBase::ComplexMatrix>& h_tot,
     const int nlocal,
     const int nks,
     const char matrix_type);
 
-template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, std::complex<double>>
-    (const Parallel_Orbitals& pv,
+template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, std::complex<double>>(
+    const Parallel_Orbitals& pv,
     hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_ham,
     std::vector<ModuleBase::ComplexMatrix>& h_tot,
     const int nlocal,

@@ -504,16 +504,18 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // DeePKS force
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            const std::string file_ftot = PARAM.globalv.global_out_dir +
-                                         (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
+            const std::string file_ftot = PARAM.globalv.global_out_dir
+                                          + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
             LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
 
-            if (PARAM.inp.deepks_out_labels==1)
+            if (PARAM.inp.deepks_out_labels == 1)
             {
                 const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 if (PARAM.inp.deepks_scf)
                 {
-                    LCAO_deepks_io::save_matrix2npy(file_fbase, fcs - fvnl_dalpha, GlobalV::MY_RANK); // Hartree/Bohr, F_base
+                    LCAO_deepks_io::save_matrix2npy(file_fbase,
+                                                    fcs - fvnl_dalpha,
+                                                    GlobalV::MY_RANK); // Hartree/Bohr, F_base
                 }
                 else
                 {
@@ -690,7 +692,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __DEEPKS
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            if (PARAM.inp.deepks_out_labels==1)
+            if (PARAM.inp.deepks_out_labels == 1)
             {
                 const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
                 LCAO_deepks_io::save_matrix2npy(file_stot,
@@ -698,7 +700,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                 GlobalV::MY_RANK,
                                                 ucell.omega,
                                                 'U'); // change to energy unit Ry when printing, S_tot;
-    
+
                 const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
                 if (PARAM.inp.deepks_scf)
                 {
@@ -710,16 +712,17 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
                 else
                 {
-                    LCAO_deepks_io::save_matrix2npy(file_sbase, scs, GlobalV::MY_RANK, ucell.omega, 'U'); // sbase = stot
+                    LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                    scs,
+                                                    GlobalV::MY_RANK,
+                                                    ucell.omega,
+                                                    'U'); // sbase = stot
                 }
             }
-            else if (PARAM.inp.deepks_out_labels==2)
+            else if (PARAM.inp.deepks_out_labels == 2)
             {
                 const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stress.npy";
-                LCAO_deepks_io::save_matrix2npy(file_stot,
-                                                scs,
-                                                GlobalV::MY_RANK,
-                                                ucell.omega,
+                LCAO_deepks_io::save_matrix2npy(file_stot, scs, GlobalV::MY_RANK, ucell.omega,
                                                 'F'); // flat mode
             }
         }

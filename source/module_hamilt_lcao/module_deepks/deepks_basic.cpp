@@ -5,8 +5,8 @@
 #ifdef __DEEPKS
 #include "deepks_basic.h"
 
-#include "module_base/timer.h"
 #include "module_base/atom_in.h"
+#include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
@@ -237,7 +237,7 @@ void DeePKS_domain::check_gedm(const int inlmax, const std::vector<int>& inl2l, 
     }
 }
 
-void DeePKS_domain::prepare_atom(const UnitCell& ucell,torch::Tensor& atom_out)
+void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out)
 {
     int nat = ucell.nat;
     atom_out = torch::zeros({nat, 4}, torch::TensorOptions().dtype(torch::kFloat64));
@@ -259,7 +259,7 @@ void DeePKS_domain::prepare_atom(const UnitCell& ucell,torch::Tensor& atom_out)
         }
     }
 }
-void DeePKS_domain::prepare_box(const UnitCell& ucell,torch::Tensor& box_out)
+void DeePKS_domain::prepare_box(const UnitCell& ucell, torch::Tensor& box_out)
 {
     box_out = torch::zeros({9}, torch::TensorOptions().dtype(torch::kFloat64));
 

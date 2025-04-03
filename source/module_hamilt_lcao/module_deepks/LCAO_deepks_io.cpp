@@ -216,7 +216,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         shape[0] = nr;
         shape[1] = nc;
     }
-    else if (mode == 'F') //flat
+    else if (mode == 'F') // flat
     {
         size = nr * nc;
         shape.resize(1);
@@ -275,7 +275,8 @@ void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::
     {
         return;
     }
-    using T_tensor = typename std::conditional<std::is_same<T, std::complex<double>>::value, c10::complex<double>, T>::type;
+    using T_tensor =
+        typename std::conditional<std::is_same<T, std::complex<double>>::value, c10::complex<double>, T>::type;
     const int dim = tensor.dim();
     std::vector<long unsigned> shape(dim);
     for (int i = 0; i < dim; i++)

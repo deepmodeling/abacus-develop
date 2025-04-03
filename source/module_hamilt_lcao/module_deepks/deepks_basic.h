@@ -59,10 +59,8 @@ void cal_edelta_gedm_equiv(const int nat,
                            double& E_delta,
                            const int rank);
 
-void prepare_atom(const UnitCell& ucell,
-                  torch::Tensor& atom_out);
-void prepare_box(const UnitCell& ucell,
-                 torch::Tensor& box_out);
+void prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out);
+void prepare_box(const UnitCell& ucell, torch::Tensor& box_out);
 } // namespace DeePKS_domain
 #endif
 #endif

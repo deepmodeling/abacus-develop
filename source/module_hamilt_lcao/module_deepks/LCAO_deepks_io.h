@@ -32,8 +32,8 @@ namespace LCAO_deepks_io
 /// 4. save_matrix2npy : ModuleBase::matrix -> .npy, for force, stress and orbital
 /// 5. save_tensor2npy : torch::Tensor -> .npy, for precalculation variables
 
-/// Ry2Hartree : convert Ry to Hartree, for energy, force, stress, orbital and Hamiltonian, which is consistent with deepks-kit.
-/// Used in save_npy_e, save_npy_h and save_matrix2npy by default
+/// Ry2Hartree : convert Ry to Hartree, for energy, force, stress, orbital and Hamiltonian, which is consistent with
+/// deepks-kit. Used in save_npy_e, save_npy_h and save_matrix2npy by default
 constexpr double Ry2Hartree = 0.5;
 
 /// print density matrices
