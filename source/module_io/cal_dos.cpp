@@ -6,30 +6,33 @@
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 
-bool ModuleIO::calculate_dos(const int& is,
-                             const std::string& fa,  // file address for DOS
-                             const std::string& fa1, // file address for DOS_smearing
-                             const double& de_ev,    // delta energy in ev
-                             const double& emax_ev,
-                             const double& emin_ev, // minimal energy in ev.
-                             const double& bcoeff,
-                             const int& nks, // number of k points
-                             const int& nkstot,
-                             const std::vector<double>& wk, // weight of k points
-                             const std::vector<int>& isk,
-                             const int& nbands,             // number of bands
-                             const ModuleBase::matrix& ekb, // store energy for each k point and each band
-                             const ModuleBase::matrix& wg   // weight of (kpoint,bands)
-)
+bool ModuleIO::cal_dos(const int& is,
+		const std::string& fa,  // file address for DOS
+		const std::string& fa1, // file address for DOS_smearing
+		const double& de_ev,    // delta energy in ev
+		const double& emax_ev,
+		const double& emin_ev, // minimal energy in ev.
+		const double& bcoeff,
+		const int& nks, // number of k points
+		const int& nkstot,
+		const std::vector<double>& wk, // weight of k points
+		const std::vector<int>& isk,
+		const int& nbands,             // number of bands
+		const ModuleBase::matrix& ekb, // store energy for each k point and each band
+		const ModuleBase::matrix& wg   // weight of (kpoint,bands)
+		)
 {
-    ModuleBase::TITLE("ModuleIO", "calculate_dos");
+    ModuleBase::TITLE("ModuleIO", "cal_dos");
+
     std::ofstream ofs;
     std::ofstream ofs1;
+
     if (GlobalV::MY_RANK == 0)
     {
         ofs.open(fa.c_str());   // make the file clear!!
         ofs1.open(fa1.c_str()); // make the file clear!!
     }
+
     std::vector<double> dos;
     std::vector<double> ene;
     std::vector<double> dos_smearing; // dos_smearing
@@ -40,23 +43,23 @@ bool ModuleIO::calculate_dos(const int& is,
 
     if (de_ev <= 0)
     {
-        ModuleBase::WARNING("ModuleIO::calculate_dos", "de <= 0 ");
+        ModuleBase::WARNING("ModuleIO::cal_dos", "de <= 0 ");
         return false;
     }
     else if (emax_ev < emin_ev)
     {
-        ModuleBase::WARNING("ModuleIO::calculate_dos", "emax_ev < emin_ev");
+        ModuleBase::WARNING("ModuleIO::cal_dos", "emax_ev < emin_ev");
         return false;
     }
 
-    // mohan fixed bug 2010-1-18
     const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev));
+
     dos.clear();
     ene.clear();
     if (npoints <= 0)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "npoints", npoints);
-        ModuleBase::WARNING("ModuleIO::calculate_dos", "npoints <= 0");
+        ModuleBase::WARNING("ModuleIO::cal_dos", "npoints <= 0");
         return false;
     }
     if (GlobalV::MY_RANK == 0)
@@ -65,20 +68,14 @@ bool ModuleIO::calculate_dos(const int& is,
         ofs << nkstot << std::endl;
     }
 
-    GlobalV::ofs_running << "\n OUTPUT DOS FILE IN: " << fa << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "min state energy (eV)", emin_ev);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "max state energy (eV)", emax_ev);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "delta energy interval (eV)", de_ev);
-
-    double* e_mod = new double[npoints];
-    ModuleBase::GlobalFunc::ZEROS(e_mod, npoints);
+    std::vector<double> e_mod(npoints, 0.0); 
 
     double sum = 0.0;
     double e_new = emin_ev;
     double e_old = 0.0;
+
     while (e_new < emax_ev)
     {
-        //		GlobalV::ofs_running << " enew=" << e_new << std::endl;
         double count = 0.0;
         e_old = e_new;
         e_new += de_ev;
@@ -91,13 +88,7 @@ bool ModuleIO::calculate_dos(const int& is,
                     //  compare et and e_old(e_new) in ev unit.
                     if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old && ekb(ik, ib) * ModuleBase::Ry_to_eV < e_new)
                     {
-                        // because count is 'double' type,so
-                        // we can't write count++ or ++count
-                        count += wk[ik] * nkstot; // mohanix bug 2012-04-23
-                        //						GlobalV::ofs_running << " count = " << count << " wk = " << wk[ik] << " nks
-                        //=
-                        //"
-                        //<< nks << std::endl;
+                        count += wk[ik] * nkstot; 
                     }
                 }
             }
@@ -155,9 +146,9 @@ bool ModuleIO::calculate_dos(const int& is,
         ofs.close();
         ofs1.close();
     }
+
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of bands", nbands);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "sum up the states", sum);
-    delete[] e_mod;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "sum up the electronic states", sum);
 
     return true;
 }

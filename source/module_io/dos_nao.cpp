@@ -34,9 +34,9 @@ namespace ModuleIO
 {
     ModuleBase::TITLE("Module_IO", "out_dos_nao");
 
-    write_dos_lcao(ucell,psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
+    write_dos_lcao(ucell, psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
-    int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
     if (PARAM.inp.out_dos == 3)
     {
         for (int i = 0; i < nspin0; i++)

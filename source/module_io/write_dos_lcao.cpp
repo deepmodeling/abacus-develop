@@ -85,11 +85,6 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         emin = emin - delta / 2.0;
     }
 
-    //	OUT(GlobalV::ofs_running,"minimal energy is (eV)", emin);
-    //	OUT(GlobalV::ofs_running,"maximal energy is (eV)", emax);
-    //  output the PDOS file.////qifeng-2019-01-21
-    // 		atom_arrange::set_sr_NL();
-    //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
     const double de_ev = dos_edelta_ev;
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
@@ -190,6 +185,8 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     delete[] pdosk;
     delete[] waveg;
     delete[] Gauss;
+
+
     if (GlobalV::MY_RANK == 0)
     {
         {
@@ -320,21 +317,21 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         std::stringstream ss1;
         ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
-        ModuleIO::calculate_dos(is,
-                                ss.str(),
-                                ss1.str(),
-                                dos_edelta_ev,
-                                emax,
-                                emin,
-                                bcoeff,
-                                kv.get_nks(),
-                                kv.get_nkstot(),
-                                kv.wk,
-                                kv.isk,
-                                PARAM.inp.nbands,
-                                ekb,
-                                wg);
-    }
+		ModuleIO::cal_dos(is,
+				ss.str(),
+				ss1.str(),
+				dos_edelta_ev,
+				emax,
+				emin,
+				bcoeff,
+				kv.get_nks(),
+				kv.get_nkstot(),
+				kv.wk,
+				kv.isk,
+				PARAM.inp.nbands,
+				ekb,
+				wg);
+	}
 
     return;
 }
@@ -395,12 +392,6 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         emax = emax + delta / 2.0;
         emin = emin - delta / 2.0;
     }
-
-    //	OUT(GlobalV::ofs_running,"minimal energy is (eV)", emin);
-    //	OUT(GlobalV::ofs_running,"maximal energy is (eV)", emax);
-    //  output the PDOS file.////qifeng-2019-01-21
-    // 		atom_arrange::set_sr_NL();
-    //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
 
     const double de_ev = dos_edelta_ev;
 
@@ -682,21 +673,21 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         std::stringstream ss1;
         ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
-        ModuleIO::calculate_dos(is,
-                                ss.str(),
-                                ss1.str(),
-                                dos_edelta_ev,
-                                emax,
-                                emin,
-                                bcoeff,
-                                kv.get_nks(),
-                                kv.get_nkstot(),
-                                kv.wk,
-                                kv.isk,
-                                PARAM.inp.nbands,
-                                ekb,
-                                wg);
-    }
+		ModuleIO::cal_dos(is,
+				ss.str(),
+				ss1.str(),
+				dos_edelta_ev,
+				emax,
+				emin,
+				bcoeff,
+				kv.get_nks(),
+				kv.get_nkstot(),
+				kv.wk,
+				kv.isk,
+				PARAM.inp.nbands,
+				ekb,
+				wg);
+	}
 
     return;
 }

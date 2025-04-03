@@ -5,7 +5,7 @@
 
 namespace ModuleIO
 {
-	bool calculate_dos(const int &is,		
+	bool cal_dos(const int &is,		
 		const std::string &fn,// file address for DOS.
 		const std::string &fn1,// file address for DOS_smearing.
 		const double &de_ev, // delta energy in ev.

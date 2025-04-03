@@ -1,10 +1,7 @@
 #include "cal_ldos.h"
-
 #include "cube_io.h"
 
-namespace ModuleIO
-{
-void cal_ldos(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+void ModuleIO::cal_ldos(const elecstate::ElecStatePW<std::complex<double>>* pelec,
               const psi::Psi<std::complex<double>>& psi,
               const Parallel_Grid& pgrid,
               const UnitCell& ucell)
@@ -28,28 +25,18 @@ void cal_ldos(const elecstate::ElecStatePW<std::complex<double>>* pelec,
             double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
             if (eigenval >= emin && eigenval <= emax)
             {
-                for (int ir = 0; ir < pelec->basis->nrxx; ir++)
-                    ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+				for (int ir = 0; ir < pelec->basis->nrxx; ir++)
+				{
+					ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+				}
             }
         }
     }
 
     std::stringstream fn;
-    fn << PARAM.globalv.global_out_dir << "LDOS_" << PARAM.inp.stm_bias << "eV"
+    fn << PARAM.globalv.global_out_dir 
+       << "LDOS_" << PARAM.inp.stm_bias << "eV"
        << ".cube";
 
     ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, 11, 0);
 }
-
-#ifdef __LCAO
-// lcao multi-k case
-// void cal_ldos(elecstate::ElecState* pelec, const psi::Psi<std::complex<double>>& psi, std::vector<double>& ldos)
-// {
-// }
-
-// // lcao Gamma_only case
-// void cal_ldos(elecstate::ElecState* pelec, const psi::Psi<double>& psi, std::vector<double>& ldos)
-// {
-// }
-#endif
-} // namespace elecstate
