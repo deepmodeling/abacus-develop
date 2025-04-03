@@ -54,9 +54,9 @@ void Gint_tau::cal_tau_()
                 phi_op.phi_mul_dm(dphi_x.data(), *dm_gint_vec_[is], true, dphi_x_dm.data());
                 phi_op.phi_mul_dm(dphi_y.data(), *dm_gint_vec_[is], true, dphi_y_dm.data());
                 phi_op.phi_mul_dm(dphi_z.data(), *dm_gint_vec_[is], true, dphi_z_dm.data());
-                phi_op.phi_dot_phi_dm(dphi_x.data(), dphi_x_dm.data(), kin_[is]);
-                phi_op.phi_dot_phi_dm(dphi_y.data(), dphi_y_dm.data(), kin_[is]);
-                phi_op.phi_dot_phi_dm(dphi_z.data(), dphi_z_dm.data(), kin_[is]);
+                phi_op.phi_dot_phi(dphi_x.data(), dphi_x_dm.data(), kin_[is]);
+                phi_op.phi_dot_phi(dphi_y.data(), dphi_y_dm.data(), kin_[is]);
+                phi_op.phi_dot_phi(dphi_z.data(), dphi_z_dm.data(), kin_[is]);
             }
         }
     }

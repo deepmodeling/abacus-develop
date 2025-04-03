@@ -11,14 +11,16 @@ namespace ModuleGint
 
 /**
  * @brief The class phiOperator is used to perform operations on the wave function matrix phi, dphi, etc.
- * 
- * In fact, the variables and functions of this class could be placed in the BigGrid class, but the lifecycle of the BigGrid class is relatively long. 
- * We do not want the BigGrid to contain too many member variables, as this could lead to excessive memory usage. 
+ *
+ * In fact, the variables and functions of this class could be placed in the BigGrid class, but the lifecycle of the BigGrid class is relatively long.
+ * We do not want the BigGrid to contain too many member variables, as this could lead to excessive memory usage.
  * Therefore, we separate this class out, so it can be destroyed after use.
  */
 class PhiOperator
 {
     public:
+    enum class Triangular_Matrix{Upper, Lower, Full};
+
     // constructor
     PhiOperator()=default;
 
@@ -31,7 +33,8 @@ class PhiOperator
 
     // get phi of the big grid
     // the dimension of phi is num_mgrids * (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
-    void set_phi(double* phi) const;
+    template<typename T>
+    void set_phi(T* phi) const;
 
     // get phi and the gradient of phi of the big grid
     // the dimension of phi and dphi is num_mgrids * (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
@@ -45,26 +48,29 @@ class PhiOperator
         double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
     void phi_mul_dm(
-        const double* phi, 
-        const HContainer<double>& dm, 
+        const double* phi,
+        const HContainer<double>& dm,
         const bool is_symm, double* phi_dm) const;
 
+    template<typename T>
     void phi_mul_vldr3(
-        const double* vl,
-        const double dr3,
-        const double* phi,
-        double* result) const;
-    
+        const T*const vl,
+        const T dr3,
+        const T*const phi,
+        T*const result) const;
+
     // this is a thread-safe function
-    void phi_mul_phi_vldr3(
-        const double* phi,
-        const double* phi_vldr3,
-        HContainer<double>& hr) const;
-    
-    void phi_dot_phi_dm(
-        const double* phi,
-        const double* phi_dm,
-        double* rho) const;
+    template<typename T>
+    void phi_mul_phi(
+        const T*const phi_i,                // phi_i(igrid,iwt_i)
+        const T*const phi_j,                // phi_j(igrid,iwt_j)
+        HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
+        const Triangular_Matrix triangular_matrix) const;
+
+    void phi_dot_phi(
+        const double*const phi_1,           // phi_1(igrid,iwt)
+        const double*const phi_2,           // phi_2(igrid,iwt)
+        double*const rho) const;            // rho(igrid)
 
     void phi_dot_dphi(
         const double* phi,
@@ -72,7 +78,7 @@ class PhiOperator
         const double* dphi_y,
         const double* dphi_z,
         ModuleBase::matrix *fvl) const;
-    
+
     void phi_dot_dphi_r(
         const double* phi,
         const double* dphi_x,
@@ -95,11 +101,11 @@ class PhiOperator
     // the row number of the phi matrix
     // rows_ = biggrid_->get_mgrids_num()
     int rows_;
-    
+
     // the column number of the phi matrix
     // cols_ = biggrid_->get_mgrid_phi_len()
     int cols_;
-    
+
     // the local index of the meshgrids
     std::vector<int> meshgrids_local_idx_;
 
@@ -112,7 +118,7 @@ class PhiOperator
 
     // record whether the atom affects the meshgrid
     // is_atom_on_mgrid_[i][j] = true if the ith atom affects the jth meshgrid, otherwise false
-    // FIXME,std::vector<std::vector<bool>> is not a efficient data structure, we can use a 1D array to replace it. 
+    // FIXME,std::vector<std::vector<bool>> is not a efficient data structure, we can use a 1D array to replace it.
     std::vector<std::vector<bool>> is_atom_on_mgrid_;
 
     // the start index of the phi of each atom
@@ -124,7 +130,9 @@ class PhiOperator
     std::vector<int> atoms_phi_len_;
 
     // This data structure is used to store the index of the first and last meshgrid affected by each atom pair
-    std::vector<std::pair<int, int>> atom_pair_start_end_idx_; 
+    std::vector<std::pair<int, int>> atom_pair_start_end_idx_;
 };
 
 }
+
+#include "phi_operator.hpp"

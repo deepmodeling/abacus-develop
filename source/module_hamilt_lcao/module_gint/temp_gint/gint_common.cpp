@@ -23,7 +23,7 @@ void compose_hr_gint(std::shared_ptr<HContainer<double>> hr_gint)
             assert(upper_ap != nullptr);
 #endif
             for (int ir = 0; ir < ap.get_R_size(); ir++)
-            {   
+            {
                 auto R_index = ap.get_R_index(ir);
                 auto upper_mat = upper_ap->find_matrix(-R_index);
                 auto lower_mat = lower_ap->find_matrix(R_index);
@@ -36,7 +36,7 @@ void compose_hr_gint(std::shared_ptr<HContainer<double>> hr_gint)
                 }
             }
         }
-    } 
+    }
 }
 
 void compose_hr_gint(std::vector<std::shared_ptr<HContainer<double>>> hr_gint_part,
@@ -54,7 +54,7 @@ void compose_hr_gint(std::vector<std::shared_ptr<HContainer<double>>> hr_gint_pa
             const hamilt::AtomPair<double>* ap_nspin_0 = hr_gint_part[0]->find_pair(iat1, iat2);
             const hamilt::AtomPair<double>* ap_nspin_3 = hr_gint_part[3]->find_pair(iat1, iat2);
             for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
-            {   
+            {
                 const auto R_index = upper_ap->get_R_index(ir);
                 auto upper_mat = upper_ap->find_matrix(R_index);
                 auto mat_nspin_0 = ap_nspin_0->find_matrix(R_index);
@@ -166,7 +166,7 @@ void transfer_dm_2d_to_gint(
                 const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
                 for (int is = 0; is < 4; is++)
                 {
-                    tmp_pointer[is] = 
+                    tmp_pointer[is] =
                         dm_gint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
                 }
                 double* data_full = ap.get_pointer(ir);

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <cassert>
 
 namespace hamilt
 {
@@ -111,7 +112,8 @@ class BaseMatrix
     void add_array_ts(T* array)
     {
         std::lock_guard<std::mutex> lock(mtx);
-        for (int i = 0; i < nrow_local * ncol_local; ++i)
+        const int size = nrow_local * ncol_local;
+        for (int i = 0; i < size; ++i)
         {
             value_begin[i] += array[i];
         }
