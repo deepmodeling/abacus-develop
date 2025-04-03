@@ -25,8 +25,7 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
 
     // init
 #ifdef __MPI
-    
-const int mypool = 0;
+    const int mypool = 0;
     const int key = 1;
     const int nproc_in_pool = 1;
     const int rank_in_pool = 0;
@@ -174,7 +173,7 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     bool xprime = false;
 
 #ifdef __MPI
-const int mypool = 0;
+    const int mypool = 0;
     const int key = 1;
     const int nproc_in_pool = 1;
     const int rank_in_pool = 0;
