@@ -835,6 +835,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
         ModuleIO::write_dos_pw(this->pelec->ekb,
                                this->pelec->wg,
                                this->kv,
+                               PARAM.inp.nbands,
                                PARAM.inp.dos_edelta_ev,
                                PARAM.inp.dos_scale,
                                PARAM.inp.dos_sigma);

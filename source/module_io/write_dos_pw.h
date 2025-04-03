@@ -9,6 +9,7 @@ namespace ModuleIO
 	void write_dos_pw(const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg,
 		const K_Vectors& kv,
+		const int nbands,
 		const double &dos_edelta_ev,
 		const double &dos_scale,
 		const double &bcoeff);

@@ -59,7 +59,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
         emin = emin - delta / 2.0;
     }
 
-    assert(dos_edleta_ev>0.0);
+    assert(dos_edelta_ev>0.0);
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "minimal energy is (eV)", emin);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "maximal energy is (eV)", emax);
