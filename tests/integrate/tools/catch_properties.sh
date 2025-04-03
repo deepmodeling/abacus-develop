@@ -69,6 +69,7 @@ has_mat_t=$(get_input_key_value "out_mat_t" "INPUT")
 has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
+has_ldos=$(get_input_key_value "out_ldos" "INPUT")
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 rdmft=$(get_input_key_value "rdmft" "INPUT")
 #echo $running_path
@@ -373,6 +374,16 @@ if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
     echo "SPIN1_CHG.cube_pass $?" >>$1
     python3 ../tools/CompareFile.py SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
     echo "SPIN1_TAU.cube_pass $?" >>$1
+fi
+
+#---------------------------------------
+# local density of states
+# echo $has_ldos
+#---------------------------------------
+if ! test -z "$has_ldos"  && [  $has_ldos == 1 ]; then
+    stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT")
+    python3 ../tools/CompareFile.py LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
+    echo "LDOS.cube_pass $?" >> $1
 fi
 
 #---------------------------------------

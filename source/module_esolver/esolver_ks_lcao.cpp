@@ -421,7 +421,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     }
 
     // out ldos
-    if (PARAM.inp.out_ldos)
+    if (PARAM.inp.out_ldos[0])
     {
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(reinterpret_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec),
                                               this->psi[0],

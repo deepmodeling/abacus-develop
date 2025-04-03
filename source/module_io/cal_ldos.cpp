@@ -43,7 +43,8 @@ void Cal_ldos<T>::cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>
     fn << PARAM.globalv.global_out_dir << "LDOS_" << PARAM.inp.stm_bias << "eV"
        << ".cube";
 
-    ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, 11, 0);
+    const int precision = PARAM.inp.out_ldos[1];
+    ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0);
 }
 
 #ifdef __LCAO
