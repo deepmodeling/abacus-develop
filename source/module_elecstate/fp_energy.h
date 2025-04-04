@@ -1,11 +1,12 @@
+#ifndef FP_ENERGY_H
+#define FP_ENERGY_H
+
 #include <vector>
 
 /**
  * @file fp_energy.h
  * @brief This file contains all energies about first-principle calculations
  */
-#ifndef FP_ENERGY_H
-#define FP_ENERGY_H
 namespace elecstate
 {
 /**
@@ -63,7 +64,7 @@ struct efermi
     double ef = 0.0;         ///< Fermi energy
     double ef_up = 0.0;      ///< spin up Fermi energy
     double ef_dw = 0.0;      ///< spin down Fermi energy
-    bool two_efermi = false; ///<
+    bool two_efermi = false; 
     void set_efval(const int& is, const double& ef_in);
     double get_efval(const int& is) const;
     std::vector<double> get_all_ef() const;

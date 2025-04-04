@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     nscf
+calculation     scf
 
 nbands			6
 symmetry		0
@@ -14,7 +14,7 @@ scf_thr				1e-8
 scf_nmax			100
 
 #out_chg      1
-init_chg        file
+#init_chg        file
 out_dos            1
 pw_diag_thr                0.00001
 
@@ -29,3 +29,4 @@ smearing_sigma			0.002
 mixing_type		plain
 mixing_beta		0.7
 
+nspin 2

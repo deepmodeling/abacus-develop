@@ -6,36 +6,39 @@
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 
-bool ModuleIO::cal_dos(const int& is,
-		const std::string& fa,  // file address for DOS
-		const std::string& fa1, // file address for DOS_smearing
-		const double& de_ev,    // delta energy in ev
-		const double& emax_ev,
+bool ModuleIO::cal_dos(const int& is,  // index for spin
+		const std::string& file_dos,   // file address for DOS
+		const std::string& file_smear, // file address for DOS_smearing
+		const double& de_ev,           // delta energy in ev
+		const double& emax_ev, // maximal energy in eV
 		const double& emin_ev, // minimal energy in ev.
 		const double& bcoeff,
-		const int& nks, // number of k points
-		const int& nkstot,
+		const int& nks, // number of k points in this pool
+		const int& nkstot, // number of total kpoints
 		const std::vector<double>& wk, // weight of k points
-		const std::vector<int>& isk,
+		const std::vector<int>& isk,   // index of spin for each k-point
 		const int& nbands,             // number of bands
-		const ModuleBase::matrix& ekb, // store energy for each k point and each band
-		const ModuleBase::matrix& wg   // weight of (kpoint,bands)
+		const ModuleBase::matrix& ekb, // energy for each k point and each band
+		const ModuleBase::matrix& wg   // weight of k-points and bands 
 		)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
-    std::ofstream ofs;
-    std::ofstream ofs1;
+    std::ofstream ofs_dos;
+    std::ofstream ofs_smear;
 
     if (GlobalV::MY_RANK == 0)
     {
-        ofs.open(fa.c_str());   // make the file clear!!
-        ofs1.open(fa1.c_str()); // make the file clear!!
+        ofs_dos.open(file_dos.c_str());
+        ofs_smear.open(file_smear.c_str());
     }
 
     std::vector<double> dos;
     std::vector<double> ene;
-    std::vector<double> dos_smearing; // dos_smearing
+    std::vector<double> dos_smear; // dos_smearing
+    dos.clear();
+    ene.clear();
+    dos_smear.clear();
 
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
@@ -54,8 +57,6 @@ bool ModuleIO::cal_dos(const int& is,
 
     const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev));
 
-    dos.clear();
-    ene.clear();
     if (npoints <= 0)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "npoints", npoints);
@@ -64,8 +65,8 @@ bool ModuleIO::cal_dos(const int& is,
     }
     if (GlobalV::MY_RANK == 0)
     {
-        ofs << npoints << std::endl;
-        ofs << nkstot << std::endl;
+        ofs_dos << npoints << " # number of points" << std::endl;
+        ofs_dos << nkstot << " # number of total k-points" << std::endl;
     }
 
     std::vector<double> e_mod(npoints, 0.0); 
@@ -76,43 +77,50 @@ bool ModuleIO::cal_dos(const int& is,
 
     while (e_new < emax_ev)
     {
-        double count = 0.0;
+        double nstates = 0.0;
         e_old = e_new;
         e_new += de_ev;
+
+        // nks is the number of k-points in the 'pool'
         for (int ik = 0; ik < nks; ik++)
         {
+            // spin index
             if (is == isk[ik])
             {
+                // band index
                 for (int ib = 0; ib < nbands; ib++)
                 {
                     //  compare et and e_old(e_new) in ev unit.
-                    if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old && ekb(ik, ib) * ModuleBase::Ry_to_eV < e_new)
+                    if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old 
+                     && ekb(ik, ib) * ModuleBase::Ry_to_eV < e_new)
                     {
-                        count += wk[ik] * nkstot; 
+                        nstates += wk[ik] * nkstot; 
                     }
                 }
             }
         }
+
 #ifdef __MPI
         const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, count);
+        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, nstates);
 #endif
-        count = count / static_cast<double>(nkstot);
-        sum += count;
+
+        nstates = nstates / static_cast<double>(nkstot);
+        sum += nstates;
         if (GlobalV::MY_RANK == 0)
         {
-            ofs << e_new << " " << count << std::endl;
-            dos.push_back(count);
+            ofs_dos << std::setw(15) << e_new 
+                    << std::setw(15) << nstates << std::endl;
+            dos.push_back(nstates);
             ene.push_back(e_new);
         }
     }
 
-    // now use Gaussian smearing to smooth the dos and write to DOS_is_smearing
+    // Use Gaussian smearing to smooth the DOS
     if (GlobalV::MY_RANK == 0)
     {
-        dos_smearing.resize(dos.size() - 1);
+        dos_smear.resize(dos.size() - 1);
 
-        // double b = INPUT.dos_sigma;
         double b = sqrt(2.0) * bcoeff;
         for (int i = 0; i < dos.size() - 1; i++)
         {
@@ -122,29 +130,30 @@ bool ModuleIO::cal_dos(const int& is,
             {
                 double de = ene[j] - ene[i];
                 double de2 = de * de;
-                //----------------------------------------------------------
-                // EXPLAIN : if en
-                //----------------------------------------------------------
                 Gauss = exp(-de2 / b / b) / sqrt(ModuleBase::PI) / b;
-                dos_smearing[j] += dos[i] * Gauss;
+                dos_smear[j] += dos[i] * Gauss;
             }
         }
 
-        //----------------------------------------------------------
-        // EXPLAIN : output DOS_smearing.dat
-        //----------------------------------------------------------
         double sum2 = 0.0;
+        ofs_smear << "#" << std::setw(14) << "energy" 
+                 << std::setw(15) << "dos_smear" 
+                 << std::setw(15) << "sum_elec" << std::endl;
+
         for (int i = 0; i < dos.size() - 1; i++)
         {
-            sum2 += dos_smearing[i];
-            ofs1 << std::setw(20) << ene[i] << std::setw(20) << dos_smearing[i] << std::setw(20) << sum2 << "\n";
+            sum2 += dos_smear[i];
+
+            ofs_smear << std::setw(15) << ene[i] 
+                 << std::setw(15) << dos_smear[i] 
+                 << std::setw(15) << sum2 << std::endl;
         }
     }
 
     if (GlobalV::MY_RANK == 0)
     {
-        ofs.close();
-        ofs1.close();
+        ofs_dos.close();
+        ofs_smear.close();
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of bands", nbands);
