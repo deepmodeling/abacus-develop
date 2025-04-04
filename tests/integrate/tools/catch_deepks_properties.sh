@@ -24,6 +24,8 @@ get_input_key_value(){
 	echo $value
 }
 
+has_force=$(get_input_key_value "cal_force" "INPUT")
+has_stress=$(get_input_key_value "cal_stress" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
 deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
