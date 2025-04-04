@@ -306,7 +306,7 @@ void timer::print_all(std::ofstream &ofs)
 							 /*indent=*/0, 
 							 /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
 	time_statistics << class_names << names << times << calls << avgs << pers;
-	const std::string table = "TIME STATISTICS\n" + time_statistics.str();
+	const std::string table = "\nTIME STATISTICS\n" + time_statistics.str();
 	std::cout<<table<<std::endl;
 	ofs<<table<<std::endl;
 	write_to_json("time.json");

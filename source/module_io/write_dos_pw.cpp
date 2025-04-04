@@ -8,18 +8,47 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
                             const ModuleBase::matrix& wg,
                             const K_Vectors& kv,
                             const int nbands,
+                            const elecstate::efermi &energy_fermi,
                             const double& dos_edelta_ev,
                             const double& dos_scale,
-                            const double& bcoeff)
+                            const double& bcoeff,
+                            std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_pw");
 
+    ofs_running << " DOS CALCULATIONS BEGINS" << std::endl; 
+
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                            "
+                   "                        |" << std::endl;
+    ofs_running << " | DOS stands for Density of States. It represents the number of      |" << std::endl;
+    ofs_running << " | available electronic states per unit energy range.                 |" << std::endl;
+    ofs_running << " | By analyzing the DOS, we can gain insights into how electrons are  |" << std::endl;
+    ofs_running << " | distributed among different energy levels within the material.     |" << std::endl;
+    ofs_running << " |                                            "
+                   "                        |" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
     assert(nbands>0);
 
-    int nspin0 = 1;
-	if (PARAM.inp.nspin == 2)
+    ofs_running << std::setprecision(6);
+
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+
+	if (PARAM.globalv.two_fermi == false)
 	{
-		nspin0 = 2;
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Fermi energy (eV)", 
+        energy_fermi.ef * ModuleBase::Ry_to_eV);
+	}
+	else
+	{
+
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (Ry)", 
+        energy_fermi.ef_up * ModuleBase::Ry_to_eV);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (Ry)", 
+        energy_fermi.ef_dw * ModuleBase::Ry_to_eV);
 	}
 
     // find energy range
@@ -61,21 +90,21 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
 
     assert(dos_edelta_ev>0.0);
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "minimal energy is (eV)", emin);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "maximal energy is (eV)", emax);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "delta energy interval (eV)", dos_edelta_ev);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Minimal energy is (eV)", emin);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Maximal energy is (eV)", emax);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Energy interval (eV)", dos_edelta_ev);
 
 
     for (int is = 0; is < nspin0; ++is)
     {
         // DOS_ispin contains not smoothed dos
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "dos" << is + 1 << ".dat";
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
 
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "dos" << is + 1 << "_smear.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "DOS file", ss.str());
+        ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
 
 		ModuleIO::cal_dos(is,
 				ss.str(),
@@ -92,4 +121,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
 				ekb,
 				wg);
 	}
+
+    ofs_running << " DOS CALCULATIONS ENDS." << std::endl; 
+
 }

@@ -55,7 +55,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         return false;
     }
 
-    const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev));
+    const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev))+1;
 
     if (npoints <= 0)
     {
@@ -67,6 +67,15 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     {
         ofs_dos << npoints << " # number of points" << std::endl;
         ofs_dos << nkstot << " # number of total k-points" << std::endl;
+        ofs_dos << "#" << std::setw(14) << "energy" 
+                 << std::setw(15) << "elec_states" 
+                 << std::setw(15) << "sum_states" << std::endl;
+
+        ofs_smear << npoints << " # number of points" << std::endl;
+        ofs_smear << nkstot << " # number of total k-points" << std::endl;
+        ofs_smear << "#" << std::setw(14) << "energy" 
+                  << std::setw(15) << "states_smear" 
+                  << std::setw(15) << "sum_states" << std::endl;
     }
 
     std::vector<double> e_mod(npoints, 0.0); 
@@ -110,7 +119,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         if (GlobalV::MY_RANK == 0)
         {
             ofs_dos << std::setw(15) << e_new 
-                    << std::setw(15) << nstates << std::endl;
+                    << std::setw(15) << nstates 
+                    << std::setw(15) << sum
+                    << std::endl;
             dos.push_back(nstates);
             ene.push_back(e_new);
         }
@@ -119,30 +130,27 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     // Use Gaussian smearing to smooth the DOS
     if (GlobalV::MY_RANK == 0)
     {
-        dos_smear.resize(dos.size() - 1);
+        dos_smear.resize(dos.size());
 
         double b = sqrt(2.0) * bcoeff;
-        for (int i = 0; i < dos.size() - 1; i++)
+        for (int i = 0; i < dos.size() ; i++)
         {
             double Gauss = 0.0;
 
-            for (int j = 0; j < dos.size() - 1; j++)
+            for (int j = 0; j < dos.size(); j++)
             {
-                double de = ene[j] - ene[i];
-                double de2 = de * de;
+                double denergy = ene[j] - ene[i];
+                double de2 = denergy * denergy;
                 Gauss = exp(-de2 / b / b) / sqrt(ModuleBase::PI) / b;
                 dos_smear[j] += dos[i] * Gauss;
             }
         }
 
         double sum2 = 0.0;
-        ofs_smear << "#" << std::setw(14) << "energy" 
-                 << std::setw(15) << "dos_smear" 
-                 << std::setw(15) << "sum_elec" << std::endl;
 
-        for (int i = 0; i < dos.size() - 1; i++)
+        for (int i = 0; i < dos.size(); i++)
         {
-            sum2 += dos_smear[i];
+            sum2 += dos_smear[i] * de_ev;
 
             ofs_smear << std::setw(15) << ene[i] 
                  << std::setw(15) << dos_smear[i] 
@@ -156,8 +164,8 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ofs_smear.close();
     }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of bands", nbands);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "sum up the electronic states", sum);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total electronic states from DOS", sum);
 
     return true;
 }
