@@ -66,13 +66,11 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     if (GlobalV::MY_RANK == 0)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << nkstot << " # number of total k-points" << std::endl;
         ofs_dos << "#" << std::setw(14) << "energy" 
                  << std::setw(15) << "elec_states" 
                  << std::setw(15) << "sum_states" << std::endl;
 
         ofs_smear << npoints << " # number of points" << std::endl;
-        ofs_smear << nkstot << " # number of total k-points" << std::endl;
         ofs_smear << "#" << std::setw(14) << "energy" 
                   << std::setw(15) << "states_smear" 
                   << std::setw(15) << "sum_states" << std::endl;

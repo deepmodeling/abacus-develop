@@ -28,8 +28,8 @@ smearing_sigma	0.002
 mixing_type		plain
 mixing_beta		0.7
 
-#dos_emin_ev     -15  #minimal range for dos
-#dos_emax_ev     15   #maximal range for dos
+#dos_emin_ev    -15  #minimal range for dos
+#dos_emax_ev    15   #maximal range for dos
 dos_edelta_ev   0.01 #delta energy for dos
-#dos_scale       0.01 #scale dos range by
+#dos_scale      0.01 #scale dos range by
 dos_sigma       0.05 #gauss b coefficeinet(default=0.07)
