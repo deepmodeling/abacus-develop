@@ -115,9 +115,6 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
     }
 }
 
-template class Cal_ldos<double>;               // Gamma_only case
-template class Cal_ldos<std::complex<double>>; // multi-k case
-
 double my_conj(double x)
 {
     return x;
@@ -129,4 +126,7 @@ std::complex<double> my_conj(const std::complex<double>& z)
 }
 
 #endif
+
+template class Cal_ldos<double>;               // Gamma_only case
+template class Cal_ldos<std::complex<double>>; // multi-k case
 } // namespace elecstate
