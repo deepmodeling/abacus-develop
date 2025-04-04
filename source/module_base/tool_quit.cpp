@@ -48,7 +48,7 @@ void QUIT(int ret)
 #ifdef __NORMAL
 
 #else
-    ModuleBase::timer::finish(GlobalV::ofs_running , -GlobalV::MY_RANK);
+    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK);
 
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
 
@@ -116,12 +116,12 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 	{
 		//All cores will print inforamtion
 		std::cout.clear();
-		if(-GlobalV::ofs_running.is_open())
+		if(!GlobalV::ofs_running.is_open())
 		{
 			std::string logfile = PARAM.globalv.global_out_dir + "running_" + calculation + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
-		if(-GlobalV::ofs_warning.is_open())
+		if(!GlobalV::ofs_warning.is_open())
 		{
 			std::string warningfile = PARAM.globalv.global_out_dir + "warning.log";
 			GlobalV::ofs_warning.open( warningfile.c_str(), std::ios::app );
@@ -129,12 +129,12 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 
 		//print error information
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		std::cout << " ERROR- " << description << std::endl;
+		std::cout << " ERROR! " << description << std::endl;
 		std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		GlobalV::ofs_running << " ERROR- CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
+		GlobalV::ofs_running << " ERROR! CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 		GlobalV::ofs_warning << std::endl;
-		GlobalV::ofs_warning << " ERROR- " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;
+		GlobalV::ofs_warning << " ERROR! " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;
 		GlobalV::ofs_warning << std::endl;
 		exit(1);
 	}
