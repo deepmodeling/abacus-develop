@@ -9,12 +9,12 @@
 #include "dos_test.h"
 
 /************************************************
- *  unit test of calculate_dos
+ *  unit test of ca_dos
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - calculate_dos()
+ *   - cal_dos()
  *     - the function to calculate and print out
  *     - density of states
  */
@@ -28,13 +28,13 @@ protected:
 
 TEST_F(DosTest,Dos)
 {
-				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",0.005,18,-6,0.07,36,36,8);
+	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smear.dat",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
-	ModuleIO::calculate_dos(dosp.is,
+	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.fa1,
 			dosp.de_ev,
@@ -48,12 +48,13 @@ TEST_F(DosTest,Dos)
 			dosp.nbands,
 			dosp.ekb,
 			dosp.wg);
+
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("DOS1_smearing.dat");
+		ifs.open("DOS1_smear.dat");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("             3200")); // number of electrons is 32
 		ifs.close();
@@ -61,7 +62,7 @@ TEST_F(DosTest,Dos)
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str1, testing::HasSubstr("4800")); //number of energy points is (18-(-6))/0.005
 		ifs.close();
-		remove("DOS1_smearing.dat");
+		remove("DOS1_smear.dat");
 		remove("DOS1");
 #ifdef __MPI
 	}
@@ -70,15 +71,15 @@ TEST_F(DosTest,Dos)
 
 TEST_F(DosTest,DosW1)
 {
-				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",-0.005,18,-6,0.07,36,36,8);
+	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smear.dat",-0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	EXPECT_LE(dosp.de_ev,0);
 	GlobalV::ofs_warning.open("warninglog1");
-	EXPECT_NO_THROW(ModuleIO::calculate_dos(dosp.is,
+	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.fa1,
 			dosp.de_ev,
@@ -100,10 +101,10 @@ TEST_F(DosTest,DosW1)
 		std::ifstream ifs;
 		ifs.open("warninglog1");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::calculate_dos  warning : de <= 0"));
+		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::cal_dos  warning : de <= 0"));
 		ifs.close();
 		remove("warninglog1");
-		remove("DOS1_smearing.dat");
+		remove("DOS1_smear.dat");
 		remove("DOS1");
 #ifdef __MPI
 	}
@@ -113,13 +114,13 @@ TEST_F(DosTest,DosW1)
 TEST_F(DosTest,DosW2)
 {
 				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",0.005,-6,18,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smear.dat",0.005,-6,18,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	GlobalV::ofs_warning.open("warninglog2");
-	EXPECT_NO_THROW(ModuleIO::calculate_dos(dosp.is,
+	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.fa1,
 			dosp.de_ev,
@@ -141,10 +142,10 @@ TEST_F(DosTest,DosW2)
 		std::ifstream ifs;
 		ifs.open("warninglog2");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::calculate_dos  warning : emax_ev < emin_ev"));
+		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::cal_dos  warning : emax_ev < emin_ev"));
 		ifs.close();
 		remove("warninglog2");
-		remove("DOS1_smearing.dat");
+		remove("DOS1_smear.dat");
 		remove("DOS1");
 #ifdef __MPI
 	}
@@ -154,13 +155,13 @@ TEST_F(DosTest,DosW2)
 TEST_F(DosTest,DosW3)
 {
 				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",0.005,18,18,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smear.dat",0.005,18,18,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	GlobalV::ofs_warning.open("warninglog3");
-	EXPECT_NO_THROW(ModuleIO::calculate_dos(dosp.is,
+	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.fa1,
 			dosp.de_ev,
@@ -182,15 +183,16 @@ TEST_F(DosTest,DosW3)
 		std::ifstream ifs;
 		ifs.open("warninglog3");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::calculate_dos  warning : npoints <= 0"));
+		EXPECT_THAT(str, testing::HasSubstr("ModuleIO::cal_dos  warning : npoints <= 0"));
 		ifs.close();
 		remove("warninglog3");
-		remove("DOS1_smearing.dat");
+		remove("DOS1_smear.dat");
 		remove("DOS1");
 #ifdef __MPI
 	}
 #endif
 }
+
 
 #ifdef __MPI
 int main(int argc, char **argv)
