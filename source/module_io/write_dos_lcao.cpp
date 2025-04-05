@@ -236,11 +236,14 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
             out << "<pdos>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
-            if (PARAM.inp.nspin == 4) {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
-            } else {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
-}
+			if (PARAM.inp.nspin == 4) 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
+			} 
+			else 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+			}
             out << "<energy_values units=\"eV\">" << std::endl;
 
             for (int n = 0; n < npoints; ++n)
@@ -249,6 +252,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                 double en = emin + n * de_ev;
                 out << std::setw(20) << en << std::endl;
             }
+
             out << "</energy_values>" << std::endl;
             for (int i = 0; i < ucell.nat; i++)
             {
@@ -315,7 +319,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         std::stringstream ss;
         ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
 		ModuleIO::cal_dos(is,
 				ss.str(),
