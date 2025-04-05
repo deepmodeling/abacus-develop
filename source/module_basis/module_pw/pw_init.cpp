@@ -6,16 +6,25 @@ namespace ModulePW
 #ifdef __MPI
 void PW_Basis:: initmpi(
     const int poolnproc_in,
-        const int poolrank_in,
-        MPI_Comm pool_world_in
+    const int poolrank_in,
+    MPI_Comm pool_world_in
 )
 {
-    this->poolnproc = poolnproc_in;
-    this->poolrank = poolrank_in;
-    this->pool_world = pool_world_in;
+    if (mpi_flag_)
+    {
+        this->poolnproc = poolnproc_in;
+        this->poolrank = poolrank_in;
+        this->pool_world = pool_world_in;
+    }else
+    {
+        ModuleBase::WARNING_QUIT("PW_Basis","to use MPI_ FFT, please set the mpi_flag as true");
+    }
 }
 #endif
-
+void PW_Basis::set_mpi(const bool mpi_flag_in)
+{
+    this->mpi_flag_ = mpi_flag_in;
+}
 /// 
 /// Init the grids for FFT
 /// Input: lattice vectors of the cell, Energy cut off for G^2/2
@@ -87,7 +96,10 @@ void PW_Basis:: initgrids(
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
+    if (mpi_flag_)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
+    }
 #endif
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
@@ -201,7 +213,10 @@ void PW_Basis:: initgrids(
         }
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
+    if (mpi_flag_)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
+    }
 #endif
     this->gridecut_lat -= 1e-6;
 

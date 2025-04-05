@@ -24,15 +24,7 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     bool xprime = false;
 
     // init
-#ifdef __MPI
-    const int mypool = 0;
-    const int key = 1;
-    const int nproc_in_pool = 1;
-    const int rank_in_pool = 0;
-    MPI_Comm POOL_WORLD;
-    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,  &POOL_WORLD);
-    pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
-#endif
+    pwtest.set_mpi(false); 
     pwtest.initgrids(lat0, latvec, wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
     pwtest.setuptransform();
@@ -99,9 +91,6 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
             }
         }
     }
-#ifdef __MPI
-    MPI_Bcast(tmp, 2 * nx * ny * nz, MPI_DOUBLE, 0, POOL_WORLD);
-#endif
     // const int size = nx * ny * nz;
     complex<double>* h_rhog = new complex<double>[npw];
     complex<double>* h_rhogout = new complex<double>[npw];
@@ -172,15 +161,7 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     int distribution_type = 1;
     bool xprime = false;
 
-#ifdef __MPI
-    const int mypool = 0;
-    const int key = 1;
-    const int nproc_in_pool = 1;
-    const int rank_in_pool = 0;
-    MPI_Comm POOL_WORLD;
-    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
-    pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
-#endif
+    pwtest.set_mpi(false); 
     pwtest.initgrids(lat0, latvec, wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
     pwtest.setuptransform();
@@ -243,9 +224,6 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
             }
         }
     }
-#ifdef __MPI
-    MPI_Bcast(tmp, 2 * nx * ny * nz, MPI_DOUBLE, 0, POOL_WORLD);
-#endif
     // const int size = nx * ny * nz;
     complex<float>* h_rhog = new complex<float>[npw];
     complex<float>* h_rhogout = new complex<float>[npw];

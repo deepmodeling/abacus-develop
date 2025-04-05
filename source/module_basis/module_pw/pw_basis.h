@@ -61,6 +61,7 @@ public:
     PW_Basis(std::string device_, std::string precision_);
     virtual ~PW_Basis();
     //Init mpi parameters
+    void set_mpi(const bool mpi_flag_in);
 #ifdef __MPI
     void initmpi(
         const int poolnproc_in, // Number of processors in this pool
@@ -436,6 +437,7 @@ protected:
 
   std::string device = "cpu";       ///< cpu or gpu
   std::string precision = "double"; ///< single, double, mixing
+  bool mpi_flag_ = true;               ///< ture,is use mpi or not
   bool double_data_ = true;         ///<  if has double data
   bool float_data_ = false;         ///< if has float data
 };

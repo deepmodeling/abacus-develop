@@ -36,6 +36,8 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         return;
     }
 #ifdef __MPI
+    if (mpi_flag_)
+    {
     //change (nplane fftnxy) to (nplane,nstot)
     // Hence, we can send them at one time.
 #ifdef _OPENMP
@@ -83,7 +85,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 			}
 		}
 	}
-   
+    }
 #endif
     //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     return;
@@ -129,6 +131,8 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         return;
     }
 #ifdef __MPI
+    if (mpi_flag_)
+    {
     // change (nz,ns) to (numz[ip],ns, poolnproc)
     // Hence, we can send them at one time. 
 #ifdef _OPENMP
@@ -183,7 +187,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 			outp[iz] = inp[iz];
 		}
 	}
-
+    }
 #endif
     //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     return;
