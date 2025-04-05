@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
+#include "module_io/cal_ldos.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
 #include "module_io/io_dmk.h"
@@ -417,6 +418,15 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                               this->pelec->eferm,
                               PARAM.inp.nbands,
                               this->p_hamilt);
+    }
+
+    // out ldos
+    if (PARAM.inp.out_ldos[0])
+    {
+        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(reinterpret_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec),
+                                              this->psi[0],
+                                              this->Pgrid,
+                                              ucell);
     }
 
     // 6) print out exchange-correlation potential

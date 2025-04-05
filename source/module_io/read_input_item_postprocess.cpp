@@ -58,7 +58,7 @@ void ReadInput::item_postprocess()
         item.annotation = "bias voltage used to calculate ldos";
         read_sync_double(input.stm_bias);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_ldos && para.input.stm_bias == 0.0)
+            if (para.input.out_ldos[0] && para.input.stm_bias == 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "a nonzero stm_bias is required for ldos calculation");
             }
