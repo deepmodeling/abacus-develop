@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
     
     // only test the second one
-    ::testing::GTEST_FLAG(filter) = "DosPWTest.Dos2";
+    // ::testing::GTEST_FLAG(filter) = "DosPWTest.Dos2";
 
 	int result = RUN_ALL_TESTS();
 
