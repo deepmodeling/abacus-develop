@@ -158,7 +158,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     {
         {
             std::stringstream ps;
-            ps << PARAM.globalv.global_out_dir << "TDOS";
+            ps << PARAM.globalv.global_out_dir << "TDOS.dat";
             std::ofstream out(ps.str().c_str());
             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
             {
@@ -198,7 +198,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
         {
             std::stringstream as;
-            as << PARAM.globalv.global_out_dir << "PDOS";
+            as << PARAM.globalv.global_out_dir << "PDOS.dat";
             std::ofstream out(as.str().c_str());
 
             out << "<pdos>" << std::endl;
@@ -284,7 +284,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
         std::stringstream ss1;
         ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
@@ -496,7 +496,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         if (GlobalV::MY_RANK == 0)
         {
 			std::stringstream ps;
-			ps << PARAM.globalv.global_out_dir << "TDOS";
+			ps << PARAM.globalv.global_out_dir << "TDOS.dat";
 			std::ofstream ofs1(ps.str().c_str());
 			if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
 			{
@@ -534,7 +534,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
             /* decomposed Mulliken charge */
 
 			std::stringstream as;
-			as << PARAM.globalv.global_out_dir << "PDOS";
+			as << PARAM.globalv.global_out_dir << "PDOS.dat";
 			std::ofstream ofs2(as.str().c_str());
 
 			ofs2 << "<pdos>" << std::endl;
@@ -618,7 +618,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
         std::stringstream ss1;
         ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
