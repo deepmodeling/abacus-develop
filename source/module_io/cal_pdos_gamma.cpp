@@ -1,14 +1,14 @@
-#include "cal_pdos.h"
+#include "cal_pdos_gamma.h"
 
 void ModuleIO::cal_pdos_gamma(
 		const int nspin0,
 		const double& emax,
 		const double& emin,
 		const double& dos_edelta_ev,
-        const double& bcoeff,
-        const double* sk,
-        const psi::Psi<double>* psi,
-        const Parallel_Orbitals& pv)
+		const double& bcoeff,
+		hamilt::Hamilt<double>* p_ham,
+		const psi::Psi<double>* psi,
+		const Parallel_Orbitals& pv)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -69,6 +69,8 @@ void ModuleIO::cal_pdos_gamma(
             const double zero_float = 0.0;
             const int one_int = 1;
 
+            const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+
 #ifdef __MPI
             const char T_char = 'T';
             const int nlocal = PARAM.globalv.nlocal;
@@ -120,7 +122,12 @@ void ModuleIO::cal_pdos_gamma(
 
     if (GlobalV::MY_RANK == 0)
     {
-        print_tdos_gamma(pdos);
+        print_tdos_gamma(pdos,
+                nlocal,
+                npoints,
+                emin,
+                dos_edelta_ev);
+
         print_pdos_gamma(pdos);
         ModuleIO::write_orb_info(&ucell);
     }
@@ -129,14 +136,14 @@ void ModuleIO::cal_pdos_gamma(
 }
 
 
-void write_tdos_gamma(
+void print_tdos_gamma(
 		const ModuleBase::matrix& pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,
 		const double& dos_edelta_ev)
 {
-    ModuleBase::TITLE("ModuleIO", "write_tdos_gamma");
+    ModuleBase::TITLE("ModuleIO", "print_tdos_gamma");
 
     // file name
 	std::stringstream ps;
@@ -179,7 +186,7 @@ void write_tdos_gamma(
 	ofs.close();
 }
 
-void write_pdos_gamma(
+void ModuleIO::print_pdos_gamma(
         const UnitCell& ucell,
 		const ModuleBase::matrix& pdos,
 		const int nlocal,
@@ -187,7 +194,7 @@ void write_pdos_gamma(
 		const double& emin,
 		const double& dos_edelta_ev)
 {
-    ModuleBase::TITLE("ModuleIO", "write_pdos_gamma");
+    ModuleBase::TITLE("ModuleIO", "print_pdos_gamma");
 
 	std::stringstream as;
 	as << PARAM.globalv.global_out_dir << "PDOS.dat";
