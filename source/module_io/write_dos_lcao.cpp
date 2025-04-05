@@ -25,6 +25,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/scalapack_connector.h"
 
+// for gamma only
 template <>
 void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const psi::Psi<double>* psi,
@@ -44,9 +45,6 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     {
         nspin0 = 2;
     }
-
-    // get the date pointer of SK
-    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
@@ -112,6 +110,9 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
     double* Gauss = new double[np];
 
+    // get the date pointer of Sk
+    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+
     for (int is = 0; is < nspin0; ++is)
     {
 
@@ -165,7 +166,6 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
-
                 if (pv.in_this_processor(j, i))
                 {
 
@@ -182,6 +182,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
     } // is
+
     delete[] pdosk;
     delete[] waveg;
     delete[] Gauss;
@@ -340,6 +341,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     return;
 }
 
+// for multi-k case
 template <>
 void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const psi::Psi<std::complex<double>>* psi,
