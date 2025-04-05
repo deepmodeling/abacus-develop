@@ -43,7 +43,7 @@ protected:
 	int T_Elapse = 100; // microseconds = 0.1 milliseconds
 	void TearDown()
 	{
-		//remove("tmp");
+		remove("tmp");
 	}
 };
 
