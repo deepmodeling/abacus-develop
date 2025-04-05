@@ -39,49 +39,21 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
+    
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
+    double emax = 0.0;
+    double emin = 0.0;
 
-    // find the maximal and minimal band energy.
-    double emax = ekb(0, 0);
-    double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
-        {
-            emax = std::max(emax, ekb(ik, ib));
-            emin = std::min(emin, ekb(ik, ib));
-        }
-    }
-
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
-#endif
-
-    emax *= ModuleBase::Ry_to_eV;
-    emin *= ModuleBase::Ry_to_eV;
-    if (PARAM.globalv.dos_setemax)
-    {
-        emax = PARAM.inp.dos_emax_ev;
-    }
-
-    if (PARAM.globalv.dos_setemin)
-    {
-        emin = PARAM.inp.dos_emin_ev;
-    }
-
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
-    {
-        // scale up a little bit so the end peaks are displaced better
-        double delta = (emax - emin) * dos_scale;
-        emax = emax + delta / 2.0;
-        emin = emin - delta / 2.0;
-    }
+	prepare_dos(GlobalV::ofs_running,
+			energy_fermi,
+			ekb,
+			kv.get_nks(),
+			nbands,
+			dos_edelta_ev,
+			dos_scale,
+			emax,
+			emin);
 
     const double de_ev = dos_edelta_ev;
 
@@ -338,6 +310,8 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 				wg);
 	}
 
+    GlobalV::ofs_running << " DOS CALCULATIONS ENDS." << std::endl;
+
     return;
 }
 
@@ -356,48 +330,20 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // find the maximal and minimal band energy.
-    double emax = ekb(0, 0);
-    double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
-        {
-            emax = std::max(emax, ekb(ik, ib));
-            emin = std::min(emin, ekb(ik, ib));
-        }
-    }
+    double emax = 0.0;
+    double emin = 0.0;
 
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
-#endif
-
-    emax *= ModuleBase::Ry_to_eV;
-    emin *= ModuleBase::Ry_to_eV;
-    if (PARAM.globalv.dos_setemax)
-    {
-        emax = PARAM.inp.dos_emax_ev;
-    }
-
-    if (PARAM.globalv.dos_setemin)
-    {
-        emin = PARAM.inp.dos_emin_ev;
-    }
-
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
-    {
-        // scale up a little bit so the end peaks are displaced better
-        double delta = (emax - emin) * dos_scale;
-        emax = emax + delta / 2.0;
-        emin = emin - delta / 2.0;
-    }
+    prepare_dos(ofs_running,
+            energy_fermi,
+            ekb,
+            kv.get_nks(),
+            nbands,
+            dos_edelta_ev,
+            dos_scale,
+            emax,
+            emin);
 
     const double de_ev = dos_edelta_ev;
 
@@ -694,6 +640,8 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 				ekb,
 				wg);
 	}
+
+    GlobalV::ofs_running << " DOS CALCULATIONS ENDS." << std::endl; 
 
     return;
 }
