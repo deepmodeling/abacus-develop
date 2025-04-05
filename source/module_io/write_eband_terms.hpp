@@ -110,7 +110,7 @@ void write_eband_terms(const int nspin,
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
 
-			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, i
+			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint,
 					&v_pp_local_k_ao, 
 					kv.kvec_d, 
 					&pot_local, 
