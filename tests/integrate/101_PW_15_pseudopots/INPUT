@@ -23,3 +23,6 @@ smearing_sigma			0.002
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7
+
+out_ldos              1
+stm_bias              2

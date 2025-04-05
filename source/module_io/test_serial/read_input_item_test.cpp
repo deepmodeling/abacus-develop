@@ -393,7 +393,7 @@ TEST_F(InputTest, Item_test)
     }
     { // stm_bias
         auto it = find_label("stm_bias", readinput.input_lists);
-        param.input.out_ldos = true;
+        param.input.out_ldos[0] = 1;
         param.input.stm_bias = 0.0;
 
         testing::internal::CaptureStdout();

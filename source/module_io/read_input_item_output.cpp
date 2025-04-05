@@ -145,8 +145,17 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_ldos");
-        item.annotation = "output local density of states";
-        read_sync_bool(input.out_ldos);
+        item.annotation = "output local density of states, second parameter controls the precision";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
+            }
+            para.input.out_ldos[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+        };
+        sync_intvec(input.out_ldos, 2, 0);
         this->add_item(item);
     }
     {

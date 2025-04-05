@@ -841,13 +841,14 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                                GlobalV::ofs_running);
     }
 
-    // 2) out ldos
-    if (PARAM.inp.out_ldos)
+    // out ldos
+    if (PARAM.inp.out_ldos[0])
     {
-        ModuleIO::cal_ldos(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
-                           this->psi[0],
-                           this->Pgrid,
-                           ucell);
+        ModuleIO::Cal_ldos<std::complex<double>>::cal_ldos_pw(
+            reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
+            this->psi[0],
+            this->Pgrid,
+            ucell);
     }
 
     //! 3) Calculate the spillage value, used to generate numerical atomic orbitals
