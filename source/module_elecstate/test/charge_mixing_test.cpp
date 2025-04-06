@@ -82,10 +82,12 @@ class ChargeMixingTest : public ::testing::Test
     ChargeMixingTest()
     {
         // Init pw_basis
+        pw_basis.set_mpi(false);
         pw_basis.initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 20);
         pw_basis.initparameters(false, 20);
         pw_basis.setuptransform();
         pw_basis.collect_local_pw();
+        pw_dbasis.set_mpi(false);
         pw_dbasis.initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 40);
         pw_dbasis.initparameters(false, 40);
         pw_dbasis.setuptransform(&pw_basis);

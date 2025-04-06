@@ -48,6 +48,10 @@ public:
 	std::string device_flag = "cpu";
 	ModulePW::PW_Basis pwb;
 	ModulePW::PW_Basis pwb1;
+	void SetUp()
+	{
+		pwb.set_mpi(false);
+	} 
 };
 
 TEST_F(PWBasisTEST,Constructor)

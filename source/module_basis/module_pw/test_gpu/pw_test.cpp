@@ -44,15 +44,8 @@ int main(int argc, char **argv)
     precision_flag = "double";
 #endif
     device_flag = "cpu";
-#ifdef __MPI
-    int nproc, myrank ,mypool;
-    MPI_Init(&argc,&argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&nproc);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-#else
     nproc_in_pool = kpar = 1;
     rank_in_pool = 0;
-#endif
 #ifdef _OPENMP
     // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
 	fftw_init_threads();
@@ -62,9 +55,6 @@ int main(int argc, char **argv)
     testing::AddGlobalTestEnvironment(new TestEnv);
     testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-#ifdef __MPI
-    MPI_Finalize();   
-#endif  
 #ifdef _OPENMP
 	fftw_cleanup_threads();
 #endif

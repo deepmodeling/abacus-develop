@@ -80,6 +80,7 @@ class ChargeTest : public ::testing::Test
         ucell = utp.SetUcellInfo();
         charge = new Charge;
         rhopw = new ModulePW::PW_Basis;
+        rhopw->set_mpi(false);
         rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
         rhopw->distribute_r();
         rhopw->initparameters(false, elecstate::tmp_gridecut);

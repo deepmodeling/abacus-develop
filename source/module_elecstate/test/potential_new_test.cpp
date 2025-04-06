@@ -117,6 +117,7 @@ class PotentialNewTest : public ::testing::Test
         solvent = new surchem();
         etxc = new double;
         vtxc = new double;
+        rhopw->set_mpi(false);
         elecstate::Set_GlobalV_Default();
     }
     virtual void TearDown()
@@ -578,6 +579,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
      XC_Functional::func_type = 3;
      XC_Functional::ked_flag = true;
      // Init pw_basis
+     rhodpw->set_mpi(false);
      rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
      rhopw->initparameters(false, 4);
      rhopw->setuptransform();
@@ -627,6 +629,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
     rhopw->collect_local_pw();
     rhodpw->gamma_only = false;
 
+    rhodpw->set_mpi(false);
     rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
     rhodpw->initparameters(false, 6);
     static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
