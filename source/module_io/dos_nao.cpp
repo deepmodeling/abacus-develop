@@ -34,9 +34,22 @@ namespace ModuleIO
 {
     ModuleBase::TITLE("Module_IO", "out_dos_nao");
 
-    write_dos_lcao(ucell,psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
+	write_dos_lcao(
+			ucell, 
+			psi, 
+			pv, 
+			ekb, 
+			wg, 
+			dos_edelta_ev, 
+			dos_scale, 
+			dos_sigma, 
+			kv, 
+			PARAM.inp.nbands,
+			eferm,
+			p_ham,
+			GlobalV::ofs_running);
 
-    int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
     if (PARAM.inp.out_dos == 3)
     {
         for (int i = 0; i < nspin0; i++)
@@ -47,15 +60,6 @@ namespace ModuleIO
         }
     }
 
-    if (nspin0 == 1)
-    {
-        GlobalV::ofs_running << " Fermi energy is " << eferm.ef << " Rydberg" << std::endl;
-    }
-    else if (nspin0 == 2)
-    {
-        GlobalV::ofs_running << " Fermi energy (spin = 1) is " << eferm.ef_up << " Rydberg" << std::endl;
-        GlobalV::ofs_running << " Fermi energy (spin = 2) is " << eferm.ef_dw << " Rydberg" << std::endl;
-	}
 }
 
 template void out_dos_nao(

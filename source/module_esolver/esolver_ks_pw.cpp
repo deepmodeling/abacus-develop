@@ -827,29 +827,18 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
-    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-
-    //! 3) Compute density of states (DOS)
+    //! 1) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
     {
         ModuleIO::write_dos_pw(this->pelec->ekb,
                                this->pelec->wg,
                                this->kv,
+                               PARAM.inp.nbands,
+                               this->pelec->eferm,
                                PARAM.inp.dos_edelta_ev,
                                PARAM.inp.dos_scale,
-                               PARAM.inp.dos_sigma);
-
-        if (nspin0 == 1)
-        {
-            GlobalV::ofs_running << " Fermi energy is " << this->pelec->eferm.ef << " Rydberg" << std::endl;
-        }
-        else if (nspin0 == 2)
-        {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->pelec->eferm.ef_up << " Rydberg"
-                                 << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
-                                 << std::endl;
-        }
+                               PARAM.inp.dos_sigma,
+                               GlobalV::ofs_running);
     }
 
     // out ldos
@@ -862,7 +851,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             ucell);
     }
 
-    //! 5) Calculate the spillage value, used to generate numerical atomic orbitals
+    //! 3) Calculate the spillage value, used to generate numerical atomic orbitals
     if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
     {
         // ! Print out overlap matrices
@@ -882,13 +871,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
         }
     }
 
-    //! 6) Print out electronic wave functions in real space
+    //! 4) Print out electronic wave functions in real space
     if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
         ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
     }
 
-    //! 7) Use Kubo-Greenwood method to compute conductivities
+    //! 5) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
         EleCond<Real, Device> elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->kspw_psi, &this->ppcell);
@@ -902,7 +891,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
 #ifdef __MLKEDF
-    // generate training data for ML-KEDF
+    //! 6) generate training data for ML-KEDF
     if (PARAM.inp.of_ml_gene_data == 1)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell);

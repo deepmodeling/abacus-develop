@@ -5,12 +5,10 @@
 
 unkOverlap_pw::unkOverlap_pw()
 {
-    // GlobalV::ofs_running << "this is unkOverlap_pw()" << std::endl;
 }
 
 unkOverlap_pw::~unkOverlap_pw()
 {
-    // GlobalV::ofs_running << "this is ~unkOverlap_pw()" << std::endl;
 }
 
 std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,

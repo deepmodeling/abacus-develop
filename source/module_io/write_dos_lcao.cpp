@@ -1,30 +1,22 @@
 #include "write_dos_lcao.h"
+#include "cal_dos.h"
 
 #include "module_parameter/parameter.h"
-#ifdef __MPI
-#include <mpi.h>
-#endif
-#include "cal_dos.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "write_orb_info.h"
 
-#include <sys/time.h>
-#include <vector>
-
-#ifdef __LCAO
-#include "module_cell/module_neighbor/sltk_atom_arrange.h" //qifeng-2019-01-21
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#endif
 
-#include "module_base/blas_connector.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
 #include "module_base/parallel_reduce.h"
+#include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
 
+
+// for gamma only
 template <>
 void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const psi::Psi<double>* psi,
@@ -35,61 +27,28 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const double& dos_scale,
                               const double& bcoeff,
                               const K_Vectors& kv,
-                              hamilt::Hamilt<double>* p_ham)
+                              const int nbands,
+                              const elecstate::efermi &energy_fermi,
+                              hamilt::Hamilt<double>* p_ham,
+                              std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
+    
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
+    double emax = 0.0;
+    double emin = 0.0;
 
-    // get the date pointer of SK
-    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+	prepare_dos(ofs_running,
+			energy_fermi,
+			ekb,
+			kv.get_nks(),
+			nbands,
+			dos_edelta_ev,
+			dos_scale,
+			emax,
+			emin);
 
-    // find the maximal and minimal band energy.
-    double emax = ekb(0, 0);
-    double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
-        {
-            emax = std::max(emax, ekb(ik, ib));
-            emin = std::min(emin, ekb(ik, ib));
-        }
-    }
-
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
-#endif
-
-    emax *= ModuleBase::Ry_to_eV;
-    emin *= ModuleBase::Ry_to_eV;
-    if (PARAM.globalv.dos_setemax)
-    {
-        emax = PARAM.inp.dos_emax_ev;
-    }
-
-    if (PARAM.globalv.dos_setemin)
-    {
-        emin = PARAM.inp.dos_emin_ev;
-    }
-
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
-    {
-        // scale up a little bit so the end peaks are displaced better
-        double delta = (emax - emin) * dos_scale;
-        emax = emax + delta / 2.0;
-        emin = emin - delta / 2.0;
-    }
-
-    //	OUT(GlobalV::ofs_running,"minimal energy is (eV)", emin);
-    //	OUT(GlobalV::ofs_running,"maximal energy is (eV)", emax);
-    //  output the PDOS file.////qifeng-2019-01-21
-    // 		atom_arrange::set_sr_NL();
-    //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
     const double de_ev = dos_edelta_ev;
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
@@ -117,6 +76,9 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
     double* Gauss = new double[np];
 
+    // get the date pointer of Sk
+    const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+
     for (int is = 0; is < nspin0; ++is)
     {
 
@@ -126,7 +88,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
-        for (int i = 0; i < PARAM.inp.nbands; ++i)
+        for (int i = 0; i < nbands; ++i)
         {
             ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
@@ -170,7 +132,6 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
-
                 if (pv.in_this_processor(j, i))
                 {
 
@@ -187,14 +148,17 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         MPI_Reduce(pdosk[is].c, pdos[is].c, NUM, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
     } // is
+
     delete[] pdosk;
     delete[] waveg;
     delete[] Gauss;
+
+
     if (GlobalV::MY_RANK == 0)
     {
         {
             std::stringstream ps;
-            ps << PARAM.globalv.global_out_dir << "TDOS";
+            ps << PARAM.globalv.global_out_dir << "TDOS.dat";
             std::ofstream out(ps.str().c_str());
             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
             {
@@ -234,16 +198,19 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
 
         {
             std::stringstream as;
-            as << PARAM.globalv.global_out_dir << "PDOS";
+            as << PARAM.globalv.global_out_dir << "PDOS.dat";
             std::ofstream out(as.str().c_str());
 
             out << "<pdos>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
-            if (PARAM.inp.nspin == 4) {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
-            } else {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
-}
+			if (PARAM.inp.nspin == 4) 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
+			} 
+			else 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+			}
             out << "<energy_values units=\"eV\">" << std::endl;
 
             for (int n = 0; n < npoints; ++n)
@@ -252,6 +219,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                 double en = emin + n * de_ev;
                 out << std::setw(20) << en << std::endl;
             }
+
             out << "</energy_values>" << std::endl;
             for (int i = 0; i < ucell.nat; i++)
             {
@@ -316,29 +284,32 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
-        ModuleIO::calculate_dos(is,
-                                ss.str(),
-                                ss1.str(),
-                                dos_edelta_ev,
-                                emax,
-                                emin,
-                                bcoeff,
-                                kv.get_nks(),
-                                kv.get_nkstot(),
-                                kv.wk,
-                                kv.isk,
-                                PARAM.inp.nbands,
-                                ekb,
-                                wg);
-    }
+		ModuleIO::cal_dos(is,
+				ss.str(),
+				ss1.str(),
+				dos_edelta_ev,
+				emax,
+				emin,
+				bcoeff,
+				kv.get_nks(),
+				kv.get_nkstot(),
+				kv.wk,
+				kv.isk,
+				nbands,
+				ekb,
+				wg);
+	}
+
+    ofs_running << " DOS CALCULATIONS ENDS." << std::endl;
 
     return;
 }
 
+// for multi-k case
 template <>
 void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const psi::Psi<std::complex<double>>* psi,
@@ -349,58 +320,27 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                               const double& dos_scale,
                               const double& bcoeff,
                               const K_Vectors& kv,
-                              hamilt::Hamilt<std::complex<double>>* p_ham)
+                              const int nbands,
+                              const elecstate::efermi &energy_fermi,
+                              hamilt::Hamilt<std::complex<double>>* p_ham,
+                              std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // find the maximal and minimal band energy.
-    double emax = ekb(0, 0);
-    double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
-        {
-            emax = std::max(emax, ekb(ik, ib));
-            emin = std::min(emin, ekb(ik, ib));
-        }
-    }
+    double emax = 0.0;
+    double emin = 0.0;
 
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
-#endif
-
-    emax *= ModuleBase::Ry_to_eV;
-    emin *= ModuleBase::Ry_to_eV;
-    if (PARAM.globalv.dos_setemax)
-    {
-        emax = PARAM.inp.dos_emax_ev;
-    }
-
-    if (PARAM.globalv.dos_setemin)
-    {
-        emin = PARAM.inp.dos_emin_ev;
-    }
-
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
-    {
-        // scale up a little bit so the end peaks are displaced better
-        double delta = (emax - emin) * dos_scale;
-        emax = emax + delta / 2.0;
-        emin = emin - delta / 2.0;
-    }
-
-    //	OUT(GlobalV::ofs_running,"minimal energy is (eV)", emin);
-    //	OUT(GlobalV::ofs_running,"maximal energy is (eV)", emax);
-    //  output the PDOS file.////qifeng-2019-01-21
-    // 		atom_arrange::set_sr_NL();
-    //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
+    prepare_dos(ofs_running,
+            energy_fermi,
+            ekb,
+            kv.get_nks(),
+            nbands,
+            dos_edelta_ev,
+            dos_scale,
+            emax,
+            emin);
 
     const double de_ev = dos_edelta_ev;
 
@@ -481,7 +421,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                         p_dwfc[index] = conj(psi->get_pointer()[index]);
                     }
 
-                    for (int i = 0; i < PARAM.inp.nbands; ++i)
+                    for (int i = 0; i < nbands; ++i)
                     {
 
                         ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
@@ -556,7 +496,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
         if (GlobalV::MY_RANK == 0)
         {
 			std::stringstream ps;
-			ps << PARAM.globalv.global_out_dir << "TDOS";
+			ps << PARAM.globalv.global_out_dir << "TDOS.dat";
 			std::ofstream ofs1(ps.str().c_str());
 			if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
 			{
@@ -594,7 +534,7 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
             /* decomposed Mulliken charge */
 
 			std::stringstream as;
-			as << PARAM.globalv.global_out_dir << "PDOS";
+			as << PARAM.globalv.global_out_dir << "PDOS.dat";
 			std::ofstream ofs2(as.str().c_str());
 
 			ofs2 << "<pdos>" << std::endl;
@@ -678,25 +618,27 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
 
-        ModuleIO::calculate_dos(is,
-                                ss.str(),
-                                ss1.str(),
-                                dos_edelta_ev,
-                                emax,
-                                emin,
-                                bcoeff,
-                                kv.get_nks(),
-                                kv.get_nkstot(),
-                                kv.wk,
-                                kv.isk,
-                                PARAM.inp.nbands,
-                                ekb,
-                                wg);
-    }
+		ModuleIO::cal_dos(is,
+				ss.str(),
+				ss1.str(),
+				dos_edelta_ev,
+				emax,
+				emin,
+				bcoeff,
+				kv.get_nks(),
+				kv.get_nkstot(),
+				kv.wk,
+				kv.isk,
+				nbands,
+				ekb,
+				wg);
+	}
+
+    ofs_running << " DOS CALCULATIONS ENDS." << std::endl; 
 
     return;
 }
