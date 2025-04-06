@@ -33,14 +33,14 @@ void ModuleIO::cal_pdos(
 
 	for (int is = 0; is < nspin0; ++is)
 	{
-		pdosk[is].create(nlocal, np, true);
+		pdosk[is].create(nlocal, npoints, true);
 	}
 
 	ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
 
 	for (int is = 0; is < nspin0; ++is)
 	{
-		pdos[is].create(nlocal, np, true);
+		pdos[is].create(nlocal, npoints, true);
 	}
 
     const double a = bcoeff;
@@ -48,7 +48,7 @@ void ModuleIO::cal_pdos(
 
 	std::complex<double>* waveg = new std::complex<double>[nlocal];
 
-	double* Gauss = new double[np]();
+	double* Gauss = new double[npoints]();
 
 	for (int is = 0; is < nspin0; ++is)
 	{
@@ -103,10 +103,10 @@ void ModuleIO::cal_pdos(
 
 					ModuleBase::GlobalFunc::ZEROS(waveg, nlocal);
 
-					ModuleBase::GlobalFunc::ZEROS(Gauss, np);
+					ModuleBase::GlobalFunc::ZEROS(Gauss, npoints);
 					for (int n = 0; n < npoints; ++n)
 					{
-						double en = emin + n * de_ev;
+						double en = emin + n * dos_edelta_ev;
 						double en0 = ekb(ik, i) * ModuleBase::Ry_to_eV;
 						double de = en - en0;
 						double de2 = 0.5 * de * de;
@@ -151,7 +151,7 @@ void ModuleIO::cal_pdos(
 
 							waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
 							const double x = waveg[j].real();
-							BlasConnector::axpy(np, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
+							BlasConnector::axpy(npoints, x, Gauss, 1, pdosk[is].c + j * pdosk[is].nc, 1);
 						}
 					}
 
