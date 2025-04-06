@@ -1,13 +1,23 @@
 #include "cal_pdos_multik.h"
 
-void ModuleIO::cal_pdos_multik(
-        const int nspin0,
+#include "module_base/parallel_reduce.h"
+#include "module_base/blas_connector.h"
+#include "module_base/scalapack_connector.h"
+#include "write_orb_info.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+void ModuleIO::cal_pdos(
+		const UnitCell& ucell,
+		const int nspin0,
+        const int nbands,
         const double& emax,
         const double& emin,
         const double& dos_edelta_ev,
         const double& bcoeff,
-        const double* sk,
-        const psi::Psi<double>* psi,
+        hamilt::Hamilt<std::complex<double>>* p_ham,
+        const psi::Psi<std::complex<double>>* psi,
         const Parallel_Orbitals& pv)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_multik");
@@ -33,7 +43,8 @@ void ModuleIO::cal_pdos_multik(
 		pdos[is].create(nlocal, np, true);
 	}
 
-	double b = sqrt(ModuleBase::TWO_PI) * bcoeff;
+    const double a = bcoeff;
+    const double b = sqrt(ModuleBase::TWO_PI) * a;
 
 	std::complex<double>* waveg = new std::complex<double>[nlocal];
 
@@ -104,7 +115,6 @@ void ModuleIO::cal_pdos_multik(
 
 					const int nb = i + 1;
 
-
 #ifdef __MPI
 					const double one_float[2] = {1.0, 0.0};
                     const double zero_float[2] = {0.0, 0.0};
@@ -162,13 +172,8 @@ void ModuleIO::cal_pdos_multik(
 
     if (GlobalV::MY_RANK == 0)
     {
-		print_tdos_gamma(pdos,
-				nlocal,
-				npoints,
-				emin,
-				dos_edelta_ev);
-
-        print_pdos_gamma(pdos);
+		print_tdos_gamma(pdos, nlocal, npoints,	emin, dos_edelta_ev);
+        print_pdos_gamma(ucell, pdos, nlocal, npoints, emin, dos_edelta_ev);
 
         ModuleIO::write_orb_info(&ucell);
     }
@@ -178,7 +183,7 @@ void ModuleIO::cal_pdos_multik(
 
 
 void ModuleIO::print_tdos_multik(
-		const ModuleBase::matrix& pdos,
+		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,
@@ -195,8 +200,8 @@ void ModuleIO::print_tdos_multik(
 		for (int n = 0; n < npoints; ++n)
 		{
 			double y = 0.0;
-			double en = emin + n * de_ev;
-			for (int i = 0; i < PARAM.globalv.nlocal; i++)
+			double en = emin + n * dos_edelta_ev;
+			for (int i = 0; i < nlocal; i++)
 			{
 				y += pdos[0](i, n);
 			}
@@ -210,8 +215,8 @@ void ModuleIO::print_tdos_multik(
 		{
 			double y = 0.0;
 			double z = 0.0;
-			double en = emin + n * de_ev;
-			for (int i = 0; i < PARAM.globalv.nlocal; i++)
+			double en = emin + n * dos_edelta_ev;
+			for (int i = 0; i < nlocal; i++)
 			{
 				y += pdos[0](i, n);
 				z += pdos[1](i, n);
@@ -226,7 +231,7 @@ void ModuleIO::print_tdos_multik(
 
 void ModuleIO::print_pdos_multik(
         const UnitCell& ucell,
-        const ModuleBase::matrix& pdos,
+        const ModuleBase::matrix* pdos,
         const int nlocal,
         const int npoints,
         const double& emin,
@@ -242,18 +247,18 @@ void ModuleIO::print_pdos_multik(
 	ofs2 << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
 	if (PARAM.inp.nspin == 4)
 	{
-		ofs2 << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
+		ofs2 << "<norbitals>" << std::setw(2) << nlocal / 2 << "</norbitals>" << std::endl;
 	}
 	else
 	{
-		ofs2 << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+		ofs2 << "<norbitals>" << std::setw(2) << nlocal << "</norbitals>" << std::endl;
 	}
 	ofs2 << "<energy_values units=\"eV\">" << std::endl;
 
 	for (int n = 0; n < npoints; ++n)
 	{
 		double y = 0.0;
-		double en = emin + n * de_ev;
+		double en = emin + n * dos_edelta_ev;
 		ofs2 << std::setw(20) << en << std::endl;
 	}
 	ofs2 << "</energy_values>" << std::endl;

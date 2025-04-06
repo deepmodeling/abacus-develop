@@ -1,7 +1,17 @@
 #include "cal_pdos_gamma.h"
 
-void ModuleIO::cal_pdos_gamma(
+#include "module_base/parallel_reduce.h"
+#include "module_base/blas_connector.h"
+#include "module_base/scalapack_connector.h"
+#include "write_orb_info.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+void ModuleIO::cal_pdos(
+		const UnitCell& ucell,
 		const int nspin0,
+        const int nbands,
 		const double& emax,
 		const double& emin,
 		const double& dos_edelta_ev,
@@ -34,7 +44,8 @@ void ModuleIO::cal_pdos_gamma(
         pdos[is].create(nlocal, npoints, true);
     }
 
-    double b = sqrt(ModuleBase::TWO_PI) * bcoeff;
+    const double a = bcoeff;
+    const double b = sqrt(ModuleBase::TWO_PI) * a;
 
     std::complex<double>* waveg = new std::complex<double>[nlocal];
 
@@ -122,13 +133,8 @@ void ModuleIO::cal_pdos_gamma(
 
     if (GlobalV::MY_RANK == 0)
     {
-        print_tdos_gamma(pdos,
-                nlocal,
-                npoints,
-                emin,
-                dos_edelta_ev);
-
-        print_pdos_gamma(pdos);
+        print_tdos_gamma(pdos, nlocal, npoints, emin, dos_edelta_ev);
+        print_pdos_gamma(ucell, pdos, nlocal, npoints, emin, dos_edelta_ev);
         ModuleIO::write_orb_info(&ucell);
     }
 
@@ -137,7 +143,7 @@ void ModuleIO::cal_pdos_gamma(
 
 
 void print_tdos_gamma(
-		const ModuleBase::matrix& pdos,
+		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,
@@ -188,7 +194,7 @@ void print_tdos_gamma(
 
 void ModuleIO::print_pdos_gamma(
         const UnitCell& ucell,
-		const ModuleBase::matrix& pdos,
+		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,

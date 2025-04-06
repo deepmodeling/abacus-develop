@@ -7,6 +7,7 @@
 #include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>
 #include "module_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
 
+
 namespace ModuleIO
 {
 	/// @brief calculate density of states(DOS), 

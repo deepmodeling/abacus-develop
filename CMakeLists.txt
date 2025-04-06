@@ -13,27 +13,27 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(USE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
-option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 
+option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 option(ENABLE_DEEPKS "Enable the DeePKS algorithm" OFF)
 option(ENABLE_MLKEDF "Enable the Machine-Learning-based KEDF for OFDFT" OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(ENABLE_LIBCOMM "Enable LibComm" OFF)
-option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
-option(DEBUG_INFO "Print message for developers to debug" OFF)
+option(DEBUG_INFO "Print message to debug" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
-option(INFO "Enable gathering of math library information" OFF)
+option(INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 
@@ -42,6 +42,7 @@ option(ENABLE_PAW "Enable PAW method" OFF)
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
+
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
