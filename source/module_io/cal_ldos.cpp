@@ -1,5 +1,4 @@
 #include "cal_ldos.h"
-
 #include "cube_io.h"
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
@@ -33,14 +32,17 @@ void Cal_ldos<T>::cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>
             const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
             if (eigenval >= emin && eigenval <= emax)
             {
-                for (int ir = 0; ir < pelec->basis->nrxx; ir++)
-                    ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+				for (int ir = 0; ir < pelec->basis->nrxx; ir++)
+				{
+					ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+				}
             }
         }
     }
 
     std::stringstream fn;
-    fn << PARAM.globalv.global_out_dir << "LDOS_" << PARAM.inp.stm_bias << "eV"
+    fn << PARAM.globalv.global_out_dir 
+       << "LDOS_" << PARAM.inp.stm_bias << "eV"
        << ".cube";
 
     const int precision = PARAM.inp.out_ldos[1];
@@ -129,4 +131,4 @@ std::complex<double> my_conj(const std::complex<double>& z)
 
 template class Cal_ldos<double>;               // Gamma_only case
 template class Cal_ldos<std::complex<double>>; // multi-k case
-} // namespace elecstate
+} // namespace ModuleIO 

@@ -130,11 +130,9 @@ fi
 # echo $total_charge
 #-------------------------------
 if ! test -z "$has_dos"  && [  $has_dos == 1 ]; then
-	total_dos=`cat OUT.autotest/DOS1_smearing.dat | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/DOS1_smear.dat | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
-#smearing_dos=`sum_file OUT.autotest/DOS1_smearing.dat`
-#echo "totaldossmearing $smearing_dos" >> $1
 
 #-------------------------------
 # Onsager coefficiency
