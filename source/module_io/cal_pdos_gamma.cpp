@@ -9,16 +9,18 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void ModuleIO::cal_pdos(
+		const psi::Psi<double>* psi,
+		hamilt::Hamilt<double>* p_ham,
+		const Parallel_Orbitals& pv,
 		const UnitCell& ucell,
+        const K_Vectors& kv,
 		const int nspin0,
         const int nbands,
+        const ModuleBase::matrix& ekb,
 		const double& emax,
 		const double& emin,
 		const double& dos_edelta_ev,
-		const double& bcoeff,
-		hamilt::Hamilt<double>* p_ham,
-		const psi::Psi<double>* psi,
-		const Parallel_Orbitals& pv)
+		const double& bcoeff)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -80,7 +82,8 @@ void ModuleIO::cal_pdos(
             const double zero_float = 0.0;
             const int one_int = 1;
 
-            const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+            //const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+            const double* sk = nullptr;
 
 #ifdef __MPI
             const char T_char = 'T';
@@ -142,7 +145,7 @@ void ModuleIO::cal_pdos(
 }
 
 
-void print_tdos_gamma(
+void ModuleIO::print_tdos_gamma(
 		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,

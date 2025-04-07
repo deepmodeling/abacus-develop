@@ -11,16 +11,18 @@ namespace ModuleIO
 {
 
 	void cal_pdos(
+			const psi::Psi<double>* psi,
+			hamilt::Hamilt<double>* p_ham,
+			const Parallel_Orbitals& pv,
 			const UnitCell& ucell,
+			const K_Vectors& kv,
 			const int nspin0,
-            const int nbands,
+			const int nbands,
+			const ModuleBase::matrix& ekb,
 			const double& emax,
 			const double& emin,
 			const double& dos_edelta_ev,
-			const double& bcoeff,
-			hamilt::Hamilt<double>* p_ham,
-			const psi::Psi<double>* psi,
-			const Parallel_Orbitals& pv);
+			const double& bcoeff);
 
 	void print_tdos_gamma(
 			const ModuleBase::matrix* pdos,

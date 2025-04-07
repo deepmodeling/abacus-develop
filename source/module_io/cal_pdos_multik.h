@@ -10,17 +10,20 @@
 namespace ModuleIO
 {
 
+    // pdos for multi-k point
 	void cal_pdos(
+			const psi::Psi<std::complex<double>>* psi,
+			hamilt::Hamilt<std::complex<double>>* p_ham,
+			const Parallel_Orbitals& pv,
 			const UnitCell& ucell,
+			const K_Vectors& kv,
 			const int nspin0,
-            const int nbands,
+			const int nbands,
+			const ModuleBase::matrix& ekb,
 			const double& emax,
 			const double& emin,
 			const double& dos_edelta_ev,
-			const double& bcoeff,
-            hamilt::Hamilt<std::complex<double>>* p_ham,
-			const psi::Psi<std::complex<double>>* psi,
-			const Parallel_Orbitals& pv);
+			const double& bcoeff);
 
 	void print_tdos_multik(
 			const ModuleBase::matrix* pdos,

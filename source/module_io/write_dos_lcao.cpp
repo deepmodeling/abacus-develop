@@ -5,21 +5,24 @@
 
 #include "module_parameter/parameter.h"
 
+namespace ModuleIO
+{
 
 template <typename T>
-void ModuleIO::write_dos_lcao(const UnitCell& ucell,
-                              const psi::Psi<T>* psi,
-                              const Parallel_Orbitals& pv,
-                              const ModuleBase::matrix& ekb,
-                              const ModuleBase::matrix& wg,
-                              const double& dos_edelta_ev,
-                              const double& dos_scale,
-                              const double& bcoeff,
-                              const K_Vectors& kv,
-                              const int nbands,
-                              const elecstate::efermi &energy_fermi,
-                              hamilt::Hamilt<T>* p_ham,
-                              std::ofstream &ofs_running)
+void write_dos_lcao(
+        const psi::Psi<T>* psi,
+		hamilt::Hamilt<T>* p_ham,
+        const Parallel_Orbitals &pv, 
+        const UnitCell& ucell,
+		const K_Vectors& kv,
+		const int nbands,
+		const elecstate::efermi &energy_fermi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& bcoeff,
+        std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
     
@@ -80,4 +83,38 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
     ofs_running << " DOS CALCULATIONS ENDS." << std::endl;
 
     return;
+}
+
+
+template void write_dos_lcao(
+        const psi::Psi<double>* psi,
+		hamilt::Hamilt<double>* p_ham,
+        const Parallel_Orbitals &pv, 
+        const UnitCell& ucell,
+		const K_Vectors& kv,
+		const int nbands,
+		const elecstate::efermi &energy_fermi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& bcoeff,
+        std::ofstream &ofs_running);
+
+
+template void write_dos_lcao(
+        const psi::Psi<std::complex<double>>* psi,
+		hamilt::Hamilt<std::complex<double>>* p_ham,
+        const Parallel_Orbitals &pv, 
+        const UnitCell& ucell,
+		const K_Vectors& kv,
+		const int nbands,
+		const elecstate::efermi &energy_fermi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const double& dos_edelta_ev,
+        const double& dos_scale,
+        const double& bcoeff,
+        std::ofstream &ofs_running);
+
 }
