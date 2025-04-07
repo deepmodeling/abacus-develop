@@ -1976,8 +1976,12 @@ These variables are used to control the calculation of DOS. [Detailed introducti
 
 ### stm_bias
 
-- **Type**: Real
-- **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos).
+- **Type**: Real Real(optional) Integer(optional)
+- **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos). When using three parameters:
+
+  - The first parameter specifies the initial bias voltage value. 
+  - The second parameter defines the voltage increment (step size between consecutive bias values). 
+  - The third parameter determines the total number of voltage points
 - **Default**: 1.0
 - **Unit**: V
 

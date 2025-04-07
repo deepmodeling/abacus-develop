@@ -22,13 +22,6 @@ class Cal_ldos
                               const psi::Psi<T>& psi,
                               const Parallel_Grid& pgrid,
                               const UnitCell& ucell);
-
-  private:
-    void dm2ldos(const elecstate::ElecStateLCAO<T>* pelec,
-                 const psi::Psi<T>& psi,
-                 elecstate::DensityMatrix<T, double>& dm,
-                 double** ldos);
-
 }; // namespace Cal_ldos
 } // namespace ModuleIO
 
