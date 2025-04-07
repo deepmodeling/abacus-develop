@@ -10,21 +10,12 @@ void PW_Basis:: initmpi(
     MPI_Comm pool_world_in
 )
 {
-    if (mpi_flag_)
-    {
         this->poolnproc = poolnproc_in;
         this->poolrank = poolrank_in;
         this->pool_world = pool_world_in;
-    }else
-    {
-        ModuleBase::WARNING_QUIT("PW_Basis","to use MPI_ FFT, please set the mpi_flag as true");
-    }
+        mpi_flag_ = ((this->poolnproc>1) || !(this->pool_world == MPI_COMM_NULL));
 }
 #endif
-void PW_Basis::set_mpi(const bool mpi_flag_in)
-{
-    this->mpi_flag_ = mpi_flag_in;
-}
 /// 
 /// Init the grids for FFT
 /// Input: lattice vectors of the cell, Energy cut off for G^2/2

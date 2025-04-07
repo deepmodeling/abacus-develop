@@ -50,7 +50,6 @@ public:
 	ModulePW::PW_Basis pwb1;
 	void SetUp()
 	{
-		pwb.set_mpi(false);
 	} 
 };
 

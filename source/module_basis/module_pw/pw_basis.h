@@ -101,7 +101,7 @@ public:
 //===============================================
 public:
 #ifdef __MPI
-    MPI_Comm pool_world;
+    MPI_Comm pool_world=MPI_COMM_NULL;
 #endif
 
     int *ig2isz=nullptr; // map ig to (is, iz).
@@ -437,7 +437,7 @@ protected:
 
   std::string device = "cpu";       ///< cpu or gpu
   std::string precision = "double"; ///< single, double, mixing
-  bool mpi_flag_ = true;            ///< ture,is use mpi or not
+  bool mpi_flag_ = false;            ///< ture,is use mpi or not
   bool double_data_ = true;         ///<  if has double data
   bool float_data_ = false;         ///< if has float data
 };

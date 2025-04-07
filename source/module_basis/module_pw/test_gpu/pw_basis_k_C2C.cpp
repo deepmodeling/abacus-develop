@@ -24,8 +24,8 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
     int distribution_type = 1;
     bool xprime = false;
     //--------------------------------------------------
-    pwtest.set_mpi(false); 
     // init //real parameter
+    pwtest.initmpi(1,0,MPI_COMM_NULL);
     pwtest.initgrids(lat0, latvec, 4 * wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, nks, kvec_d, distribution_type, xprime);
     pwtest.setuptransform();
@@ -162,8 +162,8 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
     int distribution_type = 1;
     bool xprime = false;
     //--------------------------------------------------
-    pwtest.set_mpi(false); 
     // init //real parameter
+    pwtest.initmpi(1,0,MPI_COMM_NULL);
     pwtest.initgrids(lat0, latvec, 4 * wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, nks, kvec_d, distribution_type, xprime);
     pwtest.setuptransform();

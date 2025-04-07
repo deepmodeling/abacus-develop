@@ -27,7 +27,7 @@ TEST_F(PWTEST, recip_to_real_double)
     bool xprime = false;
 
     // init
-    pwtest.set_mpi(false); 
+    pwtest.initmpi(1,0,MPI_COMM_NULL);
     pwtest.initgrids(lat0, latvec, wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
     pwtest.setuptransform();
@@ -164,7 +164,7 @@ TEST_F(PWTEST, recip_to_real_float)
     int distribution_type = 1;
     bool xprime = false;
 
-    pwtest.set_mpi(false); 
+    pwtest.initmpi(1,0,MPI_COMM_NULL);
     pwtest.initgrids(lat0, latvec, wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
     pwtest.setuptransform();

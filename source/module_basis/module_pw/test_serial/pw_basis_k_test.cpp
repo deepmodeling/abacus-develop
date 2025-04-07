@@ -39,8 +39,6 @@ public:
 	ModulePW::PW_Basis_K basis_k;
 	void SetUp()
 	{
-		// basis_k= ModuleBase::PW_Basis_k(device_flag,preci)
-		basis_k.set_mpi(false);
 	}
 };
 
