@@ -3,6 +3,8 @@ list(APPEND objects
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
+    cal_pdos_gamma.cpp
+    cal_pdos_multik.cpp
     cal_ldos.cpp
     cif_io.cpp
     write_dos_pw.cpp

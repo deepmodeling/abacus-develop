@@ -1,52 +1,42 @@
 #include "module_io/dos_nao.h"
+#include "module_io/write_dos_lcao.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
 #include "module_parameter/parameter.h"
 
 namespace ModuleIO
 {
-    /// @brief manege the output of dos in numerical atomic basis case
-    /// @param[in] psi
-    /// @param[in] pv
-    /// @param[in] ekb
-    /// @param[in] wg
-    /// @param[in] dos_edelta_ev
-    /// @param[in] dos_scale
-    /// @param[in] dos_sigma
-    /// @param[in] kv
-    /// @param[in] ucell
-    /// @param[in] eferm
-    /// @param[in] nbands
-    template<typename T>
-		void out_dos_nao(
-				const psi::Psi<T>* psi,
-				const Parallel_Orbitals &pv,
-				const ModuleBase::matrix& ekb,
-				const ModuleBase::matrix& wg,
-				const double& dos_edelta_ev,
-				const double& dos_scale,
-				const double& dos_sigma,
-				const K_Vectors& kv,
-				const UnitCell& ucell,
-				const elecstate::efermi& eferm,
-				int nbands,
-				hamilt::Hamilt<T>* p_ham)
+
+template<typename T>
+void out_dos_nao(
+			const psi::Psi<T>* psi,
+			hamilt::Hamilt<T>* p_ham,
+			const Parallel_Orbitals &pv,
+			const UnitCell& ucell,
+			const K_Vectors& kv,
+			const int nbands,
+			const elecstate::efermi& eferm,
+			const ModuleBase::matrix& ekb,
+			const ModuleBase::matrix& wg,
+			const double& dos_edelta_ev,
+			const double& dos_scale,
+			const double& dos_sigma)
 {
     ModuleBase::TITLE("Module_IO", "out_dos_nao");
 
-	write_dos_lcao(
-			ucell, 
+	ModuleIO::write_dos_lcao(
 			psi, 
+            p_ham,
 			pv, 
+			ucell, 
+			kv, 
+			PARAM.inp.nbands,
+			eferm,
 			ekb, 
 			wg, 
 			dos_edelta_ev, 
 			dos_scale, 
 			dos_sigma, 
-			kv, 
-			PARAM.inp.nbands,
-			eferm,
-			p_ham,
 			GlobalV::ofs_running);
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
@@ -62,31 +52,33 @@ namespace ModuleIO
 
 }
 
-template void out_dos_nao(
-        const psi::Psi<double>* psi,
-		const Parallel_Orbitals &pv,
-		const ModuleBase::matrix& ekb,
-        const ModuleBase::matrix& wg,
-        const double& dos_edelta_ev,
-        const double& dos_scale,
-        const double& dos_sigma,
-        const K_Vectors& kv,
-        const UnitCell& ucell,
-        const elecstate::efermi& eferm,
-        int nbands,
-		hamilt::Hamilt<double>* p_ham);
 
 template void out_dos_nao(
-        const psi::Psi<std::complex<double>>* psi,
-		const Parallel_Orbitals &pv,
-		const ModuleBase::matrix& ekb,
-        const ModuleBase::matrix& wg,
-        const double& dos_edelta_ev,
-        const double& dos_scale,
-        const double& dos_sigma,
-        const K_Vectors& kv,
-        const UnitCell& ucell,
-        const elecstate::efermi& eferm,
-        int nbands,
-        hamilt::Hamilt<std::complex<double>>* p_ham);
+			const psi::Psi<double>* psi,
+			hamilt::Hamilt<double>* p_ham,
+			const Parallel_Orbitals &pv,
+			const UnitCell& ucell,
+			const K_Vectors& kv,
+			const int nbands,
+			const elecstate::efermi& eferm,
+			const ModuleBase::matrix& ekb,
+			const ModuleBase::matrix& wg,
+			const double& dos_edelta_ev,
+			const double& dos_scale,
+			const double& dos_sigma);
+
+template void out_dos_nao(
+			const psi::Psi<std::complex<double>>* psi,
+			hamilt::Hamilt<std::complex<double>>* p_ham,
+			const Parallel_Orbitals &pv,
+			const UnitCell& ucell,
+			const K_Vectors& kv,
+			const int nbands,
+			const elecstate::efermi& eferm,
+			const ModuleBase::matrix& ekb,
+			const ModuleBase::matrix& wg,
+			const double& dos_edelta_ev,
+			const double& dos_scale,
+			const double& dos_sigma);
+
 } // namespace ModuleIO
