@@ -3,6 +3,6 @@ This test for:
 *just gamma point
 *old upf pseudopotential
 *smearing_method default
-*ks_solver dav
-
+*ks_solver dav_subspace
+*precison    float
 !!!!!!!WRONG!!!!!!!
