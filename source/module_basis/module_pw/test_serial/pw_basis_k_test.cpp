@@ -37,9 +37,6 @@ public:
 	std::string precision_single = "single";
 	std::string device_flag = "cpu";
 	ModulePW::PW_Basis_K basis_k;
-	void SetUp()
-	{
-	}
 };
 
 TEST_F(PWBasisKTEST,Constructor)
@@ -105,6 +102,7 @@ TEST_F(PWBasisKTEST,Initgrids2)
 
 TEST_F(PWBasisKTEST, Initparameters) 
 {
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_single);
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,
@@ -149,6 +147,7 @@ TEST_F(PWBasisKTEST, Initparameters)
 
 TEST_F(PWBasisKTEST, SetupTransform) 
 {
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_double);
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,
@@ -168,6 +167,7 @@ TEST_F(PWBasisKTEST, SetupTransform)
 
 TEST_F(PWBasisKTEST, CollectLocalPW) 
 {
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_double);
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,

@@ -61,7 +61,6 @@ public:
     PW_Basis(std::string device_, std::string precision_);
     virtual ~PW_Basis();
     //Init mpi parameters
-    void set_mpi(const bool mpi_flag_in);
 #ifdef __MPI
     void initmpi(
         const int poolnproc_in, // Number of processors in this pool
