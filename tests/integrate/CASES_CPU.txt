@@ -27,6 +27,7 @@
 102_PW_BPCG_BP
 102_PW_CG
 102_PW_DS_davsubspace
+102_PW_DS_davsubspace_float
 102_PW_DS_davsubspace_sca
 102_PW_PINT_RKS
 102_PW_PINT_UKS
