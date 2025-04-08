@@ -32,6 +32,10 @@ namespace LCAO_deepks_io
 /// 4. save_matrix2npy : ModuleBase::matrix -> .npy, for force, stress and orbital
 /// 5. save_tensor2npy : torch::Tensor -> .npy, for precalculation variables
 
+/// Ry2Hartree : convert Ry to Hartree, for energy, force, stress, orbital and Hamiltonian, which is consistent with
+/// deepks-kit. Used in save_npy_e, save_npy_h and save_matrix2npy by default
+constexpr double Ry2Hartree = 0.5;
+
 /// print density matrices
 template <typename TK>
 void print_dm(const int nks, const int nlocal, const int nrow, const std::vector<std::vector<TK>>& dm);
@@ -51,7 +55,8 @@ void save_npy_d(const int nat,
 // save energy
 void save_npy_e(const double& e, /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/
                 const std::string& e_file,
-                const int rank);
+                const int rank,
+                const double unit_scale = Ry2Hartree);
 
 // save Hamiltonian
 template <typename TK, typename TH>
@@ -59,13 +64,15 @@ void save_npy_h(const std::vector<TH>& hamilt,
                 const std::string& h_file,
                 const int nlocal,
                 const int nks,
-                const int rank);
+                const int rank,
+                const double unit_scale = Ry2Hartree);
 
 void save_matrix2npy(const std::string& file_name,
                      const ModuleBase::matrix& matrix,
                      const int rank,
                      const double& scale = 1.0,
-                     const char mode = 'N');
+                     const char mode = 'N',
+                     const double unit_scale = Ry2Hartree);
 
 template <typename T>
 void save_tensor2npy(const std::string& file_name, const torch::Tensor& tensor, const int rank);

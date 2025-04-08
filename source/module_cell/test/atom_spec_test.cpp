@@ -146,12 +146,15 @@ TEST_F(AtomSpecTest, BcastAtom)
 		atom.mass = 12.0;
 		atom.tau.resize(atom.na);
 		atom.taud.resize(atom.na);
+		atom.dis.resize(atom.na);
 		atom.vel.resize(atom.na);
 		atom.mag.resize(atom.na);
 		atom.angle1.resize(atom.na);
 		atom.angle2.resize(atom.na);
 		atom.m_loc_.resize(atom.na);
 		atom.mbl.resize(atom.na);
+		atom.lambda.resize(atom.na);
+		atom.constrain.resize(atom.na);
 		atom.tau[0].x = 0.2;
 		atom.tau[0].y = 0.2;
 		atom.tau[0].z = 0.2;

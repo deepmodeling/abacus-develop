@@ -2027,10 +2027,13 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### deepks_out_labels
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: numerical atomic orbital basis
-- **Description**: Print labels and descriptors for DeePKS training in OUT.${suffix}. The names of these files start with "deepks".
-- **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
+- **Description**: Print labels and descriptors for DeePKS in OUT.${suffix}. The names of these files start with "deepks".
+  - 0 : No output.
+  - 1 : Output intermediate files needed during DeePKS training.
+  - 2 : Output target labels for label preperation. The label files are named as `deepks_<property>.npy`, where the units and formats are the same as label files `<property>.npy` required for training, except that the first dimension (`nframes`) is excluded. System structrue files are also given in `deepks_atom.npy` and `deepks_box.npy` in the unit of *Bohr*, which means `lattice_constant` should be set to 1 when training. 
+- **Note**: When `deepks_out_labels` equals **1**, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```text
   NUMERICAL_ORBITAL
@@ -2040,8 +2043,8 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
-
-- **Default**: False
+  This is not needed when `deepks_out_labels` equals 2. 
+- **Default**: 0
 
 ### deepks_scf
 

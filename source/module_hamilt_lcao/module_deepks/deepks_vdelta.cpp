@@ -15,6 +15,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 // calculating sum of correction band energies
 template <typename TK>
@@ -128,6 +129,42 @@ void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
     }
 }
 
+template <typename TK, typename TH, typename TR>
+void DeePKS_domain::get_h_tot(const Parallel_Orbitals& pv,
+                              hamilt::HamiltLCAO<TK, TR>* p_ham,
+                              std::vector<TH>& h_tot,
+                              const int nlocal,
+                              const int nks,
+                              const char matrix_type) // 'H' for H(k), 'S' for S(k)
+{
+    ModuleBase::TITLE("DeePKS_domain", "get_h_tot");
+    TK* (hamilt::HamiltLCAO<TK, TR>::*getMatrixFunc)() const = nullptr;
+    if (matrix_type == 'H')
+    {
+        getMatrixFunc = &hamilt::HamiltLCAO<TK, TR>::getHk;
+    }
+    else if (matrix_type == 'S')
+    {
+        getMatrixFunc = &hamilt::HamiltLCAO<TK, TR>::getSk;
+    }
+    else
+    {
+        throw std::invalid_argument("Invalid matrix_type. Use 'H' for H(k) or 'S' for S(k).");
+    }
+    std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.nloc));
+    for (int ik = 0; ik < nks; ik++)
+    {
+        h_tot[ik].create(nlocal, nlocal);
+        p_ham->updateHk(ik);
+        const TK* hk_ptr = (p_ham->*getMatrixFunc)();
+        for (int i = 0; i < pv.nloc; i++)
+        {
+            h_mat[ik][i] = hk_ptr[i];
+        }
+    }
+    DeePKS_domain::collect_h_mat<TK, TH>(pv, h_mat, h_tot, nlocal, nks);
+}
+
 template void DeePKS_domain::cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm,
                                                       const std::vector<std::vector<double>>& V_delta,
                                                       const int nks,
@@ -155,4 +192,26 @@ template void DeePKS_domain::collect_h_mat<std::complex<double>, ModuleBase::Com
     const int nlocal,
     const int nks);
 
+template void DeePKS_domain::get_h_tot<double, ModuleBase::matrix, double>(const Parallel_Orbitals& pv,
+                                                                           hamilt::HamiltLCAO<double, double>* p_ham,
+                                                                           std::vector<ModuleBase::matrix>& h_tot,
+                                                                           const int nlocal,
+                                                                           const int nks,
+                                                                           const char matrix_type);
+
+template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, double>(
+    const Parallel_Orbitals& pv,
+    hamilt::HamiltLCAO<std::complex<double>, double>* p_ham,
+    std::vector<ModuleBase::ComplexMatrix>& h_tot,
+    const int nlocal,
+    const int nks,
+    const char matrix_type);
+
+template void DeePKS_domain::get_h_tot<std::complex<double>, ModuleBase::ComplexMatrix, std::complex<double>>(
+    const Parallel_Orbitals& pv,
+    hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_ham,
+    std::vector<ModuleBase::ComplexMatrix>& h_tot,
+    const int nlocal,
+    const int nks,
+    const char matrix_type);
 #endif

@@ -240,6 +240,7 @@ TEST_F(ParaReduce, GatherIntAll)
         /// printf("post rank %d array[%d] = %d, min = %d \n",
         ///	my_rank,i,array[i],min_number);
     }
+    delete[] array;
 }
 
 TEST_F(ParaReduce, GatherDoubleAll)
@@ -266,6 +267,7 @@ TEST_F(ParaReduce, GatherDoubleAll)
         /// printf("post rank %d array[%d] = %f, min = %f, max = %f \n",
         ///	my_rank,i,array[i],min_number,max_number);
     }
+    delete[] array;
 }
 
 TEST_F(ParaReduce, ReduceIntDiag)
@@ -306,6 +308,7 @@ TEST_F(ParaReduce, ReduceIntDiag)
         ///	my_rank,mpiContext.dsize,diag_sum_first, diag_sum_second);
         EXPECT_EQ(diag_sum_first, diag_sum_second);
         delete[] rand_array;
+        delete[] swap;
         MPI_Comm_free(&DIAG_WORLD);
     }
 }
@@ -595,7 +598,7 @@ TEST_F(ParaReduce, GatherDoublePool)
             /// printf("post rank %d, pool rank %d, array[%d] = %f, min = %f, max = %f \n",
             ///  my_rank,mpiContext.rank_in_pool,i,array[i],min_number,max_number);
         }
-
+        delete[] array;
         MPI_Comm_free(&POOL_WORLD);
     }
 }
