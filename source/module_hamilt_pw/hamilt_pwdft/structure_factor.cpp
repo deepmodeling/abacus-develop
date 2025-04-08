@@ -68,8 +68,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
     if(nbspline > 0) {   usebspline = true;
-    } else {    usebspline = false;
-}
+    } else {    usebspline = false;}
     
     if(usebspline)
     {
@@ -147,6 +146,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
             inat++;
         }
     }
+    
     if (device == "gpu") {
         if (PARAM.globalv.has_float_data) {
             resmem_cd_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
@@ -164,7 +164,9 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
         syncmem_z2z_h2d_op()(this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
+        std::cout<<"the test is "<<std::endl;
         if (PARAM.globalv.has_float_data) {
+            std::cout<<"here set the float data"<<std::endl;
             resmem_ch_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_ch_op()(this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_ch_op()(this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));

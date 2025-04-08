@@ -57,10 +57,7 @@ void FFT_Bundle::initfft(int nx_in,
         }
 #endif
     }
-    if (this->precision == "double" || this->precision == "mixing")
-    {
         double_flag = true;
-    }
 #if defined(__DSP)
     if (device == "dsp")
     {
