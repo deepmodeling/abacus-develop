@@ -57,7 +57,10 @@ void FFT_Bundle::initfft(int nx_in,
         }
 #endif
     }
-    double_flag = true;
+    if (this->precision == "double" || this->precision == "mixing")
+    {
+        double_flag = true;
+    }
 #if defined(__DSP)
     if (device == "dsp")
     {
@@ -138,7 +141,7 @@ void FFT_Bundle::clear()
 
 void FFT_Bundle::resource_handler(const int flag) const
 {
-    if (this->device == "dsp")
+    if (this->device=="dsp")
     {
         if (double_flag)
         {
@@ -217,23 +220,27 @@ void FFT_Bundle::fftxyc2r(std::complex<double>* in, double* out) const
 }
 
 template <>
-void FFT_Bundle::fft3D_forward(std::complex<float>* in, std::complex<float>* out) const
+void FFT_Bundle::fft3D_forward(std::complex<float>* in,
+                               std::complex<float>* out) const
 {
     fft_float->fft3D_forward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
+void FFT_Bundle::fft3D_forward(std::complex<double>* in,
+                               std::complex<double>* out) const
 {
     fft_double->fft3D_forward(in, out);
 }
 
 template <>
-void FFT_Bundle::fft3D_backward(std::complex<float>* in, std::complex<float>* out) const
+void FFT_Bundle::fft3D_backward(std::complex<float>* in,
+                                std::complex<float>* out) const
 {
     fft_float->fft3D_backward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_backward(std::complex<double>* in, std::complex<double>* out) const
+void FFT_Bundle::fft3D_backward(std::complex<double>* in,
+                                std::complex<double>* out) const
 {
     fft_double->fft3D_backward(in, out);
 }

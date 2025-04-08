@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     precision_flag = "double";
 #endif
     device_flag = "cpu";
-    nproc_in_pool=1;
+    nproc_in_pool = kpar = 1;
     rank_in_pool = 0;
 #ifdef _OPENMP
     // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
