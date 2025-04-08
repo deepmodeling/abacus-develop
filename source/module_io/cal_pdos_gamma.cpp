@@ -7,6 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 void ModuleIO::cal_pdos(
 		const psi::Psi<double>* psi,
@@ -82,8 +83,8 @@ void ModuleIO::cal_pdos(
             const double zero_float = 0.0;
             const int one_int = 1;
 
-            //const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
-            const double* sk = nullptr;
+            const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+            //const double* sk = nullptr;
 
 #ifdef __MPI
             const char T_char = 'T';

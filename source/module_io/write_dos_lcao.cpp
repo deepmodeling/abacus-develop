@@ -68,16 +68,18 @@ void write_dos_lcao(
 
     if (PARAM.inp.out_dos == 2)
     {
-		cal_pdos(ucell,
+		cal_pdos(psi,
+				p_ham,
+				pv,
+				ucell,
+				kv,
 				nspin0,
 				nbands,
+				ekb,
 				emax,
-                emin,
-                dos_edelta_ev,
-                bcoeff,
-                p_ham,
-                psi,
-                pv);
+				emin,
+				dos_edelta_ev,
+				bcoeff);
     }
 
     ofs_running << " DOS CALCULATIONS ENDS." << std::endl;

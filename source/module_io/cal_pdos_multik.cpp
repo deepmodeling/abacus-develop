@@ -7,18 +7,21 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 void ModuleIO::cal_pdos(
+		const psi::Psi<std::complex<double>>* psi,
+		hamilt::Hamilt<std::complex<double>>* p_ham,
+		const Parallel_Orbitals& pv,
 		const UnitCell& ucell,
+		const K_Vectors& kv,
 		const int nspin0,
-        const int nbands,
-        const double& emax,
-        const double& emin,
-        const double& dos_edelta_ev,
-        const double& bcoeff,
-        hamilt::Hamilt<std::complex<double>>* p_ham,
-        const psi::Psi<std::complex<double>>* psi,
-        const Parallel_Orbitals& pv)
+		const int nbands,
+		const ModuleBase::matrix& ekb,
+		const double& emax,
+		const double& emin,
+		const double& dos_edelta_ev,
+		const double& bcoeff)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_multik");
 
@@ -71,7 +74,6 @@ void ModuleIO::cal_pdos(
 				{
 					dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
 						->updateSk(ik, hk_type);
-
 					sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
 						->getSk();
 				}
@@ -79,7 +81,6 @@ void ModuleIO::cal_pdos(
 				{
 					dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
 						->updateSk(ik, hk_type);
-
 					sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
 						->getSk();
 				}
@@ -172,8 +173,8 @@ void ModuleIO::cal_pdos(
 
     if (GlobalV::MY_RANK == 0)
     {
-		print_tdos_gamma(pdos, nlocal, npoints,	emin, dos_edelta_ev);
-        print_pdos_gamma(ucell, pdos, nlocal, npoints, emin, dos_edelta_ev);
+		print_tdos_multik(pdos, nlocal, npoints, emin, dos_edelta_ev);
+        print_pdos_multik(ucell, pdos, nlocal, npoints, emin, dos_edelta_ev);
 
         ModuleIO::write_orb_info(&ucell);
     }
