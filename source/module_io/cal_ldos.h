@@ -22,7 +22,6 @@ class Cal_ldos
                               const psi::Psi<T>& psi,
                               const Parallel_Grid& pgrid,
                               const UnitCell& ucell);
-
 }; // namespace Cal_ldos
 } // namespace ModuleIO
 

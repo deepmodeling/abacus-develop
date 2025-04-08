@@ -1,7 +1,8 @@
 #include "cal_ldos.h"
+
 #include "cube_io.h"
-#include "module_base/blas_connector.h"
-#include "module_base/scalapack_connector.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <type_traits>
 
@@ -13,40 +14,43 @@ void Cal_ldos<T>::cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>
                               const Parallel_Grid& pgrid,
                               const UnitCell& ucell)
 {
-    // energy range for ldos (efermi as reference)
-    const double emin = PARAM.inp.stm_bias < 0 ? PARAM.inp.stm_bias : 0;
-    const double emax = PARAM.inp.stm_bias > 0 ? PARAM.inp.stm_bias : 0;
-
-    std::vector<double> ldos(pelec->charge->nrxx);
-    std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
-
-    for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
+    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
     {
-        psi.fix_k(ik);
-        const double efermi = pelec->eferm.get_efval(pelec->klist->isk[ik]);
-        int nbands = psi.get_nbands();
+        // energy range for ldos (efermi as reference)
+        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double emin = en < 0 ? en : 0;
+        const double emax = en > 0 ? en : 0;
 
-        for (int ib = 0; ib < nbands; ib++)
+        std::vector<double> ldos(pelec->charge->nrxx);
+        std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+
+        for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
         {
-            pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
-            const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
-            if (eigenval >= emin && eigenval <= emax)
+            psi.fix_k(ik);
+            const double efermi = pelec->eferm.get_efval(pelec->klist->isk[ik]);
+            int nbands = psi.get_nbands();
+
+            for (int ib = 0; ib < nbands; ib++)
             {
-				for (int ir = 0; ir < pelec->basis->nrxx; ir++)
-				{
-					ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
-				}
+                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
+                if (eigenval >= emin && eigenval <= emax)
+                {
+                    for (int ir = 0; ir < pelec->basis->nrxx; ir++)
+                    {
+                        ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+                    }
+                }
             }
         }
+
+        std::stringstream fn;
+        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+           << ".cube";
+
+        const int precision = PARAM.inp.out_ldos[1];
+        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0);
     }
-
-    std::stringstream fn;
-    fn << PARAM.globalv.global_out_dir 
-       << "LDOS_" << PARAM.inp.stm_bias << "eV"
-       << ".cube";
-
-    const int precision = PARAM.inp.out_ldos[1];
-    ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0);
 }
 
 #ifdef __LCAO
@@ -56,75 +60,83 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
                                 const Parallel_Grid& pgrid,
                                 const UnitCell& ucell)
 {
-    // energy range for ldos (efermi as reference)
-    const double emin = PARAM.inp.stm_bias < 0 ? PARAM.inp.stm_bias : 0;
-    const double emax = PARAM.inp.stm_bias > 0 ? PARAM.inp.stm_bias : 0;
-
-    // calulate dm-like
-    const int nbands_local = psi.get_nbands();
-    const int nbasis_local = psi.get_nbasis();
-
-    // psi.T * wk * psi.conj()
-    // result[ik](iw1,iw2) = \sum_{ib} psi[ik](ib,iw1).T * wk(k) * psi[ik](ib,iw2).conj()
-    for (int ik = 0; ik < psi.get_nk(); ++ik)
+    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
     {
-        psi.fix_k(ik);
-        const double efermi = pelec->eferm.get_efval(pelec->klist->isk[ik]);
+        // energy range for ldos (efermi as reference)
+        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double emin = en < 0 ? en : 0;
+        const double emax = en > 0 ? en : 0;
 
-        // T* dmk_pointer = DM.get_DMK_pointer(ik);
+        // calculate weight (for bands not in the range, weight is zero)
+        ModuleBase::matrix weight(pelec->ekb.nr, pelec->ekb.nc);
+        for (int ik = 0; ik < pelec->ekb.nr; ++ik)
+        {
+            const double efermi = pelec->eferm.get_efval(pelec->klist->isk[ik]);
 
-        psi::Psi<T> wk_psi(1, psi.get_nbands(), psi.get_nbasis(), psi.get_nbasis(), true);
-        const T* ppsi = psi.get_pointer();
-        T* pwk_psi = wk_psi.get_pointer();
+            for (int ib = 0; ib < pelec->ekb.nc; ib++)
+            {
+                const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
+                if (eigenval >= emin && eigenval <= emax)
+                {
+                    weight(ik, ib) = pelec->klist->wk[ik];
+                }
+            }
+        }
 
-        // #ifdef _OPENMP
-        // #pragma omp parallel for schedule(static, 1024)
-        // #endif
-        //         for (int i = 0; i < wk_psi.size(); ++i)
-        //         {
-        //             pwk_psi[i] = my_conj(ppsi[i]);
-        //         }
+        // calculate dm-like for ldos
+        const int nspin_dm = PARAM.inp.nspin == 2 ? 2 : 1;
+        elecstate::DensityMatrix<T, double> dm_ldos(pelec->DM->get_paraV_pointer(),
+                                                    nspin_dm,
+                                                    pelec->klist->kvec_d,
+                                                    pelec->klist->get_nks() / nspin_dm);
 
-        //         int ib_global = 0;
-        //         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
-        //         {
-        //             while (ib_local != ParaV->global2local_col(ib_global))
-        //             {
-        //                 ++ib_global;
-        //                 if (ib_global >= wg.nc)
-        //                 {
-        //                     ModuleBase::WARNING_QUIT("cal_ldos", "please check global2local_col!");
-        //                 }
-        //             }
+        elecstate::cal_dm_psi(pelec->DM->get_paraV_pointer(), weight, psi, dm_ldos);
+        dm_ldos.init_DMR(*(pelec->DM->get_DMR_pointer(1)));
+        dm_ldos.cal_DMR();
 
-        //             const double eigenval = (pelec->ekb(ik, ib_global) - efermi) * ModuleBase::Ry_to_eV;
-        //             if (eigenval >= emin && eigenval <= emax)
-        //             {
-        //                 for (int ir = 0; ir < pelec->basis->nrxx; ir++)
-        //                     ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
-        //             }
+        // allocate ldos space
+        std::vector<double> ldos_space(PARAM.inp.nspin * pelec->charge->nrxx);
+        double** ldos = new double*[PARAM.inp.nspin];
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        {
+            ldos[is] = &ldos_space[is * pelec->charge->nrxx];
+        }
 
-        //             double* wg_wfc_pointer = &(wk_psi(0, ib_local, 0));
-        //             BlasConnector::scal(nbasis_local, pelec->klist->wk[ik], wg_wfc_pointer, 1);
-        //         }
+    // calculate ldos
+#ifndef __NEW_GINT
+        ModuleBase::WARNING_QUIT("Cal_ldos::dm2ldos",
+                                 "do not support old grid integral, please recompile with __NEW_GINT");
+#else
+        ModuleGint::cal_gint_rho(dm_ldos.get_DMR_vector(), PARAM.inp.nspin, ldos);
+#endif
 
-        //         // C++: dm(iw1,iw2) = psi(ib,iw1).T * wk_psi(ib,iw2)
-        // #ifdef __MPI
-        //         psiMulPsiMpi(wk_psi, psi, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
-        // #else
-        //         psiMulPsi(wk_psi, psi, dmk_pointer);
-        // #endif
+        // I'm not sure whether ldos should be output for each spin or not
+        // ldos[0] += ldos[1] for nspin_dm == 2
+        if (nspin_dm == 2)
+        {
+            BlasConnector::axpy(pelec->charge->nrxx, 1.0, ldos[1], 1, ldos[0], 1);
+        }
+
+        // write ldos to cube file
+        std::stringstream fn;
+        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+           << ".cube";
+
+        const int precision = PARAM.inp.out_ldos[1];
+        ModuleIO::write_vdata_palgrid(pgrid,
+                                      ldos_space.data(),
+                                      0,
+                                      PARAM.inp.nspin,
+                                      0,
+                                      fn.str(),
+                                      0,
+                                      &ucell,
+                                      precision,
+                                      0);
+
+        // free memory
+        delete[] ldos;
     }
-}
-
-double my_conj(double x)
-{
-    return x;
-}
-
-std::complex<double> my_conj(const std::complex<double>& z)
-{
-    return {z.real(), -z.imag()};
 }
 
 #endif

@@ -418,7 +418,7 @@ struct Input_para
     double dos_scale = 0.01;
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
-    double stm_bias = 1.0;   ///< bias voltage for STM
+    std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions
