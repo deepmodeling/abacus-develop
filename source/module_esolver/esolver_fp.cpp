@@ -37,6 +37,10 @@ ESolver_FP::ESolver_FP()
     }else{
         fft_precsion = "double";
     }
+    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
+        if (fft_device == "gpu")
+            fft_precsion = "double";
+    #endif
     pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precsion);
     if (PARAM.globalv.double_grid)
     {
