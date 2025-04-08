@@ -27,6 +27,7 @@
 102_PW_DA_davidson
 102_PW_DA_davidson_float
 102_PW_DS_davsubspace
+102_PW_DS_davsubspace_float
 102_PW_DS_davsubspace_sca
 102_PW_PINT_RKS
 102_PW_PINT_UKS
