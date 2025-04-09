@@ -292,7 +292,7 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
                            pow(ucell.lat0, 3);
     if (ucell.omega <= 0) 
     {
-        ModuleBase::WARNING_QUIT("setup_cell_after_vc", "omega <= 0 .");
+        ModuleBase::WARNING_QUIT("setup_cell_after_vc", "Cell volume <= 0 .");
     } else {
         log << std::endl;
         ModuleBase::GlobalFunc::OUT(log, "Volume (Bohr^3)", ucell.omega);
