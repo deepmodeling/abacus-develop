@@ -25,10 +25,12 @@ void ModuleIO::write_proj_band_lcao(
     const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
     int nspin0 = 1;
-    if (PARAM.inp.nspin == 2) {
-        nspin0 = 2;
-}
-    int nks = 0;
+	if (PARAM.inp.nspin == 2) 
+	{
+		nspin0 = 2;
+	}
+
+	int nks = 0;
     if (nspin0 == 1)
     {
         nks = kv.get_nkstot();

@@ -733,7 +733,7 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
     // 1) write information
     if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
     {
-        GlobalV::ofs_running << "\n\n\n\n";
+        GlobalV::ofs_running << "\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                                 ">>>>>>>>>>>>>>>>>>>>>>>>>"
                              << std::endl;
@@ -761,17 +761,17 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
         GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
                                 "<<<<<<<<<<<<<<<<<<<<<<<<<"
                              << std::endl;
-        GlobalV::ofs_running << "\n\n\n\n";
+        GlobalV::ofs_running << "\n\n";
     }
 
     // 2) write information
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
 
-    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
     // 3) print out band information
     if (PARAM.inp.out_band[0])
     {
+        const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;

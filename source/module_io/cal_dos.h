@@ -1,11 +1,24 @@
 #ifndef DOS_H
 #define DOS_H
+
 #include<vector>
 #include "module_base/matrix.h"
+#include "module_elecstate/fp_energy.h"
 
 namespace ModuleIO
 {
-	bool calculate_dos(const int &is,		
+
+	void prepare_dos(std::ofstream& ofs_running,
+			const elecstate::efermi &energy_fermi,
+			const ModuleBase::matrix& ekb,
+			const int nks,
+			const int nbands,
+			const double& dos_edelta_ev,
+            const double& dos_scale,
+			double &emax,
+            double &emin);
+
+	bool cal_dos(const int &is,		
 		const std::string &fn,// file address for DOS.
 		const std::string &fn1,// file address for DOS_smearing.
 		const double &de_ev, // delta energy in ev.
@@ -19,6 +32,8 @@ namespace ModuleIO
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb, //store energy for each k point and each band
 		const ModuleBase::matrix &wg); //weight of (kpoint,bands))
+
+
 }
 
 #endif 

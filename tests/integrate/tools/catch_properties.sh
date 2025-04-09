@@ -45,10 +45,6 @@ has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
-deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
-deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
-deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
-deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
 has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
 out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
 has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
@@ -69,6 +65,7 @@ has_mat_t=$(get_input_key_value "out_mat_t" "INPUT")
 has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
+has_ldos=$(get_input_key_value "out_ldos" "INPUT")
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 rdmft=$(get_input_key_value "rdmft" "INPUT")
 #echo $running_path
@@ -129,11 +126,9 @@ fi
 # echo $total_charge
 #-------------------------------
 if ! test -z "$has_dos"  && [  $has_dos == 1 ]; then
-	total_dos=`cat OUT.autotest/DOS1_smearing.dat | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/DOS1_smear.dat | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
-#smearing_dos=`sum_file OUT.autotest/DOS1_smearing.dat`
-#echo "totaldossmearing $smearing_dos" >> $1
 
 #-------------------------------
 # Onsager coefficiency
@@ -376,6 +371,16 @@ if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
 fi
 
 #---------------------------------------
+# local density of states
+# echo $has_ldos
+#---------------------------------------
+if ! test -z "$has_ldos"  && [  $has_ldos == 1 ]; then
+    stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT")
+    python3 ../tools/CompareFile.py LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
+    echo "LDOS.cube_pass $?" >> $1
+fi
+
+#---------------------------------------
 # wave functions in real space 
 # echo "$has_wfc_r" ## test out_wfc_r > 0
 #---------------------------------------
@@ -568,61 +573,8 @@ fi
 #--------------------------------------------
 # deepks
 #--------------------------------------------
-if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
-	sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
-	total_des=`sum_file des_tmp.txt 5`
-	rm des_tmp.txt
-	echo "totaldes $total_des" >>$1
-	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
-		deepks_e_dm=`python3 get_dm_eig.py`
-	    echo "deepks_e_dm $deepks_e_dm" >>$1
-	fi
-	if ! test -z "$has_force" && [ $has_force == 1 ]; then
-	    deepks_f_label=`python3 get_grad_vx.py`
-		echo "deepks_f_label $deepks_f_label" >>$1
-	fi
-	if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-	    deepks_s_label=`python3 get_grad_vepsl.py`
-		echo "deepks_s_label $deepks_s_label" >>$1
-	fi
-fi
-
-#--------------------------------------------
-# band gap information
-#--------------------------------------------
-if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
-	odelta=`python3 get_odelta.py`
-	echo "odelta $odelta" >>$1
-	oprec=`python3 get_oprec.py`
-	echo "oprec $oprec" >> $1
-fi
-
-
-#--------------------------------------------
-# check vdelta in deepks
-#--------------------------------------------
-if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
-	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
-	echo "totalh $totalh" >>$1
-	totalvdelta=`python3 get_v_delta.py`
-	echo "totalvdelta $totalvdelta" >>$1
-	totalvdp=`python3 get_sum_numpy.py OUT.autotest/deepks_vdpre.npy `
-	echo "totalvdp $totalvdp" >> $1
-fi
-
-#--------------------------------------------
-# check vdelta in deepks
-#--------------------------------------------
-if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
-	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
-	echo "totalh $totalh" >>$1
-	totalvdelta=`python3 get_v_delta.py`
-	echo "totalvdelta $totalvdelta" >>$1
-	total_phialpha=`python3 get_sum_numpy.py OUT.autotest/deepks_phialpha.npy `
-	echo "total_phialpha $total_phialpha" >> $1
-	total_gevdm=`python3 get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
-	echo "total_gevdm $total_gevdm" >> $1
-fi
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+bash ${script_dir}/catch_deepks_properties.sh $1
 
 #--------------------------------------------
 # check symmetry 

@@ -9,6 +9,20 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            const K_Vectors *p_kv,
                                            const psi::Psi<complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell)
 {
+    double nqs_half1 = 0.5 * p_kv->nmp[0];
+    double nqs_half2 = 0.5 * p_kv->nmp[1];
+    double nqs_half3 = 0.5 * p_kv->nmp[2];
+    bool gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
+    if (!p_kv->get_is_mp())
+    {
+        gamma_extrapolation = false;
+    }
+    auto isint = [](double x)
+    {
+        double epsilon = 1e-6; // this follows the isint judgement in q-e
+        return std::abs(x - std::round(x)) < epsilon;
+    };
+
     // T is complex of FPTYPE, if FPTYPE is double, T is std::complex<double>
     // but if FPTYPE is std::complex<double>, T is still std::complex<double>
     using T = std::complex<FPTYPE>;
@@ -33,12 +47,14 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     T* density_real = nullptr;
     T* density_recip = nullptr;
     Real* pot = nullptr; // This factor is 2x of the potential in 10.1103/PhysRevB.73.125120
+    Real* pot_stress = nullptr;
 
     resmem_complex_op()(psi_nk_real, wfcpw->nrxx);
     resmem_complex_op()(psi_mq_real, wfcpw->nrxx);
     resmem_complex_op()(density_real, rhopw->nrxx);
     resmem_complex_op()(density_recip, rhopw->npw);
     resmem_real_op()(pot, rhopw->npw * nks * nks);
+    resmem_real_op()(pot_stress, rhopw->npw * nks * nks);
 
     // prepare the coefficients
     double exx_div = 0;
@@ -58,24 +74,46 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
         // temporarily for all k points, should be replaced to q points later
         for (int ik = 0; ik < wfcpw->nks; ik++)
         {
-            auto k = wfcpw->kvec_c[ik];
+            const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
+            const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:div)
 #endif
             for (int ig = 0; ig < rhopw->npw; ig++)
             {
-                auto q = k + rhopw->gcar[ig];
-                double qq = q.norm2();
+                const ModuleBase::Vector3<double> q_c = k_c + rhopw->gcar[ig];
+                const ModuleBase::Vector3<double> q_d = k_d + rhopw->gdirect[ig];
+                double qq = q_c.norm2();
+                // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
+                // 7/8 of the points in the grid are "activated" and 1/8 are disabled.
+                // grid_factor is designed for the 7/8 of the grid to function like all of the points
+                double grid_factor = 1;
+                double extrapolate_grid = 8.0/7.0;
+                if (gamma_extrapolation)
+                {
+                    if (isint(q_d[0] * nqs_half1) &&
+                        isint(q_d[1] * nqs_half2) &&
+                        isint(q_d[2] * nqs_half3))
+                    {
+                        grid_factor = 0;
+                    }
+                    else
+                    {
+                        grid_factor = extrapolate_grid;
+                    }
+                }
+
+
                 if (qq <= 1e-8) continue;
                 else if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
                 {
                     double hse_omega = GlobalC::exx_info.info_global.hse_omega;
                     double omega2 = hse_omega * hse_omega;
-                    div += std::exp(-alpha * qq) / qq * (1.0 - std::exp(-qq*tpiba2 / 4.0 / omega2));
+                    div += std::exp(-alpha * qq) / qq * (1.0 - std::exp(-qq*tpiba2 / 4.0 / omega2)) * grid_factor;
                 }
                 else
                 {
-                    div += std::exp(-alpha * qq) / qq;
+                    div += std::exp(-alpha * qq) / qq * grid_factor;
                 }
             }
         }
@@ -84,14 +122,18 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
         // std::cout << "EXX div: " << div << std::endl;
 
         // if (PARAM.inp.dft_functional == "hse")
-        if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+        if (!gamma_extrapolation)
         {
-            double hse_omega = GlobalC::exx_info.info_global.hse_omega;
-            div += tpiba2 / 4.0 / hse_omega / hse_omega; // compensate for the finite value when qq = 0
-        }
-        else
-        {
-            div -= alpha;
+            if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+            {
+                double omega = GlobalC::exx_info.info_global.hse_omega;
+                div += tpiba2 / 4.0 / omega / omega; // compensate for the finite value when qq = 0
+            }
+            else
+            {
+                div -= alpha;
+            }
+
         }
 
         div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / wfcpw->nks;
@@ -107,9 +149,9 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
         {
             double hse_omega = GlobalC::exx_info.info_global.hse_omega;
             double omega2 = hse_omega * hse_omega;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+:aa)
-#endif
+            #ifdef _OPENMP
+            #pragma omp parallel for reduction(+:aa)
+            #endif
             for (int i = 0; i < nqq; i++)
             {
                 double q = dq * (i+0.5);
@@ -127,25 +169,82 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     // prepare for the potential
     for (int ik = 0; ik < nks; ik++)
     {
-        for (int iq = 0; iq < nqs; iq++)
+        for (int iq = 0; iq < nks; iq++)
         {
-            auto k = wfcpw->kvec_c[ik];
-            auto q = wfcpw->kvec_c[iq];
+            const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
+            const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
+            const ModuleBase::Vector3<double> q_c = wfcpw->kvec_c[iq];
+            const ModuleBase::Vector3<double> q_d = wfcpw->kvec_d[iq];
+
             #ifdef _OPENMP
             #pragma omp parallel for schedule(static)
             #endif
             for (int ig = 0; ig < rhopw->npw; ig++)
             {
-                FPTYPE qq = (k - q + rhopw->gcar[ig]).norm2() * tpiba2;
-                FPTYPE fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / qq;
-                if (qq < 1e-8)
+                const ModuleBase::Vector3<double> g_d = rhopw->gdirect[ig];
+                const ModuleBase::Vector3<double> kqg_d = k_d - q_d + g_d;
+
+                // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
+                // 7/8 of the points in the grid are "activated" and 1/8 are disabled.
+                // grid_factor is designed for the 7/8 of the grid to function like all of the points
+                Real grid_factor = 1;
+                if (gamma_extrapolation)
                 {
-                    pot[ig + iq * rhopw->npw + ik * rhopw->npw * nqs] = exx_div;
+                    double extrapolate_grid = 8.0/7.0;
+                    if (isint(kqg_d[0] * nqs_half1) &&
+                        isint(kqg_d[1] * nqs_half2) &&
+                        isint(kqg_d[2] * nqs_half3))
+                    {
+                        grid_factor = 0;
+                    }
+                    else
+                    {
+                        grid_factor = extrapolate_grid;
+                    }
                 }
+
+                const int ig_kq = ik * nks * rhopw->npw + iq * rhopw->npw + ig;
+
+                Real gg = (k_c - q_c + rhopw->gcar[ig]).norm2() * tpiba2;
+                Real hse_omega2 = GlobalC::exx_info.info_global.hse_omega * GlobalC::exx_info.info_global.hse_omega;
+                // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
+                if (gg >= 1e-8)
+                {
+                    Real fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / gg;
+                    // if (PARAM.inp.dft_functional == "hse")
+                    if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+                    {
+                        pot[ig_kq] = fac * (1.0 - std::exp(-gg / 4.0 / hse_omega2)) * grid_factor;
+                        pot_stress[ig_kq] = (1.0 - (1.0 + gg / 4.0 / hse_omega2) * std::exp(-gg / 4.0 / hse_omega2)) / (1.0 - std::exp(-gg / 4.0 / hse_omega2)) / gg;
+                    }
+                    else if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erf)
+                    {
+                        ModuleBase::WARNING("Stress_PW", "Stress for Erf is not implemented yet");
+                        pot[ig_kq] = fac * grid_factor;
+                        pot_stress[ig_kq] = 1.0 / gg;
+                    }
+                    else if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Hf)
+                    {
+                        pot[ig_kq] = fac * grid_factor;
+                        pot_stress[ig_kq] = 1.0 / gg;
+                    }
+                }
+                // }
                 else
                 {
-                    pot[ig + iq * rhopw->npw + ik * rhopw->npw * nqs] = fac;
+                    // if (PARAM.inp.dft_functional == "hse")
+                    if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc && !gamma_extrapolation)
+                    {
+                        pot[ig_kq] = - ModuleBase::PI * ModuleBase::e2 / hse_omega2; // maybe we should add a exx_div here, but q-e does not do that
+                        pot_stress[ig_kq] = 1 / 4.0 / hse_omega2;
+                    }
+                    else
+                    {
+                        pot[ig_kq] = exx_div;
+                        pot_stress[ig_kq] = 0;
+                    }
                 }
+                // assert(is_finite(density_recip[ig]));
             }
         }
     }
@@ -196,23 +295,16 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                             #endif
                             for (int ig = 0; ig < rhopw->npw; ig++)
                             {
-                                auto kqg = wfcpw->kvec_c[ik] - wfcpw->kvec_c[iq] + rhopw->gcar[ig];
+                                const ModuleBase::Vector3<double> kqg = wfcpw->kvec_c[ik] - wfcpw->kvec_c[iq] + rhopw->gcar[ig];
                                 double kqg_alpha = kqg[alpha] * tpiba;
                                 double kqg_beta = kqg[beta] * tpiba;
                                 // equation 10 of 10.1103/PhysRevB.73.125120
                                 double density_recip2 = std::real(density_recip[ig] * std::conj(density_recip[ig]));
-                                double pot_local = pot[ig + iq * rhopw->npw + ik * rhopw->npw * nqs];
-                                double _4pi_e2 = ModuleBase::FOUR_PI * ModuleBase::e2;
-                                sigma_ab_loc += density_recip2 * pot_local * (kqg_alpha * kqg_beta * (-pot_local) / _4pi_e2 - delta_ab) ;
-//                                if (std::abs(pot_local + 22.235163511253440) < 1e-2)
-//                                {
-//                                    std::cout << "delta_ab: " << delta_ab << std::endl;
-//                                    std::cout << "density_recip2: " << density_recip2 << std::endl;
-//                                    std::cout << "pot_local: " << pot_local << std::endl;
-//                                    std::cout << "kqg_alpha: " << kqg_alpha << std::endl;
-//                                    std::cout << "kqg_beta: " << kqg_beta << std::endl;
-//
-//                                }
+                                const int idx = ig + iq * rhopw->npw + ik * rhopw->npw * nqs;
+                                double pot_local = pot[idx];
+                                double pot_stress_local = pot_stress[idx];
+                                sigma_ab_loc += density_recip2 * pot_local * (kqg_alpha * kqg_beta * pot_stress_local - delta_ab) ;
+
                             }
 
                             // 0.5 in the following line is caused by 2x in the pot
@@ -235,17 +327,6 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     }
 
     Parallel_Reduce::reduce_all(sigma.c, sigma.nr * sigma.nc);
-
-////    print sigma
-//    for (int i = 0; i < 3; i++)
-//    {
-//        for (int j = 0; j < 3; j++)
-//        {
-//            std::cout << sigma(i, j) * ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8 << " ";
-//            sigma(i, j) = 0;
-//        }
-//        std::cout << std::endl;
-//    }
 
 
     delmem_complex_op()(psi_nk_real);

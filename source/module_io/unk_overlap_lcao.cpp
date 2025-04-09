@@ -22,7 +22,6 @@ unkOverlap_lcao::~unkOverlap_lcao()
         delete [] cal_tag;
     }
 
-    // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
 }
 
 void unkOverlap_lcao::init(const UnitCell& ucell,
@@ -30,9 +29,9 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
                            const int nkstot, 
                            const LCAO_Orbitals& orb)
 {
-    // std::cout << "unkOverlap_lcao::init start" << std::endl;
 
-    int Lmax_used, Lmax;
+    int Lmax_used = 0;
+    int Lmax = 0;
     int exx_lmax = 0;
 #ifdef __EXX
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
@@ -69,11 +68,11 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
 
-    const int T = 0;                                                    // any selected element type
+    const int T = 0;                                           // any selected element type
     orb_r.set_orbital_info(orb.Phi[T].PhiLN(0, 0).getLabel(),  // atom label
-                           T,                                           // atom type
-                           1,                                           // angular momentum L
-                           1,                                           // number of orbitals of this L , just N
+                           T,                                  // atom type
+                           1,                                  // angular momentum L
+                           1,                                  // number of orbitals of this L , just N
                            orb.Phi[T].PhiLN(0, 0).getNr(),     // number of radial mesh
                            orb.Phi[T].PhiLN(0, 0).getRab(),    // the mesh interval in radial mesh
                            orb.Phi[T].PhiLN(0, 0).getRadial(), // radial mesh value(a.u.)
@@ -101,7 +100,8 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
 
 #ifdef __MPI
     // parallel scheme
-    int nproc, myrank;
+    int nproc=0;
+    int myrank=0;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     const int total_term = PARAM.globalv.nlocal * PARAM.globalv.nlocal;
@@ -194,48 +194,59 @@ void unkOverlap_lcao::init(const UnitCell& ucell,
         }
     }
 
-    for (auto& co1: center2_orb11) {
-        for (auto& co2: co1.second) {
-            for (auto& co3: co2.second) {
-                for (auto& co4: co3.second) {
-                    for (auto& co5: co4.second) {
-                        for (auto& co6: co5.second) {
-                            co6.second.init_radial_table();
-}
-}
-}
-}
-}
-}
+    for (auto& co1: center2_orb11) 
+	{
+		for (auto& co2: co1.second) 
+		{
+			for (auto& co3: co2.second) 
+			{
+				for (auto& co4: co3.second) 
+				{
+					for (auto& co5: co4.second) 
+					{
+						for (auto& co6: co5.second) 
+						{
+							co6.second.init_radial_table();
+						}
+					}
+				}
+			}
+		}
+	}
 
-    for (auto& co1: center2_orb21_r) {
-        for (auto& co2: co1.second) {
-            for (auto& co3: co2.second) {
-                for (auto& co4: co3.second) {
-                    for (auto& co5: co4.second) {
-                        for (auto& co6: co5.second) {
-                            co6.second.init_radial_table();
-}
-}
-}
-}
-}
-}
+	for (auto& co1: center2_orb21_r) 
+	{
+		for (auto& co2: co1.second) 
+		{
+			for (auto& co3: co2.second) 
+			{
+				for (auto& co4: co3.second) 
+				{
+					for (auto& co5: co4.second) 
+					{
+						for (auto& co6: co5.second) 
+						{
+							co6.second.init_radial_table();
+						}
+					}
+				}
+			}
+		}
+	}
 
-    rcut_orb_.resize(orb.get_ntype());
-    for (int it = 0; it < orb.get_ntype(); ++it) {
-        rcut_orb_[it] = orb.Phi[it].getRcut();
-    }
+	rcut_orb_.resize(orb.get_ntype());
+	for (int it = 0; it < orb.get_ntype(); ++it) 
+	{
+		rcut_orb_[it] = orb.Phi[it].getRcut();
+	}
 
-    // std::cout << "unkOverlap_lcao::init end" << std::endl;
     return;
 }
 
 int unkOverlap_lcao::iw2it(const UnitCell& ucell, int iw)
 {
-    int ic, type;
-    ic = 0;
-    type = 0;
+    int ic = 0;
+    int type = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
@@ -261,9 +272,8 @@ int unkOverlap_lcao::iw2it(const UnitCell& ucell, int iw)
 
 int unkOverlap_lcao::iw2ia(const UnitCell& ucell,int iw)
 {
-    int ic, na;
-    ic = 0;
-    na = 0;
+    int ic = 0;
+    int na = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
@@ -289,9 +299,8 @@ int unkOverlap_lcao::iw2ia(const UnitCell& ucell,int iw)
 
 int unkOverlap_lcao::iw2iL(const UnitCell& ucell, int iw)
 {
-    int ic, iL;
-    ic = 0;
-    iL = 0;
+    int ic = 0;
+    int iL = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
@@ -345,9 +354,8 @@ int unkOverlap_lcao::iw2iN(const UnitCell& ucell,int iw)
 
 int unkOverlap_lcao::iw2im(const UnitCell& ucell, int iw)
 {
-    int ic, im;
-    ic = 0;
-    im = 0;
+    int ic = 0;
+    int im = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
@@ -451,9 +459,10 @@ void unkOverlap_lcao::cal_orb_overlap(const UnitCell& ucell)
             // if ( !pv.in_this_processor(iw1,iw2) ) continue;
 
             // iw1 and iw2 never have overlap
-            if (orb1_orb2_R[iw1][iw2].empty()) {
-                continue;
-}
+			if (orb1_orb2_R[iw1][iw2].empty()) 
+			{
+				continue;
+			}
 
             int atomType1 = iw2it(ucell,iw1);
             int ia1 = iw2ia(ucell,iw1);
@@ -503,7 +512,6 @@ void unkOverlap_lcao::cal_orb_overlap(const UnitCell& ucell)
         }
     }
 
-    // std::cout << "the cal_orb_overlap is end" << std::endl;
     return;
 }
 
@@ -515,7 +523,8 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const UnitCell& ucell,
                                               const Parallel_Orbitals& pv,
                                               const K_Vectors& kv)
 {
-    // ModuleBase::Vector3<double> dk = kv.kvec_c[ik_R] - kv.kvec_c[ik_L];
+    assert(pv.nloc>0);
+ 
     midmatrix = new std::complex<double>[pv.nloc];
     ModuleBase::GlobalFunc::ZEROS(midmatrix, pv.nloc);
     for (int iw_row = 0; iw_row < PARAM.globalv.nlocal; iw_row++) // global
@@ -608,8 +617,10 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
             &one,
             para_orb.desc);
 
+    assert(para_orb.nrow>0);
+
     int* ipiv = new int[para_orb.nrow];
-    int info;
+    int info = 0;
     pzgetrf_(&occBands, &occBands, out_matrix, &one, &one, para_orb.desc, ipiv, &info);
 
     for (int i = 0; i < occBands; i++) // global

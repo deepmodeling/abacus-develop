@@ -5,6 +5,7 @@
 #include "LCAO_deepks_io.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
+#include "module_cell/unitcell.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>
@@ -23,6 +24,8 @@ namespace DeePKS_domain
 //       caculated using torch::autograd::grad
 // 4. check_gedm : prints gedm for checking
 // 5. cal_edelta_gedm_equiv : calculates E_delta and d(E_delta)/d(pdm) for equivariant version
+// 6. prepare_atom : prepares atom tensor for output as deepks_out_labels = 2
+// 7. prepare_box : prepares box tensor for output as deepks_out_labels = 2
 
 // load the trained neural network models
 void load_model(const std::string& model_file, torch::jit::script::Module& model);
@@ -56,6 +59,8 @@ void cal_edelta_gedm_equiv(const int nat,
                            double& E_delta,
                            const int rank);
 
+void prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out);
+void prepare_box(const UnitCell& ucell, torch::Tensor& box_out);
 } // namespace DeePKS_domain
 #endif
 #endif

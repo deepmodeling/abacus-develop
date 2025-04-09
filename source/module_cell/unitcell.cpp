@@ -301,9 +301,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     assert(lat0 > 0.0);
     this->omega = latvec.Det() * this->lat0 * this->lat0 * this->lat0;
 
-    std::cout << "latvec.det=" << latvec.Det() << std::endl;
-    std::cout << "lat0=" << lat0 << std::endl;
-
 
     if (this->omega < 0)
     {
