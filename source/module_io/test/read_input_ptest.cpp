@@ -222,7 +222,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_scale, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_sigma, 0.07);
-    EXPECT_DOUBLE_EQ(param.inp.stm_bias, 2.0);
+    EXPECT_DOUBLE_EQ(param.inp.stm_bias[0], 2.0);
     EXPECT_FALSE(param.inp.out_element_info);
     EXPECT_DOUBLE_EQ(param.inp.lcao_ecut, 20);
     EXPECT_DOUBLE_EQ(param.inp.lcao_dk, 0.01);

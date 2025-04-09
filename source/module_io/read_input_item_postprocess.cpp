@@ -56,13 +56,27 @@ void ReadInput::item_postprocess()
     {
         Input_Item item("stm_bias");
         item.annotation = "bias voltage used to calculate ldos";
-        read_sync_double(input.stm_bias);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_ldos[0] && para.input.stm_bias == 0.0)
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 3)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "a nonzero stm_bias is required for ldos calculation");
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias should have 1 or 3 values");
+            }
+            para.input.stm_bias[0] = std::stod(item.str_values[0]);
+            para.input.stm_bias[1] = (count == 3) ? std::stod(item.str_values[1]) : 0.1;
+            para.input.stm_bias[2] = (count == 3) ? std::stod(item.str_values[2]) : 1;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.stm_bias[2] <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[2] should be greater than 0");
+            }
+            if (para.input.stm_bias[1] == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[1] should be nonzero");
             }
         };
+        sync_doublevec(input.stm_bias, 3, 0);
         this->add_item(item);
     }
 

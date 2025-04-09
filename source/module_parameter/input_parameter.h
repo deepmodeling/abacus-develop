@@ -418,7 +418,7 @@ struct Input_para
     double dos_scale = 0.01;
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
-    double stm_bias = 1.0;   ///< bias voltage for STM
+    std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions
@@ -648,6 +648,7 @@ struct Input_para
 
     // ==============   #Parameters (22.EXX PW) =====================
     // EXX for planewave basis, rhx0820 2025-03-10
-    bool exxace = true; // exxace, exact exchange for planewave basis
+    bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
+    bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
 };
 #endif
