@@ -49,7 +49,7 @@
 #include "module_base/kernels/dsp/dsp_connector.h"
 #endif
 
-
+#include <chrono>
 
 namespace ModuleESolver
 {
@@ -578,13 +578,18 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         {
             if (conv_esolver)
             {
+                auto start = std::chrono::high_resolution_clock::now();
+                exx_helper.set_firstiter(false);
                 exx_helper.set_psi(this->kspw_psi);
 
                 conv_esolver = exx_helper.exx_after_converge(iter);
 
                 if (!conv_esolver)
                 {
-                    std::cout << " Setting Psi for EXX PW Inner Loop" << std::endl;
+                    auto duration = std::chrono::high_resolution_clock::now() - start;
+                    std::cout << " Setting Psi for EXX PW Inner Loop took "
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0
+                              << "s" << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                     update_pot(ucell, istep, iter, conv_esolver);
