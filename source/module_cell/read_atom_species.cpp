@@ -62,9 +62,9 @@ bool read_atom_species(std::ifstream& ifa,
                     }
                     else
                     {
-                        GlobalV::ofs_warning << "unrecongnized pseudopotential type: " 
+                        GlobalV::ofs_warning << "unrecognized pseudopotential type: " 
                         << one_string << ", check your STRU file." << std::endl;
-                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudopotential type.");
+                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecognized pseudopotential type.");
                     }
                 }
 
