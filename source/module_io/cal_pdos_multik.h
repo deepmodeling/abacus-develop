@@ -1,5 +1,5 @@
-#ifndef CAL_PDOS_GAMMA_H
-#define CAL_PDOS_GAMMA_H
+#ifndef CAL_PDOS_MULTIK_H
+#define CAL_PDOS_MULTIK_H
 
 #include "module_base/matrix.h"
 #include "module_cell/klist.h"  // use K_Vectors
@@ -10,9 +10,10 @@
 namespace ModuleIO
 {
 
+    // pdos for multi-k point
 	void cal_pdos(
-			const psi::Psi<double>* psi,
-			hamilt::Hamilt<double>* p_ham,
+			const psi::Psi<std::complex<double>>* psi,
+			hamilt::Hamilt<std::complex<double>>* p_ham,
 			const Parallel_Orbitals& pv,
 			const UnitCell& ucell,
 			const K_Vectors& kv,
@@ -24,14 +25,14 @@ namespace ModuleIO
 			const double& dos_edelta_ev,
 			const double& bcoeff);
 
-	void print_tdos_gamma(
+	void print_tdos_multik(
 			const ModuleBase::matrix* pdos,
 			const int nlocal,
 			const int npoints,
 			const double& emin,
 			const double& dos_edelta_ev);
 
-	void print_pdos_gamma(
+	void print_pdos_multik(
 			const UnitCell& ucell,
 			const ModuleBase::matrix* pdos,
 			const int nlocal,

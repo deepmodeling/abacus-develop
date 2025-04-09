@@ -1,14 +1,27 @@
-#include "cal_pdos.h"
+#include "cal_pdos_gamma.h"
 
-void ModuleIO::cal_pdos_gamma(
+#include "module_base/parallel_reduce.h"
+#include "module_base/blas_connector.h"
+#include "module_base/scalapack_connector.h"
+#include "write_orb_info.h"
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+
+void ModuleIO::cal_pdos(
+		const psi::Psi<double>* psi,
+		hamilt::Hamilt<double>* p_ham,
+		const Parallel_Orbitals& pv,
+		const UnitCell& ucell,
+        const K_Vectors& kv,
 		const int nspin0,
+        const int nbands,
+        const ModuleBase::matrix& ekb,
 		const double& emax,
 		const double& emin,
 		const double& dos_edelta_ev,
-        const double& bcoeff,
-        const double* sk,
-        const psi::Psi<double>* psi,
-        const Parallel_Orbitals& pv)
+		const double& bcoeff)
 {
     ModuleBase::TITLE("ModuleIO", "cal_pdos_gamma");
 
@@ -34,7 +47,8 @@ void ModuleIO::cal_pdos_gamma(
         pdos[is].create(nlocal, npoints, true);
     }
 
-    double b = sqrt(ModuleBase::TWO_PI) * bcoeff;
+    const double a = bcoeff;
+    const double b = sqrt(ModuleBase::TWO_PI) * a;
 
     std::complex<double>* waveg = new std::complex<double>[nlocal];
 
@@ -68,6 +82,9 @@ void ModuleIO::cal_pdos_gamma(
             const double one_float = 1.0;
             const double zero_float = 0.0;
             const int one_int = 1;
+
+            const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
+            //const double* sk = nullptr;
 
 #ifdef __MPI
             const char T_char = 'T';
@@ -120,8 +137,8 @@ void ModuleIO::cal_pdos_gamma(
 
     if (GlobalV::MY_RANK == 0)
     {
-        print_tdos_gamma(pdos);
-        print_pdos_gamma(pdos);
+        print_tdos_gamma(pdos, nlocal, npoints, emin, dos_edelta_ev);
+        print_pdos_gamma(ucell, pdos, nlocal, npoints, emin, dos_edelta_ev);
         ModuleIO::write_orb_info(&ucell);
     }
 
@@ -129,14 +146,14 @@ void ModuleIO::cal_pdos_gamma(
 }
 
 
-void write_tdos_gamma(
-		const ModuleBase::matrix& pdos,
+void ModuleIO::print_tdos_gamma(
+		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,
 		const double& dos_edelta_ev)
 {
-    ModuleBase::TITLE("ModuleIO", "write_tdos_gamma");
+    ModuleBase::TITLE("ModuleIO", "print_tdos_gamma");
 
     // file name
 	std::stringstream ps;
@@ -179,15 +196,15 @@ void write_tdos_gamma(
 	ofs.close();
 }
 
-void write_pdos_gamma(
+void ModuleIO::print_pdos_gamma(
         const UnitCell& ucell,
-		const ModuleBase::matrix& pdos,
+		const ModuleBase::matrix* pdos,
 		const int nlocal,
 		const int npoints,
 		const double& emin,
 		const double& dos_edelta_ev)
 {
-    ModuleBase::TITLE("ModuleIO", "write_pdos_gamma");
+    ModuleBase::TITLE("ModuleIO", "print_pdos_gamma");
 
 	std::stringstream as;
 	as << PARAM.globalv.global_out_dir << "PDOS.dat";

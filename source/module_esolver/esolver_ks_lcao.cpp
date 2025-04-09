@@ -405,19 +405,19 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     // 5) print out density of states (DOS)
     if (PARAM.inp.out_dos)
-    {
-        ModuleIO::out_dos_nao(this->psi,
-                              this->pv,
-                              this->pelec->ekb,
-                              this->pelec->wg,
-                              PARAM.inp.dos_edelta_ev,
-                              PARAM.inp.dos_scale,
-                              PARAM.inp.dos_sigma,
-                              *(this->pelec->klist),
-                              ucell,
-                              this->pelec->eferm,
-                              PARAM.inp.nbands,
-                              this->p_hamilt);
+	{
+		ModuleIO::out_dos_nao(this->psi,
+				this->p_hamilt,
+				this->pv,
+				ucell,
+				*(this->pelec->klist),
+				PARAM.inp.nbands,
+				this->pelec->eferm,
+				this->pelec->ekb,
+				this->pelec->wg,
+				PARAM.inp.dos_edelta_ev,
+				PARAM.inp.dos_scale,
+				PARAM.inp.dos_sigma);
     }
 
     // out ldos

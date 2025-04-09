@@ -48,6 +48,8 @@ list(APPEND objects_advanced
 if(ENABLE_LCAO)
   list(APPEND objects
       write_dos_lcao.cpp
+      cal_pdos_gamma.cpp
+      cal_pdos_multik.cpp
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       nscf_fermi_surf.cpp

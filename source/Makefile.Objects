@@ -497,6 +497,8 @@ OBJS_IO=input_conv.o\
     write_dos_pw.o\
     nscf_band.o\
     cal_dos.o\
+    cal_pdos_gamma.o\
+    cal_pdos_multik.o\
     cal_ldos.o\
     cif_io.o\
     dos_nao.o\
