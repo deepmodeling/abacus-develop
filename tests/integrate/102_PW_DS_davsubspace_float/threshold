@@ -1,0 +1,5 @@
+# Float type has different eneygy with the double type
+# this intergate is to test the function of 
+# the float type of the pw basis
+threshold 0.00001
+fatal_threshold 1

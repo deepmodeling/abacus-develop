@@ -4,5 +4,5 @@ This test for:
 *old upf pseudopotential
 *smearing_method default
 *ks_solver cg
-*precison    float
+*precison    double
 !!!!!!!WRONG!!!!!!!
