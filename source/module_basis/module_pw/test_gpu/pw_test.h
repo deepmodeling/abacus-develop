@@ -14,7 +14,7 @@ public:
         if(rank_in_pool == 0)
         {
             cout<<"\033[32m"<<"============================"<<"\033[0m"<<endl;
-            cout<<"\033[32m"<<"=    PW MODULE TEST START  ="<<"\033[0m"<<endl;
+            cout<<"\033[32m"<<"=    PW GPU MODULE TEST START  ="<<"\033[0m"<<endl;
             cout<<"\033[32m"<<"============================"<<"\033[0m"<<endl;
         }
     }
@@ -23,7 +23,7 @@ public:
         if(rank_in_pool == 0)
         {
             cout<<"\033[32m"<<"============================"<<"\033[0m"<<endl;
-            cout<<"\033[32m"<<"=     PW MODULE TEST END   ="<<"\033[0m"<<endl;
+            cout<<"\033[32m"<<"=     PW GPU MODULE TEST END   ="<<"\033[0m"<<endl;
             cout<<"\033[32m"<<"============================"<<"\033[0m"<<endl;
         }
     }
