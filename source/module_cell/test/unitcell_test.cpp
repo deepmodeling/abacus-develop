@@ -1210,7 +1210,7 @@ TEST_F(UcellTestReadStru, ReadLatticeConstantWarning1)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("lat0<=0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("lattice constant <= 0.0"));
     ofs_running.close();
     ifa.close();
     remove("read_atom_species.tmp");
