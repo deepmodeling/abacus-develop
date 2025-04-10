@@ -24,6 +24,13 @@ class DiagoCusolver
     DiagoCusolver(const Parallel_Orbitals* ParaV = nullptr);
     ~DiagoCusolver();
     
+    void diag_pool(
+      hamilt::MatrixBlock<T>& h_mat,
+      hamilt::MatrixBlock<T>& s_mat,
+      psi::Psi<T>& psi,
+      Real* eigenvalue_in,
+      MPI_Comm& comm);
+    
     // Override the diag function for CUSOLVER diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 

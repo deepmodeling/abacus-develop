@@ -111,6 +111,24 @@ static void distributePsi(const int* desc_psi, T* psi, T* psi_g)
     Cpxgemr2d(nrows, ncols, psi_g, 1, 1, descg, psi, 1, 1, descl, ctxt);
 }
 
+template <typename T>
+void DiagoCusolver<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
+    hamilt::MatrixBlock<T>& s_mat,
+    psi::Psi<T>& psi,
+    Real* eigenvalue_in,
+    MPI_Comm& comm)
+{
+    ModuleBase::TITLE("DiagoCusolver", "diag_pool");
+    ModuleBase::timer::tick("DiagoCusolver", "diag_pool");
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<T> eigenvectors(h_mat.row * h_mat.col);
+    this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+    const int size = psi.get_nbands() * psi.get_nbasis();
+    BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), 1, eigenvalue_in, 1);
+    ModuleBase::timer::tick("DiagoCusolver", "diag_pool");
+}
+
 // Diagonalization function
 template <typename T>
 void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)

@@ -49,7 +49,8 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     if (this->method != "pexsi")
     {
         if (PARAM.globalv.kpar_lcao > 1
-            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
+            && (this->method == "genelpa" || this->method == "elpa" 
+                || this->method == "scalapack_gvx" || this->method == "cusolver"))
         {
 #ifdef __MPI
             this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
@@ -191,11 +192,20 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int nks = psi.get_nk();
     int nrow = this->ParaV->get_global_row_size();
     int nb2d = this->ParaV->get_block_size();
-    k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+    if(this->method == "cusolver")
+    {
+        k2d.set_para_env_cusolver(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+    } else
+    {
+        k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+    }
     /// set psi_pool
     const int zero = 0;
-    int ncol_bands_pool
-        = numroc_(&(nbands), &(nb2d), &(k2d.get_p2D_pool()->coord[1]), &zero, &(k2d.get_p2D_pool()->dim1));
+    int ncol_bands_pool = 0;
+    if(k2d.is_in_pool())
+    {
+        ncol_bands_pool = numroc_(&(nbands), &(nb2d), &(k2d.get_p2D_pool()->coord[1]), &zero, &(k2d.get_p2D_pool()->dim1));
+    }
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {
@@ -222,9 +232,12 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             }
         }
         k2d.distribute_hsk(pHamilt, ik_kpar, nrow);
+        auto psi_pool = psi::Psi<T>();
+        if(k2d.is_in_pool())
+        {
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
-        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
+        psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
         ModuleBase::Memory::record("HSolverLCAO::psi_pool", nrow * ncol_bands_pool * sizeof(T));
         if (ik_global < psi.get_nk() && ik < k2d.get_pKpoints()->nks_pool[k2d.get_my_pool()])
         {
@@ -256,20 +269,38 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                 el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
 #endif
+#ifdef __CUDA
+            else if (this->method == "cusolver")
+            {
+                DiagoCusolver<T> cs(nullptr);
+                cs.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+            }
+#endif
             else
             {
                 ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
                                          "This type of eigensolver for k-parallelism diagnolization is not supported!");
             }
         }
+        }
         MPI_Barrier(MPI_COMM_WORLD);
         ModuleBase::timer::tick("HSolverLCAO", "collect_psi");
         for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
         {
-            int source = k2d.get_pKpoints()->get_startpro_pool(ipool);
+            int source = 0;
+            if(this->method != "cusolver")
+            {
+                source = k2d.get_pKpoints()->get_startpro_pool(ipool);
+            } else
+            {
+                source = ipool;
+            }
             MPI_Bcast(&(pes->ekb(ik_kpar[ipool], 0)), nbands, MPI_DOUBLE, source, MPI_COMM_WORLD);
             int desc_pool[9];
-            std::copy(k2d.get_p2D_pool()->desc, k2d.get_p2D_pool()->desc + 9, desc_pool);
+            if(k2d.is_in_pool())
+            {
+                std::copy(k2d.get_p2D_pool()->desc, k2d.get_p2D_pool()->desc + 9, desc_pool);
+            }
             if (k2d.get_my_pool() != ipool)
             {
                 desc_pool[1] = -1;
