@@ -647,7 +647,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->ESolver_KS<T, Device>::psi = new psi::Psi<T, Device>(this->psi[0]);
+        this->ESolver_KS<T>::psi = new psi::Psi<T>(this->psi[0]);
     }
 
     //------------------------------------------------------------------
