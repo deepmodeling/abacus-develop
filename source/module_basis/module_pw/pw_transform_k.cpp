@@ -170,6 +170,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
     assert(this->gamma_only == false);
+    ModuleBase::timer::tick("fftxybac", "recip2real_init");
     ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<FPTYPE>(), this->nst * this->nz);
 
     const int startig = ik * this->npwk_max;
@@ -182,12 +183,13 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     {
         auxg[this->igl2isz_k[igl + startig]] = in[igl];
     }
+    ModuleBase::timer::tick("fftxybac", "recip2real_init");
     this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
     this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
     this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
-
+    ModuleBase::timer::tick("fftxybac", "recip2real_back");
     auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
     if (add)
     {
@@ -209,6 +211,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
             out[ir] = auxr[ir];
         }
     }
+    ModuleBase::timer::tick("fftxybac", "recip2real_back");
     ModuleBase::timer::tick(this->classname, "recip2real");
 }
 

@@ -1,5 +1,6 @@
 #include "fft_cpu.h"
 #include "fftw3.h"
+#include "module_base/timer.h"
 namespace ModulePW
 {
 
@@ -61,6 +62,7 @@ void FFT_CPU<double>::setupFFT()
     default:
         break;
     }
+    flag = FFTW_MEASURE;
     z_auxg = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * this->maxgrids);
     z_auxr = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * this->maxgrids);
     d_rspace = (double*)z_auxg;
@@ -347,11 +349,14 @@ void FFT_CPU<double>::fftxyfor(std::complex<double>* in, std::complex<double>* o
     int npy = this->nplane * this->ny;
     if (this->xprime)
     {
+        
         fftw_execute_dft(this->planxfor1, (fftw_complex*)in, (fftw_complex*)out);
+        #pragma omp parallel for
         for (int i = 0; i < this->lixy + 1; ++i)
         {
             fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
         }
+        #pragma omp parallel for
         for (int i = rixy; i < this->nx; ++i)
         {
             fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
@@ -359,6 +364,7 @@ void FFT_CPU<double>::fftxyfor(std::complex<double>* in, std::complex<double>* o
     }
     else
     {
+        #pragma omp parallel for
         for (int i = 0; i < this->nx; ++i)
         {
             fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
@@ -374,20 +380,27 @@ void FFT_CPU<double>::fftxybac(std::complex<double>* in,std::complex<double>* ou
     int npy = this->nplane * this->ny;
     if (this->xprime)
     {
+        ModuleBase::timer::tick("fftxybac", "fftybac");
+        #pragma omp parallel for
         for (int i = 0; i < this->lixy + 1; ++i)
         {
             fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
         }
+        #pragma omp parallel for
         for (int i = rixy; i < this->nx; ++i)
         {
             fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
         }
+        ModuleBase::timer::tick("fftxybac", "fftybac");
+        ModuleBase::timer::tick("fftxybac", "fftxbac");
         fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)out);
+        ModuleBase::timer::tick("fftxybac", "fftxbac");
     }
     else
     {
         fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)out);
         fftw_execute_dft(this->planxbac2, (fftw_complex*)&in[rixy * nplane], (fftw_complex*)&out[rixy * nplane]);
+        #pragma omp parallel for
         for (int i = 0; i < this->nx; ++i)
         {
             fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
@@ -404,7 +417,9 @@ void FFT_CPU<double>::fftzfor(std::complex<double>* in, std::complex<double>* ou
 template <>
 void FFT_CPU<double>::fftzbac(std::complex<double>* in, std::complex<double>* out) const
 {
+    ModuleBase::timer::tick("fftxybac", "fftzbac");
     fftw_execute_dft(this->planzbac, (fftw_complex*)in, (fftw_complex*)out);
+    ModuleBase::timer::tick("fftxybac", "fftzbac");
 }
 
 template <>
@@ -421,6 +436,7 @@ void FFT_CPU<double>::fftxyr2c(double* in, std::complex<double>* out) const
     }
     else
     {
+        #pragma omp parallel for
         for (int i = 0; i < this->nx; ++i)
         {
             fftw_execute_dft_r2c(this->planyr2c, &in[i * npy], (fftw_complex*)&out[i * npy]);
@@ -435,6 +451,7 @@ void FFT_CPU<double>::fftxyc2r(std::complex<double> *in,double *out) const
     int npy = this->nplane * this->ny;
     if (this->xprime)
     {
+        #pragma omp parallel for
         for (int i = 0; i < this->lixy + 1; ++i)
         {
             fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&in[i * npy]);
@@ -444,6 +461,7 @@ void FFT_CPU<double>::fftxyc2r(std::complex<double> *in,double *out) const
     else
     {
         fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)in);
+        #pragma omp parallel for
         for (int i = 0; i < this->nx; ++i)
         {
             fftw_execute_dft_c2r(this->planyc2r, (fftw_complex*)&in[i * npy], &out[i * npy]);

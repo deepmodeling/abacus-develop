@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # ABACUS executable path
-abacus=abacus
+abacus=/home/ubuntu/github/virtual_machine/abacus-develop/build/abacus
 # number of MPI processes
 np=4
-nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
+nt=1 # number of OpenMP threads, default is $OMP_NUM_THREADS
 # threshold with unit: eV
 threshold=0.0000001
 force_threshold=0.0001
@@ -12,7 +12,7 @@ stress_threshold=0.001
 # check accuracy
 ca=8
 # specify the test cases file
-cases_file=CASES_CPU.txt
+cases_file=CASES_GPU.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
@@ -26,7 +26,10 @@ threshold_file="threshold"
 # stress_threshold 0.001
 # fatal_threshold 1
 
-
+# cal=37241.38404200 OMP =12
+# cal=37241.38404200
+# cal=37241.38404200
+# 37241.23410500
 while getopts a:n:t:c:s:r:f:go: flag
 do
     case "${flag}" in
