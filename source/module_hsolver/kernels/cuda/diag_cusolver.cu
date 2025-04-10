@@ -6,6 +6,8 @@ Diag_Cusolver_gvd::Diag_Cusolver_gvd(){
 // step 1: create cusolver/cublas handle
     cusolverH = NULL;
     checkCudaErrors( cusolverDnCreate(&cusolverH) );
+    checkCudaErrors( cudaStreamCreate(&stream) );
+    checkCudaErrors( cusolverDnSetStream(cusolverH, stream) );
 
     itype = CUSOLVER_EIG_TYPE_1; // A*x = (lambda)*B*x
     jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
@@ -40,6 +42,7 @@ void Diag_Cusolver_gvd::finalize(){
 Diag_Cusolver_gvd::~Diag_Cusolver_gvd(){
     finalize();
     if (cusolverH) {checkCudaErrors( cusolverDnDestroy(cusolverH) );    cusolverH = NULL;}
+    if (stream) {checkCudaErrors( cudaStreamDestroy(stream) ); stream = NULL;}
     //checkCudaErrors( cudaDeviceReset() );
 }
 
