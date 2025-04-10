@@ -176,7 +176,7 @@ double ESolver_OF::kinetic_energy()
  * Calculated the kinetic energy density, ONLY SPIN=1 SUPPORTED
  *
  * @param [in] prho charge density
- * @param [in] pphi phi^2 = rho
+ * @param [in] pphi phi = sqrt(rho)
  * @param [out] rtau kinetic energy density
  */
 void ESolver_OF::kinetic_energy_density(double** prho, double** pphi, double** rtau)
