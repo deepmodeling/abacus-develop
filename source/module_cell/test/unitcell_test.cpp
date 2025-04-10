@@ -108,7 +108,7 @@ Magnetism::~Magnetism()
  *   - ReadAtomSpecies
  *     - read_atom_species(): a successful case
  *   - ReadAtomSpeciesWarning1
- *     - read_atom_species(): unrecongnized pseudo type.
+ *     - read_atom_species(): unrecognized pseudopotential type.
  *   - ReadAtomSpeciesWarning2
  *     - read_atom_species(): lat0<=0.0
  *   - ReadAtomSpeciesWarning3
@@ -149,7 +149,7 @@ Magnetism::~Magnetism()
  *   - ReadAtomPositionsWarning4
  *     - read_atom_positions(): mismatch in atom number for atom type
  *   - ReadAtomPositionsWarning5
- *     - read_atom_positions(): no atom can move in MD!
+ *     - read_atom_positions(): no atoms can move in MD simulations!
  */
 
 // mock function
@@ -1192,7 +1192,7 @@ TEST_F(UcellTestReadStru, ReadAtomSpeciesWarning1)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_atom_species(ifa, ofs_running,*ucell), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("unrecongnized pseudo type."));
+    EXPECT_THAT(output, testing::HasSubstr("unrecognized pseudopotential type."));
     ofs_running.close();
     ifa.close();
     //remove("read_atom_species.txt");
@@ -1210,7 +1210,7 @@ TEST_F(UcellTestReadStru, ReadLatticeConstantWarning1)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("lat0<=0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("lattice constant <= 0.0"));
     ofs_running.close();
     ifa.close();
     remove("read_atom_species.tmp");
@@ -1908,7 +1908,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     std::ifstream ifs_tmp;
     ifs_tmp.open("read_atom_positions.warn");
     std::string str((std::istreambuf_iterator<char>(ifs_tmp)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("read_atoms  warning : no atom can move in MD!"));
+    EXPECT_THAT(str, testing::HasSubstr("read_atoms  warning : no atoms can move in MD simulations!"));
     ifs_tmp.close();
     remove("read_atom_positions.tmp");
     remove("read_atom_positions.warn");

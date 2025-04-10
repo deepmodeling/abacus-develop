@@ -71,6 +71,10 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	std::cout << " ---------------------------------------------------------" << std::endl;
 	std::cout << "                         !NOTICE!                         " << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
+    std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
+    std::cout << " https://abacus.deepmodeling.com" << std::endl;
+	std::cout << " For any questions, propose issues on the website" << std::endl;
+    std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 
 #else
 		std::cout << " " << std::endl;
@@ -81,6 +85,10 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 		std::cout << " " << description << std::endl;
 		std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 		std::cout << " " << std::endl;
+		std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
+		std::cout << " https://abacus.deepmodeling.com" << std::endl;
+		std::cout << " For any questions, propose issues on the website" << std::endl;
+		std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 		std::cout << " ---------------------------------------------------------" << std::endl;
 		std::cout << "                         !NOTICE!                         " << std::endl;
 		std::cout << " ---------------------------------------------------------" << std::endl;
@@ -93,6 +101,10 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	GlobalV::ofs_running << " " << description << std::endl;
 	GlobalV::ofs_running << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 	GlobalV::ofs_running << std::endl;
+	GlobalV::ofs_running << " For detailed manual of ABACUS, please see the website" << std::endl;
+	GlobalV::ofs_running << " https://abacus.deepmodeling.com" << std::endl;
+	GlobalV::ofs_running << " For any questions, propose issues on the website" << std::endl;
+	GlobalV::ofs_running << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 	GlobalV::ofs_running << "                         NOTICE                           " << std::endl;
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;

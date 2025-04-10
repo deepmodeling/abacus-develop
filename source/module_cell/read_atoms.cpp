@@ -180,7 +180,8 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     mv.y = true ;
                     mv.z = true ;
                     ucell.atoms[it].vel[ia].set(0,0,0);
-                    ucell.atoms[it].mag[ia]=ucell.magnet.start_magnetization[it];//if this line is used, default startmag_type would be 2
+                    ucell.atoms[it].mag[ia]=ucell.magnet.start_magnetization[it];
+                    //if this line is used, default startmag_type would be 2
                     ucell.atoms[it].angle1[ia]=0;
                     ucell.atoms[it].angle2[ia]=0;
                     ucell.atoms[it].m_loc_[ia].set(0,0,0);
@@ -547,7 +548,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     //check if any atom can move in MD
     if(!ucell.if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
     {
-        ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
+        ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;
     } 
 
@@ -556,7 +557,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
     if (ucell.nat == 0)
     {
-        ModuleBase::WARNING("read_atom_positions","no atom in the system!");
+        ModuleBase::WARNING("read_atom_positions","no atoms found in the system!");
         return false;
     }
 
