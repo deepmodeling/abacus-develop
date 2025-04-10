@@ -1,9 +1,14 @@
 #include <assert.h>
 #include "diag_cusolver.cuh"
 #include "helper_cuda.h"
+#include "module_base/module_device/device.h"
 
 Diag_Cusolver_gvd::Diag_Cusolver_gvd(){
 // step 1: create cusolver/cublas handle
+#ifdef __MPI
+    device_id = base_device::information::set_device_by_rank();
+    checkCudaErrors( cudaSetDevice(device_id) );
+#endif
     cusolverH = NULL;
     checkCudaErrors( cusolverDnCreate(&cusolverH) );
     checkCudaErrors( cudaStreamCreate(&stream) );

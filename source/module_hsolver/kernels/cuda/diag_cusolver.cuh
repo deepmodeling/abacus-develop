@@ -23,7 +23,8 @@ class Diag_Cusolver_gvd{
 
     cusolverDnHandle_t cusolverH = nullptr;
     cudaStream_t stream = nullptr;
-    
+    int device_id = 0;
+
     cusolverEigType_t itype = CUSOLVER_EIG_TYPE_1; //problem type: A*x = (lambda)*B*x
     cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_NOVECTOR; // compute eigenvalues and eigenvectors.
     cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER;
