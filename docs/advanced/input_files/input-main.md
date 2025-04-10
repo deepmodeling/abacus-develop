@@ -1705,8 +1705,7 @@ These variables are used to control the output of properties.
 - **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
   - 0: no output
   - 1: output the density of states (DOS)
-  - 2: 
-    - lcao-only: output the density of states (DOS) and the projected density of states (PDOS)
+  - 2: (lcao-only) output the density of states (DOS) and the projected density of states (PDOS)
 - **Default**: 0
 
 ### out_ldos
@@ -3884,12 +3883,6 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**: Specify whether to output the detailed components in stress.
-  - 0: No.
-  - 1: Yes.
-- **Default**: 0
-
-- **Type**: Boolean
-- **Description**: Specify whether to set the colorful output in terminal.
   - 0: No.
   - 1: Yes.
 - **Default**: 0

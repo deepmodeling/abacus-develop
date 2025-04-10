@@ -25,12 +25,15 @@
 #endif
 
 #include "update_cell.h"
-UnitCell::UnitCell() {
+UnitCell::UnitCell() 
+{
     itia2iat.create(1, 1);
 }
 
-UnitCell::~UnitCell() {
-    if (set_atom_flag) {
+UnitCell::~UnitCell() 
+{
+    if (set_atom_flag) 
+    {
         delete[] atoms;
     }
 }
@@ -511,7 +514,7 @@ void UnitCell::setup(const std::string& latname_in,
     } else {
         ModuleBase::WARNING_QUIT(
             "Input",
-            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+            "fixed_axes should be none, volume, shape, a, b, c, ab, ac, bc or abc!");
     }
     return;
 }
