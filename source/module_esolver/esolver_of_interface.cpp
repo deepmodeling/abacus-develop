@@ -193,7 +193,7 @@ void ESolver_OF::kinetic_energy_density(double** prho, double** pphi, double** r
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
-        this->vw_->tau_vw(prho, this->pw_rho, rtau[0]);
+        this->vw_->tau_vw(pphi, this->pw_rho, rtau[0]);
     }
     if (this->of_kinetic_ == "wt")
     {
