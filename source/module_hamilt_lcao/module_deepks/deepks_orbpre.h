@@ -41,6 +41,8 @@ void cal_orbital_precalc(const std::vector<TH>& dm_hl,
                          const Parallel_Orbitals& pv,
                          const Grid_Driver& GridD,
                          torch::Tensor& orbital_precalc);
+
+void check_orbpre(const torch::Tensor& orbpre);
 } // namespace DeePKS_domain
 #endif
 #endif

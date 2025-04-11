@@ -31,6 +31,8 @@ void cal_o_delta(const std::vector<TH>& dm_hl,
                  const Parallel_Orbitals& pv,
                  const int nks,
                  const int nspin);
+
+void check_o_delta(ModuleBase::matrix& o_delta);
 } // namespace DeePKS_domain
 
 #endif
