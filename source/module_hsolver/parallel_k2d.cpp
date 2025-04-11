@@ -42,6 +42,11 @@ void Parallel_K2D<TK>::set_para_env_cusolver(int nks,
                                     const int& my_rank,
                                     const int& nspin) {
     const int kpar = this->get_kpar();
+    if(kpar <= 0 || kpar > nproc)
+    {
+        ModuleBase::WARNING_QUIT("Parallel_K2D::set_para_env_cusolver",
+                                 "kpar must be greater than 0 and less than nproc.");
+    }
     const int pool_id = (my_rank < kpar) ? my_rank : MPI_UNDEFINED;
     MPI_Comm_split(MPI_COMM_WORLD,
                    pool_id,
