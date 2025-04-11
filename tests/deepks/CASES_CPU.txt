@@ -11,4 +11,6 @@
 603_NO_deepks_SiO2_bandgap_multik
 603_NO_deepks_H2O_v_delta_1
 603_NO_deepks_H2O_v_delta_2
+603_NO_deepks_H2O_v_delta_1_multik
+603_NO_deepks_H2O_v_delta_2_multik
 603_NO_deepks_H2O_out_labels_2
