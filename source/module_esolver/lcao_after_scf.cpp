@@ -78,22 +78,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
     //------------------------------------------------------------------
-    //! 1) calculate the kinetic energy density tau in LCAO basis
-    //！sunliang 2024-09-18
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_elf[0] > 0)
-    {
-        assert(this->psi != nullptr);
-        this->pelec->cal_tau(*(this->psi));
-    }
-
-    //------------------------------------------------------------------
-    //! 2) call after_scf() of ESolver_KS
+    //! 1) call after_scf() of ESolver_KS
     //------------------------------------------------------------------
     ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
 
     //------------------------------------------------------------------
-    //! 3) write density matrix for sparse matrix in LCAO basis
+    //! 2) write density matrix for sparse matrix in LCAO basis
     //------------------------------------------------------------------
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
                         this->pv,
@@ -105,7 +95,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                         istep);
 
     //------------------------------------------------------------------
-    //! 4) write density matrix in LCAO basis
+    //! 3) write density matrix in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_dm)
     {
@@ -124,7 +114,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 5) write Hexx matrix in LCAO basis
+    //! 4) write Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (PARAM.inp.calculation != "nscf")
@@ -146,7 +136,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 #endif
 
     //------------------------------------------------------------------
-    // 6) write Hamiltonian and Overlap matrix in LCAO basis
+    // 5) write Hamiltonian and Overlap matrix in LCAO basis
     //------------------------------------------------------------------
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
@@ -193,7 +183,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    // 7) write electronic wavefunctions in LCAO basis
+    // 6) write electronic wavefunctions in LCAO basis
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (istep % PARAM.inp.out_interval == 0))
     {
@@ -207,7 +197,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 8) write DeePKS information in LCAO basis
+    //! 7) write DeePKS information in LCAO basis
     //------------------------------------------------------------------
 #ifdef __DEEPKS
     if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
@@ -234,7 +224,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 #endif
 
     //------------------------------------------------------------------
-    //! 9) Perform RDMFT calculations
+    //! 8) Perform RDMFT calculations
     // rdmft, added by jghan, 2024-10-17
     //------------------------------------------------------------------
     if (PARAM.inp.rdmft == true)
@@ -263,7 +253,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    // 10) Write RPA information in LCAO basis
+    // 9) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.rpa)
     {
@@ -279,7 +269,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 #endif
 
     //------------------------------------------------------------------
-    // 11) write HR in npz format in LCAO basis
+    // 10) write HR in npz format in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_hr_npz)
     {
@@ -300,7 +290,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    // 12) write density matrix in the 'npz' format in LCAO basis
+    // 11) write density matrix in the 'npz' format in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_dm_npz)
     {
@@ -317,7 +307,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 13) Print out information every 'out_interval' steps.
+    //! 12) Print out information every 'out_interval' steps.
     //------------------------------------------------------------------
     if (PARAM.inp.calculation != "md" || istep % PARAM.inp.out_interval == 0)
     {
@@ -354,7 +344,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 14) Print out atomic magnetization in LCAO basis
+    //! 13) Print out atomic magnetization in LCAO basis
     //! only when 'spin_constraint' is on.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -366,7 +356,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 15) Print out kinetic matrix in LCAO basis
+    //! 14) Print out kinetic matrix in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_tk[0])
     {
@@ -402,7 +392,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 16) wannier90 interface in LCAO basis
+    //! 15) wannier90 interface in LCAO basis
     // added by jingan in 2018.11.7
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
@@ -444,7 +434,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 17) berry phase calculations in LCAO basis
+    //! 16) berry phase calculations in LCAO basis
     // added by jingan
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
@@ -458,7 +448,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 18) calculate quasi-orbitals in LCAO basis
+    //! 17) calculate quasi-orbitals in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.qo_switch)
     {
@@ -475,7 +465,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 19) Clean up RA, which is used to serach for adjacent atoms
+    //! 18) Clean up RA, which is used to serach for adjacent atoms
     //------------------------------------------------------------------
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
     {
@@ -483,7 +473,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     }
 
     //------------------------------------------------------------------
-    //! 20) calculate expectation of angular momentum operator in LCAO basis
+    //! 19) calculate expectation of angular momentum operator in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_l[0])
     {
