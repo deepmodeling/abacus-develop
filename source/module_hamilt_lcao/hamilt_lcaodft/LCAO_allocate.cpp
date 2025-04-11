@@ -18,7 +18,7 @@ void DeePKS_init(const UnitCell& ucell,
 {
     ModuleBase::TITLE("LCAO_domain", "DeePKS_init");
     // preparation for DeePKS
-    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
+    if (PARAM.inp.deepks_out_labels == 1 || PARAM.inp.deepks_scf)
     {
         // allocate relevant data structures for calculating descriptors
         std::vector<int> na;

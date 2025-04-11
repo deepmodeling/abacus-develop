@@ -202,34 +202,13 @@ void DeePKS_domain::cal_gvepsl(const int nat,
     auto accessor = gdmepsl.accessor<double, 4>();
     if (rank == 0)
     {
-        // make gdmx as tensor
+        // make gdmepsl as tensor
         int nlmax = inlmax / nat;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            std::vector<torch::Tensor> bmmv;
-            for (int i = 0; i < 6; ++i)
-            {
-                std::vector<torch::Tensor> ammv;
-                for (int iat = 0; iat < nat; ++iat)
-                {
-                    int inl = iat * nlmax + nl;
-                    int nm = 2 * inl2l[inl] + 1;
-                    std::vector<double> mmv;
-                    for (int m1 = 0; m1 < nm; ++m1)
-                    {
-                        for (int m2 = 0; m2 < nm; ++m2)
-                        {
-                            mmv.push_back(accessor[i][inl][m1][m2]);
-                        }
-                    } // nm^2
-                    torch::Tensor mm
-                        = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
-                    ammv.push_back(mm);
-                }
-                torch::Tensor bmm = torch::stack(ammv, 0); // nat*nm*nm
-                bmmv.push_back(bmm);
-            }
-            gdmepsl_vector.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+            int nm = 2 * inl2l[nl] + 1;
+            torch::Tensor gdmepsl_sliced = gdmepsl.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            gdmepsl_vector.push_back(gdmepsl_sliced);
         }
         assert(gdmepsl_vector.size() == nlmax);
 

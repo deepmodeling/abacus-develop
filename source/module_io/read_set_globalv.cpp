@@ -23,7 +23,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
         }
     }
     /// set deepks_setorb
-    if (inp.deepks_scf || inp.deepks_out_labels)
+    if (inp.deepks_scf || inp.deepks_out_labels == 1)
     {
         sys.deepks_setorb = true;
     }
@@ -75,8 +75,8 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
     sys.has_float_data = (inp.precision == "float") || (inp.precision == "mixing") || float_cond;
 }
 
-/// @note Here para.inp has not been synchronized of all ranks. 
-///       Only para.inp in rank 0 is right. 
+/// @note Here para.inp has not been synchronized of all ranks.
+///       Only para.inp in rank 0 is right.
 ///       So we need to broadcast the results to all ranks.
 void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
 {

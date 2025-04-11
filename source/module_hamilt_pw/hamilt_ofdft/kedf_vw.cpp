@@ -117,35 +117,42 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
 
 /**
  * @brief Get the positive definite energy density of vW KEDF
- * \f[ \tau_{vW} = |\nabla \rho|^2 / (8 \rho) \f]
+ * \f[ \tau_{vW} = |\nabla \phi|^2 / 2 \f]
  * 
- * @param prho charge density
+ * @param pphi sqrt(rho)
  * @param pw_rho pw basis
  * @param rtau_vw rtau_vw => rtau_vw + tau_vw
  */
-void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
+void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
 {
+    std::vector<double> abs_phi = std::vector<double>(pw_rho->nrxx, 0.);
+
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(pw_rho->nrxx, 0.));
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            abs_phi[ir] = std::abs(pphi[is][ir]);
+        }
 
-        std::vector<std::complex<double>> recip_rho(pw_rho->npw, 0.);
-        std::vector<std::complex<double>> recip_nabla_rho(pw_rho->npw, 0.);
-        pw_rho->real2recip(prho[is], recip_rho.data());
+        std::vector<std::vector<double>> nabla_phi(3, std::vector<double>(pw_rho->nrxx, 0.));
+        std::vector<std::complex<double>> recip_phi(pw_rho->npw, 0.);
+        std::vector<std::complex<double>> recip_nabla_phi(pw_rho->npw, 0.);
+
+        pw_rho->real2recip(abs_phi.data(), recip_phi.data());
         
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
             for (int ip = 0; ip < pw_rho->npw; ++ip)
             {
-                recip_nabla_rho[ip] = img * pw_rho->gcar[ip][j] * recip_rho[ip] * pw_rho->tpiba;
+                recip_nabla_phi[ip] = img * pw_rho->gcar[ip][j] * recip_phi[ip] * pw_rho->tpiba;
             }
 
-            pw_rho->recip2real(recip_nabla_rho.data(), nabla_rho[j].data());
+            pw_rho->recip2real(recip_nabla_phi.data(), nabla_phi[j].data());
 
             for (int ir = 0; ir < pw_rho->nrxx; ++ir)
             {
-                rtau_vw[ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * prho[is][ir]) * 2.0; // convert Ha to Ry.
+                rtau_vw[ir] += nabla_phi[j][ir] * nabla_phi[j][ir] / 2. * this->vw_weight_ * 2.0; // convert Ha to Ry.
             }
         }
     }

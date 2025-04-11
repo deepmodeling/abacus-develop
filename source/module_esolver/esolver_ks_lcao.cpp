@@ -8,11 +8,11 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
+#include "module_io/cal_ldos.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
 #include "module_io/io_dmk.h"
 #include "module_io/io_npz.h"
-#include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_log.h"
 #include "module_io/output_mat_sparse.h"
@@ -393,70 +393,9 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-
-    // 1) write information
-    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
-    {
-        GlobalV::ofs_running << "\n\n\n\n";
-        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Post-processing of data:                   "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
-                                "output here.             |"
-                             << std::endl;
-        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
-                                "charge analysis can be done. |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
-                                "surface information can be    |"
-                             << std::endl;
-        GlobalV::ofs_running << " | done here.                                 "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
-                             << std::endl;
-        GlobalV::ofs_running << "\n\n\n\n";
-    }
-
-    // 2) write information
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
-    {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-    }
+    ESolver_KS<TK>::after_all_runners(ucell);
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-
-    // 3) print out band information
-    if (PARAM.inp.out_band[0])
-    {
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                PARAM.inp.nbands,
-                                0.0,
-                                PARAM.inp.out_band[1],
-                                this->pelec->ekb,
-                                this->kv);
-        }
-    }
 
     // 4) write projected band structure by jiyy-2022-4-20
     if (PARAM.inp.out_proj_band)
@@ -466,19 +405,28 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     // 5) print out density of states (DOS)
     if (PARAM.inp.out_dos)
+	{
+		ModuleIO::out_dos_nao(this->psi,
+				this->p_hamilt,
+				this->pv,
+				ucell,
+				*(this->pelec->klist),
+				PARAM.inp.nbands,
+				this->pelec->eferm,
+				this->pelec->ekb,
+				this->pelec->wg,
+				PARAM.inp.dos_edelta_ev,
+				PARAM.inp.dos_scale,
+				PARAM.inp.dos_sigma);
+    }
+
+    // out ldos
+    if (PARAM.inp.out_ldos[0])
     {
-        ModuleIO::out_dos_nao(this->psi,
-                              this->pv,
-                              this->pelec->ekb,
-                              this->pelec->wg,
-                              PARAM.inp.dos_edelta_ev,
-                              PARAM.inp.dos_scale,
-                              PARAM.inp.dos_sigma,
-                              *(this->pelec->klist),
-                              ucell,
-                              this->pelec->eferm,
-                              PARAM.inp.nbands,
-                              this->p_hamilt);
+        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(reinterpret_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec),
+                                              this->psi[0],
+                                              this->Pgrid,
+                                              ucell);
     }
 
     // 6) print out exchange-correlation potential

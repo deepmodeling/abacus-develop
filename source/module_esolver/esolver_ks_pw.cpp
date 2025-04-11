@@ -22,8 +22,8 @@
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_io/berryphase.h"
+#include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
-#include "module_io/nscf_band.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -49,7 +49,7 @@
 #include "module_base/kernels/dsp/dsp_connector.h"
 #endif
 
-
+#include <chrono>
 
 namespace ModuleESolver
 {
@@ -578,13 +578,18 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         {
             if (conv_esolver)
             {
+                auto start = std::chrono::high_resolution_clock::now();
+                exx_helper.set_firstiter(false);
                 exx_helper.set_psi(this->kspw_psi);
 
                 conv_esolver = exx_helper.exx_after_converge(iter);
 
                 if (!conv_esolver)
                 {
-                    std::cout << " Setting Psi for EXX PW Inner Loop" << std::endl;
+                    auto duration = std::chrono::high_resolution_clock::now() - start;
+                    std::cout << " Setting Psi for EXX PW Inner Loop took "
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0
+                              << "s" << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                     update_pot(ucell, istep, iter, conv_esolver);
@@ -635,12 +640,14 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 
     //------------------------------------------------------------------
-    // 1) calculate the kinetic energy density tau in pw basis
-    // sunliang 2024-09-18
+    // 1) since ESolver_KS::psi is hidden by ESolver_KS_PW::psi,
+    // we need to copy the data from ESolver_KS::psi to ESolver_KS_PW::psi.
+    // This part needs to be removed when we have a better design.
+    // sunliang 2025-04-10
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->pelec->cal_tau(*(this->psi));
+        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->psi[0]);
     }
 
     //------------------------------------------------------------------
@@ -825,96 +832,33 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    //! 1) Output information to screen
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    ESolver_KS<T, Device>::after_all_runners(ucell);
 
-    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0)
-    {
-        GlobalV::ofs_running << "\n\n\n\n";
-        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Post-processing of data:                   "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
-                                "output here.             |"
-                             << std::endl;
-        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
-                                "charge analysis can be done. |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
-                                "surface information can be    |"
-                             << std::endl;
-        GlobalV::ofs_running << " | done here.                                 "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
-                             << std::endl;
-        GlobalV::ofs_running << "\n\n\n\n";
-    }
-
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-    {
-        nspin0 = 2;
-    }
-
-    //! 2) Print occupation numbers into istate.info
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-
-    //! 3) Compute density of states (DOS)
+    //! 1) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
     {
         ModuleIO::write_dos_pw(this->pelec->ekb,
                                this->pelec->wg,
                                this->kv,
+                               PARAM.inp.nbands,
+                               this->pelec->eferm,
                                PARAM.inp.dos_edelta_ev,
                                PARAM.inp.dos_scale,
-                               PARAM.inp.dos_sigma);
-
-        if (nspin0 == 1)
-        {
-            GlobalV::ofs_running << " Fermi energy is " << this->pelec->eferm.ef << " Rydberg" << std::endl;
-        }
-        else if (nspin0 == 2)
-        {
-            GlobalV::ofs_running << " Fermi energy (spin = 1) is " << this->pelec->eferm.ef_up << " Rydberg"
-                                 << std::endl;
-            GlobalV::ofs_running << " Fermi energy (spin = 2) is " << this->pelec->eferm.ef_dw << " Rydberg"
-                                 << std::endl;
-        }
+                               PARAM.inp.dos_sigma,
+                               GlobalV::ofs_running);
     }
 
-    //! 4) Print out band structure information
-    if (PARAM.inp.out_band[0])
+    // out ldos
+    if (PARAM.inp.out_ldos[0])
     {
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                PARAM.inp.nbands,
-                                0.0,
-                                PARAM.inp.out_band[1],
-                                this->pelec->ekb,
-                                this->kv);
-        }
+        ModuleIO::Cal_ldos<std::complex<double>>::cal_ldos_pw(
+            reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
+            this->psi[0],
+            this->Pgrid,
+            ucell);
     }
 
-    //! 5) Calculate the spillage value, used to generate numerical atomic orbitals
+    //! 3) Calculate the spillage value, used to generate numerical atomic orbitals
     if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
     {
         // ! Print out overlap matrices
@@ -934,13 +878,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
         }
     }
 
-    //! 6) Print out electronic wave functions in real space
+    //! 4) Print out electronic wave functions in real space
     if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
         ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
     }
 
-    //! 7) Use Kubo-Greenwood method to compute conductivities
+    //! 5) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
         EleCond<Real, Device> elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->kspw_psi, &this->ppcell);
@@ -954,7 +898,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
 #ifdef __MLKEDF
-    // generate training data for ML-KEDF
+    //! 6) generate training data for ML-KEDF
     if (PARAM.inp.of_ml_gene_data == 1)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell);

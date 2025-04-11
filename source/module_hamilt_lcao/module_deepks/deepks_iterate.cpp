@@ -16,36 +16,34 @@ void DeePKS_domain::iterate_ad1(const UnitCell& ucell,
                                                    ModuleBase::Vector3<int> /*dR*/)> callback)
 {
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
-    for (int T0 = 0; T0 < ucell.ntype; T0++)
+    for (int iat = 0; iat < ucell.nat; iat++)
     {
+        const int T0 = ucell.iat2it[iat];
+        const int I0 = ucell.iat2ia[iat];
         Atom* atom0 = &ucell.atoms[T0];
-        for (int I0 = 0; I0 < atom0->na; I0++)
+        const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
+        GridD.Find_atom(ucell, tau0, T0, I0);
+        for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad)
         {
-            const int iat = ucell.itia2iat(T0, I0);
-            const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
-            GridD.Find_atom(ucell, tau0, T0, I0);
-            for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad)
+            const int T1 = GridD.getType(ad);
+            const int I1 = GridD.getNatom(ad);
+            const int ibt = ucell.itia2iat(T1, I1);
+            const int start = ucell.itiaiw2iwt(T1, I1, 0);
+
+            const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad);
+            const Atom* atom1 = &ucell.atoms[T1];
+            const int nw1_tot = atom1->nw * PARAM.globalv.npol;
+            const double Rcut_AO1 = orb.Phi[T1].getRcut();
+            const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
+
+            if (dist1 > Rcut_Alpha + Rcut_AO1)
             {
-                const int T1 = GridD.getType(ad);
-                const int I1 = GridD.getNatom(ad);
-                const int ibt = ucell.itia2iat(T1, I1); // on which chi_mu is located
-                const int start = ucell.itiaiw2iwt(T1, I1, 0);
-
-                const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad);
-                const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
-                const double Rcut_AO1 = orb.Phi[T1].getRcut();
-                const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
-
-                if (dist1 > Rcut_Alpha + Rcut_AO1)
-                {
-                    continue;
-                }
-
-                ModuleBase::Vector3<int> dR(GridD.getBox(ad).x, GridD.getBox(ad).y, GridD.getBox(ad).z);
-
-                callback(iat, tau0, ibt, tau1, start, nw1_tot, dR);
+                continue;
             }
+
+            ModuleBase::Vector3<int> dR(GridD.getBox(ad).x, GridD.getBox(ad).y, GridD.getBox(ad).z);
+
+            callback(iat, tau0, ibt, tau1, start, nw1_tot, dR);
         }
     }
 }
@@ -174,7 +172,8 @@ void DeePKS_domain::iterate_ad2(const UnitCell& ucell,
 
                 callback(iat, tau0, ibt1, tau1, start1, nw1_tot, dR1, ibt2, tau2, start2, nw2_tot, dR2);
             }
-        });
+        }
+    );
 }
 
 #endif

@@ -26,7 +26,7 @@ class ESolver
     virtual void runner(UnitCell& cell, const int istep) = 0;
 
     //! perform post processing calculations
-    virtual void after_all_runners(UnitCell& ucell){};
+    virtual void after_all_runners(UnitCell& ucell) = 0;
 
     //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg

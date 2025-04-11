@@ -96,22 +96,22 @@ void fenergy::print_all() const
     std::cout << " total= " << etot << std::endl;
 }
 
-/// @brief get the reference of fermi of a specific spin
+/// @brief set efermi of a specific spin
 /// @param is SPIN
-/// @return a reference of fermi(is)
-double& efermi::get_ef(const int& is)
+/// @param ef_in fermi(is)
+void efermi::set_efval(const int& is, const double& ef_in)
 {
     if (!two_efermi)
     {
-        return this->ef;
+        this->ef = ef_in;
     }
     else if (is == 0)
     {
-        return this->ef_up;
+        this->ef_up = ef_in;
     }
     else if (is == 1)
     {
-        return this->ef_dw;
+        this->ef_dw = ef_in;
     }
     else
     {
