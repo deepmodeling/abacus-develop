@@ -320,11 +320,11 @@ void print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
-    GlobalV::ofs_running << " Electron density error is " << scf_thr << std::endl;
+    GlobalV::ofs_running << " Electron density deviation is " << scf_thr << std::endl;
 
     if (PARAM.inp.basis_type == "pw")
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Diago Threshold", pw_diag_thr);
     }
 
     std::vector<std::string> titles;

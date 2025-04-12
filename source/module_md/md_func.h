@@ -2,7 +2,10 @@
 #define MD_FUNC_H
 
 #include "module_esolver/esolver.h"
+
+#ifdef __MPI
 #include <mpi.h> // MPI functions
+#endif
 
 /**
  * @brief base functions in md
