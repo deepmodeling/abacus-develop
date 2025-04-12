@@ -640,12 +640,14 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 
     //------------------------------------------------------------------
-    // 1) calculate the kinetic energy density tau in pw basis
-    // sunliang 2024-09-18
+    // 1) since ESolver_KS::psi is hidden by ESolver_KS_PW::psi,
+    // we need to copy the data from ESolver_KS::psi to ESolver_KS_PW::psi.
+    // This part needs to be removed when we have a better design.
+    // sunliang 2025-04-10
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->pelec->cal_tau(*(this->psi));
+        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->psi[0]);
     }
 
     //------------------------------------------------------------------

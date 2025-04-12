@@ -714,11 +714,18 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
-
-    // 1) call after_scf() of ESolver_FP
+    
+    // 1) calculate the kinetic energy density tau
+    if (PARAM.inp.out_elf[0] > 0)
+    {
+        assert(this->psi != nullptr);
+        this->pelec->cal_tau(*(this->psi));
+    }
+    
+    // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
-    // 2) write eigenvalues
+    // 3) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
         elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
