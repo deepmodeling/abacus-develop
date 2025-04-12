@@ -87,11 +87,11 @@ class ElecStatePrintTest : public ::testing::Test
         elecstate.wg(0, 1) = 0.2;
         elecstate.wg(1, 0) = 0.3;
         elecstate.wg(1, 1) = 0.4;
-        ucell.magnet.tot_magnetization = 1.1;
-        ucell.magnet.abs_magnetization = 2.2;
-        ucell.magnet.tot_magnetization_nc[0] = 3.3;
-        ucell.magnet.tot_magnetization_nc[1] = 4.4;
-        ucell.magnet.tot_magnetization_nc[2] = 5.5;
+        ucell.magnet.tot_mag = 1.1;
+        ucell.magnet.abs_mag = 2.2;
+        ucell.magnet.tot_mag_nc[0] = 3.3;
+        ucell.magnet.tot_mag_nc[1] = 4.4;
+        ucell.magnet.tot_mag_nc[2] = 5.5;
         PARAM.input.ks_solver = "dav";
         PARAM.sys.log_file = "test.dat";
     }

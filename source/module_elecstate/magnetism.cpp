@@ -18,10 +18,10 @@ Magnetism::~Magnetism()
 }
 
 void Magnetism::compute_mag(const double& omega,
-                                      const int& nrxx, 
-                                      const int& nxyz, 
-                                      const double* const * rho, 
-                                      double* nelec_spin)
+		const int& nrxx, 
+		const int& nxyz, 
+		const double* const * rho, 
+		double* nelec_spin)
 {
     assert(nxyz>0);
 

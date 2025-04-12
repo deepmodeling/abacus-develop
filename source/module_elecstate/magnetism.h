@@ -22,11 +22,11 @@ public:
 
     double abs_mag;
 
-    void compute_mag(const double& omega,
-                               const int& nrxx, 
-                               const int& nxyz, 
-                               const double* const * rho, 
-                               double* nelec_spin = nullptr);
+	void compute_mag(const double& omega,
+			const int& nrxx, 
+			const int& nxyz, 
+			const double* const * rho, 
+			double* nelec_spin = nullptr);
 
     ModuleBase::Vector3<double> *m_loc_=nullptr; //magnetization for each element along c-axis
 
