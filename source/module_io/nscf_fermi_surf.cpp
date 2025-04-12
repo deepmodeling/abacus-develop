@@ -4,6 +4,8 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
+#include <mpi.h>
+
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nband,
 	const double &ef,

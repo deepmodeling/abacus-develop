@@ -556,7 +556,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     }
 
     // compute magnetization, only for LSDA(spin==2)
-    ucell.magnet.compute_magnetization(ucell.omega,
+    ucell.magnet.compute_mag(ucell.omega,
                                        this->chr.nrxx,
                                        this->chr.nxyz,
                                        this->chr.rho,

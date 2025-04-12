@@ -457,13 +457,13 @@ void print_etot(const Magnetism& magnet,
         switch (PARAM.inp.nspin)
         {
         case 2:
-            mag = {magnet.tot_magnetization, magnet.abs_magnetization};
+            mag = {magnet.tot_mag, magnet.abs_mag};
             break;
         case 4:
-            mag = {magnet.tot_magnetization_nc[0],
-                   magnet.tot_magnetization_nc[1],
-                   magnet.tot_magnetization_nc[2],
-                   magnet.abs_magnetization};
+            mag = {magnet.tot_mag_nc[0],
+                   magnet.tot_mag_nc[1],
+                   magnet.tot_mag_nc[2],
+                   magnet.abs_mag};
             break;
         default:
             mag = {};

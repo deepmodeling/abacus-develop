@@ -4,6 +4,8 @@
 #include<vector>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
+#include <mpi.h>
+
 void ModuleIO::write_vdata_palgrid(
     const Parallel_Grid& pgrid,
     const double* const data,

@@ -10,6 +10,8 @@
 #include "module_parameter/parameter.h"
 #include "nonlocal_maths.hpp"
 
+#include "module_base/parallel_comm.h" // different MPI worlds (POOL_WORLD)
+
 namespace hamilt
 {
 
