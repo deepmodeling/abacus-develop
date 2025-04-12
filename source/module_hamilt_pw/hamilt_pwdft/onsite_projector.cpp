@@ -17,8 +17,6 @@
 #include "module_base/timer.h"
 #include "module_base/formatter.h"
 
-
-
 /**
  * ===============================================================================================
  * 
@@ -96,18 +94,19 @@ projectors::OnsiteProjector<T, Device>* projectors::OnsiteProjector<T, Device>::
 
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir,
-                                                  const UnitCell* ucell_in,
-                                                  const psi::Psi<std::complex<T>, Device>& psi,
-                                                  const K_Vectors& kv,
-                                                  const ModulePW::PW_Basis_K& pw_basis,             // level1: the plane wave basis, need ik
-                                                  Structure_Factor& sf,                              // level2: the structure factor calculator
-                                                  const double onsite_radius,
-                                                  const int nq,
-                                                  const double dq,
-                                                  const ModuleBase::matrix& wg,
-                                                  const ModuleBase::matrix& ekb)
+		const UnitCell* ucell_in,
+		const psi::Psi<std::complex<T>, Device>& psi,
+		const K_Vectors& kv,
+		const ModulePW::PW_Basis_K& pw_basis, // level1: the plane wave basis, need ik
+		Structure_Factor& sf,                 // level2: the structure factor calculator
+		const double onsite_radius,
+		const int nq,
+		const double dq,
+		const ModuleBase::matrix& wg,
+		const ModuleBase::matrix& ekb)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
+
     if(!this->initialed)
     {
         this->ucell = ucell_in;
@@ -203,11 +202,11 @@ projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
 
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbital_dir,
-                     const std::vector<std::string>& orb_files,
-                     const std::vector<int>& nproj,           // for each type, the number of projectors
-                     const std::vector<int>& lproj,           // angular momentum of projectors within the type (l of zeta function)
-                     const std::vector<int>& iproj,           // index of projectors within the type (izeta)
-                     const std::vector<double>& onsite_r) 
+		const std::vector<std::string>& orb_files,
+		const std::vector<int>& nproj,  // for each type, the number of projectors
+		const std::vector<int>& lproj,  // angular momentum of projectors within the type (l of zeta function)
+		const std::vector<int>& iproj,  // index of projectors within the type (izeta)
+		const std::vector<double>& onsite_r) 
 {
     // extract the information from ucell
     const int ntype = nproj.size();
@@ -341,8 +340,7 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::overlap_proj_psi( 
                     const int npm,
-                    const std::complex<double>* ppsi
-                    )
+                    const std::complex<double>* ppsi)
 {
     ModuleBase::timer::tick("OnsiteProj", "overlap");
     // STAGE 3 - cal_becp
@@ -524,7 +522,9 @@ void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
 } // end of read_abacus_orb
 
 template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std::complex<T>, Device>* psi_in, const ModuleBase::matrix& wg_in)
+void projectors::OnsiteProjector<T, Device>::cal_occupations(
+		const psi::Psi<std::complex<T>, Device>* psi_in, 
+		const ModuleBase::matrix& wg_in)
 {
     ModuleBase::timer::tick("OnsiteProj", "cal_occupation");
     this->tabulate_atomic(0);
@@ -581,6 +581,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
     GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
     GlobalV::ofs_running << "Orbital Charge Analysis      Charge         Mag(x)         Mag(y)         Mag(z)" << std::endl;
     GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
+
     // parameters for orbital charge output
     // parameters for mag output
     std::vector<double> mag_x(this->ucell->nat, 0.0);
