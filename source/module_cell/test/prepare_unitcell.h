@@ -150,6 +150,8 @@ public:
 			ucell->atoms[it].angle2.resize(ucell->atoms[it].na);
 			ucell->atoms[it].m_loc_.resize(ucell->atoms[it].na);
 			ucell->atoms[it].mbl.resize(ucell->atoms[it].na);
+			ucell->atoms[it].lambda.resize(ucell->atoms[it].na);
+			ucell->atoms[it].constrain.resize(ucell->atoms[it].na);
 			ucell->atoms[it].mass = ucell->atom_mass[it]; // mass set here
 			for(int ia=0; ia<ucell->atoms[it].na; ++ia)
 			{

@@ -73,7 +73,7 @@ class LCAO_Deepks
     int inlmax = 0;                  // tot. number {i,n,l} - atom, n, l
     int n_descriptor;                // natoms * des_per_atom, size of descriptor(projector) basis set
     int des_per_atom;                // \sum_L{Nchi(L)*(2L+1)}
-    std::vector<int> inl2l;          // inl2l[inl] = l of descriptor with inl_index
+    std::vector<int> inl2l;          // inl2l[inl] = inl2l[nl] = l (not related to iat) of descriptor with inl_index
     ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration

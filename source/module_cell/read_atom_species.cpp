@@ -62,9 +62,9 @@ bool read_atom_species(std::ifstream& ifa,
                     }
                     else
                     {
-                        GlobalV::ofs_warning << "unrecongnized pseudopotential type: " 
+                        GlobalV::ofs_warning << "unrecognized pseudopotential type: " 
                         << one_string << ", check your STRU file." << std::endl;
-                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
+                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecognized pseudopotential type.");
                     }
                 }
 
@@ -141,7 +141,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         ModuleBase::GlobalFunc::READ_VALUE(ifa, lat0);
         if(lat0<=0.0)
         {
-            ModuleBase::WARNING_QUIT("read_atom_species","lat0<=0.0");
+            ModuleBase::WARNING_QUIT("read_atom_species","lattice constant <= 0.0");
         }
         lat0_angstrom = lat0 * 0.529177;
         ModuleBase::GlobalFunc::OUT(ofs_running,"lattice constant (Bohr)",lat0);
@@ -170,7 +170,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         if( !ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_VECTORS") )
         {
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
-            "Please set LATTICE_VECTORS in STRU file");
+            "Please set LATTICE_VECTORS in the STRU file");
         }
         else if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_VECTORS") )
         {

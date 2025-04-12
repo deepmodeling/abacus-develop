@@ -8,14 +8,21 @@
 class DosPrepare
 {
 public:
-	DosPrepare(int is_in, std::string fa_in, std::string fa1_in,
-		double de_ev_in, double emax_ev_in,
-		double emin_ev_in, double bcoeff_in,
-		int nks_in, int nkstot_in, int nbands_in):
+	DosPrepare(int is_in, 
+			std::string fa_in, 
+			std::string fa1_in,
+			double de_ev_in, 
+			double emax_ev_in,
+			double emin_ev_in, 
+			double bcoeff_in,
+			int nks_in, 
+			int nkstot_in, 
+			int nbands_in):
 		is(is_in),fa(fa_in),fa1(fa1_in),
 		de_ev(de_ev_in),emax_ev(emax_ev_in),
 		emin_ev(emin_ev_in),bcoeff(bcoeff_in),
 		nks(nks_in),nkstot(nkstot_in),nbands(nbands_in){}
+
 	int is;
 	std::string fa;
 	std::string fa1;
@@ -30,6 +37,7 @@ public:
 	std::vector<double> wk;
 	ModuleBase::matrix ekb;
 	ModuleBase::matrix wg;
+
 	void set_isk()
 	{
 		this->isk.reserve(nks);
@@ -38,6 +46,7 @@ public:
 			isk[i] = 0; //spin-unpolarized case, only 1 spin
 		}
 	}
+
 	void read_wk()
 	{
 		this->wk.reserve(nks);
@@ -63,6 +72,7 @@ public:
 			wk[ik] *= 2.0;
 		}
 	}
+
 	void read_istate_info()
 	{
 		this->ekb.create(nks,nbands);

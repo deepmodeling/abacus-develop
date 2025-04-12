@@ -14,7 +14,7 @@
  *   - fenergy::calculate_harris()
  *   - fenergy::clear_all()
  *   - fenergy::print_all()
- *   - efermi::get_ef()
+ *   - efermi::set_efval()
  *   - efermi::get_efval()
  */
 class fenergy : public ::testing::Test
@@ -61,19 +61,18 @@ TEST_F(fenergy, print_all)
 TEST_F(fenergy, eferm_get_ef)
 {
     eferm.two_efermi = false;
-    double& tmp_ef = eferm.get_ef(0);
-    tmp_ef = 0.7;
+    eferm.set_efval(0, 0.7);
     EXPECT_EQ(eferm.ef, 0.7);
+    eferm.set_efval(2, 0.77);
+    EXPECT_EQ(eferm.ef, 0.77);
     eferm.two_efermi = true;
-    double& tmp_efup = eferm.get_ef(0);
-    tmp_efup = 1.0;
-    EXPECT_EQ(eferm.ef_up, 1.0);
-    double& tmp_efdw = eferm.get_ef(1);
-    tmp_efdw = -1.0;
+    eferm.set_efval(0, 0.6);
+    EXPECT_EQ(eferm.ef_up, 0.6);
+    eferm.set_efval(1, -1.0);
     EXPECT_EQ(eferm.ef_dw, -1.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(double& tmpp = eferm.get_ef(2);, ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(eferm.set_efval(3, 1.0);, ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please check NSPIN when TWO_EFERMI is true"));
 }

@@ -93,7 +93,7 @@ TEST_F(ToolQuitTest,warningquit)
 	ifs.open("running.log");
 	getline(ifs,output);
 	// test output in running.log file
-	EXPECT_THAT(output,testing::HasSubstr("!!!!!!!"));
+	EXPECT_THAT(output,testing::HasSubstr("-------"));
 	ifs.close();
 }
 
@@ -116,7 +116,7 @@ TEST_F(ToolQuitTest,warningquit_with_ret)
 	ifs.open("running.log");
 	getline(ifs,output);
 	// test output in running.log file
-	EXPECT_THAT(output,testing::HasSubstr("!!!!!!!"));
+	EXPECT_THAT(output,testing::HasSubstr("-------"));
 	ifs.close();
 }
 // use __MPI to activate parallel environment

@@ -44,6 +44,8 @@ class ESolver_KS : public ESolver_FP
 
     virtual void runner(UnitCell& ucell, const int istep) override;
 
+    virtual void after_all_runners(UnitCell& ucell) override;
+
   protected:
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep) override;

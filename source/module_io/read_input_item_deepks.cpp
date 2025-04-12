@@ -1,6 +1,6 @@
 #include "module_base/constants.h"
-#include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
+#include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 namespace ModuleIO
@@ -9,8 +9,8 @@ void ReadInput::item_deepks()
 {
     {
         Input_Item item("deepks_out_labels");
-        item.annotation = ">0 compute descriptor for deepks";
-        read_sync_bool(input.deepks_out_labels);
+        item.annotation = ">0 compute descriptor for deepks. 1 used during training, 2 used for label production";
+        read_sync_int(input.deepks_out_labels);
         this->add_item(item);
     }
     {
@@ -18,13 +18,13 @@ void ReadInput::item_deepks()
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-        #ifndef __DEEPKS
-            if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || 
-                PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
+#ifndef __DEEPKS
+            if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap
+                || PARAM.inp.deepks_v_delta)
             {
                 ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
             }
-        #endif
+#endif
         };
         this->add_item(item);
     }
@@ -48,7 +48,8 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_v_delta");
-        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for phialpha and grad_evdm ( can save memory )";
+        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for phialpha and grad_evdm ( "
+                          "can save memory )";
         read_sync_int(input.deepks_v_delta);
         this->add_item(item);
     }
@@ -60,16 +61,17 @@ void ReadInput::item_deepks()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.deepks_out_unittest)
             {
-                para.input.deepks_out_labels = true;
+                para.input.deepks_out_labels = 1;
                 para.input.deepks_scf = true;
-
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.deepks_out_unittest){
+            if (para.input.deepks_out_unittest)
+            {
                 if (para.input.cal_force != 1 || para.input.cal_stress != 1)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "force and stress are required in generating deepks unittest");
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "force and stress are required in generating deepks unittest");
                 }
             }
         };

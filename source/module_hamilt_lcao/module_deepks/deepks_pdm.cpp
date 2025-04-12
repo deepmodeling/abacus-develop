@@ -96,6 +96,9 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                                hamilt::HContainer<double>* dmr_deepks)
 {
     dmr_deepks->set_zero();
+    // save whether the pair with R has been calculated
+    std::vector<std::tuple<int, int, int, int, int>> calculated_pairs(0);
+
     DeePKS_domain::iterate_ad2(
         ucell,
         GridD,
@@ -133,6 +136,15 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                 dRz = (dR1 - dR2).z;
             }
             ModuleBase::Vector3<int> dR(dRx, dRy, dRz);
+
+            // avoid duplicate calculation
+            if (std::find(calculated_pairs.begin(), calculated_pairs.end(),
+                          std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z))
+                != calculated_pairs.end())
+            {
+                return;
+            }
+            calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
 
             dm_pair.find_R(dR);
             hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
@@ -222,7 +234,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
         Atom* atom0 = &ucell.atoms[T0];
         const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
         AdjacentAtomInfo adjs;
-        GridD.Find_atom(ucell, atom0->tau[I0], T0, I0, &adjs);
+        GridD.Find_atom(ucell, tau0, T0, I0, &adjs);
 
         // trace alpha orbital
         std::vector<int> trace_alpha_row;

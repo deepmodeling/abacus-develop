@@ -61,8 +61,10 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (reduce) {Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
-}
+		if (reduce) 
+		{
+			Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+		}
 
         if (!reduce || GlobalV::DRANK == 0)
         {
@@ -90,14 +92,9 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             nonzeros_count += indptr.back();
             indptr.push_back(nonzeros_count);
         }
-
-        // delete[] line;
-        // line = nullptr;
-
     }
 
     delete[] line;
-    line = nullptr;
 
     if (!reduce || GlobalV::DRANK == 0)
     {
@@ -137,6 +134,7 @@ template void ModuleIO::output_single_R<double>(std::ofstream& ofs,
     const bool& binary,
     const Parallel_Orbitals& pv,
     const bool& reduce);
+
 template void ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
     const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
     const double& sparse_threshold,

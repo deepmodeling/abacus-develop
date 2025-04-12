@@ -196,12 +196,18 @@ TEST_F(vdwd2Test, WrongVdwType)
     std::string output = testing::internal::GetCapturedStdout();
 }
 
+
+// mohan comment out 2025-04-05 since the original code has been removed.
+// further investigation is needed.
+/*
 TEST_F(vdwd2Test, OneAtomWarning)
 {
     UnitCell ucell1;
     stru_ structure1{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
                      std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}}}}};
+
     construct_ucell(structure1,ucell1);
+
     GlobalV::ofs_warning.open("warning.log");
     std::ifstream ifs;
     std::string output;
@@ -217,6 +223,7 @@ TEST_F(vdwd2Test, OneAtomWarning)
     ifs.close();
     ClearUcell(ucell1);
 }
+*/
 
 TEST_F(vdwd2Test, D2ReadFile)
 {

@@ -77,12 +77,23 @@ void ModuleIO::write_vdata_palgrid(
         }
 
         std::vector<std::string> comment(2);
-        for (int i = 0;i < 2;++i) { std::getline(ss, comment[i]); }
+		for (int i = 0;i < 2;++i) 
+		{ 
+			std::getline(ss, comment[i]); 
+		}
 
-        double fac = ucell->lat0;
-        std::vector<double> dx = { fac * ucell->latvec.e11 / double(nx), fac * ucell->latvec.e12 / double(nx), fac * ucell->latvec.e13 / double(nx) };
-        std::vector<double> dy = { fac * ucell->latvec.e21 / double(ny), fac * ucell->latvec.e22 / double(ny), fac * ucell->latvec.e23 / double(ny) };
-        std::vector<double> dz = { fac * ucell->latvec.e31 / double(nz), fac * ucell->latvec.e32 / double(nz), fac * ucell->latvec.e33 / double(nz) };
+		double fac = ucell->lat0;
+		std::vector<double> dx = { fac * ucell->latvec.e11 / double(nx), 
+			fac * ucell->latvec.e12 / double(nx), 
+			fac * ucell->latvec.e13 / double(nx) };
+
+		std::vector<double> dy = { fac * ucell->latvec.e21 / double(ny), 
+			fac * ucell->latvec.e22 / double(ny), 
+			fac * ucell->latvec.e23 / double(ny) };
+
+		std::vector<double> dz = { fac * ucell->latvec.e31 / double(nz), 
+			fac * ucell->latvec.e32 / double(nz), 
+			fac * ucell->latvec.e33 / double(nz) };
 
         std::string element = "";
         std::vector<int> atom_type;
@@ -118,11 +129,18 @@ void ModuleIO::write_vdata_palgrid(
                     }
                 }
                 atom_type.push_back(z);
-                atom_charge.push_back(ucell->atoms[it].ncpp.zv);
-                atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, fac * ucell->atoms[it].tau[ia].y, fac * ucell->atoms[it].tau[ia].z });
+				atom_charge.push_back(ucell->atoms[it].ncpp.zv);
+				atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, 
+						fac * ucell->atoms[it].tau[ia].y, 
+						fac * ucell->atoms[it].tau[ia].z });
             }
         }
-        write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, nx, ny, nz, dx, dy, dz, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
+		write_cube(fn, comment, ucell->nat, {0.0, 0.0, 0.0}, 
+				nx, ny, nz, 
+				dx, dy, dz, 
+				atom_type, atom_charge, atom_pos, 
+				data_xyz_full, precision);
+
         end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
     }
@@ -148,7 +166,11 @@ void ModuleIO::write_cube(const std::string& file,
     const int ndata_line)
 {
     assert(comment.size() >= 2);
-    for (int i = 0;i < 2;++i) { assert(comment[i].find("\n") == std::string::npos); }
+	for (int i = 0;i < 2;++i) 
+	{ 
+		assert(comment[i].find("\n") == std::string::npos); 
+	}
+
     assert(origin.size() >= 3);
     assert(dx.size() >= 3);
     assert(dy.size() >= 3);
@@ -156,12 +178,20 @@ void ModuleIO::write_cube(const std::string& file,
     assert(atom_type.size() >= natom);
     assert(atom_charge.size() >= natom);
     assert(atom_pos.size() >= natom);
-    for (int i = 0;i < natom;++i) { assert(atom_pos[i].size() >= 3); }
+
+	for (int i = 0;i < natom;++i) 
+	{ 
+		assert(atom_pos[i].size() >= 3); 
+	}
+
     assert(data.size() >= nx * ny * nz);
 
     std::ofstream ofs(file);
 
-    for (int i = 0;i < 2;++i) { ofs << comment[i] << "\n"; }
+	for (int i = 0;i < 2;++i) 
+	{ 
+		ofs << comment[i] << "\n"; 
+	}
 
     ofs << std::fixed;
     ofs << std::setprecision(1);    // as before
@@ -175,7 +205,9 @@ void ModuleIO::write_cube(const std::string& file,
 
     for (int i = 0;i < natom;++i)
     {
-        ofs << " " << atom_type[i] << " " << atom_charge[i] << " " << atom_pos[i][0] << " " << atom_pos[i][1] << " " << atom_pos[i][2] << "\n";
+        ofs << " " << atom_type[i] << " " << atom_charge[i] 
+            << " " << atom_pos[i][0] << " " << atom_pos[i][1] 
+            << " " << atom_pos[i][2] << "\n";
     }
 
     ofs.unsetf(std::ofstream::fixed);

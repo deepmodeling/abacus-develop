@@ -5,6 +5,7 @@
 #ifdef __DEEPKS
 #include "deepks_basic.h"
 
+#include "module_base/atom_in.h"
 #include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 
@@ -234,6 +235,44 @@ void DeePKS_domain::check_gedm(const int inlmax, const std::vector<int>& inl2l, 
         }
         ofs << std::endl;
     }
+}
+
+void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out)
+{
+    int nat = ucell.nat;
+    atom_out = torch::zeros({nat, 4}, torch::TensorOptions().dtype(torch::kFloat64));
+
+    // get atom information
+    atom_in AtomInfo;
+    int index = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            atom_out[index][0] = AtomInfo.atom_Z[ucell.atom_label[it]];
+
+            // use bohr as unit
+            atom_out[index][1] = ucell.atoms[it].tau[ia].x * ucell.lat0;
+            atom_out[index][2] = ucell.atoms[it].tau[ia].y * ucell.lat0;
+            atom_out[index][3] = ucell.atoms[it].tau[ia].z * ucell.lat0;
+            index++;
+        }
+    }
+}
+void DeePKS_domain::prepare_box(const UnitCell& ucell, torch::Tensor& box_out)
+{
+    box_out = torch::zeros({9}, torch::TensorOptions().dtype(torch::kFloat64));
+
+    // use bohr as unit
+    box_out[0] = ucell.latvec.e11 * ucell.lat0;
+    box_out[1] = ucell.latvec.e12 * ucell.lat0;
+    box_out[2] = ucell.latvec.e13 * ucell.lat0;
+    box_out[3] = ucell.latvec.e21 * ucell.lat0;
+    box_out[4] = ucell.latvec.e22 * ucell.lat0;
+    box_out[5] = ucell.latvec.e23 * ucell.lat0;
+    box_out[6] = ucell.latvec.e31 * ucell.lat0;
+    box_out[7] = ucell.latvec.e32 * ucell.lat0;
+    box_out[8] = ucell.latvec.e33 * ucell.lat0;
 }
 
 #endif

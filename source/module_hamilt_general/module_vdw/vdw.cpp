@@ -44,6 +44,9 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
                               const Input_para &input,
                               std::ofstream* plog)
 {
+    // NOTE: the following lines are incorrect! 
+    // NOTE: VDW interaction exists between images even if there is only one
+    // NOTE: atom in cell. See issue#5401: https://github.com/deepmodeling/abacus-develop/issues/5401
     // if (ucell.nat < 2 && input.vdw_method != "none")
     // {
     //     ModuleBase::WARNING("VDW", "Only one atom in this system, and will not do the calculation of VDW");

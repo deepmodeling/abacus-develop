@@ -5,29 +5,7 @@
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #endif
-
-extern "C"
-{
-  //I'm not sure what's happenig here, but the interface in scalapack_connecter.h
-  //does not seem to work, so I'll use this one here
-  void pzgemm_(
-		const char *transa, const char *transb,
-		const int *M, const int *N, const int *K,
-		const std::complex<double> *alpha,
-		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
-		const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
-		const std::complex<double> *beta,
-		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
-  
-  void pdgemm_(
-		const char *transa, const char *transb,
-		const int *M, const int *N, const int *K,
-		const double *alpha,
-		const double *A, const int *IA, const int *JA, const int *DESCA,
-		const double *B, const int *IB, const int *JB, const int *DESCB,
-		const double *beta,
-		double *C, const int *IC, const int *JC, const int *DESCC);
-}
+#include "module_base/scalapack_connector.h"
 
 namespace ModuleDFTU
 {
@@ -189,7 +167,27 @@ void DFTU::cal_occup_m_k(const int iter,
         }
 
 #ifdef __MPI
-        pzgemm_(&transN,
+        ScalapackConnector::gemm(transN,
+            transT,
+            PARAM.globalv.nlocal,
+            PARAM.globalv.nlocal,
+            PARAM.globalv.nlocal,
+            alpha,
+            s_k_pointer,
+            one_int,
+            one_int,
+            &this->paraV->desc[0],
+            dm_k[ik].data(),
+            //dm_k[ik].c,
+            one_int,
+            one_int,
+            &this->paraV->desc[0],
+            beta,
+            srho.data(),
+            one_int,
+            one_int,
+            &this->paraV->desc[0]);
+        /*pzgemm_(&transN,
                 &transT,
                 &PARAM.globalv.nlocal,
                 &PARAM.globalv.nlocal,
@@ -208,7 +206,7 @@ void DFTU::cal_occup_m_k(const int iter,
                 &srho[0],
                 &one_int,
                 &one_int,
-                this->paraV->desc);
+                this->paraV->desc);*/
 #endif
 
         const int spin = kv.isk[ik];
@@ -399,7 +397,7 @@ void DFTU::cal_occup_m_gamma(const int iter,
 
     //=================Part 1======================
     // call PBLAS routine to calculate the product of the S and density matrix
-    const char transN = 'N', transT = 'T';
+    char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double alpha = 1.0, beta = 0.0;
 
@@ -410,7 +408,27 @@ void DFTU::cal_occup_m_gamma(const int iter,
         double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
 #ifdef __MPI
-        pdgemm_(&transN,
+        ScalapackConnector::gemm(transN,
+            transT,
+            PARAM.globalv.nlocal,
+            PARAM.globalv.nlocal,
+            PARAM.globalv.nlocal,
+            alpha,
+            s_gamma_pointer,
+            one_int,
+            one_int,
+            &this->paraV->desc[0],
+            dm_gamma[is].data(),
+            //dm_gamma[is].c,
+            one_int,
+            one_int,
+            &this->paraV->desc[0],
+            beta,
+            srho.data(),
+            one_int,
+            one_int,
+            &this->paraV->desc[0]);
+        /*pdgemm_(&transN,
                 &transT,
                 &PARAM.globalv.nlocal,
                 &PARAM.globalv.nlocal,
@@ -429,7 +447,7 @@ void DFTU::cal_occup_m_gamma(const int iter,
                 &srho[0],
                 &one_int,
                 &one_int,
-                this->paraV->desc);
+                this->paraV->desc);*/
 #endif
 
         for (int it = 0; it < ucell.ntype; it++)

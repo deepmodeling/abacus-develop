@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
+#ifndef TD_CURRENT_IO_H
+#define TD_CURRENT_IO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -30,4 +30,5 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM_real,
 
 #endif // __LCAO
 } // namespace ModuleIO
-#endif // W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_TD_CURRENT_IO_H
+
+#endif

@@ -5,27 +5,31 @@ calculation     nscf
 
 nbands			6
 symmetry		0
-pseudo_dir	../../PP_ORB
+pseudo_dir	    ../../PP_ORB
 read_file_dir   ./
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
-scf_nmax			100
+scf_thr			1e-8
+scf_nmax		100
 
-#out_chg      1
 init_chg        file
-out_dos            1
-pw_diag_thr                0.00001
+out_dos         1
+pw_diag_thr     0.00001
 
 #Parameters (3.Basis)
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma			0.002
+smearing_method	gauss
+smearing_sigma	0.002
 
 #Parameters (5.Mixing)
 mixing_type		plain
 mixing_beta		0.7
 
+#dos_emin_ev    -15  #minimal range for dos
+#dos_emax_ev    15   #maximal range for dos
+dos_edelta_ev   0.01 #delta energy for dos
+#dos_scale      0.01 #scale dos range by
+dos_sigma       0.05 #gauss b coefficeinet(default=0.07)

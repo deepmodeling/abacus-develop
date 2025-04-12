@@ -49,6 +49,8 @@ class ESolver_FP: public ESolver
     //! Initialize of the first-principels energy solver
     virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
+    virtual void after_all_runners(UnitCell& ucell) override;
+
   protected:
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep);

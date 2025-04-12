@@ -151,6 +151,13 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                                     += gedm[inl][m1 * nm + m2]
                                                         * overlap_1->get_value(row_indexes[iw1], ib + m1)
                                                         * grad_overlap_2[dim]->get_value(col_indexes[iw2], ib + m2);
+                                                if (isstress)
+                                                {
+                                                    nlm_t[dim] += gedm[inl][m1 * nm + m2]
+                                                                    * overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                                    * grad_overlap_1[dim]->get_value(row_indexes[iw1],
+                                                                                                    ib + m2);
+                                                }
                                             }
                                         }
                                     }
@@ -175,6 +182,12 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                         nlm[dim] += gedm[iat][iproj * nproj + jproj]
                                                     * overlap_1->get_value(row_indexes[iw1], iproj)
                                                     * grad_overlap_2[dim]->get_value(col_indexes[iw2], jproj);
+                                        if (isstress)
+                                        {
+                                            nlm_t[dim] += gedm[iat][iproj * nproj + jproj]
+                                                            * overlap_2->get_value(col_indexes[iw2], iproj)
+                                                            * grad_overlap_1[dim]->get_value(row_indexes[iw1], jproj);
+                                        }
                                     }
                                 }
                             }
@@ -192,54 +205,6 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
 
                         if (isstress)
                         {
-                            if (!PARAM.inp.deepks_equiv)
-                            {
-                                int ib = 0;
-                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                                {
-                                    for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                                    {
-                                        const int inl = inl_index[T0](I0, L0, N0);
-                                        const int nm = 2 * L0 + 1;
-                                        for (int m1 = 0; m1 < nm; ++m1)
-                                        {
-                                            for (int m2 = 0; m2 < nm; ++m2)
-                                            {
-                                                for (int dim = 0; dim < 3; ++dim)
-                                                {
-                                                    nlm_t[dim] += gedm[inl][m1 * nm + m2]
-                                                                    * overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                                    * grad_overlap_1[dim]->get_value(row_indexes[iw1],
-                                                                                                    ib + m2);
-                                                }
-                                            }
-                                        }
-                                        ib += nm;
-                                    }
-                                }
-                                assert(ib == overlap_2->get_col_size());
-                            }
-                            else
-                            {
-                                int nproj = 0;
-                                for (int il = 0; il < lmaxd + 1; il++)
-                                {
-                                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
-                                }
-                                for (int iproj = 0; iproj < nproj; iproj++)
-                                {
-                                    for (int jproj = 0; jproj < nproj; jproj++)
-                                    {
-                                        for (int dim = 0; dim < 3; dim++)
-                                        {
-                                            nlm_t[dim] += gedm[iat][iproj * nproj + jproj]
-                                                            * overlap_2->get_value(col_indexes[iw2], iproj)
-                                                            * grad_overlap_1[dim]->get_value(row_indexes[iw1], jproj);
-                                        }
-                                    }
-                                }
-                            }
-
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
                                 for (int jpol = ipol; jpol < 3; jpol++)

@@ -7,79 +7,56 @@
 void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
                             const ModuleBase::matrix& wg,
                             const K_Vectors& kv,
+                            const int nbands,
+                            const elecstate::efermi &energy_fermi,
                             const double& dos_edelta_ev,
                             const double& dos_scale,
-                            const double& bcoeff)
+                            const double& bcoeff,
+                            std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_pw");
 
-    int nspin0 = 1;
-    if (PARAM.inp.nspin == 2)
-        nspin0 = 2;
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // find energy range
-    double emax = ekb(0, 0);
-    double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
-        {
-            emax = std::max(emax, ekb(ik, ib));
-            emin = std::min(emin, ekb(ik, ib));
-        }
-    }
+    double emax = 0.0;
+    double emin = 0.0;
 
-#ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, emax);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, emin);
-#endif
-
-    emax *= ModuleBase::Ry_to_eV;
-    emin *= ModuleBase::Ry_to_eV;
-
-    if (PARAM.globalv.dos_setemax)
-        emax = PARAM.inp.dos_emax_ev;
-    if (PARAM.globalv.dos_setemin)
-        emin = PARAM.inp.dos_emin_ev;
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
-    {
-        // scale up a little bit so the end peaks are displaced better
-        double delta = (emax - emin) * dos_scale;
-        emax = emax + delta / 2.0;
-        emin = emin - delta / 2.0;
-    }
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "minimal energy is (eV)", emin);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "maximal energy is (eV)", emax);
-    // 		atom_arrange::set_sr_NL();
-    //		atom_arrange::search( GlobalV::SEARCH_RADIUS );//qifeng-2019-01-21
-    // determine #. energy points
-    const double de_ev = dos_edelta_ev;
-    // std::cout << de_ev;
-
-    const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
-    const int np = npoints;
+	prepare_dos(ofs_running, 
+			energy_fermi, 
+			ekb,
+			kv.get_nks(),
+			nbands,
+			dos_edelta_ev,
+            dos_scale,
+			emax, 
+			emin);
 
     for (int is = 0; is < nspin0; ++is)
     {
         // DOS_ispin contains not smoothed dos
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
+
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
-        ModuleIO::calculate_dos(is,
-                                ss.str(),
-                                ss1.str(),
-                                dos_edelta_ev,
-                                emax,
-                                emin,
-                                bcoeff,
-                                kv.get_nks(),
-                                kv.get_nkstot(),
-                                kv.wk,
-                                kv.isk,
-                                PARAM.inp.nbands,
-                                ekb,
-                                wg);
-    }
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
+
+        ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
+
+		ModuleIO::cal_dos(is,
+				ss.str(),
+				ss1.str(),
+				dos_edelta_ev,
+				emax,
+				emin,
+				bcoeff,
+				kv.get_nks(),
+				kv.get_nkstot(),
+				kv.wk,
+				kv.isk,
+				nbands,
+				ekb,
+				wg);
+	}
+
+    ofs_running << " DOS CALCULATIONS ENDS." << std::endl; 
 }
