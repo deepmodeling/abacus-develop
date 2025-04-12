@@ -2,8 +2,7 @@
 #include "cal_dos.h"
 #include "cal_pdos_gamma.h"
 #include "cal_pdos_multik.h"
-#include "nscf_fermi_surface"
-
+#include "nscf_fermi_surf.h"
 #include "module_parameter/parameter.h"
 
 namespace ModuleIO
@@ -89,7 +88,7 @@ void write_dos_lcao(
         {
             std::stringstream ss3;
             ss3 << PARAM.globalv.global_out_dir << "fermi" << is << ".bxsf";
-            nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, ucell, ekb);
+            nscf_fermi_surface(ss3.str(), nbands, energy_fermi.ef, kv, ucell, ekb);
         }
     }
 
