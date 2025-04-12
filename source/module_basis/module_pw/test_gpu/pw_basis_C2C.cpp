@@ -51,9 +51,10 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
         {
             for (int iy = 0; iy < ny; ++iy)
             {
+                const int offset = (ix * ny + iy) * nz;
                 for (int iz = 0; iz < nz; ++iz)
                 {
-                    tmp[ix * ny * nz + iy * nz + iz] = 0.0;
+                    tmp[offset + iz] = 0.0;
                     double vx = ix - int(nx / 2);
                     double vy = iy - int(ny / 2);
                     double vz = iz - int(nz / 2);
@@ -61,11 +62,11 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
                     double modulus = v * (GGT * v);
                     if (modulus <= ggecut)
                     {
-                        tmp[ix * ny * nz + iy * nz + iz] = 1.0 / (modulus + 1);
+                        tmp[offset + iz] = 1.0 / (modulus + 1);
                         if (vy > 0)
-                            tmp[ix * ny * nz + iy * nz + iz] += ModuleBase::IMAG_UNIT / (std::abs(v.x + 1) + 1);
+                            tmp[offset + iz] += ModuleBase::IMAG_UNIT / (std::abs(v.x + 1) + 1);
                         else if (vy < 0)
-                            tmp[ix * ny * nz + iy * nz + iz] -= ModuleBase::IMAG_UNIT / (std::abs(-v.x + 1) + 1);
+                            tmp[offset + iz] -= ModuleBase::IMAG_UNIT / (std::abs(-v.x + 1) + 1);
                     }
                 }
             }
@@ -186,9 +187,10 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
         {
             for (int iy = 0; iy < ny; ++iy)
             {
+                const int offset = (ix * ny + iy) * nz;
                 for (int iz = 0; iz < nz; ++iz)
                 {
-                    tmp[ix * ny * nz + iy * nz + iz] = 0.0;
+                    tmp[offset+ iz] = 0.0;
                     float vx = ix - int(nx / 2);
                     float vy = iy - int(ny / 2);
                     float vz = iz - int(nz / 2);
@@ -196,11 +198,11 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
                     float modulus = v * (GGT * v);
                     if (modulus <= ggecut)
                     {
-                        tmp[ix * ny * nz + iy * nz + iz] = 1.0 / (modulus + 1);
+                        tmp[offset+ iz] = 1.0 / (modulus + 1);
                         if (vy > 0)
-                            tmp[ix * ny * nz + iy * nz + iz] += std::complex<float>(0, 1.0) / (std::abs(vx + 1) + 1);
+                            tmp[offset+ iz] += std::complex<float>(0, 1.0) / (std::abs(vx + 1) + 1);
                         else if (vy < 0)
-                            tmp[ix * ny * nz + iy * nz + iz] -= std::complex<float>(0, 1.0) / (std::abs(-vx + 1) + 1);
+                            tmp[offset+ iz] -= std::complex<float>(0, 1.0) / (std::abs(-vx + 1) + 1);
                     }
                 }
             }
