@@ -37,7 +37,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
 
     if (output_level != "m") // xiaohui add 'output_level', 2015-09-16
     {
-        ofs_in << "\n\n\n\n";
+        ofs_in << "\n\n";
         ofs_in << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
         ofs_in << " |                                                                    |" << std::endl;
         ofs_in << " | Search adjacent atoms:                                             |" << std::endl;
@@ -47,7 +47,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ofs_in << " | for each atom.                                                     |" << std::endl;
         ofs_in << " |                                                                    |" << std::endl;
         ofs_in << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-        ofs_in << "\n\n\n\n";
+        ofs_in << "\n\n";
 
         ofs_in << "\n SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
         ofs_in << std::setprecision(3);

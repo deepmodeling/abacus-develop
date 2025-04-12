@@ -482,11 +482,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
 
             // xiaohui add "OUT_LEVEL", 2015-09-16
-            if (PARAM.inp.out_level != "m")
-            {
-                GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
-                                     << sum / nat << std::endl;
-            }
+//            if (PARAM.inp.out_level != "m")
+//            {
+//                GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
+//                                     << sum / nat << std::endl;
+//            }
         }
 
         if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
