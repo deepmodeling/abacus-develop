@@ -15,8 +15,8 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
 #ifdef __MPI
 
-	int start = 1;
-	int end = PARAM.inp.nbands;
+	const int start = 1;
+	const int end = PARAM.inp.nbands;
 
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)

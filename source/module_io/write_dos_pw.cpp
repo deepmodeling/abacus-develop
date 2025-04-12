@@ -58,5 +58,21 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
 				wg);
 	}
 
+
+    if (PARAM.inp.out_dos == 2)
+    {
+        WARNING_QUIT("ModuleIO::write_dos_pw","PW basis do not support PDOS calculations yet.");
+    }
+
+    if(PARAM.inp.out_dos == 3)
+    {
+        for (int is = 0; is < nspin0; is++)
+        {
+            std::stringstream ss3;
+            ss3 << PARAM.globalv.global_out_dir << "fermi" << is << ".bxsf";
+            nscf_fermi_surface(ss3.str(), nbands, energy_fermi.ef, kv, ucell, ekb);
+        }
+    }
+
     ofs_running << " DOS CALCULATIONS ENDS." << std::endl; 
 }
