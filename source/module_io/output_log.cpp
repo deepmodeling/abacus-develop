@@ -5,6 +5,9 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 
+#include "module_base/parallel_comm.h"
+#include <mpi.h>
+
 namespace ModuleIO
 {
 void output_convergence_after_scf(const bool &convergence, double& energy, std::ofstream& ofs_running)
