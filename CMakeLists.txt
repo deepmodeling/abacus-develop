@@ -212,7 +212,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   add_compile_options(-fp-model=strict)
   set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare"
+      "${CMAKE_CXX_FLAGS} -Wno-write-strings "
   )
 endif()
 
