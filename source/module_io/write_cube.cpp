@@ -4,7 +4,10 @@
 #include<vector>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
+#ifdef __MPI
 #include <mpi.h>
+#endif
+
 #include <cstring> 
 
 void ModuleIO::write_vdata_palgrid(

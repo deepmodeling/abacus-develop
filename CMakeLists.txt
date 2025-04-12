@@ -114,11 +114,13 @@ You can install Git first and reinstall abacus.")
   endif()
 endif()
 
+# Serial version of ABACUS will not use ELPA
 if(NOT ENABLE_MPI)
   set(USE_ELPA OFF)
   set(ENABLE_DEEPKS OFF)
 endif()
 
+# Different exe files of ABACUS
 if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
 elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
@@ -129,6 +131,7 @@ elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_serial)
 endif()
 
+# Use DSP hardware
 if (USE_DSP)
   set(USE_ELPA OFF)
   set(ENABLE_LCAO OFF)
