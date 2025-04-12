@@ -60,7 +60,6 @@ if(ENABLE_LCAO)
       write_wfc_nao.cpp
       io_dmk.cpp
       write_dmr.cpp
-      dos_nao.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp

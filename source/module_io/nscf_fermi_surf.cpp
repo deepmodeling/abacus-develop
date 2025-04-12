@@ -21,7 +21,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)
 	{
-		ofs.open(out_band_dir.c_str());//make the file clear!!
+		ofs.open(out_band_dir.c_str());
 		ofs << std::setprecision(6);
 		ofs.close();	
 	}
