@@ -6,7 +6,10 @@
 #include "module_base/global_variable.h"
 
 #include "module_base/parallel_comm.h"
+
+#ifdef __MPI
 #include <mpi.h>
+#endif
 
 namespace ModuleIO
 {

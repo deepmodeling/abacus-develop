@@ -5,7 +5,9 @@
 #include "module_base/tool_title.h"
 #include "module_base/formatter.h"
 
+#ifdef __MPI
 #include <mpi.h>
+#endif
 
 void ModuleIO::nscf_band(
     const int &is,

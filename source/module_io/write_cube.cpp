@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
 #include <mpi.h>
+#include <cstring> 
 
 void ModuleIO::write_vdata_palgrid(
     const Parallel_Grid& pgrid,
