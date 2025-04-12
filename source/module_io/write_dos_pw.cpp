@@ -1,18 +1,20 @@
 #include "write_dos_pw.h"
-
 #include "cal_dos.h"
+#include "nscf_fermi_surf.h"
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 
-void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
-                            const ModuleBase::matrix& wg,
-                            const K_Vectors& kv,
-                            const int nbands,
-                            const elecstate::efermi &energy_fermi,
-                            const double& dos_edelta_ev,
-                            const double& dos_scale,
-                            const double& bcoeff,
-                            std::ofstream& ofs_running)
+void ModuleIO::write_dos_pw(
+		const UnitCell& ucell,
+		const ModuleBase::matrix& ekb,
+		const ModuleBase::matrix& wg,
+		const K_Vectors& kv,
+		const int nbands,
+		const elecstate::efermi &energy_fermi,
+		const double& dos_edelta_ev,
+		const double& dos_scale,
+		const double& bcoeff,
+		std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_pw");
 
@@ -61,7 +63,7 @@ void ModuleIO::write_dos_pw(const ModuleBase::matrix& ekb,
 
     if (PARAM.inp.out_dos == 2)
     {
-        WARNING_QUIT("ModuleIO::write_dos_pw","PW basis do not support PDOS calculations yet.");
+        ModuleBase::WARNING_QUIT("ModuleIO::write_dos_pw","PW basis do not support PDOS calculations yet.");
     }
 
     if(PARAM.inp.out_dos == 3)

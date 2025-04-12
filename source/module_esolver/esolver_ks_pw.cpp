@@ -837,16 +837,17 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 1) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
     {
-        ModuleIO::write_dos_pw(this->pelec->ekb,
-                               this->pelec->wg,
-                               this->kv,
-                               PARAM.inp.nbands,
-                               this->pelec->eferm,
-                               PARAM.inp.dos_edelta_ev,
-                               PARAM.inp.dos_scale,
-                               PARAM.inp.dos_sigma,
-                               GlobalV::ofs_running);
-    }
+		ModuleIO::write_dos_pw(ucell, 
+				this->pelec->ekb,
+				this->pelec->wg,
+				this->kv,
+				PARAM.inp.nbands,
+				this->pelec->eferm,
+				PARAM.inp.dos_edelta_ev,
+				PARAM.inp.dos_scale,
+				PARAM.inp.dos_sigma,
+				GlobalV::ofs_running);
+	}
 
     // out ldos
     if (PARAM.inp.out_ldos[0])

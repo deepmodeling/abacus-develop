@@ -68,7 +68,12 @@ TEST_F(DosPWTest,Dos1)
     elecstate::efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
-	ModuleIO::write_dos_pw(dosp.ekb,
+    
+    UnitCell ucell;
+
+	ModuleIO::write_dos_pw(
+            ucell, // this should be unitcell, 2025-04-12
+            dosp.ekb,
 			dosp.wg,
 			*kv,
 			PARAM.inp.nbands,
@@ -134,7 +139,12 @@ TEST_F(DosPWTest,Dos2)
     elecstate::efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
-	ModuleIO::write_dos_pw(dosp.ekb,
+
+    UnitCell ucell;
+
+	ModuleIO::write_dos_pw(
+			ucell,
+			dosp.ekb,
 			dosp.wg,
 			*kv,
             PARAM.inp.nbands,
