@@ -598,7 +598,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell,
 
 // Temporary, it should be rewritten with Hamilt class.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, i
+void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell,
 		const int istep, 
 		const int iter, 
 		const bool conv_esolver)
