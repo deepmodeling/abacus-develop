@@ -11,6 +11,7 @@ void ModuleESolver::pw_setup(const Input_para& inp,
 		K_Vectors& kv,
 		ModulePW::PW_Basis_K& pw_wfc)
 {
+    ModuleBase::TITLE("ModuleESolver", "pw_setup");
 
     //! new plane wave basis, fft grids, etc.
 #ifdef __MPI

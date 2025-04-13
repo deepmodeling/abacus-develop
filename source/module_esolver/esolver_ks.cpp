@@ -602,12 +602,11 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         }
     }
 
-    // BCAST should not be here, mohan note 2025-04-13 
 #ifdef __MPI
     MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, BP_WORLD);
 
-    // be careful! conv_esolver is bool, not double !! Maybe a bug 20250302 by mohan 
-    MPI_Bcast(&conv_esolver, 1, MPI_DOUBLE, 0, BP_WORLD);
+    // change MPI_DOUBLE to MPI_C_BOOL, mohan 2025-04-13 
+    MPI_Bcast(&conv_esolver, 1, MPI_C_BOOL, 0, BP_WORLD);
     MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
