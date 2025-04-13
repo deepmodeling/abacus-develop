@@ -1,5 +1,8 @@
 #include "esolver_ks.h"
 
+// To setup plane wave for electronic wave functions
+#include "pw_setup.h"
+
 #include "module_base/timer.h"
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -218,43 +221,10 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     //! 7) print information
     ModuleIO::setup_parameters(ucell, this->kv);
 
-    //! 8) new plane wave basis, fft grids, etc.
-#ifdef __MPI
-    this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
-#endif
+    //! 8) setup plane wave for electronic wave functions
+    ModuleESolver::pw_setup(inp, ucell, *this->pw_rho, this->kv, *this->pw_wfc);
 
-    this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
-                            ucell.latvec,
-                            this->pw_rho->nx,
-                            this->pw_rho->ny,
-                            this->pw_rho->nz);
-
-    this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
-
-    // the MPI allreduce should not be here, mohan 2024-05-12
-#ifdef __MPI
-    if (inp.pw_seed > 0)
-    {
-        MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    }
-    // qianrui add 2021-8-13 to make different kpar parameters can get the same
-    // results
-#endif
-
-    this->pw_wfc->fft_bundle.initfftmode(inp.fft_mode);
-    this->pw_wfc->setuptransform();
-
-    //! 9) initialize the number of plane waves for each k point
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
-    }
-
-    this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
-
-    ModuleIO::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
-
-    //! 10) initialize the real-space uniform grid for FFT and parallel
+    //! 9) initialize the real-space uniform grid for FFT and parallel
     //! distribution of plane waves
 	Pgrid.init(this->pw_rhod->nx,
 			this->pw_rhod->ny,
@@ -264,7 +234,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 			pw_big->nbz,
 			pw_big->bz);
 
-    //! 11) calculate the structure factor
+    //! 10) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 
 #ifdef USE_PAW

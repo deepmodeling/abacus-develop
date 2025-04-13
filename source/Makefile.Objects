@@ -259,6 +259,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
+    pw_setup.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
