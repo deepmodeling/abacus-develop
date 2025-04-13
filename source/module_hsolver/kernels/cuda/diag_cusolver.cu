@@ -6,8 +6,7 @@
 Diag_Cusolver_gvd::Diag_Cusolver_gvd(){
 // step 1: create cusolver/cublas handle
 #if defined(__MPI) && defined(__CUDA)
-    device_id = base_device::information::set_device_by_rank();
-    checkCudaErrors( cudaSetDevice(device_id) );
+    base_device::information::set_device_by_rank();
 #endif
     cusolverH = NULL;
     checkCudaErrors( cusolverDnCreate(&cusolverH) );
