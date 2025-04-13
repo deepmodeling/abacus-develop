@@ -213,7 +213,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
                          PARAM.inp.mixing_dmr,
                          ucell.omega,
                          ucell.tpiba);
-    p_chgmix->init_mixing();
 
     //! 5) ESolver depends on the Symmetry module
     // symmetry analysis should be performed every time the cell is changed
@@ -483,6 +482,10 @@ void ESolver_KS<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     //! 1) call before_scf() of ESolver_FP
     ESolver_FP::before_scf(ucell, istep);
+
+    this->p_chgmix->init_mixing();
+    this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
+    this->p_chgmix->mixing_restart_count = 0;
 }
 
 template <typename T, typename Device>

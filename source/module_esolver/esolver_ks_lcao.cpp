@@ -522,23 +522,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
-    if (iter == 1)
-    {
-        this->p_chgmix->mix_reset(); // init mixing
-        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-        this->p_chgmix->mixing_restart_count = 0;
-        // this output will be removed once the feeature is stable
-        if (GlobalC::dftu.uramping > 0.01)
-        {
-            std::cout << " U-Ramping! Current U = ";
-            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
-            {
-                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
-            }
-            std::cout << " eV " << std::endl;
-        }
-    }
-
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {

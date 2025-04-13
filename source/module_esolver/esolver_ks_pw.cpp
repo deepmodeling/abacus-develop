@@ -387,11 +387,6 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // call iter_init() of ESolver_KS
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
-    if (iter == 1)
-    {
-        this->p_chgmix->init_mixing();
-        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-    }
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {

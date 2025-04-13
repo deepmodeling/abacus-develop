@@ -272,6 +272,17 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                 this->sf.strucFac);
     }
 
+    // this output will be removed once the feeature is stable
+    if (GlobalC::dftu.uramping > 0.01)
+    {
+        std::cout << " U-Ramping! Current U = ";
+        for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+        {
+            std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+        }
+        std::cout << " eV " << std::endl;
+    }
+
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
