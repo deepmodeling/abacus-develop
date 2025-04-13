@@ -691,8 +691,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     // Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
     // add Json of scf mag
-    Json::add_output_scf_mag(ucell.magnet.tot_magnetization,
-                             ucell.magnet.abs_magnetization,
+    Json::add_output_scf_mag(ucell.magnet.tot_mag,
+                             ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho,
