@@ -1,31 +1,63 @@
+#include "rho_restart.h"
 
-
-void ModuleESolver::rho_mix(const Input_para& inp,
+void ModuleESolver::rho_restart(const Input_para& inp,
 		const UnitCell& ucell, 
-        Charge_Mixing& chr_mix)
+        const elecstate::ElecState& elec,
+		const int nrxx, // originally written as pw_rhod->nrxx  
+        const int iter, // SCF iteration index
+        const double& scf_thr,
+        const double& scf_ene_thr,
+        double& drho, // not sure how this is changed in this function
+        Charge_Mixing& chr_mix,
+        Charge &chr,
+        bool &conv_esolver,
+        bool &oscillate_esolver)
 {
-    
-    // ks_run means this is KSDFT, otherwise it is OFDFT
+    ModuleBase::TITLE("ModuleESolver", "rho_restart");
+
+    // mixing will restart once if drho is smaller than inp.mixing_restart
+    const double restart_thr = inp.mixing_restart;
+
+    // ks_run means this is KSDFT
     if (PARAM.globalv.ks_run)
     {
-        // mixing will restart at this->p_chgmix->mixing_restart steps
-        if (drho <= inp.mixing_restart && inp.mixing_restart > 0.0
+        //--------------------------------------------------------
+        // step1: determine mixing_restart_step
+        //--------------------------------------------------------
+        // charge mixing restarts at chgmix.mixing_restart steps
+        if (drho <= restart_thr 
+            && restart_thr > 0.0
             && chgmix.mixing_restart_step > iter)
         {
-            this->p_chgmix->mixing_restart_step = iter + 1;
+            chgmix.mixing_restart_step = iter + 1;
         }
 
-        if (inp.scf_os_stop) // if oscillation is detected, SCF will stop
+
+        //--------------------------------------------------------
+        // step2: determine density oscillation 
+        //--------------------------------------------------------
+        // if density oscillation is detected, SCF will stop
+        if (inp.scf_os_stop)
         {
-            this->oscillate_esolver
-                = this->p_chgmix->if_scf_oscillate(iter, drho, inp.scf_os_ndim, inp.scf_os_thr);
+			oscillate_esolver = chgmix.if_scf_oscillate(iter, 
+					drho, 
+					inp.scf_os_ndim, 
+					inp.scf_os_thr);
         }
 
-        // drho will be 0 at this->p_chgmix->mixing_restart step, which is
-        // not ground state
-        bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0);
+        //--------------------------------------------------------
+        // step3: determine convergence of SCF: conv_esolver 
+        //--------------------------------------------------------
+        // drho will be 0 at the chgmix.mixing_restart step, 
+        // which is not ground state
+		bool is_mixing_restart_step = (iter == chgmix.mixing_restart_step);
+		bool is_restart_thr_positive = (restart_thr > 0.0);
+		bool is_restart_condition_met = is_mixing_restart_step && is_restart_thr_positive;
+		bool not_restart_step =!is_restart_condition_met;
+
         // SCF will continue if U is not converged for uramping calculation
         bool is_U_converged = true;
+
         // to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
         if (inp.dft_plus_u)
@@ -34,30 +66,44 @@ void ModuleESolver::rho_mix(const Input_para& inp,
         }
 #endif
 
-        conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
+        conv_esolver = (drho < scf_thr && not_restart_step && is_U_converged);
 
-        // add energy threshold for SCF convergence
-        if (this->scf_ene_thr > 0.0)
+        //--------------------------------------------------------
+        // step4: determine conv_esolver if energy threshold is 
+        // used in SCF
+        //--------------------------------------------------------
+        if (scf_ene_thr > 0.0)
         {
             // calculate energy of output charge density
             this->update_pot(ucell, istep, iter, conv_esolver);
-            this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
+
+            // '2' means Kohn-Sham functional
+            elec.cal_energies(2);
+
             // now, etot_old is the energy of input density, while etot is the energy of output density
-            this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
+            elec.f_en.etot_delta = elec.f_en.etot - elec.f_en.etot_old;
+
             // output etot_delta
-            GlobalV::ofs_running << " DeltaE_womix = " << this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV"
+            GlobalV::ofs_running << " DeltaE_womix = " 
+                                 << elec.f_en.etot_delta * ModuleBase::Ry_to_eV << " eV"
                                  << std::endl;
-            if (iter > 1 && conv_esolver == 1) // only check when density is converged
+
+            // only check when density is converged
+            if (iter > 1 && conv_esolver == 1)
             {
                 // update the convergence flag
                 conv_esolver
-                    = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
+                    = (std::abs(elec.f_en.etot_delta * ModuleBase::Ry_to_eV) < scf_ene_thr);
             }
         }
 
-        // If drho < hsolver_error in the first iter or drho < scf_thr, we
-        // do not change rho.
-        if (drho < hsolver_error || conv_esolver || inp.calculation == "nscf")
+        //--------------------------------------------------------
+        // If drho < hsolver_error in the first iter or 
+        // drho < scf_thr, we do nothing and do not change rho.
+        //--------------------------------------------------------
+        if (drho < hsolver_error  
+            || conv_esolver   // SCF has been converged
+            || inp.calculation == "nscf") // nscf calculations, do not change rho
         {
             if (drho < hsolver_error)
             {
@@ -68,34 +114,34 @@ void ModuleESolver::rho_mix(const Input_para& inp,
         }
         else
         {
-            //----------charge mixing---------------
-            // mixing will restart after this->p_chgmix->mixing_restart
-            // steps
-            if (inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1
-                && drho <= inp.mixing_restart)
+            // mixing will restart after chgmix.mixing_restart steps
+            if (restart_thr > 0.0 
+                && iter == chgmix.mixing_restart_step - 1
+                && drho <= restart_thr)
             {
                 // do not mix charge density
             }
             else
             {
-                p_chgmix->mix_rho(&this->chr); // update chr->rho by mixing
+                // mix charge density (rho) 
+                chgmix.mix_rho(&chr);
             }
+
+            // renormalize rho in R-space would induce error in G space
             if (inp.scf_thr_type == 2)
             {
-                this->chr.renormalize_rho(); // renormalize rho in R-space would
-                                             // induce a error in K-space
+                chr.renormalize_rho();
             }
-            //----------charge mixing done-----------
         }
     }
 
-    // BCAST should not be here, mohan note 2025-04-13 
 #ifdef __MPI
+    // bcast drho in BP_WORLD (Band parallel world) 
     MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, BP_WORLD);
 
     // be careful! conv_esolver is bool, not double !! Maybe a bug 20250302 by mohan 
     MPI_Bcast(&conv_esolver, 1, MPI_DOUBLE, 0, BP_WORLD);
-    MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
+    MPI_Bcast(chr.rho[0], nrxx, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
 }
