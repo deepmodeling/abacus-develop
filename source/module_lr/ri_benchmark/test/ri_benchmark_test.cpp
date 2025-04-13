@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 #include "../ri_benchmark.h"
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom_pseudo::Atom_pseudo() {}
