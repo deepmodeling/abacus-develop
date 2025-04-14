@@ -83,7 +83,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             ModuleBase::GlobalFunc::OUT(ofs_running, "atom label",ucell.atoms[it].label);
 
             bool set_element_mag_zero = false;
-            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_magnetization[it] );
+            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it] );
 
 #ifndef __SYMMETRY
             //===========================================
@@ -180,7 +180,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     mv.y = true ;
                     mv.z = true ;
                     ucell.atoms[it].vel[ia].set(0,0,0);
-                    ucell.atoms[it].mag[ia]=ucell.magnet.start_magnetization[it];
+                    ucell.atoms[it].mag[ia]=ucell.magnet.start_mag[it];
                     //if this line is used, default startmag_type would be 2
                     ucell.atoms[it].angle1[ia]=0;
                     ucell.atoms[it].angle2[ia]=0;
@@ -493,7 +493,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             // reset some useless parameters
             if (set_element_mag_zero)
             {
-                ucell.magnet.start_magnetization[it] = 0.0;
+                ucell.magnet.start_mag[it] = 0.0;
             }
         } // end for ntype
 

@@ -87,11 +87,11 @@ class ElecStatePrintTest : public ::testing::Test
         elecstate.wg(0, 1) = 0.2;
         elecstate.wg(1, 0) = 0.3;
         elecstate.wg(1, 1) = 0.4;
-        ucell.magnet.tot_magnetization = 1.1;
-        ucell.magnet.abs_magnetization = 2.2;
-        ucell.magnet.tot_magnetization_nc[0] = 3.3;
-        ucell.magnet.tot_magnetization_nc[1] = 4.4;
-        ucell.magnet.tot_magnetization_nc[2] = 5.5;
+        ucell.magnet.tot_mag = 1.1;
+        ucell.magnet.abs_mag = 2.2;
+        ucell.magnet.tot_mag_nc[0] = 3.3;
+        ucell.magnet.tot_mag_nc[1] = 4.4;
+        ucell.magnet.tot_mag_nc[2] = 5.5;
         PARAM.input.ks_solver = "dav";
         PARAM.sys.log_file = "test.dat";
     }
@@ -278,8 +278,8 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density error is 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("Error Threshold = 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD2"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD3"));
@@ -320,8 +320,8 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density error is 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("Error Threshold = 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_Harris"));
     EXPECT_THAT(str, testing::HasSubstr("E_Fermi"));

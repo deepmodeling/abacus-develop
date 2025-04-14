@@ -62,7 +62,7 @@ AddTest(
 AddTest(
   TARGET io_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp
 )
 
 AddTest(
