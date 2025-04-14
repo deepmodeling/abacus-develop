@@ -501,6 +501,22 @@ void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2
                 return;
             }
         }
+        else if (word1[0] == '(' && word1[word1.size() - 1] == ')' && 
+                 word2[0] == '(' && word2[word2.size() - 1] == ')') // complex number
+        {
+            std::string word1_str = word1.substr(1, word1.size() - 2);
+            std::string word2_str = word2.substr(1, word2.size() - 2);
+            double word1_real = std::stof(word1_str.substr(0, word1_str.find(',')));
+            double word1_imag = std::stof(word1_str.substr(word1_str.find(',') + 1));
+            double word2_real = std::stof(word2_str.substr(0, word2_str.find(',')));
+            double word2_imag = std::stof(word2_str.substr(word2_str.find(',') + 1));
+            if (std::abs(word1_real - word2_real) > test_thr || std::abs(word1_imag - word2_imag) > test_thr)
+            {
+                this->failed_check += 1;
+                std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;
+                return;
+            }
+        }
         else
         {
             if (word1 != word2)
