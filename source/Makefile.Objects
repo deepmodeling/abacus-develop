@@ -259,6 +259,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
+    pw_setup.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
@@ -495,13 +496,13 @@ OBJS_IO=input_conv.o\
     bessel_basis.o\
     cal_test.o\
     write_dos_pw.o\
+    nscf_fermi_surf.o\
     nscf_band.o\
     cal_dos.o\
     cal_pdos_gamma.o\
     cal_pdos_multik.o\
     cal_ldos.o\
     cif_io.o\
-    dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
     numerical_basis_jyjy.o\
@@ -564,7 +565,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_dos_lcao.o\
       write_proj_band_lcao.o\
       write_istate_info.o\
-      nscf_fermi_surf.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
       io_dmk.o\

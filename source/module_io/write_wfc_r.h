@@ -1,8 +1,3 @@
-//======================
-// AUTHOR : Peize Lin
-// DATE :   2021-11-21
-//======================
-
 #ifndef WRITE_WFC_R_H
 #define WRITE_WFC_R_H
 

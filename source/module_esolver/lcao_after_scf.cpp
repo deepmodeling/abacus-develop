@@ -1,4 +1,7 @@
 #include "esolver_ks_lcao.h"
+#include "module_io/write_HS.h"         // write H and S matrices
+#include "module_rdmft/rdmft.h"         // RDMFT codes
+
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
@@ -7,7 +10,6 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
-#include "module_io/dos_nao.h"
 #include "module_io/io_dmk.h"
 #include "module_io/io_npz.h"
 #include "module_io/nscf_band.h"
@@ -19,16 +21,12 @@
 #include "module_io/to_qo.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
-#include "module_io/write_HS.h"
-#include "module_io/write_dmr.h"
+#include "module_io/write_dmr.h" 
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_istate_info.h"
-#include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_io/cal_pLpR.h"
 #include "module_parameter/parameter.h"
-
-//--------------temporary----------------------------
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
@@ -38,8 +36,6 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
-
-// mohan add 20250302
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
 
 #include <memory>
@@ -59,12 +55,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-// function used by deepks
-// #include "module_elecstate/cal_dm.h"
-//---------------------------------------------------
 
-// test RDMFT
-#include "module_rdmft/rdmft.h"
 
 #include <iostream>
 

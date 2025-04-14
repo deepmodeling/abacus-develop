@@ -114,11 +114,13 @@ You can install Git first and reinstall abacus.")
   endif()
 endif()
 
+# Serial version of ABACUS will not use ELPA
 if(NOT ENABLE_MPI)
   set(USE_ELPA OFF)
   set(ENABLE_DEEPKS OFF)
 endif()
 
+# Different exe files of ABACUS
 if(ENABLE_LCAO AND ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus)
 elseif(NOT ENABLE_LCAO AND ENABLE_MPI)
@@ -129,6 +131,7 @@ elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_serial)
 endif()
 
+# Use DSP hardware
 if (USE_DSP)
   set(USE_ELPA OFF)
   set(ENABLE_LCAO OFF)
@@ -212,7 +215,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   add_compile_options(-fp-model=strict)
   set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wno-tautological-constant-compare"
+      "${CMAKE_CXX_FLAGS} -Wno-write-strings "
   )
 endif()
 

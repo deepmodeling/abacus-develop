@@ -156,8 +156,6 @@ class STM:
     def pointcurrent(self, bias, x, y, z):
         """Current for a single x, y, z position for a given bias."""
 
-        self.read_ldos(bias)
-
         nx = self.ldos.shape[0]
         ny = self.ldos.shape[1]
         nz = self.ldos.shape[2]
@@ -193,6 +191,7 @@ class STM:
 
         for b in np.arange(len(biases)):
             print(b, biases[b])
+            self.read_ldos(biases[b])
             current[b] = self.pointcurrent(biases[b], x, y, z)
 
         dIdV = np.gradient(current, biasstep)
@@ -209,14 +208,21 @@ class STM:
         d = p2 - p1
         s = np.dot(d, d)**0.5
         biases = np.arange(bias0, bias1 + biasstep, biasstep)
+        current = np.zeros((npoints, len(biases)))
+
+        for b in np.arange(len(biases)):
+            print(b, biases[b])
+            self.read_ldos(biases[b])
+
+            for i in range(npoints):
+                x, y, z = p1 + i * d / (npoints - 1)
+                current[i, b] = self.pointcurrent(biases[b], x, y, z)
 
         dIdV = np.zeros((npoints, len(biases)))
-
         for i in range(npoints):
-            x, y, z = p1 + i * d / (npoints - 1)
-            biases, current, dIdV[i, :] = self.sts(x, y, z, bias0, bias1, biasstep)
+            dIdV[i, :] = np.gradient(current[i, :], biasstep)
 
-        return biases, np.linspace(0, s, npoints), dIdV
+        return biases, np.linspace(0, s, npoints), current, dIdV
 
 
     def find_current(self, ldos, z):

@@ -33,12 +33,16 @@ void Cal_ldos<T>::cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>
             for (int ib = 0; ib < nbands; ib++)
             {
                 pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
+                double weight = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
+                weight /= ucell.omega;
+
                 if (eigenval >= emin && eigenval <= emax)
                 {
                     for (int ir = 0; ir < pelec->basis->nrxx; ir++)
                     {
-                        ldos[ir] += pelec->klist->wk[ik] * norm(wfcr[ir]);
+                        ldos[ir] += weight * norm(wfcr[ir]);
                     }
                 }
             }
@@ -78,7 +82,7 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 if (eigenval >= emin && eigenval <= emax)
                 {
-                    weight(ik, ib) = pelec->klist->wk[ik];
+                    weight(ik, ib) = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
                 }
             }
         }
