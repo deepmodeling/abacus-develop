@@ -1,5 +1,6 @@
 #ifndef NSCF_FERMI_SURF_H
 #define NSCF_FERMI_SURF_H
+
 #include "module_base/matrix.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"

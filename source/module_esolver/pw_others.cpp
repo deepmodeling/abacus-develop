@@ -5,7 +5,6 @@
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
-#include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
 

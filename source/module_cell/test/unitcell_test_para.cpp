@@ -26,13 +26,13 @@ InfoNonlocal::~InfoNonlocal()
 #endif
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 #define private public
 #include "module_parameter/parameter.h"
@@ -137,8 +137,8 @@ TEST_F(UcellTest, BcastMagnitism)
     PARAM.input.nspin = 4;
     if (GlobalV::MY_RANK != 0)
     {
-        EXPECT_DOUBLE_EQ(ucell->magnet.start_magnetization[0], 0.0);
-        EXPECT_DOUBLE_EQ(ucell->magnet.start_magnetization[1], 0.0);
+        EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[0], 0.0);
+        EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[1], 0.0);
         for (int i = 0; i < 3; ++i)
         {
             EXPECT_DOUBLE_EQ(ucell->magnet.ux_[i], 0.0);

@@ -104,7 +104,7 @@ namespace unitcell
         for(int it = 0; it < ucell.ntype; it++)
         {
             str += "\n" + ucell.atoms[it].label + " #label\n";
-            str += FmtCore::format("%-8.4f #magnetism\n", ucell.magnet.start_magnetization[it]);
+            str += FmtCore::format("%-8.4f #magnetism\n", ucell.magnet.start_mag[it]);
             str += FmtCore::format("%d #number of atoms\n", atoms[it].na);
             for(int ia = 0; ia < atoms[it].na; ia++)
             {

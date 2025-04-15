@@ -13,13 +13,13 @@
 
 Magnetism::Magnetism()
 {
-	this->tot_magnetization = 0.0;
-	this->abs_magnetization = 0.0;
-	this->start_magnetization = nullptr;
+	this->tot_mag = 0.0;
+	this->abs_mag = 0.0;
+	this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-	delete[] this->start_magnetization;
+	delete[] this->start_mag;
 }
 
 /************************************************
@@ -102,8 +102,8 @@ if(GlobalV::MY_RANK==0)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//mandatory preliminaries
-	delete[] ucell->magnet.start_magnetization;
-	ucell->magnet.start_magnetization = new double[ucell->ntype];
+	delete[] ucell->magnet.start_mag;
+	ucell->magnet.start_mag = new double[ucell->ntype];
 	//call read_atom_positions
 	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
 	ofs_running.close();

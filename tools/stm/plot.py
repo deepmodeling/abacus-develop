@@ -59,7 +59,7 @@ biasstep = 0.1
 start_points = [0, 0, 8]
 end_points = [2, 0, 8]
 distance = np.linalg.norm(np.array(end_points) - np.array(start_points))
-biases, points, dIdV_map = stm.line_sts(biasstart, biasend, biasstep, start_points, end_points, 50)
+biases, points, current, dIdV_map = stm.line_sts(biasstart, biasend, biasstep, start_points, end_points, 50)
 
 plt.figure(figsize=(10, 6), dpi=150)
 
