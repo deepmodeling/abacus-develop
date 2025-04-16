@@ -107,6 +107,9 @@ class Get_wf_lcao
     };
 
   private:
+
+    void prepare_get_wf(std::ofstream &ofs_running, const int nelec, int& fermi_band);
+
     void select_bands(const int nbands_istate,
                       const std::vector<int>& out_wfc_kb,
                       const int nbands,

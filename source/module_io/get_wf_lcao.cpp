@@ -41,15 +41,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 		const std::string& global_out_dir)
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
-
-    std::cout << " Calculate |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (gamma only)." << std::endl;
-
-    // if ucell is odd, it's correct,
-    // if ucell is even, it's also correct.
-    // +1.0e-8 in case like (2.999999999+1)/2
-    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-    std::cout << " Number of electrons = " << nelec << std::endl;
-    std::cout << " Number of occupied bands = " << fermi_band << std::endl;
+ 
+    int fermi_band = 0;
+    prepare_get_wf(GlobalV::ofs_running, nelec, fermi_band);
 
     // allocate grid wave functions for gamma_only
     std::vector<double**> wfc_gamma_grid(nspin);
@@ -70,8 +64,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
-    ModuleBase::Memory::record("Get_wf_lcao::begin::wfc_gamma_grid", mem_size);
-    printf(" Estimated on-the-fly memory consuming by Get_wf_lcao::begin::wfc_gamma_grid: %f MB\n", mem_size);
+    ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
+    printf(" Estimated on-the-fly memory: %f MB\n", mem_size);
 
     int mode_norm = 0;
     if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
@@ -93,7 +87,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+            GlobalV::ofs_running << " Electronic wave funciton " << ib + 1 << std::endl;
 
             for (int is = 0; is < nspin; ++is)
             {
@@ -281,15 +275,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
-    std::cout << " Calculate |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] for selected bands (multi-k)." << std::endl;
-
-    // if ucell is odd, it's correct,
-    // if ucell is even, it's also correct.
-    // +1.0e-8 in case like (2.999999999+1)/2
-    // if NSPIN=4, each band only one electron, fermi_band should be nelec
-    const int fermi_band = nspin < 4 ? static_cast<int>((nelec + 1) / 2 + 1.0e-8) : nelec;
-    std::cout << " number of electrons = " << nelec << std::endl;
-    std::cout << " number of occupied bands = " << fermi_band << std::endl;
+    int fermi_band = 0;
+    prepare_get_wf(GlobalV::ofs_running, nelec, fermi_band);
 
     // allocate grid wave functions for multi-k
     const int nks = kv.get_nks();
@@ -305,8 +292,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     const double mem_size
         = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nks) / 1024.0 / 1024.0;
-    ModuleBase::Memory::record("Get_wf_lcao::begin::wfc_k_grid", mem_size);
-    printf(" Estimated on-the-fly memory consuming by Get_wf_lcao::begin::wfc_k_grid: %f MB\n", mem_size);
+    ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
+    printf(" Estimated on-the-fly memory %f MB\n", mem_size);
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
@@ -335,7 +322,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+            GlobalV::ofs_running << " Electronic wave funciton " << ib + 1 << std::endl;
 
             const int nspin0 = (nspin == 2) ? 2 : 1;
             for (int ik = 0; ik < nks; ++ik) // the loop of nspin0 is included
@@ -343,9 +330,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
                                               pw_wfc->nrxx); // terrible, you make changes on another instance's data???
-                std::cout << " Calculate envelope function for kpoint " << ik + 1 << ",  band" << ib + 1 << std::endl;
+
+                GlobalV::ofs_running << " k-point " << ik + 1 << std::endl;
+
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
+
 #ifdef __MPI // need to deal with NSPIN=4 !!!!
                 wfc_2d_to_grid(psi->get_pointer(), para_orb, wfc_k_grid[ik], gk.gridt->trace_lo);
 #else
@@ -744,11 +734,43 @@ template void Get_wf_lcao::wfc_2d_to_grid(const std::complex<double>* lowf_2d,
                                               const std::vector<int>& trace_lo);
 #endif
 
+
+void Get_wf_lcao::prepare_get_wf(std::ofstream &ofs_running, const int nelec, int& fermi_band)
+{
+    ofs_running << "\n\n";
+    ofs_running << " GET_WF CALCULATIONS BEGINS" << std::endl;
+
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                            "
+        "                        |" << std::endl;
+    ofs_running << " | Here we use real-space (r) grid integral technique to calculate    |" << std::endl;
+    ofs_running << " | the electronic wave function psi(i,r) for each electronic state i. |" << std::endl;
+    ofs_running << " | The |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] are printed out      |" << std::endl;
+    ofs_running << " | using numerical atomic orbitals as basis set.                      |" << std::endl;
+    ofs_running << " |                                            "
+        "                        |" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
+    ofs_running << "\n\n";
+
+    ofs_running << std::setprecision(6);
+
+    // if ucell is odd, it's correct,
+    // if ucell is even, it's also correct.
+    // +1.0e-8 in case like (2.999999999+1)/2
+    fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Number of electrons", nelec);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "Number of occupied bands", fermi_band);
+}
+
+
+
 int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
-    int iblock, gIndex;
-    iblock = localindex / nblk;
-    gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
+    const int iblock = localindex / nblk;
+    const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;
 }
 
