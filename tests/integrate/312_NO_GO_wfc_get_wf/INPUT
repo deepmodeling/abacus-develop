@@ -1,22 +1,17 @@
 INPUT_PARAMETERS
-#Parameters	(System)
-suffix                  autotest
-
+suffix          autotest
+calculation  	get_wf 
+bands_to_print  1 3*0
 nbands			4
-stru_file		STRU
-kpoint_file		KPT
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
 latname			sc
-#Parameters (PW)
-ecutwfc			25.0              # Rydberg
-#Parameters (electronic)
+stru_file		STRU
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB
+ecutwfc			25.0  # Rydberg
 basis_type		lcao 	
 scf_thr			1e-10
-
-calculation     	get_wf 
 gamma_only		1
-read_file_dir 		./
+read_file_dir 	./
 
 bx 2
 by 2

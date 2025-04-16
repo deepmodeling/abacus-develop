@@ -492,19 +492,8 @@ fi
 #--------------------------------------------
 if [ $calculation == "get_wf" ]; then
 	nfile=0
-	# envfiles=`ls OUT.autotest/ | grep ENV$`
-	# if test -z "$envfiles"; then
-	# 	echo "Can't find ENV(-elope) files"
-	# 	exit 1
-	# else
-	# 	for env in $envfiles;
-	# 	do
-	# 		nelec=`../tools/sum_ENV_H2 OUT.autotest/$env`
-	# 		nfile=$(($nfile+1))
-	# 		echo "nelec$nfile $nelec" >>$1
-	# 	done
-	# fi
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
+    echo "The cube file is $cubefiles"
 	if test -z "$cubefiles"; then
 		echo "Can't find BAND_CHG files"
 		exit 1

@@ -120,7 +120,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 pes_->charge->save_rho_before_sum_band();
 
                 std::stringstream ss;
-                ss << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_ENV.cube";
+                ss << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << ".cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
@@ -206,7 +206,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
 
                     // Output real part
                     std::stringstream ss_real;
-                    ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
+                    ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   wfc_real.data(),
                                                   is,
@@ -218,7 +218,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
 
                     // Output imaginary part
                     std::stringstream ss_imag;
-                    ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
+                    ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   wfc_imag.data(),
                                                   is,
