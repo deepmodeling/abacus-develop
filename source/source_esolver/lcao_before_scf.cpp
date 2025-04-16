@@ -31,6 +31,10 @@
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
+#ifdef __CUDA
+#include "module_hamilt_lcao/module_gint/temp_gint/kernel/gint_gpu_vars.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/kernel/phi_operator_gpu.h"
+#endif
 
 namespace ModuleESolver
 {
@@ -111,7 +115,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         orb_.Phi,
         ucell,
         this->gd);
-    ModuleGint::Gint::init_gint_info(gint_info);
+#ifdef __CUDA
+    auto gint_gpu_vars = std::make_shared<ModuleGint::GintGPUVars>(
+        gint_info,
+        ucell,
+        orb_.Phi);
+    ModuleGint::PhiOperatorGpu::set_gint_gpu_vars(gint_gpu_vars);
+#endif
+    ModuleGint::Gint::set_gint_info(gint_info);
 #endif
 
     psi_u.clear();

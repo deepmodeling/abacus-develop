@@ -47,6 +47,10 @@ GintInfo::GintInfo(
     // initialize the ijr_info
     // this step needs to be done after init_atoms_, because it requires the information of is_atom_on_bgrid
     init_ijr_info_(ucell, gd);
+
+    #ifdef __CUDA
+    init_bgrid_batches(nbz_local);
+    #endif
 }
 
 template <typename T>
@@ -206,6 +210,22 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
     this->ijr_info_ = hr_gint_local.get_ijr_info();
     return;
 }
+
+#ifdef __CUDA
+void GintInfo::init_bgrid_batches_(int batch_size)
+{
+    for (int i = 0; i < biggrids_.size(); i+ = batch_size)
+    {
+        std::vector<std::shared_ptr<BigGrid>> bgrid_vec;
+        for(int j = i; j < i + batch_size && j < biggrids_.size(); j++)
+        {
+            bgrid_vec.push_back(biggrids_[j]);
+        }
+        auto bgrid_batch = std::make_shared<BatchBigGrid>(bgrid_vec);
+        bgrid_batches_.push_back(bgrid_batch);
+    }
+}
+#endif
 
 template std::shared_ptr<HContainer<double>> GintInfo::get_hr<double>(int npol) const;
 template std::shared_ptr<HContainer<std::complex<double>>> GintInfo::get_hr<std::complex<double>>(int npol) const;

@@ -109,8 +109,6 @@ class GintAtom
         Vec3d tau_in_biggrid_;
 
         // the numerical orbitals of this atom
-        // In fact, I think the Numerical_Orbital class
-        // should be a member of the Atom class, not the GintAtom class
         const Numerical_Orbital* orb_;
 
 };

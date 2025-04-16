@@ -16,7 +16,7 @@ class Gint
 
     // note that gint_info_ is a static member variable
     // it is shared by all instances of Gint
-    static void init_gint_info(std::shared_ptr<GintInfo> gint_info)
+    static void set_gint_info(std::shared_ptr<GintInfo> gint_info)
     {
         gint_info_ = gint_info;
     }

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include <module_hamilt_lcao/module_hcontainer/hcontainer.h>
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "big_grid.h"
 
 namespace ModuleGint
@@ -110,7 +110,7 @@ class PhiOperator
     int rows_;
 
     // the column number of the phi matrix
-    // cols_ = biggrid_->get_mgrid_phi_len()
+    // cols_ = biggrid_->get_phi_len()
     int cols_;
 
     // the local index of the meshgrids

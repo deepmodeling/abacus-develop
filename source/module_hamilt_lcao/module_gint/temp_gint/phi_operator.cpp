@@ -9,7 +9,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 {
     biggrid_ = biggrid;
     rows_ = biggrid_->get_mgrids_num();
-    cols_ = biggrid_->get_mgrid_phi_len();
+    cols_ = biggrid_->get_phi_len();
 
     biggrid_->set_atoms_startidx(atoms_startidx_);
     biggrid_->set_atoms_phi_len(atoms_phi_len_);

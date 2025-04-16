@@ -40,7 +40,7 @@ class BigGrid
 
         // get the total number of phi of a meshgrid
         // return: (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
-        int get_mgrid_phi_len() const;
+        int get_phi_len() const;
 
         // set the start index of the phi of each atom
         // return: vector[i] = \sum_{j=0}^{i-1} atoms_[j]->nw
@@ -55,6 +55,9 @@ class BigGrid
         // set the 1D index of the meshgrids in the local cell
         void set_mgrids_local_idx(std::vector<int>& mgrids_idx) const;
 
+        // a wrapper function to get the relative coordinates of the atom and the meshgrids
+        void set_atom_relative_coords(const GintAtom* atom, std::vector<Vec3d>& atom_coord) const;
+        
         /**
          * @brief Set the coordinates of the meshgrids of the big grid relative to an atom
          * 
@@ -64,8 +67,8 @@ class BigGrid
          */
         void set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in_bgrid, std::vector<Vec3d>& atom_coord) const;
 
-        // a wrapper function to get the relative coordinates of the atom and the meshgrids
-        void set_atom_relative_coords(const GintAtom* atom, std::vector<Vec3d>& atom_coord) const;
+        // get the relative coords of the atom and the biggrid (used in gpu code)
+        Vec3d get_bgrid_atom_rcoord(const GintAtom* atom) const;
 
         // if the atom affects the big grid, return true, otherwise false
         // note when we say an atom affects a big grid, it does not mean that the atom affects all the meshgrid on the big grid,
