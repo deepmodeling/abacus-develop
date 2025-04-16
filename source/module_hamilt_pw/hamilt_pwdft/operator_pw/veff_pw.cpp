@@ -57,9 +57,9 @@ void Veff<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
 
 #ifdef __DSP
-    wfcpw->fft_bundle.resource_handler(1);
+    // wfcpw->fft_bundle.resource_handler(1);
 #endif
-
+    // std::cout<<"the Device is "<<Device;
     for (int ib = 0; ib < nbands; ib += npol)
     {
         if (npol == 1)
@@ -73,6 +73,13 @@ void Veff<OperatorPW<T, Device>>::act(
                 veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
             }
             wfcpw->real_to_recip<T,Device>(this->porter, tmhpsi, this->ik, true);
+            // wfcpw->convolution(this->ctx,
+            //         this->ik,
+            //         this->veff_col,
+            //         tmpsi_in,
+            //         this->veff+ current_spin* this->veff_col,
+            //         tmhpsi,
+            //         true);
         }
         else
         {
@@ -97,7 +104,7 @@ void Veff<OperatorPW<T, Device>>::act(
         tmpsi_in += max_npw * npol;
     }
 #ifdef __DSP
-    wfcpw->fft_bundle.resource_handler(0);
+    // wfcpw->fft_bundle.resource_handler(0);
 #endif
     ModuleBase::timer::tick("Operator", "veff_pw");
 }

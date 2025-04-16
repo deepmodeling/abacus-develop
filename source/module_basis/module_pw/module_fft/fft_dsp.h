@@ -25,6 +25,7 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
 
         void cleanFFT() override;
 
+        void resource_handler(const int flag) const override;
         /** 
         * @brief Initialize the fft parameters
         * @param nx_in  number of grid points in x direction
