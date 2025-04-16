@@ -345,10 +345,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        IState_Envelope wavefunc(this->pelec);
+        Get_wf_lcao get_wf(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -370,7 +370,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
