@@ -4,6 +4,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/kernels/math_kernel_op.h"
+#include "module_base/parallel_comm.h" // different MPI worlds
 #include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
 

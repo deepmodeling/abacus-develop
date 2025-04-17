@@ -4,6 +4,10 @@
 #include "module_parameter/parameter.h"
 #undef private
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
 #ifdef __MPI

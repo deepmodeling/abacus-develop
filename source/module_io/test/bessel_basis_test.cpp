@@ -21,6 +21,11 @@
 #endif
 #include "gtest/gtest.h"
 
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 /// @brief Simpson integral
 /// @attention this function is a COMPLETE version, but there is no improvement in performance.
 /// @param x variable stored in a vector

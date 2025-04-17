@@ -1,16 +1,19 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_io/write_dos_lcao.h"       // write DOS and PDOS
+#include "module_io/write_proj_band_lcao.h" // projcted band structure
+
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/elecstate_tools.h"
+
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cal_ldos.h"
 #include "module_io/cube_io.h"
-#include "module_io/dos_nao.h"
 #include "module_io/io_dmk.h"
 #include "module_io/io_npz.h"
 #include "module_io/output_dmk.h"
@@ -36,7 +39,6 @@
 #include "module_io/write_vxc.hpp"
 #include "module_io/write_vxc_r.hpp"
 
-//--------------temporary----------------------------
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
@@ -387,6 +389,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
 //! the 8th function of ESolver_KS_LCAO: after_all_runners
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
+
+
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 {
@@ -397,7 +401,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // 4) write projected band structure by jiyy-2022-4-20
+    // 4) write projected band structure
     if (PARAM.inp.out_proj_band)
     {
         ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
@@ -406,7 +410,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     // 5) print out density of states (DOS)
     if (PARAM.inp.out_dos)
 	{
-		ModuleIO::out_dos_nao(this->psi,
+		ModuleIO::write_dos_lcao(this->psi,
 				this->p_hamilt,
 				this->pv,
 				ucell,
@@ -417,7 +421,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 				this->pelec->wg,
 				PARAM.inp.dos_edelta_ev,
 				PARAM.inp.dos_scale,
-				PARAM.inp.dos_sigma);
+				PARAM.inp.dos_sigma,
+                GlobalV::ofs_running);
     }
 
     // out ldos
