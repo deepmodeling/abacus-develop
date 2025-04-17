@@ -7,11 +7,11 @@
 
 template <typename TK>
 void Parallel_K2D<TK>::set_para_env(int nks,
-                                    const int& nw,
-                                    const int& nb2d,
-                                    const int& nproc,
-                                    const int& my_rank,
-                                    const int& nspin) {
+                                    const int nw,
+                                    const int nb2d,
+                                    const int nproc,
+                                    const int my_rank,
+                                    const int nspin) {
     const int kpar = this->get_kpar();
     Parallel_Global::divide_mpi_groups(nproc,
                                        kpar,
@@ -36,11 +36,11 @@ void Parallel_K2D<TK>::set_para_env(int nks,
 
 template <typename TK>
 void Parallel_K2D<TK>::set_para_env_cusolver(int nks,
-                                    const int& nw,
-                                    const int& nb2d,
-                                    const int& nproc,
-                                    const int& my_rank,
-                                    const int& nspin) {
+                                    const int nw,
+                                    const int nb2d,
+                                    const int nproc,
+                                    const int my_rank,
+                                    const int nspin) {
     const int kpar = this->get_kpar();
     if(kpar <= 0 || kpar > nproc)
     {

@@ -18,6 +18,7 @@
 
 #ifdef __CUDA
 #include "diago_cusolver.h"
+#include "module_base/module_device/device.h"
 #endif
 
 #ifdef __PEXSI
@@ -186,6 +187,9 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 {
 #ifdef __MPI
     ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
+#ifdef __CUDA
+    base_device::information::set_device_by_rank();
+#endif
     auto k2d = Parallel_K2D<T>();
     k2d.set_kpar(kpar);
     int nbands = this->ParaV->get_nbands();
@@ -194,10 +198,10 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int nb2d = this->ParaV->get_block_size();
     if(this->method == "cusolver")
     {
-        k2d.set_para_env_cusolver(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+        k2d.set_para_env_cusolver(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK);
     } else
     {
-        k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+        k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK);
     }
     /// set psi_pool
     const int zero = 0;
@@ -272,7 +276,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 #ifdef __CUDA
             else if (this->method == "cusolver")
             {
-                DiagoCusolver<T> cs(nullptr);
+                DiagoCusolver<T> cs;
                 cs.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
 #endif

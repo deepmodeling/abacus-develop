@@ -13,11 +13,11 @@ class Parallel_Kpoints
     ~Parallel_Kpoints(){};
 
     void kinfo(int& nkstot_in,
-               const int& kpar_in,
-               const int& my_pool_in,
-               const int& rank_in_pool_in,
-               const int& nproc_in,
-               const int& nspin_in);
+               const int kpar_in,
+               const int my_pool_in,
+               const int rank_in_pool_in,
+               const int nproc_in,
+               const int nspin_in);
 
     // collect value from each pool to wk.
     void pool_collection(double& value, const double* wk, const int& ik);

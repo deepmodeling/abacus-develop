@@ -120,12 +120,15 @@ void DiagoCusolver<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 {
     ModuleBase::TITLE("DiagoCusolver", "diag_pool");
     ModuleBase::timer::tick("DiagoCusolver", "diag_pool");
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    const int nbands_local = psi.get_nbands();
+    const int nbasis = psi.get_nbasis();
+    int nbands_global = nbands_local;
+    std::vector<double> eigen(nbasis, 0.0);
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);
     this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
-    const int size = psi.get_nbands() * psi.get_nbasis();
+    const int size = nbands_local * nbasis;
     BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), 1, eigenvalue_in, 1);
+    BlasConnector::copy(nbands_global, eigen.data(), 1, eigenvalue_in, 1);
     ModuleBase::timer::tick("DiagoCusolver", "diag_pool");
 }
 
@@ -140,7 +143,14 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
     hamilt::MatrixBlock<T> h_mat;
     hamilt::MatrixBlock<T> s_mat;
     phm_in->matrix(h_mat, s_mat);
-
+    const int nbands_local = psi.get_nbands();
+    const int nbasis = psi.get_nbasis();
+    int nbands_global;
+#ifdef __MPI
+    MPI_Allreduce(&nbands_local, &nbands_global, 1, MPI_INT, MPI_SUM, this->ParaV->comm());
+#else
+    nbands_global = nbands_local;
+#endif
 #ifdef __MPI
     // global matrix
     Matrix_g<T> h_mat_g;
@@ -159,7 +169,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 #endif
 
     // Allocate memory for eigenvalues
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(nbasis, 0.0);
 
     // Start the timer for the cusolver operation
     ModuleBase::timer::tick("DiagoCusolver", "cusolver");
@@ -189,23 +199,23 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
         MPI_Barrier(MPI_COMM_WORLD);
 
         // broadcast eigenvalues to all processes
-        MPI_Bcast(eigen.data(), PARAM.inp.nbands, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
+        MPI_Bcast(eigen.data(), nbands_global, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
 
         // distribute psi to all processes
         distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
     }
     else
     {
-        // Be careful that h_mat.row * h_mat.col != psi.get_nbands() * psi.get_nbasis() under multi-k situation
+        // Be careful that h_mat.row * h_mat.col != nbands * nbasis under multi-k situation
         std::vector<T> eigenvectors(h_mat.row * h_mat.col);
         this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
-        const int size = psi.get_nbands() * psi.get_nbasis();
+        const int size = nbands_local * nbasis;
         BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
     }
 #else
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);
     this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
-    const int size = psi.get_nbands() * psi.get_nbasis();
+    const int size = nbands_local * nbasis;
     BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
 #endif
     // Stop the timer for the cusolver operation
@@ -213,7 +223,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 
     // Copy the eigenvalues to the output arrays
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(nbands_global, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 // Explicit instantiation of the DiagoCusolver class for real and complex numbers

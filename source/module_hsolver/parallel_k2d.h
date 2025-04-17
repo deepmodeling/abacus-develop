@@ -26,19 +26,20 @@ class Parallel_K2D {
      */
     /// this function sets the parallel environment for k-points parallelism
     /// including the glabal and pool 2D parallel distribution
+    /// nspin doesn't affect anything here, in fact it can be deleted
     void set_para_env(int nks,
-                      const int& nw,
-                      const int& nb2d,
-                      const int& nproc,
-                      const int& my_rank,
-                      const int& nspin);
+                      const int nw,
+                      const int nb2d,
+                      const int nproc,
+                      const int my_rank,
+                      const int nspin = 1);
     
     void set_para_env_cusolver(int nks,
-                               const int& nw,
-                               const int& nb2d,
-                               const int& nproc,
-                               const int& my_rank,
-                               const int& nspin);
+                               const int nw,
+                               const int nb2d,
+                               const int nproc,
+                               const int my_rank,
+                               const int nspin = 1);
 
     /// this function distributes the Hk and Sk matrices to hk_pool and sk_pool
     void distribute_hsk(hamilt::Hamilt<TK>* pHamilt,

@@ -5,11 +5,11 @@
 
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
-                             const int& kpar_in,
-                             const int& my_pool_in,
-                             const int& rank_in_pool_in,
-                             const int& nproc_in,
-                             const int& nspin_in)
+                             const int kpar_in,
+                             const int my_pool_in,
+                             const int rank_in_pool_in,
+                             const int nproc_in,
+                             const int nspin_in)
 {
 #ifdef __MPI
 
