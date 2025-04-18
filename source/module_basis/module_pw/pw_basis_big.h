@@ -166,12 +166,9 @@ public:
     ibox[0] = 2*n1+1;
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
-    if (mpi_flag_)
-    {
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
 #endif
-    }
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
     for (int i = 0; i < 3; i++)
@@ -352,12 +349,9 @@ public:
                 }
             }
         }
-        if (mpi_flag_)
-        {
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
 #endif
-        }
         this->gridecut_lat -= 1e-6;
 
         delete[] ibox;

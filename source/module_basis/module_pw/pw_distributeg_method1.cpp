@@ -46,8 +46,6 @@ void PW_Basis::distribution_method1()
 
         this->count_pw_st(st_length2D, st_bottom2D);
     }
-    if (mpi_flag_)
-    {
 #ifdef __MPI
         MPI_Bcast(&this->npwtot, 1, MPI_INT, 0, this->pool_world);
         MPI_Bcast(&this->nstot, 1, MPI_INT, 0, this->pool_world);
@@ -56,12 +54,10 @@ void PW_Basis::distribution_method1()
         MPI_Bcast(&lix, 1, MPI_INT, 0, this->pool_world);
         MPI_Bcast(&rix, 1, MPI_INT, 0, this->pool_world);
 #endif
-    }
-    delete[] this->istot2ixy; this->istot2ixy = new int[this->nstot];
+    delete[] this->istot2ixy; 
+    this->istot2ixy = new int[this->nstot];
 
     if(poolrank == 0)
-    {
-    if (mpi_flag_)
     {
 #ifdef __MPI
         // Parallel line
@@ -84,8 +80,7 @@ void PW_Basis::distribution_method1()
         //We do not need startnsz_per after it.
         delete[] this->startnsz_per;
         this->startnsz_per=nullptr;    
-#endif
-    }else{
+#else
         // Serial line
         // get nst_per, npw_per, fftixy2ip, and istot2ixy
         this->nst_per[0] = this->nstot;
@@ -100,10 +95,8 @@ void PW_Basis::distribution_method1()
                 st_move++;
             }
         }
+#endif
     }
-    }
-    if (mpi_flag_)
-    {
 #ifdef __MPI
         MPI_Bcast(st_length2D, this->fftnxy, MPI_INT, 0, this->pool_world);
         MPI_Bcast(st_bottom2D, this->fftnxy, MPI_INT, 0, this->pool_world);
@@ -112,7 +105,6 @@ void PW_Basis::distribution_method1()
         MPI_Bcast(this->nst_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
         MPI_Bcast(this->npw_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
 #endif
-    }
     this->npw = this->npw_per[this->poolrank];
     this->nst = this->nst_per[this->poolrank];
     this->nstnz = this->nst * this->nz;

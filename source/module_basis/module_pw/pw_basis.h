@@ -436,7 +436,6 @@ protected:
 
   std::string device = "cpu";       ///< cpu or gpu
   std::string precision = "double"; ///< single, double, mixing
-  bool mpi_flag_ = false;            ///< ture,is use mpi or not
   bool double_data_ = true;         ///<  if has double data
   bool float_data_ = false;         ///< if has float data
 };

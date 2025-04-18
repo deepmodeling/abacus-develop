@@ -13,7 +13,6 @@ void PW_Basis:: initmpi(
         this->poolnproc = poolnproc_in;
         this->poolrank = poolrank_in;
         this->pool_world = pool_world_in;
-        mpi_flag_ = ((this->poolnproc>1) || !(this->pool_world == MPI_COMM_NULL));
 }
 #endif
 /// 
@@ -87,10 +86,7 @@ void PW_Basis:: initgrids(
     ibox[1] = 2*n2+1;
     ibox[2] = 2*n3+1;
 #ifdef __MPI
-    if (mpi_flag_)
-    {
-        MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
-    }
+    MPI_Allreduce(MPI_IN_PLACE, ibox, 3, MPI_INT, MPI_MAX , this->pool_world);
 #endif
 
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
@@ -204,10 +200,7 @@ void PW_Basis:: initgrids(
         }
     }
 #ifdef __MPI
-    if (mpi_flag_)
-    {
-        MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
-    }
+    MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
 #endif
     this->gridecut_lat -= 1e-6;
 

@@ -25,7 +25,14 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
     bool xprime = false;
     //--------------------------------------------------
     // init //real parameter
-    pwtest.initmpi(1,0,MPI_COMM_NULL);
+    const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
+    pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+    
     pwtest.initgrids(lat0, latvec, 4 * wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, nks, kvec_d, distribution_type, xprime);
     pwtest.setuptransform();
@@ -171,7 +178,14 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
     bool xprime = false;
     //--------------------------------------------------
     // init //real parameter
-    pwtest.initmpi(1,0,MPI_COMM_NULL);
+    const int mypool = 0;
+    const int key = 1;
+    const int nproc_in_pool = 1;
+    const int rank_in_pool = 0;
+    MPI_Comm POOL_WORLD;
+    MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
+    pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+
     pwtest.initgrids(lat0, latvec, 4 * wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, nks, kvec_d, distribution_type, xprime);
     pwtest.setuptransform();
