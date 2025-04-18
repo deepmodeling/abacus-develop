@@ -49,24 +49,28 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     {
         for (int ix = 0; ix < nx; ++ix)
         {
+            const double vx = ix - int(nx / 2);
             for (int iy = 0; iy < ny; ++iy)
             {
                 const int offset = (ix * ny + iy) * nz;
+                const double vy = iy - int(ny / 2);
                 for (int iz = 0; iz < nz; ++iz)
                 {
                     tmp[offset + iz] = 0.0;
-                    double vx = ix - int(nx / 2);
-                    double vy = iy - int(ny / 2);
-                    double vz = iz - int(nz / 2);
+                    const double vz = iz - int(nz / 2);
                     ModuleBase::Vector3<double> v(vx, vy, vz);
                     double modulus = v * (GGT * v);
                     if (modulus <= ggecut)
                     {
                         tmp[offset + iz] = 1.0 / (modulus + 1);
                         if (vy > 0)
+                        {
                             tmp[offset + iz] += ModuleBase::IMAG_UNIT / (std::abs(v.x + 1) + 1);
+                        }
                         else if (vy < 0)
+                        {
                             tmp[offset + iz] -= ModuleBase::IMAG_UNIT / (std::abs(-v.x + 1) + 1);
+                        }
                     }
                 }
             }
@@ -81,10 +85,10 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
                                             double(int(nz / 2)) / nz);
         for (int ixy = 0; ixy < nx * ny; ++ixy)
         {
+            const int ix = ixy / ny;
+            const int iy = ixy % ny;
             for (int iz = 0; iz < nz; ++iz)
             {
-                int ix = ixy / ny;
-                int iy = ixy % ny;
                 ModuleBase::Vector3<double> real_r(ix, iy, iz);
                 double phase_im = -delta_g * real_r;
                 complex<double> phase(0, ModuleBase::TWO_PI * phase_im);
@@ -95,9 +99,9 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     // const int size = nx * ny * nz;
     complex<double>* h_rhog = new complex<double>[npw];
     complex<double>* h_rhogout = new complex<double>[npw];
-    complex<double>* d_rhog;
-    complex<double>* d_rhogr;
-    complex<double>* d_rhogout;
+    complex<double>* d_rhog = nullptr;
+    complex<double>* d_rhogr = nullptr;
+    complex<double>* d_rhogout = nullptr;
     cudaMalloc((void**)&d_rhog, npw * sizeof(complex<double>));
     cudaMalloc((void**)&d_rhogr, npw * sizeof(complex<double>));
     cudaMalloc((void**)&d_rhogout, npw * sizeof(complex<double>));
@@ -117,7 +121,7 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<double>), cudaMemcpyHostToDevice);
 
     std::complex<double>* h_rhor = new std::complex<double>[nrxx];
-    std::complex<double>* d_rhor;
+    std::complex<double>* d_rhor = nullptr;
     cudaMalloc((void**)&d_rhor, nrxx * sizeof(std::complex<double>));
     pwtest.recip_to_real<std::complex<double>, std::complex<double>, base_device::DEVICE_GPU>(d_rhog, d_rhor);
     cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(std::complex<double>), cudaMemcpyDeviceToHost);
@@ -125,10 +129,12 @@ TEST_F(PWTEST, recip_to_real_C2C_double)
     int startiz = pwtest.startz_current;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
+        const int offset = ixy * nz + startiz;
+        const int startz = ixy * nplane ;
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-6);
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-6);
+            EXPECT_NEAR(tmp[offset + iz].real(), h_rhor[startz + iz].real(), 1e-6);
+            EXPECT_NEAR(tmp[offset + iz].imag(), h_rhor[startz + iz].imag(), 1e-6);
         }
     }
 
@@ -185,14 +191,14 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     {
         for (int ix = 0; ix < nx; ++ix)
         {
+            const float vx = ix - int(nx / 2);
             for (int iy = 0; iy < ny; ++iy)
             {
+                const float vy = iy - int(ny / 2);
                 const int offset = (ix * ny + iy) * nz;
                 for (int iz = 0; iz < nz; ++iz)
                 {
                     tmp[offset+ iz] = 0.0;
-                    float vx = ix - int(nx / 2);
-                    float vy = iy - int(ny / 2);
                     float vz = iz - int(nz / 2);
                     ModuleBase::Vector3<double> v(vx, vy, vz);
                     float modulus = v * (GGT * v);
@@ -215,10 +221,10 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
         ModuleBase::Vector3<float> delta_g(float(int(nx / 2)) / nx, float(int(ny / 2)) / ny, float(int(nz / 2)) / nz);
         for (int ixy = 0; ixy < nx * ny; ++ixy)
         {
+            const int ix = ixy / ny;
+            const int iy = ixy % ny;
             for (int iz = 0; iz < nz; ++iz)
             {
-                int ix = ixy / ny;
-                int iy = ixy % ny;
                 ModuleBase::Vector3<float> real_r(ix, iy, iz);
                 float phase_im = -delta_g * real_r;
                 complex<float> phase(0, ModuleBase::TWO_PI * phase_im);
@@ -229,9 +235,9 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     // const int size = nx * ny * nz;
     complex<float>* h_rhog = new complex<float>[npw];
     complex<float>* h_rhogout = new complex<float>[npw];
-    complex<float>* d_rhog;
-    complex<float>* d_rhogr;
-    complex<float>* d_rhogout;
+    complex<float>* d_rhog = nullptr;
+    complex<float>* d_rhogr = nullptr;
+    complex<float>* d_rhogout = nullptr;
     cudaMalloc((void**)&d_rhog, npw * sizeof(complex<float>));
     cudaMalloc((void**)&d_rhogr, npw * sizeof(complex<float>));
     cudaMalloc((void**)&d_rhogout, npw * sizeof(complex<float>));
@@ -252,7 +258,7 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     cudaMemcpy(d_rhogout, h_rhogout, npw * sizeof(complex<float>), cudaMemcpyHostToDevice);
 
     std::complex<float>* h_rhor = new std::complex<float>[nrxx];
-    std::complex<float>* d_rhor;
+    std::complex<float>* d_rhor = nullptr;
     cudaMalloc((void**)&d_rhor, nrxx * sizeof(std::complex<float>));
     pwtest.recip_to_real<std::complex<float>, std::complex<float>, base_device::DEVICE_GPU>(d_rhog, d_rhor);
     cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(std::complex<float>), cudaMemcpyDeviceToHost);
@@ -260,10 +266,12 @@ TEST_F(PWTEST, recip_to_real_C2C_float)
     int startiz = pwtest.startz_current;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
+        const int offset = ixy * nz + startiz;
+        const int startz = ixy * nplane;
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-4);
-            EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-4);
+            EXPECT_NEAR(tmp[offset + iz].real(), h_rhor[startz + iz].real(), 1e-4);
+            EXPECT_NEAR(tmp[offset + iz].imag(), h_rhor[startz + iz].imag(), 1e-4);
         }
     }
 

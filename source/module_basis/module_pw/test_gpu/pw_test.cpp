@@ -38,11 +38,7 @@ int main(int argc, char **argv)
     
     int kpar;
     kpar = 1;
-#ifdef __ENABLE_FLOAT_FFTW
-    precision_flag = "single";
-#else
     precision_flag = "double";
-#endif
     device_flag = "cpu";
     nproc_in_pool = kpar = 1;
     rank_in_pool = 0;

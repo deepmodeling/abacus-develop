@@ -53,14 +53,14 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
             ModuleBase::Vector3<double> kk = kvec_d[ik];
             for (int ix = 0; ix < nx; ++ix)
             {
+                const double vx = ix - int(nx / 2);
                 for (int iy = 0; iy < ny; ++iy)
                 {
+                    const double vy = iy - int(ny / 2);
                     const int offset = (ix * ny + iy) * nz;
                     for (int iz = 0; iz < nz; ++iz)
                     {
                         tmp[offset+ iz] = 0.0;
-                        double vx = ix - int(nx / 2);
-                        double vy = iy - int(ny / 2);
                         double vz = iz - int(nz / 2);
                         ModuleBase::Vector3<double> v(vx, vy, vz);
                         double modulusgk = (v + kk) * (GGT * (v + kk));
@@ -68,9 +68,13 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
                         {
                             tmp[offset+ iz] = 1.0 / (modulusgk + 1);
                             if (vy > 0)
-                                tmp[offset+ iz] += ModuleBase::IMAG_UNIT / (std::abs(v.x + 1) + 1);
+                            {
+                                tmp[offset + iz] += ModuleBase::IMAG_UNIT / (std::abs(v.x + 1) + 1);
+                            }
                             else if (vy < 0)
-                                tmp[offset+ iz] -= ModuleBase::IMAG_UNIT / (std::abs(-v.x + 1) + 1);
+                            {
+                                tmp[offset + iz] -= ModuleBase::IMAG_UNIT / (std::abs(-v.x + 1) + 1);
+                            }
                         }
                     }
                 }
@@ -85,10 +89,11 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
                                                 double(int(nz / 2)) / nz);
             for (int ixy = 0; ixy < nx * ny; ++ixy)
             {
+                const int ix = ixy / ny;
+                const int iy = ixy % ny;
                 for (int iz = 0; iz < nz; ++iz)
                 {
-                    int ix = ixy / ny;
-                    int iy = ixy % ny;
+                    
                     ModuleBase::Vector3<double> real_r(ix, iy, iz);
                     double phase_im = -delta_g * real_r;
                     complex<double> phase(0, ModuleBase::TWO_PI * phase_im);
@@ -108,8 +113,8 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
             else if (f.y < 0)
                 h_rhog[ig] -= ModuleBase::IMAG_UNIT / (std::abs(-f.x + 1) + 1);
         }
-        complex<double>* d_rhog;
-        complex<double>* d_rhor;
+        complex<double>* d_rhog = nullptr;
+        complex<double>* d_rhor = nullptr;
         cudaMalloc((void**)&d_rhog, npwk * sizeof(complex<double>));
         cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<double>));
         cudaMemcpy(d_rhog, h_rhog, npwk * sizeof(complex<double>), cudaMemcpyHostToDevice);
@@ -120,10 +125,12 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
         int startiz = pwtest.startz_current;
         for (int ixy = 0; ixy < nx * ny; ++ixy)
         {
+            const int offset = ixy * nz + startiz;
+            const int startz = ixy * nplane;
             for (int iz = 0; iz < nplane; ++iz)
             {
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-6);
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-6);
+                EXPECT_NEAR(tmp[offset + iz].real(), h_rhor[startz + iz].real(), 1e-6);
+                EXPECT_NEAR(tmp[offset + iz].imag(), h_rhor[startz + iz].imag(), 1e-6);
             }
         }
 
@@ -191,14 +198,14 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
             ModuleBase::Vector3<double> kk = kvec_d[ik];
             for (int ix = 0; ix < nx; ++ix)
             {
+                const float vx = ix - int(nx / 2);
                 for (int iy = 0; iy < ny; ++iy)
                 {
                     const int offset = (ix * ny + iy) * nz;
+                    const float vy = iy - int(ny / 2);
                     for (int iz = 0; iz < nz; ++iz)
                     {
                         tmp[offset+ iz] = 0.0;
-                        double vx = ix - int(nx / 2);
-                        double vy = iy - int(ny / 2);
                         double vz = iz - int(nz / 2);
                         ModuleBase::Vector3<double> v(vx, vy, vz);
                         float modulusgk = float((v + kk) * (GGT * (v + kk)));
@@ -206,9 +213,13 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
                         {
                             tmp[offset+ iz] = float(1.0 / (modulusgk + 1));
                             if (vy > 0)
+                            {
                                 tmp[offset+ iz] += std::complex<float>(0,1.0)  / (std::abs(float(v.x) + 1) + 1);
+                            }
                             else if (vy < 0)
+                            {
                                 tmp[offset+ iz] -= std::complex<float>(0,1.0)  / (std::abs(float(-v.x) + 1) + 1);
+                            }
                         }
                     }
                 }
@@ -223,6 +234,8 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
                                                 float(int(nz / 2)) / nz);
             for (int ixy = 0; ixy < nx * ny; ++ixy)
             {
+                const int ix = ixy / ny;
+                const int iy = ixy % ny;
                 for (int iz = 0; iz < nz; ++iz)
                 {
                     int ix = ixy / ny;
@@ -246,8 +259,8 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
             else if (f.y < 0)
                 h_rhog[ig] -= std::complex<float>(0,1.0)  / (std::abs(float(-f.x) + 1) + 1);
         }
-        complex<float>* d_rhog;
-        complex<float>* d_rhor;
+        complex<float>* d_rhog = nullptr;
+        complex<float>* d_rhor = nullptr;
         cudaMalloc((void**)&d_rhog, npwk * sizeof(complex<float>));
         cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<float>));
         cudaMemcpy(d_rhog, h_rhog, npwk * sizeof(complex<float>), cudaMemcpyHostToDevice);
@@ -258,10 +271,12 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
         int startiz = pwtest.startz_current;
         for (int ixy = 0; ixy < nx * ny; ++ixy)
         {
+            const int offset = ixy * nz + startiz;
+            const int startz = ixy * nplane;
             for (int iz = 0; iz < nplane; ++iz)
             {
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(), h_rhor[ixy * nplane + iz].real(), 1e-4);
-                EXPECT_NEAR(tmp[ixy * nz + startiz + iz].imag(), h_rhor[ixy * nplane + iz].imag(), 1e-4);
+                EXPECT_NEAR(tmp[offset + iz].real(), h_rhor[startz + iz].real(), 1e-4);
+                EXPECT_NEAR(tmp[offset + iz].imag(), h_rhor[startz + iz].imag(), 1e-4);
             }
         }
 
