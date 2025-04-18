@@ -54,7 +54,8 @@ void PW_Basis::distribution_method2()
     MPI_Bcast(&lix, 1, MPI_INT, 0, this->pool_world);
     MPI_Bcast(&rix, 1, MPI_INT, 0, this->pool_world);
 #endif
-    delete[] this->istot2ixy; this->istot2ixy = new int[this->nstot];
+    delete[] this->istot2ixy; 
+    this->istot2ixy = new int[this->nstot];
 
     if(poolrank == 0)
     {
