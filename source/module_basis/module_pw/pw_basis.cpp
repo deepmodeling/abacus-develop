@@ -16,7 +16,14 @@ PW_Basis::PW_Basis()
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
     std::string fft_precison;
-    fft_precison = this->precision;
+    if ((this->precision=="single") || (this->precision=="mixing"))
+    {
+        fft_precison = "mixing";
+    }
+    else if (this->precision=="double")
+    {
+        fft_precison = "double";
+    }
     #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
         if (this->device == "gpu")
         {
