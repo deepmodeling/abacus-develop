@@ -68,9 +68,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
     int mode_norm = 0;
-    const int norm_size = static_cast<int>(out_wfc_norm.size();
+    const int norm_size = static_cast<int>(out_wfc_norm.size());
 
-    if (nbands_istate > 0 && norm_size) == 0)
+    if (nbands_istate > 0 && norm_size == 0)
     {
         mode_norm = 1;
     }
@@ -89,7 +89,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
@@ -143,11 +142,14 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     int mode_re_im = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_wfc_re_im.size()) == 0)
+
+    const int re_im_size = static_cast<int>(out_wfc_re_im.size());
+
+    if (nbands_istate > 0 && re_im_size == 0)
     {
         mode_re_im = 1;
     }
-    else if (static_cast<int>(out_wfc_re_im.size()) > 0)
+    else if (re_im_size > 0)
     {
         // If out_wfc_re_im is not empty, set mode to 2
         mode_re_im = 2;
