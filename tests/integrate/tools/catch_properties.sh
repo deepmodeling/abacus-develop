@@ -34,7 +34,8 @@ file=$1
 calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
 
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
-echo $running_path
+#echo $running_path
+
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
 has_force=$(get_input_key_value "cal_force" "INPUT")
 has_stress=$(get_input_key_value "cal_stress" "INPUT")
@@ -92,7 +93,10 @@ if [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
 && [ $is_lr == 0 ]; then
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
+    #echo "etot = $etot"
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
+    #echo "etotperatom = $etotperatom"
+    # put the results in file
 	echo "etotref $etot" >>$1
 	echo "etotperatomref $etotperatom" >>$1
 fi
@@ -495,14 +499,14 @@ fi
 if [ $calculation == "get_wf" ]; then
 	nfile=0
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-    #echo "The cube file is $cubefiles"
+    #echo "The cube files are $cubefiles"
 	if test -z "$cubefiles"; then
 		echo "Can't find $cubefiles files"
 		exit 1
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_ENV_H2_cube OUT.autotest/$cube`
+			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
@@ -534,7 +538,7 @@ if [ $calculation == "get_pchg" ]; then
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_BAND_CHG_H2_cube OUT.autotest/$cube`
+			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
