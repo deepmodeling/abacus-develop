@@ -62,7 +62,6 @@ void FFT_CPU<double>::setupFFT()
     default:
         break;
     }
-    flag = FFTW_MEASURE;
     z_auxg = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * this->maxgrids);
     z_auxr = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * this->maxgrids);
     d_rspace = (double*)z_auxg;
