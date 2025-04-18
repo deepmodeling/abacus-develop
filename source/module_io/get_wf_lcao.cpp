@@ -65,7 +65,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    printf(" Estimated on-the-fly memory: %f MB\n", mem_size);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
     int mode_norm = 0;
     if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
@@ -87,7 +87,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-            GlobalV::ofs_running << " Electronic wave funciton " << ib + 1 << std::endl;
 
             for (int is = 0; is < nspin; ++is)
             {
@@ -97,8 +96,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 #ifdef __MPI
                 wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
 #else
-                // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between different
-                // spin channels (actually kpoints, because now the same kpoint in different spin channels are treated
+                // if not MPI enabled, it is the case psid holds a global matrix. 
+                // use fix_k to switch between different spin channels (actually kpoints, 
+                // because now the same kpoint in different spin channels are treated
                 // as distinct kpoints)
 
                 for (int i = 0; i < nbands; ++i)
@@ -114,8 +114,18 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 pes_->charge->save_rho_before_sum_band();
 
-                std::stringstream ss;
-                ss << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << ".cube";
+                // pint out information
+                std::stringstream ss_file;
+                ss_file << "wf" << ib + 1 << "s" << is + 1 << ".cube"; 
+
+                std::stringstream ss_out;
+                ss_out << global_out_dir << ss_file.str();
+
+                std::stringstream ss_info;
+                ss_info << "Wave func. " << ib+1 << " spin " << is+1 << " saved in";
+
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
+
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
@@ -123,7 +133,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               is,
                                               nspin,
                                               0,
-                                              ss.str(),
+                                              ss_out.str(),
                                               ef_tmp,
                                               &(ucell));
             }
@@ -293,7 +303,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     const double mem_size
         = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nks) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    printf(" Estimated on-the-fly memory %f MB\n", mem_size);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
@@ -322,8 +332,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-            GlobalV::ofs_running << " Electronic wave funciton " << ib + 1 << std::endl;
-
             const int nspin0 = (nspin == 2) ? 2 : 1;
             for (int ik = 0; ik < nks; ++ik) // the loop of nspin0 is included
             {
@@ -331,7 +339,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
                                               pw_wfc->nrxx); // terrible, you make changes on another instance's data???
 
-                GlobalV::ofs_running << " k-point " << ik + 1 << std::endl;
 
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
@@ -341,15 +348,42 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 #else
                 for (int i = 0; i < nbands; ++i)
                 {
-                    for (int j = 0; j < nlocal; ++j)
-                        wfc_k_grid[ik][i][j] = psi[0](i, j);
+					for (int j = 0; j < nlocal; ++j)
+					{
+						wfc_k_grid[ik][i][j] = psi[0](i, j);
+					}
                 }
 #endif
                 // deal with NSPIN=4
                 gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, ucell);
 
-                std::stringstream ss;
-                ss << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik+1 << ".cube";
+
+                // ik0 is the real k-point index, starting from 0               
+				int ik0 = kv.ik2iktot[ik];
+				if(nspin == 2)
+				{
+					const int half_k = kv.get_nkstot()/2;
+					if(ik0 >= half_k)
+					{
+						ik0 -= half_k;
+					}
+				}
+
+                // pint out information
+                std::stringstream ss_file;
+                ss_file << "wf" << ib+1 << "s" << ispin + 1 << "k" << ik0+1 << ".cube";
+
+                std::stringstream ss_out;
+                ss_out << global_out_dir << ss_file.str();
+
+                std::stringstream ss_info;
+                ss_info << "Wave func. " << ib+1 
+                        << " spin " << ispin+1
+                        << " k-point " << ik0+1
+                        << " saved in";
+
+                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
+
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
                 ModuleIO::write_vdata_palgrid(pgrid,
@@ -357,7 +391,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               ispin,
                                               nspin,
                                               0,
-                                              ss.str(),
+                                              ss_out.str(),
                                               ef_tmp,
                                               &(ucell),
                                               3,
@@ -416,6 +450,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                     }
 
                     // Output real part
+
                     std::stringstream ss_real;
                     ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik+1 << "real.cube";
 
@@ -478,9 +513,8 @@ void Get_wf_lcao::select_bands(const int nbands_istate,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " Plot wave functions below the Fermi surface with " << bands_below << " bands." << std::endl;
-
-        std::cout << " Plot wave functions above the Fermi surface with " << bands_above << " bands." << std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of states below Fermi energy", bands_below);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of states above Fermi energy", bands_above);
 
         for (int ib = 0; ib < nbands; ++ib)
         {
