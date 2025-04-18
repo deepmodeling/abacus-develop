@@ -49,7 +49,8 @@ TEST_F(PWBasisKTEST,Constructor)
 	EXPECT_EQ(basis_k2.precision,"double");
 	EXPECT_EQ(basis_k2.fft_bundle.precision,"double");
 	ModulePW::PW_Basis_K basis_k3(device_flag, precision_single);
-	EXPECT_EQ(basis_k3.fft_bundle.precision,"single");
+	EXPECT_EQ(basis_k3.precision,"single");
+	EXPECT_EQ(basis_k3.fft_bundle.precision,"mixing");
 }
 
 TEST_F(PWBasisKTEST,Initgrids1)
