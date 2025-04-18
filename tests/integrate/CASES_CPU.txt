@@ -23,14 +23,11 @@
 101_PW_Coulomb
 101_PW_GTH_CF_CS_Si
 102_PW_BPCG
-102_PW_BPCG_float
 102_PW_BPCG_BP
 102_PW_CG
 102_PW_CG_float
 102_PW_DA_davidson
-102_PW_DA_davidson_float
 102_PW_DS_davsubspace
-102_PW_DS_davsubspace_float
 102_PW_DS_davsubspace_sca
 102_PW_PINT_RKS
 102_PW_PINT_UKS
