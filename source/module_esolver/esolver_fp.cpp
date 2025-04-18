@@ -24,27 +24,15 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     std::string fft_device = PARAM.inp.device;
-    std::string fft_precsion;
-    
     // LCAO basis doesn't support GPU acceleration on FFT currently
     if(PARAM.inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
-    if(PARAM.inp.precision == "single" || PARAM.inp.precision == "mixing")
-    {
-        fft_precsion = "mixing";
-    }else{
-        fft_precsion = "double";
-    }
-    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
-        if (fft_device == "gpu")
-            fft_precsion = "double";
-    #endif
-    pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precsion);
+    pw_rho = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
     if (PARAM.globalv.double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precsion);
+        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
     }
     else
     {

@@ -650,7 +650,6 @@ TEST_F(MathChebyshevTest, checkconverge_float)
 
     delete[] v;
     delete p_fchetest;
-    #define __MPI
     #endif
 }
 #endif

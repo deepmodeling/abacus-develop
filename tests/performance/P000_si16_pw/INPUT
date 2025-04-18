@@ -23,4 +23,3 @@ smearing_sigma			0.002
 mixing_type		broyden
 mixing_beta		0.3
 ks_solver dav
-fft_mode  1

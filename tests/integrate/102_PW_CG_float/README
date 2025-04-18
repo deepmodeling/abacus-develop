@@ -5,4 +5,3 @@ This test for:
 *smearing_method default
 *ks_solver cg
 *precison    float
-!!!!!!!WRONG!!!!!!!
