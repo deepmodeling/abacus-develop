@@ -15,3 +15,7 @@ ecutwfc			25.0
 basis_type		lcao 	
 scf_thr			1e-10
 read_file_dir	./
+
+bx 2
+by 2
+bz 2

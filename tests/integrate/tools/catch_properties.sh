@@ -30,8 +30,11 @@ get_input_key_value(){
 file=$1
 #echo $1
 
-calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+# the command will ignore lines starting with #
+calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
+
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
+echo $running_path
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
 has_force=$(get_input_key_value "cal_force" "INPUT")
 has_stress=$(get_input_key_value "cal_stress" "INPUT")
@@ -68,7 +71,6 @@ out_chg=$(get_input_key_value "out_chg" "INPUT")
 has_ldos=$(get_input_key_value "out_ldos" "INPUT")
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 rdmft=$(get_input_key_value "rdmft" "INPUT")
-#echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
@@ -493,9 +495,9 @@ fi
 if [ $calculation == "get_wf" ]; then
 	nfile=0
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-    echo "The cube file is $cubefiles"
+    #echo "The cube file is $cubefiles"
 	if test -z "$cubefiles"; then
-		echo "Can't find BAND_CHG files"
+		echo "Can't find $cubefiles files"
 		exit 1
 	else
 		for cube in $cubefiles;
