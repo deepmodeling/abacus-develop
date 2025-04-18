@@ -68,11 +68,13 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
     int mode_norm = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
+    const int norm_size = static_cast<int>(out_wfc_norm.size();
+
+    if (nbands_istate > 0 && norm_size) == 0)
     {
         mode_norm = 1;
     }
-    else if (static_cast<int>(out_wfc_norm.size()) > 0)
+    else if (norm_size > 0)
     {
         // If out_wfc_norm is not empty, set mode to 2
         mode_norm = 2;
@@ -80,7 +82,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
+    this->select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
 
     // Calculate out_wfc_norm
     for (int ib = 0; ib < nbands; ++ib)
@@ -153,7 +155,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
+    this->select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
 
     if (out_wfc_pw || out_wfc_r)
     {
@@ -325,7 +327,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
+    this->select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
 
     // Calculate out_wfc_norm
     for (int ib = 0; ib < nbands; ++ib)
