@@ -114,7 +114,6 @@ void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
         this->count_pw_st(st_length2D, st_bottom2D);
     }
 #ifdef __MPI
-
         MPI_Bcast(&this->npwtot, 1, MPI_INT, 0, this->pool_world);
         MPI_Bcast(&this->nstot, 1, MPI_INT, 0, this->pool_world);
         MPI_Bcast(&liy, 1, MPI_INT, 0, this->pool_world);
@@ -163,7 +162,6 @@ void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
                 st_move++;
             }
         }
-    }
 #endif
     }
 #ifdef __MPI

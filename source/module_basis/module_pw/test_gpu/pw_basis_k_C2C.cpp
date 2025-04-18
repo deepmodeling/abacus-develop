@@ -116,9 +116,13 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
             h_rhog[ig] = 1.0 / (pwtest.getgk2(ik, ig) + 1);
             ModuleBase::Vector3<double> f = pwtest.getgdirect(ik, ig);
             if (f.y > 0)
+            {
                 h_rhog[ig] += ModuleBase::IMAG_UNIT / (std::abs(f.x + 1) + 1);
+            }
             else if (f.y < 0)
+            {
                 h_rhog[ig] -= ModuleBase::IMAG_UNIT / (std::abs(-f.x + 1) + 1);
+            }
         }
         complex<double>* d_rhog = nullptr;
         complex<double>* d_rhor = nullptr;
@@ -252,8 +256,6 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
                 const int iy = ixy % ny;
                 for (int iz = 0; iz < nz; ++iz)
                 {
-                    int ix = ixy / ny;
-                    int iy = ixy % ny;
                     ModuleBase::Vector3<float> real_r(ix, iy, iz);
                     float phase_im = -delta_g * real_r;
                     complex<float> phase(0, ModuleBase::TWO_PI * phase_im);
@@ -269,9 +271,13 @@ TEST_F(PWTEST, pw_basis_k_C2C_float)
             h_rhog[ig] = float(1.0 / (pwtest.getgk2(ik, ig) + 1));
             ModuleBase::Vector3<double> f = pwtest.getgdirect(ik, ig);
             if (f.y > 0)
+            {
                 h_rhog[ig] += std::complex<float>(0,1.0) / (std::abs(float(f.x) + 1) + 1);
+            }
             else if (f.y < 0)
+            {
                 h_rhog[ig] -= std::complex<float>(0,1.0)  / (std::abs(float(-f.x) + 1) + 1);
+            }
         }
         complex<float>* d_rhog = nullptr;
         complex<float>* d_rhor = nullptr;
