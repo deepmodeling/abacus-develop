@@ -380,7 +380,6 @@ void FFT_CPU<double>::fftxybac(std::complex<double>* in,std::complex<double>* ou
     int npy = this->nplane * this->ny;
     if (this->xprime)
     {
-        ModuleBase::timer::tick("fftxybac", "fftybac");
         #pragma omp parallel for
         for (int i = 0; i < this->lixy + 1; ++i)
         {
@@ -391,10 +390,7 @@ void FFT_CPU<double>::fftxybac(std::complex<double>* in,std::complex<double>* ou
         {
             fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
         }
-        ModuleBase::timer::tick("fftxybac", "fftybac");
-        ModuleBase::timer::tick("fftxybac", "fftxbac");
         fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)out);
-        ModuleBase::timer::tick("fftxybac", "fftxbac");
     }
     else
     {
@@ -417,9 +413,7 @@ void FFT_CPU<double>::fftzfor(std::complex<double>* in, std::complex<double>* ou
 template <>
 void FFT_CPU<double>::fftzbac(std::complex<double>* in, std::complex<double>* out) const
 {
-    ModuleBase::timer::tick("fftxybac", "fftzbac");
     fftw_execute_dft(this->planzbac, (fftw_complex*)in, (fftw_complex*)out);
-    ModuleBase::timer::tick("fftxybac", "fftzbac");
 }
 
 template <>
@@ -429,6 +423,7 @@ void FFT_CPU<double>::fftxyr2c(double* in, std::complex<double>* out) const
     if (this->xprime)
     {
         fftw_execute_dft_r2c(this->planxr2c, in, (fftw_complex*)out);
+        #pragma omp parallel for
         for (int i = 0; i < this->lixy + 1; ++i)
         {
             fftw_execute_dft(this->planyfor, (fftw_complex*)&out[i * npy], (fftw_complex*)&out[i * npy]);
