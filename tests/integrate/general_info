@@ -1,3 +1,3 @@
-EXEC /home/mohan/qianrui/abacus-mc/build/abacus 
+EXEC /xxx/abacus 
 CHECKACCURACY 2 
 NUMBEROFPROCESS 4
