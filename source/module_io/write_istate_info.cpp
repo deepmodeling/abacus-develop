@@ -5,6 +5,10 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
+#ifdef __MPI
+#include <mpi.h> // use MPI_Barrier
+#endif
+
 void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
 	ModuleBase::TITLE("ModuleIO","write_istate_info");

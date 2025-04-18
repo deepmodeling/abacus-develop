@@ -5,6 +5,12 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 
+#include "module_base/parallel_comm.h"
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 namespace ModuleIO
 {
 void output_convergence_after_scf(const bool &convergence, double& energy, std::ofstream& ofs_running)

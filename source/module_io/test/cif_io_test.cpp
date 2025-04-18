@@ -5,6 +5,10 @@
 #include "module_base/formatter.h"
 #include <fstream>
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 /**
  * this is the unittest for ABACUS i/o interface with Crystal Information File (CIF) format.
  * 
