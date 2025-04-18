@@ -1,1 +1,2 @@
-Obtain the electronci wave functions via the 'calculation get_wf' commond, for lcao gamma_only
+Obtain the electronic wave functions via the 'calculation get_wf' 
+opiton in 'INPUT' file, for LCAO gamma_only
