@@ -55,7 +55,15 @@ class FFT_BASE
      * class, the function is used to clear the fft data.
      */
     virtual void clear() = 0;
-
+    /**
+     * @brief Allocate and destory the resoure in FFT running time,
+     * Now it only used in the DSP mode.
+     * 
+     * The function is set as pure virtual function.In order to
+     * override the function in the derived class.In the derived
+     * class, the function is used to allocate and destory the
+     * resoure in FFT running time.
+     */
     virtual void resource_handler(const int flag) const {};
     /**
      * @brief Get the real space data in cpu-like fft
