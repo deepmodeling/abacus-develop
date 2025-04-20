@@ -12,12 +12,7 @@
 
 namespace ModulePW
 {
-    enum class ResourceState
-    {
-        Destroyed = 0,
-        Created = 1,
-        INVALID
-    }
+    
 template <typename FPTYPE>
 class FFT_DSP : public FFT_BASE<FPTYPE>
 {
@@ -30,7 +25,11 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
         void clear() override;
 
         void cleanFFT() override;
-
+        /**
+         * @brief Control the allocation or deallocation of hthread 
+         * resource 
+         * @param flag  0: deallocate, 1: allocate
+         */
         void resource_handler(const int flag) const override;
         /** 
         * @brief Initialize the fft parameters

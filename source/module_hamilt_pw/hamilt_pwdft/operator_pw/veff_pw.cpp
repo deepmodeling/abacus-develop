@@ -57,9 +57,38 @@ void Veff<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
 
 #ifdef __DSP
-    // wfcpw->fft_bundle.resource_handler(1);
+    ModulePW::FFT_RALL guard(wfcpw->fft_bundle);
+    for (int ib = 0; ib<nbands ; ib += npol)
+    {
+        if (npol == 1)
+        {
+            wfcpw->convolution(this->ctx,
+            this->ik,
+            this->veff_col,
+            tmpsi_in,
+            this->veff+ current_spin* this->veff_col,
+            tmhpsi,
+            true);
+        }else{
+            // Should be replaced in the Convolution way.
+            wfcpw->recip_to_real<T,Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real<T,Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            if(this->veff_col != 0)
+            {
+                /// denghui added at 20221109
+				const Real* current_veff[4];
+				for(int is = 0; is < 4; is++) 
+				{
+					current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
+				}
+                veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
+            }
+            // FFT back to G space.
+            wfcpw->real_to_recip<T,Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip<T,Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+        }
+    }
 #endif
-    // std::cout<<"the Device is "<<Device;
     for (int ib = 0; ib < nbands; ib += npol)
     {
         if (npol == 1)
@@ -73,13 +102,6 @@ void Veff<OperatorPW<T, Device>>::act(
                 veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
             }
             wfcpw->real_to_recip<T,Device>(this->porter, tmhpsi, this->ik, true);
-            // wfcpw->convolution(this->ctx,
-            //         this->ik,
-            //         this->veff_col,
-            //         tmpsi_in,
-            //         this->veff+ current_spin* this->veff_col,
-            //         tmhpsi,
-            //         true);
         }
         else
         {
@@ -103,9 +125,6 @@ void Veff<OperatorPW<T, Device>>::act(
         tmhpsi += max_npw * npol;
         tmpsi_in += max_npw * npol;
     }
-#ifdef __DSP
-    // wfcpw->fft_bundle.resource_handler(0);
-#endif
     ModuleBase::timer::tick("Operator", "veff_pw");
 }
 
