@@ -8,10 +8,13 @@ check_out(){
 	for word in $worddir; do
         # serach result.out and get information
 		cal=`grep "$word" $outfile | awk '{printf "%.'$CA'f\n",$2}'`
+        # echo "cal = $cal"
         # search result.ref and get information
 		ref=`grep "$word" result.ref | awk '{printf "%.'$CA'f\n",$2}'`
+        # echo "ref = $ref"
         # compute the error between 'cal' and 'ref'
 		error=`awk 'BEGIN {x='$ref';y='$cal';printf "%.'$CA'f\n",x-y}'`
+        # echo "error = $error"
         # compare the total time
 		if [ $word == "totaltimeref" ]; then		
 			echo "$word this-test: $cal ref-1core-test: $ref"

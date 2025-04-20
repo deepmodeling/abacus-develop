@@ -328,7 +328,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const Parallel_Orbitals& pv,
                               LCAO_HS_Arrays& HS_Arrays,
                               const double& sparse_thr,
-                              const bool& binary) {
+                              const bool& binary,
+                              const std::string& fileflag) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::tick("ModuleIO", "save_dH_sparse");
 
@@ -429,24 +430,24 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshz[2];
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
         sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRx-sparse_SPIN0.csr";
+                << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
         sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRx-sparse_SPIN1.csr";
+                << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
         sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRy-sparse_SPIN0.csr";
+                << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
         sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRy-sparse_SPIN1.csr";
+                << "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
         sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRz-sparse_SPIN0.csr";
+                << "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
         sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-dHRz-sparse_SPIN1.csr";
+                << "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
     } else {
-        sshx[0] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN0.csr";
-        sshx[1] << PARAM.globalv.global_out_dir << "data-dHRx-sparse_SPIN1.csr";
-        sshy[0] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN0.csr";
-        sshy[1] << PARAM.globalv.global_out_dir << "data-dHRy-sparse_SPIN1.csr";
-        sshz[0] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN0.csr";
-        sshz[1] << PARAM.globalv.global_out_dir << "data-dHRz-sparse_SPIN1.csr";
+        sshx[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
+        sshx[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
+        sshy[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
+        sshy[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
+        sshz[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
+        sshz[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
     }
     std::ofstream g1x[2];
     std::ofstream g1y[2];
