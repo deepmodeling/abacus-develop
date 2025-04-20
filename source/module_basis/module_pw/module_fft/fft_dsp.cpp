@@ -63,7 +63,15 @@ void FFT_DSP<double>::setupFFT()
 template <>
 void FFT_DSP<double>::resource_handler(const int flag) const
 {
-    if (flag==0)
+    switch (ResourceState)
+    {
+    case constant expression:
+        /* code */
+        break;
+    
+    default:
+        break;
+    }
     {
         hthread_barrier_destroy(b_id);
         hthread_group_destroy(thread_id_for);

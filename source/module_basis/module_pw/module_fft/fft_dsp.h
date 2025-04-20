@@ -12,6 +12,12 @@
 
 namespace ModulePW
 {
+    enum class ResourceState
+    {
+        Destroyed = 0,
+        Created = 1,
+        INVALID
+    }
 template <typename FPTYPE>
 class FFT_DSP : public FFT_BASE<FPTYPE>
 {
