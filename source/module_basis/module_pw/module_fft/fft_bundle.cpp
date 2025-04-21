@@ -88,9 +88,9 @@ void FFT_Bundle::initfft(int nx_in,
         }
         if (double_flag)
         {
+            fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
             fft_double
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
-            fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
         }
     }else if (device == "gpu")
     {
