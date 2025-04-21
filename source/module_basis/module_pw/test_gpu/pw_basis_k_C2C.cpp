@@ -32,7 +32,6 @@ TEST_F(PWTEST, pw_basis_k_C2C_double)
     MPI_Comm POOL_WORLD;
     MPI_Comm_split(MPI_COMM_WORLD,mypool,key,&POOL_WORLD);
     pwtest.initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
-    
     pwtest.initgrids(lat0, latvec, 4 * wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, nks, kvec_d, distribution_type, xprime);
     pwtest.setuptransform();
