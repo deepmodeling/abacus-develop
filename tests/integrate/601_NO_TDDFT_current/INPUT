@@ -36,10 +36,14 @@ td_stype		0
 td_ttype		0
 td_tstart 		1
 td_tend			2
+
+# Gauss external field
 td_gauss_freq	2.44
 td_gauss_phase	0.0
 td_gauss_sigma	0.5
 td_gauss_t0		0
 td_gauss_amp	0.1
 
+# print out information
 out_current     1
+out_current_k   1
