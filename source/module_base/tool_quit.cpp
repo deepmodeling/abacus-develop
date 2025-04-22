@@ -66,7 +66,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 	WARNING_QUIT(file, description, 1);
 
 	#ifdef __MPI /* if it is MPI run, finalize first, then exit */
-	std::cout << "Detecting if MPI has been initialized..."
+	std::cout << "Detecting if MPI has been initialized..." << std::endl;
 	int is_initialized;
     MPI_Initialized(&is_initialized);
 	if (is_initialized) {
