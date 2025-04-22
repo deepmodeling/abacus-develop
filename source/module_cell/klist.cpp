@@ -1413,12 +1413,6 @@ void K_Vectors::set_after_vc(const int& nspin_in,
         ModuleBase::Matrix3 RT = latvec.Transpose();
         for (int i = 0; i < nks; i++)
         {
-            //			std::cout << " ik=" << i
-            //				<< " kvec.x=" << kvec_c[i].x
-            //				<< " kvec.y=" << kvec_c[i].y
-            //				<< " kvec.z=" << kvec_c[i].z << std::endl;
-            // wrong!            kvec_d[i] = RT * kvec_c[i];
-            // mohan fixed bug 2011-03-07
             kvec_d[i] = kvec_c[i] * RT;
         }
         kd_done = true;

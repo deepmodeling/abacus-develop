@@ -323,6 +323,18 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_ds");
+        item.annotation = "output of derivative of S(R) matrix";
+        read_sync_bool(input.out_mat_ds);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_ds && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_ds is not available for nspin = 4");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_xc");
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         read_sync_bool(input.out_mat_xc);

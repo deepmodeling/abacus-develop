@@ -1,0 +1,26 @@
+INPUT_PARAMETERS
+suffix          autotest
+calculation  	get_wf 
+bands_to_print  1 3*0
+nbands			4
+latname			sc
+stru_file		STRU
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB
+ecutwfc			25.0  # Rydberg
+basis_type		lcao 	
+scf_thr			1e-7
+gamma_only		1
+nspin           2
+read_file_dir 	./
+
+bx 2
+by 2
+bz 2
+
+#---------------------------------
+# this line if for generting wave
+# functions 
+#---------------------------------
+#calculation     scf
+#out_wfc_lcao    1
