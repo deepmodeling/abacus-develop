@@ -131,7 +131,6 @@ class MixedTypeTest : public ::testing::Test
                 }
             }
         }
-        // const int size = nx * ny * nz;
         h_rhog = new complex<T>[npw];
         h_rhogout = new complex<T>[npw];
 

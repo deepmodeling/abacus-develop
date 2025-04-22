@@ -18,7 +18,7 @@ struct TypePair
 };
 
 template <typename TypePair>
-class MixedTypeTest : public ::testing::Test
+class PW_BASIS_C2C_GPU_TEST : public ::testing::Test
 {
   public:
     using T = typename TypePair::T;
@@ -28,10 +28,10 @@ class MixedTypeTest : public ::testing::Test
     complex<T>* d_rhogr = nullptr;
     complex<T>* d_rhogout = nullptr;
     complex<T>* d_rhor = nullptr;
-    complex<T>* tmp;
-    complex<T>* h_rhog;
-    complex<T>* h_rhogout;
-    complex<T>* h_rhor;
+    complex<T>* tmp = nullptr;
+    complex<T>* h_rhog = nullptr;
+    complex<T>* h_rhogout = nullptr;
+    complex<T>* h_rhor = nullptr;
     void init(ModulePW::PW_Basis_K& pwtest)
     {
         ModuleBase::Matrix3 latvec(1, 1, 0, 0, 1, 1, 0, 0, 2);
@@ -60,7 +60,6 @@ class MixedTypeTest : public ::testing::Test
         pwtest.setuptransform();
         pwtest.collect_local_pw();
 
-        const int npw = pwtest.npw;
         const int nrxx = pwtest.nrxx;
         const int nmaxgr = pwtest.nmaxgr;
         const int nx = pwtest.nx;
@@ -150,14 +149,9 @@ class MixedTypeTest : public ::testing::Test
                 }
                 // const int size = nx * ny * nz;
 
-                h_rhog = new complex<T>[npw];
-                h_rhogout = new complex<T>[npw];
-
-                cudaMalloc((void**)&d_rhog, npwk * sizeof(complex<T>));
-                cudaMalloc((void**)&d_rhogr, nrxx * sizeof(complex<T>));
-                cudaMalloc((void**)&d_rhogout, npwk * sizeof(complex<T>));
-
-                for (int ig = 0; ig < npw; ++ig)
+                h_rhog = new complex<T>[npwk];
+                h_rhogout = new complex<T>[npwk];
+                for (int ig = 0; ig < npwk; ++ig)
                 {
                     h_rhog[ig] = 1.0 / (pwtest.getgk2(ik, ig) + 1);
                     ModuleBase::Vector3<double> f = pwtest.getgdirect(ik, ig);
@@ -170,16 +164,18 @@ class MixedTypeTest : public ::testing::Test
                         h_rhog[ig] -= std::complex<float>(0, 1.0) / (std::abs(float(-f.x) + 1) + 1);
                     }
                 }
-                cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<T>), cudaMemcpyHostToDevice);
+
+                cudaMalloc((void**)&d_rhog, npwk * sizeof(complex<T>));
+                cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<T>));
+                cudaMemcpy(d_rhog, h_rhog, npwk * sizeof(complex<T>), cudaMemcpyHostToDevice);
 
                 h_rhor = new complex<T>[nrxx];
 
-                cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<T>));
                 pwtest.recip_to_real<std::complex<T>, base_device::DEVICE_GPU>(d_rhog, d_rhor, ik);
                 cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(complex<T>), cudaMemcpyDeviceToHost);
 
                 pwtest.real_to_recip<std::complex<T>, base_device::DEVICE_GPU>(d_rhor, d_rhog, ik);
-                cudaMemcpy(h_rhogout, d_rhog, npw * sizeof(complex<T>), cudaMemcpyDeviceToHost);
+                cudaMemcpy(h_rhogout, d_rhog, npwk * sizeof(complex<T>), cudaMemcpyDeviceToHost);
             }
         }
     }
@@ -203,15 +199,15 @@ class MixedTypeTest : public ::testing::Test
 using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
                                     TypePair<double, base_device::DEVICE_GPU> >;
 
-TYPED_TEST_CASE(MixedTypeTest, MixedTypes);
+TYPED_TEST_CASE(PW_BASIS_C2C_GPU_TEST, MixedTypes);
 
-TYPED_TEST(MixedTypeTest, Mixing)
+TYPED_TEST(PW_BASIS_C2C_GPU_TEST, Mixing)
 {
     using T = typename TestFixture::T;
     using Device = typename TestFixture::Device;
     ModulePW::PW_Basis_K pwtest;
     pwtest.set_device("gpu");
-    pwtest.set_precision("double");
+    pwtest.set_precision("mixing");
     pwtest.fft_bundle.setfft("gpu", "mixing");
     this->init(pwtest);
     int startiz = pwtest.startz_current;
@@ -219,7 +215,7 @@ TYPED_TEST(MixedTypeTest, Mixing)
     const int ny = pwtest.ny;
     const int nz = pwtest.nz;
     const int nplane = pwtest.nplane;
-    const int npw = pwtest.npw;
+    const int npwk = pwtest.npwk[0];
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
         const int offset = ixy * nz + startiz;
@@ -229,20 +225,20 @@ TYPED_TEST(MixedTypeTest, Mixing)
             EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz].real(), 1e-4);
         }
     }
-    for (int ig = 0; ig < pwtest.npw; ++ig)
+    for (int ig = 0; ig < npwk; ++ig)
     {
         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
     }
 }
 
-TYPED_TEST(MixedTypeTest, FloatDouble)
+TYPED_TEST(PW_BASIS_C2C_GPU_TEST, FloatDouble)
 {
     using T = typename TestFixture::T;
     using Device = typename TestFixture::Device;
     ModulePW::PW_Basis_K pwtest;
     pwtest.set_device("gpu");
-    pwtest.set_precision("double");
+    pwtest.set_precision("mixing");
     if (typeid(T) == typeid(float))
     {
         pwtest.fft_bundle.setfft("gpu", "single");
@@ -262,7 +258,7 @@ TYPED_TEST(MixedTypeTest, FloatDouble)
     const int ny = pwtest.ny;
     const int nz = pwtest.nz;
     const int nplane = pwtest.nplane;
-    const int npw = pwtest.npw;
+    const int npwk = pwtest.npwk[0];;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
         const int offset = ixy * nz + startiz;
@@ -273,7 +269,7 @@ TYPED_TEST(MixedTypeTest, FloatDouble)
         }
     }
 
-    for (int ig = 0; ig < pwtest.npw; ++ig)
+    for (int ig = 0; ig < npwk; ++ig)
     {
         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
