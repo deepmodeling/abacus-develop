@@ -42,6 +42,17 @@ void output_dHR(const int& istep,
                 const bool& binary = false,
                 const double& sparse_threshold = 1e-10);
 
+void output_dSR(const int& istep,
+                const UnitCell& ucell,
+                const Parallel_Orbitals& pv,
+                LCAO_HS_Arrays& HS_Arrays,
+                const Grid_Driver& grid, // mohan add 2024-04-06
+                const TwoCenterBundle& two_center_bundle,
+                const LCAO_Orbitals& orb,
+                const K_Vectors& kv,
+                const bool& binary = false,
+                const double& sparse_thr = 1e-10);
+
 void output_TR(const int istep,
                const UnitCell& ucell,
                const Parallel_Orbitals& pv,

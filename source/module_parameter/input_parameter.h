@@ -380,6 +380,7 @@ struct Input_para
     bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
                                           ///< S(R) matrix in local basis.
     bool out_mat_dh = false;
+    bool out_mat_ds = false;
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
     bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.

@@ -25,7 +25,8 @@ void save_dH_sparse(const int& istep,
                     const Parallel_Orbitals& pv,
                     LCAO_HS_Arrays& HS_Arrays,
                     const double& sparse_thr,
-                    const bool& binary);
+                    const bool& binary,
+                    const std::string& fileflag = "H");
 
 template <typename Tdata>
 void save_sparse(const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>& smat,

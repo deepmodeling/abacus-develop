@@ -305,6 +305,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         //! Print out sparse matrix
         ModuleIO::output_mat_sparse(PARAM.inp.out_mat_hs2,
                                     PARAM.inp.out_mat_dh,
+                                    PARAM.inp.out_mat_ds,
                                     PARAM.inp.out_mat_t,
                                     PARAM.inp.out_mat_r,
                                     istep,

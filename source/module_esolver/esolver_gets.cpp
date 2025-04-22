@@ -137,6 +137,20 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         r_matrix.out_rR(ucell, gd, istep);
     }
 
+    if (PARAM.inp.out_mat_ds)
+    {
+        LCAO_HS_Arrays HS_Arrays; // store sparse arrays
+        //! Print out sparse matrix
+        ModuleIO::output_dSR(istep,
+            ucell,
+            this->pv,
+            HS_Arrays,
+            gd, // mohan add 2024-04-06
+            two_center_bundle_,
+            orb_,
+            kv);
+    }
+
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
