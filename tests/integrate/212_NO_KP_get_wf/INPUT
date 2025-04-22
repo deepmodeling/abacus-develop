@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+suffix          autotest
+
+#calculation     scf
+#out_wfc_lcao    1 
+
+calculation     get_wf
+symmetry        -1
+nbands			2
+nspin           2
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB
+latname			sc
+ecutwfc			25.0
+basis_type		lcao 	
+scf_thr			1e-10
+read_file_dir	./
+
+bx 2
+by 2
+bz 2

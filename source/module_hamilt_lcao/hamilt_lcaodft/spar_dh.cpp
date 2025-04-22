@@ -4,6 +4,52 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include <vector>
 
+void sparse_format::cal_dS(const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    const Grid_Driver& grid,
+    const TwoCenterBundle& two_center_bundle,
+    const LCAO_Orbitals& orb,
+    const double& sparse_thr)
+{
+ModuleBase::TITLE("sparse_format", "cal_dS");
+
+sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
+const int nnr = pv.nnr;
+
+ForceStressArrays fsr_dh;
+fsr_dh.DHloc_fixedR_x = new double[nnr];
+fsr_dh.DHloc_fixedR_y = new double[nnr];
+fsr_dh.DHloc_fixedR_z = new double[nnr];
+ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
+ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
+ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
+// the pointers of dS is different from dH, use the dh pointers to reuse the print functions
+fsr_dh.DSloc_Rx = fsr_dh.DHloc_fixedR_x;
+fsr_dh.DSloc_Ry = fsr_dh.DHloc_fixedR_y;
+fsr_dh.DSloc_Rz = fsr_dh.DHloc_fixedR_z;
+// cal dS=<phi|dphi> in LCAO
+const bool cal_deri = true;
+const bool cal_stress = false;
+LCAO_domain::build_ST_new(fsr_dh,
+       'S',
+       cal_deri,
+       cal_stress,
+       ucell,
+       orb,
+       pv,
+       two_center_bundle,
+       &grid,
+       nullptr,
+       false); // delete unused parameter lm.Hloc_fixedR
+
+sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr);
+delete[] fsr_dh.DHloc_fixedR_x;
+delete[] fsr_dh.DHloc_fixedR_y;
+delete[] fsr_dh.DHloc_fixedR_z;
+return;
+}
+
 void sparse_format::cal_dH(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
