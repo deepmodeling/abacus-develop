@@ -69,7 +69,6 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
     MPI_Initialized(&is_initialized);
 	if (is_initialized) {
 		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
-		// Parallel_Global::finalize_mpi();
 		MPI_Finalize();
 	}
 	else{
