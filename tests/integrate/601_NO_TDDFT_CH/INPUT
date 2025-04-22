@@ -28,7 +28,7 @@ scf_thr			1.0e-6
 cal_stress      1
 stress_thr      1e-6
 cal_force       1
-force_thr_ev    e-3
+force_thr_ev    1e-3
 
 md_type		    nve
 md_dt			0.01

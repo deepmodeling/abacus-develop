@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ABACUS executable path
-abacus=abacus
+abacus=/home/mohan/qianrui/abacus-mc/build/abacus
 # number of MPI processes
 np=4
 nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
@@ -12,8 +12,8 @@ stress_threshold=0.001
 # check accuracy
 ca=8
 # specify the test cases file
-cases_file=CASES_CPU.txt
-#cases_file=CASES_mylist.txt
+#cases_file=CASES_CPU.txt
+cases_file=CASES_mylist.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
@@ -178,8 +178,9 @@ check_out(){
         let failed++
         failed_case_list+=$dir'\n'
         calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
-        running_path=`echo "OUT.autotest/running_$calculation"".log"`
-        cat $running_path
+        # mohan comment out 2025-04-22, we don't need to print so many details on the screen
+        #running_path=`echo "OUT.autotest/running_$calculation"".log"`
+        #cat $running_path
         case_status+=$dir' 0\n'
     else
         case_status+=$dir' 1\n'
