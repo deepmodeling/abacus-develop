@@ -74,7 +74,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
 		Parallel_Global::finalize_mpi();
 	}
 	else{
-		std::cout << "MPI has not been initialized. Quit normally."
+		std::cout << "MPI has not been initialized. Quit normally." << std::endl;
 	}
 	/* but seems this is the only correct way to terminate the MPI */
 #endif
