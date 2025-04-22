@@ -32,9 +32,9 @@ gpu_vendor      = nvidia               # GPU vendor (Equivalence Class: nvidia/a
 3. Compare GPU calculation results with referenct results
 
 # [Expected Results]
-etotref          = -4869.7470519303351466      # Reference total energy (Ry)
-etotperatomref   = -2434.8735259652         # Reference energy per atom (Ry/atom)
-pointgroupref    = C_1                    # Expected point group symmetry
+etotref          = -4869.7470519303351466  # Reference total energy (Ry)
+etotperatomref   = -2434.8735259652        # Reference energy per atom (Ry/atom)
+pointgroupref    = C_1                     # Expected point group symmetry
 spacegroupref    = C_1                     # Expected space group symmetry
 nksibzref        = 8                       # Expected irreducible k-points
 
@@ -48,7 +48,7 @@ nksibzref        = 8                       # Expected irreducible k-points
 
 # [Comments]
 #  the test case is designed to validate the basic parameters of the GaAs 
-#  deformation simulation using the Davidson subspace solver
+#  deformation simulation using the CG solver
 #  in a GPU environment. The test checks for correct energy
 #  calculations, symmetry group identification, and k-point sampling. 
 #  The test is marked as P1, indicating its importance in core configuration 

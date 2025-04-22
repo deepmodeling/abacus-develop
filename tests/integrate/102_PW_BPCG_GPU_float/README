@@ -48,7 +48,7 @@ nksibzref        = 8                          # Expected irreducible k-points
 
 # [Comments]
 #  the test case is designed to validate the basic parameters of the GaAs 
-#  deformation simulation using the Davidson subspace solver
+#  deformation simulation using the BPCG solver
 #  in a GPU environment. The test checks for correct energy
 #  calculations, symmetry group identification, and k-point sampling. 
 #  The test is marked as P1, indicating its importance in core configuration 
