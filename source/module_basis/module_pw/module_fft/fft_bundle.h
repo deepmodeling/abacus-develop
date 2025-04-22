@@ -205,12 +205,12 @@ class FFT_Bundle
 };
 // Use RAII (Resource Acquisition Is Initialization) to 
 // control the resources used by hthread when setting the DSP
-struct FFT_RALL
+struct FFT_Guard
   {
       const FFT_Bundle& fft_;
-      FFT_RALL(const FFT_Bundle& fft) : fft_(fft) 
+      FFT_Guard(const FFT_Bundle& fft) : fft_(fft) 
         {fft_.resource_handler(1);}
-      ~FFT_RALL()
+      ~FFT_Guard()
       {
         fft_.resource_handler(0);
       }

@@ -57,7 +57,7 @@ void Veff<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
 
 #ifdef __DSP
-    ModulePW::FFT_RALL guard(wfcpw->fft_bundle);
+    ModulePW::FFT_Guard guard(wfcpw->fft_bundle);
     for (int ib = 0; ib<nbands ; ib += npol)
     {
         if (npol == 1)
