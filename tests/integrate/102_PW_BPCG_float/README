@@ -1,10 +1,22 @@
-This test for:
-*GaAs-deformation
-*PW
-*kpoints 2*2*2
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver bpcg
-*mixing_type broyden-kerker
-*mixing_beta 0.4
-*precison    float
+# ------------------------------
+# System and Calculation Parameters
+# ------------------------------
+system          = GaAs-deformation    # Target material
+basis_type      = PW                   # Plane-Wave basis
+pseudopotential = sg15                 # SG15 pseudopotential library
+kpoint_grid     = 2 2 2                # K-point sampling
+
+# ------------------------------
+# Electronic State Solver Settings
+# ------------------------------
+smearing_method = gauss                # Gaussian smearing
+ks_solver       = bpcg                 # Block Preconditioned Conjugate Gradient (GPU-optimized)
+mixing_type     = broyden-kerker       # Charge mixing method
+mixing_beta     = 0.4                  # Mixing parameter
+
+# ------------------------------
+# GPU/Precision Configuration
+# ------------------------------
+use_gpu         = flase                # Enable GPU acceleration
+precision       = double               # Single-precision mode (mandatory for GPU)
+gpu_vendor      = nvidia               # Options: nvidia (CUDA) / amd (ROCm)

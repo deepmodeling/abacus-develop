@@ -1,7 +1,22 @@
-This test for:
-*Si-diamond
-*just gamma point
-*old upf pseudopotential
-*smearing_method default
-*ks_solver cg
-*precison    float
+# ------------------------------
+# System and Calculation Parameters
+# ------------------------------
+system          = GaAs-deformation    # Target material
+basis_type      = PW                   # Plane-Wave basis
+pseudopotential = sg15                 # SG15 pseudopotential library
+kpoint_grid     = 2 2 2                # K-point sampling
+
+# ------------------------------
+# Electronic State Solver Settings
+# ------------------------------
+smearing_method = gauss                # Gaussian smearing
+ks_solver       = cg                   # Conjugate Gradient 
+mixing_type     = broyden-kerker       # Charge mixing method
+mixing_beta     = 0.4                  # Mixing parameter
+
+# ------------------------------
+# GPU/Precision Configuration
+# ------------------------------
+use_gpu         = true                 # Enable GPU acceleration
+precision       = float                # Single-precision mode (mandatory for GPU)
+gpu_vendor      = nvidia               # Options: nvidia (CUDA) / amd (ROCm)
