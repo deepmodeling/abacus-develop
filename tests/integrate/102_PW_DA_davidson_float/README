@@ -1,22 +1,56 @@
-# ------------------------------
-# System and Calculation Parameters
-# ------------------------------
-system          = GaAs-deformation    # Target material
-basis_type      = PW                   # Plane-Wave basis
-pseudopotential = sg15                 # SG15 pseudopotential library
-kpoint_grid     = 2 2 2                # K-point sampling
+# ================================================
+# Test Case ID: tests/integrate/102_PW_DS_davsubspace_float
+# Test Objective: Validate GaAs deformation simulation base parameters
+# Priority: P1 (Core configuration)
+# ================================================
 
 # ------------------------------
-# Electronic State Solver Settings
+# [Preconditions]
+# 1. ABACUS v3.0.9.3+ installed
+# 2. SG15 pseudopotential library deployed
+# 3. GPU acceleration enabled in ABACUS configuration
+# 4. Test environment set up with necessary dependencies
+# 5. Test system (GaAs-deformation) prepared with appropriate input files
 # ------------------------------
-smearing_method = gauss                # Gaussian smearing
-ks_solver       = davsion              # Davidson Iterative Method 
-mixing_type     = broyden-kerker       # Charge mixing method
-mixing_beta     = 0.4                  # Mixing parameter
 
-# ------------------------------
-# GPU/Precision Configuration
-# ------------------------------
-use_gpu         = flase                # Enable GPU acceleration
-precision       = float                # Single-precision mode (mandatory for GPU)
-gpu_vendor      = nvidia               # Options: nvidia (CUDA) / amd (ROCm)
+# [Input Data ]
+system          = GaAs-deformation     # Target material (Equivalence Class: Valid materials)
+basis_type      = PW                   # Basis type (Boundary Value: Only PW/LCAO supported)
+pseudopotential = sg15                 # Pseudopotential library (Valid values: sg15)
+kpoint_grid     = 2 2 2                # k-point sampling (Boundary Value: ≥2×2×2)
+smearing_method = gauss                # Smearing method (Valid Class: gauss/)
+ks_solver       = davsion              # Solver algorithm (Valid values: cg/bpcg/dav/dav_subapce)
+mixing_type     = broyden-kerker       # Charge mixing (Valid Class: broyden/linear)
+mixing_beta     = 0.4                  # Mixing parameter (Boundary Value: 0.1≤β≤0.8)
+use_gpu         = false                # GPU toggle (Boundary Value: true/false) ※Note: Value should be corrected to false
+precision       = float                # Precision mode (Valid Class: float/double)
+gpu_vendor      = nvidia               # GPU vendor (Equivalence Class: nvidia/amd)
+
+# [Test Steps]
+1. Execute benchmark with use_gpu = true precision = float
+2. Check the output files for GPU calculation results
+3. Compare GPU calculation results with referenct results
+
+# [Expected Results]
+etotref          = -198.2238296207179      # Reference total energy (Ry)
+etotperatomref   = -99.1119148104          # Reference energy per atom (Ry/atom)
+pointgroupref    = T_d                     # Expected point group symmetry
+spacegroupref    = O_h                     # Expected space group symmetry
+nksibzref        = 1                       # Expected irreducible k-points
+
+# [Priority]
+# P1 (Core configuration)
+# P2 (Non-core configuration)
+# P3 (Non-core configuration, non-critical)
+# P4 (Non-core configuration, non-critical, non-urgent)
+# P5 (Non-core configuration, non-critical, non-urgent, non-essential)
+# P6 (Non-core configuration, non-critical, non-urgent, non-essential, non-issue)
+
+# [Comments]
+#  the test case is designed to validate the basic parameters of the GaAs 
+#  deformation simulation using the Davidson subspace solver
+#  in a GPU environment. The test checks for correct energy
+#  calculations, symmetry group identification, and k-point sampling. 
+#  The test is marked as P2, indicating its importance in Non-core configuration 
+#  validation.
+
