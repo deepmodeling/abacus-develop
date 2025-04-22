@@ -8,7 +8,7 @@ namespace GlobalV
     std::ofstream ofs_running;
 }
 #ifdef __MPI
-MPI_Comm POOL_WORLD;
+//MPI_Comm POOL_WORLD;
 namespace Parallel_Reduce
 {
     template<typename T> void reduce_all(T& object) { return; };
