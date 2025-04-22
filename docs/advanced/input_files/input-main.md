@@ -153,6 +153,7 @@
     - [out\_mat\_hs2](#out_mat_hs2)
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
+    - [out\_mat\_ds](#out_mat_ds)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
     - [out\_mat\_l](#out_mat_l)
@@ -1799,6 +1800,13 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix (in Ry/Bohr). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False
+
+### out_mat_ds
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the derivatives of the Overlap matrix (in Ry/Bohr). The format will be the same as the Overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `data-dSRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
 - **Default**: False
 
 ### out_mat_xc

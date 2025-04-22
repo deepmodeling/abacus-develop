@@ -18,6 +18,10 @@ int main(int argc, char **argv)
 		cout << "Can't find " << input_file << " !" << endl;
 		return 1;
 	}
+    else
+    {
+//        cout << "Find the " << input_file << endl;
+    }
 
 	int nx = 0;
 	int ny = 0;
@@ -50,10 +54,7 @@ int main(int argc, char **argv)
 	double ne = 0.0;
 
 	ne = sum * mx * my * mz;
-	//std::cout<<nx<<"--"<<ny<<"--"<<nz<<std::endl;
-	//std::cout<<" sum = "<<sum<< " ne = "<<ne<<std::endl;
-	std::cout<<ne<<std::endl;
-
+	std::cout<<setprecision(10)<<ne<<std::endl;
 	
 	return 0;
 }

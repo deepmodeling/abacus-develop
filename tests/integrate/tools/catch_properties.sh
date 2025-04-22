@@ -30,8 +30,12 @@ get_input_key_value(){
 file=$1
 #echo $1
 
-calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+# the command will ignore lines starting with #
+calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
+
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
+#echo $running_path
+
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
 has_force=$(get_input_key_value "cal_force" "INPUT")
 has_stress=$(get_input_key_value "cal_stress" "INPUT")
@@ -68,7 +72,6 @@ out_chg=$(get_input_key_value "out_chg" "INPUT")
 has_ldos=$(get_input_key_value "out_ldos" "INPUT")
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 rdmft=$(get_input_key_value "rdmft" "INPUT")
-#echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
@@ -90,7 +93,10 @@ if [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
 && [ $is_lr == 0 ]; then
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
+    #echo "etot = $etot"
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
+    #echo "etotperatom = $etotperatom"
+    # put the results in file
 	echo "etotref $etot" >>$1
 	echo "etotperatomref $etotperatom" >>$1
 fi
@@ -492,26 +498,15 @@ fi
 #--------------------------------------------
 if [ $calculation == "get_wf" ]; then
 	nfile=0
-	# envfiles=`ls OUT.autotest/ | grep ENV$`
-	# if test -z "$envfiles"; then
-	# 	echo "Can't find ENV(-elope) files"
-	# 	exit 1
-	# else
-	# 	for env in $envfiles;
-	# 	do
-	# 		nelec=`../tools/sum_ENV_H2 OUT.autotest/$env`
-	# 		nfile=$(($nfile+1))
-	# 		echo "nelec$nfile $nelec" >>$1
-	# 	done
-	# fi
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
+    #echo "The cube files are $cubefiles"
 	if test -z "$cubefiles"; then
-		echo "Can't find BAND_CHG files"
+		echo "Can't find $cubefiles files"
 		exit 1
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_ENV_H2_cube OUT.autotest/$cube`
+			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
@@ -524,26 +519,14 @@ fi
 #--------------------------------------------
 if [ $calculation == "get_pchg" ]; then
 	nfile=0
-	# chgfiles=`ls OUT.autotest/ | grep -E '_CHG$'`
-	# if test -z "$chgfiles"; then
-	# 	echo "Can't find BAND_CHG files"
-	# 	exit 1
-	# else
-	# 	for chg in $chgfiles;
-	# 	do
-	# 		total_chg=`../tools/sum_BAND_CHG_H2 OUT.autotest/$chg`
-	# 		nfile=$(($nfile+1))
-	# 		echo "nelec$nfile $total_chg" >>$1
-	# 	done
-	# fi
 	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
 	if test -z "$cubefiles"; then
-		echo "Can't find BAND_CHG files"
+		echo "Can't find cube files"
 		exit 1
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_BAND_CHG_H2_cube OUT.autotest/$cube`
+			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi

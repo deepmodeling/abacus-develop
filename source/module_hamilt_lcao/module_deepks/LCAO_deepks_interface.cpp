@@ -64,6 +64,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
+        DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
+        
         DeePKS_domain::cal_pdm<
             TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dmr, phialpha, ucell, orb, GridD, *ParaV, pdm);
 

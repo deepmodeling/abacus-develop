@@ -83,6 +83,37 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
     return;
 }
 
+void ModuleIO::output_dSR(const int& istep,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    LCAO_HS_Arrays& HS_Arrays,
+    const Grid_Driver& grid, // mohan add 2024-04-06
+    const TwoCenterBundle& two_center_bundle,
+    const LCAO_Orbitals& orb,
+    const K_Vectors& kv,
+    const bool& binary,
+    const double& sparse_thr)
+{
+ModuleBase::TITLE("ModuleIO", "output_dSR");
+ModuleBase::timer::tick("ModuleIO", "output_dSR");
+
+
+sparse_format::cal_dS(ucell,
+            pv,
+            HS_Arrays,
+            grid,
+            two_center_bundle,
+            orb,
+            sparse_thr);
+// mohan update 2024-04-01
+ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "S");
+
+sparse_format::destroy_dH_R_sparse(HS_Arrays);
+
+ModuleBase::timer::tick("ModuleIO", "output_dSR");
+return;
+}
+
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
                           Gint_k& gint_k, // mohan add 2024-04-01
