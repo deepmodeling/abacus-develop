@@ -391,6 +391,30 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // out_ldos
+        auto it = find_label("out_ldos", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_ldos[0], 1);
+        EXPECT_EQ(param.input.out_ldos[1], 3);
+
+        it->second.str_values = {"2", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_ldos[0], 2);
+        EXPECT_EQ(param.input.out_ldos[1], 2);
+
+        it->second.str_values = {"1", "2", "3"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.out_ldos = {5, 5};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // stm_bias
         auto it = find_label("stm_bias", readinput.input_lists);
         param.input.stm_bias = {1.0, 0.1, 0.0};
