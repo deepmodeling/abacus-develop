@@ -1,8 +1,6 @@
 #include "tool_quit.h"
 #ifdef __MPI
 #include "mpi.h"
-#include "module_base/parallel_global.h"
-#include "module_base/parallel_comm.h"
 #endif
 
 #ifdef __NORMAL
@@ -71,7 +69,8 @@ void WARNING_QUIT(const std::string &file,const std::string &description)
     MPI_Initialized(&is_initialized);
 	if (is_initialized) {
 		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
-		Parallel_Global::finalize_mpi();
+		// Parallel_Global::finalize_mpi();
+		MPI_Finalize();
 	}
 	else{
 		std::cout << "MPI has not been initialized. Quit normally." << std::endl;
