@@ -33,7 +33,7 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
     Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          grid_neigh,
                          ucell,
