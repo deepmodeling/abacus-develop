@@ -154,11 +154,6 @@
 204_NO_KP_FM
 204_NO_KP_NC
 204_NO_NC_magnetic
-205_NO_FD_smearing
-205_NO_FX_smearing
-205_NO_GA_smearing
-205_NO_M2_smearing
-205_NO_MV_smearing
 207_NO_KP_OB
 207_NO_KP_OD
 207_NO_KP_OH_nscf
