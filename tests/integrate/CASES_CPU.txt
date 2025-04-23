@@ -159,9 +159,6 @@
 205_NO_GA_smearing
 205_NO_M2_smearing
 205_NO_MV_smearing
-206_NO_PK_chargemixing
-206_NO_PL_chargemixing
-206_NO_PU_chargemixing
 207_NO_KP_OB
 207_NO_KP_OD
 207_NO_KP_OH_nscf
