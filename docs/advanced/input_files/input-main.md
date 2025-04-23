@@ -52,7 +52,6 @@
     - [lcao\_dr](#lcao_dr)
     - [lcao\_rmax](#lcao_rmax)
     - [search\_radius](#search_radius)
-    - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
     - [elpa\_num\_thread](#elpa_num_thread)
     - [num\_stream](#num_stream)
@@ -923,12 +922,6 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Description**: Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.
 - **Default**: -1
 - **Unit**: Bohr
-
-### search_pbc
-
-- **Type**: Boolean
-- **Description**: If True, periodic images will be included in searching for the neighbouring atoms. If False, periodic images will be ignored.
-- **Default**: True
 
 ### bx, by, bz
 
@@ -3586,9 +3579,11 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**:
   `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+
   $$
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
+
 - **Default**: 0.05
 
 ### td_lcut2
@@ -3596,9 +3591,11 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**:
   `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+
   $$
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
+
 - **Default**: 0.95
 
 ### td_gauss_freq

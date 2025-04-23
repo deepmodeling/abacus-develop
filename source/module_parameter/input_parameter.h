@@ -134,7 +134,6 @@ struct Input_para
     double lcao_dr = 0.01;                     ///< dr used in two center integral
     double lcao_rmax = 30.0;                   ///< rmax(a.u.) to make table.
     double search_radius = -1.0;               ///< 11.1
-    bool search_pbc = true;                    ///< 11.2
     int bx = 0, by = 0, bz = 0;                ///< big mesh ball. 0: auto set bx/by/bz
     int elpa_num_thread = -1;                  ///< Number of threads need to use in elpa
     int nstream = 4;                           ///< Number of streams in CUDA as per input data

@@ -90,7 +90,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 
     Grid_Driver gd;
 
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          gd,
                          ucell,
@@ -133,7 +133,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     if (PARAM.inp.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell,pv, orb_);
+        r_matrix.init(ucell, pv, orb_);
         r_matrix.out_rR(ucell, gd, istep);
     }
 
@@ -142,20 +142,23 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         //! Print out sparse matrix
         ModuleIO::output_dSR(istep,
-            ucell,
-            this->pv,
-            HS_Arrays,
-            gd, // mohan add 2024-04-06
-            two_center_bundle_,
-            orb_,
-            kv);
+                             ucell,
+                             this->pv,
+                             HS_Arrays,
+                             gd, // mohan add 2024-04-06
+                             two_center_bundle_,
+                             orb_,
+                             kv);
     }
 
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
 void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
-double ESolver_GetS::cal_energy() { return 0.0; };
+double ESolver_GetS::cal_energy()
+{
+    return 0.0;
+};
 void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
 void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
 
