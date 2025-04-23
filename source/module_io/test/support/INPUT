@@ -134,7 +134,6 @@ basis_type                     lcao #PW; LCAO in pw; LCAO
 nb2d                           0 #2d distribution of atoms
 gamma_only                     T #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
 search_radius                  -1 #input search radius (Bohr)
-search_pbc                     1 #input periodic boundary condition
 lcao_ecut                      20 #energy cutoff for LCAO
 lcao_dk                        0.01 #delta k for 1D integration in LCAO
 lcao_dr                        0.01 #delta r for 1D integration in LCAO

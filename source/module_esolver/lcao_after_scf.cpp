@@ -476,7 +476,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             /*test_deconstructor=*/PARAM.inp.test_deconstructor,
             /*test_grid=*/PARAM.inp.test_grid,
             /*test_atom_input=*/PARAM.inp.test_atom_input,
-            /*search_pbc=*/PARAM.inp.search_pbc,
+            /*search_pbc=*/PARAM.globalv.search_pbc,
             /*ofs=*/&GlobalV::ofs_running,
             /*rank=*/GlobalV::MY_RANK
         );
