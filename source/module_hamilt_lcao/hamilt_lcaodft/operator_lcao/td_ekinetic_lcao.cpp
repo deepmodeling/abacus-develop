@@ -241,7 +241,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td()
     // calculate At in cartesian coorinates.
     td_velocity.cal_cart_At(elecstate::H_TDDFT_pw::At);
     this->cart_At = td_velocity.cart_At;
-    std::cout << "cart_At: " << cart_At[0] << " " << cart_At[1] << " " << cart_At[2] << std::endl;
+
+    // mohan update 2025-04-20
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[0]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[1]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[2]);
 }
 
 template <typename TK, typename TR>

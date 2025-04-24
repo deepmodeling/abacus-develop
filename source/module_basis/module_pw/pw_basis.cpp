@@ -43,6 +43,7 @@ PW_Basis:: ~PW_Basis()
     if (this->device == "gpu")
     {
         delmem_int_op()(this->d_is2fftixy);
+        delmem_int_op()(this->ig2ixyz_gpu);
     }
 #endif
 }
@@ -59,6 +60,7 @@ void PW_Basis::setuptransform()
     this->distribute_g();
     this->getstartgr();
     this->fft_bundle.clear();
+    
     if(this->xprime)    
     {
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);

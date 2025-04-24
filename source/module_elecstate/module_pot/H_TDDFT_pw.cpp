@@ -114,7 +114,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     {
         return;
     }
-    std::cout << "calculate electric potential" << std::endl;
+    //std::cout << "calculate electric potential" << std::endl;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
@@ -280,7 +280,7 @@ int H_TDDFT_pw::check_ncut(int t_type)
 
 void H_TDDFT_pw::update_At()
 {
-    std::cout << "calculate electric potential" << std::endl;
+    //std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
 
@@ -289,6 +289,9 @@ void H_TDDFT_pw::update_At()
     {
         return;
     }
+
+    ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
+
     int count = 0;
     gauss_count = 0;
     trape_count = 0;
@@ -346,6 +349,8 @@ void H_TDDFT_pw::update_At()
         // total count++
         count++;
     }
+
+    ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
     return;
 }
 
