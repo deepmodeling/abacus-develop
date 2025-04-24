@@ -58,8 +58,9 @@ struct System_para
     bool ks_run = false;                    ///< true if current process runs KS calculation
     bool all_ks_run = true;                 ///< true if only all processes run KS calculation
 
-    bool has_double_data = true;           ///< hamiltonian has double data
-    bool has_float_data = false;           ///< hamiltonian has float data
+    bool has_double_data = true;            ///< hamiltonian has double data
+    bool has_float_data = false;            ///< hamiltonian has float data
 
+    bool search_pbc = true;                 ///< whether to search for periodic boundary conditions, force set to true
 };
 #endif

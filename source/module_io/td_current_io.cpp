@@ -128,11 +128,12 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              Record_adj& ra)
 {
-
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
+
     TD_current* cal_current = nullptr;
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
+
     if (!TD_Velocity::tddft_velocity)
     {
         cal_current = new TD_current(&ucell, &gd, pv, orb, intor);
@@ -156,11 +157,16 @@ void ModuleIO::write_current(const UnitCell& ucell,
     }
 
     // construct a DensityMatrix object
-    // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
-    // be refactored in the future.
-    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[PARAM.inp.nspin];
+    // Since the function cal_dm_psi do not suport DMR in complex type, 
+    // I replace it with two DMR in double type.
+    // Should be refactored in the future.
+
+    const int nspin0 = PARAM.inp.nspin;
+    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin0];
+
     elecstate::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 
@@ -169,19 +175,21 @@ void ModuleIO::write_current(const UnitCell& ucell,
     DM_imag.init_DMR(ra, &ucell);
 
     int nks = DM_real.get_DMK_nks();
-    if (PARAM.inp.nspin == 2)
+    if (nspin0 == 2)
     {
         nks /= 2;
     }
+
     double current_total[3] = {0.0, 0.0, 0.0};
-    for (int is = 1; is <= PARAM.inp.nspin; ++is)
+    for (int is = 1; is <= nspin0; ++is)
     {
         for (int ik = 0; ik < nks; ++ik)
         {
-            cal_tmp_DM(DM_real, DM_imag, ik, PARAM.inp.nspin, is);
+            cal_tmp_DM(DM_real, DM_imag, ik, nspin0, is);
             // check later
             double current_ik[3] = {0.0, 0.0, 0.0};
             int total_irr = 0;
+
 #ifdef _OPENMP
 #pragma omp parallel
             {
@@ -223,13 +231,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
                         double Rx = ra.info[iat][cb][0];
                         double Ry = ra.info[iat][cb][1];
                         double Rz = ra.info[iat][cb][2];
-                        // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:
-                        // " << Rz << std::endl;
+
                         //  get BaseMatrix
                         hamilt::BaseMatrix<double>* tmp_matrix_real
                             = DM_real.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         hamilt::BaseMatrix<double>* tmp_matrix_imag
                             = DM_imag.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                         // refactor
                         hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx
                             = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
@@ -237,12 +245,15 @@ void ModuleIO::write_current(const UnitCell& ucell,
                             = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz
                             = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                         if (tmp_matrix_real == nullptr)
                         {
                             continue;
                         }
+
                         int row_ap = pv->atom_begin_row[iat1];
                         int col_ap = pv->atom_begin_col[iat2];
+
                         // get DMR
                         for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
                         {
@@ -287,6 +298,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
             {
                 current_total[i] += current_ik[i];
             }
+
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_Velocity::out_current_k)
             {
