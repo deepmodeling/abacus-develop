@@ -100,10 +100,11 @@ public:
 //===============================================
 public:
 #ifdef __MPI
-    MPI_Comm pool_world;
+    MPI_Comm pool_world=MPI_COMM_NULL;
 #endif
 
     int *ig2isz=nullptr; // map ig to (is, iz).
+    int *ig2ixyz_gpu = nullptr;
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
@@ -352,7 +353,10 @@ public:
     void recip_to_real(TK* in,
                        TR* out,
                        const bool add = false,
-                       const typename GetTypeReal<TK>::type factor = 1.0) const;
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->recip2real_gpu(in,out,add,factor);
+                       };
 
     // template <typename FPTYPE,
     //         typename Device,
@@ -383,9 +387,7 @@ public:
      * values in the output array.
      * @param factor Optional scaling factor, default value 1.0, applied to the output values.
      */
-    template <typename TK,
-            typename TR,
-            typename Device,
+    template <typename TR,typename TK,typename Device,
             typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
                     && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
                     && std::is_same<Device, base_device::DEVICE_CPU>::value ,int>::type = 0>
@@ -397,14 +399,17 @@ public:
         this->real2recip(in, out, add, factor);
     }
 
-    template <typename TK,typename TR, typename Device,
+    template <typename TR, typename TK, typename Device,
             typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
                     && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
-                    && !std::is_same<Device, base_device::DEVICE_CPU>::value ,int>::type = 0>
+                    && std::is_same<Device, base_device::DEVICE_GPU>::value ,int>::type = 0>
     void real_to_recip(TR* in,
                        TK* out,
                        const bool add = false,
-                       const typename GetTypeReal<TK>::type factor = 1.0) const;
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->real2recip_gpu(in,out,add,factor);
+                       };
 
   protected:
     //gather planes and scatter sticks of all processors

@@ -713,12 +713,6 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
-        Input_Item item("search_pbc");
-        item.annotation = "input periodic boundary condition";
-        read_sync_bool(input.search_pbc);
-        this->add_item(item);
-    }
-    {
         Input_Item item("bx");
         item.annotation = "division of an element grid in FFT grid along x";
         read_sync_int(input.bx);
