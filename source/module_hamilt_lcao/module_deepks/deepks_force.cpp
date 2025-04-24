@@ -11,7 +11,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 
 template <typename TK>
-void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
+void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Grid_Driver& GridD,
@@ -100,51 +100,14 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                 int dRx = 0;
                 int dRy = 0;
                 int dRz = 0;
-                if constexpr (std::is_same<TK, std::complex<double>>::value) // for multi-k
+                if (std::is_same<TK, std::complex<double>>::value) // for multi-k
                 {
-                    dRx = dR2.x - dR1.x;
-                    dRy = dR2.y - dR1.y;
-                    dRz = dR2.z - dR1.z;
+                    dRx = dR1.x - dR2.x;
+                    dRy = dR1.y - dR2.y;
+                    dRz = dR1.z - dR2.z;
                 }
                 ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
-
-                hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
-
-                dm_pair.allocate(nullptr, true);
-
-                if constexpr (std::is_same<TK, double>::value) // for gamma-only
-                {
-                    for (int is = 0; is < dm.size(); is++)
-                    {
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                        {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
-                        }
-                        else
-                        {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_col_size(), 1.0, 0);
-                        }
-                    }
-                }
-                else // for multi-k
-                {
-                    for (int ik = 0; ik < nks; ik++)
-                    {
-                        const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                        double sinp = 0;
-                        double cosp = 0;
-                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                        const std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                        {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
-                        }
-                        else
-                        {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
-                        }
-                    }
-                }
+                const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
 
                 hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
                 hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
@@ -162,7 +125,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
                 assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
-                const double* dm_current = dm_pair.get_pointer();
                 for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1)
                 {
                     for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2)
@@ -189,6 +151,13 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                                     += gedm[inl][m1 * nm + m2]
                                                         * overlap_1->get_value(row_indexes[iw1], ib + m1)
                                                         * grad_overlap_2[dim]->get_value(col_indexes[iw2], ib + m2);
+                                                if (isstress)
+                                                {
+                                                    nlm_t[dim] += gedm[inl][m1 * nm + m2]
+                                                                    * overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                                    * grad_overlap_1[dim]->get_value(row_indexes[iw1],
+                                                                                                    ib + m2);
+                                                }
                                             }
                                         }
                                     }
@@ -213,11 +182,17 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                         nlm[dim] += gedm[iat][iproj * nproj + jproj]
                                                     * overlap_1->get_value(row_indexes[iw1], iproj)
                                                     * grad_overlap_2[dim]->get_value(col_indexes[iw2], jproj);
+                                        if (isstress)
+                                        {
+                                            nlm_t[dim] += gedm[iat][iproj * nproj + jproj]
+                                                            * overlap_2->get_value(col_indexes[iw2], iproj)
+                                                            * grad_overlap_1[dim]->get_value(row_indexes[iw1], jproj);
+                                        }
                                     }
                                 }
                             }
                         }
-                        
+
                         // HF term is minus, only one projector for each atom force.
                         f_delta_local(iat, 0) -= 2.0 * *dm_current * nlm[0];
                         f_delta_local(iat, 1) -= 2.0 * *dm_current * nlm[1];
@@ -230,54 +205,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
                         if (isstress)
                         {
-                            if (!PARAM.inp.deepks_equiv)
-                            {
-                                int ib = 0;
-                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                                {
-                                    for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                                    {
-                                        const int inl = inl_index[T0](I0, L0, N0);
-                                        const int nm = 2 * L0 + 1;
-                                        for (int m1 = 0; m1 < nm; ++m1)
-                                        {
-                                            for (int m2 = 0; m2 < nm; ++m2)
-                                            {
-                                                for (int dim = 0; dim < 3; ++dim)
-                                                {
-                                                    nlm_t[dim] += gedm[inl][m1 * nm + m2]
-                                                                    * overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                                    * grad_overlap_1[dim]->get_value(row_indexes[iw1],
-                                                                                                    ib + m2);
-                                                }
-                                            }
-                                        }
-                                        ib += nm;
-                                    }
-                                }
-                                assert(ib == overlap_2->get_col_size());
-                            }
-                            else
-                            {
-                                int nproj = 0;
-                                for (int il = 0; il < lmaxd + 1; il++)
-                                {
-                                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
-                                }
-                                for (int iproj = 0; iproj < nproj; iproj++)
-                                {
-                                    for (int jproj = 0; jproj < nproj; jproj++)
-                                    {
-                                        for (int dim = 0; dim < 3; dim++)
-                                        {
-                                            nlm_t[dim] += gedm[iat][iproj * nproj + jproj]
-                                                            * overlap_2->get_value(col_indexes[iw2], iproj)
-                                                            * grad_overlap_1[dim]->get_value(row_indexes[iw1], jproj);
-                                        }
-                                    }
-                                }
-                            }
-                            
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
                                 for (int jpol = ipol; jpol < 3; jpol++)
@@ -286,7 +213,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                         += *dm_current * (nlm[ipol] * r2[jpol] + nlm_t[ipol] * r1[jpol]);
                                 }
                             }
-
                         }
                         dm_current++;
                     } // iw2
@@ -294,15 +220,14 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
             }         // ad2
         }             // ad1
     }                 // iat
-    if(isstress)
+    if (isstress)
     {
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = ipol; jpol < 3; jpol++)
             {
                 #pragma omp atomic
-                svnl_dalpha(ipol, jpol)
-                    += svnl_dalpha_local(ipol, jpol);
+                svnl_dalpha(ipol, jpol) += svnl_dalpha_local(ipol, jpol);
             }
         }
     }
@@ -364,7 +289,7 @@ void DeePKS_domain::check_f_delta(const int nat, ModuleBase::matrix& f_delta, Mo
     return;
 }
 
-template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<double>>& dm,
+template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Grid_Driver& GridD,
@@ -378,7 +303,7 @@ template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<d
                                                  const bool isstress,
                                                  ModuleBase::matrix& svnl_dalpha);
 
-template void DeePKS_domain::cal_f_delta<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
+template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HContainer<double>* dmr,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Grid_Driver& GridD,

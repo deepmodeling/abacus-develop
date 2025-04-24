@@ -261,14 +261,8 @@ void current_md_info(const int& my_rank,
 } // namespace MD_func
 
 namespace GlobalC {
-UnitCell ucell;
-wavefunc wf;
-ModuleSymmetry::Symmetry symm;
-Structure_Factor sf;
 ModuleDFTU::DFTU dftu;
 Restart restart;
-pseudopot_cell_vnl ppcell;
-Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
 #ifdef __PEXSI

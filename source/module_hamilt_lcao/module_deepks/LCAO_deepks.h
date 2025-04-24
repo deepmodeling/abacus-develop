@@ -73,7 +73,7 @@ class LCAO_Deepks
     int inlmax = 0;                  // tot. number {i,n,l} - atom, n, l
     int n_descriptor;                // natoms * des_per_atom, size of descriptor(projector) basis set
     int des_per_atom;                // \sum_L{Nchi(L)*(2L+1)}
-    std::vector<int> inl2l;          // inl2l[inl] = l of descriptor with inl_index
+    std::vector<int> inl2l;          // inl2l[inl] = inl2l[nl] = l (not related to iat) of descriptor with inl_index
     ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
@@ -85,6 +85,9 @@ class LCAO_Deepks
     // saves <phi(0)|alpha(R)> and its derivatives
     // index 0 for itself and index 1-3 for derivatives over x,y,z
     std::vector<hamilt::HContainer<double>*> phialpha;
+
+    // density matrix in real space
+    hamilt::HContainer<double>* dm_r = nullptr;
 
     // projected density matrix
     // [tot_Inl][2l+1][2l+1], here l is corresponding to inl;
@@ -134,6 +137,12 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
+
+    /// Initialize the dm_r container
+    void init_DMR(const UnitCell& ucell,
+                  const LCAO_Orbitals& orb,
+                  const Parallel_Orbitals& pv,
+                  const Grid_Driver& GridD);
 
     //! a temporary interface for cal_e_delta_band
     void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);

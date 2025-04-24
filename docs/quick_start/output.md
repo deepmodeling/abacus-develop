@@ -6,7 +6,13 @@ The following files are the central output files for ABACUS. After executing the
 
 Different from `INPUT` given by the users, `OUT.suffix/INPUT` contains all parameters in ABACUS.
 
-> **Note:** `OUT.suffix/INPUT` contain the initial default of ABACUS instead of the real parameters used in calculations. This file is stored for reproduction in case the default value is changed during development. If you want to figure out the real parameters used in calculations, you can open `OUT.suffix/runing_scf.log` and research corresponding parameter you are interested.
+> **Note:** `OUT.suffix/INPUT` contains the **actual parameters used in the calculation**, including:
+> 1. **User-specified parameters** (explicitly defined in your input file or command-line arguments, overriding default parameters).
+> 2. **System default parameters** (automatically applied when not explicitly provided by the user).
+
+
+This file ensures calculations can be fully reproduced, even if default values change in future ABACUS versions.
+Also notice that in rare cases, a small number of parameters may be dynamically reset to appropriate values during runtime.
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 

@@ -37,7 +37,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
     // save the results in dense matrix by now.
     // pv.nloc: number of H elements in this proc.
 
-    assert(pv.nloc>0);
+    assert(pv.nloc > 0);
     fsr.DSloc_x = new double[pv.nloc];
     fsr.DSloc_y = new double[pv.nloc];
     fsr.DSloc_z = new double[pv.nloc];
@@ -230,11 +230,9 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
-        const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
-
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
-        DeePKS_domain::cal_f_delta<double>(dm_gamma,
+        DeePKS_domain::cal_f_delta<double>(ld.dm_r,
                                            ucell,
                                            orb,
                                            gd,

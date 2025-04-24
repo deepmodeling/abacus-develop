@@ -45,8 +45,6 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
-
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -70,17 +68,17 @@ TEST_F(cal_epsilon_test, cal_epsilon)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
-    GlobalC::rhopw->initgrids(lat0, latvec, wfcecut);
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
+    pwtest.initgrids(lat0, latvec, wfcecut);
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
 
-    GlobalC::rhopw->nrxx = 125000;
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    pwtest.nrxx = 125000;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
 
     std::ifstream fin;
     fin.open("./support/PS_TOTN_real.in");
@@ -99,8 +97,7 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     double* epsilon = new double[nrxx];
     double* epsilon0 = new double[nrxx];
 
-    GlobalC::rhopw = &pwtest;
-    solvent_model.cal_epsilon(GlobalC::rhopw, PS_TOTN_real, epsilon, epsilon0);
+    solvent_model.cal_epsilon(&pwtest, PS_TOTN_real, epsilon, epsilon0);
 
     EXPECT_EQ(PS_TOTN_real[0], 0.274231);
     EXPECT_EQ(epsilon[0], 1);

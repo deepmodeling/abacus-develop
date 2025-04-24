@@ -52,7 +52,6 @@
     - [lcao\_dr](#lcao_dr)
     - [lcao\_rmax](#lcao_rmax)
     - [search\_radius](#search_radius)
-    - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
     - [elpa\_num\_thread](#elpa_num_thread)
     - [num\_stream](#num_stream)
@@ -140,6 +139,7 @@
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
+    - [out\_ldos](#out_ldos)
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
@@ -152,8 +152,10 @@
     - [out\_mat\_hs2](#out_mat_hs2)
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
+    - [out\_mat\_ds](#out_mat_ds)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
+    - [out\_mat\_l](#out_mat_l)
     - [out\_eband\_terms](#out_eband_terms)
     - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
     - [dm\_to\_rho](#dm_to_rho)
@@ -174,6 +176,7 @@
     - [dos\_emin\_ev](#dos_emin_ev)
     - [dos\_emax\_ev](#dos_emax_ev)
     - [dos\_nche](#dos_nche)
+    - [stm\_bias](#stm_bias)
   - [NAOs](#naos)
     - [bessel\_nao\_ecut](#bessel_nao_ecut)
     - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
@@ -919,12 +922,6 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Description**: Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.
 - **Default**: -1
 - **Unit**: Bohr
-
-### search_pbc
-
-- **Type**: Boolean
-- **Description**: If True, periodic images will be included in searching for the neighbouring atoms. If False, periodic images will be ignored.
-- **Default**: True
 
 ### bx, by, bz
 
@@ -1702,9 +1699,15 @@ These variables are used to control the output of properties.
 - **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
   - 0: no output
   - 1: output the density of states (DOS)
-  - 2: 
-    - lcao-only: output the density of states (DOS) and the projected density of states (PDOS)
+  - 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
+  - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen 
 - **Default**: 0
+
+### out_ldos
+
+- **Type**: Boolean
+- **Description**: Whether to output the local density of states for given bias in cube file format, which is controlled by [stm_bias](#stm_bias). 
+- **Default**: False
 
 ### out_band
 
@@ -1792,6 +1795,13 @@ These variables are used to control the output of properties.
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix (in Ry/Bohr). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 
+### out_mat_ds
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the derivatives of the Overlap matrix (in Ry/Bohr). The format will be the same as the Overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `data-dSRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
+- **Default**: False
+
 ### out_mat_xc
 
 - **Type**: Boolean
@@ -1806,6 +1816,13 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Availability**: Numerical atomic orbital (NAO) basis
 - **Description**: Whether to print the exchange-correlation matrices in **numerical orbital representation** (unit: Ry): $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format (the same format as [out_mat_hs2](../elec_properties/hs_matrix.md#out_mat_hs2)) in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
 - **Default**: False
+
+### out_mat_l
+
+- **Type**: Boolean [Integer\](optional)
+- **Availability**: Numerical atomic orbital (NAO) basis
+- **Description**: Whether to print the expectation value of the angular momentum operator $\hat{L}_x$, $\hat{L}_y$, and $\hat{L}_z$ in the basis of the localized atomic orbitals. The files are named `OUT.${suffix}/${suffix}_Lx.dat`, `OUT.${suffix}/${suffix}_Ly.dat`, and `OUT.${suffix}/${suffix}_Lz.dat`. The second integer controls the precision of the output.
+- **Default**: False 8
 
 ### out_eband_terms
 
@@ -1955,8 +1972,19 @@ These variables are used to control the calculation of DOS. [Detailed introducti
 ### dos_nche
 
 - **Type**: Integer
-The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
+- **Description**: The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.
 - **Default**: 100
+
+### stm_bias
+
+- **Type**: Real Real(optional) Integer(optional)
+- **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos). When using three parameters:
+
+  - The first parameter specifies the initial bias voltage value. 
+  - The second parameter defines the voltage increment (step size between consecutive bias values). 
+  - The third parameter determines the total number of voltage points
+- **Default**: 1.0
+- **Unit**: V
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2004,10 +2032,13 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### deepks_out_labels
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: numerical atomic orbital basis
-- **Description**: Print labels and descriptors for DeePKS training in OUT.${suffix}. The names of these files start with "deepks".
-- **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
+- **Description**: Print labels and descriptors for DeePKS in OUT.${suffix}. The names of these files start with "deepks".
+  - 0 : No output.
+  - 1 : Output intermediate files needed during DeePKS training.
+  - 2 : Output target labels for label preperation. The label files are named as `deepks_<property>.npy`, where the units and formats are the same as label files `<property>.npy` required for training, except that the first dimension (`nframes`) is excluded. System structrue files are also given in `deepks_atom.npy` and `deepks_box.npy` in the unit of *Bohr*, which means `lattice_constant` should be set to 1 when training. 
+- **Note**: When `deepks_out_labels` equals **1**, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```text
   NUMERICAL_ORBITAL
@@ -2017,8 +2048,8 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
-
-- **Default**: False
+  This is not needed when `deepks_out_labels` equals 2. 
+- **Default**: 0
 
 ### deepks_scf
 
@@ -3548,9 +3579,11 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**:
   `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+
   $$
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
+
 - **Default**: 0.05
 
 ### td_lcut2
@@ -3558,9 +3591,11 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Real
 - **Description**:
   `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+
   $$
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
+
 - **Default**: 0.95
 
 ### td_gauss_freq
@@ -3854,12 +3889,6 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**: Specify whether to output the detailed components in stress.
-  - 0: No.
-  - 1: Yes.
-- **Default**: 0
-
-- **Type**: Boolean
-- **Description**: Specify whether to set the colorful output in terminal.
   - 0: No.
   - 1: Yes.
 - **Default**: 0

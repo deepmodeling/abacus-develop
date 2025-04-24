@@ -12,9 +12,7 @@
 
 namespace GlobalC
 {
-	  UnitCell ucell;
     ModulePW::PW_Basis* rhopw;
-    Parallel_Grid Pgrid;
 }
 
 UnitCell::UnitCell(){};

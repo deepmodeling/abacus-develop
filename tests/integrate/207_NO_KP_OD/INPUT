@@ -5,27 +5,26 @@ calculation     nscf
 
 nbands			6
 symmetry		0
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB
 read_file_dir   ./
 gamma_only      0
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr				1e-8
-scf_nmax			100
+ecutwfc		  20
+scf_thr		  1e-8
+scf_nmax	  100
 
-#out_chg      1
-init_chg     file
-out_dos          1
-pw_diag_thr             0.00001
+init_chg      file
+out_dos       1
+pw_diag_thr   0.00001
 
 #Parameters (3.Basis)
-basis_type		lcao
+basis_type	  lcao
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma			0.002
+smearing_method	 gauss
+smearing_sigma	 0.002
 
 #Parameters (5.Mixing)
 mixing_type		broyden

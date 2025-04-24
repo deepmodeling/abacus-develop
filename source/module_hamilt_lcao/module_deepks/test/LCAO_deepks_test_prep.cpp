@@ -8,13 +8,13 @@
 
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 namespace GlobalC
 {
@@ -171,7 +171,7 @@ void test_deepks<T>::prep_neighbour()
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.sys.gamma_only_local);
 
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          Test_Deepks::GridD,
                          ucell,

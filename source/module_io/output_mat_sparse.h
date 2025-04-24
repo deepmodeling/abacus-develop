@@ -13,6 +13,7 @@ namespace ModuleIO
 template <typename T>
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
+                       const bool& out_mat_ds,
                        const bool& out_mat_t,
                        const bool& out_mat_r,
                        const int& istep,

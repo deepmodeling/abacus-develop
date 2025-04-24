@@ -21,10 +21,10 @@ void PhiOperator::set_phi(T* phi) const
 // phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
 template<typename T>
 void PhiOperator::phi_mul_dm(
-    const T*const phi,
-    const HContainer<T>& dm,
+    const T*const phi,                  // phi(ir,iwt)
+    const HContainer<T>& dm,            // dm(iwt_1,iwt_2)
     const bool is_symm,
-    T*const phi_dm) const
+    T*const phi_dm) const               // phi_dm(ir,iwt)
 {
     ModuleBase::GlobalFunc::ZEROS(phi_dm, rows_ * cols_);
 
@@ -86,10 +86,10 @@ void PhiOperator::phi_mul_dm(
 // result(ir) = phi(ir) * vl(ir)
 template<typename T>
 void PhiOperator::phi_mul_vldr3(
-    const T*const vl,
+    const T*const vl,                   // vl(ir)
     const T dr3,
-    const T*const phi,
-    T*const result) const
+    const T*const phi,                  // phi(ir,iwt)
+    T*const result) const               // result(ir,iwt)
 {
     int idx = 0;
     for(int i = 0; i < biggrid_->get_mgrids_num(); i++)
@@ -107,8 +107,8 @@ void PhiOperator::phi_mul_vldr3(
 // this is a thread-safe function
 template<typename T>
 void PhiOperator::phi_mul_phi(
-    const T*const phi_i,                // phi_i(ir,iwt_i)
-    const T*const phi_j,                // phi_j(ir,iwt_j)
+    const T*const phi_i,                // phi_i(ir,iwt)
+    const T*const phi_j,                // phi_j(ir,iwt)
     HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
     const Triangular_Matrix triangular_matrix) const
 {
@@ -174,9 +174,9 @@ void PhiOperator::phi_mul_phi(
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
 template<typename T>
 void PhiOperator::phi_dot_phi(
-    const T*const phi_i,           // phi_i(igrid,iwt)
-    const T*const phi_j,           // phi_j(igrid,iwt)
-    T*const rho) const             // rho(igrid)
+    const T*const phi_i,           // phi_i(ir,iwt)
+    const T*const phi_j,           // phi_j(ir,iwt)
+    T*const rho) const             // rho(ir)
 {
     constexpr int inc = 1;
     for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)

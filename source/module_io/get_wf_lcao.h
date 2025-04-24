@@ -1,5 +1,5 @@
-#ifndef ISTATE_ENVELOPE_H
-#define ISTATE_ENVELOPE_H
+#ifndef GET_WF_LCAO_H
+#define GET_WF_LCAO_H
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
@@ -10,11 +10,11 @@
 #include "module_psi/psi.h"
 
 #include <stdexcept>
-class IState_Envelope
+class Get_wf_lcao
 {
   public:
-    IState_Envelope(const elecstate::ElecState* pes);
-    ~IState_Envelope();
+    Get_wf_lcao(const elecstate::ElecState* pes);
+    ~Get_wf_lcao();
 
     /// For gamma_only
     void begin(const UnitCell& ucell,
@@ -107,6 +107,9 @@ class IState_Envelope
     };
 
   private:
+
+    void prepare_get_wf(std::ofstream &ofs_running, const int nelec, int& fermi_band);
+
     void select_bands(const int nbands_istate,
                       const std::vector<int>& out_wfc_kb,
                       const int nbands,

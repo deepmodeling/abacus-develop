@@ -560,15 +560,15 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(
             cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc));
-#endif
     }
+#endif
 	else {
 		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
@@ -599,9 +599,9 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle,
@@ -618,8 +618,8 @@ void BlasConnector::gemm_cm(const char transa,
                                    (float2*)&beta,
                                    (float2*)c,
                                    ldc));
-#endif
     }
+#endif
 	else {
 		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
@@ -650,9 +650,9 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle,
@@ -669,8 +669,8 @@ void BlasConnector::gemm_cm(const char transa,
                                    (double2*)&beta,
                                    (double2*)c,
                                    ldc));
-#endif
     }
+#endif
 	else {
 		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}

@@ -2,7 +2,6 @@
 
 namespace GlobalC
 {
-    Structure_Factor sf;
     ModulePW::PW_Basis* rhopw;
 }
 

@@ -13,6 +13,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks.h"
+#include "deepks_iterate.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // Constructor of the class
@@ -207,9 +208,57 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
 }
 
 template <typename T>
+void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
+                              const LCAO_Orbitals& orb,
+                              const Parallel_Orbitals& pv,
+                              const Grid_Driver& GridD)
+{
+    this->dm_r = new hamilt::HContainer<double>(&pv);
+    DeePKS_domain::iterate_ad2(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt1,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start1,
+            const int nw1_tot,
+            ModuleBase::Vector3<int> dR1,
+            const int ibt2,
+            const ModuleBase::Vector3<double>& tau2,
+            const int start2,
+            const int nw2_tot,
+            ModuleBase::Vector3<int> dR2) 
+        {
+            auto row_indexes = pv.get_indexes_row(ibt1);
+            auto col_indexes = pv.get_indexes_col(ibt2);
+            if (row_indexes.size() * col_indexes.size() == 0)
+            {
+                return; // to next loop
+            }
+
+            int dRx = 0;
+            int dRy = 0;
+            int dRz = 0;
+            if (std::is_same<T, std::complex<double>>::value)
+            {
+                dRx = (dR1 - dR2).x;
+                dRy = (dR1 - dR2).y;
+                dRz = (dR1 - dR2).z;
+            }
+            hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
+            this->dm_r->insert_pair(dm_pair);
+        }
+    );
+    this->dm_r->allocate(nullptr, true);
+}
+
+template <typename T>
 void LCAO_Deepks<T>::dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks)
 {
-    DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, this->pv, this->e_delta_band);
+    DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, PARAM.inp.nspin, this->pv, this->e_delta_band);
 }
 
 template class LCAO_Deepks<double>;

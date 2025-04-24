@@ -144,6 +144,21 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_ldos");
+        item.annotation = "output local density of states, second parameter controls the precision";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
+            }
+            para.input.out_ldos[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+        };
+        sync_intvec(input.out_ldos, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
         read_sync_bool(input.out_mul);
@@ -281,6 +296,21 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_l");
+        item.annotation = "output the expectation values of angular momentum operators";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
+            }
+            para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_l[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+        };
+        sync_intvec(input.out_mat_l, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
         read_sync_bool(input.out_mat_dh);
@@ -288,6 +318,18 @@ void ReadInput::item_output()
             if (para.input.out_mat_dh && para.input.nspin == 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh is not available for nspin = 4");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_ds");
+        item.annotation = "output of derivative of S(R) matrix";
+        read_sync_bool(input.out_mat_ds);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_ds && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_ds is not available for nspin = 4");
             }
         };
         this->add_item(item);

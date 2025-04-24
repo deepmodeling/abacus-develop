@@ -126,12 +126,10 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                     const int T2 = GridD.getType(ad2);
                     const int I2 = GridD.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2, I2);
-                    if constexpr (std::is_same<TK, std::complex<double>>::value) // Why only for multi-k?
+                    // skip if ibt1 > ibt2 and set gemm_alpha = 2.0 later, for performance
+                    if (ibt1 > ibt2)
                     {
-                        if (ibt1 > ibt2)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
                     const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
@@ -169,71 +167,52 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                         }
                     }
 
-                    std::vector<double> dm_array(row_size * nks * col_size, 0.0);
+                    std::vector<double> dm_array(row_size * dm_hl.size() * col_size, 0.0);
 
-                    const int row_size_nks = row_size * nks;
+                    const int row_size_nks = row_size * dm_hl.size();
 
-                    if constexpr (std::is_same<TK, double>::value)
+                    int dRx = 0;
+                    int dRy = 0;
+                    int dRz = 0;
+                    if (std::is_same<TK, std::complex<double>>::value)
                     {
-                        for (int is = 0; is < PARAM.inp.nspin; is++)
-                        {
-                            hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, &pv);
-
-                            dm_pair.allocate(dm_array.data(), 0);
-
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                            {
-                                dm_pair.add_from_matrix(dm_hl[is].c, pv.get_row_size(), 1.0, 1);
-                            }
-                            else
-                            {
-                                dm_pair.add_from_matrix(dm_hl[is].c, pv.get_col_size(), 1.0, 0);
-                            }
-                        } // is
+                        dRx = dR1.x - dR2.x;
+                        dRy = dR1.y - dR2.y;
+                        dRz = dR1.z - dR2.z;
                     }
-                    else
+                    ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
+
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dR.x, dR.y, dR.z, &pv);
+
+                    for (int ik = 0; ik < dm_hl.size(); ik++)
                     {
-                        for (int ik = 0; ik < nks; ik++)
+                        dm_pair.allocate(&dm_array[ik * row_size * col_size], 0);
+
+                        std::complex<double> kphase = std::complex<double>(1, 0);
+                        if (std::is_same<TK, std::complex<double>>::value)
                         {
-                            hamilt::AtomPair<double> dm_pair(ibt1,
-                                                             ibt2,
-                                                             (dR2 - dR1).x,
-                                                             (dR2 - dR1).y,
-                                                             (dR2 - dR1).z,
-                                                             &pv);
-
-                            dm_pair.allocate(&dm_array[ik * row_size * col_size], 0);
-
                             const double arg
-                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR2 - dR1)) * ModuleBase::TWO_PI;
+                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
+                            kphase = std::complex<double>(cos(arg), sin(arg));
+                        }
+                        TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
 
-                            double sinp, cosp;
-
-                            ModuleBase::libm::sincos(arg, &sinp, &cosp);
-
-                            const std::complex<double> kphase = std::complex<double>(cosp, sinp);
-
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                            {
-                                dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_row_size(), kphase, 1);
-                            }
-                            else
-                            {
-                                dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_col_size(), kphase, 0);
-                            }
-                        } // ik
-                    }
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        {
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_row_size(), *kphase_ptr, 1);
+                        }
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm_hl[ik].c, pv.get_col_size(), *kphase_ptr, 0);
+                        }
+                    } // ik
 
                     // dgemm for s_2t and dm_array to get g_1dmt
                     constexpr char transa = 'T', transb = 'N';
                     double gemm_alpha = 1.0, gemm_beta = 1.0;
-
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    if (ibt1 < ibt2)
                     {
-                        if (ibt1 < ibt2)
-                        {
-                            gemm_alpha = 2.0;
-                        }
+                        gemm_alpha = 2.0;
                     }
 
                     dgemm_(&transa,
@@ -296,33 +275,10 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     std::vector<torch::Tensor> orbital_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        std::vector<torch::Tensor> kammv;
-        for (int iks = 0; iks < nks; ++iks)
-        {
-            std::vector<torch::Tensor> ammv;
-            for (int iat = 0; iat < nat; ++iat)
-            {
-                int inl = iat * nlmax + nl;
-                int nm = 2 * inl2l[inl] + 1;
-                std::vector<double> mmv;
-
-                for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
-                {
-                    for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
-                    {
-                        mmv.push_back(accessor[iks][inl][m1][m2]);
-                    }
-                }
-                torch::Tensor mm
-                    = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
-
-                ammv.push_back(mm);
-            }
-            torch::Tensor amm = torch::stack(ammv, 0);
-            kammv.push_back(amm);
-        }
-        torch::Tensor kamm = torch::stack(kammv, 0);
-        orbital_pdm_vector.push_back(kamm);
+        int nm = 2 * inl2l[nl] + 1;
+        torch::Tensor orbital_pdm_sliced
+            = orbital_pdm.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+        orbital_pdm_vector.push_back(orbital_pdm_sliced);
     }
 
     assert(orbital_pdm_vector.size() == nlmax);

@@ -166,8 +166,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (psi_in + m*ld_psi),
-                reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
+            GlobalC::paw_cell.paw_nl_psi(1,
+                                         reinterpret_cast<const std::complex<double>*>(psi_in + m * ld_psi),
+                                         reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
 #endif
         }
         else
@@ -191,8 +192,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         if(this->use_paw)
         {
 #ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*m),
-                reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
+            GlobalC::paw_cell.paw_nl_psi(1,
+                                         reinterpret_cast<const std::complex<double>*>(basis + dim * m),
+                                         reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
 #endif
         }
         else

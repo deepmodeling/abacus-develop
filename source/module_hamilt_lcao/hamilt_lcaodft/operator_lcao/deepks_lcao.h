@@ -101,8 +101,6 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const double* hr_in, const int& row_size, const int& col_size, TR* data_pointer);
 
-    void pre_calculate_nlm(const int iat0, std::vector<std::unordered_map<int, std::vector<double>>>& nlm_in);
-    std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
     /**
      * @brief initialize V_delta_R, search the nearest neighbor atoms
      * used for calculate the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs

@@ -41,7 +41,7 @@ TEST_F(cal_vcav_test, lapl_rho)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
+    
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -60,22 +60,22 @@ TEST_F(cal_vcav_test, lapl_rho)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     std::complex<double>* gdrtmpg = new std::complex<double>[npw];
     double* lapn = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(lapn, nrxx);
 
-    std::complex<double>* aux = new std::complex<double>[GlobalC::rhopw->nmaxgr];
+    std::complex<double>* aux = new std::complex<double>[pwtest.nmaxgr];
 
     gdrtmpg[0] = {2.431e-07, 4.760e-08};
     gdrtmpg[1] = {-7.335e-08, 9.826e-07};
@@ -89,9 +89,9 @@ TEST_F(cal_vcav_test, lapl_rho)
     {
         for (int ig = 0; ig < npw; ig++)
         {
-            aux[ig] = gdrtmpg[ig] * pow(GlobalC::rhopw->gcar[ig][i], 2);
+            aux[ig] = gdrtmpg[ig] * pow(pwtest.gcar[ig][i], 2);
         }
-        GlobalC::rhopw->recip2real(aux, aux);
+        pwtest.recip2real(aux, aux);
         for (int ir = 0; ir < nrxx; ir++)
         {
             lapn[ir] -= aux[ir].real() * ucell.tpiba2;
@@ -148,7 +148,7 @@ TEST_F(cal_vcav_test, createcavity)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
+    
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -167,17 +167,17 @@ TEST_F(cal_vcav_test, createcavity)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     std::complex<double>* PS_TOTN = new std::complex<double>[npw];
     double* vwork = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(vwork, nrxx);
@@ -191,7 +191,7 @@ TEST_F(cal_vcav_test, createcavity)
         PS_TOTN[ig] = 1e-7;
     }
 
-    solvent_model.createcavity(ucell, GlobalC::rhopw, PS_TOTN, vwork);
+    solvent_model.createcavity(ucell, &pwtest, PS_TOTN, vwork);
 
     EXPECT_NEAR(vwork[0], 4.8556305312, 1e-10);
     EXPECT_NEAR(vwork[1], -2.1006480538, 1e-10);
@@ -209,7 +209,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    GlobalC::rhopw = &pwtest;
+    
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz;
     double wfcecut;
@@ -228,17 +228,17 @@ TEST_F(cal_vcav_test, cal_vcav)
 #endif
 
 #ifdef __MPI
-    GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
+    pwtest.initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
+    pwtest.initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
-    GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
-    GlobalC::rhopw->setuptransform();
-    GlobalC::rhopw->collect_local_pw();
-    GlobalC::rhopw->collect_uniqgg();
+    pwtest.initparameters(gamma_only, wfcecut, distribution_type, xprime);
+    pwtest.setuptransform();
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
 
-    const int npw = GlobalC::rhopw->npw;
-    const int nrxx = GlobalC::rhopw->nrxx;
+    const int npw = pwtest.npw;
+    const int nrxx = pwtest.nrxx;
     std::complex<double>* PS_TOTN = new std::complex<double>[npw];
 
     PS_TOTN[0] = {2.432e-07, 4.862e-08};
@@ -253,7 +253,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     int nspin = 2;
     solvent_model.Vcav.create(nspin, nrxx);
 
-    solvent_model.cal_vcav(ucell, GlobalC::rhopw, PS_TOTN, nspin);
+    solvent_model.cal_vcav(ucell, &pwtest, PS_TOTN, nspin);
 
     EXPECT_NEAR(solvent_model.Vcav(0, 0), 4.8556305312, 1e-10);
     EXPECT_NEAR(solvent_model.Vcav(0, 1), -2.1006480538, 1e-10);

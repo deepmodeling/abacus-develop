@@ -9,6 +9,7 @@ namespace ModuleIO
 template <>
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
+                       const bool& out_mat_ds,
                        const bool& out_mat_t,
                        const bool& out_mat_r,
                        const int& istep,
@@ -27,6 +28,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
 template <>
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
+                       const bool& out_mat_ds,
                        const bool& out_mat_t,
                        const bool& out_mat_r,
                        const int& istep,
@@ -67,6 +69,18 @@ void output_mat_sparse(const bool& out_mat_hsR,
                    two_center_bundle,
                    orb,
                    kv); // LiuXh add 2019-07-15
+    }
+    //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
+    if (out_mat_ds)
+    {
+        output_dSR(istep,
+                   ucell,
+                   pv,
+                   HS_Arrays,
+                   grid, // mohan add 2024-04-06
+                   two_center_bundle,
+                   orb,
+                   kv);
     }
 
     // add by jingan for out r_R matrix 2019.8.14

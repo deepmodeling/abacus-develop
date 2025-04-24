@@ -67,7 +67,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
         double search_radius = PARAM.inp.search_radius;
-        atom_arrange::search(PARAM.inp.search_pbc,
+        atom_arrange::search(PARAM.globalv.search_pbc,
                              GlobalV::ofs_running,
                              this->gd,
                              ucell,
@@ -86,7 +86,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          ucell,
@@ -345,10 +345,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        IState_Envelope wavefunc(this->pelec);
+        Get_wf_lcao get_wf(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -370,7 +370,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,

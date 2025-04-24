@@ -1,9 +1,9 @@
-1, modify file general_info
+1. Modify the file general_info
 
-2, try this script for autotest:
+2. try this script for autotest:
 ./Autotest.sh > check.txt
 
-3, if want to focus on No. xxx example, such as 101_PW_OU_PL:
+3. if you want to focus on No.xxx example, such as 101_PW_OU_PL:
 cd 101_PW_OU_PL
 ./../run_debug.sh $parameter
 
@@ -20,7 +20,6 @@ NOTES:
 3,  if there is any bug occurs, rename the bug example path to mark it please.
 
 #######################
-##################
 
 "simple" scripts
 

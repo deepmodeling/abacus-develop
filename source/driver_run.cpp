@@ -25,12 +25,13 @@
  */
 void Driver::driver_run()
 {
-    ModuleBase::TITLE("Driver", "driver_line");
+    ModuleBase::TITLE("Driver", "driver_run");
 
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
     if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
+        ModuleBase::timer::tick("Driver","driver_run");
         ModuleBase::WARNING_QUIT("driver",
                                  "to use LCAO basis, compile with __LCAO");
     }
@@ -92,5 +93,6 @@ void Driver::driver_run()
 
     //! 6: output the json file
     Json::create_Json(&ucell, PARAM);
+
     return;
 }

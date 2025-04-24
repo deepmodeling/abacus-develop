@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
+#ifndef GLOBAL_FUNCTION_H
+#define GLOBAL_FUNCTION_H
 
 #include "blas_connector.h"
 #include "global_function-func_each_2.h" // Peize Lin add 2016-09-07
@@ -145,13 +145,26 @@ static void READ_VALUE(std::ifstream& ifs, T& v)
     return;
 }
 
-bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart = true, const bool ifwarn = true);
-// ifwarn: whether to call GlobalV::ofs_warning when the TargetName is not found, used to avoid invalid warning.
-// Mohan warning : the last term can't be written as const bool &restart,
-// I don't know why.
+//-------------------------------------------------------------
+//! The `SCAN_BEGIN` function efficiently searches 
+//! text files for specified keywords 
+//-------------------------------------------------------------
+bool SCAN_BEGIN(std::ifstream& ifs, 
+                const std::string& TargetName, 
+                const bool restart = true, 
+                const bool ifwarn = true);
+
+//-------------------------------------------------------------
+// The `SCAN_LINE_BEGIN` function efficiently searches 
+// text files for specified keywords while ignoring comment
+// lines and whitespace. It skips any line starting with '#' 
+//-------------------------------------------------------------
+bool SCAN_LINE_BEGIN(std::ifstream& ifs, 
+                const std::string& TargetName, 
+                const bool restart = true, 
+                const bool ifwarn = true);
 
 void SCAN_END(std::ifstream& ifs, const std::string& TargetName, const bool ifwarn = true);
-// ifwarn: whether to call GlobalV::ofs_warning when the TargetName is not found, used to avoid invalid warning.
 
 template <class T>
 static inline void DCOPY(const T& a, T& b, const int& dim)

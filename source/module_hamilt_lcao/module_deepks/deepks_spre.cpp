@@ -21,7 +21,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
                                 const ModuleBase::IntArray* inl_index,
-                                const std::vector<std::vector<TK>>& dm,
+                                const hamilt::HContainer<double>* dmr,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
@@ -72,45 +72,18 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                 return; // to next loop
             }
 
-            double* dm_current = nullptr;
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if constexpr (std::is_same<TK, std::complex<double>>::value)
+            if (std::is_same<TK, std::complex<double>>::value)
             {
-                dRx = (dR2 - dR1).x;
-                dRy = (dR2 - dR1).y;
-                dRz = (dR2 - dR1).z;
+                dRx = (dR1 - dR2).x;
+                dRy = (dR1 - dR2).y;
+                dRz = (dR1 - dR2).z;
             }
             ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
-            hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
-            dm_pair.allocate(nullptr, 1);
-            for (int ik = 0; ik < nks; ik++)
-            {
-                TK kphase = TK(0);
-                if constexpr (std::is_same<TK, double>::value)
-                {
-                    kphase = 1.0;
-                }
-                else
-                {
-                    const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                    double sinp, cosp;
-                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    kphase = TK(cosp, sinp);
-                }
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                {
-                    dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
-                }
-                else
-                {
-                    dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
-                }
-            }
-
-            dm_current = dm_pair.get_pointer();
+            const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
 
             hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
             hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
@@ -229,34 +202,13 @@ void DeePKS_domain::cal_gvepsl(const int nat,
     auto accessor = gdmepsl.accessor<double, 4>();
     if (rank == 0)
     {
-        // make gdmx as tensor
+        // make gdmepsl as tensor
         int nlmax = inlmax / nat;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            std::vector<torch::Tensor> bmmv;
-            for (int i = 0; i < 6; ++i)
-            {
-                std::vector<torch::Tensor> ammv;
-                for (int iat = 0; iat < nat; ++iat)
-                {
-                    int inl = iat * nlmax + nl;
-                    int nm = 2 * inl2l[inl] + 1;
-                    std::vector<double> mmv;
-                    for (int m1 = 0; m1 < nm; ++m1)
-                    {
-                        for (int m2 = 0; m2 < nm; ++m2)
-                        {
-                            mmv.push_back(accessor[i][inl][m1][m2]);
-                        }
-                    } // nm^2
-                    torch::Tensor mm
-                        = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
-                    ammv.push_back(mm);
-                }
-                torch::Tensor bmm = torch::stack(ammv, 0); // nat*nm*nm
-                bmmv.push_back(bmm);
-            }
-            gdmepsl_vector.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+            int nm = 2 * inl2l[nl] + 1;
+            torch::Tensor gdmepsl_sliced = gdmepsl.slice(1, nl, inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            gdmepsl_vector.push_back(gdmepsl_sliced);
         }
         assert(gdmepsl_vector.size() == nlmax);
 
@@ -322,7 +274,7 @@ template void DeePKS_domain::cal_gdmepsl<double>(const int lmaxd,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
                                                  const ModuleBase::IntArray* inl_index,
-                                                 const std::vector<std::vector<double>>& dm,
+                                                 const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Parallel_Orbitals& pv,
@@ -335,7 +287,7 @@ template void DeePKS_domain::cal_gdmepsl<std::complex<double>>(const int lmaxd,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
                                                                const ModuleBase::IntArray* inl_index,
-                                                               const std::vector<std::vector<std::complex<double>>>& dm,
+                                                               const hamilt::HContainer<double>* dmr,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Parallel_Orbitals& pv,

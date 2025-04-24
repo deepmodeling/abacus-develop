@@ -62,7 +62,7 @@ AddTest(
 AddTest(
   TARGET io_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp
 )
 
 AddTest(
@@ -261,3 +261,26 @@ add_test(
   COMMAND mpirun -np 2 ./io_read_wfc_nao_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET cal_pLpR_test
+  LIBS parameter base ${math_libs} device neighbor
+  SOURCES 
+  cal_pLpR_test.cpp 
+  ../cal_pLpR.cpp
+  ../../module_basis/module_ao/ORB_atomic_lm.cpp
+  ../../module_basis/module_ao/ORB_atomic.cpp
+  ../../module_basis/module_nao/radial_set.cpp
+  ../../module_basis/module_nao/numerical_radial.cpp
+  ../../module_basis/module_nao/beta_radials.cpp
+  ../../module_basis/module_nao/hydrogen_radials.cpp
+  ../../module_basis/module_nao/pswfc_radials.cpp
+  ../../module_basis/module_nao/atomic_radials.cpp
+  ../../module_basis/module_nao/sphbes_radials.cpp
+  ../../module_basis/module_nao/two_center_integrator.cpp
+  ../../module_basis/module_nao/two_center_table.cpp
+  ../../module_basis/module_nao/real_gaunt_table.cpp
+  ../../module_basis/module_nao/radial_collection.cpp
+)
+endif()

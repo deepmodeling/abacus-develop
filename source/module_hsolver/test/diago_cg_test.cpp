@@ -105,8 +105,6 @@ class DiagoCGPrepare
         int ik = 1;
 	    hamilt::Hamilt<std::complex<double>>* ha;
 	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
-	    int* ngk = new int [1];
-	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<double>> psi;
 	    psi.resize(ik,nband,npw);
 	    //psi.fix_k(0);

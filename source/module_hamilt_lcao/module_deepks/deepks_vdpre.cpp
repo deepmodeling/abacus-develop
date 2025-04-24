@@ -44,6 +44,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     // gettimeofday(&t_start,NULL);
 
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
+    using TK_tensor =
+        typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
 
     torch::Tensor v_delta_pdm
         = torch::zeros({nks, nlocal, nlocal, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(dtype));
@@ -101,14 +103,13 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                     {
                         int ib = 0;
                         std::complex<double> kphase = std::complex<double>(1.0, 0.0);
-                        if constexpr (std::is_same<TK, std::complex<double>>::value)
+                        if (std::is_same<TK, std::complex<double>>::value)
                         {
                             const double arg
-                                = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
-                            double sinp, cosp;
-                            ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                            kphase = std::complex<double>(cosp, sinp);
+                                = (kvec_d[ik] * ModuleBase::Vector3<double>(dR1 - dR2)) * ModuleBase::TWO_PI;
+                            kphase = std::complex<double>(cos(arg), sin(arg));
                         }
+                        TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
                         for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
                         {
                             for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
@@ -119,19 +120,9 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                 {
                                     for (int m2 = 0; m2 < nm; ++m2) // nm = 1 for s, 3 for p, 5 for d
                                     {
-                                        if constexpr (std::is_same<TK, double>::value)
-                                        {
-                                            accessor[ik][iw1][iw2][inl][m1][m2] += overlap_1->get_value(iw1, ib + m1)
-                                                                                   * overlap_2->get_value(iw2, ib + m2);
-                                        }
-                                        else
-                                        {
-                                            c10::complex<double> tmp;
-                                            tmp = overlap_1->get_value(iw1, ib + m1)
-                                                  * overlap_2->get_value(iw2, ib + m2)
-                                                  * kphase; // from std::complex to c10::complex
-                                            accessor[ik][iw1][iw2][inl][m1][m2] += tmp;
-                                        }
+                                        TK_tensor tmp = overlap_1->get_value(iw1, ib + m1)
+                                                        * overlap_2->get_value(iw2, ib + m2) * *kpase_ptr;
+                                        accessor[ik][iw1_all][iw2_all][inl][m1][m2] += tmp;
                                     }
                                 }
                                 ib += nm;
@@ -144,74 +135,20 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     );
 #ifdef __MPI
     const int size = nks * nlocal * nlocal * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
-    TK* data_ptr;
-    if constexpr (std::is_same<TK, double>::value)
-    {
-        data_ptr = v_delta_pdm.data_ptr<double>();
-    }
-    else
-    {
-        c10::complex<double>* c10_ptr = v_delta_pdm.data_ptr<c10::complex<double>>();
-        data_ptr = reinterpret_cast<TK*>(c10_ptr);
-    }
+    TK_tensor* data_tensor_ptr = v_delta_pdm.data_ptr<TK_tensor>();
+    TK* data_ptr = reinterpret_cast<TK*>(data_tensor_ptr);
     Parallel_Reduce::reduce_all(data_ptr, size);
 #endif
 
     // transfer v_delta_pdm to v_delta_pdm_vector
     int nlmax = inlmax / nat;
-
     std::vector<torch::Tensor> v_delta_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        std::vector<torch::Tensor> kuuammv;
-        for (int iks = 0; iks < nks; ++iks)
-        {
-            std::vector<torch::Tensor> uuammv;
-            for (int mu = 0; mu < nlocal; ++mu)
-            {
-                std::vector<torch::Tensor> uammv;
-                for (int nu = 0; nu < nlocal; ++nu)
-                {
-                    std::vector<torch::Tensor> ammv;
-                    for (int iat = 0; iat < nat; ++iat)
-                    {
-                        int inl = iat * nlmax + nl;
-                        int nm = 2 * inl2l[inl] + 1;
-                        std::vector<TK> mmv;
-
-                        for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
-                        {
-                            for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
-                            {
-                                if constexpr (std::is_same<TK, double>::value)
-                                {
-                                    mmv.push_back(accessor[iks][mu][nu][inl][m1][m2]);
-                                }
-                                else
-                                {
-                                    c10::complex<double> tmp_c10 = accessor[iks][mu][nu][inl][m1][m2];
-                                    std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
-                                    mmv.push_back(tmp);
-                                }
-                            }
-                        }
-                        torch::Tensor mm = torch::from_blob(mmv.data(),
-                                                            {nm, nm},
-                                                            torch::TensorOptions().dtype(dtype))
-                                               .clone(); // nm*nm
-                        ammv.push_back(mm);
-                    }
-                    torch::Tensor amm = torch::stack(ammv, 0);
-                    uammv.push_back(amm);
-                }
-                torch::Tensor uamm = torch::stack(uammv, 0);
-                uuammv.push_back(uamm);
-            }
-            torch::Tensor uuamm = torch::stack(uuammv, 0);
-            kuuammv.push_back(uuamm);
-        }
-        torch::Tensor kuuamm = torch::stack(kuuammv, 0);
-        v_delta_pdm_vector.push_back(kuuamm);
+        int nm = 2 * inl2l[nl] + 1;
+        torch::Tensor v_delta_pdm_sliced
+            = v_delta_pdm.slice(3, nl, inlmax, nlmax).slice(4, 0, nm, 1).slice(5, 0, nm, 1);
+        v_delta_pdm_vector.push_back(v_delta_pdm_sliced);
     }
 
     assert(v_delta_pdm_vector.size() == nlmax);
@@ -241,6 +178,8 @@ void DeePKS_domain::check_v_delta_precalc(const int nat,
                                           const int des_per_atom,
                                           const torch::Tensor& v_delta_precalc)
 {
+    using TK_tensor =
+        typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
     std::ofstream ofs("v_delta_precalc.dat");
     ofs << std::setprecision(10);
     auto accessor
@@ -256,16 +195,9 @@ void DeePKS_domain::check_v_delta_precalc(const int nat,
                 {
                     for (int p = 0; p < des_per_atom; ++p)
                     {
-                        if constexpr (std::is_same<TK, double>::value)
-                        {
-                            ofs << accessor[iks][mu][nu][iat][p] << " ";
-                        }
-                        else
-                        {
-                            c10::complex<double> tmp_c10 = accessor[iks][mu][nu][iat][p];
-                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
-                            ofs << tmp << " ";
-                        }
+                        TK_tensor tmp = accessor[iks][mu][nu][iat][p];
+                        TK* tmp_ptr = reinterpret_cast<TK*>(&tmp);
+                        ofs << *tmp_ptr << " ";
                     }
                 }
                 ofs << std::endl;
@@ -293,6 +225,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha");
     ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
+    using TK_tensor =
+        typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
     phialpha_out = torch::zeros({nat, nlmax, nks, nlocal, mmax}, dtype);
@@ -332,13 +266,12 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                 for (int ik = 0; ik < nks; ik++)
                 {
                     std::complex<double> kphase = std::complex<double>(1.0, 0.0);
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    if (std::is_same<TK, std::complex<double>>::value)
                     {
                         const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
-                        double sinp, cosp;
-                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                        kphase = std::complex<double>(cosp, sinp);
+                        kphase = std::complex<double>(cos(arg), sin(arg));
                     }
+                    TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
                     int ib = 0;
                     int nl = 0;
                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
@@ -348,16 +281,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                             const int nm = 2 * L0 + 1;
                             for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
                             {
-                                if constexpr (std::is_same<TK, double>::value)
-                                {
-                                    accessor[iat][nl][ik][iw1_all][m1] = overlap->get_value(iw1, ib + m1);
-                                }
-                                else
-                                {
-                                    c10::complex<double> tmp;
-                                    tmp = overlap->get_value(iw1, ib + m1) * kphase;
-                                    accessor[iat][nl][ik][iw1_all][m1] += tmp;
-                                }
+                                TK_tensor tmp = overlap->get_value(iw1, ib + m1) * *kpase_ptr;
+                                accessor[iat][nl][ik][iw1_all][m1] += tmp;
                             }
                             ib += nm;
                             nl++;
@@ -370,16 +295,8 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
 
 #ifdef __MPI
     int size = nat * nlmax * nks * nlocal * mmax;
-    TK* data_ptr;
-    if constexpr (std::is_same<TK, double>::value)
-    {
-        data_ptr = phialpha_out.data_ptr<double>();
-    }
-    else
-    {
-        c10::complex<double>* c10_ptr = phialpha_out.data_ptr<c10::complex<double>>();
-        data_ptr = reinterpret_cast<TK*>(c10_ptr);
-    }
+    TK_tensor* data_tensor_ptr = phialpha_out.data_ptr<TK_tensor>();
+    TK* data_ptr = reinterpret_cast<TK*>(data_tensor_ptr);
     Parallel_Reduce::reduce_all(data_ptr, size);
 
 #endif
@@ -396,6 +313,8 @@ void DeePKS_domain::check_vdp_phialpha(const int nat,
                                        const int lmaxd,
                                        const torch::Tensor& phialpha_out)
 {
+    using TK_tensor =
+        typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
     std::ofstream ofs("vdp_phialpha.dat");
     ofs << std::setprecision(10);
     auto accessor
@@ -413,16 +332,9 @@ void DeePKS_domain::check_vdp_phialpha(const int nat,
                 {
                     for (int m = 0; m < mmax; m++)
                     {
-                        if constexpr (std::is_same<TK, double>::value)
-                        {
-                            ofs << accessor[iat][nl][iks][mu][m] << " ";
-                        }
-                        else
-                        {
-                            c10::complex<double> tmp_c10 = accessor[iat][nl][iks][mu][m];
-                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
-                            ofs << tmp << " ";
-                        }
+                        TK_tensor tmp = accessor[iat][nl][iks][mu][m];
+                        TK* tmp_ptr = reinterpret_cast<TK*>(&tmp);
+                        ofs << *tmp_ptr << " ";
                     }
                 }
             }
@@ -445,29 +357,15 @@ void DeePKS_domain::prepare_gevdm(const int nat,
     int mmax = 2 * lmaxd + 1;
     gevdm_out = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
 
-    int nl = 0;
-    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
+    std::vector<torch::Tensor> gevdm_out_vector;
+    for (int nl = 0; nl < nlmax; ++nl)
     {
-        for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-        {
-            for (int iat = 0; iat < nat; iat++)
-            {
-                const int nm = 2 * L0 + 1;
-                for (int v = 0; v < nm; ++v) // nm = 1 for s, 3 for p, 5 for d
-                {
-                    for (int m = 0; m < nm; ++m)
-                    {
-                        for (int n = 0; n < nm; ++n)
-                        {
-                            gevdm_out[iat][nl][v][m][n] = gevdm_in[nl][iat][v][m][n];
-                        }
-                    }
-                }
-            }
-            nl++;
-        }
+        torch::Tensor gevdm_tmp = torch::zeros({nat, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
+        int nm = gevdm_in[nl].size(-1);
+        gevdm_tmp.slice(0, 0, nat).slice(1, 0, nm).slice(2, 0, nm).slice(3, 0, nm).copy_(gevdm_in[nl]);
+        gevdm_out_vector.push_back(gevdm_tmp);
     }
-    assert(nl == nlmax);
+    gevdm_out = torch::stack(gevdm_out_vector, 1);
 
     ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
     return;

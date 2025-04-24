@@ -73,7 +73,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                 {
                     if (is == 1)    // failed at the second spin
                     {
-                        std::cout << "Incomplete electron density file!" << std::endl;
+                        std::cout << " Incomplete electron density file." << std::endl;
                         read_error = true;
                         break;
                     }
@@ -105,15 +105,15 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         if (read_error)
         {
             const std::string warn_msg
-                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
-                  " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the "
+                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read\n charge density from file.\n"
+                  " Please check if there is SPINX_CHG.cube (X=1,...) or\n {suffix}-CHARGE-DENSITY.restart in the "
                   "directory.\n";
-            std::cout << std::endl << warn_msg;
+            std::cout << warn_msg;
             if (PARAM.inp.init_chg == "file")
             {
                 ModuleBase::WARNING_QUIT("Charge::init_rho",
-                                         "Failed to read in charge density from file.\nIf you want to use atomic "
-                                         "charge initialization, \nplease set init_chg to atomic in INPUT.");
+                                         "Failed to read in charge density from file.\n For initializing atomic "
+                                         "charge in calculations,\n please set init_chg to atomic in INPUT.");
             }
         }
 
@@ -196,8 +196,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::cout << " Charge::init_rho: init kinetic energy density from rho." << std::endl;
             }
-            const double pi = 3.141592653589790;
-            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            const double fact = (3.0 / 5.0) * pow(3.0 * ModuleBase::PI * ModuleBase::PI, 2.0 / 3.0);
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ir = 0; ir < this->rhopw->nrxx; ++ir)

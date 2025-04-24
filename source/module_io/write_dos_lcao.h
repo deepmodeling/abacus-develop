@@ -1,26 +1,33 @@
 #ifndef WRITE_DOS_LCAO_H
 #define WRITE_DOS_LCAO_H
 
-#include "module_base/matrix.h"
-#include "module_cell/klist.h"
-#include "module_psi/psi.h"
-#include "module_hamilt_general/hamilt.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_base/matrix.h" // use matrix
+#include "module_cell/klist.h"  // use K_Vectors
+#include "module_psi/psi.h"     // use psi::Psi<T>
+#include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>
+#include "module_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
+#include "module_elecstate/fp_energy.h" // use elecstate::efermi
+
 
 namespace ModuleIO
 {
-	/// @brief calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
+	/// @brief calculate density of states(DOS), 
+    /// partial density of states(PDOS),
+    ///  and mulliken charge for LCAO base
     template <typename T>
     void write_dos_lcao(
-        const UnitCell& ucell,
-        const psi::Psi<T>* psi,
-        const Parallel_Orbitals &pv, 
-        const ModuleBase::matrix& ekb,
-        const ModuleBase::matrix& wg,
-        const double& dos_edelta_ev,
-        const double& dos_scale,
+        const psi::Psi<T>* psi,      // LCAO wave functions
+		hamilt::Hamilt<T>* p_ham,    // Hamiltonian
+        const Parallel_Orbitals &pv, // Parallel scheme for LCAO wave functions
+        const UnitCell& ucell,       // Unit cell information
+		const K_Vectors& kv,         // k-point information in Brillouin zone
+		const int nbands,            // Number of bands
+		const elecstate::efermi &energy_fermi,  // Fermi energy
+        const ModuleBase::matrix& ekb,          // Eigenvalues per k-point and band
+        const ModuleBase::matrix& wg,           // Weights of eigenvalues
+        const double& dos_edelta_ev,            // Delta energy
+        const double& dos_scale,                
         const double& bcoeff,
-        const K_Vectors& kv,
-        hamilt::Hamilt<T>* p_ham);
+        std::ofstream &ofs_running);
 }
 #endif
