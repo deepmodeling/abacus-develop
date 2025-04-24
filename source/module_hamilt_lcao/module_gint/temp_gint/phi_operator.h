@@ -47,11 +47,15 @@ class PhiOperator
         double* ddphi_xx, double* ddphi_xy, double* ddphi_xz,
         double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
+    // phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
+    template<typename T>
     void phi_mul_dm(
-        const double* phi,
-        const HContainer<double>& dm,
-        const bool is_symm, double* phi_dm) const;
+        const T*const phi,
+        const HContainer<T>& dm,
+        const bool is_symm,
+        T*const phi_dm) const;
 
+    // result(ir) = phi(ir) * vl(ir)
     template<typename T>
     void phi_mul_vldr3(
         const T*const vl,
@@ -59,18 +63,21 @@ class PhiOperator
         const T*const phi,
         T*const result) const;
 
+    // hr(iwt_i,iwt_j) = \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
     // this is a thread-safe function
     template<typename T>
     void phi_mul_phi(
-        const T*const phi_i,                // phi_i(igrid,iwt_i)
-        const T*const phi_j,                // phi_j(igrid,iwt_j)
+        const T*const phi_i,                // phi_i(ir,iwt_i)
+        const T*const phi_j,                // phi_j(ir,iwt_j)
         HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
         const Triangular_Matrix triangular_matrix) const;
 
+    // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
+    template<typename T>
     void phi_dot_phi(
-        const double*const phi_1,           // phi_1(igrid,iwt)
-        const double*const phi_2,           // phi_2(igrid,iwt)
-        double*const rho) const;            // rho(igrid)
+        const T*const phi_i,           // phi_i(ir,iwt)
+        const T*const phi_j,           // phi_j(ir,iwt)
+        T*const rho) const;            // rho(ir)
 
     void phi_dot_dphi(
         const double* phi,

@@ -124,10 +124,11 @@ void transfer_hr_gint_to_hR(std::shared_ptr<const HContainer<T>> hr_gint, HConta
 
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
+template<typename T>
 void transfer_dm_2d_to_gint(
     std::shared_ptr<const GintInfo> gint_info,
-    std::vector<HContainer<double>*> dm,
-    std::vector<std::shared_ptr<HContainer<double>>> dm_gint)
+    std::vector<HContainer<T>*> dm,
+    std::vector<std::shared_ptr<HContainer<T>>> dm_gint)
 {
     // To check whether input parameter dm_2d has been initialized
 #ifdef __DEBUG
@@ -150,12 +151,12 @@ void transfer_dm_2d_to_gint(
     {
 #ifdef __MPI
         const int npol = 2;
-        std::shared_ptr<HContainer<double>> dm_full = gint_info->get_hr<double>(npol);
+        std::shared_ptr<HContainer<T>> dm_full = gint_info->get_hr<T>(npol);
         hamilt::transferParallels2Serials(*dm[0], dm_full.get());
 #else
-        HContainer<double>* dm_full = dm[0];
+        HContainer<T>* dm_full = dm[0];
 #endif
-        std::vector<double*> tmp_pointer(4, nullptr);
+        std::vector<T*> tmp_pointer(4, nullptr);
         for (int iap = 0; iap < dm_full->size_atom_pairs(); iap++)
         {
             auto& ap = dm_full->get_atom_pair(iap);
@@ -169,7 +170,7 @@ void transfer_dm_2d_to_gint(
                     tmp_pointer[is] =
                         dm_gint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
                 }
-                double* data_full = ap.get_pointer(ir);
+                T* data_full = ap.get_pointer(ir);
                 for (int irow = 0; irow < ap.get_row_size(); irow += 2)
                 {
                     for (int icol = 0; icol < ap.get_col_size(); icol += 2)
@@ -191,6 +192,18 @@ void transfer_dm_2d_to_gint(
 }
 
 
-template void transfer_hr_gint_to_hR(std::shared_ptr<const HContainer<double>> hr_gint, HContainer<double>* hR);
-template void transfer_hr_gint_to_hR(std::shared_ptr<const HContainer<std::complex<double>>> hr_gint, HContainer<std::complex<double>>* hR);
+template void transfer_hr_gint_to_hR(
+    std::shared_ptr<const HContainer<double>> hr_gint,
+    HContainer<double>* hR);
+template void transfer_hr_gint_to_hR(
+    std::shared_ptr<const HContainer<std::complex<double>>> hr_gint,
+    HContainer<std::complex<double>>* hR);
+template void transfer_dm_2d_to_gint(
+    std::shared_ptr<const GintInfo> gint_info,
+    std::vector<HContainer<double>*> dm,
+    std::vector<std::shared_ptr<HContainer<double>>> dm_gint);
+template void transfer_dm_2d_to_gint(
+    std::shared_ptr<const GintInfo> gint_info,
+    std::vector<HContainer<std::complex<double>>*> dm,
+    std::vector<std::shared_ptr<HContainer<std::complex<double>>>> dm_gint);
 }
