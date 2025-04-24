@@ -188,9 +188,9 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     const double sigma2 = sigma * sigma;
     const double sigma_PI = sqrt(ModuleBase::PI) * sigma;
 
-    std::vector<double> start = {0, 0, 0};
-    std::vector<double> end = {1, 0, 0};
-    int npoints = 101;
+    std::vector<double> start = {PARAM.inp.ldos_line[0], PARAM.inp.ldos_line[1], PARAM.inp.ldos_line[2]};
+    std::vector<double> end = {PARAM.inp.ldos_line[3], PARAM.inp.ldos_line[4], PARAM.inp.ldos_line[5]};
+    const int npoints = PARAM.inp.ldos_line[6];
 
     // calculate grid points
     std::vector<std::vector<int>> points(npoints, std::vector<int>(3, 0));
@@ -273,16 +273,16 @@ void get_grid_points(const std::vector<double>& start,
         for (int i = 0; i < 3; i++)
         {
             shift[i] = coor[i] * ndim[i];
+            while (shift[i] >= ndim[i])
+            {
+                shift[i] -= ndim[i];
+            }
+            while (shift[i] < 0)
+            {
+                shift[i] += ndim[i];
+            }
             points[i] = static_cast<int>(shift[i]);
             shift[i] -= points[i];
-            while (points[i] >= ndim[i])
-            {
-                points[i] -= ndim[i];
-            }
-            while (points[i] < 0)
-            {
-                points[i] += ndim[i];
-            }
         }
     };
 

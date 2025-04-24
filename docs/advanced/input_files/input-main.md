@@ -1712,9 +1712,13 @@ These variables are used to control the output of properties.
 
 ### out_ldos
 
-- **Type**: Boolean
-- **Description**: Whether to output the local density of states for given bias in cube file format, which is controlled by [stm_bias](#stm_bias). 
-- **Default**: False
+- **Type**: Integer
+- **Description**: Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
+  - 0: no output
+  - 1: output the partial charge density for given bias (controlled by [stm_bias](#stm_bias)) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script [plot.py](../../../tools/stm/plot.py).
+  - 2: output LDOS along a line in real space (controlled by xxx). Parameters used to control DOS output are also valid for LDOS.
+  - 3: output both two LDOS modes above.
+- **Default**: 0
 
 ### out_band
 
