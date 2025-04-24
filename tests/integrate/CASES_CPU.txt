@@ -39,7 +39,7 @@
 103_PW_OU_CS_CF
 104_PW_AF_magnetic
 104_PW_FM_magnetic
-104_PW_NC_magnetic
+104_PW_NC
 105_PW_FD_smearing
 105_PW_FX_smearing
 105_PW_GA_smearing
@@ -153,7 +153,7 @@
 204_NO_KP_AFM
 204_NO_KP_FM
 204_NO_KP_NC
-204_NO_NC_magnetic
+204_NO_NC
 207_NO_KP_OB
 207_NO_KP_OD
 207_NO_KP_OH_nscf
