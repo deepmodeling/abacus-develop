@@ -83,7 +83,6 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 			}
 		}
 	}
-   
 #endif
     //ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     return;
@@ -182,8 +181,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 		{
 			outp[iz] = inp[iz];
 		}
-	}
-
+    }
 #endif
     //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     return;

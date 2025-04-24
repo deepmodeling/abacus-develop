@@ -54,11 +54,13 @@ void PW_Basis::distribution_method2()
     MPI_Bcast(&lix, 1, MPI_INT, 0, this->pool_world);
     MPI_Bcast(&rix, 1, MPI_INT, 0, this->pool_world);
 #endif
-    delete[] this->istot2ixy; this->istot2ixy = new int[this->nstot];
+    delete[] this->istot2ixy; 
+    this->istot2ixy = new int[this->nstot];
 
     if(poolrank == 0)
     {
 #ifdef __MPI
+    
         // Parallel line
         // (2) Devide the sticks to each core, sticks are in the order of ixy increasing.
         // get nst_per and startnsz_per
@@ -93,8 +95,8 @@ void PW_Basis::distribution_method2()
     MPI_Bcast(st_bottom2D, this->fftnxy, MPI_INT, 0, this->pool_world);
     MPI_Bcast(this->fftixy2ip, this->fftnxy, MPI_INT, 0, this->pool_world);
     MPI_Bcast(this->istot2ixy, this->nstot, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(this->nst_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
-    MPI_Bcast(this->npw_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
+    MPI_Bcast(this->nst_per, this->poolnproc, MPI_INT, 0, this->pool_world);
+    MPI_Bcast(this->npw_per, this->poolnproc, MPI_INT, 0, this->pool_world);
 #endif
     this->npw = this->npw_per[this->poolrank];
     this->nst = this->nst_per[this->poolrank];
