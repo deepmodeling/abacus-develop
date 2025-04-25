@@ -101,7 +101,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.basis_type, "lcao");
     EXPECT_EQ(param.inp.ks_solver, "genelpa");
     EXPECT_DOUBLE_EQ(param.inp.search_radius, -1.0);
-    EXPECT_TRUE(param.inp.search_pbc);
     EXPECT_EQ(param.inp.symmetry, "1");
     EXPECT_FALSE(param.inp.init_vel);
     EXPECT_DOUBLE_EQ(param.inp.symmetry_prec, 1.0e-6);

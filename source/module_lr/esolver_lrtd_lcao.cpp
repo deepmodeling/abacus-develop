@@ -352,7 +352,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         orb.get_rcutmax_Phi(),
         ucell.infoNL.get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          this->ucell,

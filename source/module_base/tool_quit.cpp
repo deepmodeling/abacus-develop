@@ -62,6 +62,20 @@ void QUIT(int ret)
 void WARNING_QUIT(const std::string &file,const std::string &description)
 {
 	WARNING_QUIT(file, description, 1);
+
+	#ifdef __MPI /* if it is MPI run, finalize first, then exit */
+	std::cout << "Detecting if MPI has been initialized..." << std::endl;
+	int is_initialized;
+    MPI_Initialized(&is_initialized);
+	if (is_initialized) {
+		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
+		MPI_Finalize();
+	}
+	else{
+		std::cout << "MPI has not been initialized. Quit normally." << std::endl;
+	}
+	/* but seems this is the only correct way to terminate the MPI */
+#endif
 }
 
 void WARNING_QUIT(const std::string &file,const std::string &description,int ret)
