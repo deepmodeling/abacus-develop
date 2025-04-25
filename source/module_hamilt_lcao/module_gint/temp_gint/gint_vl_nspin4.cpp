@@ -49,7 +49,7 @@ void Gint_vl_nspin4::cal_hr_gint_()
             for(int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
-                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_part_[is]);
+                phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), *hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
             }
         }
     }

@@ -61,10 +61,10 @@ void Gint_vl_metagga::cal_hr_gint_()
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_x.data(), dphi_x_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_y.data(), dphi_y_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_z.data(), dphi_z_vldr3.data());
-            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_);
-            phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), *hr_gint_);
-            phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), *hr_gint_);
-            phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), *hr_gint_);
+            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(dphi_x.data(), dphi_x_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(dphi_y.data(), dphi_y_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(dphi_z.data(), dphi_z_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
         }
     }
 }
