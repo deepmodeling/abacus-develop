@@ -222,6 +222,15 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.dos_scale, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_sigma, 0.07);
     EXPECT_DOUBLE_EQ(param.inp.stm_bias[0], 2.0);
+    EXPECT_DOUBLE_EQ(param.inp.stm_bias[1], 0.1);
+    EXPECT_EQ(param.inp.stm_bias[2], 5);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[0], 0.1);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[1], 0.2);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[2], 0.3);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[3], 0.4);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[4], 0.5);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[5], 0.6);
+    EXPECT_EQ(param.inp.ldos_line[6], 200);
     EXPECT_FALSE(param.inp.out_element_info);
     EXPECT_DOUBLE_EQ(param.inp.lcao_ecut, 20);
     EXPECT_DOUBLE_EQ(param.inp.lcao_dk, 0.01);

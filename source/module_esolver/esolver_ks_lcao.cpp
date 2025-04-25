@@ -690,11 +690,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         this->p_hamilt->refresh();
     }
-    if (iter == 1 && istep == 0)
-    {
-        // initialize DMR
-        this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
-    }
+    // if (iter == 1 && istep == 0)
+    // {
+    //     // initialize DMR
+    //     this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    // }
 #endif
 
     if (PARAM.inp.vl_in_h)

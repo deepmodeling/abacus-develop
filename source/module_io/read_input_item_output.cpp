@@ -49,13 +49,13 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
             }
-            para.input.out_chg[0] = (item.str_values[0] == "-1")? -1: assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : assume_as_boolean(item.str_values[0]);
             para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-                                     ? 1
-                                     : para.input.out_chg[0];
+                                        ? 1
+                                        : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -145,15 +145,21 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_ldos");
-        item.annotation = "output local density of states, second parameter controls the precision";
+        item.annotation = "output mode of local density of states, second parameter controls the precision";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
             }
-            para.input.out_ldos[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_ldos[0] = std::stoi(item.str_values[0]);
             para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_ldos[0] < 0 || para.input.out_ldos[0] > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should be 0, 1, 2 or 3");
+            }
         };
         sync_intvec(input.out_ldos, 2, 0);
         this->add_item(item);
@@ -426,14 +432,13 @@ void ReadInput::item_output()
         item.annotation = "output r(R) matrix";
         read_sync_bool(input.out_mat_r);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
-                    || para.inp.out_mat_dh || para.inp.out_hr_npz
-                    || para.inp.out_dm_npz || para.inp.dm_to_rho)
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t || para.inp.out_mat_dh
+                 || para.inp.out_hr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                            "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
-                                            "available for gamma only calculations");
+                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                         "available for gamma only calculations");
             }
         };
         this->add_item(item);
@@ -527,9 +532,8 @@ void ReadInput::item_output()
     {
         Input_Item item("out_pchg");
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.out_pchg);
-        };
+        item.read_value
+            = [](const Input_Item& item, Parameter& para) { parse_expression(item.str_values, para.input.out_pchg); };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.is_read())
             {
@@ -583,7 +587,9 @@ void ReadInput::item_output()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_elf(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
             // assign non-negative values to para.input.out_elf
             std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
         };

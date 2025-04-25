@@ -13,9 +13,10 @@ namespace ModuleGint
     template <typename T>
     void transfer_hr_gint_to_hR(std::shared_ptr<const HContainer<T>> hr_gint, HContainer<T>* hR);
 
+    template<typename T>
     void transfer_dm_2d_to_gint(
         std::shared_ptr<const GintInfo> gint_info,
-        std::vector<HContainer<double>*> dm,
-        std::vector<std::shared_ptr<HContainer<double>>> dm_gint);
+        std::vector<HContainer<T>*> dm,
+        std::vector<std::shared_ptr<HContainer<T>>> dm_gint);
 
 }

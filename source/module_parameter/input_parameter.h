@@ -419,6 +419,14 @@ struct Input_para
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
     std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
+    std::vector<double> ldos_line
+        = {0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           100}; ///< start and end point of the line (direct coordinates) and number of points
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions

@@ -179,7 +179,8 @@ dos_edelta_ev                  0.01 #delta energy for dos
 dos_scale                      0.01 #scale dos range by
 dos_sigma                      0.07 #gauss b coefficeinet(default=0.07)
 dos_nche                       100 #orders of Chebyshev expansions for dos
-stm_bias                       2.0 #bias voltage used to calculate ldos
+stm_bias                       2.0 0.1 5 #bias voltage used to calculate ldos
+ldos_line                      0.1 0.2 0.3 0.4 0.5 0.6 200 #start and end point of the line (direct coordinates) and number of points
 
 #Parameters (9.Molecular dynamics)
 md_type                        nvt #choose ensemble

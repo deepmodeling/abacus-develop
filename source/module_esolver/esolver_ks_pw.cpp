@@ -947,11 +947,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     if (PARAM.inp.out_ldos[0])
     {
-        ModuleIO::Cal_ldos<std::complex<double>>::cal_ldos_pw(
-            reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
-            this->psi[0],
-            this->Pgrid,
-            ucell);
+        ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(this->pelec),
+                              this->psi[0],
+                              this->Pgrid,
+                              ucell);
     }
 
     //----------------------------------------------------------
