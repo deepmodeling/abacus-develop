@@ -159,7 +159,7 @@ void test_deepks<T>::check_pdm()
                               ParaO,
                               this->ld.pdm);
     DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl2l, this->ld.pdm);
-    this->compare_with_ref("pdm.dat", "pdm_ref.dat");
+    this->compare_with_ref("deepks_projdm.dat", "pdm_ref.dat");
 }
 
 template <typename T>
