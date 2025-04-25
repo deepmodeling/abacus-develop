@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+
+# non-collinear LCAO calculations
+basis_type    lcao
+noncolin      1
+symmetry      1
+
+calculation   scf
+ks_solver     scalapack_gvx
+ecutwfc       26
+scf_thr       1.0e-8
+scf_nmax      200
+
+# smearing method
+smearing_method   gaussian
+smearing_sigma    0.07
+
+# charge mixing method
+mixing_type    broyden 
+mixing_beta    0.5
+mixing_ndim    10
+
+# output Mulliken charge
+out_mul       1
+
+# pseudopotential and orbital directories
+pseudo_dir    ../../PP_ORB
+orbital_dir   ../../PP_ORB
+suffix    autotest

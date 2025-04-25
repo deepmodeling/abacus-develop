@@ -3,8 +3,6 @@
 101_PW_15_LDA
 101_PW_15_LibxcLDA
 101_PW_15_lowz
-101_PW_15_PAW
-101_PW_15_PAW_SPIN2
 101_PW_BLPS
 101_PW_Coulomb
 101_PW_GTH_CF_CS_Si
@@ -39,7 +37,7 @@
 103_PW_OU_CS_CF
 104_PW_AF_magnetic
 104_PW_FM_magnetic
-104_PW_NC_magnetic
+104_PW_NC
 105_PW_FD_smearing
 105_PW_FX_smearing
 105_PW_GA_smearing
@@ -153,7 +151,7 @@
 204_NO_KP_AFM
 204_NO_KP_FM
 204_NO_KP_NC
-204_NO_NC_magnetic
+204_NO_NC
 207_NO_KP_OB
 207_NO_KP_OD
 207_NO_KP_OH_nscf
@@ -289,6 +287,7 @@
 705_LJ_single_rule2
 706_LJ_RE_stop
 707_LJ_dry_run
+710_RDMFT_Si2
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc
@@ -331,4 +330,3 @@
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA
 922_NO_FeBiTe
-1001_NO_Si2_dzp_rdmft

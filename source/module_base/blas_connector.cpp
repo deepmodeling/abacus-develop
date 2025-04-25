@@ -88,10 +88,13 @@ void BlasConnector::axpy( const int n, const float alpha, const float *X, const 
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		saxpy_(&n, &alpha, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasSaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -100,10 +103,13 @@ void BlasConnector::axpy( const int n, const double alpha, const double *X, cons
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		daxpy_(&n, &alpha, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasDaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -112,10 +118,13 @@ void BlasConnector::axpy( const int n, const std::complex<float> alpha, const st
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		caxpy_(&n, &alpha, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -124,10 +133,13 @@ void BlasConnector::axpy( const int n, const std::complex<double> alpha, const s
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zaxpy_(&n, &alpha, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -138,10 +150,13 @@ void BlasConnector::scal( const int n,  const float alpha, float *X, const int i
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		sscal_(&n, &alpha, X, &incX);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasSscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -150,10 +165,13 @@ void BlasConnector::scal( const int n, const double alpha, double *X, const int 
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		dscal_(&n, &alpha, X, &incX);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasDscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -162,10 +180,13 @@ void BlasConnector::scal( const int n, const std::complex<float> alpha, std::com
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		cscal_(&n, &alpha, X, &incX);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -174,43 +195,144 @@ void BlasConnector::scal( const int n, const std::complex<double> alpha, std::co
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zscal_(&n, &alpha, X, &incX);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasErrcheck(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
 
 // d=x*y
-float BlasConnector::dot( const int n, const float *X, const int incX, const float *Y, const int incY, base_device::AbacusDevice_t device_type)
+float BlasConnector::dot( const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return sdot_(&n, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
 		cublasErrcheck(cublasSdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
-#endif
 	}
-	return sdot_(&n, X, &incX, Y, &incY);
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
-double BlasConnector::dot( const int n, const double *X, const int incX, const double *Y, const int incY, base_device::AbacusDevice_t device_type)
+double BlasConnector::dot( const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return ddot_(&n, X, &incX, Y, &incY);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
 		cublasErrcheck(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
-#endif
 	}
-	return ddot_(&n, X, &incX, Y, &incY);
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+// d=x*y
+float BlasConnector::dotu(const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	return BlasConnector::dot(n, X, incX, Y, incY, device_type);
+}
+
+double BlasConnector::dotu(const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	return BlasConnector::dot(n, X, incX, Y, incY, device_type);
+}
+
+std::complex<float> BlasConnector::dotu(const int n, const std::complex<float>*const X, const int incX, const std::complex<float>*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		const int incX2 = 2 * incX;
+		const int incY2 = 2 * incY;
+		const float*const x = reinterpret_cast<const float*const>(X);
+		const float*const y = reinterpret_cast<const float*const>(Y);
+		//Re(result)=Re(x)*Re(y)-Im(x)*Im(y)
+		//Im(result)=Re(x)*Im(y)+Im(x)*Re(y)
+		return std::complex<float>(
+			BlasConnector::dot(n, x, incX2, y,   incY2, device_type) - dot(n, x+1, incX2, y+1, incY2, device_type),
+			BlasConnector::dot(n, x, incX2, y+1, incY2, device_type) + dot(n, x+1, incX2, y,   incY2, device_type));
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+std::complex<double> BlasConnector::dotu(const int n, const std::complex<double>*const X, const int incX, const std::complex<double>*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		const int incX2 = 2 * incX;
+		const int incY2 = 2 * incY;
+		const double*const x = reinterpret_cast<const double*const>(X);
+		const double*const y = reinterpret_cast<const double*const>(Y);
+		//Re(result)=Re(x)*Re(y)-Im(x)*Im(y)
+		//Im(result)=Re(x)*Im(y)+Im(x)*Re(y)
+		return std::complex<double>(
+			BlasConnector::dot(n, x, incX2, y,   incY2, device_type) - dot(n, x+1, incX2, y+1, incY2, device_type),
+			BlasConnector::dot(n, x, incX2, y+1, incY2, device_type) + dot(n, x+1, incX2, y,   incY2, device_type));
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+// d = x.conj() * Vy
+float BlasConnector::dotc(const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	return BlasConnector::dot(n, X, incX, Y, incY, device_type);
+}
+
+double BlasConnector::dotc(const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	return BlasConnector::dot(n, X, incX, Y, incY, device_type);
+}
+
+std::complex<float> BlasConnector::dotc(const int n, const std::complex<float>*const X, const int incX, const std::complex<float>*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		const int incX2 = 2 * incX;
+		const int incY2 = 2 * incY;
+		const float*const x = reinterpret_cast<const float*const>(X);
+		const float*const y = reinterpret_cast<const float*const>(Y);
+		// Re(result)=Re(X)*Re(Y)+Im(X)*Im(Y)
+		// Im(result)=Re(X)*Im(Y)-Im(X)*Re(Y)
+		return std::complex<float>(
+			BlasConnector::dot(n, x, incX2, y,   incY2, device_type) + dot(n, x+1, incX2, y+1, incY2, device_type),
+			BlasConnector::dot(n, x, incX2, y+1, incY2, device_type) - dot(n, x+1, incX2, y,   incY2, device_type));
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+std::complex<double> BlasConnector::dotc(const int n, const std::complex<double>*const X, const int incX, const std::complex<double>*const Y, const int incY, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		const int incX2 = 2 * incX;
+		const int incY2 = 2 * incY;
+		const double*const x = reinterpret_cast<const double*const>(X);
+		const double*const y = reinterpret_cast<const double*const>(Y);
+		// Re(result)=Re(X)*Re(Y)+Im(X)*Im(Y)
+		// Im(result)=Re(X)*Im(Y)-Im(X)*Re(Y)
+		return std::complex<double>(
+			BlasConnector::dot(n, x, incX2, y,   incY2, device_type) + dot(n, x+1, incX2, y+1, incY2, device_type),
+			BlasConnector::dot(n, x, incX2, y+1, incY2, device_type) - dot(n, x+1, incX2, y,   incY2, device_type));
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 // C = a * A.? * B.? + b * C
@@ -231,12 +353,15 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
 		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
 		cublasErrcheck(cublasSgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, &alpha, b, ldb, a, lda, &beta, c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -274,6 +399,9 @@ void BlasConnector::gemm(const char transa,
             cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, &alpha, b, ldb, a, lda, &beta, c, ldc));
 #endif
     }
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 void BlasConnector::gemm(const char transa,
@@ -322,6 +450,9 @@ void BlasConnector::gemm(const char transa,
                                    ldc));
 #endif
     }
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 void BlasConnector::gemm(const char transa,
@@ -370,6 +501,9 @@ void BlasConnector::gemm(const char transa,
                                    ldc));
 #endif
     }
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 // Col-Major part
@@ -389,12 +523,15 @@ void BlasConnector::gemm_cm(const char transa, const char transb, const int m, c
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
 		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
 		cublasErrcheck(cublasSgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -423,15 +560,18 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(
             cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc));
-#endif
     }
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 void BlasConnector::gemm_cm(const char transa,
@@ -459,9 +599,9 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle,
@@ -478,8 +618,11 @@ void BlasConnector::gemm_cm(const char transa,
                                    (float2*)&beta,
                                    (float2*)c,
                                    ldc));
-#endif
     }
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 void BlasConnector::gemm_cm(const char transa,
@@ -507,9 +650,9 @@ void BlasConnector::gemm_cm(const char transa,
         mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
     }
 #endif
+#ifdef __CUDA
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
     {
-#ifdef __CUDA
         cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
         cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
         cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle,
@@ -526,8 +669,11 @@ void BlasConnector::gemm_cm(const char transa,
                                    (double2*)&beta,
                                    (double2*)c,
                                    ldc));
-#endif
     }
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 // Symm and Hemm part. Only col-major is supported.
@@ -541,12 +687,15 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasSsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, &alpha, a, lda, b, ldb, &beta, c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -559,12 +708,15 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasDsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, &alpha, a, lda, b, ldb, &beta, c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -577,12 +729,15 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasCsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (float2*)&alpha, (float2*)a, lda, (float2*)b, ldb, (float2*)&beta, (float2*)c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -595,13 +750,30 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasZsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (double2*)&alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)&beta, (double2*)c, ldc));
-#endif
 	}
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+void BlasConnector::hemm_cm(const char side, const char uplo, const int m, const int n,
+	const float alpha, const float *a, const int lda, const float *b, const int ldb,
+	const float beta, float *c, const int ldc, base_device::AbacusDevice_t device_type)
+{
+	symm_cm(side, uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc, device_type);
+}
+
+void BlasConnector::hemm_cm(const char side, const char uplo, const int m, const int n,
+	const double alpha, const double *a, const int lda, const double *b, const int ldb,
+	const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type)
+{
+	symm_cm(side, uplo, m, n, alpha, a, lda, b, ldb, beta, c, ldc, device_type);
 }
 
 void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
@@ -613,12 +785,15 @@ void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasChemm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (float2*)&alpha, (float2*)a, lda, (float2*)b, ldb, (float2*)&beta, (float2*)c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -631,12 +806,15 @@ void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
 		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
 		cublasErrcheck(cublasZhemm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (double2*)&alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)&beta, (double2*)c, ldc));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -647,11 +825,14 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
 		cublasErrcheck(cublasSgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha, A, lda, X, incx, &beta, Y, incy));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -662,11 +843,14 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
 		cublasErrcheck(cublasDgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha, A, lda, X, incx, &beta, Y, incy));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -677,13 +861,16 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	cgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cuFloatComplex alpha_cu = make_cuFloatComplex(alpha.real(), alpha.imag());
     	cuFloatComplex beta_cu = make_cuFloatComplex(beta.real(), beta.imag());
 		cublasOperation_t cutransA = BlasUtils::judge_trans(true, trans, "gemv_op");
 		cublasErrcheck(cublasCgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha_cu, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta_cu, (cuFloatComplex*)Y, incy));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -694,13 +881,16 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	zgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		cuDoubleComplex alpha_cu = make_cuDoubleComplex(alpha.real(), alpha.imag());
     	cuDoubleComplex beta_cu = make_cuDoubleComplex(beta.real(), beta.imag());
 		cublasOperation_t cutransA = BlasUtils::judge_trans(true, trans, "gemv_op");
 		cublasErrcheck(cublasZgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha_cu, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta_cu, (cuDoubleComplex*)Y, incy));
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -710,14 +900,16 @@ float BlasConnector::nrm2( const int n, const float *X, const int incX, base_dev
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return snrm2_( &n, X, &incX );
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
 		cublasErrcheck(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
-#endif
 	}
-	return snrm2_( &n, X, &incX );
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 
@@ -726,14 +918,16 @@ double BlasConnector::nrm2( const int n, const double *X, const int incX, base_d
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dnrm2_( &n, X, &incX );
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
 		cublasErrcheck(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
-#endif
 	}
-	return dnrm2_( &n, X, &incX );
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 
@@ -742,14 +936,16 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dznrm2_( &n, X, &incX );
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
 		cublasErrcheck(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
 		return result;
-#endif
 	}
-	return dznrm2_( &n, X, &incX );
+#endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 // copies a into b
@@ -758,12 +954,18 @@ void BlasConnector::copy(const long n, const double *a, const int incx, double *
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		dcopy_(&n, a, &incx, b, &incy);
 	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
 }
 
 void BlasConnector::copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -780,10 +982,13 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
             result[i] = vector1[i] * vector2[i];
         }
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		ModuleBase::vector_mul_vector_op<T, base_device::DEVICE_GPU>()(dim, result, vector1, vector2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -800,10 +1005,13 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
             result[i] = vector1[i] / vector2[i];
         }
 	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
 		ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU>()(dim, result, vector1, vector2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -818,10 +1026,13 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
             result[i] = vector1[i] * constant1 + vector2[i] * constant2;
         }
 	}
-	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::GpuDevice) {
 		ModuleBase::vector_add_vector_op<float, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -836,10 +1047,13 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
             result[i] = vector1[i] * constant1 + vector2[i] * constant2;
         }
 	}
-	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::GpuDevice) {
 		ModuleBase::vector_add_vector_op<double, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -854,10 +1068,13 @@ void vector_add_vector(const int& dim, std::complex<float> *result, const std::c
             result[i] = vector1[i] * constant1 + vector2[i] * constant2;
         }
 	}
-	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::GpuDevice) {
 		ModuleBase::vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
 
@@ -872,9 +1089,12 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
             result[i] = vector1[i] * constant1 + vector2[i] * constant2;
         }
 	}
-	else if (device_type == base_device::GpuDevice){
 #ifdef __CUDA
+	else if (device_type == base_device::GpuDevice) {
 		ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
+	}
 #endif
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
 	}
 }
