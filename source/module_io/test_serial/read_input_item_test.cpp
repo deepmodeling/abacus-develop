@@ -419,15 +419,15 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("stm_bias", readinput.input_lists);
         it->second.str_values = {"2"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(param.input.out_ldos[0], 2);
-        EXPECT_EQ(param.input.out_ldos[1], 0.1);
-        EXPECT_EQ(param.input.out_ldos[2], 1);
+        EXPECT_EQ(param.input.stm_bias[0], 2);
+        EXPECT_EQ(param.input.stm_bias[1], 0.1);
+        EXPECT_EQ(param.input.stm_bias[2], 1);
 
         it->second.str_values = {"3", "0.2", "5"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(param.input.out_ldos[0], 3);
-        EXPECT_EQ(param.input.out_ldos[1], 0.2);
-        EXPECT_EQ(param.input.out_ldos[2], 5);
+        EXPECT_EQ(param.input.stm_bias[0], 3);
+        EXPECT_EQ(param.input.stm_bias[1], 0.2);
+        EXPECT_EQ(param.input.stm_bias[2], 5);
 
         it->second.str_values = {"1", "2"};
         testing::internal::CaptureStdout();
