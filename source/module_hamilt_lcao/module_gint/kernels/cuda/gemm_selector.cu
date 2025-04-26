@@ -59,8 +59,8 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,co
                 n.get_host_pointer()[index] = ucell.atoms[l].nw;
                 k.get_host_pointer()[index] = matrix_k;
 
-                lda.get_host_pointer()[index] = matrix_k;
-                ldb.get_host_pointer()[index] = matrix_k;
+                lda.get_host_pointer()[index] = ucell.atoms[j].nw;
+                ldb.get_host_pointer()[index] = ucell.atoms[l].nw;
                 ldc.get_host_pointer()[index] = ucell.atoms[l].nw;
 
                 A_array.get_host_pointer()[index]
@@ -71,19 +71,19 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,co
                     = &C.get_device_pointer()[index * max_n
                                               * max_m]; // test atom add
                 BlasConnector::gemm(
-                    'N',
                     'T',
+                    'N',
                     m.get_host_pointer()[index],
                     n.get_host_pointer()[index],
                     matrix_k,
                     1.0,
                     &A.get_host_pointer()[index * max_m * matrix_k],
-                    matrix_k,
+                    lda.get_host_pointer()[index],
                     &B.get_host_pointer()[index * max_n * matrix_k],
-                    matrix_k,
+                    ldb.get_host_pointer()[index],
                     1.0,
                     &cpu_result[index * max_m * max_n],
-                    n.get_host_pointer()[index]);
+                    ldc.get_host_pointer()[index]);
                 index++;
             }
         }

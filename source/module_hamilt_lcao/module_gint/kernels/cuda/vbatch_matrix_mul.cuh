@@ -31,15 +31,15 @@ template <typename T,
 static __device__ void vbatched_gemm_device(int M,
                                             int N,
                                             int K,
-                                            T* __restrict__ A,
+                                            const T* __restrict__ A,
                                             int LDA,
-                                            T* __restrict__ B,
+                                            const T* __restrict__ B,
                                             int LDB,
                                             T* __restrict__ C,
                                             int LDC,
-                                            T* sA,
+                                            T* __restrict__ sA,
                                             int slda,
-                                            T* sB,
+                                            T* __restrict__ sB,
                                             int sldb,
                                             T alpha)
 {
@@ -63,8 +63,8 @@ static __device__ void vbatched_gemm_device(int M,
     T rB[THR_N];
 
     // Registers for the dev->shmem copy
-    T ra[BLK_M / DIM_YA][BLK_K / DIM_XA];
-    T rb[BLK_N / DIM_YB][BLK_K / DIM_XB];
+    T ra[BLK_K / DIM_XA][BLK_M / DIM_YA];
+    T rb[BLK_K / DIM_XB][BLK_N / DIM_YB];
 
     // bound is the correction to offs_d in order to not get out of memory bound
     // so bound could be negative value since offs_d could be out of bound
@@ -89,22 +89,22 @@ static __device__ void vbatched_gemm_device(int M,
 
 // Load A dev->shmem
 #pragma unroll
-    for (n = 0; n < BLK_M; n += DIM_YA)
+    for (n = 0; n < BLK_K; n += DIM_XA)
     {
 #pragma unroll
-        for (m = 0; m < BLK_K; m += DIM_XA)
+        for (m = 0; m < BLK_M; m += DIM_YA)
         {
-            sA(n + idyA, m + idxA) = fetch(A, m, n, boundA);
+            sA(m + idyA, n + idxA) = fetch(A, m, n, boundA);
         }
     }
 
 #pragma unroll
-    for (n = 0; n < BLK_N; n += DIM_YB)
+    for (n = 0; n < BLK_K; n += DIM_XB)
     {
 #pragma unroll
-        for (m = 0; m < BLK_K; m += DIM_XB)
+        for (m = 0; m < BLK_N; m += DIM_YB)
         {
-            sB(m + idxB, n + idyB) = fetch(B, m, n, boundB);
+            sB(n + idxB, m + idyB) = fetch(B, m, n, boundB);
         }
     }
 
@@ -112,31 +112,31 @@ static __device__ void vbatched_gemm_device(int M,
 
     for (kk = 0; kk < K - BLK_K; kk += BLK_K)
     {
-        offs_dA += BLK_K;
-        boundA -= BLK_K;
+        offs_dA += BLK_K * LDA;
+        boundA -= BLK_K * LDA;
 
-        offs_dB += BLK_K;
-        boundB -= BLK_K;
+        offs_dB += BLK_K * LDB;
+        boundB -= BLK_K * LDB;
 
 // Load A dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_M / DIM_YA; n++)
+        for (n = 0; n < BLK_K / DIM_XA; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XA; m++)
+            for (m = 0; m < BLK_M / DIM_YA; m++)
             {
-                ra[n][m] = fetch(A, m * DIM_XA, n * DIM_YA, boundA);
+                ra[n][m] = fetch(A, m * DIM_YA, n * DIM_XA, boundA);
             }
         }
 
 // Load B dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_N / DIM_YB; n++)
+        for (n = 0; n < BLK_K / DIM_XB; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XB; m++)
+            for (m = 0; m < BLK_N / DIM_YB; m++)
             {
-                rb[n][m] = fetch(B, m * DIM_XB, n * DIM_YB, boundB);
+                rb[n][m] = fetch(B, m * DIM_YB, n * DIM_XB, boundB);
             }
         }
 
@@ -174,23 +174,23 @@ static __device__ void vbatched_gemm_device(int M,
 
 // Load A regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_M / DIM_YA; n++)
+        for (n = 0; n < BLK_K / DIM_XA; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XA; m++)
+            for (m = 0; m < BLK_M / DIM_YA; m++)
             {
-                sA(n * DIM_YA + idyA, m * DIM_XA + idxA) = ra[n][m];
+                sA(m * DIM_YA + idyA, n * DIM_XA + idxA) = ra[n][m];
             }
         }
 
 // Load B regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_N / DIM_YB; n++)
+        for (n = 0; n < BLK_K / DIM_XB; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XB; m++)
+            for (m = 0; m < BLK_N / DIM_YB; m++)
             {
-                sB(m * DIM_XB + idxB, n * DIM_YB + idyB) = rb[n][m];
+                sB(n * DIM_XB + idxB, m * DIM_YB + idyB) = rb[n][m];
             }
         }
         __syncthreads();
@@ -260,16 +260,16 @@ template <typename T,
           int DIM_YA,
           int DIM_XB,
           int DIM_YB>
-static __global__ void vbatched_gemm_kernel(int* M,
-                                            int* N,
-                                            int* K,
-                                            T** global_A_array,
-                                            int* global_lda,
-                                            T** global_B_array,
-                                            int* global_ldb,
+static __global__ void vbatched_gemm_kernel(const int* M,
+                                            const int* N,
+                                            const int* K,
+                                            const T* const* global_A_array,
+                                            const int* global_lda,
+                                            const T* const* global_B_array,
+                                            const int* global_ldb,
                                             T** global_C_array,
-                                            int* global_ldc,
-                                            T* alpha)
+                                            const int* global_ldc,
+                                            const T* alpha)
 {
     extern __shared__ __align__(sizeof(T)) unsigned char smem[];
     T* shared_mem = reinterpret_cast<T*>(smem);
@@ -381,7 +381,7 @@ static inline int ceildiv(int x, int y)
  * especially the fact that we can relatively easily control the arrangement of
  * the matrix elements, we have only implemented one type of requirement for
  * matrix transposition. That is, we have implemented the operation C = alpha *
- * trans(A) * B + C under the constraint of column-major order.
+ * A * trans(B) + C under the constraint of column-major order.
  *
  * Finally, we would like to thank Magma for its contributions to the field of
  * scientific computing.
@@ -415,8 +415,8 @@ void vbatched_gemm_impl(int max_m,
     // The positions of A and B have been swapped here.
     // This is because the original code is for column-major matrices.
     // We use row-major matrices, so we need to swap A and B.
-    // The vbatched_gemm_impl is for C = trans(A) * B + C, but we need trans(C).
-    // Which means: trans(C) = trans(trans(A)*B + C) = trans(B) * A + trans(C)
+    // The vbatched_gemm_impl is for C = A * trans(B) + C, but we need trans(C).
+    // Which means: trans(C) = trans(A * trans(B) + C) = B * trans(A) + trans(C)
     // Then, ldc should be N, lda and ldb should be K
 
     size_t shared_mem_size = 0;
@@ -452,7 +452,7 @@ void vbatched_gemm_impl(int max_m,
     if (remain_num > 0)
     {
         dim3 dimGrid(ceildiv(max_n, BLK_M), ceildiv(max_m, BLK_N), remain_num);
-        T* alpha_tmp = nullptr;
+        const T* alpha_tmp = nullptr;
         if (alpha != nullptr)
         {
             alpha_tmp = alpha + loop_num * max_batch_count;
@@ -484,15 +484,15 @@ template <typename T,
           int DIM_YB>
 void gemm_time_measure(int max_m,
                        int max_n,
-                       int* m,
-                       int* n,
-                       int* k,
-                       T** global_A_array,
-                       int* global_lda,
-                       T** global_B_array,
-                       int* global_ldb,
+                       const int* m,
+                       const int* n,
+                       const int* k,
+                       const T* const* global_A_array,
+                       const int* global_lda,
+                       const T* const* global_B_array,
+                       const int* global_ldb,
                        T** global_C_array,
-                       int* global_ldc,
+                       const int* global_ldc,
                        int batchCount,
                        cudaStream_t stream,
                        float& fast_time,
