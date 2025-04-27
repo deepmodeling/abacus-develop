@@ -79,6 +79,30 @@ void ReadInput::item_postprocess()
         sync_doublevec(input.stm_bias, 3, 0);
         this->add_item(item);
     }
+    {
+        Input_Item item("ldos_line");
+        item.annotation = "start and end point of the line (direct coordinates) and number of points";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 6 && count != 7)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ldos_line should have 6 or 7 values");
+            }
+            for (int i = 0; i < 6; ++i)
+            {
+                para.input.ldos_line[i] = std::stod(item.str_values[i]);
+            }
+            para.input.ldos_line[6] = (count == 7) ? std::stoi(item.str_values[6]) : 100;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ldos_line[6] <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ldos_line[6] should be greater than 0");
+            }
+        };
+        sync_doublevec(input.ldos_line, 7, 0);
+        this->add_item(item);
+    }
 
     // Electronic Conductivity
     {

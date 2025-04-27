@@ -134,7 +134,6 @@ struct Input_para
     double lcao_dr = 0.01;                     ///< dr used in two center integral
     double lcao_rmax = 30.0;                   ///< rmax(a.u.) to make table.
     double search_radius = -1.0;               ///< 11.1
-    bool search_pbc = true;                    ///< 11.2
     int bx = 0, by = 0, bz = 0;                ///< big mesh ball. 0: auto set bx/by/bz
     int elpa_num_thread = -1;                  ///< Number of threads need to use in elpa
     int nstream = 4;                           ///< Number of streams in CUDA as per input data
@@ -420,6 +419,14 @@ struct Input_para
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
     std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
+    std::vector<double> ldos_line
+        = {0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           100}; ///< start and end point of the line (direct coordinates) and number of points
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions

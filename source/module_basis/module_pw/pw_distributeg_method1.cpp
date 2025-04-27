@@ -47,14 +47,15 @@ void PW_Basis::distribution_method1()
         this->count_pw_st(st_length2D, st_bottom2D);
     }
 #ifdef __MPI
-    MPI_Bcast(&this->npwtot, 1, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(&this->nstot, 1, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(&liy, 1, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(&riy, 1, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(&lix, 1, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(&rix, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&this->npwtot, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&this->nstot, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&liy, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&riy, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&lix, 1, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(&rix, 1, MPI_INT, 0, this->pool_world);
 #endif
-    delete[] this->istot2ixy; this->istot2ixy = new int[this->nstot];
+    delete[] this->istot2ixy; 
+    this->istot2ixy = new int[this->nstot];
 
     if(poolrank == 0)
     {
@@ -78,7 +79,7 @@ void PW_Basis::distribution_method1()
         delete[] st_j;
         //We do not need startnsz_per after it.
         delete[] this->startnsz_per;
-        this->startnsz_per=nullptr;
+        this->startnsz_per=nullptr;    
 #else
         // Serial line
         // get nst_per, npw_per, fftixy2ip, and istot2ixy
@@ -96,14 +97,13 @@ void PW_Basis::distribution_method1()
         }
 #endif
     }
-
 #ifdef __MPI
-    MPI_Bcast(st_length2D, this->fftnxy, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(st_bottom2D, this->fftnxy, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(this->fftixy2ip, this->fftnxy, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(this->istot2ixy, this->nstot, MPI_INT, 0, this->pool_world);
-    MPI_Bcast(this->nst_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
-    MPI_Bcast(this->npw_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
+        MPI_Bcast(st_length2D, this->fftnxy, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(st_bottom2D, this->fftnxy, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(this->fftixy2ip, this->fftnxy, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(this->istot2ixy, this->nstot, MPI_INT, 0, this->pool_world);
+        MPI_Bcast(this->nst_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
+        MPI_Bcast(this->npw_per, this->poolnproc, MPI_INT, 0 , this->pool_world);
 #endif
     this->npw = this->npw_per[this->poolrank];
     this->nst = this->nst_per[this->poolrank];

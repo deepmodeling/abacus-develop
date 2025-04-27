@@ -133,6 +133,7 @@ struct synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVIC
     void operator()(FPTYPE* arr_out,
                     const FPTYPE* arr_in,
                     const size_t size);
+    
 };
 
 template <typename FPTYPE>

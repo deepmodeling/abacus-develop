@@ -65,7 +65,7 @@ extern "C"
 	void cgemv_(const char *trans, const int *m, const int *n, const std::complex<float> *alpha,
 			const std::complex<float> *a, const int *lda, const std::complex<float> *x, const int *incx,
 			const std::complex<float> *beta, std::complex<float> *y, const int *incy);
-		
+
 	void zgemv_(const char *trans, const int *m, const int *n, const std::complex<double> *alpha,
 			const std::complex<double> *a, const int *lda, const std::complex<double> *x, const int *incx,
 			const std::complex<double> *beta, std::complex<double> *y, const int *incy);
@@ -180,11 +180,36 @@ public:
 	// Peize Lin add 2017-10-27
 	// d=x*y
 	static
-	float dot( const int n, const float *X, const int incX, const float *Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+	float dot( const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
 	static
-	double dot( const int n, const double *X, const int incX, const double *Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+	double dot( const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
+	// d=x*y
+	static
+	float dotu( const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	double dotu( const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	std::complex<float> dotu( const int n, const std::complex<float>*const X, const int incX, const std::complex<float>*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	std::complex<double> dotu( const int n, const std::complex<double>*const X, const int incX, const std::complex<double>*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	// d=x.conj()*y
+	static
+	float dotc( const int n, const float*const X, const int incX, const float*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	double dotc( const int n, const double*const X, const int incX, const double*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	std::complex<float> dotc( const int n, const std::complex<float>*const X, const int incX, const std::complex<float>*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	std::complex<double> dotc( const int n, const std::complex<double>*const X, const int incX, const std::complex<double>*const Y, const int incY, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
 	// Peize Lin add 2017-10-27, fix bug trans 2019-01-17
 	// C = a * A.? * B.? + b * C
@@ -231,6 +256,9 @@ public:
 		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
 		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
+	// side=='L': C = a * A * B + b * C.
+	// side=='R': C = a * B * A + b * C.
+	// 		A == A^T
 	// Because you cannot pack symm or hemm into a row-major kernel by exchanging parameters, so only col-major functions are provided.
 	static
 	void symm_cm(const char side, const char uplo, const int m, const int n,
@@ -252,6 +280,19 @@ public:
 		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
 		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
+	// side=='L': C = a * A * B + b * C.
+	// side=='R': C = a * B * A + b * C.
+	// 		A == A^H
+	static
+	void hemm_cm(const char side, const char uplo, const int m, const int n,
+		const float alpha, const float *a, const int lda, const float *b, const int ldb,
+		const float beta, float *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void hemm_cm(const char side, const char uplo, const int m, const int n,
+		const double alpha, const double *a, const int lda, const double *b, const int ldb,
+		const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
 	static
     void hemm_cm(char side, char uplo, int m, int n,
             std::complex<float> alpha, std::complex<float> *a, int lda, std::complex<float> *b, int ldb,
@@ -263,7 +304,6 @@ public:
 		std::complex<double> beta, std::complex<double> *c, int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
 	// y = A*x + beta*y
-
 	static
 	void gemv(const char trans, const int m, const int n,
         const float alpha, const float* A, const int lda, const float* X, const int incx,
@@ -283,7 +323,6 @@ public:
     void gemv(const char trans, const int m, const int n,
               const std::complex<double> alpha, const std::complex<double> *A, const int lda, const std::complex<double> *X, const int incx,
               const std::complex<double> beta, std::complex<double> *Y, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
- 
 
 	// Peize Lin add 2018-06-12
 	// out = ||x||_2
