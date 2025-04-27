@@ -23,27 +23,6 @@ namespace ModuleESolver
 
 ESolver_FP::ESolver_FP()
 {
-    std::string fft_device = PARAM.inp.device;
-    // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(PARAM.inp.basis_type == "lcao")
-    {
-        fft_device = "cpu";
-    }
-    pw_rho = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
-    if (PARAM.globalv.double_grid)
-    {
-        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
-    }
-    else
-    {
-        pw_rhod = pw_rho;
-    }
-
-    // temporary, it will be removed
-    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
-    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
-    sf.set(pw_rhod, PARAM.inp.nbspline);
-
 }
 
 ESolver_FP::~ESolver_FP()
@@ -59,6 +38,39 @@ ESolver_FP::~ESolver_FP()
 void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
+    std::string fft_device = PARAM.inp.device;
+    std::string fft_precison = PARAM.inp.precision;
+    // LCAO basis doesn't support GPU acceleration on FFT currently
+    if(PARAM.inp.basis_type == "lcao")
+    {
+        fft_device = "cpu";
+    }
+    if ((PARAM.inp.precision=="single") || (PARAM.inp.precision=="mixing"))
+    {
+        fft_precison = "mixing";
+    }
+    else if (PARAM.inp.precision=="double")
+    {
+        fft_precison = "double";
+    }
+    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
+        if (this->device == "gpu")
+        {
+            fft_precison = "double";
+        }
+    #endif
+    pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
+    if (PARAM.globalv.double_grid)
+    {
+        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
+    }
+    else
+    {
+        pw_rhod = pw_rho;
+    }
+    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
+    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
+    sf.set(pw_rhod, PARAM.inp.nbspline);
 
     //! 1) read pseudopotentials
     if (!PARAM.inp.use_paw)

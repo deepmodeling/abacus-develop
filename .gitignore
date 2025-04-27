@@ -24,3 +24,7 @@ abacus.json
 *.npy
 toolchain/install/
 toolchain/abacus_env.sh
+*.sh
+*.pyc
+*.txt
+*.py
