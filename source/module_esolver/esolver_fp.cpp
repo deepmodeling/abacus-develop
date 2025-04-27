@@ -54,7 +54,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
         fft_precison = "double";
     }
     #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
-        if (this->device == "gpu")
+        if (fft_device == "gpu")
         {
             fft_precison = "double";
         }
