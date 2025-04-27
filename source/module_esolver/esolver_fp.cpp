@@ -27,7 +27,11 @@ ESolver_FP::ESolver_FP()
 
 ESolver_FP::~ESolver_FP()
 {
-    delete pw_rho;
+    if (pw_rho_flag == 1)
+    {
+        delete this->pw_rho;
+        this->pw_rho_flag = 0;
+    }
     if ( PARAM.globalv.double_grid)
     {
         delete pw_rhod;
@@ -60,6 +64,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
         }
     #endif
     pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
+    pw_rho_flag = 1;
     if (PARAM.globalv.double_grid)
     {
         pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precison);

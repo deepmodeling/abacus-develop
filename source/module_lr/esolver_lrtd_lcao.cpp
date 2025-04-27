@@ -226,7 +226,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->gint_->reset_DMRGint(1);
 
     // move pw basis
-    delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    if (this->pw_rho_flag)
+    {
+        this->pw_rho_flag = 0;
+        delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    }
     this->pw_rho = ks_sol.pw_rho;
     ks_sol.pw_rho = nullptr;
     //init potential and calculate kernels using ground state charge
