@@ -4,7 +4,7 @@
 102_NO_GO_deepks_scf
 102_NO_KP_deepks_scf
 102_NO_GO_deepks_md
-#102_NO_KP_deepks_md
+102_NO_KP_deepks_md
 #102_NO_GO_deepks_nscf
 #102_NO_KP_deepks_nscf
 #102_NO_GO_deepks_relax

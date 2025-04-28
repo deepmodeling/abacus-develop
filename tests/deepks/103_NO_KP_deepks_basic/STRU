@@ -7,15 +7,15 @@ O_gga_6au_60Ry_2s2p1d.orb
 H_gga_6au_60Ry_2s1p.orb
 
 NUMERICAL_DESCRIPTOR
-../Model_ProjOrb/6au_50Ry_jle.orb
+../Model_ProjOrb/2au_20Ry_jle.orb
 
 LATTICE_CONSTANT
-1.8897259886
+1
 
 LATTICE_VECTORS
-14.81696297 0.0 0.0 
-0.0 14.81696297 0.0 
-0.0 0.0 14.81696297 
+12 0 0 
+0 12 0
+0 0 12 
 
 ATOMIC_POSITIONS
 Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)

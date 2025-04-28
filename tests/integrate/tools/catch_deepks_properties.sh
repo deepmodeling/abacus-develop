@@ -89,12 +89,12 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
             echo "deepks_vdelta $deepks_vdelta" >>$1
             # For deepks_v_delta = 1
             if [ $deepks_v_delta == 1 ]; then
-                deepks_vdp=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_vdpre.npy `
+                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy `
                 echo "deepks_vdp $deepks_vdp" >> $1
             fi
             # For deepks_v_delta = 2
             if [ $deepks_v_delta == 2 ]; then
-                deepks_phialpha=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_phialpha.npy `
+                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy `
                 echo "deepks_phialpha $deepks_phialpha" >> $1
                 deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
                 echo "deepks_gevdm $deepks_gevdm" >> $1
