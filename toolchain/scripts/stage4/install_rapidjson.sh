@@ -53,7 +53,7 @@ case "$with_rapidjson" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         # tar -xzf $filename
-        unzip $filename # downloaded file is a zip file, so use unzip instead of tar
+        unzip -q $filename # downloaded file is a zip file, so use unzip instead of tar, use -q to suppress output
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         # for CMake to find rapidjson
