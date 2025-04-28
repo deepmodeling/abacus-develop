@@ -177,6 +177,7 @@
     - [dos\_emax\_ev](#dos_emax_ev)
     - [dos\_nche](#dos_nche)
     - [stm\_bias](#stm_bias)
+    - [ldos\_line](#ldos_line)
   - [NAOs](#naos)
     - [bessel\_nao\_ecut](#bessel_nao_ecut)
     - [bessel\_nao\_tolerence](#bessel_nao_tolerence)
@@ -1705,9 +1706,13 @@ These variables are used to control the output of properties.
 
 ### out_ldos
 
-- **Type**: Boolean
-- **Description**: Whether to output the local density of states for given bias in cube file format, which is controlled by [stm_bias](#stm_bias). 
-- **Default**: False
+- **Type**: Integer
+- **Description**: Whether to output the local density of states (LDOS), optionally output precision can be set by a second parameter, default is 3.
+  - 0: no output
+  - 1: output the partial charge density for given bias (controlled by [stm_bias](#stm_bias)) in cube file format, which can be used to plot scanning tunneling spectroscopys to mimick STM images using the Python script [plot.py](../../../tools/stm/plot.py).
+  - 2: output LDOS along a line in real space (controlled by [ldos_line](#ldos_line)). Parameters used to control DOS output are also valid for LDOS.
+  - 3: output both two LDOS modes above.
+- **Default**: 0
 
 ### out_band
 
@@ -1985,6 +1990,13 @@ These variables are used to control the calculation of DOS. [Detailed introducti
   - The third parameter determines the total number of voltage points
 - **Default**: 1.0
 - **Unit**: V
+
+### ldos_line
+
+- **Type**: Real*6 Integer(optional)
+- **Description**: Specify the path of the three-dimensional space and display LDOS in the form of a two-dimensional color chart, see details in [out_ldos](#out_ldos). The first three paramenters are the direct coordinates of the start point, the next three paramenters are the direct coordinates of the end point, and the final one is the number of points along the path, whose default is 100.
+- **Default**: 0.0 0.0 0.0 0.0 0.0 1.0 100
+
 
 [back to top](#full-list-of-input-keywords)
 

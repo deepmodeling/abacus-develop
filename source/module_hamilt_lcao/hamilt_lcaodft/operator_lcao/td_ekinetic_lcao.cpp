@@ -244,8 +244,8 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td()
 
     // mohan update 2025-04-20
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[0]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[1]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[2]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", cart_At[1]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", cart_At[2]);
 }
 
 template <typename TK, typename TR>
