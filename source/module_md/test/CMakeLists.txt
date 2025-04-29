@@ -23,7 +23,9 @@ list(APPEND depend_files
   ../../module_base/matrix3.cpp
   ../../module_base/matrix.cpp
   ../../module_base/timer.cpp
-  ../../module_base/blas_connector.cpp
+  ../../module_base/blas_connector_base.cpp
+  ../../module_base/blas_connector_matrix.cpp
+  ../../module_base/blas_connector_vector.cpp
   ../../module_base/memory.cpp
   ../../module_base/global_variable.cpp
   ../../module_base/global_function.cpp
