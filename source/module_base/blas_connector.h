@@ -368,9 +368,26 @@ public:
 
 #ifdef __CUDA
 
+#include <cuda_runtime.h>
+#include "cublas_v2.h"
+
+// If you want to use cublas, you need these functions to create and destroy the cublas/hipblas handle.
+// You also need to use these functions to translate the transpose parameter into cublas/hipblas datatype.
+
 namespace BlasUtils{
-	void createGpuBlasHandle();
-	void destoryBLAShandle();
+
+	static cublasHandle_t cublas_handle = nullptr;
+
+	void createGpuBlasHandle(); // Create a cublas/hipblas handle.
+
+	void destoryBLAShandle(); // Destroy the cublas/hipblas handle. Do this when the software is about to end.
+
+	cublasOperation_t judge_trans(bool is_complex, const char& trans, const char* name); // Translate a normal transpose parameter to a cublas/hipblas type.
+
+	cublasSideMode_t judge_side(const char& trans); // Translate a normal side parameter to a cublas/hipblas type.
+
+	cublasFillMode_t judge_fill(const char& trans); // Translate a normal fill parameter to a cublas/hipblas type.
+
 }
 
 #endif
