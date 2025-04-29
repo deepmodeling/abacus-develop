@@ -6,11 +6,12 @@
 # Only problem is the installation from github.com
 
 # Last Update in 2024-0119
+# Last Update in 2025-04-28 by Kai Luo
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-rapidjson_ver="1.1.0"
+rapidjson_ver="master" # latest version, instead of "1.1.0"  fixing issue of #5518
 rapidjson_sha256="bf7ced29704a1e696fbccf2a2b4ea068e7774fa37f6d7dd4039d0787f8bed98e"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -31,8 +32,10 @@ case "$with_rapidjson" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/rapidjson/${rapidjson_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/Tencent/rapidjson/archive/refs/tags/v${rapidjson_ver}.tar.gz"
-    filename="rapidjson-${rapidjson_ver}.tar.gz"
+    #url="https://github.com/Tencent/rapidjson/archive/refs/tags/v${rapidjson_ver}.tar.gz" # commented by Kai Luo in 2025/04/28
+    url="https://codeload.github.com/Tencent/rapidjson/zip/refs/heads/master"
+    # filename="rapidjson-${rapidjson_ver}.tar.gz"
+    filename="rapidjson-${rapidjson_ver}.zip" # changed by Kai Luo in 2025/04/28
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -41,14 +44,16 @@ case "$with_rapidjson" in
         else
         # download from github.com and checksum
             echo "===> Notice: This version of rapidjson is downloaded in GitHub Release, which will always be out-of-date version <==="
-            download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
+            # download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
+            wget  "${url}" -O  "${filename}"  --no-check-certificate # use wget directly instead of download_pkg_from_url
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        tar -xzf $filename
+        # tar -xzf $filename
+        unzip -q $filename # downloaded file is a zip file, so use unzip instead of tar, use -q to suppress output
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         # for CMake to find rapidjson

@@ -458,7 +458,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 
 void DeePKS_domain::check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm)
 {
-    const std::string file_projdm = PARAM.globalv.global_out_dir + "pdm.dat";
+    const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     ofs << std::setprecision(10);

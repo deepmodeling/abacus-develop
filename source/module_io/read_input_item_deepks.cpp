@@ -25,6 +25,10 @@ void ReadInput::item_deepks()
                 ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
             }
 #endif
+            // if (!PARAM.inp.deepks_scf && PARAM.inp.deepks_out_labels == 1)
+            // {
+            //     ModuleBase::WARNING_QUIT("Input_conv", "deepks_out_labels = 1 requires deepks_scf = 1");
+            // }
         };
         this->add_item(item);
     }
