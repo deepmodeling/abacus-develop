@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-calculation         scf
+calculation         nscf
 suffix              autotest
 
 ecutwfc             50
@@ -7,8 +7,9 @@ scf_thr             1e-06
 scf_nmax            35
 pseudo_dir          ../../PP_ORB
 orbital_dir         ../../PP_ORB
+read_file_dir       ./
 basis_type          lcao
-dft_functional      lda
+dft_functional      pbe
 gamma_only          0
 mixing_type         broyden
 mixing_beta         0.8
@@ -21,3 +22,5 @@ deepks_out_labels   0
 deepks_scf          1
 deepks_model        ../Model_ProjOrb/model_lda_pbe_18.ptg
 
+init_chg            file
+out_dos             1

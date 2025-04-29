@@ -5,10 +5,10 @@
 102_NO_KP_deepks_scf
 102_NO_GO_deepks_md
 102_NO_KP_deepks_md
-#102_NO_GO_deepks_nscf
-#102_NO_KP_deepks_nscf
-#102_NO_GO_deepks_relax
-#102_NO_KP_deepks_relax
+102_NO_GO_deepks_nscf
+102_NO_KP_deepks_nscf
+102_NO_GO_deepks_relax
+102_NO_KP_deepks_relax
 103_NO_GO_deepks_basic
 103_NO_KP_deepks_basic
 103_NO_GO_deepks_bandgap
