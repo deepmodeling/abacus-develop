@@ -271,7 +271,10 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
         }
     }
 
-    std::ofstream ofscond("je-je.txt");
+    std::stringstream ss;
+    ss << PARAM.globalv.global_out_dir << "je-je.txt";
+
+    std::ofstream ofscond(ss.str());
     ofscond << std::setw(8) << "#t(a.u.)" << std::setw(15) << "c11(t)" << std::setw(15) << "c12(t)" << std::setw(15)
             << "c22(t)" << std::setw(15) << "decay" << std::endl;
     for (int it = 0; it < nt; ++it)
@@ -293,7 +296,11 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
             cw22[iw] += -2 * ct22[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
         }
     }
-    ofscond.open("Onsager.txt");
+
+    std::stringstream sso;
+    sso << PARAM.globalv.global_out_dir << "Onsager.txt";
+
+    ofscond.open(sso.str());
     ofscond << std::setw(8) << "## w(eV) " << std::setw(20) << "sigma(Sm^-1)" << std::setw(20) << "kappa(W(mK)^-1)"
             << std::setw(20) << "L12/e(Am^-1)" << std::setw(20) << "L22/e^2(Wm^-1)" << std::endl;
     for (int iw = 0; iw < nw; ++iw)
