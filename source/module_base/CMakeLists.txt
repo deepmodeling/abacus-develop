@@ -10,7 +10,6 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
-    #blas_connector.cpp
     blas_connector_base.cpp
     blas_connector_vector.cpp
     blas_connector_matrix.cpp
