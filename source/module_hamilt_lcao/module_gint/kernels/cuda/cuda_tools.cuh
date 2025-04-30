@@ -15,15 +15,15 @@
 cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line);
 cudaError_t __checkCudaLastError(const char *file, const int line);
 
-void dump_cuda_array_to_file(double* cuda_array,
+void dump_cuda_array_to_file(const double* cuda_array,
                              int width,
                              int hight,
                              const std::string& filename);
 
-inline int ceil_div(int a, int b)
-{
-    return (a + b - 1) / b;
-}
+// inline int ceil_div(int a, int b)
+// {
+//     return (a + b - 1) / b;
+// }
 
 /*
  * @brief: A simple wrapper for cudaMalloc and cudaFree, sync and async CUDA

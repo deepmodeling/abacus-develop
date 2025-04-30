@@ -15,6 +15,7 @@
 
 #ifdef __CUDA
 #include "batch_biggrid.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/kernel/gint_gpu_vars.h"
 #endif
 
 namespace ModuleGint
@@ -33,7 +34,7 @@ class GintInfo
         const UnitCell& ucell, Grid_Driver& gd);
 
     // getter functions
-    std::vector<std::shared_ptr<BigGrid>>& get_biggrids() const { return biggrids_; };
+    std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; };
     std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
     double get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); };
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); };
@@ -85,11 +86,14 @@ class GintInfo
 
     #ifdef __CUDA
     public:
-    std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() const { return bgrid_batches_; };
-
+    std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() { return bgrid_batches_; };
+    std::shared_ptr<const GintGpuVars> get_gpu_vars() const { return gpu_vars_; };
+    int get_dev_id() const { return gpu_vars_->dev_id_; };
+    
     private:
     void init_bgrid_batches_(int batch_size);
     std::vector<std::shared_ptr<BatchBigGrid>> bgrid_batches_;
+    std::shared_ptr<const GintGpuVars> gpu_vars_;
     #endif
 };
 

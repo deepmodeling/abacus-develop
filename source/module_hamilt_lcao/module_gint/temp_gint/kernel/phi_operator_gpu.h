@@ -2,11 +2,10 @@
 #include <memory>
 #include <cuda_runtime.h>
 
-#include "temp_gint/batch_biggrid.h"
-#include "module_gint/kernels/cuda/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/temp_gint/batch_biggrid.h"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
 #include "gint_gpu_vars.h"
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
+#include "cuda_mem_wrapper.h"
 
 namespace ModuleGint
 {
@@ -15,34 +14,67 @@ class PhiOperatorGpu
 {
 
 public:
-    PhiOperatorGpu(cudaStream_t stream);
+    PhiOperatorGpu(std::shared_ptr<const GintGpuVars> gint_gpu_vars, cudaStream_t stream = 0);
+    ~PhiOperatorGpu();
 
     void set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch);
-    static void set_gint_gpu_vars(std::shared_ptr<GintGpuVars> gint_gpu_vars)
-    {
-        gint_gpu_vars_ = gint_gpu_vars;
-    };
 
-    void 
+    void set_phi(double* phi_d);
+
+    void phi_mul_vldr3(
+        const double* vl_d,
+        const double dr3,
+        const double* phi_d,
+        double* result_d);
+    
+    void phi_mul_phi_vldr3(
+        const double* phi_d,
+        const double* phi_vldr3_d,
+        std::shared_ptr<HContainer<double>> hRGint,
+        double* hr_d);
+    
 
 private:
     std::shared_ptr<BatchBigGrid> bgrid_batch_;
-    static std::shared_ptr<GintGpuVars> gint_gpu_vars_;
-    cudaStream_t stream_ = nullptr;
+    std::shared_ptr<const GintGpuVars> gint_gpu_vars_;
+
+    // the number of meshgrids on a biggrid
+    int mgrids_num_;
+    
+    int phi_len_;
+
+    cudaStream_t stream_ = 0;
+    cudaEvent_t event_;
 
     // The first number in every group of two represents the number of atoms on that bigcell.
     // The second number represents the cumulative number of atoms up to that bigcell.
-    thrust::host_vector<int2> atoms_num_info_h_;
-    thrust::device_vector<int2> atoms_num_info_d_;
+    CudaMemWrapper<int2> atoms_num_info_;
 
     // the iat of each atom
-    thrust::host_vector<int> atoms_iat_h_;
-    thrust::device_vector<int> atoms_iat_d_;
+    CudaMemWrapper<int> atoms_iat_;
 
     // atoms_bgrids_rcoords_ here represents the relative coordinates from the big grid to the atoms
-    thrust::host_vector<double3> atoms_bgrids_rcoords_h_;
-    thrust::device_vector<double3> atoms_bgrids_rcoords_d_;
-    
+    CudaMemWrapper<double3> atoms_bgrids_rcoords_;
+
+    // the start index of the phi array for each atom
+    CudaMemWrapper<int> atoms_phi_start_;
+    // The length of phi for a single meshgrid on each big grid.
+    CudaMemWrapper<int> bgrids_phi_len_;
+    // The start index of the phi array for each big grid.
+    CudaMemWrapper<int> bgrids_phi_start_;
+    // Mapping of the index of meshgrid in the batch of biggrids to the index of meshgrid in the local cell
+    CudaMemWrapper<int> mgrids_local_idx_batch_;
+
+    CudaMemWrapper<int> gemm_m_;
+    CudaMemWrapper<int> gemm_n_;
+    CudaMemWrapper<int> gemm_k_;
+    CudaMemWrapper<int> gemm_lda_;
+    CudaMemWrapper<int> gemm_ldb_;
+    CudaMemWrapper<int> gemm_ldc_;
+    CudaMemWrapper<const double*> gemm_A_;
+    CudaMemWrapper<const double*> gemm_B_;
+    CudaMemWrapper<double*> gemm_C_; 
+    CudaMemWrapper<int> gemm_alpha_;
 };
 
 }

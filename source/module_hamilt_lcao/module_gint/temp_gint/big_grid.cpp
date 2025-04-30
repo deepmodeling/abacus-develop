@@ -89,15 +89,15 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
     atom_coord.resize(biggrid_info_->get_mgrids_num());
     for(int im = 0; im < biggrid_info_->get_mgrids_num(); ++im)
     {
-        const Vec3d& mcell_coord = biggrid_info_->get_mgrid_coord(im);
-        atom_coord[im] = mcell_coord - bgrid_relative_coord;
+        const Vec3d& mgrid_coord = biggrid_info_->get_mgrid_coord(im);
+        atom_coord[im] = mgrid_coord - bgrid_relative_coord;
     }
 }
 
 Vec3d BigGrid::get_bgrid_atom_rcoord(const GintAtom* atom) const
 {
     Vec3i this_bgrid_idx = localcell_info_->get_bgrid_global_idx_3D(idx_);
-    return unitcell_info_->get_relative_coord(bgrid_idx, this_bgrid_idx) + tau_in_bgrid;;
+    return unitcell_info_->get_relative_coord(atom->get_bgrid_idx(), this_bgrid_idx) + atom->get_tau_in_bgrid();
 }
 
 

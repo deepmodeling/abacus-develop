@@ -24,7 +24,7 @@ cudaError_t __checkCudaLastError(const char *file, const int line)
     return result;
 }
 
-void dump_cuda_array_to_file(double* cuda_array,
+void dump_cuda_array_to_file(const double* cuda_array,
                              int width,
                              int hight,
                              const std::string& filename)

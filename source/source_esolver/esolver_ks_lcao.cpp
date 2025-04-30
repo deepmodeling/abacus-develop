@@ -61,6 +61,8 @@
 // test RDMFT
 #include "module_rdmft/rdmft.h"
 
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
+
 #include <iostream>
 
 namespace ModuleESolver
@@ -92,6 +94,10 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
+#ifdef __NEW_GINT
+    // release gint_info
+    ModuleGint::Gint::set_gint_info(nullptr);
+#endif
 }
 
 template <typename TK, typename TR>

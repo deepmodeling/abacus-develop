@@ -52,6 +52,16 @@ if(NEW_GINT)
       temp_gint/gint_common.cpp
       temp_gint/gint_interface.cpp
       )
+  if(USE_CUDA)
+    list(APPEND objects
+        temp_gint/kernel/gint_gpu_vars.cpp
+        temp_gint/kernel/phi_operator_gpu.cu
+        temp_gint/kernel/phi_operator_kernel.cu
+        temp_gint/kernel/set_const_mem.cu
+        temp_gint/batch_biggrid
+        temp_gint/gint_vl_gpu.cpp
+    )
+  endif()
 endif()
 
 if(USE_CUDA)

@@ -5,9 +5,9 @@
 #include "module_base/ylm.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/atom_spec.h"
-#include "module_gint/kernels/cuda/gemm_selector.cuh"
-#include "module_gint/temp_gint/gint_info.h"
-#include "module_gint/kernels/cuda/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/temp_gint/biggrid_info.h"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gemm_selector.cuh"
 
 namespace ModuleGint
 {
@@ -15,13 +15,17 @@ namespace ModuleGint
 class GintGpuVars
 {
     public:
-    GintGpuVars(const std::shared_ptr<GintInfo> gint_info,
+    GintGpuVars(std::shared_ptr<const BigGridInfo> bgrid_info,
                 const UnitCell& ucell,
-                Numerical_Orbital* Phi);
+                const Numerical_Orbital* Phi);
     ~GintGpuVars();
-
-    // ylmcoef_d is __constant__ memory
+    
+    int nwmax;
+    double dr_uniform;
+    double nr_max;
+    // ylmcoef_d is __constant__ memory, no need to cudaFree
     double* ylmcoef_d = nullptr;
+    double* rcut_d = nullptr;
     int* atom_nw_d = nullptr;
     int* ucell_atom_nwl_d = nullptr;
     bool* atom_iw2_new_d = nullptr;
@@ -30,11 +34,13 @@ class GintGpuVars
     double* psi_u_d = nullptr;
     double* dpsi_u_d = nullptr;
     double* d2psi_u_d = nullptr;
-    double3* mgrid_pos_d = nullptr;
+    double3* mgrids_pos_d = nullptr;
     int* iat2it_d = nullptr;
-    int dev_id = 0;
+
+    // the index of gpu device
+    int dev_id_ = 0;
     matrix_multiple_func_type fastest_matrix_mul;
 
-}
+};
 
 }

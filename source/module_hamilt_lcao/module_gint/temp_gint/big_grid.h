@@ -23,9 +23,9 @@ class BigGrid
 
         // getter functions
         int get_idx() const { return idx_; };
-        std::shared_ptr<const LocalCellInfo> get_localcell_info() const { return localcell_info_; };
-        std::shared_ptr<const UnitCellInfo> get_unitcell_info() const {return unitcell_info_; };
-        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
+        static std::shared_ptr<const LocalCellInfo> get_localcell_info() { return localcell_info_; };
+        static std::shared_ptr<const UnitCellInfo> get_unitcell_info() { return unitcell_info_; };
+        static std::shared_ptr<const BigGridInfo> get_bgrid_info() { return biggrid_info_; };
         const std::vector<const GintAtom*>& get_atoms() const { return atoms_; };
         const GintAtom* get_atom(int i) const { return atoms_[i]; };
 

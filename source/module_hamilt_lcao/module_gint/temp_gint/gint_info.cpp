@@ -49,7 +49,11 @@ GintInfo::GintInfo(
     init_ijr_info_(ucell, gd);
 
     #ifdef __CUDA
-    init_bgrid_batches(nbz_local);
+    if(PARAM.inp.device == "gpu")
+    {
+        init_bgrid_batches_(nbz_local);
+        gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);
+    }
     #endif
 }
 
@@ -214,7 +218,7 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
 #ifdef __CUDA
 void GintInfo::init_bgrid_batches_(int batch_size)
 {
-    for (int i = 0; i < biggrids_.size(); i+ = batch_size)
+    for (int i = 0; i < biggrids_.size(); i += batch_size)
     {
         std::vector<std::shared_ptr<BigGrid>> bgrid_vec;
         for(int j = i; j < i + batch_size && j < biggrids_.size(); j++)
