@@ -56,6 +56,16 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
     return;
 }
 
+void DeePKS_domain::check_o_delta(ModuleBase::matrix& o_delta)
+{
+    std::ofstream ofs("o_delta.dat");
+    ofs << std::setprecision(10);
+    for (int ik = 0; ik < o_delta.nr; ik++)
+    {
+        ofs << o_delta(ik, 0) << std::endl;
+    }
+}
+
 template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::vector<ModuleBase::matrix>& dm_hl,
                                                                      const std::vector<std::vector<double>>& h_delta,
                                                                      //  std::vector<double>& o_delta,

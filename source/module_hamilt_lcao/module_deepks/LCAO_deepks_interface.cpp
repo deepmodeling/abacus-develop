@@ -58,14 +58,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const int nspin = PARAM.inp.nspin;
     const int nk = nks / nspin;
 
+    // Update DMR in any case of deepks_out_labels/deepks_scf
+    DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
+
     // Note : update PDM and all other quantities with the current dm
     // DeePKS PDM and descriptor
     if (PARAM.inp.deepks_out_labels == 1 || PARAM.inp.deepks_scf)
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
-        DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
-        
         DeePKS_domain::cal_pdm<
             TK>(init_pdm, inlmax, lmaxd, inl2l, inl_index, kvec_d, dmr, phialpha, ucell, orb, GridD, *ParaV, pdm);
 

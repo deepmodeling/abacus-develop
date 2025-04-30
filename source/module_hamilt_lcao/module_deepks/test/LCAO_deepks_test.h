@@ -95,6 +95,10 @@ class test_deepks
     void check_gvx(torch::Tensor& gdmx);
     void check_gvepsl(torch::Tensor& gdmepsl);
 
+    void check_orbpre();
+
+    void check_vdpre();
+
     void check_edelta(std::vector<torch::Tensor>& descriptor);
 
     // calculate V_delta
@@ -102,6 +106,7 @@ class test_deepks
 
     void check_e_deltabands();
     void check_f_delta_and_stress_delta();
+    void check_o_delta();
 
     // compares numbers stored in two files
     void compare_with_ref(const std::string f1, const std::string f2);

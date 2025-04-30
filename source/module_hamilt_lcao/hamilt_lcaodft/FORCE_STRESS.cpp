@@ -690,41 +690,38 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         } // end symmetry
 
 #ifdef __DEEPKS
-        if (PARAM.inp.deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels == 1)
         {
-            if (PARAM.inp.deepks_out_labels == 1)
+            const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
+            LCAO_deepks_io::save_matrix2npy(file_stot,
+                                            scs,
+                                            GlobalV::MY_RANK,
+                                            ucell.omega,
+                                            'U'); // change to energy unit Ry when printing, S_tot;
+
+            const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+            if (PARAM.inp.deepks_scf)
             {
-                const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
-                LCAO_deepks_io::save_matrix2npy(file_stot,
+                LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                scs - svnl_dalpha,
+                                                GlobalV::MY_RANK,
+                                                ucell.omega,
+                                                'U'); // change to energy unit Ry when printing, S_base;
+            }
+            else
+            {
+                LCAO_deepks_io::save_matrix2npy(file_sbase,
                                                 scs,
                                                 GlobalV::MY_RANK,
                                                 ucell.omega,
-                                                'U'); // change to energy unit Ry when printing, S_tot;
-
-                const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
-                if (PARAM.inp.deepks_scf)
-                {
-                    LCAO_deepks_io::save_matrix2npy(file_sbase,
-                                                    scs - svnl_dalpha,
-                                                    GlobalV::MY_RANK,
-                                                    ucell.omega,
-                                                    'U'); // change to energy unit Ry when printing, S_base;
-                }
-                else
-                {
-                    LCAO_deepks_io::save_matrix2npy(file_sbase,
-                                                    scs,
-                                                    GlobalV::MY_RANK,
-                                                    ucell.omega,
-                                                    'U'); // sbase = stot
-                }
+                                                'U'); // sbase = stot
             }
-            else if (PARAM.inp.deepks_out_labels == 2)
-            {
-                const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stress.npy";
-                LCAO_deepks_io::save_matrix2npy(file_stot, scs, GlobalV::MY_RANK, ucell.omega,
-                                                'F'); // flat mode
-            }
+        }
+        else if (PARAM.inp.deepks_out_labels == 2)
+        {
+            const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stress.npy";
+            LCAO_deepks_io::save_matrix2npy(file_stot, scs, GlobalV::MY_RANK, ucell.omega,
+                                            'F'); // flat mode
         }
 #endif
 

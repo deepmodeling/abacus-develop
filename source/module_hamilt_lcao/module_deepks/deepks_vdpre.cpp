@@ -172,28 +172,25 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 }
 
 template <typename TK>
-void DeePKS_domain::check_v_delta_precalc(const int nat,
-                                          const int nks,
-                                          const int nlocal,
-                                          const int des_per_atom,
-                                          const torch::Tensor& v_delta_precalc)
+void DeePKS_domain::check_v_delta_precalc(const torch::Tensor& v_delta_precalc)
 {
     using TK_tensor =
         typename std::conditional<std::is_same<TK, std::complex<double>>::value, c10::complex<double>, TK>::type;
+    auto sizes = v_delta_precalc.sizes();
     std::ofstream ofs("v_delta_precalc.dat");
     ofs << std::setprecision(10);
     auto accessor
         = v_delta_precalc
               .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
-    for (int iks = 0; iks < nks; ++iks)
+    for (int iks = 0; iks < sizes[0]; ++iks)
     {
-        for (int mu = 0; mu < nlocal; ++mu)
+        for (int mu = 0; mu < sizes[1]; ++mu)
         {
-            for (int nu = 0; nu < nlocal; ++nu)
+            for (int nu = 0; nu < sizes[2]; ++nu)
             {
-                for (int iat = 0; iat < nat; ++iat)
+                for (int iat = 0; iat < sizes[3]; ++iat)
                 {
-                    for (int p = 0; p < des_per_atom; ++p)
+                    for (int p = 0; p < sizes[4]; ++p)
                     {
                         TK_tensor tmp = accessor[iks][mu][nu][iat][p];
                         TK* tmp_ptr = reinterpret_cast<TK*>(&tmp);
@@ -432,16 +429,8 @@ template void DeePKS_domain::cal_v_delta_precalc<std::complex<double>>(
     const Grid_Driver& GridD,
     torch::Tensor& v_delta_precalc);
 
-template void DeePKS_domain::check_v_delta_precalc<double>(const int nat,
-                                                           const int nks,
-                                                           const int nlocal,
-                                                           const int des_per_atom,
-                                                           const torch::Tensor& v_delta_precalc);
-template void DeePKS_domain::check_v_delta_precalc<std::complex<double>>(const int nat,
-                                                                         const int nks,
-                                                                         const int nlocal,
-                                                                         const int des_per_atom,
-                                                                         const torch::Tensor& v_delta_precalc);
+template void DeePKS_domain::check_v_delta_precalc<double>(const torch::Tensor& v_delta_precalc);
+template void DeePKS_domain::check_v_delta_precalc<std::complex<double>>(const torch::Tensor& v_delta_precalc);
 
 template void DeePKS_domain::prepare_phialpha<double>(const int nlocal,
                                                       const int lmaxd,
