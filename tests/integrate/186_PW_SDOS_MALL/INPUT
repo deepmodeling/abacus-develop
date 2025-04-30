@@ -11,14 +11,14 @@ nche_sto		120
 emax_sto		0
 emin_sto		0
 seed_sto        20000
-pseudo_dir	../../PP_ORB
+pseudo_dir	    ../../PP_ORB
 symmetry	    1
 kpar            2
 bndpar          2
 
 #Parameters (2.Iteration)
 ecutwfc			20
-read_file_dir 		./
+read_file_dir 	./
 init_chg        file
 
 
@@ -27,8 +27,8 @@ init_chg        file
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		fd
-smearing_sigma			0.6
+smearing_method	fd
+smearing_sigma	0.6
 
 #Parameters (5.Mixing)
 mixing_type		broyden
