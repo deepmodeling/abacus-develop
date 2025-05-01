@@ -57,9 +57,8 @@ And re-run toolchain installation script.
 You can manually install requirements packages via:
 1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
 2. Download from github.com (for CEREAL, RapidJSON, libnpy, LibRI and others stage4 packages)
-3. Use git submodule update --init --recursive (for LibRI)
-4. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps.zip
-5. for Intel-oneAPI, please contact your server manager our visit Intel official website
+3. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps.zip (a mirror in Bohrium)
+4. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager our visit Intel official website
 EOF
 }
 
@@ -665,14 +664,14 @@ download_pkg_from_ABACUS_org() {
 
 download_pkg_from_url() {
   # usage: download_pkg_from_url sha256 filename url
-  local __sha256="$1"
+  local __sha256="$1" # if set to "--no-checksum", do not check checksum
   local __filename="$2"
   local __url="$3"
   # download
   #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename"
   #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url -O $__filename"
-  if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename; then
+  echo "wget ${DOWNLOADER_FLAGS} $__url -O $__filename --no-check-certificate"
+  if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename --no-check-certificate; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
     if [ "${PACK_RUN}" != "__TRUE__" ]; then
@@ -680,7 +679,9 @@ download_pkg_from_url() {
     fi
   fi
   # checksum
-  checksum "$__filename" "$__sha256"
+  if [ "$__sha256" != "--no-checksum" ]; then
+    checksum "$__filename" "$__sha256"
+  fi
 }
 
 # verify the checksums inside the given checksum file

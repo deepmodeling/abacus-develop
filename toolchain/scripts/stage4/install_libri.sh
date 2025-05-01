@@ -7,12 +7,13 @@
 # LibRI is under highly-active development, the git submodule installation is more recommended
 
 # Last Update in 2024-0815
+# other contributor: Peize Lin
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-# libri 0.2.0 need to be used in newer ABACUS
-libri_ver="0.2.1.0"
-libri_sha256="66a5540daba36effdad6ce2fe5e8368b96ddd4a7e148af90894ef21dc20ff29f"
+# libri 0.2.0 and above need to be used in newer ABACUS
+libri_ver="master"
+libri_sha256="--no-checksum"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -32,8 +33,9 @@ case "$with_libri" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/libri/${libri_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/abacusmodeling/LibRI/archive/refs/tags/v${libri_ver}.tar.gz"
-    filename="LibRI-${libri_ver}.tar.gz"
+    #url="https://github.com/abacusmodeling/LibRI/archive/refs/tags/v${libri_ver}.tar.gz"
+    url="https://codeload.github.com/abacusmodeling/LibRI/zip/refs/heads/${libri_ver}"
+    filename="LibRI-${libri_ver}.zip"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -41,7 +43,7 @@ case "$with_libri" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of LibRI is downloaded in GitHub Release, which will always be out-of-date version <==="
+            echo "===> Notice: This version of rapidjson is downloaded in GitHub master repository <==="
             download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
@@ -49,7 +51,7 @@ case "$with_libri" in
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        tar -xzf $filename
+        unzip -q $filename
         cp -r $dirname "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
