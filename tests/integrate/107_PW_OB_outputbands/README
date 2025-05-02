@@ -1,7 +1,1 @@
-This test for: out electron bands of 
-*Si-diamond
-*just gamma point
-*old upf pseudopotential
-*smearing_method default
-*ks_solver cg
-
+output bands in pw basis
