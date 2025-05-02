@@ -2,7 +2,6 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix				autotest
 calculation     	md
-ntype				2
 symmetry			0
 nspin				1
 pseudo_dir			../../PP_ORB
