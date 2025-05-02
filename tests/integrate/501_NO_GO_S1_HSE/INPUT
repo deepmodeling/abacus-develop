@@ -8,6 +8,10 @@ nspin				1
 pseudo_dir			../../PP_ORB
 orbital_dir			../../PP_ORB
 
+# Force and Stress
+cal_force		1
+cal_stress		1
+
 #Parameters (2.PW)
 ecutwfc				5
 scf_thr				1e-7
