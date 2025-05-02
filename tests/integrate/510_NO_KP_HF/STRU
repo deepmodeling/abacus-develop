@@ -2,7 +2,7 @@ ATOMIC_SPECIES
 Si 1.000 Si_dojo_nsoc.upf
 
 NUMERICAL_ORBITAL
-Si_dojo_6au.orb
+Si_dojo_6au_sz.orb
 
 LATTICE_CONSTANT
 1.889766
