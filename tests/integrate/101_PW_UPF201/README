@@ -1,5 +1,1 @@
-This test for:
-*Si-diamond
-*upf201 pseudopotential
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+test upf201 pseudopotential, symmetry=on

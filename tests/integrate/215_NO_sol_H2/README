@@ -1,4 +1,2 @@
-This test for: implicit solvation energy correction
-*H2
-*NO
-*kpoints 1*1*1
+test inplicit solvation model correction for H2, lcao
+

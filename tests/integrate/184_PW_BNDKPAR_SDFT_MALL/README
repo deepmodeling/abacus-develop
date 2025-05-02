@@ -1,10 +1,1 @@
-This test for:
-*SDFT
-*Si
-*kpoints 2*2*2
-*3 KS + complete orbitals
-*mixing_type plain
-*mixing_beta 0.7
-*seed_sto > 0
-*bndpar  2
-*kpar    2
+test parallel method bndpar and kpar. Must be run by MPI with at least 4 cores, otherwise please ignore this test.

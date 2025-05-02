@@ -1,5 +1,1 @@
-This test for:
-*Al-fcc
-*LPS in psp8 format (local pseudopotential)
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+test LPS in psp8 format, symmetry=on

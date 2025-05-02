@@ -1,9 +1,1 @@
-This test for:
-*Si-diamond
-*LCAO
-*gamma_only
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver hpseps
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+Func:GO/ks_solver=hpseps; Sys:Si2; Ref:energy

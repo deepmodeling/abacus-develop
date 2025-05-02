@@ -1,10 +1,1 @@
-This test for:
-*SDFT
-*Si
-*kpoints 1*1*1
-*All complete basis
-*mixing_type broyden
-*mixing_beta 0.4
-*seed_sto > 0
-*emax_sto   23.5079108951
-*emin_sto  -4.40353816868
+test SDFT with all complete basis, 1*1*1 kpoint, 20000 seed_sto

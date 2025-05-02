@@ -1,6 +1,1 @@
-This test for:
-*Fe-bcc
-*nspin 2
-*upf201 ultrasoft pseudopotential
-*mixing_type broyden
-*mixing_beta 0.4
+test upf201 uspp, Fe npsin=2, symmetry=off

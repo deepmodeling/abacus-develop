@@ -1,6 +1,1 @@
-Fe Antiferromagnetic
-NSPIN 2
-lcao
-init magnet: up + down
-SG15
-
+test for initial magnetization from elements, anti-ferromagnetic Fe2, LCAO
