@@ -1,14 +1,13 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-ntype			1
 symmetry		0
 gamma_only      0
 nspin			1
 
 #Parameters (2.Iteration)
-ecutwfc			50
-scf_thr			1E-5
+ecutwfc			10
+scf_thr			1e-7
 scf_nmax		100
 
 calculation		cell-relax
