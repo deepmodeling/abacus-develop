@@ -70,6 +70,7 @@ namespace unitcell
 			}
 		}
         ofs << std::endl;
+        ofs << std::setprecision(6); // return to 6, as original
 
 
         return;
