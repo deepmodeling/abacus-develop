@@ -332,9 +332,11 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
                 if (xc_func1 != ucell.atoms[i].ncpp.xc_func)
                 {
-                    std::cout << " dft_functional readin is: " << PARAM.inp.dft_functional << std::endl;
-                    std::cout << " dft_functional in pseudopot file is: " << ucell.atoms[i].ncpp.xc_func << std::endl;
-                    std::cout << " Please make sure this is what you need" << std::endl;
+                    std::cout << " NAME OF ELEMENT      : " << ucell.atoms[i].label << std::endl;
+                    std::cout << " DFT FUNC. (READIN)   : " << PARAM.inp.dft_functional << std::endl; 
+                    std::cout << " DFT FUNC. (PSEUDO)   : " << ucell.atoms[i].ncpp.xc_func << std::endl;
+                    std::cout << " MAKE SURE THIS DFT FUNCTIONAL IS WHAT YOU NEED" << std::endl;
+
                     GlobalV::ofs_warning << " dft_functional readin is: " << PARAM.inp.dft_functional << std::endl;
                     GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << ucell.atoms[i].ncpp.xc_func
                                          << std::endl;
