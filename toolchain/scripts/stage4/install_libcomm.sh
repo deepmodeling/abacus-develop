@@ -34,9 +34,8 @@ case "$with_libcomm" in
     #pkg_install_dir="${HOME}/lib/libcomm/${libcomm_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
     # url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
-    # filename="LibComm-${libcomm_ver}.tar.gz"
-    url="https://codeload.github.com/abacusmodeling/LibComm/zip/refs/heads/${libcomm_ver}"
-    filename="LibComm-${libcomm_ver}.zip"
+    filename="LibComm-${libcomm_ver}.tar.gz"
+    url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/${libcomm_ver}"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -52,8 +51,8 @@ case "$with_libcomm" in
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        #tar -xzf $filename
-        unzip -q $filename
+        tar -xzf $filename
+        # unzip -q $filename
         cp -r $dirname "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi

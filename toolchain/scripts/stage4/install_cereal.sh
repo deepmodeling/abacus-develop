@@ -31,10 +31,8 @@ case "$with_cereal" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    # url="https://github.com/USCiLab/cereal/archive/refs/tags/v${cereal_ver}.tar.gz"
-    # filename="cereal-${cereal_ver}.tar.gz"
-    url="https://codeload.github.com/USCiLab/cereal/zip/refs/heads/${cereal_ver}"
-    filename="cereal-${cereal_ver}.zip"
+    url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}.tar.gz"
+    filename="cereal-${cereal_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -50,8 +48,8 @@ case "$with_cereal" in
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        #tar -xzf $filename
-        unzip -q $filename
+        tar -xzf $filename
+        #unzip -q $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"

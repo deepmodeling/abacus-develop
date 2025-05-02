@@ -33,9 +33,9 @@ case "$with_rapidjson" in
     #pkg_install_dir="${HOME}/lib/rapidjson/${rapidjson_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
     #url="https://github.com/Tencent/rapidjson/archive/refs/tags/v${rapidjson_ver}.tar.gz" # commented by Kai Luo in 2025/04/28
-    url="https://codeload.github.com/Tencent/rapidjson/zip/refs/heads/${rapidjson_ver}"
+    url="https://codeload.github.com/Tencent/rapidjson/tar.gz/${rapidjson_ver}"
     # changed by Kai Luo in 2025/04/28， modified by Zhaoqing Liu in 2025/05/01
-    filename="rapidjson-${rapidjson_ver}.zip" # changed by Kai Luo in 2025/04/28
+    filename="rapidjson-${rapidjson_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -52,7 +52,8 @@ case "$with_rapidjson" in
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        unzip -q $filename # use -q to suppress output
+        #unzip -q $filename # use -q to suppress output
+        tar -xzf $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         # for CMake to find rapidjson

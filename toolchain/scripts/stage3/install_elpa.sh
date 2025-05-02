@@ -115,7 +115,7 @@ case "$with_elpa" in
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-static=yes \
+          --enable-static=no \
           --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \
@@ -143,7 +143,7 @@ case "$with_elpa" in
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-static=yes \
+          --enable-static=no \
           --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \

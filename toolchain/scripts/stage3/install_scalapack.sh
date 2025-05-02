@@ -8,8 +8,10 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-scalapack_ver="2.2.1"
-scalapack_sha256="4aede775fdb28fa44b331875730bcd5bab130caaec225fadeccf424c8fcb55aa"
+scalapack_ver="2.2.2"
+scalapack_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7b7d022"
+#scalapack_ver="2.2.1"
+#scalapack_sha256="4aede775fdb28fa44b331875730bcd5bab130caaec225fadeccf424c8fcb55aa"
 scalapack_pkg="scalapack-${scalapack_ver}.tgz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -39,7 +41,9 @@ case "$with_scalapack" in
       if [ -f ${scalapack_pkg} ]; then
         echo "${scalapack_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${scalapack_sha256}" "${scalapack_pkg}"
+        url="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${scalapack_ver}"
+        download_pkg_from_url "${scalapack_sha256}" "${scalapack_pkg}" "${url}"
+        #download_pkg_from_ABACUS_org "${scalapack_sha256}" "${scalapack_pkg}"
       fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"

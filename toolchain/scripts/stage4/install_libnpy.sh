@@ -34,8 +34,8 @@ case "$with_libnpy" in
     install_lock_file="$pkg_install_dir/install_successful"
     #url="https://github.com/llohse/libnpy/archive/refs/tags/v${libnpy_ver}.tar.gz"
     #filename="libnpy-${libnpy_ver}.tar.gz"
-    url="https://codeload.github.com/llohse/libnpy/zip/refs/heads/${libnpy_ver}"
-    filename="libnpy-${libnpy_ver}.zip"
+    url="https://codeload.github.com/llohse/libnpy/tar.gz/${libnpy_ver}"
+    filename="libnpy-${libnpy_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -51,8 +51,7 @@ case "$with_libnpy" in
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        #tar -xzf $filename
-        unzip -q $filename
+        tar -xzf $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
