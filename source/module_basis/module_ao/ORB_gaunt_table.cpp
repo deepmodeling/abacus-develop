@@ -302,14 +302,14 @@ double ORB_gaunt_table::Get_Gaunt_CH
 
 	if( (m1 + m2 + m3) != 0) return 0.0;
 
-    const int L1 = l1;
-	const int M1 = m1;
-	const int L2 = l2;
-	const int M2 = m2;
+    int L1 = l1;
+	int M1 = m1;
+	int L2 = l2;
+    int M2 = m2;
 	Swap(L1, M1, L2, M2);
 
-	const int L3 = l3;
-	const int M3 = m3;
+	int L3 = l3;
+	int M3 = m3;
 	Swap(L1, M1, L3, M3);
 
 	Swap(L2, M2, L3, M3);
