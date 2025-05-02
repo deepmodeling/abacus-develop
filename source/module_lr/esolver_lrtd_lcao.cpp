@@ -133,18 +133,37 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::reset_dim_spin2()
 {
-    if (nspin != 2) { return; }
-    if (nupdown == 0) { std::cout << "** Assuming the spin-up and spin-down states are degenerate. **" << std::endl; }
-    else
+	if (nspin != 2) 
+	{ 
+		return; 
+	}
+	if (nupdown == 0) 
+	{ 
+		std::cout << " ** Assuming degenerate spin-up and spin-down states  **" << std::endl; 
+	}
+	else
     {
         this->openshell = true;
         nupdown > 0 ? ((nocc[1] -= nupdown) && (nvirt[1] += nupdown)) : ((nocc[0] += nupdown) && (nvirt[0] -= nupdown));
         npairs = { nocc[0] * nvirt[0], nocc[1] * nvirt[1] };
         std::cout << "** Solve the spin-up and spin-down states separately for open-shell system. **" << std::endl;
     }
-    for (int is : {0, 1}) { if (npairs[is] <= 0) { throw std::invalid_argument(std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin") + std::string(is == 0 ? "up" : "down")); } }
-    if (nstates > (npairs[0] + npairs[1]) * nk) { throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nk"); }
-    if (input.lr_unrestricted) { this->openshell = true; }
+	for (int is : {0, 1}) 
+	{ 
+		if (npairs[is] <= 0) 
+		{ 
+			throw std::invalid_argument(std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin") + std::string(is == 0 ? "up" : "down")); 
+		} 
+	}
+
+	if (nstates > (npairs[0] + npairs[1]) * nk) 
+	{ 
+		throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nk"); 
+	}
+	if (input.lr_unrestricted) 
+	{ 
+		this->openshell = true; 
+	}
 }
 
 template <typename T, typename TR>
@@ -157,9 +176,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
 
-    if (this->input.lr_solver == "spectrum") {
-        throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be set to `lr` to skip the KS calculation.");
-}
+	if (this->input.lr_solver == "spectrum") 
+	{
+		throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be `lr` to skip KS calculation.");
+	}
 
     this->gd = std::move(ks_sol.gd);
 
@@ -184,6 +204,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         , this->paraMat_.blacs_ctxt
 #endif
     );
+
     auto move_gs = [&, this]() -> void  // move the ground state info
         {
             this->psi_ks = ks_sol.psi;
@@ -192,7 +213,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             this->eig_ks = std::move(ks_sol.pelec->ekb);
         };
 #ifdef __MPI
-    if (this->nbands == PARAM.inp.nbands) { move_gs(); }
+	if (this->nbands == PARAM.inp.nbands) 
+	{ 
+		move_gs(); 
+	}
     else    // copy the part of ground state info according to paraC_
     {
         this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), 
@@ -220,8 +244,15 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
-    if (std::is_same<T, double>::value) { this->gint_g_ = std::move(ks_sol.GG); }
-    else { this->gint_k_ = std::move(ks_sol.GK); }
+
+	if (std::is_same<T, double>::value) 
+	{ 
+		this->gint_g_ = std::move(ks_sol.GG); 
+	}
+	else 
+	{ 
+		this->gint_k_ = std::move(ks_sol.GK); 
+	}
     this->set_gint();
     this->gint_->reset_DMRGint(1);
 
@@ -492,7 +523,7 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
             auto spin_types = std::vector<std::string>({ "singlet", "triplet" });
             for (int is = 0;is < nspin;++is)
             {
-                std::cout << "Calculating " << spin_types[is] << " excitations" << std::endl;
+                std::cout << " Calculating " << spin_types[is] << " excitations" << std::endl;
                 HamiltLR<T> hlr(xc_kernel,
                                 nspin,
                                 this->nbasis,
