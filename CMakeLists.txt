@@ -705,7 +705,6 @@ if(BUILD_TESTING)
   endif()
   # TODO: Try the GoogleTest module.
   # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
 
   function(AddTest) # function for UT
     cmake_parse_arguments(UT "DYN" "TARGET"
@@ -797,4 +796,8 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(tests) # Contains integration tests
 endif()
