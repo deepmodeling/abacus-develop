@@ -1,9 +1,1 @@
-This test for:
-*GaAs-scf
-*PW
-*2*2*2 Kpoints
-*dojo pseudopotential
-*smearing_method gauss
-*ks_solver cg
-*mixing_type broyden-kerker
-*mixing_beta 0.4
+GaAs-scf, 2*2*2 Kpoints, dojo pseudopotential
