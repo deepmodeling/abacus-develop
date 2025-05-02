@@ -704,7 +704,7 @@ if(BUILD_TESTING)
     FetchContent_MakeAvailable(googletest)
   endif()
   # TODO: Try the GoogleTest module.
-  # https://cmake.org/cmake/help/latest/module/GoogleTest.html\
+  # https://cmake.org/cmake/help/latest/module/GoogleTest.html
   add_subdirectory(tests) # Contains integration tests
 
   function(AddTest) # function for UT
