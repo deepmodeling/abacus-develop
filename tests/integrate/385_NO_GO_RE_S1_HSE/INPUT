@@ -9,8 +9,8 @@ pseudo_dir			../../PP_ORB
 orbital_dir			../../PP_ORB
 
 #Parameters (2.PW)
-ecutwfc				20
-scf_thr				1e-3
+ecutwfc				5
+scf_thr				1e-7
 
 #Parameters (4.Relaxation)
 scf_nmax			100

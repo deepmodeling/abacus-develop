@@ -327,7 +327,10 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         { // has separate_loop case
             const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
-            if (two_level_step) { std::cout << FmtCore::format("EDIFF/eV (outer loop): %.8e \n", ediff); }
+			if (two_level_step) 
+			{ 
+				std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); 
+			}
             // exx converged or get max exx steps
             if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
                 || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop
