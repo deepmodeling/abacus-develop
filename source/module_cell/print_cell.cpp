@@ -46,16 +46,16 @@ namespace unitcell
             }
         }
         table += "\n";
-        ofs << table << std::endl;
+        ofs << table; 
 
 
         // print velocities
         ofs << " ATOMIC VELOCITIES" << std::endl;
         ofs << std::setprecision(12);
         ofs << std::setw(5) << "atom" 
-            << std::setw(16) << "vx" 
-            << std::setw(16) << "vy" 
-            << std::setw(16) << "vz"
+            << std::setw(19) << "vx" 
+            << std::setw(19) << "vy" 
+            << std::setw(19) << "vz"
             << std::endl;
  
 		for(int it = 0; it < ntype; it++)
@@ -63,9 +63,9 @@ namespace unitcell
 			for (int ia = 0; ia < atoms[it].na; ia++)
 			{
                 ofs << std::setw(5) << atoms[it].label;
-                ofs << " " << std::setw(15) << atoms[it].vel[ia].x;
-                ofs << " " << std::setw(15) << atoms[it].vel[ia].y;
-                ofs << " " << std::setw(15) << atoms[it].vel[ia].z;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].x;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].y;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].z;
                 ofs << std::endl;
 			}
 		}
