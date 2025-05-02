@@ -7,8 +7,8 @@ gamma_only      0
 nspin			1
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr			1E-5
+ecutwfc			10
+scf_thr			1E-7
 scf_nmax		100
 
 calculation		scf
