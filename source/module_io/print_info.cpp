@@ -199,12 +199,12 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
                   ModulePW::PW_Basis_Big* pw_big,
                   std::ofstream& ofs)
 {
-    std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
-    std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
+    std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
+    std::cout << " UNIFORM GRID DIM(BIG): " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
               << std::endl;
     if (PARAM.globalv.double_grid)
     {
-        std::cout << " UNIFORM GRID DIM(DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
+        std::cout << " UNIFORM GRID (DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
                   << std::endl;
     }
 
