@@ -37,7 +37,12 @@ jobs:
           cmake --build build -j4
           cmake --install build
 
-      - name: Test
+      - name: Test 11_PW_GPU
         run: |
-          cd tests/integrate
-          bash Autotest.sh -n 2 -f CASES_GPU.txt
+          cd tests/11_PW_GPU
+          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
+      - name: Test 16_SDFT_GPU
+        run: |
+          cd tests/16_SDFT_GPU
+          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
