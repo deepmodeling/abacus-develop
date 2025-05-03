@@ -9,7 +9,7 @@ if(ENABLE_ASAN)
     )
 else()
     add_test(
-        NAME 16_SDFT_GPU_test
+        NAME 16_SDFT_GPU
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/16_SDFT_GPU
     )

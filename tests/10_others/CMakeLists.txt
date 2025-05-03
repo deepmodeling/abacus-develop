@@ -9,7 +9,7 @@ if(ENABLE_ASAN)
     )
 else()
     add_test(
-        NAME 10_others_test
+        NAME 10_others
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/10_others
     )
