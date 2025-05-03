@@ -144,7 +144,6 @@
 201_NO_OU_pseudopots
 201_NO_upf201_pseudopots
 201_NO_GTH_CF_CS_Si
-#202_NO_KP_HP_hpseps
 203_NO_bspline
 203_NO_CF_CS_S1_smallg
 203_NO_CF_CS_S2_smallg
