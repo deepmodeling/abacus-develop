@@ -3,14 +3,14 @@ enable_testing()
 find_program(BASH bash)
 if(ENABLE_ASAN)
     add_test(
-        NAME EXX_test_with_asan
+        NAME 08_EXX_test_with_asan
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 2 -s true
-        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/04_EXX
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
     )
 else()
     add_test(
-        NAME EXX_test
+        NAME 08_EXX_test
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
-        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/04_EXX
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
     )
 endif()
