@@ -1,4 +1,4 @@
-001_PW_15
+001_PW_15_ONCV
 002_PW_15_f
 003_PW_15_LDA
 004_PW_15_LibxcLDA
@@ -68,7 +68,7 @@
 068_PW_CR_fix_b
 069_PW_CR_fix_bc
 070_PW_CR_fix_c
-071_PW_CR_moveatoms
+071_PW_CR_move
 072_PW_SY
 073_PW_SY
 074_PW_SY_6K
@@ -103,14 +103,14 @@
 103_PW_15_SO
 104_PW_15_SO_avg
 105_PW_15_SO_wfcinit
-106_PW_DJ__SO
+106_PW_DJ_SO
 107_PW_MD_1O
 108_PW_MD_2O
 109_PW_PBE0
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc
-804_PW_LT_hexagonal
+804_PW_LT_hex
 805_PW_LT_trigonal
 806_PW_LT_st
 807_PW_LT_bct

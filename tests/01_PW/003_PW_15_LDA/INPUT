@@ -17,11 +17,11 @@ scf_nmax			100
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma			0.002
+smearing_method gs	
+smearing_sigma	0.002
 
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7
 
-dft_functional pz
+dft_functional  pz

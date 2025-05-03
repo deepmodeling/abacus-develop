@@ -1,1 +1,2 @@
-teset SG15 pseudopotential, symmetry=on, LDA
+1. change the dft functional from readin PBE to pz LDA
+2. Fermi-Dirac smearing
