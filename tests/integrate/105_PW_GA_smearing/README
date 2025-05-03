@@ -1,6 +1,1 @@
-This test for:
-*fcc Al (110)
-*k-points 1*1*1
-*SG15 upf pseudopotential
-*smearing_method gauss = gaussian smearing
-*ks_solver cg
+test smearing method: gauss for (110) surface of fcc Al

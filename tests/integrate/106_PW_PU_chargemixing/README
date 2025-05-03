@@ -1,8 +1,1 @@
-This test for:
-*Si-diamond
-*just gamma point
-*sg15 pseudopotential
-*smearing_method fixed
-*ks_solver cg
-*mixing_type plain
-*mixing_beta 0.4
+test SG15 pseudopotential (UPF 2.0.1) for Al with Pulay charge mixing 

@@ -1,9 +1,1 @@
-This test for: cell-relax
-*Si-deformation
-*LCAO
-*kpoints 2*2*2
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver genelpa
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+cell relxation with multiple k-points

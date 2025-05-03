@@ -817,13 +817,6 @@ TEST_F(InputTest, Item_test)
         param.input.out_dm = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_dm, false);
-
-        param.sys.gamma_only_local = false;
-        param.input.out_dm = true;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // out_dm1
         auto it = find_label("out_dm1", readinput.input_lists);

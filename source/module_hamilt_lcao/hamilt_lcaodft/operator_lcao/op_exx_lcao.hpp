@@ -136,6 +136,11 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         {
             // Read HexxR in binary format (old version)
             const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+            std::ifstream ifs(file_name_exx_cereal, std::ios::binary);
+            if (!ifs)
+            {
+                ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
+            }
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);

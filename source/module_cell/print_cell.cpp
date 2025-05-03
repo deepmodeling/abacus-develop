@@ -18,13 +18,18 @@ namespace unitcell
         // assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom"); // this line causes abort in unittest ReadAtomPositionsCACXY.
         // previously there are two if-statements, the first is `if(Coordinate == "Direct")` and the second is `if(Coordinate == "Cartesian" || Coordiante == "Cartesian_angstrom")`
         // however the Coordinate can also be value among Cartesian_angstrom_center_xy, Cartesian_angstrom_center_xz, Cartesian_angstrom_center_yz and Cartesian_angstrom_center_xyz
+
         // if Coordinate has value one of them, this print_tau will not print anything.
         std::regex pattern("Direct|Cartesian(_angstrom)?(_center_(xy|xz|yz|xyz))?");
         assert(std::regex_search(Coordinate, pattern));
         bool direct = (Coordinate == "Direct");
+
+        //----------------------
+        // print atom positions
+        //----------------------
         std::string table;
-        table += direct? "DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr ).\n", lat0);
-        table += FmtCore::format("%8s%10s%10s%10s%8s%8s%8s%8s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
+        table += direct? " DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr ).\n", lat0);
+        table += FmtCore::format("%5s%19s%19s%19s%8s\n", "atom", "x", "y", "z", "mag");
         for(int it = 0; it < ntype; it++)
         {
             for (int ia = 0; ia < atoms[it].na; ia++)
@@ -32,19 +37,42 @@ namespace unitcell
                 const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
                 const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
                 const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
-                table += FmtCore::format("%8s%10.3f%10.3f%10.3f%8.3f%8.3f%8.3f%8.3f\n", 
+                table += FmtCore::format("%5s%19.12f%19.12f%19.12f%8.4f\n", 
                                         atoms[it].label, 
                                         x, 
                                         y, 
                                         z, 
-                                        atoms[it].mag[ia], 
-                                        atoms[it].vel[ia].x, 
-                                        atoms[it].vel[ia].y, 
-                                        atoms[it].vel[ia].z);
+                                        atoms[it].mag[ia]); 
             }
         }
         table += "\n";
-        ofs << table << std::endl;
+        ofs << table; 
+
+
+        // print velocities
+        ofs << " ATOMIC VELOCITIES" << std::endl;
+        ofs << std::setprecision(12);
+        ofs << std::setw(5) << "atom" 
+            << std::setw(19) << "vx" 
+            << std::setw(19) << "vy" 
+            << std::setw(19) << "vz"
+            << std::endl;
+ 
+		for(int it = 0; it < ntype; it++)
+		{
+			for (int ia = 0; ia < atoms[it].na; ia++)
+			{
+                ofs << std::setw(5) << atoms[it].label;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].x;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].y;
+                ofs << " " << std::setw(18) << atoms[it].vel[ia].z;
+                ofs << std::endl;
+			}
+		}
+        ofs << std::endl;
+        ofs << std::setprecision(6); // return to 6, as original
+
+
         return;
     }
 

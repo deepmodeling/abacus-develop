@@ -67,23 +67,39 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     assert(cg_grad0 != 0);
     assert(move0 != 0);
 
-    static bool
-        sd; // sd , trial are two parameters, when sd=trial=true ,a new direction begins, when sd = false trial =true
-    static bool trial;  // a cubic interpolation is used to make the third point ,when sa = trial = false , we use Brent
-                        // to get the
-    static int ncggrad; // minimum point in this direction.
-    static double fa, fb, fc; // ncggrad is a parameter to control the cg method , every ten cg direction , we change
-                              // the direction back to
-    static double xa, xb, xc, xpt, steplength, fmax; // the steepest descent method
-    static int nbrent;
+    // sd , trial are two parameters, when sd=trial=true ,a new direction begins, when sd = false trial =true
+    static bool sd = false;
 
+    // a cubic interpolation is used to make the third point ,
+    // when sa = trial = false , we use Brent to get the minimum point in this direction.
+    static bool trial = false;
+
+    // ncggrad is a parameter to control the cg method , every ten cg directions,
+    // we change the direction back to the steepest descent method                       
+    static int ncggrad = 0;
+
+    static double fa = 0.0;
+    static double fb = 0.0;
+    static double fc = 0.0;
+
+    static double xa = 0.0;
+    static double xb = 0.0;
+    static double xc = 0.0;
+    static double xpt = 0.0;
+    static double steplength = 0.0;
+    static double fmax = 0.0;
+
+    static int nbrent = 0;
+
+    
+    // some arrays
     double *pos = new double[dim];
     double *grad = new double[dim];
     double *cg_gradn = new double[dim];
     double *move = new double[dim];
     double *cg_grad = new double[dim];
-    double best_x;
-    double fmin;
+    double best_x = 0.0;
+    double fmin = 0.0;
 
     int flag = 0;
 
@@ -97,7 +113,6 @@ CG_begin:
     if (Ions_Move_Basic::istep == 1)
     {
         steplength = Ions_Move_Basic::relax_bfgs_init; // read in the init trust radius
-        // std::cout<<"Ions_Move_Basic::relax_bfgs_init = "<<Ions_Move_Basic::relax_bfgs_init<<std::endl;
         sd = true;
         trial = true;
         ncggrad = 0;
@@ -118,11 +133,9 @@ CG_begin:
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
-    // std::cout<<"sd = "<<sd<<"  trial = "<<trial<<"  istep = "<<istep<<std::endl;
     if (flag == 0)
     {
         Ions_Move_Basic::check_converged(ucell, grad);
-        // std::cout<<"Ions_Move_Basic::converged = "<<Ions_Move_Basic::converged<<std::endl;
     }
 
     if (Ions_Move_Basic::converged)
@@ -240,9 +253,6 @@ CG_begin:
 
                 fmin = std::abs(fc);
                 nbrent++;
-                // std::cout<<"nbrent = "<<nbrent<<std::endl;
-                // std::cout<<"xa = "<<xa<<" xb = "<<xb<<" xc = "<<xc<<" fa = "<<fa<<" fb = "<<fb<<" fc =
-                // "<<fc<<std::endl;
 
                 if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3))
                 {
@@ -256,7 +266,6 @@ CG_begin:
                 else
                 {
                     Brent(fa, fb, fc, xa, xb, xc, best_x, xpt); // Brent method
-                    // std::cout<<"xc = "<<xc<<std::endl;
                     if (xc < 0)
                     {
                         sd = true;

@@ -72,9 +72,14 @@ void run_tests(test_deepks<T>& test)
     test.check_gdmepsl(gdmepsl);
     test.check_gvepsl(gdmepsl);
 
+    test.check_orbpre();
+
+    test.check_vdpre();
+
     test.check_edelta(descriptor);
     test.check_e_deltabands();
     test.check_f_delta_and_stress_delta();
+    test.check_o_delta();
 
     std::cout << " [  ------  ] Total checks : " << test.total_check << std::endl;
     if (test.failed_check > 0)

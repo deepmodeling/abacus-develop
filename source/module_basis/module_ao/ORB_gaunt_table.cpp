@@ -162,16 +162,6 @@ int ORB_gaunt_table::get_lm_index(
 }
 
 
-/**********************//**
-  * Rasch and Yu's Method
-  ***********************/
-///total pointers
-//int ORB_gaunt_table::P_EL(const int& L)
-//{
-//	return (L+1) * (L+2) * (L+3) * (L+4) / 24;
-//}
-
-
 ///effective pointers
 int ORB_gaunt_table::EP_EL(const int& L)
 {
@@ -201,13 +191,7 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 	ModuleBase::TITLE("ORB_gaunt_table","init_Gaunt_CH");
 	ModuleBase::timer::tick("ORB_gaunt_table","init_Gaunt_CH");
 
-//	assert(Lmax <= 6);			// Peize Lin delete 2016-08-26. why?
-
 	int L = 2*Lmax + 1;
-	
-	//int Np = this->P_EL(L);
-//	assert(Np <= 5000);			// Peize Lin delete 2016-08-26. why?
-
 	int Eff_Np = this->EP_EL(L);
 
 	ModuleBase::Memory::record("ORB::Gaunt_CH", sizeof(double) * Eff_Np * 30);
@@ -228,9 +212,6 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 					if((l_sum % 2 == 0) && (l2 + l3 >= l1))
 					{
 						int uplmt_m2 = l1 - m3 > l2 ? l2 : l1 - m3;
-						//int dim = l2 + uplmt_m2 + 1;
-						
-//						assert(dim <= 30);			// Peize Lin delete 2016-08-26. why?
 
 						int ic2 = 0;
 						for(int m2 = -l2; m2 <= uplmt_m2; m2++)
@@ -239,9 +220,6 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 							int m1 = -m2 - m3;
 							assert(std::abs(m1) <= l1);
 
-							// Peize Lin delete assert 2016-08-26
-//							assert(ic1 < 5000);
-//							assert(ic2 < 30);
 							Gaunt_CH[ic1][ic2] = Calc_Gaunt_CH(l1, m1, l2, m2, l3, m3);
 							ic2++;
 						}
@@ -269,7 +247,6 @@ double ORB_gaunt_table::Calc_Gaunt_CH
 	const int& m3
 )
 {
-//	ModuleBase::TITLE("ORB_gaunt_table","Calc_Gaunt_CH");
 	ModuleBase::timer::tick("ORB_gaunt_table","Calc_Gaunt_CH");
 	
 	double fac = sqrt((2*l1+1) * (2*l2+1) * (2*l3+1) / ModuleBase::FOUR_PI);
@@ -281,7 +258,8 @@ double ORB_gaunt_table::Calc_Gaunt_CH
 
 	double aux1 = sqrt(Fact(l1+m1) * Fact(l1-m1) * Fact(l2+m2) * Fact(l2-m2) * Fact(l3+m3) * Fact(l3-m3));
 
-	int kmin, kmax;
+	int kmin = 0;
+    int kmax = 0;
 	
 	kmin = (l2-l3-m1) > (l1-l3+m2) ? (l2-l3-m1) : (l1-l3+m2);
 	kmin = kmin > 0 ? kmin : 0;
@@ -324,16 +302,14 @@ double ORB_gaunt_table::Get_Gaunt_CH
 
 	if( (m1 + m2 + m3) != 0) return 0.0;
 
-	int L1, M1, L2, M2, L3, M3;
-	
-	L1 = l1;
-	M1 = m1;
-	L2 = l2;
-	M2 = m2;
+    int L1 = l1;
+	int M1 = m1;
+	int L2 = l2;
+    int M2 = m2;
 	Swap(L1, M1, L2, M2);
 
-	L3 = l3;
-	M3 = m3;
+	int L3 = l3;
+	int M3 = m3;
 	Swap(L1, M1, L3, M3);
 
 	Swap(L2, M2, L3, M3);
@@ -345,19 +321,17 @@ double ORB_gaunt_table::Get_Gaunt_CH
 		M3 = -M3;
 	}
 
-	/*	
-	if(l1 == 2 && m1 == -1 && l2 == 2 && m2 == 2 && l3 == 2 && m3 == -1)
-	{
-		std::cout << L1 << " " << L2 << " " << L3 << std::endl;
-		std::cout << M1 << " " << M2 << " " << M3 <<std::endl;
-	}
-	*/
-	
 	int ic1 = index_func(L1, L2, L3, M3);
 	int ic2 = M2 + L2;
 
-	try{ return Gaunt_CH.at(ic1).at(ic2); }			// Peize Lin add 2016-08-26
-	catch( std::out_of_range ){ return 0; }
+	try
+	{ 
+		return Gaunt_CH.at(ic1).at(ic2); 
+	} // Peize Lin add 2016-08-26
+	catch( std::out_of_range )
+	{ 
+		return 0; 
+	}
 }
 	
 
@@ -374,8 +348,6 @@ double ORB_gaunt_table::Get_Gaunt_SH
 	const int& mm3
 )
 {
-//	ModuleBase::TITLE("ORB_gaunt_table","Get_Gaunt_SH");
-	ModuleBase::timer::tick("ORB_gaunt_table","Get_Gaunt_SH");
 	
 	//Tranform M index
 	int m1 = Index_M(mm1);
@@ -442,7 +414,6 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		else return 0.0;
 	}
 
-	ModuleBase::timer::tick("ORB_gaunt_table","Get_Gaunt_SH");
 }
 
 

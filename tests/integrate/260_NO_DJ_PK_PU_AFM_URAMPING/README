@@ -1,7 +1,1 @@
-FeO Anti-Ferromagnetic+LDA
-U-Ramping method to find the ground state
-NSPIN 2
-lcao
-init magnet: up + down
-SG15
-
+DFTU + U-Ramping + NSPIN2 AFM, Fe2O2, multi-k case

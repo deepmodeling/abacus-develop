@@ -1,6 +1,1 @@
-This test for:
-*Si-diamond with small perturbation
-*one additional electron
-*sg15 pseudopotential
-*mixing_type plain
-*mixing_beta 0.7
+test diamond Si with one additional electron, symmetry=on in lcao base set

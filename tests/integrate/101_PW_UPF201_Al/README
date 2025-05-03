@@ -1,7 +1,1 @@
-This test for:
-*Al-fcc
-*upf201 pseudopotential
-*mixing_type broyden-kerker
-*mixing_beta 0.7
-*ecutwfc 30
-*ecutrho 160
+test upf201 pseudopotential with ecutrho/ecutwfc > 4, symmetry=on

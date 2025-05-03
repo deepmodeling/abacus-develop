@@ -3,6 +3,3 @@ NSPIN 2
 pw
 init magnet: up + down
 SG15
-
-WRONG!!!!!
-pseudopot_cell_vnl::init_vnl
