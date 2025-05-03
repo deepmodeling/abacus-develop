@@ -9,7 +9,7 @@ pseudo_dir              ../../PP_ORB
 pw_seed                 1
 
 #Parameters (2.Iteration)
-ecutwfc                 20
+ecutwfc                 5
 ecutrho                 100
 scf_thr                 1e-9
 scf_nmax                100
