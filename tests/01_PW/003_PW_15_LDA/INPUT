@@ -17,7 +17,7 @@ scf_nmax			100
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method gs	
+smearing_method gauss
 smearing_sigma	0.002
 
 #Parameters (5.Mixing)
