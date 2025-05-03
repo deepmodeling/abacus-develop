@@ -3,14 +3,14 @@ enable_testing()
 find_program(BASH bash)
 if(ENABLE_ASAN)
     add_test(
-        NAME rt-TDDFT_test_with_asan
+        NAME LJ-DP_test_with_asan
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 2 -s true
-        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/06_rtTDDFT
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/05_LJ_DP
     )
 else()
     add_test(
-        NAME rt-TDDFT_test
+        NAME LJ-DP_test
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
-        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/06_rtTDDFT
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/05_LJ_DP
     )
 endif()
