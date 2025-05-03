@@ -195,9 +195,15 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     // = -4*pi/V * oscilator_strength * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     std::vector<double>& osc = this->oscillator_strength_;
     std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
-    if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
+
+	if (GlobalV::MY_RANK == 0) 
+	{ 
+		ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; 
+	}
+
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator
+
     for (int f = 0;f < freq.size();++f)
     {
         std::complex<double> f_complex = std::complex<double>(freq[f], eta);
