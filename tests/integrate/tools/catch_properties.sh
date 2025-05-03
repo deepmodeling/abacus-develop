@@ -3,6 +3,7 @@
 # mohan add 2025-05-03
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+SUM_CUBE_EXE="../../integrate/tools/sum_cube.exe"
 
 
 sum_file(){
@@ -511,7 +512,7 @@ if [ $calculation == "get_wf" ]; then
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
+			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
@@ -531,7 +532,7 @@ if [ $calculation == "get_pchg" ]; then
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
+			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
