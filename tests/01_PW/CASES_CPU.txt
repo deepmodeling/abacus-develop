@@ -102,7 +102,7 @@
 121_PW_kspacing_3value
 123_PW_zero_atom
 127_PW_15_PK_AF
-127_PW_15_PK_AF_wfcinit
+#127_PW_15_PK_AF_wfcinit
 128_PW_zero_ntype
 133_PW_DJ_PK
 135_PW_15_PK

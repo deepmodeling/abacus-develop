@@ -1,6 +1,1 @@
-Fe Ferromagnetic
-NSPIN 2
-pw
-init magnet: up + up
-SG15
-
+Fe Ferromagnetic, nspin 2, init magnet: up + up
