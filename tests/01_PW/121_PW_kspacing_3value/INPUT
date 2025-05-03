@@ -2,9 +2,9 @@ INPUT_PARAMETERS
 suffix                  autotest
 calculation             scf
 
-symmetry            1
-ecutwfc                 20
-scf_thr                 1e-07
+symmetry                1
+ecutwfc                 5
+scf_thr                 1e-08
 scf_nmax                100
 basis_type              pw
 
