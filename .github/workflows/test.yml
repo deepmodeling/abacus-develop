@@ -48,12 +48,16 @@ jobs:
         run: |
           cmake --build build -j8
           cmake --install build
+
       - name: Unit Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 1700 -E integrated_test"
+          cmake --build build --target test ARGS="-V --timeout 1700 -E integrate_test|01_PW \
+          |02_NAO_Gamma|03_NAO_multik|04_LJ_DP|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS \
+          |10_others|11_PW_GPU|16_SDFT_GPU"
+
       - name: Integrated Test
         env:
           GTEST_COLOR: 'yes'
@@ -61,3 +65,9 @@ jobs:
         run: |
           cmake --build build --target test ARGS="-V --timeout 1700 -R integrated_test"
 
+      - name: 01_PW Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -E -R 01_PW"
