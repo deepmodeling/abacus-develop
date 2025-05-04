@@ -5,7 +5,7 @@
 # CEREAL is not need any complex setting
 # Only problem is the installation from github.com
 
-# Last Update in 2023-0918
+# Last Update in 2025-0504
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"

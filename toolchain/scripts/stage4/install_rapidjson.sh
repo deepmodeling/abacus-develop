@@ -5,7 +5,7 @@
 # RAPIDJSON is not need any complex setting
 # Only problem is the installation from github.com
 
-# Last Update in 2025-05-01
+# Last Update in 2025-0504
 # other contributor: Kai Luo, XingLiang Peng
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0

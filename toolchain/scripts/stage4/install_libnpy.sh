@@ -6,13 +6,13 @@
 # Only problem is the installation from github.com
 # Libnpy is under active development, you can check the latest version in github yourself
 
-# Last Update in 2023-1124
+# Last Update in 2025-0504
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libnpy_ver="master"
-libnpy_sha256="--no-checksum"
+libnpy_ver="1.0.1"
+libnpy_sha256="43452a4db1e8c1df606c64376ea1e32789124051d7640e7e4e8518ab4f0fba44"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -32,9 +32,7 @@ case "$with_libnpy" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    #url="https://github.com/llohse/libnpy/archive/refs/tags/v${libnpy_ver}.tar.gz"
-    #filename="libnpy-${libnpy_ver}.tar.gz"
-    url="https://codeload.github.com/llohse/libnpy/tar.gz/${libnpy_ver}"
+    url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
     filename="libnpy-${libnpy_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
@@ -43,7 +41,7 @@ case "$with_libnpy" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of Libnpy is downloaded in GitHub master repository <==="
+            echo "===> Notice: This version of Libnpy is downloaded in GitHub Release <==="
             download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
