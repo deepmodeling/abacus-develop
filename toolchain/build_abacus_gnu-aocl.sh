@@ -23,14 +23,14 @@ rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
 ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
-CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
+CEREAL=$INSTALL_DIR/cereal-master/include/cereal
 LIBXC=$INSTALL_DIR/libxc-7.0.0
-RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
+RAPIDJSON=$INSTALL_DIR/rapidjson-master/
 # LAPACK=$AOCLhome/lib
 # SCALAPACK=$AOCLhome/lib
 # FFTW3=$AOCLhome
 # LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
-# LIBCOMM=$INSTALL_DIR/LibComm-0.1.1
+# LIBCOMM=$INSTALL_DIR/LibComm-master
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
