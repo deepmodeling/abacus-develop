@@ -3,16 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-0901
+# Last Update in 2024-0504
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 scalapack_ver="2.2.2"
 scalapack_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7b7d022"
-#scalapack_ver="2.2.1"
-#scalapack_sha256="4aede775fdb28fa44b331875730bcd5bab130caaec225fadeccf424c8fcb55aa"
-scalapack_pkg="scalapack-${scalapack_ver}.tgz"
+scalapack_pkg="scalapack-${scalapack_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -55,18 +53,21 @@ case "$with_scalapack" in
       mkdir -p "scalapack-${scalapack_ver}/build"
       pushd "scalapack-${scalapack_ver}/build" > /dev/null
 
-      flags=""
+      cflags=""
+      fflags=""
       if ("${FC}" --version | grep -q 'GNU'); then
-        flags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
+        cflags="-fpermissive"
+        fflags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
       fi
-      # modified by @YuugataShinonome for GCC 14
-      FFLAGS=$flags cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
+      CFLAGS=${cflags} FFLAGS=${fflags} \
+      cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
         -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
         -DCMAKE_INSTALL_LIBDIR="lib" \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DBUILD_SHARED_LIBS=YES \
         -DCMAKE_BUILD_TYPE=Release .. \
-        -DCMAKE_C_FLAGS:STRING="$CFLAGS -Wno-implicit-function-declaration" \
+        -DBUILD_TESTING=NO \
         -DSCALAPACK_BUILD_TESTS=NO \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -99,13 +100,13 @@ if [ "$with_scalapack" != "__DONTUSE__" ]; then
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="${pkg_install_dir}":\${CMAKE_PREFIX_PATH}
 export SCALAPACK_ROOT="${pkg_install_dir}"
 EOF
     cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
