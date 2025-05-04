@@ -31,7 +31,7 @@ case "$with_cereal" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}.tar.gz"
+    url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
     filename="cereal-${cereal_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."

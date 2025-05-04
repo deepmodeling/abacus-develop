@@ -70,8 +70,7 @@ case "${with_openmpi}" in
         fi
       fi
 
-    # Apply patch for RHEL8 from https://github.com/open-mpi/ompi/issues/13103
-      patch -p1 oshmem/mca/sshmem/base/sshmem_base_open.c < ${SCRIPT_DIR}/stage1/openmpi_RHEL8.patch
+    # Notice for RHEL8 refer https://github.com/open-mpi/ompi/issues/13103
 
     # OpenMPI 5.0 only supports PMIx
     # PMI support is required for Slurm, but not for other schedulers
