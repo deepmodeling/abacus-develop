@@ -705,13 +705,13 @@ if [ "${ENABLE_CUDA}" = "__TRUE__" ] || [ "${ENABLE_HIP}" = "__TRUE__" ]; then
   if [ "${GPUVER}" = "no" ]; then
     report_error "Please choose GPU architecture to compile for with --gpu-ver"
     exit 1
+  fi
   if [[ "$ARCH_NUM" =~ ^[1-9][0-9]*$ ]] || [ $ARCH_NUM = "no" ]; then
     echo "Notice: GPU compilation is enabled, and GPU compatibility is set via --gpu-ver to sm_${ARCH_NUM}."
   else
     report_error ${LINENO} \
         "When GPU compilation is enabled, the --gpu-ver variable should be properly set regarding to GPU compatibility. For check your GPU compatibility, visit https://developer.nvidia.com/cuda-gpus. For example: A100 -> 8.0 (or 80), V100 -> 7.0 (or 70), 4090 -> 8.9 (or 89)"
         exit 1
-    fi
   fi
 fi
 
