@@ -12,7 +12,7 @@ ocp_set     32*1 16*0
 # SCF parameters
 calculation scf
 ecutwfc     5
-scf_thr     1e-7
+scf_thr     1e-8
 scf_nmax    100
 
 # Smearing
