@@ -3,8 +3,8 @@ Fe 1.000 Fe_ONCV_PBE-1.0.upf
 O  1.000 O_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-Fe_gga_9au_100Ry_4s2p2d1f.orb
-O_gga_7au_100Ry_2s2p1d.orb
+Fe_gga_6au_100Ry_2s1p1d.orb
+O_gga_7au_60Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
 8.190

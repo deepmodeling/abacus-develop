@@ -1,23 +1,24 @@
 INPUT_PARAMETERS
 suffix    autotest
-nbands    40
+nbands    28
 
-calculation    scf
-ecutwfc    20
-scf_thr    1.0e-4
-scf_nmax    3
-out_chg    0
+calculation scf
+ecutwfc     6
+scf_thr     1.0e-7
+scf_nmax    30
+out_chg     0
 
 #init_chg    file
-#out_dos    1
-#dos_sigma    0.05
+#out_dos     1
+#dos_sigma   0.05
 #out_band    1
 
-smearing_method    gaussian
+smearing_method   gaussian
 smearing_sigma    0.07
 
-cal_force     0
-cal_stress    0
+cal_force      1
+cal_stress     1
+
 #force_thr_ev    0.01
 #relax_method    cg
 #relax_bfgs_init    0.5
