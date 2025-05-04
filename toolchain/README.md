@@ -1,6 +1,6 @@
 # The ABACUS Toolchain
 
-Version 2025.1
+Version 2025.2
 
 ## Main Developer
 
@@ -98,7 +98,7 @@ The above station will be updated handly but one should notice that the version 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.6.tar.bz2*, 
+like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.7.tar.bz2*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -113,17 +113,17 @@ just by using this toolchain
 
 The needed dependencies version default:
 
-- `cmake` 3.31.2
+- `cmake` 3.31.7
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.6 (Version 5 OpenMPI is good but will have compability problem, user can manually downarade to Version 4 in toolchain scripts)
+- `OpenMPI` 5.0.7 (Version 5 OpenMPI is good but will have compability problem, user can manually downarade to Version 4 in toolchain scripts)
 - `MPICH` 4.3.0
-- `OpenBLAS` 0.3.28 (Intel toolchain need `get_vars.sh` tool from it)
-- `ScaLAPACK` 2.2.1 (a developing version)
+- `OpenBLAS` 0.3.29 (Intel toolchain need `get_vars.sh` tool from it)
+- `ScaLAPACK` 2.2.2 
 - `FFTW` 3.3.10
 - `LibXC` 7.0.0
-- `ELPA` 2025.01.001
-- `CEREAL` 1.3.2
-- `RapidJSON` 1.1.0
+- `ELPA` 2025.01.001 (may not be conpatiable for gpu-ver)
+- `CEREAL` master (for oneapi compatibility)
+- `RapidJSON` master (for oneapi compatibility)
 And:
 - Intel-oneAPI need user or server manager to manually install from Intel.
 - - [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
@@ -135,8 +135,8 @@ Dependencies below are optional， which is NOT installed by default:
 
 - `LibTorch` 2.1.2
 - `Libnpy` 1.0.1
-- `LibRI` 0.2.0
-- `LibComm` 0.1.1
+- `LibRI` 0.2.1.0
+- `LibComm` master (for openmpi compatibility)
 
 Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default. Also, user can specify the absolute path of the package by `--with-*=path/to/package` in toolchain*.sh to allow toolchain to use the package.
 > Notice: LibTorch always suffer from GLIBC_VERSION problem, if you encounter this, please downgrade LibTorch version to 1.12.1 in scripts/stage4/install_torch.sh
