@@ -266,11 +266,12 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
         p_esolver->before_all_runners(ucell, inp);
         p_esolver->runner(ucell, 0); // scf-only
+
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.
         // after_all_runners() is for output, it is not needed here.
-        std::cout << "Setting up the esolver for excited states..." << std::endl;
+        std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
         if (PARAM.globalv.gamma_only_local)

@@ -1,8 +1,1 @@
-This test for:
-*SDFT
-*Al
-*kpoints 2*1*1
-*complete basis
-*kpar 1
-*bndpar 2
-*cal_dos 1
+test stochastic-KG with 10 KS + 10 stochastic, 2*1*1 kpoint

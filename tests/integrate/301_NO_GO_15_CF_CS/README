@@ -1,9 +1,1 @@
-This test for:
-*Si-diamond
-*LCAO
-*gamma_only
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver genelpa
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+calculate forces and stresses with LCAO (Gamma only)

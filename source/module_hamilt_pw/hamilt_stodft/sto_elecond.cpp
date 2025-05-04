@@ -122,7 +122,11 @@ loop:
     }
 
     std::cout << "set N order of Chebyshev for KG as " << nche_new << std::endl;
-    std::ofstream cheofs("Chebycoef");
+
+    std::stringstream ss;
+    ss << PARAM.globalv.global_out_dir << "Chebycoef.txt";
+    std::ofstream cheofs(ss.str());
+
     for (int i = 1; i < nche_guess; ++i)
     {
         double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);

@@ -1,6 +1,1 @@
-This test for:
-*bcc Fe
-*k-points 2*2*2
-*SG15 upf pseudopotential
-*smearing_method mp = methfessel-paxton
-*ks_solver cg
+test smearing method: mp for bcc Fe

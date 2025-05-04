@@ -1,6 +1,1 @@
-FeO Ferromagnetic+LDA+U
-NSPIN 2
-lcao
-init magnet: up + up
-SG15
-
+DFTU + NSPIN2, Fe2O2, multi-k case

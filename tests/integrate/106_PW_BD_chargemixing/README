@@ -1,6 +1,1 @@
-This test for:
-*Al fcc
-*sg15 pseudopotential
-*smearing_method gauss 
-*ks_solver cg
-*mixing_type broyden
+test SG15 pseudopotential (UPF 2.0.1) for Al with broyden charge mixing 

@@ -182,8 +182,8 @@ namespace LR
             // }
 
             // output iters
-            std::cout << "Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
-                << " ; where current threshold is: " << hsolver::DiagoIterAssist<T>::PW_DIAG_THR << " . " << std::endl;
+            std::cout << " Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
+                << "; current threshold: " << hsolver::DiagoIterAssist<T>::PW_DIAG_THR << std::endl;
         }
     }
 }

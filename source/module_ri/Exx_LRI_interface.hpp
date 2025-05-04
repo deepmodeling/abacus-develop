@@ -124,19 +124,47 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0 || PARAM.inp.init_wfc == "file") // non separate loop case
-            || (GlobalC::exx_info.info_global.separate_loop && PARAM.inp.init_wfc == "file" && this->two_level_step == 0 && iter == 1))  // the first iter in separate loop case
+        if (!GlobalC::exx_info.info_global.separate_loop 
+            && (this->two_level_step 
+                || istep > 0 
+                || PARAM.inp.init_wfc == "file") // non separate loop case
+            || (GlobalC::exx_info.info_global.separate_loop 
+                && PARAM.inp.init_wfc == "file" 
+                && this->two_level_step == 0 
+                && iter == 1)
+           )  // the first iter in separate loop case
         {
-            std::cout << "update exx" << std::endl;
+            std::cout << " UPDATE EXX" << std::endl;
+
             const bool flag_restart = (iter == 1) ? true : false;
+
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {
-                if (this->exx_spacegroup_symmetry) { this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), *dm_in.get_paraV_pointer()), flag_restart); }
-                else { this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); }
-			        const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-				            Ds = PARAM.globalv.gamma_only_local
-                                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin)
-                                : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin, this->exx_spacegroup_symmetry);
+				if (this->exx_spacegroup_symmetry) 
+				{ 
+					this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), 
+							*dm_in.get_paraV_pointer()), 
+							flag_restart); 
+				}
+                else 
+				{ 
+					this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); 
+				}
+
+				const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
+					Ds = PARAM.globalv.gamma_only_local
+					? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
+							*this->exx_ptr->p_kv, 
+							this->mix_DMk_2D.get_DMk_gamma_out(), 
+							*dm_in.get_paraV_pointer(), 
+							PARAM.inp.nspin)
+					: RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
+							*this->exx_ptr->p_kv, 
+							this->mix_DMk_2D.get_DMk_k_out(), 
+							*dm_in.get_paraV_pointer(), 
+							PARAM.inp.nspin, 
+							this->exx_spacegroup_symmetry);
+
                 if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) 
                 { 
                     this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); 
@@ -146,12 +174,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                     this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); 
                 }
             };
-            if(istep > 0 && flag_restart) {
-                cal(*dm_last_step);
-            } else {
-                cal(dm);
-}
-        }
+			if(istep > 0 && flag_restart) 
+			{
+				cal(*dm_last_step);
+			} 
+			else 
+			{
+				cal(dm);
+			}
+		}
     }
 }
 
@@ -296,7 +327,10 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         { // has separate_loop case
             const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
-            if (two_level_step) { std::cout << FmtCore::format("EDIFF/eV (outer loop): %.8e \n", ediff); }
+			if (two_level_step) 
+			{ 
+				std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); 
+			}
             // exx converged or get max exx steps
             if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
                 || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop

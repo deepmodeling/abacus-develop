@@ -1,1 +1,0 @@
-test parallel method bndpar and kpar. Must be run by MPI with at least 4 cores, otherwise please ignore this test.

@@ -1,7 +1,1 @@
-This test for:
-*Al-fcc
-*sg15 pseudopotential
-*smearing_method kerker mixing
-*ks_solver cg
-*mixing_type kerker 
-*mixing_beta 0.4
+test SG15 pseudopotential (UPF 2.0.1) for Al with pualy-kerker mixing 

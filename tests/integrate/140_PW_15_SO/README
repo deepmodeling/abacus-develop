@@ -1,9 +1,1 @@
-This test for:
-*GaAs-soc
-*PW
-*kpoints 2*2*2
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver cg
-*mixing_type broyden-kerker
-*mixing_beta 0.4
+test SG15 soc pseudopotential with soc on

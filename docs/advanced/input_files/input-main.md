@@ -1645,10 +1645,13 @@ These variables are used to control the output of properties.
 ### out_dm
 
 - **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis (gamma-only algorithm)
+- **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
-  - nspin = 1: SPIN1_DM;
-  - nspin = 2: SPIN1_DM, and SPIN2_DM.
+  - For gamma only case:
+    - nspin = 1: SPIN1_DM;
+    - nspin = 2: SPIN1_DM, and SPIN2_DM.
+  - For multi-k points case:
+    - SPIN\*_K\*_DM, where \* stands for index of spin and kpoints;
 - **Default**: False
 
 ### out_dm1

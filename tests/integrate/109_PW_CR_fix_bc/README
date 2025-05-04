@@ -1,10 +1,1 @@
-This test for: cell-relax
-*fix bc axe
-*Si-deformation
-*PW
-*kpoints 2*2*2
-*sg15 pseudopotential
-*smearing_method gauss
-*ks_solver cg
-*mixing_type broyden-kerker
-*mixing_beta 0.7
+test cell-relax for the fixed bc axe

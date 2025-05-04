@@ -1,7 +1,1 @@
-This test for:
-*Si-diamond
-*k-points 2*2*2
-*old upf pseudopotential
-*smearing_method fixed
-*ks_solver cg
-
+test smearing method: fixed smearing for GaN (zinc-blend) 
