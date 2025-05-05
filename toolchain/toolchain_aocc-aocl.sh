@@ -5,13 +5,13 @@
 #SBATCH -o compile.log
 #SBATCH -e compile.err
 
-# JamesMisaka in 2023-09-16
-# install abacus dependency by gnu-toolchain
-# one can use mpich or openmpi.
-# openmpi will be faster, but not compatible in some cases.
+# JamesMisaka in 2025-05-05
+# install abacus dependency by aocc-aocl toolchain
+# openmpi is recommended to use
 # libtorch and libnpy are for deepks support, which can be =no
 # if you want to run EXX calculation, you should set --with-libri=install
-# mpich (and intel toolchain) is recommended for EXX support
+# gpu-lcao supporting modify: CUDA_PATH and --enable-cuda
+# export CUDA_PATH=/usr/local/cuda
 
 ./install_abacus_toolchain.sh \
 --with-amd=system \

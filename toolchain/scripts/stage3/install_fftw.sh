@@ -40,7 +40,9 @@ case "$with_fftw" in
       if [ -f ${fftw_pkg} ]; then
         echo "${fftw_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${fftw_sha256}" "${fftw_pkg}"
+        #download_pkg_from_ABACUS_org "${fftw_sha256}" "${fftw_pkg}"
+        url="http://www.fftw.org/${fftw_pkg}"
+        download_pkg_from_url "${fftw_sha256}" "${fftw_pkg}" "${url}"
       fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
@@ -49,7 +51,7 @@ case "$with_fftw" in
       [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
       tar -xzf ${fftw_pkg}
       cd fftw-${fftw_ver}
-      FFTW_FLAGS="--enable-openmp --enable-shared --enable-static"
+      FFTW_FLAGS="--enable-openmp --enable-shared"
       # fftw has mpi support but not compiled by default. so compile it if we build with mpi.
       # it will create a second library to link with if needed
       [ "${MPI_MODE}" != "no" ] && FFTW_FLAGS="--enable-mpi ${FFTW_FLAGS}"
