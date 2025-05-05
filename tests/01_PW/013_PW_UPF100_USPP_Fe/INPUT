@@ -8,10 +8,10 @@ nspin                   2
 pseudo_dir              ../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc                 10
-ecutrho                 50
+ecutwfc                 8
+ecutrho                 35
 scf_thr                 1e-9
-scf_nmax                100
+scf_nmax                50
 
 #Parameters (3.Basis)
 basis_type             pw
