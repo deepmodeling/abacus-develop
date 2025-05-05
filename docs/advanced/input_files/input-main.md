@@ -708,7 +708,7 @@ These variables are used to control parameters related to input files.
 ### stru_file
 
 - **Type**: String
-- **Description**: The name of the structure file
+- **Description**: The name of the structure file.
   - Containing various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
   - When [calculation](#calculation) is set to `md` and [md_restart](#md_restart) is set to `true`, this keyword will NOT work.
   - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/stru.md)
@@ -726,7 +726,7 @@ These variables are used to control parameters related to input files.
 ### pseudo_dir
 
 - **Type**: String
-- **Description**: the pseudopotential file directory
+- **Description**: The direcotyr of pseudopotential files.
   - This parameter is combined with the pseudopotential filenames in the STRU file to form the complete pseudopotential file paths.
   - Example: set pseudo_dir to "../" with "Si.upf" which specified under "ATOMIC_SPECIES" in STRU file, ABACUS will open the pseudopotential file in path "../Si.upf".
 - **Default**: ""
@@ -734,7 +734,7 @@ These variables are used to control parameters related to input files.
 ### orbital_dir
 
 - **Type**: String
-- **Description**: the orbital file directory
+- **Description**: The directory to save numerical atomic orbitals.
   - This parameter is combined with orbital filenames in the STRU file to form the complete orbital file paths.
   - Example: set orbital_dir to "../" with "Si.orb" which specified under "NUMERICAL_ORBITAL" in STRU file, ABACUS will open the orbital file in path "../Si.orb".
 - **Default**: ""
@@ -749,7 +749,7 @@ These variables are used to control parameters related to input files.
 ### restart_load
 
 - **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis
+- **Availability**: Used only when numerical atomic orbitals are employed as basis set.
 - **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file exist.
 
   If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files in the same folder for each processor will also be read.
@@ -802,7 +802,8 @@ These variables are used to control the plane wave related parameters.
 ### pw_seed
 
 - **Type**: Integer
-- **Description**: Only useful for plane wave basis only now. It is the random seed to initialize wave functions. Only positive integers are available.
+- **Availability**: Only used for plane wave basis.
+- **Description**: Specify the random seed to initialize wave functions. Only positive integers are available.
 - **Default**:0
 
 ### pw_diag_thr
