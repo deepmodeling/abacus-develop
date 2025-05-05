@@ -1315,7 +1315,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 ## Electronic structure (SDFT)
 
-These variables are used to control the parameters of stochastic DFT (SDFT),  mix stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). In the following text, stochastic DFT is used to refer to these three methods. We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" [calculation](#calculation) are supported.
+These variables are used to control the parameters of stochastic DFT (SDFT),  mixed stochastic-deterministic DFT (MDFT), or complete-basis Chebyshev method (CT). In the following text, stochastic DFT is used to refer to these three methods. We suggest using SDFT to calculate high-temperature systems and we only support [smearing_method](#smearing_method) "fd". Both "scf" and "nscf" [calculation](#calculation) are supported.
 
 ### method_sto
 
@@ -1883,7 +1883,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
   If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files for each processor will also be saved in the above folder, which can be read in EXX calculation with *[restart_load](#restart_load)==True*.
 - **Default**: False
 
-### rpa
+### rpa (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: Generate output files used in rpa calculations.
@@ -4260,7 +4260,7 @@ These variables are used to control the usage of PEXSI (Pole Expansion and Selec
 
 [back to top](#full-list-of-input-keywords)
 
-## Linear Response TDDFT
+## Linear Response TDDFT (Under Development Feature)
 
 These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 
@@ -4358,7 +4358,7 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 - **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
 
-## Reduced Density Matrix Functional Theory
+## Reduced Density Matrix Functional Theory (Under Development Feature)
 
 ab-initio methods and the xc-functional parameters used in RDMFT.
 The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
