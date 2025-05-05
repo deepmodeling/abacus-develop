@@ -936,8 +936,7 @@ These variables are used to control the numerical atomic orbitals related parame
 ### num_stream
 
 - **Type** :int
-- **Description**: choose the number of streams in GPU when we compute the `LCAO`. According to different devices , we may have different effects.For most devices,the stream is
-enough when the number is bigger then 2.
+- **Description**: The number of streams used in GPU calculations (only for LCAO). For most devices, the performance is satisfactory when the number is larger than 2.
 - **Default** : "4" 
 
 [back to top](#full-list-of-input-keywords)
@@ -951,9 +950,9 @@ calculations.
 
 - **Type**: String
 - **Description**: Choose the basis set.
-  - **pw**: Using plane-wave basis set only.
-  - **lcao**: Using localized atomic orbital sets.
-  - **lcao_in_pw**: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
+  - pw: Using plane-wave basis set only.
+  - lcao: Using localized atomic orbital sets.
+  - lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
 - **Default**: pw
 
 ### ks_solver
@@ -963,21 +962,21 @@ calculations.
 
   For plane-wave basis,
 
-  - **cg**: cg method.
-  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
-  - **dav**: the Davidson algorithm.
-  - **dav_subspace**: Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+  - cg: The conjugate-gradient (CG) method.
+  - bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
+  - dav: The Davidson algorithm.
+  - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
-  For atomic orbitals basis,
+  For numerical atomic orbitals basis,
 
-  - **lapack**: This method is only avaliable for serial version. For parallel version please use **scalapack_gvx**.
-  - **genelpa**: This method should be used if you choose localized orbitals.
-  - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
-  - **cusolver**: This method needs building with CUDA and at least one gpu is available.
-  - **cusolvermp**: This method supports multi-GPU acceleration and needs building with CUDA。 Note that when using cusolvermp, you should set the number of MPI processes to be equal to the number of GPUs.
-  - **elpa**: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+  - lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
+  - genelpa: Use GEN-ELPA to diagonalize the Hamiltonian. 
+  - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
+  - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed. 
+  - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
+  - elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
-  If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
+  If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
   ```text
   genelpa can not be used with plane wave basis.
