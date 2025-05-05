@@ -70,7 +70,7 @@ If you are using AMD AOCL and AOCC, please note:
 
 **Notice: You GCC version should be no lower than 5 !!!. The toolchain will check it, and gcc with version larger than 7.3.0 is recommended.**
 
-**Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `intel`, `gcc-aocl` or `aocc-aocl` toolchain !!!! for example, `module load mkl mpi icc compiler` for loading oneapi envs**
+**Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, especially for `intel`, `gcc-aocl` or `aocc-aocl` toolchain! For example, `module load mkl mpi icc compiler` for loading oneapi envs.**
 
 **Notice: You SHOULD keep your environments systematic, for example, you CANNOT load `intel-OneAPI` environments while use gcc toolchain !!!**
 
@@ -307,7 +307,7 @@ You cannot use gcc as compiler while using MKL as math library for compile ABACU
 
 ### AMD AOCC-AOCL problem
 
-Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS effciency. But you need to get rid of `flang` while compling ELPA. Toolchain itself help you make this `flang` shade in default of `aocc-aocl` toolchain, and you can manully use `flang` by setting `--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain help you to bypass the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be relatively lower compared to `gnu` or `gcc-aocl` toolchain.
+Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS efficiency. But you need to get rid of `flang` while compiling ELPA. Toolchain itself helps you make this `flang` shade in default of `aocc-aocl` toolchain, and you can manually use `flang` by setting `--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain helps you to bypass the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be relatively lower compared to `gnu` or `gcc-aocl` toolchain.
 
 The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. However, the gcc-dependent aocl will have some package linking problem related to OpenMPI. Take it with caution.
 
