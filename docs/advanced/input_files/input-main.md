@@ -625,7 +625,8 @@ These variables are used to control general system parameters.
 ### mem_saver
 
 - **Type**: Boolean
-- **Description**: Used only for nscf calculations.
+- **Availability**: Used only for nscf calculations with plane wave basis set.
+- **Description**: Save memory when performing nscf calculations.
   - 0: no memory saving techniques are used.
   - 1: a memory saving technique will be used for many k point calculations.
 
@@ -634,7 +635,7 @@ These variables are used to control general system parameters.
 ### diago_proc
 
 - **Type**: Integer
-- **Availability**: pw base
+- **Availability**: Used only for plane wave basis set.
 - **Description**:
   - 0: it will be set to the number of MPI processes. Normally, it is fine just leave it to the default value.
   - `>0`: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes. Also, when cg diagonalization is used, diago_proc must be the same as the total number of MPI processes.
@@ -659,7 +660,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 ### min_dist_coef
 
 - **Type**: Real
-- **Description**: a factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
+- **Description**: A factor related to the allowed minimum distance between two atoms. At the beginning, ABACUS will check the structure, and if the distance of two atoms is shorter than min_dist_coef*(standard covalent bond length), we think this structure is unreasonable. If you want to calculate some structures in extreme conditions like high pressure, you should set this parameter as a smaller value or even 0.
 - **Default**: 0.2
 
 ### device
@@ -679,17 +680,10 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 ### precision
 
 - **Type**: String
-- **Description**: Specifies the precision of the PW_SCF calculation.
-
-  Available options are:
-
+- **Availability**: Used only for plane wave basis set.
+- **Description**: Specifies the precision when performing scf calculation.
   - single: single precision
   - double: double precision
-
-  Known limitations:
-
-  - pw basis: required by the `single` precision options
-  - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
 
 ### nb2d
@@ -714,7 +708,7 @@ These variables are used to control parameters related to input files.
 ### stru_file
 
 - **Type**: String
-- **Description**: the name of the structure file
+- **Description**: The name of the structure file
   - Containing various information about atom species, including pseudopotential files, local orbitals files, cell information, atom positions, and whether atoms should be allowed to move.
   - When [calculation](#calculation) is set to `md` and [md_restart](#md_restart) is set to `true`, this keyword will NOT work.
   - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/stru.md)
@@ -723,7 +717,7 @@ These variables are used to control parameters related to input files.
 ### kpoint_file
 
 - **Type**: String
-- **Description**: the name of the k-points file
+- **Description**: The name of the k-point file that includes the k-point information of Brillouin zone.
   - In atomic orbitals basis with `gamma_only` set to true, the `KPT` file is unnecessary, because a `KPT` file will be generated automatically.
   - When more than one k-points are required, an explicit `KPT` file is mandatory.
   - Refer to [Doc](https://github.com/deepmodeling/abacus-develop/blob/develop/docs/advanced/input_files/kpt.md)
