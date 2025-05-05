@@ -892,8 +892,9 @@ To build ABACUS by intel-toolchain, just use:
     ./build_abacus_intel.sh
 To build ABACUS by amd-toolchain in gcc-aocl, just use:
     ./build_abacus_gnu-aocl.sh
+To build ABACUS by amd-toolchain in aocc-aocl, just use:
+    ./build_abacus_aocc-aocl.sh
 or you can modify the builder scripts to suit your needs.
-"""
 EOF
 
 fi
