@@ -1005,15 +1005,14 @@ calculations.
 - **Type**: Real
 - **Description**:
 
-  - 0.0: the total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
+  - 0.0: The total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
   - `>0.0`: this denotes the total number of electrons in the system. Must be less than 2*nbands.
 - **Default**: 0.0
 
 ### nelec_delta
 
 - **Type**: Real
-- **Description**:
- the total number of electrons will be calculated by `nelec`+`nelec_delta`.
+- **Description**: The total number of electrons will be calculated by `nelec`+`nelec_delta`.
 - **Default**: 0.0
 
 ### nupdown
@@ -1021,7 +1020,7 @@ calculations.
 - **Type**: Real
 - **Description**:
   - 0.0: no constrain apply to system.
-  - `>0.0`: this denotes the difference number of electrons between spin-up and spin-down in the system. The range of value must in [-nelec ~ nelec]. It is one method of constraint DFT, the fermi energy level will separate to E_Fermi_up and E_Fermi_down.
+  - `>0.0`: The different number of electrons between spin-up and spin-down channels. The range of value must be in [-nelec ~ nelec]. It is one type of constrainted DFT method, two Fermi energies will be calculated.
 - **Default**: 0.0
 
 ### dft_functional
@@ -1030,22 +1029,22 @@ calculations.
 - **Description**: In our package, the XC functional can either be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file.
   On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/module_hamilt_general/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://libxc.gitlab.io/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
 
-  Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum CPU cores for running exx in parallel is $N(N+1)/2$, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
+  Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum CPU cores for running exx in parallel is $N(N+1)/2$, with N being the number of atoms.
 
   If set to `opt_orb`, the program will not perform hybrid functional calculation. Instead, it is going to generate opt-ABFs as discussed in this [article](https://pubs.acs.org/doi/abs/10.1021/acs.jpclett.0c00481).
-- **Default**: same as UPF file.
+- **Default**: Used the same as DFT functional as specified in the pseudopotential files.
 
 ### xc_temperature
 
 - **Type**: Real
-- **Description**: specifies temperature when using temperature-dependent XC functionals (KSDT and so on).
-- **Default** : 0.0
+- **Description**: Specifies temperature when using temperature-dependent XC functionals (KSDT and so on).
+- **Default**: 0.0
 - **Unit**: Ry
 
 ### pseudo_rcut
 
 - **Type**: Real
-- **Description**: Cut-off of radial integration for pseudopotentials
+- **Description**: Cut-off of radial integration for pseudopotentials.
 - **Default**: 15
 - **Unit**: Bohr
 
@@ -1053,29 +1052,29 @@ calculations.
 
 - **Type**: Integer
 - **Description**:
-  - 0: use our own mesh for radial integration of pseudopotentials
-  - 1: use the mesh that is consistent with quantum espresso
+  - 0: Use a mesh for radial integration of pseudopotentials.
+  - 1: Use the mesh that is consistent with quantum espresso
 - **Default**: 0
 
 ### nspin
 
 - **Type**: Integer
 - **Description**: The number of spin components of wave functions.
-  - **1**: Spin degeneracy
-  - **2**: Collinear spin polarized.
-  - **4**: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
+  - 1: Spin degeneracy
+  - 2: Collinear spin polarized.
+  - 4: For the case of [noncollinear polarized](../scf/spin.md#noncollinear-spin-polarized-calculations), nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
 ### smearing_method
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - **fixed**: fixed occupations (available for non-coductors only)
-  - **gauss** or **gaussian**: Gaussian smearing method.
-  - **mp**: methfessel-paxton smearing method; recommended for metals.
-  - **mp2**: 2-nd methfessel-paxton smearing method; recommended for metals.
-  - **mv** or **cold**: marzari-vanderbilt smearing method.
-  - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
+  - fixed: fixed occupations (available for non-coductors only)
+  - gauss or gaussian: Gaussian smearing method.
+  - mp: methfessel-paxton smearing method; recommended for metals.
+  - mp2: 2-nd methfessel-paxton smearing method; recommended for metals.
+  - mv or cold: marzari-vanderbilt smearing method.
+  - fd: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: gauss
 
 ### smearing_sigma
@@ -1096,9 +1095,9 @@ calculations.
 
 - **Type**: String
 - **Description**: Charge mixing methods.
-  - **plain**: Just simple mixing.
-  - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
-  - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  - plain: Just simple mixing.
+  - pulay: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
+  - broyden: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
 
   In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
 - **Default**: broyden
@@ -1108,10 +1107,10 @@ calculations.
 - **Type**: Real
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
-  - **0.8**: `nspin=1`
-  - **0.4**: `nspin=2` and `nspin=4`
-  - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
-  - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
+  - 0.8: `nspin=1`
+  - 0.4: `nspin=2` and `nspin=4`
+  - 0: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
+  - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
 
   Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.0` usually works well.
 
@@ -1152,8 +1151,8 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling for charge density.
-  - **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
-  - **0**: No Kerker scaling is performed.
+  - >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
+  - 0: No Kerker scaling is performed.
 
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 1.0
@@ -1168,7 +1167,7 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 ### mixing_gg0_min
 
 - **Type**: Real
-- **Description**: the minimum kerker coefficient
+- **Description**: The minimum kerker coefficient.
 - **Default**: 0.1
 
 ### mixing_angle
