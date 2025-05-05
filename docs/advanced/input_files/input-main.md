@@ -553,13 +553,13 @@ These variables are used to control general system parameters.
 ### kpar
 
 - **Type**: Integer
-- **Description**: divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
+- **Description**: Divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
 - **Default**: 1
 
 ### bndpar
 
 - **Type**: Integer
-- **Description**: divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
+- **Description**: Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
 - **Default**: 1
 
 ### latname
@@ -567,22 +567,22 @@ These variables are used to control general system parameters.
 - **Type**: String
 - **Description**: Specifies the type of Bravias lattice. When set to `none`, the three lattice vectors are supplied explicitly in STRU file. When set to a certain Bravais lattice type, there is no need to provide lattice vector, but a few lattice parameters might be required. For more information regarding this parameter, consult the [page on STRU file](stru.md).
 
-  Available options are (correspondence with ibrav in QE(Quantum Espresso) is given in parenthesis):
+  Available options are:
   - none: free structure
-  - sc: simple cubic (1)
-  - fcc: face-centered cubic (2)
-  - bcc: body-centered cubic (3)
-  - hexagonal: hexagonal (4)
-  - trigonal: trigonal (5)
-  - st: simple tetragonal (6)
-  - bct: body-centered tetragonal (7)
-  - so: orthorhombic (8)
-  - baco: base-centered orthorhombic (9)
-  - fco: face-centered orthorhombic (10)
-  - bco: body-centered orthorhombic (11)
-  - sm: simple monoclinic (12)
-  - bacm: base-centered monoclinic (13)
-  - triclinic: triclinic (14)
+  - sc: simple cubic
+  - fcc: face-centered cubic
+  - bcc: body-centered cubic
+  - hexagonal: hexagonal
+  - trigonal: trigonal
+  - st: simple tetragona
+  - bct: body-centered tetragonal
+  - so: orthorhombic
+  - baco: base-centered orthorhombic
+  - fco: face-centered orthorhombic
+  - bco: body-centered orthorhombic
+  - sm: simple monoclinic
+  - bacm: base-centered monoclinic
+  - triclinic: triclinic
 - **Default**: none
 
 ### init_wfc
