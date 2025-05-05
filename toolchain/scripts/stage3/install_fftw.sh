@@ -40,7 +40,9 @@ case "$with_fftw" in
       if [ -f ${fftw_pkg} ]; then
         echo "${fftw_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${fftw_sha256}" "${fftw_pkg}"
+        #download_pkg_from_ABACUS_org "${fftw_sha256}" "${fftw_pkg}"
+        url="http://www.fftw.org/${fftw_pkg}"
+        download_pkg_from_url "${fftw_sha256}" "${fftw_pkg}" "${url}"
       fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
