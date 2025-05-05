@@ -515,8 +515,8 @@ These variables are used to control general system parameters.
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
-  - ks-lr: Kohn-Sham density functional theory + LR-TDDFT
-  - lr: LR-TDDFT with given KS orbitals
+  - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
+  - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
 - **Default**: ksdft
 
 ### symmetry
@@ -536,7 +536,7 @@ These variables are used to control general system parameters.
 ### symmetry_prec
 
 - **Type**: Real
-- **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged.
+- **Description**: The accuracy for symmetry analysis. Typically, the default value is good enough, but if the lattice parameters or atom positions in STRU file are not accurate enough, this value should be enlarged.
   > Note: if *[calculation](#calculation)==cell_relax*, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation. The new value will be printed in `OUT.${suffix}/running_cell-relax.log` in that case.
 - **Default**: 1.0e-6
 - **Unit**:  Bohr
