@@ -187,9 +187,13 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
         for (int j = 0; j < Ions_Move_Basic::dim; ++j)
         {
             if (i == j)
-                EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 1.0);
-            else
-                EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 0.0);
+			{
+				EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 1.0);
+			}
+			else
+			{
+				EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 0.0);
+			}
         }
     }
 }

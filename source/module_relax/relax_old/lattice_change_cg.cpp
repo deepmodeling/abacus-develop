@@ -69,16 +69,35 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     assert(grad0 != 0);
     assert(cg_grad0 != 0);
     assert(move0 != 0);
+   
 
-    static bool
-        sd; // sd , trial are two parameters, when sd=trial=true ,a new direction begins, when sd = false trial =true
-    static bool trial;  // a cubic interpolation is used to make the third point ,when sa = trial = false , we use Brent
-                        // to get the
-    static int ncggrad; // minimum point in this direction.
-    static double fa, fb, fc; // ncggrad is a parameter to control the cg method , every ten cg direction , we change
-                              // the direction back to
-    static double xa, xb, xc, xpt, steplength, fmax; // the steepest descent method
-    static int nbrent;
+    // sd , trial are two parameters, when sd=trial=true,
+    // a new direction begins, when sd = false trial =true
+    static bool sd = false;
+
+    // a cubic interpolation is used to make the third point,
+    // when sa = trial = false, we use Brent to get the
+    // minimum point in this direction.
+    static bool trial = false; 
+
+    // ncggrad is a parameter to control the cg method,
+    // every ten cg direction, we change the direction back to
+    // the steepest descent method  
+    static int ncggrad = 0;
+
+    static double fa = 0.0;
+    static double fb = 0.0;
+    static double fc = 0.0;
+
+    static double xa = 0.0;
+    static double xb = 0.0;
+    static double xc = 0.0;
+
+    static double xpt = 0.0;
+    static double steplength = 0.0;
+    static double fmax = 0.0;
+
+    static int nbrent = 0;
 
     double *lat = new double[dim];
     double *grad = new double[dim];
@@ -124,11 +143,9 @@ CG_begin:
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
-    // cout<<"stress  sd = "<<sd<<"  trial = "<<trial<<"  istep = "<<istep<<endl;
     if (flag == 0)
     {
         Lattice_Change_Basic::check_converged(ucell, stress, grad);
-        // cout<<"Lattice_Change_Basic::converged = "<<Lattice_Change_Basic::converged<<endl;
     }
 
     if (Lattice_Change_Basic::converged)
