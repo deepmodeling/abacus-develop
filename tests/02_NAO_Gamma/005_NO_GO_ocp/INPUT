@@ -7,12 +7,12 @@ gamma_only  1
 symmetry    1
 nbands      24
 ocp         1
-ocp_set     32*1 16*0
+ocp_set     17*1 7*0 15*1 9*0
 
 # SCF parameters
 calculation scf
 ecutwfc     5
-scf_thr     1e-8
+scf_thr     1e-9
 scf_nmax    100
 
 # Smearing
