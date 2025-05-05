@@ -623,6 +623,7 @@ export ENABLE_CRAY="${enable_cray}"
 # Check and solve known conflicts before installations proceed
 # ------------------------------------------------------------------------
 # Check GCC version:
+# Quantum Misaka in 2025-05-05
 if [ "${with_gcc}" != "__INSTALL__" ]
 then
   export GCC_MIN_VERSION=5
@@ -651,6 +652,7 @@ then
     echo "Your GCC version do not be larger than ${GCC_MIN_VERSION} !!!"
     exit 1
   fi
+  echo "Your GCC version seems to be enough for ABACUS installation."
 fi
 
 # Compiler conflicts
