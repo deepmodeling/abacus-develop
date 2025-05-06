@@ -26,9 +26,9 @@ mixing_type		broyden
 mixing_beta		0.7
 mixing_gg0      0.0
 
-nx                      24
-ny                      24
-nz                      3
+nx              24
+ny              24
+nz              3
 pw_seed                 1
 
 test_skip_ewald         1
