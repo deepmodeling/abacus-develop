@@ -49,7 +49,7 @@ case "${with_aocl}" in
 
   *)
     echo "==================== Linking AOCL to user paths ===================="
-    pkg_install_dir="$with_openblas"
+    pkg_install_dir="$with_aocl"
     check_dir "${pkg_install_dir}/include"
     check_dir "${pkg_install_dir}/lib"
     AOCL_CFLAGS="-I'${pkg_install_dir}/include'"
@@ -57,8 +57,8 @@ case "${with_aocl}" in
     AOCL_LIBS="-lblis -lflame"
     ;;
 esac
-if [ "$with_openblas" != "__DONTUSE__" ]; then
-  if [ "$with_openblas" != "__SYSTEM__" ]; then
+if [ "$with_aocl" != "__DONTUSE__" ]; then
+  if [ "$with_aocl" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_aocl"
 prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
@@ -76,7 +76,7 @@ export AOCL_ROOT=${pkg_install_dir}
 EOF
     cat "${BUILDDIR}/setup_aocl" >> $SETUPFILE
   fi
-  cat << EOF >> "${BUILDDIR}/setup_aocl"
+cat << EOF >> "${BUILDDIR}/setup_aocl"
 export AOCL_ROOT="${pkg_install_dir}"
 export AOCL_CFLAGS="${AOCL_CFLAGS}"
 export AOCL_LDFLAGS="${AOCL_LDFLAGS}"
