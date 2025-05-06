@@ -14,9 +14,6 @@
  *   - calfinalvec_real
  *   - calfinalvec_complex
  *   - tracepolyA
- *   - checkconverge
- *
- *
  */
 class toolfunc
 {
