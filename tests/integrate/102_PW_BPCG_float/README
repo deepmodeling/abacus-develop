@@ -1,8 +1,5 @@
-# ================================================
-# Test Case ID: tests/integrate/102_PW_DS_davsubspace_float
-# Test Objective: Validate GaAs deformation simulation base parameters
-# Priority: P1 (Core configuration)
-# ================================================
+# Test Case ID: tests/integrate/102_PW_BPCG_float; 
+# Test Objective: Validate GaAs deformation simulation base parameters.
 
 # ------------------------------
 # [Preconditions]

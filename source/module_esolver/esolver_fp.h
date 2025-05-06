@@ -96,7 +96,7 @@ class ESolver_FP: public ESolver
     //! solvent model
     surchem solvent;
 
-    int pw_rho_flag  = 0; ///< flag for pw_rho, 0: not initialized, 1: initialized
+    int pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
 
 };
 } // namespace ModuleESolver

@@ -27,10 +27,10 @@ ESolver_FP::ESolver_FP()
 
 ESolver_FP::~ESolver_FP()
 {
-    if (pw_rho_flag == 1)
+    if (pw_rho_flag == true)
     {
         delete this->pw_rho;
-        this->pw_rho_flag = 0;
+        this->pw_rho_flag = false;
     }
     if ( PARAM.globalv.double_grid)
     {
@@ -64,7 +64,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
         }
     #endif
     pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
-    pw_rho_flag = 1;
+    pw_rho_flag = true;
     if (PARAM.globalv.double_grid)
     {
         pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precison);

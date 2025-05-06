@@ -228,7 +228,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     // move pw basis
     if (this->pw_rho_flag)
     {
-        this->pw_rho_flag = 0;
+        this->pw_rho_flag = true;
         delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
     }
     this->pw_rho = ks_sol.pw_rho;

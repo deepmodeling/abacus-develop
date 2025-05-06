@@ -1,6 +1,5 @@
 #include "fft_cpu.h"
 #include "fftw3.h"
-#include "module_base/timer.h"
 namespace ModulePW
 {
 
