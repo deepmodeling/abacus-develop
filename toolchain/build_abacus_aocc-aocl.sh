@@ -16,7 +16,7 @@ INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
 ABACUS_DIR=$(pwd)
-#AOCLhome=/opt/aocl-linux-aocc-5.0.0/5.0.0/aocc/  # user should specify this parameter
+#AOCLhome=/opt/aocl-linux-aocc-5.0.0/5.0.0/aocl/  # user should specify this parameter
 
 BUILD_DIR=build_abacus_aocl
 rm -rf $BUILD_DIR
