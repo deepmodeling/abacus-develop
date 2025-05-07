@@ -243,6 +243,28 @@ then just build the abacus executable program by compiling it with `./build_abac
 
 The ELPA method need more parameter setting, but it doesn't seem to be affected by the CUDA toolkits version, and it is no need to manually install and package. 
 
+Note: ELPA-2025.01.001 may have problem in nvidia-GPU compilation on some V100-GPU with AMD-CPU machine, error message:
+```bash
+ 1872 | static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+../src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c:51:47: note: in definition of macro 'CONCAT2_8ARGS'
+   51 | #define CONCAT2_8ARGS(a, b, c, d, e, f, g, h) a ## b ## c ## d ## e ## f ## g ## h
+      |                                               ^
+../src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c:1872:27: note: in expansion of macro 'CONCAT_8ARGS'
+ 1872 | static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
+      |                           ^~~~~~~~~~~~
+  PPFC     src/GPU/libelpa_openmp_private_la-mod_vendor_agnostic_general_layer.lo
+  PPFC     test/shared/GPU/libelpatest_openmp_la-test_gpu_vendor_agnostic_layer.lo
+../src/GPU/CUDA/./cudaFunctions_template.h(942): error: identifier "creal" is undefined
+    double alpha_real = creal(alpha);
+                        ^
+
+../src/GPU/CUDA/./cudaFunctions_template.h(960): error: identifier "creal" is undefined
+    float alpha_real = creal(alpha);
+```
+
+And you may need to change ELPA version to 2024.05.001, edit `toolchain/scripts/stage3/install_elpa.sh` to do it.
+
 2. For the cusolvermp method, toolchain_*.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_*.sh`, and then add
 ```shell
 -DUSE_CUDA=ON \
