@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 # elpa_ver="2024.05.001"
 # elpa_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
+# newer version of elpa may have problem in GPU-ELPA compliation
 elpa_ver="2025.01.001"
 elpa_sha256="3ef0c6aed9a3e05db6efafe6e14d66eb88b2a1354d61e765b7cde0d3d5f3951e"
 
@@ -123,7 +124,6 @@ case "$with_elpa" in
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
           --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
-          CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
           OMPI_MCA_plm_rsh_agent=/bin/false \
           FC=${MPIFC} \
           CC=${MPICC} \
@@ -153,7 +153,6 @@ case "$with_elpa" in
           --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
           --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
-          CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
           FC=${MPIFC} \
           CC=${MPICC} \
           CXX=${MPICXX} \
