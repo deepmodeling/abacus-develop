@@ -52,7 +52,6 @@ void Veff<OperatorPW<T, Device>>::act(
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
-
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
     const int psi_offset= max_npw * npol;
@@ -69,7 +68,7 @@ void Veff<OperatorPW<T, Device>>::act(
                                this->veff + current_spin * this->veff_col,
                                tmhpsi,
                                true);
-            tmhpsi += psi_offset;
+            tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
     }else if (npol == 2 && this->veff_col !=0)
@@ -87,7 +86,7 @@ void Veff<OperatorPW<T, Device>>::act(
             veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
             wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
-            tmhpsi += psi_offset;
+            tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
     }else{
@@ -124,8 +123,8 @@ void Veff<OperatorPW<T, Device>>::act(
             // FFT back to G space.
             wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
-            tmhpsi += max_npw * npol;
-            tmpsi_in += max_npw * npol;
+            tmhpsi   += psi_offset;
+            tmpsi_in += psi_offset;
         }
     }else{
         ModuleBase::WARNING_QUIT("VeffPW", "npol should be 1 or 2 or veff_col equal to 0\n");
