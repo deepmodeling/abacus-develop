@@ -1,0 +1,17 @@
+INPUT_PARAMETERS
+
+suffix         autotest
+pseudo_dir    ../../PP_ORB
+ 
+nbands        8
+calculation   scf
+ecutwfc       20
+scf_nmax      20
+
+basis_type    pw
+relax_nmax    1
+
+ks_solver     cg
+mixing_type   broyden
+mixing_beta   0.7
+mixing_gg0    1.5

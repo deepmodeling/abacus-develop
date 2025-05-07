@@ -1,0 +1,4 @@
+1. SG15 pseudopotential with f electron
+2. SCAN exchange-correlation functional
+3. symmetry=on
+4. init_chg=file

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# mohan add 2025-05-03
+# this compare script is used in different integrate tests
+COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+SUM_CUBE_EXE="../../integrate/tools/sum_cube.exe"
+
+
 sum_file(){
 	line=`grep -vc '^$' $1`
 	inc=1
@@ -142,7 +148,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=OUT.autotest/Onsager.txt
-	python3 ../tools/CompareFile.py $onref $oncal 3 -com_type 0
+	python3 $COMPARE_SCRIPT $onref $oncal 3 -com_type 0
     echo "CompareH_Failed $?" >>$1
 	rm -f je-je.txt Chebycoef
 fi
@@ -153,7 +159,7 @@ fi
 if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
 	dm1ref=refdata-DMR-sparse_SPIN0.csr
 	dm1cal=OUT.autotest/data-DMR-sparse_SPIN0.csr
-	python3 ../tools/CompareFile.py $dm1ref $dm1cal 8
+	python3 $COMPARE_SCRIPT $dm1ref $dm1cal 8
 	echo "CompareDM1_pass $?" >>$1
 fi
 
@@ -163,7 +169,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
 	pot1ref=refSPIN1_POT.cube
 	pot1cal=OUT.autotest/SPIN1_POT.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 3
+	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
 
@@ -173,7 +179,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
 	pot1ref=refElecStaticPot.cube
 	pot1cal=OUT.autotest/ElecStaticPot.cube
-	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
+	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
 fi
 
@@ -184,7 +190,7 @@ fi
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
 	elf1ref=refELF.cube
 	elf1cal=OUT.autotest/ELF.cube
-	python3 ../tools/CompareFile.py $elf1ref $elf1cal 3
+	python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
 
@@ -195,7 +201,7 @@ fi
 if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
 	sref=refSR.csr
 	scal=OUT.autotest/SR.csr
-	python3 ../tools/CompareFile.py $sref $scal 8
+	python3 $COMPARE_SCRIPT $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi
 
@@ -206,11 +212,11 @@ fi
 if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
 	#pbandref=refPBANDS_1
 	#pbandcal=OUT.autotest/PBANDS_1
-	#python3 ../tools/CompareFile.py $pbandref $pbandcal 8
+	#python3 $COMPARE_SCRIPT $pbandref $pbandcal 8
 	#echo "CompareProjBand_pass $?" >>$1
 	orbref=refOrbital
 	orbcal=OUT.autotest/Orbital
-	python3 ../tools/CompareFile.py $orbref $orbcal 8
+	python3 $COMPARE_SCRIPT $orbref $orbcal 8
 	echo "CompareOrb_pass $?" >>$1
 fi
 
@@ -227,11 +233,11 @@ if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	eigcal=OUT.autotest/diamond.eig
 	sed -i '1d' $amncal
 	sed -i '1d' $mmncal
-	python3 ../tools/CompareFile.py $amnref $amncal 1 -abs 8
+	python3 $COMPARE_SCRIPT $amnref $amncal 1 -abs 8
 	echo "CompareAMN_pass $?" >>$1
-	python3 ../tools/CompareFile.py $mmnref $mmncal 1 -abs 8
+	python3 $COMPARE_SCRIPT $mmnref $mmncal 1 -abs 8
 	echo "CompareMMN_pass $?" >>$1
-	python3 ../tools/CompareFile.py $eigref $eigcal 8
+	python3 $COMPARE_SCRIPT $eigref $eigcal 8
 	echo "CompareEIG_pass $?" >>$1
 fi
 
@@ -243,7 +249,7 @@ fi
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 	bandref=refBANDS_1.dat
 	bandcal=OUT.autotest/BANDS_1.dat
-	python3 ../tools/CompareFile.py $bandref $bandcal 8
+	python3 $COMPARE_SCRIPT $bandref $bandcal 8
 	echo "CompareBand_pass $?" >>$1
 fi
 
@@ -265,9 +271,9 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
                 scal=OUT.autotest/data-1-S
         fi
 
-        python3 ../tools/CompareFile.py $href $hcal 6
+        python3 $COMPARE_SCRIPT $href $hcal 6
     echo "CompareH_pass $?" >>$1
-    python3 ../tools/CompareFile.py $sref $scal 8
+    python3 $COMPARE_SCRIPT $sref $scal 8
     echo "CompareS_pass $?" >>$1
 fi
 
@@ -284,9 +290,9 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	fi
 	oeref=vxc_out.ref
 	oecal=OUT.autotest/vxc_out.dat
-	python3 ../tools/CompareFile.py $xcref $xccal 4
+	python3 $COMPARE_SCRIPT $xcref $xccal 4
 	echo "CompareVXC_pass $?" >>$1
-	python3 ../tools/CompareFile.py $oeref $oecal 5
+	python3 $COMPARE_SCRIPT $oeref $oecal 5
     echo "CompareOrbXC_pass $?" >>$1
 fi
 
@@ -296,7 +302,7 @@ fi
 if ! test -z "$has_xc2"  && [  $has_xc2 == 1 ]; then
 	xc2ref=Vxc_R_spin0.ref
 	xc2cal=OUT.autotest/Vxc_R_spin0.csr
-	python3 ../tools/CompareFile.py $xc2ref $xc2cal 8
+	python3 $COMPARE_SCRIPT $xc2ref $xc2cal 8
 	echo "CompareVXC_R_pass $?" >>$1
 fi
 
@@ -306,19 +312,19 @@ fi
 if ! test -z "$has_eband_separate"  && [  $has_eband_separate == 1 ]; then
 	ekref=kinetic_out.ref
 	ekcal=OUT.autotest/kinetic_out.dat
-	python3 ../tools/CompareFile.py $ekref $ekcal 4
+	python3 $COMPARE_SCRIPT $ekref $ekcal 4
 	echo "CompareOrbKinetic_pass $?" >>$1
 	vlref=vpp_local_out.ref
 	vlcal=OUT.autotest/vpp_local_out.dat
-	python3 ../tools/CompareFile.py $vlref $vlcal 4
+	python3 $COMPARE_SCRIPT $vlref $vlcal 4
 	echo "CompareOrbVL_pass $?" >>$1
 	vnlref=vpp_nonlocal_out.ref
 	vnlcal=OUT.autotest/vpp_nonlocal_out.dat
-	python3 ../tools/CompareFile.py $vnlref $vnlcal 4
+	python3 $COMPARE_SCRIPT $vnlref $vnlcal 4
 	echo "CompareOrbVNL_pass $?" >>$1
 	vhref=vhartree_out.ref
 	vhcal=OUT.autotest/vhartree_out.dat
-	python3 ../tools/CompareFile.py $vhref $vhcal 4
+	python3 $COMPARE_SCRIPT $vhref $vhcal 4
 	echo "CompareOrbVHartree_pass $?" >>$1
 fi
 
@@ -327,9 +333,9 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    #python3 ../tools/CompareFile.py data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
+    #python3 $COMPARE_SCRIPT data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
     #echo "CompareHR_pass $?" >>$1
-    python3 ../tools/CompareFile.py data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 
@@ -338,7 +344,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 ../tools/CompareFile.py data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
+    python3 $COMPARE_SCRIPT data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
     echo "ComparerR_pass $?" >>$1
 fi
 
@@ -347,7 +353,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 ../tools/CompareFile.py data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
     echo "ComparerTR_pass $?" >>$1
 fi
 
@@ -356,11 +362,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 ../tools/CompareFile.py data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 ../tools/CompareFile.py data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 ../tools/CompareFile.py data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
@@ -370,9 +376,9 @@ fi
 #---------------------------------------
 if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
        ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 ../tools/CompareFile.py SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
+    python3 $COMPARE_SCRIPT SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
     echo "SPIN1_CHG.cube_pass $?" >>$1
-    python3 ../tools/CompareFile.py SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
+    python3 $COMPARE_SCRIPT SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
     echo "SPIN1_TAU.cube_pass $?" >>$1
 fi
 
@@ -382,7 +388,7 @@ fi
 #---------------------------------------
 if ! test -z "$has_ldos"  && [  $has_ldos == 1 ]; then
     stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT")
-    python3 ../tools/CompareFile.py LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
+    python3 $COMPARE_SCRIPT LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
     echo "LDOS.cube_pass $?" >> $1
 fi
 
@@ -465,7 +471,7 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
 
-	python3 ../tools/CompareFile.py $wfc_cal $wfc_ref 8 -abs 1
+	python3 $COMPARE_SCRIPT $wfc_cal $wfc_ref 8 -abs 1
 	echo "Compare_wfc_lcao_pass $?" >>$1
 fi
 
@@ -479,7 +485,7 @@ if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
               echo "Can't find DM files"
               exit 1
       else
-			python3 ../tools/CompareFile.py $dmref $dmfile 5
+			python3 $COMPARE_SCRIPT $dmref $dmfile 5
             echo "DM_different $?" >>$1
       fi
 fi
@@ -488,7 +494,7 @@ fi
 # mulliken charge
 #--------------------------------------------
 if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
-    python3 ../tools/CompareFile.py mulliken.txt.ref OUT.autotest/mulliken.txt 3
+    python3 $COMPARE_SCRIPT mulliken.txt.ref OUT.autotest/mulliken.txt 3
 	echo "Compare_mulliken_pass $?" >>$1
 fi
 
@@ -506,7 +512,7 @@ if [ $calculation == "get_wf" ]; then
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
+			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
@@ -526,7 +532,7 @@ if [ $calculation == "get_pchg" ]; then
 	else
 		for cube in $cubefiles;
 		do
-			total_chg=`../tools/sum_cube.exe OUT.autotest/$cube`
+			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
 			echo "$cube $total_chg" >>$1
 		done
 	fi
@@ -550,7 +556,7 @@ if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
 	onref=refcoulomb_mat_0.txt
 	oncal=coulomb_mat_0.txt
-	python3 ../tools/CompareFile.py $onref $oncal 8
+	python3 $COMPARE_SCRIPT $onref $oncal 8
 fi
 
 #--------------------------------------------
@@ -577,7 +583,7 @@ fi
 if ! test -z "$out_current" && [ $out_current ]; then
 	current1ref=refcurrent_total.dat
 	current1cal=OUT.autotest/current_total.dat
-	python3 ../tools/CompareFile.py $current1ref $current1cal 10
+	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
 	echo "CompareCurrent_pass $?" >>$1
 fi
 
