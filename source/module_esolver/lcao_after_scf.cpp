@@ -210,7 +210,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                            *(this->psi),
                                            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                            p_ham_deepks,
-                                           GlobalV::MY_RANK);
+                                           GlobalV::MY_RANK,
+                                           GlobalV::ofs_running);
     }
 #endif
 
