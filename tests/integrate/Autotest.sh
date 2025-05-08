@@ -92,11 +92,11 @@ check_out(){
     properties=`awk '{print $1}' $outfile`
 
     #------------------------------------------------------
-    # jd = job description
+    # README 
     #------------------------------------------------------
-    if test -e "jd"; then
-        jd=`cat jd`
-         echo "[----------] $jd"
+    if test -e "README"; then
+        readme=`cat README`
+         echo "[----------] $readme"
     fi
 
     #------------------------------------------------------

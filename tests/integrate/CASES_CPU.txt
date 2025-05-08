@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 101_PW_15
 101_PW_15_f
 101_PW_15_LDA
@@ -332,3 +333,5 @@
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA
 922_NO_FeBiTe
+=======
+>>>>>>> develop

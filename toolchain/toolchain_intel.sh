@@ -5,14 +5,16 @@
 #SBATCH -o compile.log
 #SBATCH -e compile.err
 
-# JamesMisaka in 2023-08-31
+# JamesMisaka in 2025-05-05
 # install abacus dependency by intel-toolchain
 # use mkl and intelmpi
 # but mpich and openmpi can also be tried
 # libtorch and libnpy are for deepks support, which can be =no
+# gpu-lcao supporting modify: CUDA_PATH and --enable-cuda
+# export CUDA_PATH=/usr/local/cuda
 
 # module load mkl mpi compiler
-export CUDA_PATH=/usr/local/cuda
+
 ./install_abacus_toolchain.sh \
 --with-intel=system \
 --math-mode=mkl \

@@ -220,12 +220,6 @@ void ReadInput::item_output()
                 para.input.out_dm = false;
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == false && para.input.out_dm)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_dm with k-point algorithm is not implemented yet.");
-            }
-        };
         read_sync_bool(input.out_dm);
         this->add_item(item);
     }

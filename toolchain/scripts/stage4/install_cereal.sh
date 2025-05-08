@@ -5,13 +5,13 @@
 # CEREAL is not need any complex setting
 # Only problem is the installation from github.com
 
-# Last Update in 2023-0918
+# Last Update in 2025-0504
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-cereal_ver="1.3.2"
-cereal_sha256="16a7ad9b31ba5880dac55d62b5d6f243c3ebc8d46a3514149e56b5e7ea81f85f"
+cereal_ver="master" # latest version, instead of "1.3.2"
+cereal_sha256="--no-checksum" # latest version cannot maintain checksum
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -31,7 +31,7 @@ case "$with_cereal" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/USCiLab/cereal/archive/refs/tags/v${cereal_ver}.tar.gz"
+    url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
     filename="cereal-${cereal_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
@@ -40,7 +40,7 @@ case "$with_cereal" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of CEREAL is downloaded in GitHub Release, which will always be out-of-date version <==="
+            echo "===> Notice: This version of CEREAL is downloaded in GitHub master repository  <==="
             download_pkg_from_url "${cereal_sha256}" "${filename}" "${url}"
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
@@ -49,6 +49,7 @@ case "$with_cereal" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
+        #unzip -q $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
