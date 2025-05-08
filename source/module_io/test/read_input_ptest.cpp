@@ -460,9 +460,24 @@ TEST_F(InputParaTest, Check)
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    try {
+        readinput.read_parameters(param, "./empty_INPUT");
+
+        // if exit normally with exit(0)
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+
+    } catch (const std::exception& e) {
+        // if exit with error, then the test is failed
+        FAIL() << "read_parameters threw an exception: " << e.what();
+    } catch (...) {
+        // if exit with unknown error, then the test is failed
+        FAIL() << "read_parameters threw an unknown exception.";
+    }
+    // Note : the EXPECT_EXIT is not working with MPI, so we use try-catch to test the exit
+    // EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
+    // std::string output = testing::internal::GetCapturedStdout();
+    // EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
