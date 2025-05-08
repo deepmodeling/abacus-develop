@@ -56,7 +56,7 @@ void Veff<OperatorPW<T, Device>>::act(
     const int current_spin = this->isk[this->ik];
     const int psi_offset= max_npw * npol;
 #ifdef __DSP
-    if (npol == 1 && this->veff_col !=0)
+    if (npol == 1)
     {
         ModulePW::FFT_Guard guard(wfcpw->fft_bundle);
         for (int ib = 0; ib < nbands; ib += npol)
@@ -71,7 +71,7 @@ void Veff<OperatorPW<T, Device>>::act(
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
-    }else if (npol == 2 && this->veff_col !=0)
+    }else if (npol == 2)
     {
         const Real* current_veff[4];
         for (int is = 0; is < 4; is++)
@@ -93,7 +93,7 @@ void Veff<OperatorPW<T, Device>>::act(
         ModuleBase::WARNING_QUIT("VeffPW", "npol should be 1 or 2 or veff_col equal to 0\n");
     }
 #else
-    if (npol == 1  && this->veff_col !=0)
+    if (npol == 1)
     {
         for (int ib = 0; ib < nbands; ib += npol)
         {
@@ -103,11 +103,11 @@ void Veff<OperatorPW<T, Device>>::act(
             // but the 3DFFT can not be skipped, it will cause hanging
             veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
             wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
-            tmhpsi += psi_offset;
+            tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
     }
-    else if (npol == 2 && this->veff_col !=0)
+    else if (npol == 2)
     {
         const Real* current_veff[4];
         for (int is = 0; is < 4; is++)
