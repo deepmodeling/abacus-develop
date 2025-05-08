@@ -324,7 +324,7 @@ static __global__ void vbatched_gemm_nt_kernel(const int* M,
  * Performs a batched matrix multiplication using the vbatched_gemm_impl
  * function.
  *
- * C = alpha * A * B + C
+ * C = alpha * trans(A) * B + C
  * @tparam T The data type of the matrices.
  * @tparam DIM_X The number of threads in the x-dimension of each block.
  * @tparam DIM_Y The number of threads in the y-dimension of each block.

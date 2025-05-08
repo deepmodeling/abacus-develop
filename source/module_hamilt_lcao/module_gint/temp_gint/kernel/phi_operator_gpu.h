@@ -19,20 +19,33 @@ public:
 
     void set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch);
 
-    void set_phi(double* phi_d);
+    void set_phi(double* phi_d) const;
+
+    void set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d);
 
     void phi_mul_vldr3(
         const double* vl_d,
         const double dr3,
         const double* phi_d,
-        double* result_d);
+        double* result_d) const;
     
     void phi_mul_phi_vldr3(
         const double* phi_d,
         const double* phi_vldr3_d,
         std::shared_ptr<HContainer<double>> hRGint,
-        double* hr_d);
+        double* hr_d) const;
     
+    void phi_mul_dm(
+        const double* phi_d,
+        const double* dm_d,
+        const HContainer<double>& dm,
+        const bool is_symm,
+        double* phi_dm_d);
+
+    void phi_dot_phi(
+        const double* phi_i,
+        const double* phi_j,
+        double* rho) const;
 
 private:
     std::shared_ptr<BatchBigGrid> bgrid_batch_;
@@ -65,16 +78,16 @@ private:
     // Mapping of the index of meshgrid in the batch of biggrids to the index of meshgrid in the local cell
     CudaMemWrapper<int> mgrids_local_idx_batch_;
 
-    CudaMemWrapper<int> gemm_m_;
-    CudaMemWrapper<int> gemm_n_;
-    CudaMemWrapper<int> gemm_k_;
-    CudaMemWrapper<int> gemm_lda_;
-    CudaMemWrapper<int> gemm_ldb_;
-    CudaMemWrapper<int> gemm_ldc_;
-    CudaMemWrapper<const double*> gemm_A_;
-    CudaMemWrapper<const double*> gemm_B_;
-    CudaMemWrapper<double*> gemm_C_; 
-    CudaMemWrapper<int> gemm_alpha_;
+    mutable CudaMemWrapper<int> gemm_m_;
+    mutable CudaMemWrapper<int> gemm_n_;
+    mutable CudaMemWrapper<int> gemm_k_;
+    mutable CudaMemWrapper<int> gemm_lda_;
+    mutable CudaMemWrapper<int> gemm_ldb_;
+    mutable CudaMemWrapper<int> gemm_ldc_;
+    mutable CudaMemWrapper<const double*> gemm_A_;
+    mutable CudaMemWrapper<const double*> gemm_B_;
+    mutable CudaMemWrapper<double*> gemm_C_; 
+    mutable CudaMemWrapper<double> gemm_alpha_;
 };
 
 }

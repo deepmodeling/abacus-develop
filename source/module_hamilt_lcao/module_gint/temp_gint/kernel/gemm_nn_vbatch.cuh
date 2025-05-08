@@ -26,7 +26,7 @@ template <typename T,
           int DIM_YB,
           int THR_M,
           int THR_N>
-static __device__ void vbatched_gemm_tt_device(int M,
+static __device__ void vbatched_gemm_nn_device(int M,
                                                int N,
                                                int K,
                                                const T* __restrict__ A,
@@ -61,18 +61,18 @@ static __device__ void vbatched_gemm_tt_device(int M,
     T rB[THR_N];
 
     // Registers for the dev->shmem copy
-    T ra[BLK_M / DIM_YA][BLK_K / DIM_XA];
-    T rb[BLK_K / DIM_YB][BLK_N / DIM_XB];
+    T ra[BLK_K / DIM_YA][BLK_M / DIM_XA];
+    T rb[BLK_N / DIM_YB][BLK_K / DIM_XB];
 
     // bound is the correction to offs_d in order to not get out of memory bound
     // so bound could be negative value since offs_d could be out of bound
-    const T* offs_dA = A + blx * BLK_M * LDA + idyA * LDA + idxA;
+    const T* offs_dA = A + blx * BLK_M + idyA * LDA + idxA;
     int boundA
-        = (LDA * (M - 1) + K) - (blx * BLK_M * LDA + idyA * LDA + idxA) - 1;
+        = (LDA * (K - 1) + M) - (blx * BLK_M + idyA * LDA + idxA) - 1;
 
-    const T* offs_dB = B + bly * BLK_N + idyB * LDB + idxB;
+    const T* offs_dB = B + bly * BLK_N * LDB + idyB * LDB + idxB;
     int boundB
-        = (LDB * (K - 1) + N) - (bly * BLK_N + idyB * LDB + idxB) - 1;
+        = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
 
     int m, n, k, kk;
 
@@ -89,22 +89,22 @@ static __device__ void vbatched_gemm_tt_device(int M,
 
 // Load A dev->shmem
 #pragma unroll
-    for (n = 0; n < BLK_M; n += DIM_YA)
+    for (n = 0; n < BLK_K; n += DIM_YA)
     {
 #pragma unroll
-        for (m = 0; m < BLK_K; m += DIM_XA)
+        for (m = 0; m < BLK_M; m += DIM_XA)
         {
-            sA(n + idyA, m + idxA) = fetch(A, m, n, boundA);
+            sA(m + idxA, n + idyA) = fetch(A, m, n, boundA);
         }
     }
 
 #pragma unroll
-    for (n = 0; n < BLK_K; n += DIM_YB)
+    for (n = 0; n < BLK_N; n += DIM_YB)
     {
 #pragma unroll
-        for (m = 0; m < BLK_N; m += DIM_XB)
+        for (m = 0; m < BLK_K; m += DIM_XB)
         {
-            sB(n + idyB, m + idxB) = fetch(B, m, n, boundB);
+            sB(m + idxB, n + idyB) = fetch(B, m, n, boundB);
         }
     }
 
@@ -112,18 +112,18 @@ static __device__ void vbatched_gemm_tt_device(int M,
 
     for (kk = 0; kk < K - BLK_K; kk += BLK_K)
     {
-        offs_dA += BLK_K;
-        boundA -= BLK_K;
+        offs_dA += BLK_K * LDA;
+        boundA -= BLK_K * LDA;
 
-        offs_dB += BLK_K * LDB;
-        boundB -= BLK_K * LDB;
+        offs_dB += BLK_K;
+        boundB -= BLK_K;
 
 // Load A dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_M / DIM_YA; n++)
+        for (n = 0; n < BLK_K / DIM_YA; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XA; m++)
+            for (m = 0; m < BLK_M / DIM_XA; m++)
             {
                 ra[n][m] = fetch(A, m * DIM_XA, n * DIM_YA, boundA);
             }
@@ -131,10 +131,10 @@ static __device__ void vbatched_gemm_tt_device(int M,
 
 // Load B dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_K / DIM_YB; n++)
+        for (n = 0; n < BLK_N / DIM_YB; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_N / DIM_XB; m++)
+            for (m = 0; m < BLK_K / DIM_XB; m++)
             {
                 rb[n][m] = fetch(B, m * DIM_XB, n * DIM_YB, boundB);
             }
@@ -174,23 +174,23 @@ static __device__ void vbatched_gemm_tt_device(int M,
 
 // Load A regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_M / DIM_YA; n++)
+        for (n = 0; n < BLK_K / DIM_YA; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XA; m++)
+            for (m = 0; m < BLK_M / DIM_XA; m++)
             {
-                sA(n * DIM_YA + idyA, m * DIM_XA + idxA) = ra[n][m];
+                sA(m * DIM_XA + idxA, n * DIM_YA + idyA) = ra[n][m];
             }
         }
 
 // Load B regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_K / DIM_YB; n++)
+        for (n = 0; n < BLK_N / DIM_YB; n++)
         {
 #pragma unroll
-            for (m = 0; m < BLK_N / DIM_XB; m++)
+            for (m = 0; m < BLK_K / DIM_XB; m++)
             {
-                sB(n * DIM_YB + idyB, m * DIM_XB + idxB) = rb[n][m];
+                sB(m * DIM_XB + idxB, n * DIM_YB + idyB) = rb[n][m];
             }
         }
         __syncthreads();
@@ -260,7 +260,7 @@ template <typename T,
           int DIM_YA,
           int DIM_XB,
           int DIM_YB>
-static __global__ void vbatched_gemm_tt_kernel(const int* M,
+static __global__ void vbatched_gemm_nn_kernel(const int* M,
                                               const int* N,
                                               const int* K,
                                               const T* const* global_A_array,
@@ -293,7 +293,7 @@ static __global__ void vbatched_gemm_tt_kernel(const int* M,
     {
         alpha_tmp = alpha[batchid];
     }
-    vbatched_gemm_tt_device<T,
+    vbatched_gemm_nn_device<T,
                            DIM_X,
                            DIM_Y,
                            BLK_M,
@@ -357,31 +357,6 @@ static __global__ void vbatched_gemm_tt_kernel(const int* M,
  * @param alpha The scalar value to multiply the matrices by (optional, default
  * is nullptr). generate by copilot
  */
-
-/*
- * Why do we need to implement our own matrix multiplication based on the magma
- * code? There are two main reasons. First is when we are doing batch matrix
- * multiplication, since we need to accumulate the results of the
- * multiplications, it is necessary to pass the same memory address of matrix C
- * to different multiplications. This way, the accumulation can be done directly
- * through atomic operations during the matrix multiplication, avoiding the
- * reduction operations after the multiplication. Secondly, when calculating the
- * charge density, where C = alpha * A * B + C, the value of alpha might be
- * different for the same batch of matrices. Using the standard matrix
- * multiplication interface would require breaking down the batch matrix
- * multiplication into smaller batches. In practice, it is difficult to
- * accumulate a batch.
- *
- * Moreover, taking into account the specific requirements of our application,
- * especially the fact that we can relatively easily control the arrangement of
- * the matrix elements, we have only implemented one type of requirement for
- * matrix transposition. That is, we have implemented the operation C = alpha *
- * A * trans(B) + C under the constraint of column-major order.
- *
- * Finally, we would like to thank Magma for its contributions to the field of
- * scientific computing.
- */
-
 template <typename T,
           int DIM_X,
           int DIM_Y,
@@ -408,7 +383,7 @@ void vbatched_gemm_nn_impl(int max_m,
                            const T* alpha = nullptr)
 {
     // The positions of A and B have been swapped here.
-    // This is because vbatch_gemm__tt_kernel is column major,
+    // This is because vbatch_gemm_nn_kernel is column major,
     // but vatched_gemm_nn_impl is designed to be row major,
 
     size_t shared_mem_size = 0;
@@ -429,7 +404,7 @@ void vbatched_gemm_nn_impl(int max_m,
             alpha_tmp = alpha + i;
         }
 
-        vbatched_gemm_tt_kernel<T,
+        vbatched_gemm_nn_kernel<T,
                                 DIM_X,
                                 DIM_Y,
                                 BLK_M,

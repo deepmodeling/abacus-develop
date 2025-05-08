@@ -103,7 +103,7 @@ void PhiOperator::phi_mul_vldr3(
     }
 }
 
-// hr(iwt_i,iwt_j) = \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
+// hr(iwt_i,iwt_j) += \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
 // this is a thread-safe function
 template<typename T>
 void PhiOperator::phi_mul_phi(

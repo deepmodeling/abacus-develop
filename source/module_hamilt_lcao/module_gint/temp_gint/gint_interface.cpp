@@ -8,6 +8,7 @@
 #include "gint_fvl.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
+#include "gint_rho_gpu.h"
 #include "gint_tau.h"
 
 namespace ModuleGint
@@ -70,8 +71,17 @@ void cal_gint_rho(
     double **rho)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_rho");
-    Gint_rho gint_rho(dm_vec, nspin, rho);
-    gint_rho.cal_gint();
+    #ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Gint_rho_gpu gint_rho_gpu(dm_vec, nspin, rho);
+        gint_rho_gpu.cal_gint();
+    } else
+    #endif
+    {
+        Gint_rho gint_rho(dm_vec, nspin, rho);
+        gint_rho.cal_gint();
+    }
     ModuleBase::timer::tick("Gint", "cal_gint_rho");
 }
 

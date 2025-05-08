@@ -320,11 +320,6 @@ static __global__ void vbatched_gemm_kernel(const int* M,
                                           alpha_tmp);
 }
 
-static inline int ceildiv(int x, int y)
-{
-    return (x + y - 1) / y;
-}
-
 /**
  * Performs a batched matrix multiplication using the vbatched_gemm_impl
  * function.

@@ -15,6 +15,11 @@
 cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line);
 cudaError_t __checkCudaLastError(const char *file, const int line);
 
+static inline int ceildiv(int x, int y)
+{
+    return (x + y - 1) / y;
+}
+
 void dump_cuda_array_to_file(const double* cuda_array,
                              int width,
                              int hight,

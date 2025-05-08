@@ -20,4 +20,4 @@ void dgemm_tn_vbatch(
     const double* const* B_array_d, const int* ldb_d,
     double** C_array_d, const int* ldc_d,
     int batchCount, cudaStream_t stream,
-    const double* alpha);
+    const double* alpha = nullptr);
