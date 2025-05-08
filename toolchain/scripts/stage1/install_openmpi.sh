@@ -3,7 +3,7 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2025-0308
+# Last Update in 2025-0504
 # Change default version to openmpi 5
 # allow user to choose openmpi 4 in used scripts
 
@@ -14,8 +14,8 @@ if [ "${OPENMPI_4TH}" = "yes" ]; then
     openmpi_ver="4.1.6"
     openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 else
-    openmpi_ver="5.0.6"
-    openmpi_sha256="bd4183fcbc43477c254799b429df1a6e576c042e74a2d2f8b37d537b2ff98157"
+    openmpi_ver="5.0.7"
+    openmpi_sha256="119f2009936a403334d0df3c0d74d5595a32d99497f9b1d41e90019fee2fc2dd"
 fi
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
@@ -69,6 +69,9 @@ case "${with_openmpi}" in
           CFLAGS="${CFLAGS} -fgnu89-inline"
         fi
       fi
+
+    # Notice for RHEL8 refer https://github.com/open-mpi/ompi/issues/13103
+
     # OpenMPI 5.0 only supports PMIx
     # PMI support is required for Slurm, but not for other schedulers
     # default not use

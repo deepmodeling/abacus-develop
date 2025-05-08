@@ -24,13 +24,13 @@ rm -rf $BUILD_DIR
 PREFIX=$ABACUS_DIR
 ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
 # ELPA=$INSTALL_DIR/elpa-2025.01.001/nvidia # for gpu-lcao
-CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
+CEREAL=$INSTALL_DIR/cereal-master/include/cereal
 LIBXC=$INSTALL_DIR/libxc-7.0.0
-RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
+RAPIDJSON=$INSTALL_DIR/rapidjson-master/
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
-# LIBCOMM=$INSTALL_DIR/LibComm-0.1.1
+# LIBCOMM=$INSTALL_DIR/LibComm-master
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
 
 # Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are recommended 
@@ -47,7 +47,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DUSE_ELPA=ON \
         -DENABLE_RAPIDJSON=ON \
         -DRapidJSON_DIR=$RAPIDJSON \
-#         -DUSE_CUDA=ON \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
@@ -55,7 +54,9 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 #         -DLIBRI_DIR=$LIBRI \
 #         -DLIBCOMM_DIR=$LIBCOMM \
 # 	      -DDeePMD_DIR=$DEEPMD \
-
+#         -DUSE_CUDA=ON \
+#         -DENABLE_CUSOLVERMP=ON \
+#         -D CAL_CUSOLVERMP_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2x.xx/math_libs/1x.x/targets/x86_64-linux/lib
 
 cmake --build $BUILD_DIR -j `nproc` 
 cmake --install $BUILD_DIR 2>/dev/null

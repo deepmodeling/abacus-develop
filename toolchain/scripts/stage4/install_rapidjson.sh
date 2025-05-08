@@ -5,14 +5,14 @@
 # RAPIDJSON is not need any complex setting
 # Only problem is the installation from github.com
 
-# Last Update in 2024-0119
-# Last Update in 2025-04-28 by Kai Luo
+# Last Update in 2025-0504
+# other contributor: Kai Luo, XingLiang Peng
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 rapidjson_ver="master" # latest version, instead of "1.1.0"  fixing issue of #5518
-rapidjson_sha256="bf7ced29704a1e696fbccf2a2b4ea068e7774fa37f6d7dd4039d0787f8bed98e"
+rapidjson_sha256="--no-checksum" # latest version cannot maintain checksum
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -33,9 +33,9 @@ case "$with_rapidjson" in
     #pkg_install_dir="${HOME}/lib/rapidjson/${rapidjson_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
     #url="https://github.com/Tencent/rapidjson/archive/refs/tags/v${rapidjson_ver}.tar.gz" # commented by Kai Luo in 2025/04/28
-    url="https://codeload.github.com/Tencent/rapidjson/zip/refs/heads/master"
-    # filename="rapidjson-${rapidjson_ver}.tar.gz"
-    filename="rapidjson-${rapidjson_ver}.zip" # changed by Kai Luo in 2025/04/28
+    url="https://codeload.github.com/Tencent/rapidjson/tar.gz/${rapidjson_ver}"
+    # changed by Kai Luo in 2025/04/28， modified by Zhaoqing Liu in 2025/05/01
+    filename="rapidjson-${rapidjson_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -43,21 +43,26 @@ case "$with_rapidjson" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of rapidjson is downloaded in GitHub Release, which will always be out-of-date version <==="
-            # download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
-            wget  "${url}" -O  "${filename}"  --no-check-certificate # use wget directly instead of download_pkg_from_url
+            echo "===> Notice: This version of rapidjson is downloaded in GitHub master repository <==="
+            download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
+            # wget  "${url}" -O  "${filename}"  --no-check-certificate # use wget directly instead of download_pkg_from_url
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
     else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
-        # tar -xzf $filename
-        unzip -q $filename # downloaded file is a zip file, so use unzip instead of tar, use -q to suppress output
+        #unzip -q $filename # use -q to suppress output
+        tar -xzf $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         # for CMake to find rapidjson
-        cp ${pkg_install_dir}/RapidJSONConfig.cmake.in ${pkg_install_dir}/RapidJSONConfig.cmake
+        #cp ${pkg_install_dir}/RapidJSONConfig.cmake.in ${pkg_install_dir}/RapidJSONConfig.cmake
+        cat << EOF > "${pkg_install_dir}/RapidJSONConfig.cmake"
+get_filename_component(RAPIDJSON_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(RAPIDJSON_INCLUDE_DIRS "@INCLUDE_INSTALL_DIR@")
+message(STATUS "RapidJSON found. Headers: ${RAPIDJSON_INCLUDE_DIRS}")
+EOF
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     fi
