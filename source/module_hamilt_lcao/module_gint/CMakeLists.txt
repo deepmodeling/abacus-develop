@@ -61,6 +61,7 @@ if(NEW_GINT)
         temp_gint/batch_biggrid
         temp_gint/gint_vl_gpu.cpp
         temp_gint/gint_rho_gpu.cpp
+        temp_gint/gint_fvl_gpu.cpp
         temp_gint/kernel/dgemm_vbatch.cu
     )
   endif()

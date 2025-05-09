@@ -36,8 +36,8 @@ __global__ void set_phi_kernel(
     for (int atom_id = threadIdx.x; atom_id < atoms_num; atom_id += blockDim.x)
     {
         const int atom_type = iat2it[atoms_iat[atom_id + pre_atoms_num]];
-        const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];
-        const double3 coord = make_double3(mgrid_pos.x-rcoord.x,
+        const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
+        const double3 coord = make_double3(mgrid_pos.x-rcoord.x,                    // coord is the relative coordinate of an atom and a meshgrid
                                            mgrid_pos.y-rcoord.y,
                                            mgrid_pos.z-rcoord.z);
         double dist = sqrt(coord.x * coord.x + coord.y * coord.y + coord.z * coord.z);
@@ -181,6 +181,7 @@ __global__ void set_phi_dphi_kernel(
                 dphi_x[phi_idx + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_ylm * 3 + 0];
                 dphi_y[phi_idx + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_ylm * 3 + 1];
                 dphi_z[phi_idx + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_ylm * 3 + 2];
+                iw_nr += nrmax;
             }
         }
         else
@@ -270,6 +271,169 @@ __global__ void phi_dot_phi_kernel(
     if(tid == 0)
     {
         rho[mgrid_local_idx] = tmp_sum;
+    }
+}
+
+__global__ void phi_dot_dphi_kernel(
+    const double* __restrict__ phi,
+    const double* __restrict__ dphi_x,
+    const double* __restrict__ dphi_y,
+    const double* __restrict__ dphi_z,
+    const int mgrids_per_bgrid,
+    const int* __restrict__ bgrids_phi_len,
+    const int2* __restrict__ atoms_num_info,
+    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atoms_iat,
+    const int* __restrict__ iat2it,
+    const int* __restrict__ atom_nw,
+    double* force)
+{
+    __shared__ double s_data[32 * 3];    // the length of s_data equals the max warp num of a block times 3
+    const int bgrid_id = blockIdx.y;
+    const int atoms_num = atoms_num_info[bgrid_id].x;
+    const int pre_atoms_num = atoms_num_info[bgrid_id].y;
+    const int bgrid_phi_len = bgrids_phi_len[bgrid_id];
+    const int tid = threadIdx.x;
+    const int warp_id = tid / 32;
+    const int lane_id = tid % 32;
+
+    for (int atom_id = blockIdx.x; atom_id < atoms_num; atom_id += gridDim.x)
+    {
+        const int atom_phi_start = atoms_phi_start[atom_id + pre_atoms_num];
+        const int iat = atoms_iat[atom_id + pre_atoms_num];
+        const int nw = atom_nw[iat2it[iat]];
+        double f[3] = {0.0, 0.0, 0.0};
+        for (int mgrid_id = 0; mgrid_id < mgrids_per_bgrid; mgrid_id++)
+        {
+            const int phi_start = atom_phi_start + mgrid_id * bgrid_phi_len;
+            for (int iw = tid; iw < nw; iw += blockDim.x)
+            {
+                int phi_idx = phi_start + iw;
+                f[0] += phi[phi_idx] * dphi_x[phi_idx];
+                f[1] += phi[phi_idx] * dphi_y[phi_idx];
+                f[2] += phi[phi_idx] * dphi_z[phi_idx];
+            }
+        }
+
+        // reduce the force in each block
+        for (int i = 0; i < 3; i++)
+        {
+            f[i] = warpReduceSum(f[i]);
+        }
+
+        if (lane_id == 0)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                s_data[warp_id * 3 + i] = f[i];
+            }
+        }
+        __syncthreads();
+        
+        for (int i = 0; i < 3; i++)
+        {
+            f[i] = (tid < blockDim.x / 32) ? s_data[tid * 3 + i] : 0;
+        }
+        if (warp_id == 0)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                f[i] = warpReduceSum(f[i]);
+            }
+        }
+        if (tid == 0)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                atomicAdd(&force[iat * 3 + i], f[i] * 2);
+            }
+        }
+    }
+}
+
+__global__ void phi_dot_dphi_r_kernel(
+    const double* __restrict__ phi,
+    const double* __restrict__ dphi_x,
+    const double* __restrict__ dphi_y,
+    const double* __restrict__ dphi_z,
+    const int mgrids_per_bgrid,
+    const int* __restrict__ bgrids_phi_len,
+    const int2* __restrict__ atoms_num_info,
+    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atoms_iat,
+    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ mgrids_pos,
+    const int* __restrict__ iat2it,
+    const int* __restrict__ atom_nw,
+    double* __restrict__ svl)
+{
+    __shared__ double s_data[32 * 6];  // the length of s_data equals the max warp num of a block times 6
+    const int tid = threadIdx.x;
+    const int bgrid_id = blockIdx.y;
+    const int atoms_num = atoms_num_info[bgrid_id].x;
+    const int pre_atoms_num = atoms_num_info[bgrid_id].y;
+    const int bgrid_phi_len = bgrids_phi_len[bgrid_id];
+    const int warp_id = tid / 32;
+    const int lane_id = tid % 32;
+    
+    double stress[6]{0.0};
+    for (int mgrid_id = blockIdx.x; mgrid_id < mgrids_per_bgrid; mgrid_id += gridDim.x)
+    {
+        const double3 mgrid_pos = mgrids_pos[mgrid_id];
+        for (int atom_id = 0; atom_id < atoms_num; atom_id++)
+        {
+            const int atom_phi_start = atoms_phi_start[atom_id + pre_atoms_num] + mgrid_id * bgrid_phi_len;
+            const int iat = atoms_iat[atom_id + pre_atoms_num];
+            const int nw = atom_nw[iat2it[iat]];
+            const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
+            const double3 coord = make_double3(mgrid_pos.x-rcoord.x,                    // coord is the relative coordinate of an atom and a meshgrid
+                                               mgrid_pos.y-rcoord.y,
+                                               mgrid_pos.z-rcoord.z);
+            for (int iw = tid; iw < nw; iw += blockDim.x)
+            {
+                int phi_idx = atom_phi_start + iw;
+                stress[0] += phi[phi_idx] * dphi_x[phi_idx] * coord.x;
+                stress[1] += phi[phi_idx] * dphi_x[phi_idx] * coord.y;
+                stress[2] += phi[phi_idx] * dphi_x[phi_idx] * coord.z;
+                stress[3] += phi[phi_idx] * dphi_y[phi_idx] * coord.y;
+                stress[4] += phi[phi_idx] * dphi_y[phi_idx] * coord.z;
+                stress[5] += phi[phi_idx] * dphi_z[phi_idx] * coord.z;
+            }
+        }
+    }
+    
+    // reduce the stress in each block
+    for (int i = 0; i < 6; i++)
+    {
+        stress[i] = warpReduceSum(stress[i]);
+    }
+
+    if (lane_id == 0)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            s_data[warp_id * 6 + i] = stress[i];
+        }
+    }
+    __syncthreads();
+
+    for (int i = 0; i < 6; i++)
+    {
+        stress[i] = (tid < blockDim.x / 32) ? s_data[tid * 6 + i] : 0;
+    }
+    if (warp_id == 0)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            stress[i] = warpReduceSum(stress[i]);
+        }
+    }
+    if (tid == 0)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            atomicAdd(&svl[i], stress[i] * 2);
+        }
     }
 }
 

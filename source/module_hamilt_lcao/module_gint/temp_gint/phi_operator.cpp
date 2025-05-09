@@ -109,10 +109,10 @@ void PhiOperator::phi_dot_dphi_r(
         for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const int start_idx = atoms_startidx_[j];
+            const Vec3d& r3 = atoms_relative_coords_[j][i];
             for(int k = 0; k < atoms_phi_len_[j]; ++k)
             {
                 const int idx = i * cols_ + start_idx + k;
-                const Vec3d& r3 = atoms_relative_coords_[j][i];
                 const double phi_val = phi[idx];
                 sxx += phi_val * dphi_x[idx] * r3[0];
                 sxy += phi_val * dphi_x[idx] * r3[1];

@@ -19,6 +19,7 @@ BatchBigGrid::BatchBigGrid(std::vector<std::shared_ptr<BigGrid>> biggrids)
         {
             max_nw_ = std::max(max_nw_, atom->get_nw());
         }
+        max_atoms_num_per_bgrid_ = std::max(max_atoms_num_per_bgrid_, biggrid->get_atoms_num());
         atoms_num_ += biggrid->get_atoms_num();
         atom_pairs_num += std::pow(biggrid->get_atoms_num(), 2);
         phi_len_ += biggrid->get_phi_len() * biggrid->get_mgrids_num();

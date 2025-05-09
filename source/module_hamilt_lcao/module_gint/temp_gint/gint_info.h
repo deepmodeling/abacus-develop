@@ -36,6 +36,7 @@ class GintInfo
     // getter functions
     std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; };
     std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
+    int get_nat() const { return ucell_->nat; };        // return the number of atoms in the unitcell
     double get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); };
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); };
 

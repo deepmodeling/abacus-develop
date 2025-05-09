@@ -73,4 +73,35 @@ __global__ void phi_dot_phi_kernel(
     const int* __restrict__ bgrids_phi_len,     // the length of phi on a mgrid of a biggrid
     const int* __restrict__ bgrids_phi_start,   // the start idx in phi of each biggrid
     double* __restrict__ rho);                  // rho(ir)
+
+__global__ void phi_dot_dphi_kernel(
+    const double* __restrict__ phi,
+    const double* __restrict__ dphi_x,
+    const double* __restrict__ dphi_y,
+    const double* __restrict__ dphi_z,
+    const int mgrids_per_bgrid,
+    const int* __restrict__ bgrids_phi_len,
+    const int2* __restrict__ atoms_num_info,
+    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atoms_iat,
+    const int* __restrict__ iat2it,
+    const int* __restrict__ atom_nw,
+    double* force);
+
+__global__ void phi_dot_dphi_r_kernel(
+    const double* __restrict__ phi,
+    const double* __restrict__ dphi_x,
+    const double* __restrict__ dphi_y,
+    const double* __restrict__ dphi_z,
+    const int mgrids_per_bgrid,
+    const int* __restrict__ bgrids_phi_len,
+    const int2* __restrict__ atoms_num_info,
+    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atoms_iat,
+    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ mgrids_pos,
+    const int* __restrict__ iat2it,
+    const int* __restrict__ atom_nw,
+    double* __restrict__ svl);
+    
 }

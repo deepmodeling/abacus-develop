@@ -6,6 +6,7 @@
 #include "gint_vl_nspin4.h"
 #include "gint_vl_metagga_nspin4.h"
 #include "gint_fvl.h"
+#include "gint_fvl_gpu.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
 #include "gint_rho_gpu.h"
@@ -106,8 +107,17 @@ void cal_gint_fvl(
     ModuleBase::matrix* svl)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_fvl");
-    Gint_fvl gint_fvl(nspin, vr_eff, dm_vec, isforce, isstress, fvl, svl);
-    gint_fvl.cal_gint();
+#ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Gint_fvl_gpu gint_fvl_gpu(nspin, vr_eff, dm_vec, isforce, isstress, fvl, svl);
+        gint_fvl_gpu.cal_gint();
+    } else
+#endif
+    {
+        Gint_fvl gint_fvl(nspin, vr_eff, dm_vec, isforce, isstress, fvl, svl);
+        gint_fvl.cal_gint();
+    }
     ModuleBase::timer::tick("Gint", "cal_gint_fvl");
 }
 

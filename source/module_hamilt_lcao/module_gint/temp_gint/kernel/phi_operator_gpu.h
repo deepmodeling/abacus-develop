@@ -43,9 +43,23 @@ public:
         double* phi_dm_d);
 
     void phi_dot_phi(
-        const double* phi_i,
-        const double* phi_j,
-        double* rho) const;
+        const double* phi_i_d,
+        const double* phi_j_d,
+        double* rho_d) const;
+    
+    void phi_dot_dphi(
+        const double* phi_d,
+        const double* dphi_x_d,
+        const double* dphi_y_d,
+        const double* dphi_z_d,
+        double* fvl_d) const;
+    
+    void phi_dot_dphi_r(
+        const double* phi_d,
+        const double* dphi_x_d,
+        const double* dphi_y_d,
+        const double* dphi_z_d,
+        double* svl_d) const;
 
 private:
     std::shared_ptr<BatchBigGrid> bgrid_batch_;

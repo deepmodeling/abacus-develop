@@ -372,4 +372,56 @@ void PhiOperatorGpu::phi_dot_phi(
         rho_d);
 }
 
+void PhiOperatorGpu::phi_dot_dphi(
+    const double* phi_d,
+    const double* dphi_x_d,
+    const double* dphi_y_d,
+    const double* dphi_z_d,
+    double* fvl_d) const
+{
+    dim3 grid_dim(bgrid_batch_->get_max_atoms_num_per_bgrid(),
+                  bgrid_batch_->get_batch_size());
+    dim3 threads_per_block(32);
+    phi_dot_dphi_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 3, stream_>>>(
+        phi_d,
+        dphi_x_d,
+        dphi_y_d,
+        dphi_z_d,
+        mgrids_num_,
+        bgrids_phi_len_.get_device_ptr(),
+        atoms_num_info_.get_device_ptr(),
+        atoms_phi_start_.get_device_ptr(),
+        atoms_iat_.get_device_ptr(),
+        gint_gpu_vars_->iat2it_d,
+        gint_gpu_vars_->atom_nw_d,
+        fvl_d);
+}
+
+void PhiOperatorGpu::phi_dot_dphi_r(
+    const double* phi_d,
+    const double* dphi_x_d,
+    const double* dphi_y_d,
+    const double* dphi_z_d,
+    double* svl_d) const
+{
+    dim3 grid_dim(mgrids_num_,
+                  bgrid_batch_->get_batch_size());
+    dim3 threads_per_block(32);
+    phi_dot_dphi_r_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 6, stream_>>>(
+        phi_d,
+        dphi_x_d,
+        dphi_y_d,
+        dphi_z_d,
+        mgrids_num_,
+        bgrids_phi_len_.get_device_ptr(),
+        atoms_num_info_.get_device_ptr(),
+        atoms_phi_start_.get_device_ptr(),
+        atoms_iat_.get_device_ptr(),
+        atoms_bgrids_rcoords_.get_device_ptr(),
+        gint_gpu_vars_->mgrids_pos_d,
+        gint_gpu_vars_->iat2it_d,
+        gint_gpu_vars_->atom_nw_d,
+        svl_d);
+}
+
 }
