@@ -14,39 +14,39 @@ install(FILES C.xml H.xml
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
-  TARGET Test_Paw
+  TARGET CELL_MODULE_PAW_UnitTest
   LIBS parameter ${math_libs} base device 
   SOURCES test_paw.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_atom.cpp
 )
 
 AddTest(
-  TARGET Test_Paw1
+  TARGET CELL_MODULE_PAW_UnitTest1
   LIBS parameter ${math_libs} base device 
   SOURCES test_paw1.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
 
 AddTest(
-  TARGET Test_Paw2
+  TARGET CELL_MODULE_PAW_UnitTest2
   LIBS parameter ${math_libs} base device 
   SOURCES test_paw2.cpp ../paw_atom.cpp
 )
 
 AddTest(
-  TARGET Test_Paw3
+  TARGET CELL_MODULE_PAW_UnitTest3
   LIBS parameter ${math_libs} base device libpaw_interface 
   SOURCES test_paw3.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
-add_dependencies(Test_Paw3 libpaw_interface)
+add_dependencies(CELL_MODULE_PAW_UnitTest3 libpaw_interface)
 
 AddTest(
-  TARGET Test_Paw4
+  TARGET CELL_MODULE_PAW_UnitTest4
   LIBS parameter ${math_libs} base device libpaw_interface 
   SOURCES test_paw4.cpp ../paw_atom.cpp ../paw_cell_libpaw.cpp
 )
-add_dependencies(Test_Paw4 libpaw_interface)
+add_dependencies(CELL_MODULE_PAW_UnitTest4 libpaw_interface)
 
 AddTest(
-  TARGET Test_Paw5
+  TARGET CELL_MODULE_PAW_UnitTest5
   LIBS parameter ${math_libs} base device 
   SOURCES test_paw5.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
