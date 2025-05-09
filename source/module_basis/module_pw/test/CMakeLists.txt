@@ -1,6 +1,6 @@
 add_definitions(-D__NORMAL)
 AddTest(
-  TARGET pw_test
+  TARGET BASIS_MODULE_PW_UnitTest
   LIBS parameter ${math_libs} planewave device 
   SOURCES ../../../module_base/matrix.cpp ../../../module_base/complexmatrix.cpp ../../../module_base/matrix3.cpp ../../../module_base/tool_quit.cpp
           ../../../module_base/mymath.cpp ../../../module_base/timer.cpp ../../../module_base/memory.cpp
@@ -18,7 +18,7 @@ AddTest(
           test_tool.cpp test-big.cpp test-other.cpp test_sup.cpp
 )
 
-add_test(NAME pw_test_parallel
+add_test(NAME BASIS_MODULE_PW_UnitTest_parallel
       COMMAND mpirun -np 3 ./pw_test; mpirun -np 4 ./pw_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
