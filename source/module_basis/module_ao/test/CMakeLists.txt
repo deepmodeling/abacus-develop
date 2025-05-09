@@ -78,14 +78,14 @@ AddTest(
 
 
 AddTest(
-    TARGET BASIS_MODULE_AO_parallel_orbitals_test 
+    TARGET parallel_orbitals_test 
     SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
     LIBS parameter ${math_libs} device base
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
-add_test(NAME BASIS_MODULE_AO_parallel_orbitals_test_para
+add_test(NAME parallel_orbitals_test_para
       COMMAND ${BASH} parallel_orbitals_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

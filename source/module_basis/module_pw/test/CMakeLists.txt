@@ -18,7 +18,7 @@ AddTest(
           test_tool.cpp test-big.cpp test-other.cpp test_sup.cpp
 )
 
-add_test(NAME BASIS_MODULE_PW_UnitTest_parallel
+add_test(NAME pw_test_parallel
       COMMAND mpirun -np 3 ./pw_test; mpirun -np 4 ./pw_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
