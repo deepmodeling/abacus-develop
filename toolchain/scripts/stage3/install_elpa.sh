@@ -3,7 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2025-0308
+# Last Update in 2025-0504
+# other contributor: Benrui Tang
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -11,9 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 # elpa_ver="2024.05.001"
 # elpa_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
+# newer version of elpa may have problem in GPU-ELPA compliation
 elpa_ver="2025.01.001"
 elpa_sha256="3ef0c6aed9a3e05db6efafe6e14d66eb88b2a1354d61e765b7cde0d3d5f3951e"
-
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -34,9 +35,6 @@ cd "${BUILDDIR}"
 # elpa only works with MPI switched on
 if [ $MPI_MODE = no ]; then
   report_warning $LINENO "MPI is disabled, skipping elpa installation"
-  cat << EOF > "${BUILDDIR}/setup_elpa"
-with_elpa="__FALSE__"
-EOF
   exit 0
 fi
 
@@ -101,26 +99,30 @@ case "$with_elpa" in
           config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
         fi
       fi
-      # CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
       for TARGET in "cpu" "nvidia"; do
         [ "$TARGET" = "nvidia" ] && [ "$ENABLE_CUDA" != "__TRUE__" ] && continue
-        # disable cpu if cuda is enabled
+        # disable cpu if cuda is enabled, only install one
         [ "$TARGET" != "nvidia" ] && [ "$ENABLE_CUDA" = "__TRUE__" ] && continue
-        echo "Installing from scratch into ${pkg_install_dir}/${TARGET}"
+        # extend the pkg_install_dir by TARGET
+        # this linking method is totally different from cp2k toolchain
+        # for cp2k, ref https://github.com/cp2k/cp2k/commit/6fe2fc105b8cded84256248f68c74139dd8fc2e9
+        pkg_install_dir="${pkg_install_dir}/${TARGET}"
+
+        echo "Installing from scratch into ${pkg_install_dir}"
         mkdir -p "build_${TARGET}"
         cd "build_${TARGET}"
         if [ "${with_amd}" != "__DONTUSE__" ] && [ "${WITH_FLANG}" = "yes" ] ; then
         echo "AMD fortran compiler detected, enable special option operation"
-        ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
-          --libdir="${pkg_install_dir}/${TARGET}/lib" \
+        ../configure --prefix="${pkg_install_dir}" \
+          --libdir="${pkg_install_dir}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-static=yes \
+          --enable-static=no \
           --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \
           ${config_flags} \
-          --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
+          --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
           --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_70") \
           OMPI_MCA_plm_rsh_agent=/bin/false \
           FC=${MPIFC} \
@@ -139,10 +141,11 @@ case "$with_elpa" in
           -e 's/\\$wl--whole-archive\\$convenience \\$wl--no-whole-archive//g' \
           -e 's/\\$wl\\$soname //g'
         else
-        ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
-          --libdir="${pkg_install_dir}/${TARGET}/lib" \
+        # normal installation
+        ../configure --prefix="${pkg_install_dir}/" \
+          --libdir="${pkg_install_dir}/lib" \
           --enable-openmp=${enable_openmp} \
-          --enable-static=yes \
+          --enable-static=no \
           --enable-shared=yes \
           --disable-c-tests \
           --disable-cpp-tests \
@@ -165,9 +168,9 @@ case "$with_elpa" in
         make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ..
         # link elpa
-        link=${pkg_install_dir}/${TARGET}/include/elpa
+        link=${pkg_install_dir}/include/elpa
         if [[ ! -d $link ]]; then
-            ln -s ${pkg_install_dir}/${TARGET}/include/elpa_openmp-${elpa_ver}/elpa $link
+            ln -s ${pkg_install_dir}/include/elpa_openmp-${elpa_ver}/elpa $link
         fi
       done
       cd ..
@@ -176,8 +179,8 @@ case "$with_elpa" in
     fi
     fi
     [ "$enable_openmp" != "yes" ] && elpa_dir_openmp=""
-    ELPA_CFLAGS="-I'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/include/elpa${elpa_dir_openmp}-${elpa_ver}/modules' -I'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/include/elpa${elpa_dir_openmp}-${elpa_ver}/elpa'"
-    ELPA_LDFLAGS="-L'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/lib' -Wl,-rpath,'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/lib'"
+    ELPA_CFLAGS="-I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/modules' -I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/elpa'"
+    ELPA_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     ;;
   __SYSTEM__)
     echo "==================== Finding ELPA from system paths ===================="
@@ -201,7 +204,7 @@ case "$with_elpa" in
     pkg_install_dir="$with_elpa"
     check_dir "${pkg_install_dir}/include"
     check_dir "${pkg_install_dir}/lib"
-    user_include_path="$pkg_install_dir/include"
+    user_include_path="${pkg_install_dir}/include"
     elpa_include="$(find_in_paths "elpa_openmp-*" user_include_path)"
     if [ "$elpa_include" != "__FALSE__" ]; then
       echo "ELPA include directory threaded version is found to be $elpa_include/modules"

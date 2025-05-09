@@ -6,13 +6,14 @@
 # Only problem is the installation from github.com
 # LibComm is under highly-active development, the git submodule installation is more recommended
 
-# Last Update in 2024-0815
+# Last Update in 2025-0504
+# other contributor: Peize Lin
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libcomm_ver="0.1.1"
-libcomm_sha256="9c47b6ea9573bffa4232c0bef63714d4c3af820c6b7539cfa6e294ca2b8ba4af"
+libcomm_ver="master"
+libcomm_sha256="--no-checksum"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -32,8 +33,9 @@ case "$with_libcomm" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/libcomm/${libcomm_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
+    # url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
     filename="LibComm-${libcomm_ver}.tar.gz"
+    url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/${libcomm_ver}"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -41,7 +43,7 @@ case "$with_libcomm" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of LibComm is downloaded in GitHub Release, which will always be out-of-date version <==="
+            echo "===> Notice: This version of LibComm is downloaded in GitHub master repository  <==="
             download_pkg_from_url "${libcomm_sha256}" "${filename}" "${url}"
         fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
@@ -50,6 +52,7 @@ case "$with_libcomm" in
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
+        # unzip -q $filename
         cp -r $dirname "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
