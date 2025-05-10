@@ -29,6 +29,7 @@ bool ModuleIO::read_wfc_nao(
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
+
     int nk = pelec->ekb.nr;
     bool gamma_only = std::is_same<T, double>::value;
     int out_type = 1; // only support text file now
@@ -38,6 +39,7 @@ bool ModuleIO::read_wfc_nao(
     int nlocal = ParaV.get_wfc_global_nbasis(); // the global number of basis functions
     int nbands_local = ParaV.ncol_bands; // the number of bands in the local process
     int nlocal_local = ParaV.nrow_bands; // the number of basis functions in the local process
+
     if (gamma_only)
     {
         // I don't know why, but in orther places, the init of psi is using ParaV.ncol for gamma_only case
@@ -51,7 +53,10 @@ bool ModuleIO::read_wfc_nao(
 #endif   
 
     // lambda function to read one file
-    auto read_one_file = [&](const std::string& ss, std::stringstream& error_message, const int ik, std::vector<T>& ctot)
+	auto read_one_file = [&](const std::string& ss, 
+			std::stringstream& error_message, 
+			const int ik, 
+			std::vector<T>& ctot)
     {
         std::ifstream ifs;
         ifs.open(ss.c_str());
@@ -60,12 +65,18 @@ bool ModuleIO::read_wfc_nao(
             error_message << " Can't open file:" << ss << std::endl;
             return false;
         }
+        else
+		{
+            std::cout << " Read NAO wave functions from " << ss << std::endl;
+		}
 
         if (!gamma_only)
         {
             int ik_file = 0;
-            double kx = 0.0, ky = 0.0, kz = 0.0;
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, ik_file);
+			double kx = 0.0;
+			double ky = 0.0;
+			double kz = 0.0;
+			ModuleBase::GlobalFunc::READ_VALUE(ifs, ik_file);
             ifs >> kx >> ky >> kz;
             if (ik_file != ik + 1)
             {
@@ -142,7 +153,7 @@ bool ModuleIO::read_wfc_nao(
 #endif 
         if (!read_success)
         {
-            std::cout << "ModuleIO::read_wfc_nao: Error in reading wave function files!\n";
+            std::cout << " Error in reading wave function files!\n";
             std::cout << errors << std::endl;
             return false;
         }
@@ -177,6 +188,7 @@ template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_di
     psi::Psi<double>& psid,
     elecstate::ElecState* const pelec,
     const int skip_band);
+
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<std::complex<double>>& psid,

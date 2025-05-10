@@ -176,7 +176,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     {
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
     }
 
