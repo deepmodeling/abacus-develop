@@ -447,8 +447,8 @@ fi
 #--------------------------------------------
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/WFC_NAO_GAMMA1.txt
-		wfc_ref=WFC_NAO_GAMMA1.txt.ref	
+		wfc_cal=OUT.autotest/wfs1_nao.txt
+		wfc_ref=wfs1_nao.txt.ref
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=WFC_NAO_K1_ION3
