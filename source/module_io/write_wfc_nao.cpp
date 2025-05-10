@@ -30,26 +30,35 @@ std::string wfc_nao_gen_fname(const int out_type,
 	assert( ik2iktot.size() == nkstot );
 
 	// spin index
-	int is0 = 0;
+	int is0 = -1;
 	// ik0 is the k-point index, starting from 1
 	int ik0 = ik2iktot[ik];
-	if(nspin == 2)
+
+    if(nspin == 1)
+    {
+        is0 = 1;
+    }
+	else if(nspin == 2)
 	{
 		const int half_k = nkstot/2;
 		if(ik0 >= half_k)
 		{
-			is0 = 1;
+			is0 = 2;
 			ik0 -= half_k;
 		}
 		else
 		{
-			is0 = 0;
+			is0 = 1;
 		}
+    }
+    else if(nspin==4)
+    {
+        is0 = 4;
     }
 
     // spin part
     std::string spin_block;
-    spin_block = "s" + std::to_string(is0+1);
+    spin_block = "s" + std::to_string(is0);
 
     // k-point part
     std::string kpoint_block;
