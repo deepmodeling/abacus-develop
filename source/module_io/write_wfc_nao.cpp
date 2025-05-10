@@ -53,7 +53,7 @@ std::string wfc_nao_gen_fname(const int out_type,
     }
     else if(nspin==4)
     {
-        is0 = 4;
+        is0 = 12;
     }
 
     // spin part
