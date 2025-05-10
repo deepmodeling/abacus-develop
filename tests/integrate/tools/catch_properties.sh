@@ -451,9 +451,9 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_ref=wfs1_nao.txt.ref
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
-			wfc_name=WFC_NAO_K1_ION3
+			wfc_name=wfs1k1g3_nao
 		else
-			wfc_name=WFC_NAO_K2
+			wfc_name=wfs1k2_nao
 		fi
 		awk 'BEGIN {flag=999}
     	{
