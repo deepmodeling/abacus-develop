@@ -1,5 +1,5 @@
-#ifndef READ_WFC_TO_RHO_H
-#define READ_WFC_TO_RHO_H
+#ifndef READ_WF2RHO_PW_H
+#define READ_WF2RHO_PW_H
 
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"
@@ -17,7 +17,7 @@ namespace ModuleIO
  * @param isk k index to spin index
  * @param chg charge density
  */
-void read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
+void read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
                      ModuleSymmetry::Symmetry& symm,
                      const int* ik2iktot,
                      const int nkstot,

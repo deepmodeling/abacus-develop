@@ -1,4 +1,4 @@
-#include "read_wfc_to_rho.h"
+#include "read_wf2rho_pw.h"
 
 #include "read_wfc_pw.h"
 #include "module_base/timer.h"
@@ -7,15 +7,15 @@
 #include "module_parameter/parameter.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 
-void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
+void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
                                const int* ik2iktot,
                                const int nkstot,
                                const std::vector<int>& isk,
                                Charge& chg)
 {
-    ModuleBase::TITLE("ModuleIO", "read_wfc_pw_to_rho");
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw_to_rho");
+    ModuleBase::TITLE("ModuleIO", "read_wf2rho_pw");
+    ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
 
     const int kpar = GlobalV::KPAR;
     const int my_pool = GlobalV::MY_POOL;
@@ -140,5 +140,5 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
         srho.begin(is, chg, chg.rhopw, symm);
     }
 
-    ModuleBase::timer::tick("ModuleIO", "read_wfc_pw_to_rho");
+    ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
 }
