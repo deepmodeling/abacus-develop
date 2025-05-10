@@ -183,8 +183,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                 this->pelec->ekb,
                                 this->pelec->wg,
                                 this->pelec->klist->kvec_c,
-                                this->pv,
-                                istep);
+                                this->pelec->klist->ik2iktot,
+								this->pelec->klist->get_nkstot(),
+								this->pv,
+								PARAM.inp.nspin,
+								istep);
     }
 
     //------------------------------------------------------------------

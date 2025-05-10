@@ -23,6 +23,9 @@ std::string wfc_nao_gen_fname(const int out_type,
                                const bool gamma_only,
                                const bool out_app_flag,
                                const int ik,
+                               const std::vector<int> &ik2iktot,
+                               const int nkstot,
+                               const int nspin,
                                const int istep=-1);
 
 /**
@@ -44,9 +47,12 @@ void write_wfc_nao(const int out_type,
                     const psi::Psi<T>& psi,
                     const ModuleBase::matrix& ekb,
                     const ModuleBase::matrix& wg,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                    const Parallel_Orbitals& pv,
-                    const int istep=-1) ;
+					const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+					const std::vector<int> &ik2iktot,
+					const int nkstot,
+					const Parallel_Orbitals& pv,
+					const int nspin,
+					const int istep=-1) ;
 
 void wfc_nao_write2file(const std::string& name,
                         const double* ctot,
@@ -56,6 +62,7 @@ void wfc_nao_write2file(const std::string& name,
                         const ModuleBase::matrix& wg,
                         const bool& writeBinary,
                         const bool& append_flag = false);
+
 void wfc_nao_write2file_complex(const std::string& name,
                                 const std::complex<double>* ctot,
                                 const int nlocal,

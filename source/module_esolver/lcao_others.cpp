@@ -29,7 +29,6 @@
 
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"

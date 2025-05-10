@@ -129,7 +129,10 @@ bool ModuleIO::read_wfc_nao(
         if (myrank == 0)
         {
             std::stringstream error_message;
-            std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(out_type,gamma_only, false, ik);
+            std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(
+            out_type, gamma_only, false, ik, 
+            pelec->klist->ik2iktot, pelec->klist->get_nkstot(), PARAM.inp.nspin);
+
             read_success = read_one_file(ss, error_message, ik, ctot);
             errors = error_message.str();
         }   
