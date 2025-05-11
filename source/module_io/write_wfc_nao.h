@@ -44,15 +44,16 @@ std::string wfc_nao_gen_fname(const int out_type,
  */
 template <typename T>
 void write_wfc_nao(const int out_type,
-                    const psi::Psi<T>& psi,
-                    const ModuleBase::matrix& ekb,
-                    const ModuleBase::matrix& wg,
-					const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-					const std::vector<int> &ik2iktot,
-					const int nkstot,
-					const Parallel_Orbitals& pv,
-					const int nspin,
-					const int istep=-1) ;
+			const bool out_app_flag,
+			const psi::Psi<T>& psi,
+			const ModuleBase::matrix& ekb,
+			const ModuleBase::matrix& wg,
+			const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+			const std::vector<int> &ik2iktot,
+			const int nkstot,
+			const Parallel_Orbitals& pv,
+			const int nspin,
+			const int istep=-1) ;
 
 void wfc_nao_write2file(const std::string& name,
                         const double* ctot,

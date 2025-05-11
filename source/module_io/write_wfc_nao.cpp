@@ -87,7 +87,7 @@ std::string wfc_nao_gen_fname(const int out_type,
     }
     else
     {
-        std::cout << "WARNING: the out type of wave function is not 1 or 2. Write to a txt file." << std::endl;
+        std::cout << "WARNING: the type of output wave function is not 1 or 2, so 1 is chosen." << std::endl;
         suffix_block = ".txt";
     }
 
@@ -286,15 +286,16 @@ void wfc_nao_write2file_complex(const std::string& name,
 
 template <typename T>
 void write_wfc_nao(const int out_type,
-                    const psi::Psi<T>& psi,
-                    const ModuleBase::matrix& ekb,
-					const ModuleBase::matrix& wg,
-					const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-					const std::vector<int> &ik2iktot,
-					const int nkstot,
-					const Parallel_Orbitals& pv,
-                    const int nspin,
-                    const int istep)
+		const bool out_app_flag,
+		const psi::Psi<T>& psi,
+		const ModuleBase::matrix& ekb,
+		const ModuleBase::matrix& wg,
+		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+		const std::vector<int> &ik2iktot,
+		const int nkstot,
+		const Parallel_Orbitals& pv,
+		const int nspin,
+		const int istep)
 {
     if (!out_type)
     {
@@ -353,10 +354,10 @@ void write_wfc_nao(const int out_type,
         if (myid == 0)
         {
             std::string fn = PARAM.globalv.global_out_dir 
-            + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, 
+            + wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
               ik2iktot, nkstot, nspin, istep);
 
-            bool append_flag = (istep > 0 && PARAM.inp.out_app_flag);
+            bool append_flag = (istep > 0 && out_app_flag);
             if (std::is_same<double, T>::value)
             {
                 wfc_nao_write2file(fn,
@@ -386,25 +387,27 @@ void write_wfc_nao(const int out_type,
 }
 
 template void write_wfc_nao<double>(const int out_type,
-                                     const psi::Psi<double>& psi,
-                                     const ModuleBase::matrix& ekb,
-                                     const ModuleBase::matrix& wg,
-									 const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-									 const std::vector<int> &ik2iktot,
-									 const int nkstot,
-									 const Parallel_Orbitals& pv,
-									 const int nspin,
-									 const int istep);
+		const bool out_app_flag,
+		const psi::Psi<double>& psi,
+		const ModuleBase::matrix& ekb,
+		const ModuleBase::matrix& wg,
+		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+		const std::vector<int> &ik2iktot,
+		const int nkstot,
+		const Parallel_Orbitals& pv,
+		const int nspin,
+		const int istep);
 
 template void write_wfc_nao<std::complex<double>>(const int out_type,
-                                                   const psi::Psi<std::complex<double>>& psi,
-                                                   const ModuleBase::matrix& ekb,
-                                                   const ModuleBase::matrix& wg,
-                                                   const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-												   const std::vector<int> &ik2iktot,
-												   const int nkstot,
-												   const Parallel_Orbitals& pv,
-												   const int nspin,
-												   const int istep);
+		const bool out_app_flag,
+		const psi::Psi<std::complex<double>>& psi,
+		const ModuleBase::matrix& ekb,
+		const ModuleBase::matrix& wg,
+		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+		const std::vector<int> &ik2iktot,
+		const int nkstot,
+		const Parallel_Orbitals& pv,
+		const int nspin,
+		const int istep);
 
 } // namespace ModuleIO
