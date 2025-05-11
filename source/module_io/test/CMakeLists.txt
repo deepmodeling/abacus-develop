@@ -173,7 +173,7 @@ add_test(NAME read_wfc_pw_test_parallel
 AddTest(
   TARGET read_wfc_to_rho_test
   LIBS parameter base ${math_libs} device planewave psi
-  SOURCES read_wfc_to_rho_test.cpp ../read_wfc_pw.cpp ../read_wfc_to_rho.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wfc_to_rho_test.cpp ../read_wfc_pw.cpp ../read_wf2rho_pw.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
    ../../module_elecstate/module_charge/charge_mpi.cpp ../write_wfc_pw.cpp
 )
 
