@@ -14,7 +14,8 @@ void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data)
 {
-    double a = 0.0, b = 0.0;
+    double a = 0.0;
+    double b = 0.0;
     ifs >> a >> b;
     data = std::complex<double>(a, b);
 }
@@ -24,15 +25,19 @@ bool ModuleIO::read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-    elecstate::ElecState* const pelec,
+	elecstate::ElecState* const pelec,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
     const int skip_band)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
 
-    int nk = pelec->ekb.nr;
-    bool gamma_only = std::is_same<T, double>::value;
-    int out_type = 1; // only support text file now
+    const int nk = pelec->ekb.nr;
+
+    const bool gamma_only = std::is_same<T, double>::value;
+    const int out_type = 1; // only support .txt file now
     bool read_success = true;
     int myrank = 0;
     int nbands = ParaV.get_wfc_global_nbands(); // the global number of bands
@@ -129,20 +134,31 @@ bool ModuleIO::read_wfc_nao(
         }
         ifs.close();
         return true;
-    };
+    }; // end read one file
         
 
     std::string errors;
-    std::vector<T> ctot((myrank==0)?nbands * nlocal:0);
+
+	std::vector<T> ctot;
+	if (myrank == 0) 
+	{
+		ctot.resize(nbands * nlocal);
+	}
+	else
+	{
+		ctot.resize(0);
+	}
 
     for(int ik=0;ik<nk;ik++)
     {
         if (myrank == 0)
         {
+            const bool out_app_flag = false;
+            const int nstep = -1;
             std::stringstream error_message;
             std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(
-            out_type, gamma_only, false, ik, 
-            pelec->klist->ik2iktot, pelec->klist->get_nkstot(), PARAM.inp.nspin);
+            out_type, gamma_only, out_app_flag, ik, 
+            ik2iktot, nkstot, nspin, nstep);
 
             read_success = read_one_file(ss, error_message, ik, ctot);
             errors = error_message.str();
@@ -186,11 +202,17 @@ bool ModuleIO::read_wfc_nao(
 template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<double>& psid,
-    elecstate::ElecState* const pelec,
+	elecstate::ElecState* const pelec,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
     const int skip_band);
 
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
-    psi::Psi<std::complex<double>>& psid,
-    elecstate::ElecState* const pelec,
-    const int skip_band);
+	psi::Psi<std::complex<double>>& psid,
+	elecstate::ElecState* const pelec,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
+	const int skip_band);

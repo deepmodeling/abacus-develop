@@ -14,13 +14,13 @@ namespace ModuleIO
 {
 
 std::string wfc_nao_gen_fname(const int out_type,
-                               const bool gamma_only,
-							   const bool out_app_flag,
-                               const int ik,
-                               const std::vector<int> &ik2iktot,
-                               const int nkstot,
-                               const int nspin,
-                               const int istep)
+			const bool gamma_only,
+			const bool out_app_flag,
+			const int ik,
+			const std::vector<int> &ik2iktot,
+			const int nkstot,
+			const int nspin,
+			const int istep)
 {
     // fn_out = "{PARAM.globalv.global_out_dir}/wf{s}{spin index}{k(optinal)}{k-point index}
     // {g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}""
@@ -88,7 +88,7 @@ std::string wfc_nao_gen_fname(const int out_type,
     else
     {
         std::cout << "WARNING: the type of output wave function is not 1 or 2, so 1 is chosen." << std::endl;
-        suffix_block = ".txt";
+        suffix_block = "_nao.txt";
     }
 
     std::string fn_out

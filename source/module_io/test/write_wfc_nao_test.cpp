@@ -27,7 +27,7 @@ TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
     // if out_app_flag = true, then the 'g' label will not show up
     const int istep = 0;
 
-	std::string expected_output = "wfs1k1_nao.txt";
+	std::string expected_output = "wfs1_nao.txt";
 	std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
 			ik2iktot, nkstot, nspin, istep);
 

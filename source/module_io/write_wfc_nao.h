@@ -20,15 +20,15 @@ namespace ModuleIO
  * @return The generated filename.
  */
 std::string wfc_nao_gen_fname(const int out_type,
-                               const bool gamma_only,
-                               const bool out_app_flag,
-                               const int ik,
-                               const std::vector<int> &ik2iktot,
-                               const int nkstot,
-                               const int nspin,
-                               const int istep=-1);
+			const bool gamma_only,
+			const bool out_app_flag,
+			const int ik,
+			const std::vector<int> &ik2iktot,
+			const int nkstot,
+			const int nspin,
+			const int istep=-1);
 
-/**
+	/**
  * Writes the wavefunction coefficients for the LCAO method to a file.
  * Will loop all k-points by psi.get_nk().
  * The nbands are determined by ekb.nc.
