@@ -5,7 +5,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <map>
-// Class to store TDDFT velocity gague infos.
+// Class to store TDDFT velocity gauge infos.
 class TD_Velocity
 {
   public:
@@ -49,7 +49,7 @@ class TD_Velocity
         return this->current_term[i];
     }
 
-    // For TDDFT velocity gague, to fix the output of HR
+    // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
   private:

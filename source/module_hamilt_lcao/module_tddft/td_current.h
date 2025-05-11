@@ -10,7 +10,7 @@
 #include "module_base/vector3.h"
 
 #ifdef __LCAO
-//design to calculate current for length gague
+//design to calculate current for length gauge
 class TD_current
 {
   public:
