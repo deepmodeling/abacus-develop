@@ -22,7 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 #>           can be used to compile and use ABACUS
 #> \history  Created on Friday, 2023/08/18
 #            Update for Intel (18.08.2023, MK)
-#> \author   Zhaoqing Liu quanmisaka@stu.pku.edu.cn
+#> \author   Zhaoqing Liu (Quantum Misaka) quanmisaka@stu.pku.edu.cn
 # *****************************************************************************
 
 # ------------------------------------------------------------------------
@@ -158,7 +158,7 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
-  --with-amd              Use the AMD compiler to build CP2K.
+  --with-amd              Use the AMD compiler to build ABACUS.
                           Default = system
   --with-flang            Use flang in AMD compiler, which may lead to problem and efficiency loss in ELPA
                           Default = no
@@ -622,6 +622,39 @@ export ENABLE_CRAY="${enable_cray}"
 # ------------------------------------------------------------------------
 # Check and solve known conflicts before installations proceed
 # ------------------------------------------------------------------------
+# Check GCC version:
+# Quantum Misaka in 2025-05-05
+if [ "${with_gcc}" != "__INSTALL__" ]
+then
+  export GCC_MIN_VERSION=5
+  echo "Checking system GCC version for gcc, intel and amd toolchain"
+  echo "Your System gcc/g++/gfortran version should be consistent"
+  echo "Minimum required version: ${GCC_MIN_VERSION}"
+  gcc_version=$(gcc --version | head -n 1 | awk '{print $NF}')
+  gxx_version=$(g++ --version | head -n 1 | awk '{print $NF}')
+  gfc_version=$(gfortran --version | head -n 1 | awk '{print $NF}')
+  echo "Your gcc version: ${gcc_version}"
+  echo "Your g++ version: ${gxx_version}"
+  echo "Your gfortran version: ${gfc_version}"
+
+  if [ "${gcc_version}" != "${gxx_version}" ] || [ "${gcc_version}" != "${gfc_version}" ]; then
+    echo "Your gcc/g++/gfortran version are not consistent !!!"
+    exit 1
+  fi
+
+  extract_major() {
+    echo $1 | awk -F. '{print $1}'
+  }
+
+  gcc_major=$(extract_major "${gcc_version}")
+  if [ "${gcc_major}" -lt "${GCC_MIN_VERSION}" ]
+  then
+    echo "Your GCC version do not be larger than ${GCC_MIN_VERSION} !!!"
+    exit 1
+  fi
+  echo "Your GCC version seems to be enough for ABACUS installation."
+fi
+
 # Compiler conflicts
 if [ "${with_intel}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
   echo "You have chosen to use the Intel compiler, therefore the installation of the GNU compiler will be skipped."
@@ -632,9 +665,10 @@ if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
   with_gcc="__SYSTEM__"
 fi
 if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_intel}" != "__DONTUSE__" ]; then
-  report_error "You have chosen to use the AMD and the Intel compiler. Select only one compiler."
+  report_error "You have chosen to use the AMD and the Intel compiler to compile dependent packages. Select only one compiler."
   exit 1
 fi
+
 # MPI library conflicts
 if [ "${MPI_MODE}" = "no" ]; then
   if [ "${with_scalapack}" != "__DONTUSE__" ]; then
@@ -699,19 +733,19 @@ fi
 # Select the correct compute number based on the GPU architecture
 # QuantumMisaka in 2025-03-19
 export ARCH_NUM="${GPUVER//.}"
-if [[ "$ARCH_NUM" =~ ^[1-9][0-9]*$ ]] || [ $ARCH_NUM = "no" ]; then
-    echo "Notice: GPU compilation is enabled, and GPU compatibility is set via --gpu-ver to sm_${ARCH_NUM}."
-else
-    report_error ${LINENO} \
-        "When GPU compilation is enabled, the --gpu-ver variable should be properly set regarding to GPU compatibility. For check your GPU compatibility, visit https://developer.nvidia.com/cuda-gpus. For example: A100 -> 8.0 (or 80), V100 -> 7.0 (or 70), 4090 -> 8.9 (or 89)"
-    exit 1
-fi
 
 # If CUDA or HIP are enabled, make sure the GPU version has been defined.
 if [ "${ENABLE_CUDA}" = "__TRUE__" ] || [ "${ENABLE_HIP}" = "__TRUE__" ]; then
   if [ "${GPUVER}" = "no" ]; then
     report_error "Please choose GPU architecture to compile for with --gpu-ver"
     exit 1
+  fi
+  if [[ "$ARCH_NUM" =~ ^[1-9][0-9]*$ ]] || [ $ARCH_NUM = "no" ]; then
+    echo "Notice: GPU compilation is enabled, and GPU compatibility is set via --gpu-ver to sm_${ARCH_NUM}."
+  else
+    report_error ${LINENO} \
+        "When GPU compilation is enabled, the --gpu-ver variable should be properly set regarding to GPU compatibility. For check your GPU compatibility, visit https://developer.nvidia.com/cuda-gpus. For example: A100 -> 8.0 (or 80), V100 -> 7.0 (or 70), 4090 -> 8.9 (or 89)"
+        exit 1
   fi
 fi
 
@@ -857,9 +891,10 @@ To build ABACUS by gnu-toolchain, just use:
 To build ABACUS by intel-toolchain, just use:
     ./build_abacus_intel.sh
 To build ABACUS by amd-toolchain in gcc-aocl, just use:
-    ./build_abacus_gnu-aocl.sh
+    ./build_abacus_gcc-aocl.sh
+To build ABACUS by amd-toolchain in aocc-aocl, just use:
+    ./build_abacus_aocc-aocl.sh
 or you can modify the builder scripts to suit your needs.
-"""
 EOF
 
 fi
