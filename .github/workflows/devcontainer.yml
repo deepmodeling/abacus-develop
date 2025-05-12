@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - develop
+      - LTS
     tags:
       - 'v*'
+      - 'LTSv*'
   workflow_dispatch:
 
 jobs:
