@@ -29,7 +29,6 @@
 
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -175,9 +174,15 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // init wfc from file
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
+					this->pv, 
+					*(this->psi), 
+					this->pelec,
+                    this->pelec->klist->ik2iktot,
+                    this->pelec->klist->get_nkstot(),
+					PARAM.inp.nspin))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
     }
 

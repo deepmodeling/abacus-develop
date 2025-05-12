@@ -725,8 +725,11 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
         ModuleBase::WARNING_QUIT("ESolver_LR", "RI benchmark is only supported when compile with LibRI.");
 #endif
     }
-    else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
-        /*skip_bands=*/this->nocc_max - this->nocc_in)) {
+	else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, 
+				this->pelec,
+				this->pelec->klist->ik2iktot,
+				this->pelec->klist->get_nkstot(),
+				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }
     this->eig_ks = std::move(this->pelec->ekb);

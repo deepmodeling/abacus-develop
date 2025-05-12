@@ -1681,14 +1681,14 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as `WFC_{GAMMA|K}{index of K point}`, and if [out_app_flag](#out_app_flag) is false, the file name will also contains `_ION{ION step}`, where `ION step` is the index of ionic step:
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k(optinal)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optinal 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the wave functions accumulate during ionic steps.
   - 0: no output
   - 1: (txt format) 
-    - gamma-only: `WFC_NAO_GAMMA1_ION1.txt` or `WFC_NAO_GAMMA1.txt`, ...;
-    - non-gamma-only: `WFC_NAO_K1_ION1.txt` or `WFC_NAO_K1.txt`, ...;
+    - gamma-only: `wfs1_nao.txt` or `wfs2_nao.txt`, ...;
+    - non-gamma-only: `wfs1k1_nao.txt` or `wfs1k2_nao.txt`, ...;
   - 2: (binary format)
-    - gamma-only: `WFC_NAO_GAMMA1_ION1.dat` or `WFC_NAO_GAMMA1.dat`, ...;
-    - non-gamma-only: `WFC_NAO_K1_ION1.dat` or `WFC_NAO_K1.dat`, ....
+    - gamma-only: `wfs1_nao.dat` or `wfs2_nao.dat`, ...;
+    - non-gamma-only: `wfs1k1_nao.dat` or `wfs1k2_nao.dat`, ....
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 

@@ -10,7 +10,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_io/read_wfc_to_rho.h"
+#include "module_io/read_wf2rho_pw.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
@@ -87,7 +87,7 @@ Parallel_Grid Pgrid;
 /**
  * - Tested Functions:
  *  - write_wfc_pw()
- *  - read_wfc_to_rho()
+ *  - read_wf2rho_pw()
  */
 
 class ReadWfcRhoTest : public ::testing::Test
@@ -222,7 +222,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    ModuleIO::read_wfc_to_rho(wfcpw, symm, kv->ik2iktot.data(), nkstot, kv->isk, chg);
+    ModuleIO::read_wf2rho_pw(wfcpw, symm, kv->ik2iktot.data(), nkstot, kv->isk, chg);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)

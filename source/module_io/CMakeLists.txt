@@ -18,7 +18,7 @@ list(APPEND objects
     rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
-    read_wfc_to_rho.cpp
+    read_wf2rho_pw.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
