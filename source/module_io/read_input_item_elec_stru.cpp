@@ -528,7 +528,7 @@ void ReadInput::item_elec_stru()
             {
                 if (para.input.nspin == 4)
                 {
-                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
+                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4 (soc or noncollinear-spin) does not support gamma\n only calculation");
                 }
             }
         };

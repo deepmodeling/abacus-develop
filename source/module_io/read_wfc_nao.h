@@ -40,7 +40,10 @@ bool read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-    elecstate::ElecState* const pelec,
+	elecstate::ElecState* const pelec,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
     const int skip_band = 0);
 
 } // namespace ModuleIO
