@@ -1,7 +1,1 @@
-This test for:
-*Si-diamond
-*just gamma point
-*old upf pseudopotential
-*smearing_method default
-*ks_solver cg
-*precison    double
+This test is for silicon diamond structure using gamma point, smearing method,CG solver, double precision

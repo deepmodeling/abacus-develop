@@ -32,7 +32,7 @@ ESolver_FP::~ESolver_FP()
         delete this->pw_rho;
         this->pw_rho_flag = false;
     }
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         delete pw_rhod;
     }
