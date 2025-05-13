@@ -31,6 +31,8 @@ K_Vectors::K_Vectors()
     nspin = 0; // default spin.
     kc_done = false;
     kd_done = false;
+    kc_done_full = false;
+    kd_done_full = false;
 
     nks = 0;
     nkstot = 0;
@@ -106,16 +108,10 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     std::string skpt1;
     std::string skpt2;
 
-    if (!this->kc_done && this->kd_done)
-    {
-        for (size_t ik = 0; ik!=this->nkstot_full; ++ik)
-            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
-    }
-    else if(this->kc_done && !this->kd_done)
-    {
-        for (size_t ik = 0; ik!=this->nkstot_full; ++ik)
-            this->kvec_c_full[ik] = this->kvec_c[ik];
-    }
+    Parallel_Common::bcast_bool(kc_done);
+    Parallel_Common::bcast_bool(kd_done);
+    this->kd_done_full = this->kd_done;
+    this->kc_done_full = this->kc_done;
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -191,6 +187,16 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     this->print_klists(ofs);
 
     // std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
+    if (!this->kc_done_full && this->kd_done_full)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+    }
+    else if (this->kc_done_full && !this->kd_done_full)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_c[ik];
+    }
 
 #ifdef USE_PAW
     GlobalC::paw_cell.set_isk(nks, isk.data());

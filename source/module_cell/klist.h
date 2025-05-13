@@ -163,6 +163,8 @@ private:
     int nspin;
     bool kc_done;
     bool kd_done;
+    bool kc_done_full;
+    bool kd_done_full;
     double koffset[3];   // used only in automatic k-points.
     std::string k_kword; // LiuXh add 20180619
     int k_nkstot;        // LiuXh add 20180619
