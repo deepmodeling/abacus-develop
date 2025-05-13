@@ -7,7 +7,6 @@ on:
       - LTS
     tags:
       - 'v*'
-      - 'LTSv*'
   workflow_dispatch:
 
 jobs:
@@ -30,7 +29,8 @@ jobs:
             dp-harbor-registry.us-east-1.cr.aliyuncs.com/deepmodeling/abacus-${{ matrix.dockerfile }}
           tags: |
             type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/develop' }}
+            type=raw,value=lts,enable=${{ github.ref == 'refs/heads/LTS' }}
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
