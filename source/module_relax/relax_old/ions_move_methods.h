@@ -6,6 +6,9 @@
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
 #include "bfgs.h"
+#include "lbfgs.h"
+#include "module_esolver/esolver.h"
+#include "module_esolver/esolver_ks.h"
 
 class Ions_Move_Methods
 {
@@ -19,7 +22,8 @@ class Ions_Move_Methods
                       const int &force_step,
                       const ModuleBase::matrix &f,
                       const double &etot,
-                      UnitCell &ucell);
+                      UnitCell &ucell,
+                      ModuleESolver::ESolver* p_esolver);
 
     bool get_converged() const
     {
@@ -47,5 +51,6 @@ class Ions_Move_Methods
     Ions_Move_CG cg;
     Ions_Move_SD sd;
     BFGS bfgs_trad;
+    LBFGS lbfgs;
 };
 #endif

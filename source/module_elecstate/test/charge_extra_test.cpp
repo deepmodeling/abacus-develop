@@ -18,11 +18,11 @@ InfoNonlocal::~InfoNonlocal()
 #endif
 Magnetism::Magnetism()
 {
-    this->start_magnetization = nullptr;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 Parallel_Grid::~Parallel_Grid(){};
 

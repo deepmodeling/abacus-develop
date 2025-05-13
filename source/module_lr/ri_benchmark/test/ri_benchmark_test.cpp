@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 #include "../ri_benchmark.h"
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom_pseudo::Atom_pseudo() {}
@@ -63,9 +68,16 @@ TEST(RI_Benchmark, CalCsMO)
 int main(int argc, char** argv)
 {
     srand(time(nullptr));  // for random number generator
+#ifdef __MPI
     MPI_Init(&argc, &argv);
+#endif
+
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
     MPI_Finalize();
+#endif
+
     return result;
 }

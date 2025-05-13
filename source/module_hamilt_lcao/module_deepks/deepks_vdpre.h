@@ -39,7 +39,7 @@ void cal_v_delta_precalc(const int nlocal,
                          const int inlmax,
                          const int nat,
                          const int nks,
-                         const int* inl_l,
+                         const std::vector<int>& inl2l,
                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                          const std::vector<hamilt::HContainer<double>*> phialpha,
                          const std::vector<torch::Tensor> gevdm,
@@ -51,11 +51,7 @@ void cal_v_delta_precalc(const int nlocal,
                          torch::Tensor& v_delta_precalc);
 
 template <typename TK>
-void check_v_delta_precalc(const int nat,
-                           const int nks,
-                           const int nlocal,
-                           const int des_per_atom,
-                           const torch::Tensor& v_delta_precalc);
+void check_v_delta_precalc(const torch::Tensor& v_delta_precalc);
 
 // for deepks_v_delta = 2
 // prepare phialpha for outputting npy file

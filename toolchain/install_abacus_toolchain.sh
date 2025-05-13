@@ -22,7 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 #>           can be used to compile and use ABACUS
 #> \history  Created on Friday, 2023/08/18
 #            Update for Intel (18.08.2023, MK)
-#> \author   Zhaoqing Liu quanmisaka@stu.pku.edu.cn
+#> \author   Zhaoqing Liu (Quantum Misaka) quanmisaka@stu.pku.edu.cn
 # *****************************************************************************
 
 # ------------------------------------------------------------------------
@@ -59,10 +59,11 @@ USAGE:
 
 $(basename $SCRIPT_NAME) [options]
 
-Or a more RECOMMENDED way is to use it by pre-setting workflow scripts:
+A MORE RECOMMENDED way is to use it by pre-setting workflow scripts:
 > gcc-openmpi-openblas environments: toolchain_gnu.sh
 > intel-mkl-mpi environments: toolchain_intel.sh
 > intel-mpich environments: toolchain_intel_mpich.sh
+> AMD environments: toolchain_amd.sh [in development]
 
 OPTIONS:
 
@@ -114,13 +115,14 @@ OPTIONS:
 --target-cpu              Compile for the specified target CPU (e.g. haswell or generic), i.e.
                           do not optimize for the actual host system which is the default (native)
 --dry-run                 Write only config files, but don't actually build packages.
+--pack-run                Only check and install required packages without actually unpack and build packages 
 
 The --enable-FEATURE options follow the rules:
   --enable-FEATURE=yes    Enable this particular feature
   --enable-FEATURE=no     Disable this particular feature
   --enable-FEATURE        The option keyword alone is equivalent to
                           --enable-FEATURE=yes
-  ===== NOTICE: THESE FEATURE AER NOT INCLUDED IN ABACUS =====
+  ===== NOTICE: THESE GPU FEATURE IS ON TESTING =====
   --enable-cuda           Turn on GPU (CUDA) support (can be combined
                           with --enable-opencl).
                           Default = no
@@ -148,14 +150,18 @@ The --with-PKG options follow the rules:
   --with-PKG              The option keyword alone will be equivalent to
                           --with-PKG=install
 
-  --with-gcc              The GCC compiler to use to compile ABACUS.
+  --with-gcc              Use the GNU compiler to use to build ABACUS.
                           Default = system
-  --with-intel            Use the Intel compiler to compile ABACUS.
+  --with-intel            Use the Intel compiler to build ABACUS.
                           Default = system
   --with-intel-classic    Use the classic Intel compiler (icc, icpc, ifort) to compile ABACUS.
                           Default = no
   --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
+  --with-amd              Use the AMD compiler to build ABACUS.
+                          Default = system
+  --with-flang            Use flang in AMD compiler, which may lead to problem and efficiency loss in ELPA
+                          Default = no
   --with-cmake            Cmake utilities
                           Default = install
   --with-openmpi          OpenMPI, important if you want a parallel version of ABACUS.
@@ -179,6 +185,10 @@ The --with-PKG options follow the rules:
                           If MKL's FFTW3 interface is suitable (no FFTW-MPI support),
                           it replaces the FFTW library. If the ScaLAPACK component is
                           found, it replaces the one specified by --with-scalapack.
+                          Default = system
+  --with-aocl             AMD Optimizing CPU Libraries, which provides LAPACK, BLAS, FFTW, ScaLAPACK
+                          the ScaLAPACK and FFTW can directly use which in AOCL by setting --with-scalapack=system and --with-fftw=system if AOCL in system environment.
+                          related scripts are in development to incorporate scalapack and fftw once for all.
                           Default = system
   --with-openblas         OpenBLAS is a free high performance LAPACK and BLAS library,
                           the successor to GotoBLAS.
@@ -233,9 +243,9 @@ EOF
 # PACKAGE LIST: register all new dependent tools and libs here. Order
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
-tool_list="gcc intel cmake"
+tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
-math_list="mkl openblas"
+math_list="mkl aocl openblas"
 lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
@@ -263,6 +273,9 @@ with_scalapack="__INSTALL__"
 if [ "${MKLROOT}" ]; then
   export MATH_MODE="mkl"
   with_mkl="__SYSTEM__"
+elif [ "${AOCLhome}" ]; then
+  export MATH_MODE="aocl"
+  with_aocl="__SYSTEM__"
 else
   export MATH_MODE="openblas"
 fi
@@ -288,6 +301,8 @@ if (command -v mpiexec > /dev/null 2>&1); then
   elif (mpiexec --version 2>&1 | grep -s -q "Intel"); then
     echo "MPI is detected and it appears to be Intel MPI"
     with_gcc="__DONTUSE__"
+    with_amd="__DONTUSE__"
+    with_aocl="__DONTUSE__"
     with_intel="__SYSTEM__"
     with_intelmpi="__SYSTEM__"
     export MPI_MODE="intelmpi"
@@ -314,9 +329,12 @@ export intel_classic="no"
 # and will lead to problem in force calculation
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
-# zhaoqing by 2023.08
-export intelmpi_classic="no"
-export with_ifx="yes"
+# QuantumMisaka by 2023.08
+export PACK_RUN="__FALSE__"
+export INTELMPI_CLASSIC="no"
+export WITH_IFX="yes" # whether ifx is used in oneapi
+export WITH_FLANG="no" # whether flang is used in aocc
+export OPENMPI_4TH="no" # whether openmpi downgrade
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -336,6 +354,8 @@ if [ "${CRAY_LD_LIBRARY_PATH}" ]; then
   export MPI_MODE="mpich"
   # set default value for some installers appropriate for CLE
   with_gcc="__DONTUSE__"
+  with_amd="__DONTUSE__"
+  with_aocl="__DONTUSE__"
   with_intel="__DONTUSE__"
   with_fftw="__SYSTEM__"
   with_scalapack="__DONTUSE__"
@@ -373,11 +393,13 @@ while [ $# -ge 1 ]; do
     --install-all)
       # set all package to the default installation status
       for ii in ${package_list}; do
-        if [ "${ii}" != "intel" ] && [ "${ii}" != "intelmpi" ]; then
+        if [ "${ii}" != "intel" ] && 
+          [ "${ii}" != "intelmpi" ] &&
+          [ "${ii}" != "amd" ]; then
           eval with_${ii}="__INSTALL__"
         fi
       done
-      # I'd like to use OpenMPI as default -- zhaoqing liu in 2023.09.17
+      # I'd like to use OpenMPI as default -- QuantumMisaka in 2023.09.17
       export MPI_MODE="openmpi"
       ;;
     --mpi-mode=*)
@@ -408,6 +430,12 @@ while [ $# -ge 1 ]; do
         cray)
           export MATH_MODE="cray"
           ;;
+        aocl)
+          export MATH_MODE="aocl"
+          with_aocl="__SYSTEM__"
+          with_fftw="__SYSTEM__"
+          with_scalapack="__SYSTEM__"
+          ;;
         mkl)
           export MATH_MODE="mkl"
           ;;
@@ -416,22 +444,13 @@ while [ $# -ge 1 ]; do
           ;;
         *)
           report_error ${LINENO} \
-            "--math-mode currently only supports mkl, and openblas as options"
+            "--math-mode currently only supports mkl, aocl, openblas and cray as options"
           ;;
       esac
       ;;
     --gpu-ver=*)
       user_input="${1#*=}"
-      case "${user_input}" in
-        K20X | K40 | K80 | P100 | V100 | A100 | Mi50 | Mi100 | Mi250 | no)
-          export GPUVER="${user_input}"
-          ;;
-        *)
-          report_error ${LINENO} \
-            "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, Mi50, Mi100, Mi250, and no as options"
-          exit 1
-          ;;
-      esac
+      export GPUVER="${user_input}"
       ;;
     --target-cpu=*)
       user_input="${1#*=}"
@@ -443,6 +462,9 @@ while [ $# -ge 1 ]; do
       ;;
     --dry-run)
       dry_run="__TRUE__"
+      ;;
+    --pack-run)
+      PACK_RUN="__TRUE__"
       ;;
     --enable-tsan*)
       enable_tsan=$(read_enable $1)
@@ -496,6 +518,9 @@ while [ $# -ge 1 ]; do
         export MPI_MODE=mpich
       fi
       ;;
+    --with-4th-openmpi*)
+      OPENMPI_4TH=$(read_with "${1}" "no") # default new openmpi
+      ;;
     --with-openmpi*)
       with_openmpi=$(read_with "${1}")
       if [ "${with_openmpi}" != "__DONTUSE__" ]; then
@@ -512,13 +537,22 @@ while [ $# -ge 1 ]; do
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
     --with-intel-mpi-clas*)
-      intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
+      INTELMPI_CLASSIC=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
-    --with-intel*)
+    --with-intel*)  # must be read after items above
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-ifx*)
-      with_ifx=$(read_with "${1}" "yes") # default yes
+      WITH_IFX=$(read_with "${1}" "yes") # default yes
+      ;;
+    --with-amd*)
+      with_amd=$(read_with "${1}" "__SYSTEM__")
+      ;;
+    --with-flang*)
+      WITH_FLANG=$(read_with "${1}" "no")
+      ;;
+    --with-aocl*)
+      with_aocl=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-libxc*)
       with_libxc=$(read_with "${1}")
@@ -588,11 +622,53 @@ export ENABLE_CRAY="${enable_cray}"
 # ------------------------------------------------------------------------
 # Check and solve known conflicts before installations proceed
 # ------------------------------------------------------------------------
+# Check GCC version:
+# Quantum Misaka in 2025-05-05
+if [ "${with_gcc}" != "__INSTALL__" ]
+then
+  export GCC_MIN_VERSION=5
+  echo "Checking system GCC version for gcc, intel and amd toolchain"
+  echo "Your System gcc/g++/gfortran version should be consistent"
+  echo "Minimum required version: ${GCC_MIN_VERSION}"
+  gcc_version=$(gcc --version | head -n 1 | awk '{print $NF}')
+  gxx_version=$(g++ --version | head -n 1 | awk '{print $NF}')
+  gfc_version=$(gfortran --version | head -n 1 | awk '{print $NF}')
+  echo "Your gcc version: ${gcc_version}"
+  echo "Your g++ version: ${gxx_version}"
+  echo "Your gfortran version: ${gfc_version}"
+
+  if [ "${gcc_version}" != "${gxx_version}" ] || [ "${gcc_version}" != "${gfc_version}" ]; then
+    echo "Your gcc/g++/gfortran version are not consistent !!!"
+    exit 1
+  fi
+
+  extract_major() {
+    echo $1 | awk -F. '{print $1}'
+  }
+
+  gcc_major=$(extract_major "${gcc_version}")
+  if [ "${gcc_major}" -lt "${GCC_MIN_VERSION}" ]
+  then
+    echo "Your GCC version do not be larger than ${GCC_MIN_VERSION} !!!"
+    exit 1
+  fi
+  echo "Your GCC version seems to be enough for ABACUS installation."
+fi
+
 # Compiler conflicts
 if [ "${with_intel}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
-  echo "You have chosen to use the Intel compiler, therefore the installation of the GCC compiler will be skipped."
+  echo "You have chosen to use the Intel compiler, therefore the installation of the GNU compiler will be skipped."
   with_gcc="__SYSTEM__"
 fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
+  echo "You have chosen to use the AMD compiler, therefore the installation of the GNU compiler will be skipped."
+  with_gcc="__SYSTEM__"
+fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_intel}" != "__DONTUSE__" ]; then
+  report_error "You have chosen to use the AMD and the Intel compiler to compile dependent packages. Select only one compiler."
+  exit 1
+fi
+
 # MPI library conflicts
 if [ "${MPI_MODE}" = "no" ]; then
   if [ "${with_scalapack}" != "__DONTUSE__" ]; then
@@ -606,7 +682,7 @@ if [ "${MPI_MODE}" = "no" ]; then
 else
   # if gcc is installed, then mpi needs to be installed too
   if [ "${with_gcc}" = "__INSTALL__" ]; then
-    echo "You have chosen to install the GCC compiler, therefore MPI libraries have to be installed too"
+    echo "You have chosen to install the GNU compiler, therefore MPI libraries have to be installed too"
     case ${MPI_MODE} in
       mpich)
         with_mpich="__INSTALL__"
@@ -638,7 +714,7 @@ else
   esac
 fi
 # If MATH_MODE is mkl ,then openblas, scalapack and fftw is not needed
-# zhaoqing in 2023-09-17
+# QuantumMisaka in 2023-09-17
 if [ "${MATH_MODE}" = "mkl" ]; then
   if [ "${with_openblas}" != "__DONTUSE__" ]; then
     echo "Using MKL, so openblas is disabled."
@@ -654,17 +730,29 @@ if [ "${MATH_MODE}" = "mkl" ]; then
   fi
 fi
 
+# Select the correct compute number based on the GPU architecture
+# QuantumMisaka in 2025-03-19
+export ARCH_NUM="${GPUVER//.}"
+
 # If CUDA or HIP are enabled, make sure the GPU version has been defined.
 if [ "${ENABLE_CUDA}" = "__TRUE__" ] || [ "${ENABLE_HIP}" = "__TRUE__" ]; then
   if [ "${GPUVER}" = "no" ]; then
     report_error "Please choose GPU architecture to compile for with --gpu-ver"
     exit 1
   fi
+  if [[ "$ARCH_NUM" =~ ^[1-9][0-9]*$ ]] || [ $ARCH_NUM = "no" ]; then
+    echo "Notice: GPU compilation is enabled, and GPU compatibility is set via --gpu-ver to sm_${ARCH_NUM}."
+  else
+    report_error ${LINENO} \
+        "When GPU compilation is enabled, the --gpu-ver variable should be properly set regarding to GPU compatibility. For check your GPU compatibility, visit https://developer.nvidia.com/cuda-gpus. For example: A100 -> 8.0 (or 80), V100 -> 7.0 (or 70), 4090 -> 8.9 (or 89)"
+        exit 1
+  fi
 fi
 
-# several packages require cmake.
-if [ "${with_scalapack}" = "__INSTALL__" ]; then
-  [ "${with_cmake}" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
+# ABACUS itself and some dependencies require cmake.
+if [ "${with_cmake}" = "__DONTUSE__" ]; then
+  report_error "CMake is required for ABACUS and some dependencies. Please enable it."
+  exit 1
 fi
 
 
@@ -770,45 +858,6 @@ fi
 
 echo "Compiling with $(get_nprocs) processes for target ${TARGET_CPU}."
 
-# Select the correct compute number based on the GPU architecture
-case ${GPUVER} in
-  K20X)
-    export ARCH_NUM="35"
-    ;;
-  K40)
-    export ARCH_NUM="35"
-    ;;
-  K80)
-    export ARCH_NUM="37"
-    ;;
-  P100)
-    export ARCH_NUM="60"
-    ;;
-  V100)
-    export ARCH_NUM="70"
-    ;;
-  A100)
-    export ARCH_NUM="80"
-    ;;
-  Mi50)
-    # TODO: export ARCH_NUM=
-    ;;
-  Mi100)
-    # TODO: export ARCH_NUM=
-    ;;
-  Mi250)
-    # TODO: export ARCH_NUM=
-    ;;
-  no)
-    export ARCH_NUM="no"
-    ;;
-  *)
-    report_error ${LINENO} \
-      "--gpu-ver currently only supports K20X, K40, K80, P100, V100, A100, Mi50, Mi100, Mi250, and no as options"
-    exit 1
-    ;;
-esac
-
 write_toolchain_env ${INSTALLDIR}
 
 # write toolchain config
@@ -830,7 +879,6 @@ else
   ./scripts/stage2/install_stage2.sh
   ./scripts/stage3/install_stage3.sh
   ./scripts/stage4/install_stage4.sh
-fi
 
 cat << EOF
 ========================== usage =========================
@@ -842,9 +890,13 @@ To build ABACUS by gnu-toolchain, just use:
     ./build_abacus_gnu.sh
 To build ABACUS by intel-toolchain, just use:
     ./build_abacus_intel.sh
+To build ABACUS by amd-toolchain in gcc-aocl, just use:
+    ./build_abacus_gcc-aocl.sh
+To build ABACUS by amd-toolchain in aocc-aocl, just use:
+    ./build_abacus_aocc-aocl.sh
 or you can modify the builder scripts to suit your needs.
-"""
 EOF
 
+fi
 
 #EOF

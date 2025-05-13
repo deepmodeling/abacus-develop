@@ -99,6 +99,7 @@ void gatherv_data(const std::complex<float>* sendbuf, int sendcount, std::comple
     MPI_Allgatherv(sendbuf, sendcount, MPI_COMPLEX, recvbuf, recvcounts, displs, MPI_COMPLEX, comm);
 }
 
+#ifndef __CUDA_MPI
 template <typename T>
 struct object_cpu_point<T, base_device::DEVICE_GPU>
 {
@@ -171,6 +172,7 @@ template struct object_cpu_point<float, base_device::DEVICE_CPU>;
 template struct object_cpu_point<float, base_device::DEVICE_GPU>;
 template struct object_cpu_point<std::complex<float>, base_device::DEVICE_CPU>;
 template struct object_cpu_point<std::complex<float>, base_device::DEVICE_GPU>;
+#endif
 
 } // namespace Parallel_Common
 #endif

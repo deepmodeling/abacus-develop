@@ -1,7 +1,10 @@
 #include "elpa_new.h"
 
 #include "elpa_solver.h"
-#include "my_math.hpp"
+extern "C"
+{
+#include "Cblacs.h"
+}
 #include "utils.h"
 #include <cfloat>
 #include <complex>

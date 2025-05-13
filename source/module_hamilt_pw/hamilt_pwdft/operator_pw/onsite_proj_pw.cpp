@@ -85,7 +85,6 @@ void OnsiteProj<OperatorPW<T, Device>>::add_onsite_proj(T *hpsi_in, const int np
     char transb = 'T';
     int npm = m;
     gemm_op()(
-        this->ctx,
         transa,
         transb,
         npw,

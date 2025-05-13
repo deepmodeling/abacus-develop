@@ -1,6 +1,7 @@
 #include "sto_tool.h"
 
 #include "module_base/math_chebyshev.h"
+#include "module_base/parallel_device.h"
 #include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 #ifdef __MPI
@@ -8,20 +9,21 @@
 #endif
 #include <vector>
 
-void check_che(const int& nche_in,
-               const double& try_emin,
-               const double& try_emax,
-               const int& nbands_sto,
-               K_Vectors* p_kv,
-               Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf,
-               hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
+template <typename FPTYPE, typename Device>
+void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
+                                              const double& try_emin,
+                                              const double& try_emax,
+                                              const int& nbands_sto,
+                                              K_Vectors* p_kv,
+                                              Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
+                                              hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
 {
     //------------------------------
     //      Convergence test
     //------------------------------
     bool change = false;
     const int nk = p_kv->get_nks();
-    ModuleBase::Chebyshev<double> chetest(nche_in);
+    ModuleBase::Chebyshev<FPTYPE, Device> chetest(nche_in);
     int ntest0 = 5;
     *p_hamilt_sto->emax = try_emax;
     *p_hamilt_sto->emin = try_emin;
@@ -42,21 +44,26 @@ void check_che(const int& nche_in,
     {
         p_hamilt_sto->updateHk(ik);
         const int npw = p_kv->ngk[ik];
-        std::complex<double>* pchi = nullptr;
-        std::vector<std::complex<double>> randchi;
+        std::complex<FPTYPE>* pchi = nullptr;
+        psi::Psi<std::complex<FPTYPE>, Device> randchi_d;
+        if (nbands_sto == 0) // For case: PARAM.inp.nbands_sto = "all"
+        {
+            randchi_d.resize(1, 1, npw);
+        }
         int ntest = std::min(ntest0, p_stowf->nchip[ik]);
         for (int i = 0; i < ntest; ++i)
         {
             if (nbands_sto == 0)
             {
-                randchi.resize(npw);
-                pchi = &randchi[0];
+                std::vector<std::complex<FPTYPE>> randchi(npw);   
                 for (int ig = 0; ig < npw; ++ig)
                 {
-                    double rr = std::rand() / double(RAND_MAX);
-                    double arg = std::rand() / double(RAND_MAX);
-                    pchi[ig] = std::complex<double>(rr * cos(arg), rr * sin(arg));
+                    FPTYPE rr = std::rand() / FPTYPE(RAND_MAX);
+                    FPTYPE arg = std::rand() / FPTYPE(RAND_MAX);
+                    randchi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg));
                 }
+                syncmem_complex_h2d_op()(randchi_d.get_pointer(), randchi.data(), npw);
+                pchi = randchi_d.get_pointer();
             }
             else if (PARAM.inp.nbands > 0)
             {
@@ -69,7 +76,7 @@ void check_che(const int& nche_in,
             while (true)
             {
                 bool converge;
-                auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>::hPsi_norm,
                                            p_hamilt_sto,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
@@ -106,41 +113,45 @@ void check_che(const int& nche_in,
     }
 }
 
-void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::complex<float>>& psi_out)
+template <typename FPTYPE, typename Device>
+psi::Psi<std::complex<FPTYPE>, Device>* gatherchi_op<FPTYPE, Device>::operator()(
+    psi::Psi<std::complex<FPTYPE>, Device>& chi,
+    psi::Psi<std::complex<FPTYPE>, Device>& chi_all,
+    const int& npwx,
+    int* nrecv_sto,
+    int* displs_sto,
+    const int perbands_sto)
 {
-    psi_in.fix_k(0);
-    psi_out.fix_k(0);
-    for (int i = 0; i < psi_in.size(); ++i)
-    {
-        psi_out.get_pointer()[i] = static_cast<std::complex<float>>(psi_in.get_pointer()[i]);
-    }
-    return;
-}
-
-psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
-                                         psi::Psi<std::complex<float>>& chi_all,
-                                         const int& npwx,
-                                         int* nrecv_sto,
-                                         int* displs_sto,
-                                         const int perbands_sto)
-{
-    psi::Psi<std::complex<float>>* p_chi;
+    psi::Psi<std::complex<FPTYPE>, Device>* p_chi;
     p_chi = &chi;
 #ifdef __MPI
     if (PARAM.inp.bndpar > 1)
     {
         p_chi = &chi_all;
         ModuleBase::timer::tick("sKG", "bands_gather");
-        MPI_Allgatherv(chi.get_pointer(),
-                       perbands_sto * npwx,
-                       MPI_COMPLEX,
-                       chi_all.get_pointer(),
-                       nrecv_sto,
-                       displs_sto,
-                       MPI_COMPLEX,
-                       BP_WORLD);
+        Parallel_Common::gatherv_dev<std::complex<FPTYPE>, Device>(chi.get_pointer(),
+                                                                   perbands_sto * npwx,
+                                                                   chi_all.get_pointer(),
+                                                                   nrecv_sto,
+                                                                   displs_sto,
+                                                                   BP_WORLD);
         ModuleBase::timer::tick("sKG", "bands_gather");
     }
 #endif
     return p_chi;
 }
+
+template struct check_che_op<double, base_device::DEVICE_CPU>;
+#ifdef __ENABLE_FLOAT_FFTW
+template struct check_che_op<float, base_device::DEVICE_CPU>;
+#endif
+template struct gatherchi_op<double, base_device::DEVICE_CPU>;
+template struct gatherchi_op<float, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template struct check_che_op<double, base_device::DEVICE_GPU>;
+#ifdef __ENABLE_FLOAT_FFTW
+template struct check_che_op<float, base_device::DEVICE_GPU>;
+#endif
+template struct gatherchi_op<double, base_device::DEVICE_GPU>;
+template struct gatherchi_op<float, base_device::DEVICE_GPU>;
+#endif

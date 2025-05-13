@@ -1,3 +1,6 @@
+#ifndef RADIAL_PROJECTION_H
+#define RADIAL_PROJECTION_H
+
 /**
  * @file radial_projection.h
  * 
@@ -8,8 +11,6 @@
  * F(q) = sum_{l,m} i^l * 4*pi/sqrt(omega) * Jl[f_{lm}](q) * Ylm(q)
  */
 
-#ifndef RADIAL_PROJECTION_H
-#define RADIAL_PROJECTION_H
 
 #include "module_base/vector3.h"
 #include "module_base/cubic_spline.h"

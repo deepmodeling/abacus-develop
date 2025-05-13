@@ -98,6 +98,20 @@ class PGemmCN
     using syncmem_dev_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+
+#ifdef __MPI
+  private:
+    std::vector<T> isend_tmp_; ///< temperory memory for sending data
+    std::vector<T> A_tmp_;     ///< temperory memory for A
+    std::vector<T> B_tmp_;     ///< temperory memory for B
+    std::vector<T> C_tmp_;     ///< temperory memory for C
+    std::vector<T> C_global_tmp_; ///< temperory memory for C_global
+    T* C_local_tmp_ = nullptr;    ///< temperory memory for C_local
+    T* A_tmp_device_ = nullptr;   ///< temperory memory for A
+    T* B_tmp_device_ = nullptr;   ///< temperory memory for B
+#endif
+
+
 };
 } // namespace ModuleBase
 #endif

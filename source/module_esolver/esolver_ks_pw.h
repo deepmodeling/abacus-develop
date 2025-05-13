@@ -3,6 +3,8 @@
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
 #include "module_psi/psi_init.h"
+#include "module_hamilt_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include <memory>
 #include <module_base/macros.h>
@@ -31,20 +33,22 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     void after_all_runners(UnitCell& ucell) override;
 
+    Exx_Helper<T, Device> exx_helper;
+
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
-    virtual void after_scf(UnitCell& ucell, const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     virtual void others(UnitCell& ucell, const int istep) override;
 
-    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt(const UnitCell& ucell);
     virtual void deallocate_hamilt();

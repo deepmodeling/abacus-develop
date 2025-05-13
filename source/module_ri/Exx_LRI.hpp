@@ -283,6 +283,11 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
 
+    if (!this->exx_lri.flag_finish.D)
+    {
+        ModuleBase::WARNING_QUIT("Force_Stress_LCAO", "Cannot calculate EXX force when the first PBE loop is not converged.");
+    }
+
 	this->force_exx.create(nat, Ndim);
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{

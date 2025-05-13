@@ -31,7 +31,7 @@ void cal_orbital_precalc(const std::vector<TH>& dm_hl,
                          const int inlmax,
                          const int nat,
                          const int nks,
-                         const int* inl_l,
+                         const std::vector<int>& inl2l,
                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                          const std::vector<hamilt::HContainer<double>*> phialpha,
                          const std::vector<torch::Tensor> gevdm,
@@ -41,6 +41,8 @@ void cal_orbital_precalc(const std::vector<TH>& dm_hl,
                          const Parallel_Orbitals& pv,
                          const Grid_Driver& GridD,
                          torch::Tensor& orbital_precalc);
+
+void check_orbpre(const torch::Tensor& orbpre);
 } // namespace DeePKS_domain
 #endif
 #endif

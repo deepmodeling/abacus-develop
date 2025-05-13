@@ -27,7 +27,8 @@ class Vdwd3Parameters : public VdwParameters
      * @param input Parameter instance
      * @param plog optional, for logging the parameter setting process
      */
-    void initial_parameters(const Input_para &input, 
+    void initial_parameters(const std::string& xc,
+                            const Input_para& input, 
                             std::ofstream* plog = nullptr); // for logging the parameter autoset
 
     inline const std::string &version() const { return version_; }

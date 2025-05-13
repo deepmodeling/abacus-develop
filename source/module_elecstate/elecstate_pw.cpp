@@ -302,8 +302,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
         if (nbands == 1)
         {
             int inc = 1;
-            gemv_op()(this->ctx,
-                      transa,
+            gemv_op()(transa,
                       npw,
                       this->ppcell->nkb,
                       &one,
@@ -317,8 +316,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
         }
         else
         {
-            gemm_op()(this->ctx,
-                      transa,
+            gemm_op()(transa,
                       transb,
                       this->ppcell->nkb,
                       nbands,
@@ -368,8 +366,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 
                         char transa = 'C';
                         char transb = 'N';
-                        gemm_op()(this->ctx,
-                                  transa,
+                        gemm_op()(transa,
                                   transb,
                                   atom->ncpp.nh,
                                   atom->ncpp.nh,
@@ -446,7 +443,6 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     {
         this->addusdens_g(becsum, rhog);
     }
-
     // transform back to real space using dense grids
     if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
     {
@@ -518,8 +514,7 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
                 // sum over atoms
                 char transa = 'N';
                 char transb = 'T';
-                gemm_op()(this->ctx,
-                          transa,
+                gemm_op()(transa,
                           transb,
                           npw,
                           nij,

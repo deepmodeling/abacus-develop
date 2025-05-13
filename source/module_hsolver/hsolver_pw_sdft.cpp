@@ -5,6 +5,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/elecstate_tools.h"
 
 #include <algorithm>
 
@@ -89,7 +90,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
-    pes_pw->calEBand();
+    elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
     if(!PARAM.globalv.all_ks_run)
     {
         pes->f_en.eband /= PARAM.inp.bndpar;

@@ -93,7 +93,7 @@ TEST_F(ReadPPTest, ReadUPF100)
 	std::ifstream ifs;
 	ifs.open("./support/Te.pbe-rrkj.UPF");
 	read_pp->read_pseudo_upf(ifs, *upf);
-	EXPECT_TRUE(upf->has_so); // has soc info
+	EXPECT_FALSE(upf->has_so); // no soc info
 	EXPECT_EQ(upf->nv,0); // number of version
 	EXPECT_EQ(upf->psd,"Te"); // element label
 	EXPECT_EQ(upf->pp_type,"NC"); // pp_type
@@ -764,16 +764,16 @@ TEST_F(ReadPPTest, AverageErrReturns)
 	double lambda = 1.0;
 	// LSPINORB = 0
 	std::ifstream ifs;
-	ifs.open("./support/Te.pbe-rrkj.UPF");
+	ifs.open("./support/Si.rel-pbe-rrkj.UPF");
 	read_pp->read_pseudo_upf(ifs, *upf);
 	EXPECT_TRUE(upf->has_so); // has soc info
 	PARAM.input.lspinorb = 0;
 	ierr = read_pp->average_p(lambda, *upf);
-	EXPECT_EQ(upf->nbeta,3);
-	EXPECT_EQ(ierr,1);
+	EXPECT_EQ(upf->nbeta,2);
+	EXPECT_EQ(ierr,0);
 	// LSPINORB = 1
 	ierr = read_pp->average_p(lambda, *upf);
-	EXPECT_EQ(ierr,1);
+	EXPECT_EQ(ierr,0);
 	ifs.close();
 }
 

@@ -10,7 +10,9 @@
 namespace vdw
 {
 
-void Vdwd3Parameters::initial_parameters(const Input_para &input, std::ofstream* plog)
+void Vdwd3Parameters::initial_parameters(const std::string& xc,
+                                         const Input_para& input, 
+                                         std::ofstream* plog)
 {
     // initialize the dftd3 parameters
     mxc_.resize(max_elem_, 1);
@@ -23,7 +25,7 @@ void Vdwd3Parameters::initial_parameters(const Input_para &input, std::ofstream*
                          5,
                          std::vector<std::vector<double>>(max_elem_, std::vector<double>(max_elem_, 0.0)))));
     
-    _vdwd3_autoset_xcparam(input.dft_functional, input.vdw_method,
+    _vdwd3_autoset_xcparam(xc, input.vdw_method,
                            input.vdw_s6, input.vdw_s8, input.vdw_a1, input.vdw_a2,
                            s6_, s18_, rs6_, rs18_, /* rs6: a1, rs18: a2 */
                            plog);

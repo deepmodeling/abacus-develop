@@ -304,14 +304,12 @@ TEST_F(Verlet_test, restart)
 
 TEST_F(Verlet_test, print_md)
 {
-    std::ofstream ofs("running.log");
+    std::ofstream ofs("running_verlet.log");
     mdrun->print_md(ofs, true);
     ofs.close();
 
-    std::ifstream ifs("running.log");
+    std::ifstream ifs("running_verlet.log");
     std::string output_str;
-    getline(ifs, output_str);
-    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
@@ -333,5 +331,5 @@ TEST_F(Verlet_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-    remove("running.log");
+//    remove("running_verlet.log");
 }

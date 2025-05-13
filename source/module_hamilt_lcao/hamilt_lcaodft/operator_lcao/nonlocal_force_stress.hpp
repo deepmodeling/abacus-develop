@@ -27,17 +27,22 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
-    int atom_index = 0;
+    #pragma omp parallel
+    {
+    std::vector<double> stress_local(6, 0);
+    ModuleBase::matrix force_local(force.nr, force.nc);
+    #pragma omp for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     { 
         // skip the atoms without plus-U
         auto tau0 = ucell->get_tau(iat0);
         int I0 = 0;
-        ucell->iat2iait(iat0, &I0, &this->current_type);
+        int T0 = 0;
+        ucell->iat2iait(iat0, &I0, &T0);
         
         // first step: find the adjacent atoms and filter the real adjacent atoms
         AdjacentAtomInfo adjs;
-        this->gridD->Find_atom(*ucell, tau0, this->current_type, I0, &adjs);
+        this->gridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
 
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -51,7 +56,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[this->current_type].get_rcut_max())
+                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
             {
                 is_adj[ad] = true;
             }
@@ -89,7 +94,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                intor_->snap(T1, L1, N1, M1, this->current_type, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
+                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 const int length = nlm[0].size();
                 std::vector<double> nlm_target(length * 4);
@@ -111,8 +116,8 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
-            double* force_tmp1 = (cal_force) ? &force(iat1, 0) : nullptr;
-            double* force_tmp2 = (cal_force) ? &force(iat0, 0) : nullptr;
+            double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
+            double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
@@ -139,6 +144,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                     if (cal_force) {
                         this->cal_force_IJR(iat1,
                                             iat2,
+                                            T0,
                                             paraV,
                                             nlm_iat0[ad1],
                                             nlm_iat0[ad2],
@@ -151,17 +157,34 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                     if (cal_stress) {
                         this->cal_stress_IJR(iat1,
                                              iat2,
+                                             T0,
                                              paraV,
                                              nlm_iat0[ad1],
                                              nlm_iat0[ad2],
                                              tmp,
                                              dis1,
                                              dis2,
-                                             stress_tmp.data());
+                                             stress_local.data());
                     }
                 }
             }
         }
+    }
+    #pragma omp critical
+    {
+        if(cal_force)
+        {
+            force += force_local;
+        }
+        if(cal_stress)
+        {
+            for(int i = 0; i < 6; i++)
+            {
+                stress_tmp[i] += stress_local[i];
+            }
+        }
+
+    }
     }
 
     if (cal_force)
@@ -202,6 +225,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 template <>
 void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
+                                               const int& T0,
                                                const Parallel_Orbitals* paraV,
                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
@@ -241,11 +265,11 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
             std::vector<std::complex<double>> nlm_tmp(12, ModuleBase::ZERO);
             for (int is = 0; is < 4; ++is)
             {
-                for (int no = 0; no < this->ucell->atoms[this->current_type].ncpp.non_zero_count_soc[is]; no++)
+                for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++)
                 {
-                    const int p1 = this->ucell->atoms[this->current_type].ncpp.index1_soc[is][no];
-                    const int p2 = this->ucell->atoms[this->current_type].ncpp.index2_soc[is][no];
-                    this->ucell->atoms[this->current_type].ncpp.get_d(is, p1, p2, tmp_d);
+                    const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
+                    const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
+                    this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
                     nlm_tmp[is*3] +=  nlm1[p1 + length] * nlm2[p2] * (*tmp_d);
                     nlm_tmp[is*3+1] += nlm1[p1 + length * 2] * nlm2[p2] * (*tmp_d);
                     nlm_tmp[is*3+2] += nlm1[p1 + length * 3] * nlm2[p2] * (*tmp_d);
@@ -270,6 +294,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
 template <>
 void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
+                                                const int& T0,
                                                 const Parallel_Orbitals* paraV,
                                                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
@@ -311,11 +336,11 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
             std::vector<std::complex<double>> nlm_tmp(npol2 * 6, ModuleBase::ZERO);
             for (int is = 0; is < 4; ++is)
             {
-                for (int no = 0; no < this->ucell->atoms[this->current_type].ncpp.non_zero_count_soc[is]; no++)
+                for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++)
                 {
-                    const int p1 = this->ucell->atoms[this->current_type].ncpp.index1_soc[is][no];
-                    const int p2 = this->ucell->atoms[this->current_type].ncpp.index2_soc[is][no];
-                    this->ucell->atoms[this->current_type].ncpp.get_d(is, p1, p2, tmp_d);
+                    const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
+                    const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
+                    this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
                     nlm_tmp[is*6] += (nlm1[p1 + length] * dis1.x * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.x) * (*tmp_d);
                     nlm_tmp[is*6+1] += (nlm1[p1 + length] * dis1.y * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.y) * (*tmp_d);
                     nlm_tmp[is*6+2] += (nlm1[p1 + length] * dis1.z * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.z) * (*tmp_d);
@@ -341,6 +366,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
 template <typename TK, typename TR>
 void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
+                                               const int& T0,
                                                const Parallel_Orbitals* paraV,
                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
@@ -367,11 +393,11 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
             assert(nlm1.size() == nlm2.size());
 #endif
             std::vector<double> nlm_tmp(3, 0.0);
-            for (int no = 0; no < this->ucell->atoms[this->current_type].ncpp.non_zero_count_soc[0]; no++)
+            for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[0]; no++)
             {
-                const int p1 = this->ucell->atoms[this->current_type].ncpp.index1_soc[0][no];
-                const int p2 = this->ucell->atoms[this->current_type].ncpp.index2_soc[0][no];
-                this->ucell->atoms[this->current_type].ncpp.get_d(0, p1, p2, tmp_d);
+                const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[0][no];
+                const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[0][no];
+                this->ucell->atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
                 nlm_tmp[0] += nlm1[p1 + length] * nlm2[p2] * (*tmp_d);
                 nlm_tmp[1] += nlm1[p1 + length * 2] * nlm2[p2] * (*tmp_d);
                 nlm_tmp[2] += nlm1[p1 + length * 3] * nlm2[p2] * (*tmp_d);
@@ -390,6 +416,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
 template <typename TK, typename TR>
 void NonlocalNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
+                                                const int& T0,
                                                 const Parallel_Orbitals* paraV,
                                                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
@@ -417,11 +444,11 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
             assert(nlm1.size() == nlm2.size());
 #endif
             std::vector<double> nlm_tmp(6, 0.0);
-            for (int no = 0; no < this->ucell->atoms[this->current_type].ncpp.non_zero_count_soc[0]; no++)
+            for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[0]; no++)
             {
-                const int p1 = this->ucell->atoms[this->current_type].ncpp.index1_soc[0][no];
-                const int p2 = this->ucell->atoms[this->current_type].ncpp.index2_soc[0][no];
-                this->ucell->atoms[this->current_type].ncpp.get_d(0, p1, p2, tmp_d);
+                const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[0][no];
+                const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[0][no];
+                this->ucell->atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
                 nlm_tmp[0] += (nlm1[p1 + length] * dis1.x * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.x) * (*tmp_d);
                 nlm_tmp[1] += (nlm1[p1 + length] * dis1.y * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.y) * (*tmp_d);
                 nlm_tmp[2] += (nlm1[p1 + length] * dis1.z * nlm2[p2] + nlm1[p1] * nlm2[p2 + length] * dis2.z) * (*tmp_d);

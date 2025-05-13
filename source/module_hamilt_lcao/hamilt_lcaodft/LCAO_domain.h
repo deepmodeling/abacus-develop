@@ -175,11 +175,13 @@ void build_ST_new(ForceStressArrays& fsr,
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
 #ifdef __DEEPKS
+template <typename T>
 void DeePKS_init(const UnitCell& ucell,
                  Parallel_Orbitals& pv,
                  const int& nks,
                  const LCAO_Orbitals& orb,
-                 LCAO_Deepks& ld);
+                 LCAO_Deepks<T>& ld,
+                 std::ofstream& ofs);
 #endif
 
 template <typename T>

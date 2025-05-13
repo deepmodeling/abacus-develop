@@ -170,7 +170,6 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         // denghui replace 2022-10-20
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         gemv_op()(
-            this->ctx,
             transa,
             this->npw,
             this->ppcell->nkb,
@@ -189,7 +188,6 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // denghui replace 2022-10-20
         gemm_op()(
-            this->ctx,
             transa,
             transb,
             this->npw,
@@ -218,7 +216,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "NonlocalPW");
+    ModuleBase::timer::tick("Operator", "nonlocal_pw");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
@@ -234,9 +232,10 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // qianrui optimize 2021-3-31
             int nkb = this->ppcell->nkb;
-            if (this->nkb_m < nbands * nkb) {
-                resmem_complex_op()(this->becp, nbands * nkb, "Nonlocal<PW>::becp");
-            }
+			if (this->nkb_m < nbands * nkb) 
+			{
+				resmem_complex_op()(this->becp, nbands * nkb, "Nonlocal<PW>::becp");
+			}
             // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
             char transa = 'C';
             char transb = 'N';
@@ -246,7 +245,6 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 // denghui replace 2022-10-20
                 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 gemv_op()(
-                    this->ctx,
                     transa,
                     this->npw,
                     nkb,
@@ -265,7 +263,6 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 // denghui replace 2022-10-20
                 gemm_op()(
-                    this->ctx,
                     transa,
                     transb,
                     nkb,
@@ -306,7 +303,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
         delete[] vnlpsi;
 #endif
     }
-    ModuleBase::timer::tick("Operator", "NonlocalPW");
+    ModuleBase::timer::tick("Operator", "nonlocal_pw");
 }
 
 template<typename T, typename Device>

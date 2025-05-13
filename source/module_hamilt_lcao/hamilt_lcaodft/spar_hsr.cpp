@@ -23,7 +23,7 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 ) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
-    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
+    // sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nspin = PARAM.inp.nspin;
 
@@ -32,6 +32,8 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(
                 p_ham);
+
+        HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
         if (TD_Velocity::tddft_velocity) {
             sparse_format::cal_HContainer_td(
@@ -57,7 +59,9 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
         hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*
             p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
-                                              std::complex<double>>*>(p_ham);
+            std::complex<double>>*>(p_ham);
+
+        HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
         sparse_format::cal_HContainer_cd(pv,
                                          current_spin,

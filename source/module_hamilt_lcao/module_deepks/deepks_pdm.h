@@ -32,11 +32,21 @@ namespace DeePKS_domain
 void read_pdm(bool read_pdm_file,
               bool is_equiv,
               bool& init_pdm,
+              const int nat,
               const int inlmax,
               const int lmaxd,
-              const int* inl_l,
+              const std::vector<int>& inl2l,
               const Numerical_Orbital& alpha,
               std::vector<torch::Tensor>& pdm);
+
+template <typename TK>
+void update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                const std::vector<std::vector<TK>>& dmk,
+                const UnitCell& ucell,
+                const LCAO_Orbitals& orb,
+                const Parallel_Orbitals& pv,
+                const Grid_Driver& GridD,
+                hamilt::HContainer<double>* dmr_deepks);
 
 // calculate projected density matrix: pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
 // 3 cases to skip calculation of pdm:
@@ -47,9 +57,10 @@ template <typename TK>
 void cal_pdm(bool& init_pdm,
              const int inlmax,
              const int lmaxd,
-             const int* inl_l,
+             const std::vector<int>& inl2l,
              const ModuleBase::IntArray* inl_index,
-             const elecstate::DensityMatrix<TK, double>* dm,
+             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+             const hamilt::HContainer<double>* dmr,
              const std::vector<hamilt::HContainer<double>*> phialpha,
              const UnitCell& ucell,
              const LCAO_Orbitals& orb,
@@ -57,7 +68,7 @@ void cal_pdm(bool& init_pdm,
              const Parallel_Orbitals& pv,
              std::vector<torch::Tensor>& pdm);
 
-void check_pdm(const int inlmax, const int* inl_l, const std::vector<torch::Tensor>& pdm);
+void check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm);
 } // namespace DeePKS_domain
 
 #endif

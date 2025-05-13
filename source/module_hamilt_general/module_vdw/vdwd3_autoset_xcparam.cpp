@@ -69,7 +69,8 @@
 #include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
 
 // DFT-D3(BJ)
-const std::map<std::string, std::vector<double>> bj = {
+const std::pair<const char*, std::vector<double>> bj_data[] = {
+    {"__default__", {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 0.3946, 0.3946, 3.2822, 4.8516, 4.8516, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.4298, 0.4298, 2.6996, 4.2359, 4.2359, 1.0, 14.0, 0.0}},
     {"revpbe", {1.0, 0.5238, 0.5238, 2.355, 3.5016, 3.5016, 1.0, 14.0, 0.0}},
@@ -229,8 +230,11 @@ const std::map<std::string, std::vector<double>> bj = {
     {"dodhsep86", {0.69, 0.0, 0.0, 0.0, 5.4, 5.4, 1.0, 14.0, 0.0}},
     {"dodpbehb95", {0.67, 0.0, 0.0, 0.0, 6.0, 6.0, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> bj = {std::begin(bj_data), std::end(bj_data)};
+
 // DFT-D3(0)
-const std::map<std::string, std::vector<double>> zero = {
+const std::pair<const char*, std::vector<double>> zero_data[] = {
+    {"__default__", {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"slaterdirac", {1.0, 0.999, 0.999, -1.957, 0.697, 0.697, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 1.139, 1.139, 1.683, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 1.094, 1.094, 1.682, 1.0, 1.0, 1.0, 14.0, 0.0}},
@@ -316,8 +320,11 @@ const std::map<std::string, std::vector<double>> zero = {
     {"mn15l", {1.0, 3.3388, 3.3388, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"pwp", {1.0, 2.104, 2.104, 0.8747, 1.0, 1.0, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> zero = {std::begin(zero_data), std::end(zero_data)};
+
 // DFT-D3M(BJ): not implemented for beta
-const std::map<std::string, std::vector<double>> bjm = {
+const std::pair<const char*, std::vector<double>> bjm_data[] = {
+    {"__default__", {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 0.82185, 0.82185, 3.140281, 2.728151, 2.728151, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.448486, 0.448486, 1.875007, 3.610679, 3.610679, 1.0, 14.0, 0.0}},
     {"b97_d", {1.0, 0.240184, 0.240184, 1.206988, 3.864426, 3.864426, 1.0, 14.0, 0.0}},
@@ -327,8 +334,11 @@ const std::map<std::string, std::vector<double>> bjm = {
     {"b2plyp", {0.64, 0.486434, 0.486434, 0.67282, 3.656466, 3.656466, 1.0, 14.0, 0.0}},
     {"lcwpbe", {1.0, 0.563761, 0.563761, 0.906564, 3.59368, 3.59368, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> bjm = {std::begin(bjm_data), std::end(bjm_data)};
+
 // DFT-D3M(0): not implemented for beta
-const std::map<std::string, std::vector<double>> zerom = {
+const std::pair<const char*, std::vector<double>> zerom_data[] = {
+    {"__default__", {1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"bp", {1.0, 1.23346, 1.23346, 1.945174, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 1.279637, 1.279637, 1.841686, 1.0, 1.0, 1.0, 14.0, 0.01437}},
     {"b97_d", {1.0, 1.151808, 1.151808, 1.020078, 1.0, 1.0, 1.0, 14.0, 0.035964}},
@@ -338,8 +348,12 @@ const std::map<std::string, std::vector<double>> zerom = {
     {"b2plyp", {0.64, 1.313134, 1.313134, 0.717543, 1.0, 1.0, 1.0, 14.0, 0.016035}},
     {"lcwpbe", {1.0, 1.366361, 1.366361, 1.280619, 1.0, 1.0, 1.0, 14.0, 0.00316}},
 };
+const std::map<std::string, std::vector<double>> zerom = {std::begin(zerom_data), std::end(zerom_data)};
+
 // DFT-D3(OptimizedPower)
-const std::map<std::string, std::vector<double>> op = {
+const std::pair<const char*, std::vector<double>> op_data[] = {
+    // {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
+    {"__default__", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 14.0, 0.0}},
     {"blyp", {1.0, 0.425, 0.425, 1.31867, 3.5, 3.5, 1.0, 14.0, 2.0}},
     {"revpbe", {1.0, 0.6, 0.6, 1.44765, 2.5, 2.5, 1.0, 14.0, 0.0}},
     {"b97_d", {1.0, 0.6, 0.6, 1.46861, 2.5, 2.5, 1.0, 14.0, 0.0}},
@@ -355,8 +369,20 @@ const std::map<std::string, std::vector<double>> op = {
     {"ms2", {1.0, 0.7, 0.7, 0.90743, 4.0, 4.0, 1.0, 14.0, 2.0}},
     {"ms2h", {1.0, 0.65, 0.65, 1.69464, 4.75, 4.75, 1.0, 14.0, 0.0}},
 };
+const std::map<std::string, std::vector<double>> op = {std::begin(op_data), std::end(op_data)};
     
-
+std::vector<double> _search_impl(const std::string& xc,
+                                 const std::map<std::string, std::vector<double>>& dict)
+{
+    if (dict.find(xc) != dict.end())
+    {
+        return dict.at(xc);
+    }
+    else
+    {
+        return std::vector<double>();
+    }
+}
 // 's6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'
 /**
  * @brief Get the dftd3 params object. 
@@ -368,76 +394,49 @@ const std::map<std::string, std::vector<double>> op = {
  * @param param the dftd3 parameters, ALL_KEYS = {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
  */
 void _search(const std::string& xc, 
-                const std::string& method, 
-                std::vector<double>& param)
+             const std::string& method, 
+             std::vector<double>& param)
 {
     const std::string xc_lowercase = FmtCore::lower(xc);
     const std::vector<std::string> allowed_ = { "bj", "zero", "bjm", "zerom", "op" };
-    assert(std::find(allowed_.begin(), allowed_.end(), method) != allowed_.end());
-    if (method == "op")
+    const int i = std::find(allowed_.begin(), allowed_.end(), method) - allowed_.begin();
+    std::map<std::string, std::vector<double>> const * pdict = nullptr;
+    switch (i)
     {
-        if (op.find(xc_lowercase) != op.end())
-        {
-            param = op.at(xc_lowercase);
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                        "XC (`" + xc + "`)'s DFT-D3(OP) parameters not found");
-        }
+    case 0:
+        pdict = &bj;
+        break;
+    case 1:
+        pdict = &zero;
+        break;
+    case 2: 
+        pdict = &bjm;
+        break;
+    case 3:
+        pdict = &zerom;
+        break;
+    case 4:
+        pdict = &op;
+        break;
+    default:
+        pdict = nullptr;
+        break;
     }
-    else if (method == "bjm")
-    {
-        if (bjm.find(xc_lowercase) != bjm.end())
-        {
-            param = bjm.at(xc_lowercase);
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                        "XC (`" + xc + "`)'s DFT-D3M(BJ) parameters not found");
-        }
-    }
-    else if (method == "bj")
-    {
-        if (bj.find(xc_lowercase) != bj.end())
-        {
-            param = bj.at(xc_lowercase);
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                        "XC (`" + xc + "`)'s DFT-D3(BJ) parameters not found");
-        }
-    }
-    else if (method == "zerom")
-    {
-        if (zerom.find(xc_lowercase) != zerom.end())
-        {
-            param = zerom.at(xc_lowercase);
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                        "XC (`" + xc + "`)'s DFT-D3M(0) parameters not found");
-        }
-    }
-    else if (method == "zero")
-    {
-        if (zero.find(xc_lowercase) != zero.end())
-        {
-            param = zero.at(xc_lowercase);
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                        "XC (`" + xc + "`)'s DFT-D3(0) parameters not found");
-        }
-    }
-    else // should not reach here
+    if (pdict == nullptr)
     {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                    "Unknown DFT-D3 method: " + method);
+                                 "Unknown DFT-D3 method: " + method);
+    }
+    param = _search_impl(xc_lowercase, *pdict);
+    if (param.empty())
+    {
+        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                 "XC (`" + xc + "`)'s DFT-D3(" + method + ") parameters not found");
+        // is it meaningful to return a so-called default value?
+        std::cout << " ***WARNING*** "
+                  << "XC (`" << xc << "`)'s DFT-D3(" << method << ") parameters not found, "
+                  << "using default values. Please use at your own risk!" << std::endl;
+        param = _search_impl("__default__", *pdict);
     }
 }
 
@@ -494,7 +493,10 @@ void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
         if (plog != nullptr) // logging the autoset
         {
             param = {s6, s8, a1, a2};
-            FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
+            FmtTable vdwd3tab(/*titles=*/{"Parameters", "Original", "Autoset"}, 
+                              /*nrows=*/4, 
+                              /*formats=*/{"%10s", "%10s", "%10.4f"}, 
+                              /*indent=*/0);
             const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
             vdwd3tab << items << flag << param;
             (*plog) << "\nDFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()

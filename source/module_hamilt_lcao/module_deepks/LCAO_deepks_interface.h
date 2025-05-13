@@ -15,7 +15,7 @@ class LCAO_Deepks_Interface
   public:
     /// @brief Constructor for LCAO_Deepks_Interface
     /// @param ld_in
-    LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks> ld_in);
+    LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in);
     /// @brief output deepks-related labels, descriptors and energy corrections
     /// @param[in] etot
     /// @param[in] nks
@@ -30,6 +30,7 @@ class LCAO_Deepks_Interface
     /// @param[in] psid
     /// @param[in] dm
     /// @param[in] p_ham
+    /// @param[in] rank
     void out_deepks_labels(const double& etot,
                            const int& nks,
                            const int& nat,
@@ -42,10 +43,11 @@ class LCAO_Deepks_Interface
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<TK>& psid,
                            const elecstate::DensityMatrix<TK, double>* dm,
-                           hamilt::HamiltLCAO<TK, TR>* p_ham);
+                           hamilt::HamiltLCAO<TK, TR>* p_ham,
+                           const int rank);
 
   private:
-    std::shared_ptr<LCAO_Deepks> ld;
+    std::shared_ptr<LCAO_Deepks<TK>> ld;
 };
 
 #endif

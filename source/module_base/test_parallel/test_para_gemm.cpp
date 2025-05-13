@@ -141,8 +141,7 @@ class PgemmTest : public ::testing::Test
             const base_device::DEVICE_CPU* ctx = {};
             char transC = 'C';
             char transN = 'N';
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(ctx,
-                                                              transC,
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(transC,
                                                               transN,
                                                               ncolA_global,
                                                               ncolB_global,

@@ -17,9 +17,10 @@ STRU_READIN_ADJUST.cif
 build
 dist
 .idea
-toolchain.tar.gz
 time.json
 *.pyc
 __pycache__
 abacus.json
 *.npy
+toolchain/install/
+toolchain/abacus_env.sh

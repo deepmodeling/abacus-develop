@@ -13,13 +13,12 @@ accuracy    - the accuracy of two float value.
             - 1: assure the absolute difference of two float value is smaller than accuracy
             - Default is 1
 
-This script is used to compare whether two files are 
-same.
+This script is used to compare whether two files are the same.
 If compared two strings are different OR the difference 
-of two float value is larger than accuracy, then the 
-comparing is failed.
+of two float value is larger than the accuracy threshold, then the 
+comparing fails.
 When the script is finished, then a followed bash command
-:$? can be used to check if the comparing is passed, where 
+:$? can be used to check if the comparing passes, where 
 0 means passed and 1 means not passed.
 '''
 

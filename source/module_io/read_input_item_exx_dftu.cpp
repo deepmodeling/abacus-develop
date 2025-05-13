@@ -11,8 +11,9 @@ void ReadInput::item_exx()
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(input.exx_hybrid_alpha);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.exx_hybrid_alpha == "default")
+		item.reset_value = [](const Input_Item& item, Parameter& para) 
+		{
+			if (para.input.exx_hybrid_alpha == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
@@ -31,6 +32,10 @@ void ReadInput::item_exx()
                         || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
                 {
                     para.input.exx_hybrid_alpha = "1";
+                }
+                else if (dft_functional_lower == "b3lyp")
+                {
+                    para.input.exx_hybrid_alpha = "0.2";
                 }
                 else
                 { // no exx in scf, but will change to non-zero in
@@ -66,8 +71,9 @@ void ReadInput::item_exx()
         item.annotation = "the maximal electronic iteration number in the "
                           "evaluation of Fock exchange";
         read_sync_int(input.exx_hybrid_step);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_hybrid_step <= 0)
+		item.check_value = [](const Input_Item& item, const Parameter& para) 
+		{
+			if (para.input.exx_hybrid_step <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_hybrid_step must > 0");
             }

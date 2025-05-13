@@ -41,8 +41,6 @@ class pseudopot_cell_vnl
     template <typename FPTYPE, typename Device>
     void getvnl(Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
 
-    void getvnl(const int& ik, const UnitCell& ucell, ModuleBase::ComplexMatrix& vkb_in) const;
-
     // void getvnl_alpha(const int &ik);
 
     void init_vnl_alpha(const UnitCell& cell);
@@ -203,6 +201,7 @@ class pseudopot_cell_vnl
     Soc soc;
 
     double omega_old = 0;
+    bool use_gpu_ = false;
 
     /**
      * @brief Compute interpolation table qrad

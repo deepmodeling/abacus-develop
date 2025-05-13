@@ -40,7 +40,7 @@ void cal_gdmepsl( // const ModuleBase::matrix& dm,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     std::vector<hamilt::HContainer<double>*> phialpha,
     const ModuleBase::IntArray* inl_index,
-    const std::vector<std::vector<TK>>& dm,
+    const hamilt::HContainer<double>* dmr,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,
@@ -52,12 +52,13 @@ void check_gdmepsl(const torch::Tensor& gdmepsl);
 void cal_gvepsl(const int nat,
                 const int inlmax,
                 const int des_per_atom,
-                const int* inl_l,
+                const std::vector<int>& inl2l,
                 const std::vector<torch::Tensor>& gevdm,
                 const torch::Tensor& gdmepsl,
-                torch::Tensor& gvepsl);
+                torch::Tensor& gvepsl,
+                const int rank);
 
-void check_gvepsl(const torch::Tensor& gvepsl);
+void check_gvepsl(const torch::Tensor& gvepsl, const int rank);
 } // namespace DeePKS_domain
 #endif
 #endif

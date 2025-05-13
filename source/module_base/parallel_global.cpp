@@ -405,14 +405,16 @@ void Parallel_Global::divide_mpi_groups(const int& procs,
         exit(1);
     }
 
-    if(rank < extra_procs)
+    if(rank < extra_procs * (procs_in_group + 1))
     {
+        // The first extra_procs groups have procs_in_group + 1 processes.
         procs_in_group++;
         my_group = rank / procs_in_group;
         rank_in_group = rank % procs_in_group;
     }
     else
     {
+        // The remaining groups have procs_in_group processes.
         my_group = (rank - extra_procs) / procs_in_group;
         rank_in_group = (rank - extra_procs) % procs_in_group;
     }

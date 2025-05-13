@@ -5,6 +5,10 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
+#ifdef __MPI
+#include <mpi.h> // use MPI_Barrier
+#endif
+
 void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
 	ModuleBase::TITLE("ModuleIO","write_istate_info");
@@ -24,8 +28,10 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
         MPI_Barrier(MPI_COMM_WORLD);
         if (GlobalV::MY_POOL == ip)
         {
-            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_BNDGROUP != 0 ) { continue;
-}
+			if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_BNDGROUP != 0 ) 
+			{ 
+				continue;
+			}
 #endif
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)

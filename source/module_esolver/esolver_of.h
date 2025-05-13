@@ -89,8 +89,8 @@ class ESolver_OF : public ESolver_FP
     void update_potential(UnitCell& ucell);
     void optimize(UnitCell& ucell);
     void update_rho();
-    bool check_exit();
-    void after_opt(const int istep, UnitCell& ucell);
+    bool check_exit(bool& conv_esolver);
+    void after_opt(const int istep, UnitCell& ucell, const bool conv_esolver);
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
@@ -110,7 +110,7 @@ class ESolver_OF : public ESolver_FP
     void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 
     // --------------------- output the necessary information -----------
-    void print_info();
+    void print_info(const bool conv_esolver);
 
     // --------------------- interface to blas --------------------------
     double inner_product(double* pa, double* pb, int length, double dV = 1)

@@ -2,7 +2,7 @@
 // This file contains 2 subroutines:
 // 1. build_phialpha, which calculates the overlap
 // between atomic basis and projector alpha : <phi_mu|alpha>
-// which will be used in calculating pdm, gdmx, H_V_delta, F_delta;
+// which will be used in calculating pdm, gdmx, V_delta, F_delta;
 // 2. check_phialpha, which prints the results into .dat files
 // for checking
 
@@ -10,6 +10,7 @@
 
 #include "deepks_phialpha.h"
 
+#include "deepks_iterate.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "module_parameter/parameter.h"
@@ -29,9 +30,6 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
     phialpha[0] = new hamilt::HContainer<double>(ucell.nat); // phialpha is always real
     // Do not use fix_gamma, since it may find wrong matrix for gamma-only case in DeePKS
 
-    // cutoff for alpha is same for all types of atoms
-    const double Rcut_Alpha = orb.Alpha[0].getRcut();
-
     // Total number of atomic basis of projected orbitals
     int nw_alpha = 0;
     for (int l = 0; l <= orb.Alpha[0].getLmax(); l++)
@@ -39,47 +37,34 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
-    for (int T0 = 0; T0 < ucell.ntype; T0++)
-    {
-        Atom* atom0 = &ucell.atoms[T0];
-        for (int I0 = 0; I0 < atom0->na; I0++)
+    DeePKS_domain::iterate_ad1(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start,
+            const int nw_tot,
+            ModuleBase::Vector3<int> dR)
         {
-            const int iat = ucell.itia2iat(T0, I0);
-            auto tau_a = atom0->tau[I0];
-            GridD.Find_atom(ucell, tau_a, T0, I0);
-            for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad)
+            // Create virtual atom_begin_row and atom_begin_col for the construction of atom pair
+            // In DeePKS, phialpha is used to save data, so it is safe to do this
+            int atom_begin_row[ucell.nat];
+            int atom_begin_col[ucell.nat];
+            for (int i = 0; i < ucell.nat; ++i)
             {
-                const int T1 = GridD.getType(ad);
-                const int I1 = GridD.getNatom(ad);
-                const int ibt = ucell.itia2iat(T1, I1);
-                auto tau_b = GridD.getAdjacentTau(ad);
-                const int iw1_start = ucell.itiaiw2iwt(T1, I1, 0);
-                const Atom* atom1 = &ucell.atoms[T1];
-                auto R_index = GridD.getBox(ad);
-
-                const double Rcut_AO1 = orb.Phi[T1].getRcut();
-                const double dist = (tau_b - tau_a).norm() * ucell.lat0;
-                if (dist > Rcut_Alpha + Rcut_AO1)
-                {
-                    continue;
-                }
-                // Create virtual atom_begin_row and atom_begin_col for the construction of atom pair
-                // In DeePKS, phialpha is used to save data, so it is safe to do this
-                int atom_begin_row[ucell.nat];
-                int atom_begin_col[ucell.nat];
-                for (int i = 0; i < ucell.nat; ++i)
-                {
-                    atom_begin_row[i] = -1;
-                    atom_begin_col[i] = pv->atom_begin_col[i];
-                }
-                hamilt::AtomPair<double>
-                    pair(iat, ibt, R_index.x, R_index.y, R_index.z, atom_begin_row, atom_begin_col, ucell.nat);
-                // Notice: in AtomPair, the usage is set_size(ncol, nrow)
-                pair.set_size(nw_alpha, atom1->nw * PARAM.globalv.npol);
-                phialpha[0]->insert_pair(pair);
+                atom_begin_row[i] = -1;
+                atom_begin_col[i] = pv->atom_begin_col[i];
             }
+            hamilt::AtomPair<double> pair(iat, ibt, dR.x, dR.y, dR.z, atom_begin_row, atom_begin_col, ucell.nat);
+            // Notice: in AtomPair, the usage is set_size(ncol, nrow)
+            pair.set_size(nw_alpha, nw_tot);
+            phialpha[0]->insert_pair(pair);
         }
-    }
+    );
 
     phialpha[0]->allocate(nullptr, true);
     // whether to calculate the derivative of phialpha
@@ -105,9 +90,6 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
     ModuleBase::TITLE("DeePKS_domain", "build_phialpha");
     ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
 
-    // cutoff for alpha is same for all types of atoms
-    const double Rcut_Alpha = orb.Alpha[0].getRcut();
-
     // Total number of atomic basis of projected orbitals
     // nw_alpha will be used frequently, better to add a function in Numerical Orbital to get it
     int nw_alpha = 0;
@@ -116,97 +98,87 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
-    for (int T0 = 0; T0 < ucell.ntype; T0++)
-    {
-        Atom* atom0 = &ucell.atoms[T0];
-        for (int I0 = 0; I0 < atom0->na; I0++)
+    DeePKS_domain::iterate_ad1(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start,
+            const int nw_tot,
+            ModuleBase::Vector3<int> dR)
         {
-            const int iat = ucell.itia2iat(T0, I0);
-            auto tau_a = atom0->tau[I0];
-            GridD.Find_atom(ucell, tau_a, T0, I0);
-            for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad)
+            int R[3] = {dR.x, dR.y, dR.z};
+            const int T1 = ucell.iat2it[ibt];
+            const Atom* atom1 = &ucell.atoms[T1];
+
+            double* data_pointer = phialpha[0]->data(iat, ibt, R);
+            std::vector<double*> grad_pointer(3);
+            if (cal_deri)
             {
-                const int T1 = GridD.getType(ad);
-                const int I1 = GridD.getNatom(ad);
-                const int ibt = ucell.itia2iat(T1, I1);
-                auto tau_b = GridD.getAdjacentTau(ad);
-                const int iw1_start = ucell.itiaiw2iwt(T1, I1, 0);
-                const Atom* atom1 = &ucell.atoms[T1];
-                auto R_index = GridD.getBox(ad);
-                int R[3] = {R_index.x, R_index.y, R_index.z};
-
-                const double Rcut_AO1 = orb.Phi[T1].getRcut();
-                const double dist = (tau_b - tau_a).norm() * ucell.lat0;
-                if (dist > Rcut_Alpha + Rcut_AO1)
+                for (int i = 0; i < 3; ++i)
                 {
-                    continue;
+                    grad_pointer[i] = phialpha[i + 1]->data(iat, ibt, R);
                 }
+            }
 
-                double* data_pointer = phialpha[0]->data(iat, ibt, R);
-                std::vector<double*> grad_pointer(3);
-                if (cal_deri)
+            // Calculate phialpha
+            // Get all indexes of atomic basis on the neighbour atom in this core
+            // Notice that atom pair (a,b) and (b,a) are different when the former is changed to projected orbitals
+            // So we need both row and col indexes for complete calculation
+            auto all_indexes = pv->get_indexes_row(ibt);
+            auto col_indexes = pv->get_indexes_col(ibt);
+            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+            std::sort(all_indexes.begin(), all_indexes.end());
+            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end()); // for unique
+
+            // inner loop : all atomic basis on the adjacent atom ad
+            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += PARAM.globalv.npol)
+            {
+                const int iw1 = all_indexes[iw1l] / PARAM.globalv.npol;
+
+                std::vector<std::vector<double>> nlm;
+                // 2D, dim 0 contains the overlap <phi_{iw1}|alpha_{all}>
+                // dim 1-3 contains the gradient of overlap
+
+                const int L1 = atom1->iw2l[iw1];
+                const int N1 = atom1->iw2n[iw1];
+                const int m1 = atom1->iw2m[iw1];
+
+                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
+                const ModuleBase::Vector3<double> dtau = tau0 - tau1;
+                const int T0_fixed = 0; // All the projected orbitals are the same, use 0 here
+                overlap_orb_alpha.snap(T1, L1, N1, M1, T0_fixed, dtau * ucell.lat0, cal_deri, nlm);
+
+                const int index_begin = all_indexes[iw1l] * nw_alpha * PARAM.globalv.npol;
+                for (int iw0 = 0; iw0 < nw_alpha; iw0++)
                 {
-                    for (int i = 0; i < 3; ++i)
+                    data_pointer[index_begin + iw0] = nlm[0][iw0];
+                    if (cal_deri)
                     {
-                        grad_pointer[i] = phialpha[i + 1]->data(iat, ibt, R);
+                        grad_pointer[0][index_begin + iw0] = nlm[1][iw0];
+                        grad_pointer[1][index_begin + iw0] = nlm[2][iw0];
+                        grad_pointer[2][index_begin + iw0] = nlm[3][iw0];
                     }
-                }
-
-                // Calculate phialpha
-                // Get all indexes of atomic basis on the neighbour atom in this core
-                // Notice that atom pair (a,b) and (b,a) are different when the former is changed to projected orbitals
-                // So we need both row and col indexes for complete calculation
-                auto all_indexes = pv->get_indexes_row(ibt);
-                auto col_indexes = pv->get_indexes_col(ibt);
-                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-                std::sort(all_indexes.begin(), all_indexes.end());
-                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end()); // for unique
-
-                // inner loop : all atomic basis on the adjacent atom ad
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += PARAM.globalv.npol)
-                {
-                    const int iw1 = all_indexes[iw1l] / PARAM.globalv.npol;
-
-                    std::vector<std::vector<double>> nlm;
-                    // 2D, dim 0 contains the overlap <phi_{iw1}|alpha_{all}>
-                    // dim 1-3 contains the gradient of overlap
-
-                    const int L1 = atom1->iw2l[iw1];
-                    const int N1 = atom1->iw2n[iw1];
-                    const int m1 = atom1->iw2m[iw1];
-
-                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                    const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
-
-                    const ModuleBase::Vector3<double> dtau = tau_a - tau_b;
-                    const int T0_fixed = 0; // All the projected orbitals are the same, use 0 here
-                    overlap_orb_alpha.snap(T1, L1, N1, M1, T0_fixed, dtau * ucell.lat0, cal_deri, nlm);
-
-                    const int index_begin = all_indexes[iw1l] * nw_alpha * PARAM.globalv.npol;
-                    for (int iw0 = 0; iw0 < nw_alpha; iw0++)
+                    if (PARAM.globalv.npol == 2)
                     {
-                        data_pointer[index_begin + iw0] = nlm[0][iw0];
+                        data_pointer[index_begin + iw0 + nw_alpha] = nlm[0][iw0];
                         if (cal_deri)
                         {
-                            grad_pointer[0][index_begin + iw0] = nlm[1][iw0];
-                            grad_pointer[1][index_begin + iw0] = nlm[2][iw0];
-                            grad_pointer[2][index_begin + iw0] = nlm[3][iw0];
-                        }
-                        if (PARAM.globalv.npol == 2)
-                        {
-                            data_pointer[index_begin + iw0 + nw_alpha] = nlm[0][iw0];
-                            if (cal_deri)
-                            {
-                                grad_pointer[0][index_begin + iw0 + nw_alpha] = nlm[1][iw0];
-                                grad_pointer[1][index_begin + iw0 + nw_alpha] = nlm[2][iw0];
-                                grad_pointer[2][index_begin + iw0 + nw_alpha] = nlm[3][iw0];
-                            }
+                            grad_pointer[0][index_begin + iw0 + nw_alpha] = nlm[1][iw0];
+                            grad_pointer[1][index_begin + iw0 + nw_alpha] = nlm[2][iw0];
+                            grad_pointer[2][index_begin + iw0 + nw_alpha] = nlm[3][iw0];
                         }
                     }
-                } // end iw
-            }
+                }
+            } // end iw
         }
-    }
+    );
 
     ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
     return;

@@ -7,7 +7,6 @@
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_fpre.h"
-#include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
 #include "deepks_pdm.h"
@@ -15,6 +14,7 @@
 #include "deepks_spre.h"
 #include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
+#include "deepks_vdrpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -46,6 +46,7 @@
 // caoyu add 2021-03-29
 // wenfei modified 2022-1-5
 //
+template <typename T>
 class LCAO_Deepks
 {
 
@@ -55,14 +56,12 @@ class LCAO_Deepks
   public:
     ///(Unit: Ry) Correction energy provided by NN
     double E_delta = 0.0;
-    ///(Unit: Ry)  \f$tr(\rho H_\delta), \rho = \sum_i{c_{i, \mu}c_{i,\nu}} \f$ (for gamma_only)
+    ///(Unit: Ry)  \f$tr(\rho H_\delta), \rho = \sum_i{c_{i, \mu}c_{i,\nu}} \f$
     double e_delta_band = 0.0;
 
-    /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$ (for gamma only)
-    /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
-    std::vector<std::vector<double>> H_V_delta;
-    /// Correction term to Hamiltonian, for multi-k
-    std::vector<std::vector<std::complex<double>>> H_V_delta_k;
+    /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$
+    /// The first dimension is for k-points V_delta(k)
+    std::vector<std::vector<T>> V_delta;
 
     //-------------------
     // private variables
@@ -74,7 +73,7 @@ class LCAO_Deepks
     int inlmax = 0;                  // tot. number {i,n,l} - atom, n, l
     int n_descriptor;                // natoms * des_per_atom, size of descriptor(projector) basis set
     int des_per_atom;                // \sum_L{Nchi(L)*(2L+1)}
-    int* inl_l;                      // inl_l[inl_index] = l of descriptor with inl_index
+    std::vector<int> inl2l;          // inl2l[inl] = inl2l[nl] = l (not related to iat) of descriptor with inl_index
     ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
@@ -86,6 +85,9 @@ class LCAO_Deepks
     // saves <phi(0)|alpha(R)> and its derivatives
     // index 0 for itself and index 1-3 for derivatives over x,y,z
     std::vector<hamilt::HContainer<double>*> phialpha;
+
+    // density matrix in real space
+    hamilt::HContainer<double>* dm_r = nullptr;
 
     // projected density matrix
     // [tot_Inl][2l+1][2l+1], here l is corresponding to inl;
@@ -117,7 +119,7 @@ class LCAO_Deepks
     //   - init : allocates some arrays
     //   - init_index : records the index (inl)
     // 2. subroutines that are related to V_delta:
-    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
+    //   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
   public:
     explicit LCAO_Deepks();
@@ -130,14 +132,20 @@ class LCAO_Deepks
               const int ntype,
               const int nks,
               const Parallel_Orbitals& pv_in,
-              std::vector<int> na);
+              std::vector<int> na,
+              std::ofstream& ofs);
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
 
+    /// Initialize the dm_r container
+    void init_DMR(const UnitCell& ucell,
+                  const LCAO_Orbitals& orb,
+                  const Parallel_Orbitals& pv,
+                  const Grid_Driver& GridD);
+
     //! a temporary interface for cal_e_delta_band
-    template <typename TK>
-    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
+    void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);
 
   private:
     // flag of HR status,
@@ -146,7 +154,12 @@ class LCAO_Deepks
     bool hr_cal = true;
 
     // arrange index of descriptor in all atoms
-    void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
+    void init_index(const int ntype,
+                    const int nat,
+                    std::vector<int> na,
+                    const int tot_inl,
+                    const LCAO_Orbitals& orb,
+                    std::ofstream& ofs);
 
     const Parallel_Orbitals* pv;
 };

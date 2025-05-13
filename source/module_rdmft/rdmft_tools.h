@@ -11,7 +11,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/parallel_2d.h"
@@ -43,44 +43,6 @@
 
 namespace rdmft
 {
-
-
-// //for print matrix
-// template <typename TK>
-// void printMatrix_pointer(int M, int N, const TK* matrixA, std::string nameA)
-// {
-//     std::cout << "\n" << nameA << ": \n";
-//     for(int i=0; i<M; ++i)
-//     {
-//         for(int j=0; j<N; ++j)
-//         {
-//             if( j%5 == 0 ) { std::cout << "\n";
-// }
-//             std::cout << *(matrixA+i*N+j) << " ";
-//         }
-//         std::cout << "\n";
-//     }
-//     std::cout << std::endl;
-// }
-
-
-// template <typename TK>
-// void printMatrix_vector(int M, int N, const std::vector<TK>& matrixA, std::string nameA)
-// {
-//     std::cout << "\n" << nameA << ": \n";
-//     for(int i=0; i<M; ++i)
-//     {
-//         for(int j=0; j<N; ++j)
-//         {
-//             if( j%5 == 0 ) { std::cout << "\n";
-// }
-//             std::cout << matrixA[i*N+j] << " ";
-//         }
-//         std::cout << "\n\n";
-//     }
-//     std::cout << std::endl;
-// }
-
 
 //! now support XC_func_rdmft = "hf", "muller", "power", "pbe", "pbe0". "wp22" and "cwp22" is realizing.
 // for the dft-xc-functional part of xc-functional, just use the default is right! Or don't use the function
@@ -407,9 +369,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
     double* vtxc;
 
 };
-
-
-
 
 }
 

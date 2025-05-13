@@ -14,12 +14,12 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
                                             const psi::Psi<complex<FPTYPE>, Device>* psi_in,
                                             ModuleSymmetry::Symmetry* p_symm)
 {
-    ModuleBase::TITLE("Stress_Func", "stress_onsite");
+    ModuleBase::TITLE("Stress", "stress_onsite");
     if(psi_in == nullptr || wfc_basis == nullptr)
     {
         return;
     }
-    ModuleBase::timer::tick("Stress_Func", "stress_onsite");
+    ModuleBase::timer::tick("Stress", "stress_onsite");
 
     FPTYPE* stress_device = nullptr;
     resmem_var_op()(stress_device, 9);
@@ -29,7 +29,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
     auto* onsite_p = projectors::OnsiteProjector<FPTYPE, Device>::get_instance();
 
     const int nks = wfc_basis->nks;
-    for (int ik = 0; ik < nks; ik++) // loop k points
+    for (int ik = 0; ik < nks; ik++)
     {
         // skip zero weights to speed up
         int nbands_occ = wg.nc;
@@ -45,6 +45,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
 
         // calculate becp = <psi|beta> for all beta functions
         onsite_p->get_fs_tools()->cal_becp(ik, npm);
+
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
         for (int ipol = 0; ipol < 3; ipol++)
@@ -56,20 +57,29 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
                 if(PARAM.inp.dft_plus_u)
                 {
                     auto* dftu = ModuleDFTU::DFTU::get_instance();
-                    onsite_p->get_fs_tools()->cal_stress_dftu(ik, npm, stress_device_tmp, dftu->orbital_corr.data(), dftu->get_eff_pot_pw(0), dftu->get_size_eff_pot_pw(), wg.c);
+					onsite_p->get_fs_tools()->cal_stress_dftu(ik, 
+							npm, 
+							stress_device_tmp, 
+							dftu->orbital_corr.data(), 
+							dftu->get_eff_pot_pw(0), 
+							dftu->get_size_eff_pot_pw(), 
+							wg.c);
                 }
                 if(PARAM.inp.sc_mag_switch)
                 {
-                    spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+                    spinconstrain::SpinConstrain<std::complex<double>>& sc = 
+                        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
                     const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
                     onsite_p->get_fs_tools()->cal_stress_dspin(ik, npm, stress_device_tmp, lambda.data(), wg.c);
                 }
             }
         }
     }
+
     // transfer stress from device to host
     syncmem_var_d2h_op()(sigma_onsite.data(), stress_device, 9);
     delmem_var_op()(stress_device);
+
     // sum up forcenl from all processors
     for (int l = 0; l < 3; l++)
     {
@@ -82,6 +92,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
             Parallel_Reduce::reduce_all(sigma_onsite[l * 3 + m]); // qianrui fix a bug for kpar > 1
         }
     }
+
     // rescale the stress with 1/omega
     for (int ipol = 0; ipol < 3; ipol++)
     {
@@ -98,13 +109,13 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
             sigma(ipol, jpol) = sigma_onsite[ipol * 3 + jpol];
         }
     }
-    // do symmetry
+
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         p_symm->symmetrize_mat3(sigma, ucell_in.lat);
-    } // end symmetry
+    }
 
-    ModuleBase::timer::tick("Stress_Func", "stress_onsite");
+    ModuleBase::timer::tick("Stress", "stress_onsite");
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

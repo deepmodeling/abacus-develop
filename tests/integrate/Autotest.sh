@@ -13,6 +13,7 @@ stress_threshold=0.001
 ca=8
 # specify the test cases file
 cases_file=CASES_CPU.txt
+#cases_file=CASES_mylist.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
@@ -91,11 +92,11 @@ check_out(){
     properties=`awk '{print $1}' $outfile`
 
     #------------------------------------------------------
-    # jd = job description
+    # README 
     #------------------------------------------------------
-    if test -e "jd"; then
-        jd=`cat jd`
-         echo "[----------] $jd"
+    if test -e "README"; then
+        readme=`cat README`
+         echo "[----------] $readme"
     fi
 
     #------------------------------------------------------
@@ -176,9 +177,10 @@ check_out(){
     if [ $ifail -eq 1 ]; then
         let failed++
         failed_case_list+=$dir'\n'
-        calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-        running_path=`echo "OUT.autotest/running_$calculation"".log"`
-        cat $running_path
+        calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
+        # mohan comment out 2025-04-22, we don't need to print so many details on the screen
+        #running_path=`echo "OUT.autotest/running_$calculation"".log"`
+        #cat $running_path
         case_status+=$dir' 0\n'
     else
         case_status+=$dir' 1\n'

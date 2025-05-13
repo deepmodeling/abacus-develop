@@ -84,10 +84,6 @@ Fcoef::~Fcoef()
 {
 }
 
-namespace GlobalC
-{
-Parallel_Kpoints Pkpoints;
-} // namespace GlobalC
 
 /************************************************
  *  unit test of class K_Vectors

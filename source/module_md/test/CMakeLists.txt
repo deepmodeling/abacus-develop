@@ -23,7 +23,9 @@ list(APPEND depend_files
   ../../module_base/matrix3.cpp
   ../../module_base/matrix.cpp
   ../../module_base/timer.cpp
-  ../../module_base/blas_connector.cpp
+  ../../module_base/blas_connector_base.cpp
+  ../../module_base/blas_connector_matrix.cpp
+  ../../module_base/blas_connector_vector.cpp
   ../../module_base/memory.cpp
   ../../module_base/global_variable.cpp
   ../../module_base/global_function.cpp
@@ -44,6 +46,7 @@ list(APPEND depend_files
   ../../module_cell/module_neighbor/sltk_grid.cpp
   ../../module_cell/module_neighbor/sltk_grid_driver.cpp
   ../../module_io/output.cpp
+  ../../module_io/output_log.cpp
   ../../module_io/print_info.cpp
   ../../module_io/cif_io.cpp
   ../../module_esolver/esolver_lj.cpp

@@ -21,18 +21,21 @@
 #include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
+
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
+
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
+
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
 
 namespace ModuleESolver
 {
@@ -63,7 +66,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
         double search_radius = PARAM.inp.search_radius;
-        atom_arrange::search(PARAM.inp.search_pbc,
+        atom_arrange::search(PARAM.globalv.search_pbc,
                              GlobalV::ofs_running,
                              this->gd,
                              ucell,
@@ -82,7 +85,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          ucell,
@@ -171,9 +174,15 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // init wfc from file
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
+					this->pv, 
+					*(this->psi), 
+					this->pelec,
+                    this->pelec->klist->ik2iktot,
+                    this->pelec->klist->get_nkstot(),
+					PARAM.inp.nspin))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver", "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
     }
 
@@ -260,6 +269,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->psi,
                    this->pelec);
     }
+
     //=========================================================
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
@@ -268,15 +278,16 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
 
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        IState_Charge ISC(this->psi, &(this->pv));
+        IState_Charge chr_i(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            ISC.begin(this->GG,
-                      this->pelec->charge->rho,
+            chr_i.begin(this->GG,
+                      this->chr.rho,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod->nrxx,
@@ -303,9 +314,9 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            ISC.begin(this->GK,
-                      this->pelec->charge->rho,
-                      this->pelec->charge->rhog,
+            chr_i.begin(this->GK,
+                      this->chr.rho,
+                      this->chr.rhog,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod,
@@ -332,17 +343,17 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->kv,
                       PARAM.inp.if_separate_k,
                       &this->Pgrid,
-                      this->pelec->charge->ngmc);
+                      this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        IState_Envelope IEP(this->pelec);
+        Get_wf_lcao get_wf(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            IEP.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -364,7 +375,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            IEP.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -388,7 +399,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "CALCULATION type not supported");
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");

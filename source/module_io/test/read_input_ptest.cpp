@@ -50,7 +50,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.nbands, 8);
     EXPECT_EQ(param.inp.nbands_sto, 256);
     EXPECT_EQ(param.inp.nbands_istate, 5);
-    EXPECT_EQ(param.inp.bands_to_print.size(), 0);
     EXPECT_EQ(param.inp.out_pchg.size(), 0);
     EXPECT_EQ(param.inp.out_wfc_norm.size(), 0);
     EXPECT_EQ(param.inp.out_wfc_re_im.size(), 0);
@@ -101,7 +100,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.basis_type, "lcao");
     EXPECT_EQ(param.inp.ks_solver, "genelpa");
     EXPECT_DOUBLE_EQ(param.inp.search_radius, -1.0);
-    EXPECT_TRUE(param.inp.search_pbc);
     EXPECT_EQ(param.inp.symmetry, "1");
     EXPECT_FALSE(param.inp.init_vel);
     EXPECT_DOUBLE_EQ(param.inp.symmetry_prec, 1.0e-6);
@@ -201,6 +199,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
     EXPECT_EQ(param.inp.out_wfc_r, 0);
     EXPECT_EQ(param.inp.out_dos, 0);
+    EXPECT_EQ(param.inp.out_ldos[0], 1);
+    EXPECT_EQ(param.inp.out_ldos[1], 3);
     EXPECT_EQ(param.inp.out_band[0], 0);
     EXPECT_EQ(param.inp.out_band[1], 8);
     EXPECT_EQ(param.inp.out_proj_band, 0);
@@ -208,6 +208,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_mat_hs[1], 8);
     EXPECT_EQ(param.inp.out_mat_hs2, 0);
     EXPECT_FALSE(param.inp.out_mat_xc);
+    EXPECT_FALSE(param.inp.out_mat_xc2);
     EXPECT_FALSE(param.inp.out_eband_terms);
     EXPECT_EQ(param.inp.out_interval, 1);
     EXPECT_EQ(param.inp.out_app_flag, 0);
@@ -219,6 +220,16 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_scale, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_sigma, 0.07);
+    EXPECT_DOUBLE_EQ(param.inp.stm_bias[0], 2.0);
+    EXPECT_DOUBLE_EQ(param.inp.stm_bias[1], 0.1);
+    EXPECT_EQ(param.inp.stm_bias[2], 5);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[0], 0.1);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[1], 0.2);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[2], 0.3);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[3], 0.4);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[4], 0.5);
+    EXPECT_DOUBLE_EQ(param.inp.ldos_line[5], 0.6);
+    EXPECT_EQ(param.inp.ldos_line[6], 200);
     EXPECT_FALSE(param.inp.out_element_info);
     EXPECT_DOUBLE_EQ(param.inp.lcao_ecut, 20);
     EXPECT_DOUBLE_EQ(param.inp.lcao_dk, 0.01);

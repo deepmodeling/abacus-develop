@@ -155,8 +155,6 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
     }
 
     // charge density symmetrization
-    // this->pelec->calculate_weights();
-    // this->pelec->calEBand();
     Symmetry_rho srho;
     for (int is = 0; is < nspin; is++)
     {

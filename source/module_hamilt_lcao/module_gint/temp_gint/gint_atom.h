@@ -25,16 +25,16 @@ class GintAtom
 
         // getter functions
         const Atom* get_atom() const { return atom_; };
-        const int get_ia() const { return ia_; };
-        const int get_iat() const { return iat_; };
+        int get_ia() const { return ia_; };
+        int get_iat() const { return iat_; };
         const Vec3i& get_bgrid_idx() const { return biggrid_idx_; };
         const Vec3i& get_unitcell_idx() const { return unitcell_idx_; };
         const Vec3i& get_R() const { return unitcell_idx_; };
         const Vec3d& get_tau_in_bgrid() const { return tau_in_biggrid_; };
         const Numerical_Orbital* get_orb() const { return orb_; };
 
-        const int get_nw() const { return atom_->nw; };
-        const double get_rcut() const { return orb_->getRcut(); };
+        int get_nw() const { return atom_->nw; };
+        double get_rcut() const { return orb_->getRcut(); };
         
         /**
          * @brief Get the wave function values of the atom at a meshgrid.

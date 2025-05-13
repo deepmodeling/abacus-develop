@@ -138,7 +138,7 @@ void Mathzone_Add1::Cubic_Spline_Interpolation
 	double * const dy
 )
 {	
-	ModuleBase::timer::tick("Mathzone_Add1","Cubic_Spline_Interpolation");
+	ModuleBase::timer::tick("Mathzone","cubic_spline");
 
 #ifdef _OPENMP
 	#pragma omp parallel for schedule(static)
@@ -175,7 +175,7 @@ void Mathzone_Add1::Cubic_Spline_Interpolation
 		//ddy[m] = ddy_tmp;
 	}
 
-	ModuleBase::timer::tick("Mathzone_Add1","Cubic_Spline_Interpolation");
+	ModuleBase::timer::tick("Mathzone","cubic_spline");
 }
 
 /// Interpolation for Numerical Orbitals

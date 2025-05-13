@@ -18,11 +18,12 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
                                               ModulePW::PW_Basis_K* wfc_basis,
                                               const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
-    ModuleBase::timer::tick("Stress_Func", "stress_mgga");
+	if (PARAM.inp.nspin == 4) 
+	{
+		ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
+	}
 
-    if (PARAM.inp.nspin == 4) {
-        ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
-}
+    ModuleBase::timer::tick("Stress", "stress_mgga");
 
     int current_spin = 0;
     const int nrxx = wfc_basis->nrxx;
@@ -37,6 +38,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
         ct::DataTypeToEnum<std::complex<FPTYPE>>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
         {nrxx * 3});
+
     auto crosstaus = ct::Tensor(
         ct::DataTypeToEnum<FPTYPE>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
@@ -46,18 +48,28 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
     auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
-        if (PARAM.inp.nspin == 2) {
-            current_spin = p_kv->isk[ik];
-}
+        if (PARAM.inp.nspin == 2) 
+		{
+			current_spin = p_kv->isk[ik];
+		}
         const int npw = p_kv->ngk[ik];
 
         for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
-            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
-            cal_stress_mgga_solver(
-                current_spin, nrxx, w1, gradwfc.data<std::complex<FPTYPE>>(), crosstaus.data<FPTYPE>());
+			XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, 
+					ucell.tpiba, 
+					wfc_basis, 
+					psi, 
+					gradwfc.data<std::complex<FPTYPE>>());
+
+			cal_stress_mgga_solver(
+					current_spin, 
+					nrxx, 
+					w1, 
+					gradwfc.data<std::complex<FPTYPE>>(), 
+					crosstaus.data<FPTYPE>());
         } // band loop
         // delete[] psi;
     } // k loop
@@ -88,13 +100,15 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
             for (int iy = 0; iy < 3; iy++)
             {
                 FPTYPE delta = 0.0;
-                if (ix == iy) {
-                    delta = 1.0;
-}
-                for (int ir = 0; ir < nrxx; ir++)
+				if (ix == iy) 
+				{
+					delta = 1.0;
+				}
+				for (int ir = 0; ir < nrxx; ir++)
                 {
-                    FPTYPE x
-                        = v_ofk(is, ir) * (chr->kin_r[is][ir] * delta + crosstaus_pack[is][ipol2xy[ix][iy] * nrxx + ir]);
+                    FPTYPE x = v_ofk(is, ir) * 
+                          (chr->kin_r[is][ir] * delta 
+                           + crosstaus_pack[is][ipol2xy[ix][iy] * nrxx + ir]);
                     sigma_mgga[ix][iy] += x;
                 }
             }
@@ -117,7 +131,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
             sigma(i, j) += sigma_mgga[i][j] / wfc_basis->nxyz;
         }
     }
-    ModuleBase::timer::tick("Stress_Func", "stress_mgga");
+    ModuleBase::timer::tick("Stress", "stress_mgga");
     return;
 }
 

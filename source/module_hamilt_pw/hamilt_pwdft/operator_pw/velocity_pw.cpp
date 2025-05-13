@@ -1,19 +1,19 @@
 #include "velocity_pw.h"
-#include "module_base/timer.h"
+
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/parallel_reduce.h"
+#include "module_base/timer.h"
 namespace hamilt
 {
 
-Velocity::Velocity
-(
-    const ModulePW::PW_Basis_K* wfcpw_in,
-    const int* isk_in,
-    pseudopot_cell_vnl* ppcell_in,
-    const UnitCell* ucell_in,
-    const bool nonlocal_in
-)
+template <typename FPTYPE, typename Device>
+Velocity<FPTYPE, Device>::Velocity(const ModulePW::PW_Basis_K* wfcpw_in,
+                                   const int* isk_in,
+                                   pseudopot_cell_vnl* ppcell_in,
+                                   const UnitCell* ucell_in,
+                                   const bool nonlocal_in)
 {
-    if( wfcpw_in == nullptr || isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr)
+    if (wfcpw_in == nullptr || isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr)
     {
         ModuleBase::WARNING_QUIT("Velocity", "Constuctor of Operator::Velocity is failed, please check your code!");
     }
@@ -22,114 +22,199 @@ Velocity::Velocity
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
     this->nonlocal = nonlocal_in;
-    this->tpiba = ucell_in -> tpiba;
-    if(this->nonlocal) {      this->ppcell->initgradq_vnl(*this->ucell);
-}
+    this->tpiba = ucell_in->tpiba;
+    if (this->nonlocal)
+    {
+        this->ppcell->initgradq_vnl(*this->ucell);
+    }
 }
 
-void Velocity::init(const int ik_in)
+template <typename FPTYPE, typename Device>
+Velocity<FPTYPE, Device>::~Velocity()
+{
+    delmem_var_op()(this->gx_);
+    delmem_var_op()(this->gy_);
+    delmem_var_op()(this->gz_);
+    delmem_complex_op()(vkb_);
+    delmem_complex_op()(gradvkb_);
+}
+
+template <typename FPTYPE, typename Device>
+void Velocity<FPTYPE, Device>::init(const int ik_in)
 {
     this->ik = ik_in;
-    // Calculate nonlocal pseudopotential vkb
-	if(this->ppcell->nkb > 0 && this->nonlocal) 
-	{
-        this->ppcell->getgradq_vnl(*this->ucell,ik_in);
-	}
-
-}
-
-void Velocity::act
-(
-    const psi::Psi<std::complex<double>> *psi_in, 
-    const int n_npwx, //nbands * NPOL
-    const std::complex<double>* psi0, 
-    std::complex<double>* vpsi,
-    const bool add
-) const
-{
-    ModuleBase::timer::tick("Operator", "Velocity");
-
-    const int npw = psi_in->get_current_nbas();
-
-    const int max_npw = psi_in->get_nbasis() / psi_in->get_npol();
-    const int npol = psi_in->get_npol();
-    const std::complex<double>* tmpsi_in = psi0;
-    std::complex<double>* tmhpsi = vpsi;
-    // -------------
-    //       p
-    // -------------
-    for (int ib = 0; ib < n_npwx; ++ib)
+    // init G+K
+    const int npw = this->wfcpw->npwk[ik_in];
+    const int npwk_max = this->wfcpw->npwk_max;
+    std::vector<FPTYPE> gtmp(npw);
+    resmem_var_op()(gx_, npw);
+    resmem_var_op()(gy_, npw);
+    resmem_var_op()(gz_, npw);
+    std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
+    for(int i=0; i<3; ++i)
     {
         for (int ig = 0; ig < npw; ++ig)
         {
-            const ModuleBase::Vector3<double>& tmpg = wfcpw->getgpluskcar(this->ik, ig);
-            if(add)
-            {
-                tmhpsi[ig]                       += tmpsi_in[ig] * tmpg.x * tpiba;
-                tmhpsi[ig + n_npwx * max_npw]    += tmpsi_in[ig] * tmpg.y * tpiba;
-                tmhpsi[ig + 2 * n_npwx * max_npw]+= tmpsi_in[ig] * tmpg.z * tpiba;
-            }
-            else
-            {
-                tmhpsi[ig]                        = tmpsi_in[ig] * tmpg.x * tpiba;
-                tmhpsi[ig + n_npwx * max_npw]     = tmpsi_in[ig] * tmpg.y * tpiba;
-                tmhpsi[ig + 2 * n_npwx * max_npw] = tmpsi_in[ig] * tmpg.z * tpiba;
-            }
+            const ModuleBase::Vector3<double> tmpg = wfcpw->getgpluskcar(this->ik, ig);
+            gtmp[ig] = static_cast<FPTYPE>(tmpg[i] * tpiba);
         }
-        tmhpsi += max_npw;
-        tmpsi_in += max_npw;
+        syncmem_var_h2d_op()(gtmp_ptr[i], gtmp.data(), npw);
+    }
+
+    // Calculate nonlocal pseudopotential vkb
+    if (this->ppcell->nkb > 0 && this->nonlocal)
+    {
+        this->ppcell->getgradq_vnl(*this->ucell, ik_in);
+
+        // sync to device
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
+        {
+            const int nkb = this->ppcell->nkb;
+            // vkb
+            resmem_complex_op()(vkb_, nkb * npwk_max);
+            castmem_complex_h2d_op()(vkb_, this->ppcell->vkb.c, nkb * npwk_max);
+
+            // gradvkb
+            resmem_complex_op()(gradvkb_, 3 * nkb * npwk_max);
+            castmem_complex_h2d_op()(gradvkb_, this->ppcell->gradvkb.ptr, 3 * nkb * npwk_max);
+        }
+    }
+}
+
+template <typename FPTYPE, typename Device>
+void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+                                   const int n_npwx,
+                                   const std::complex<FPTYPE>* psi0,
+                                   std::complex<FPTYPE>* vpsi,
+                                   const bool add) const
+{
+    ModuleBase::timer::tick("Operator", "Velocity");
+
+    const int npw = this->wfcpw->npwk[this->ik];
+    const int max_npw = this->wfcpw->npwk_max;
+    const int npol = psi_in->get_npol();
+    
+    std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
+    // -------------
+    //       p
+    // -------------
+    for (int id = 0; id < 3; ++id)
+    {
+        const Complex* tmpsi_in = psi0;
+        Complex* tmpvpsi = vpsi + id * n_npwx * max_npw;
+        for (int ib = 0; ib < n_npwx; ++ib)
+        {
+            ModuleBase::vector_mul_vector_op<Complex, Device>()(npw, tmpvpsi, tmpsi_in, gtmp_ptr[id], add);
+            tmpvpsi += max_npw;
+            tmpsi_in += max_npw;
+        }
     }
 
     // ---------------------------------------------
-    // i[V_NL, r] = (\nabla_q+\nabla_q')V_{NL}(q,q') 
+    // i[V_NL, r] = (\nabla_q+\nabla_q')V_{NL}(q,q')
     // |\beta><\beta|\psi>
     // ---------------------------------------------
-    if (this->ppcell->nkb <= 0 || !this->nonlocal) 
+    if (this->ppcell->nkb <= 0 || !this->nonlocal)
     {
         ModuleBase::timer::tick("Operator", "Velocity");
         return;
     }
 
-    //1. <\beta|\psi>
+    // 1. <\beta|\psi>
+    Complex* becp1_ = nullptr; ///<[Device, n_npwx * nkb] <\beta|\psi>
+    Complex* becp2_ = nullptr; ///<[Device, n_npwx * 3*nkb] <\nabla\beta|\psi>
+    Complex* ps1_ = nullptr; ///<[Device, nkb * n_npwx] sum of becp1
+    Complex* ps2_ = nullptr; ///<[Device, 3*nkb * n_npwx] sum of becp2
+    resmem_complex_op()(ps1_, this->ppcell->nkb * n_npwx);
+    resmem_complex_op()(ps2_, 3 * this->ppcell->nkb * n_npwx);
+    resmem_complex_op()(becp1_, this->ppcell->nkb * n_npwx);
+    resmem_complex_op()(becp2_, 3 * this->ppcell->nkb * n_npwx);
+
     const int nkb = this->ppcell->nkb;
     const int nkb3 = 3 * nkb;
-    ModuleBase::ComplexMatrix becp1(n_npwx, nkb, false);
-    ModuleBase::ComplexMatrix becp2(n_npwx, nkb3, false);
-    char transC = 'C';
-    char transN = 'N';
-    char transT = 'T';
-    const int npm = n_npwx;
+    Complex one = 1.0;
+    Complex zero = 0.0;
+
+    Complex* vkb_d = reinterpret_cast<Complex*>(this->ppcell->vkb.c);
+    Complex* gradvkb_d = reinterpret_cast<Complex*>(this->ppcell->gradvkb.ptr);
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value || std::is_same<FPTYPE, float>::value)
+    {
+        vkb_d = vkb_;
+        gradvkb_d = gradvkb_;
+    }
+
     if (n_npwx == 1)
     {
         int inc = 1;
-        zgemv_(&transC, &npw, &nkb, 
-               &ModuleBase::ONE, this->ppcell->vkb.c, &max_npw, psi0, &inc, 
-               &ModuleBase::ZERO, becp1.c, &inc);
-        zgemv_(&transC, &npw, &nkb3, 
-               &ModuleBase::ONE, this->ppcell->gradvkb.ptr, &max_npw, psi0, &inc, 
-               &ModuleBase::ZERO, becp2.c, &inc);
+        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb, &one, vkb_d, max_npw, psi0, inc, &zero, becp1_, inc);
+        ModuleBase::gemv_op<Complex, Device>()('C', npw, nkb3, &one, gradvkb_d, max_npw, psi0, inc, &zero, becp2_, inc);
     }
     else
     {
-        zgemm_(&transC, &transN, &nkb, &n_npwx, &npw,
-               &ModuleBase::ONE, this->ppcell->vkb.c, &max_npw, psi0, &max_npw,
-               &ModuleBase::ZERO, becp1.c, &nkb);
-        zgemm_(&transC, &transN, &nkb3, &n_npwx, &npw,
-               &ModuleBase::ONE, this->ppcell->gradvkb.ptr, &max_npw, psi0, &max_npw,
-               &ModuleBase::ZERO, becp2.c, &nkb3);
+        ModuleBase::gemm_op<Complex, Device>()('C',
+                                               'N',
+                                               nkb,
+                                               n_npwx,
+                                               npw,
+                                               &one,
+                                               vkb_d,
+                                               max_npw,
+                                               psi0,
+                                               max_npw,
+                                               &zero,
+                                               becp1_,
+                                               nkb);
+        ModuleBase::gemm_op<Complex, Device>()('C',
+                                               'N',
+                                               nkb3,
+                                               n_npwx,
+                                               npw,
+                                               &one,
+                                               gradvkb_d,
+                                               max_npw,
+                                               psi0,
+                                               max_npw,
+                                               &zero,
+                                               becp2_,
+                                               nkb3);
     }
-    Parallel_Reduce::reduce_pool(becp1.c, nkb * n_npwx);
-    Parallel_Reduce::reduce_pool(becp2.c, nkb3 * n_npwx);
 
-    //2. <\beta \psi><psi|
-    ModuleBase::ComplexMatrix ps1(nkb, n_npwx, true);
-    ModuleBase::ComplexMatrix ps2(nkb3, n_npwx, true);
+    Complex* becp1_cpu = nullptr;
+    Complex* becp2_cpu = nullptr;
+    Complex* ps1_cpu = nullptr;
+    Complex* ps2_cpu = nullptr;
+    std::vector<Complex> tmp_space1, tmp_space2;
+    if(std::is_same<Device, base_device::DEVICE_GPU>::value)
+    {
+        tmp_space1.resize(nkb * n_npwx + nkb3 * n_npwx);
+        becp1_cpu = tmp_space1.data();
+        becp2_cpu = becp1_cpu + nkb * n_npwx;
+        syncmem_complex_d2h_op()(becp1_cpu, becp1_, nkb * n_npwx);
+        syncmem_complex_d2h_op()(becp2_cpu, becp2_, nkb3 * n_npwx);
+        
+        tmp_space2.resize(nkb * n_npwx + nkb3 * n_npwx, 0.0);
+        ps1_cpu = tmp_space2.data();
+        ps2_cpu = ps1_cpu + nkb * n_npwx;
+    }
+    else
+    {
+        Parallel_Reduce::reduce_pool(becp1_, nkb * n_npwx);
+        Parallel_Reduce::reduce_pool(becp2_, nkb3 * n_npwx);
+        becp1_cpu = becp1_;
+        becp2_cpu = becp2_;
 
+        setmem_complex_op()(ps1_, 0.0, nkb * n_npwx);
+        setmem_complex_op()(ps2_, 0.0, nkb3 * n_npwx);
+        ps1_cpu = ps1_;
+        ps2_cpu = ps2_;
+    }
+
+    // 2. <\beta \psi><psi|
     int sum = 0;
     int iat = 0;
     if (npol == 1)
     {
-        const int current_spin = this->isk[ik];
+        const int current_spin = 0;
         for (int it = 0; it < this->ucell->ntype; it++)
         {
             const int nproj = this->ucell->atoms[it].ncpp.nh;
@@ -141,13 +226,13 @@ void Velocity::act
                     {
                         for (int ib = 0; ib < n_npwx; ++ib)
                         {
-                            double dij = this->ppcell->deeq(current_spin, iat, ip, ip2);
+                            FPTYPE dij = static_cast<FPTYPE>(this->ppcell->deeq(current_spin, iat, ip, ip2));
                             int sumip2 = sum + ip2;
                             int sumip = sum + ip;
-                            ps1(sumip2, ib)  += dij * becp1(ib, sumip);
-                            ps2(sumip2, ib)  += dij * becp2(ib, sumip);
-                            ps2(sumip2 + nkb, ib)  += dij * becp2(ib, sumip + nkb);
-                            ps2(sumip2 + 2*nkb, ib)  += dij * becp2(ib , sumip + 2*nkb);
+                            ps1_cpu[sumip2 * n_npwx + ib] += dij * becp1_cpu[ib * nkb + sumip];
+                            ps2_cpu[sumip2 * n_npwx + ib] += dij * becp2_cpu[ib * nkb3 + sumip];
+                            ps2_cpu[(sumip2 + nkb) * n_npwx + ib] += dij * becp2_cpu[ib * nkb3 + sumip + nkb];
+                            ps2_cpu[(sumip2 + 2 * nkb) * n_npwx + ib] += dij * becp2_cpu[ib * nkb3 + sumip + 2 * nkb];
                         }
                     }
                 }
@@ -158,86 +243,95 @@ void Velocity::act
     }
     else
     {
-        for (int it = 0; it < this->ucell->ntype; it++)
-        {
-            const int nproj = this->ucell->atoms[it].ncpp.nh;
-            for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
-            {
-                for (int ip = 0; ip < nproj; ip++)
-                {
-                    for (int ip2 = 0; ip2 < nproj; ip2++)
-                    {
-                        for (int ib = 0; ib < n_npwx; ib+=2)
-                        {
-                            int sumip2 = sum + ip2;
-                            int sumip = sum + ip;
-                            std::complex<double> pol1becp1 = becp1(ib, sumip);
-                            std::complex<double> pol2becp1 = becp1(ib+1, sumip);
-                            std::complex<double> pol1becp2x = becp2(ib, sumip);
-                            std::complex<double> pol2becp2x = becp2(ib+1, sumip);
-                            std::complex<double> pol1becp2y = becp2(ib, sumip + nkb);
-                            std::complex<double> pol2becp2y = becp2(ib+1, sumip + nkb);
-                            std::complex<double> pol1becp2z = becp2(ib, sumip + 2 * nkb);
-                            std::complex<double> pol2becp2z = becp2(ib+1, sumip + 2 * nkb);
-                            std::complex<double> dij0 = this->ppcell->deeq_nc(0, iat, ip2, ip);
-                            std::complex<double> dij1 = this->ppcell->deeq_nc(1, iat, ip2, ip);
-                            std::complex<double> dij2 = this->ppcell->deeq_nc(2, iat, ip2, ip);
-                            std::complex<double> dij3 = this->ppcell->deeq_nc(3, iat, ip2, ip);
-
-                            ps1(sumip2, ib)             += dij0 * pol1becp1  + dij1 * pol2becp1;
-                            ps1(sumip2, ib+1)           += dij2 * pol1becp1  + dij3 * pol2becp1;
-                            ps2(sumip2, ib)             += dij0 * pol1becp2x + dij1 * pol2becp2x;
-                            ps2(sumip2, ib+1)           += dij2 * pol1becp2x + dij3 * pol2becp2x;
-                            ps2(sumip2 + nkb, ib)       += dij0 * pol1becp2y + dij1 * pol2becp2y;
-                            ps2(sumip2 + nkb, ib+1)     += dij2 * pol1becp2y + dij3 * pol2becp2y;
-                            ps2(sumip2 + 2*nkb, ib)     += dij0 * pol1becp2z + dij1 * pol2becp2z;
-                            ps2(sumip2 + 2*nkb, ib+1)   += dij2 * pol1becp2z + dij3 * pol2becp2z;
-                        }
-                    }
-                }
-                sum += nproj;
-                ++iat;
-            }
-        }
+        ModuleBase::WARNING_QUIT("Velocity", "Velocity operator does not support the non-collinear case yet!");
     }
 
-    
+    if(std::is_same<Device, base_device::DEVICE_GPU>::value)
+    {
+        syncmem_complex_h2d_op()(ps1_, ps1_cpu, nkb * n_npwx);
+        syncmem_complex_h2d_op()(ps2_, ps2_cpu, nkb3 * n_npwx);
+    }
+
     if (n_npwx == 1)
     {
         int inc = 1;
-        for(int id = 0 ; id < 3 ; ++id)
+        for (int id = 0; id < 3; ++id)
         {
             int vkbshift = id * max_npw * nkb;
             int ps2shift = id * nkb;
-            int npwshift = id * max_npw ;
-            zgemv_(&transN, &npw, &nkb,
-                   &ModuleBase::ONE, this->ppcell->gradvkb.ptr + vkbshift, &max_npw, ps1.c, &inc,
-                   &ModuleBase::ONE, vpsi + npwshift, &inc);
-            zgemv_(&transN, &npw, &nkb,
-                   &ModuleBase::ONE, this->ppcell->vkb.c, &max_npw, ps2.c + ps2shift, &inc,
-                   &ModuleBase::ONE, vpsi + npwshift, &inc);
+            int npwshift = id * max_npw;
+            ModuleBase::gemv_op<Complex, Device>()('N',
+                                                   npw,
+                                                   nkb,
+                                                   &one,
+                                                   gradvkb_d + vkbshift,
+                                                   max_npw,
+                                                   ps1_,
+                                                   inc,
+                                                   &one,
+                                                   vpsi + npwshift,
+                                                   inc);
+            ModuleBase::gemv_op<Complex, Device>()('N',
+                                                   npw,
+                                                   nkb,
+                                                   &one,
+                                                   vkb_d,
+                                                   max_npw,
+                                                   ps2_ + ps2shift,
+                                                   inc,
+                                                   &one,
+                                                   vpsi + npwshift,
+                                                   inc);
         }
     }
     else
     {
-        for(int id = 0 ; id < 3 ; ++id)
+        for (int id = 0; id < 3; ++id)
         {
             int vkbshift = id * max_npw * nkb;
             int ps2shift = id * n_npwx * nkb;
             int npwshift = id * max_npw * n_npwx;
-            zgemm_(&transN, &transT, &npw, &npm, &nkb,
-               &ModuleBase::ONE, this->ppcell->gradvkb.ptr + vkbshift, &max_npw, ps1.c, &n_npwx,
-               &ModuleBase::ONE, vpsi + npwshift, &max_npw);
-            zgemm_(&transN, &transT, &npw, &npm, &nkb,
-               &ModuleBase::ONE, this->ppcell->vkb.c, &max_npw, ps2.c + ps2shift, &n_npwx,
-               &ModuleBase::ONE, vpsi + npwshift, &max_npw);
+            ModuleBase::gemm_op<Complex, Device>()('N',
+                                                   'T',
+                                                   npw,
+                                                   n_npwx,
+                                                   nkb,
+                                                   &one,
+                                                   gradvkb_d + vkbshift,
+                                                   max_npw,
+                                                   ps1_,
+                                                   n_npwx,
+                                                   &one,
+                                                   vpsi + npwshift,
+                                                   max_npw);
+            ModuleBase::gemm_op<Complex, Device>()('N',
+                                                   'T',
+                                                   npw,
+                                                   n_npwx,
+                                                   nkb,
+                                                   &one,
+                                                   vkb_d,
+                                                   max_npw,
+                                                   ps2_ + ps2shift,
+                                                   n_npwx,
+                                                   &one,
+                                                   vpsi + npwshift,
+                                                   max_npw);
         }
     }
-
-
+    delmem_complex_op()(ps1_);
+    delmem_complex_op()(ps2_);
+    delmem_complex_op()(becp1_);
+    delmem_complex_op()(becp2_);
     ModuleBase::timer::tick("Operator", "Velocity");
     return;
 }
 
+template class Velocity<double, base_device::DEVICE_CPU>;
+template class Velocity<float, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Velocity<double, base_device::DEVICE_GPU>;
+template class Velocity<float, base_device::DEVICE_GPU>;
+#endif
 
-}
+} // namespace hamilt

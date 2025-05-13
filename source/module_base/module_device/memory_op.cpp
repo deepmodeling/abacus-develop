@@ -340,9 +340,9 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
     {
         if (arr != nullptr)
         {
-            free_ht(arr);
+            mtfunc::free_ht(arr);
         }
-        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
+        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
         std::string record_string;
         if (record_in != nullptr)
         {
@@ -365,7 +365,7 @@ struct delete_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 {
     void operator()(FPTYPE* arr)
     {
-        free_ht(arr);
+        mtfunc::free_ht(arr);
     }
 };
 

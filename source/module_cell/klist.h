@@ -140,6 +140,12 @@ public:
     {
         this->nkstot_full = value;
     }
+
+    bool get_is_mp() const
+    {
+        return is_mp;
+    }
+
     std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
 
   private:

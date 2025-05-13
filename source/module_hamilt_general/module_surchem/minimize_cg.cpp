@@ -171,13 +171,10 @@ void surchem::Leps2(const UnitCell& ucell,
                     complex<double>* phi_work,
                     complex<double>* lp)
 {
-    // cout<<"leps2!"<<endl;
     ModuleBase::Vector3<double> *grad_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
     XC_Functional::grad_rho(phi, grad_phi, rho_basis, ucell.tpiba);
-    // for (int i = 0; i < 10; i++) {
-    //     grad_phi[i].print();
-    // }
+    
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         grad_phi[ir].x *= epsilon[ir];
@@ -235,17 +232,13 @@ void surchem::Leps2(const UnitCell& ucell,
         lp_real[ir] += tmp_vector3[ir].z;
     }
 
-    // for (int i = 0; i < 10; i++) {
-    //     cout << lp_real << [i] << endl;
-    // }
 
     rho_basis->real2recip(lp_real.data(), lp);
-    // cout<<"lp: "<<endl;
-    // test_print(lp, 10);
 
     delete[] grad_phi;
     std::vector<double>().swap(lp_real);
     std::vector<double>().swap(grad_grad_phi);
+
     delete[] grad_grad_phi_G;
     delete[] tmp_vector3;
 }

@@ -110,8 +110,8 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
 
 double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2)
 {
-    ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_rho");
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
+    ModuleBase::TITLE("Charge_Mixing", "recip_rho");
+    ModuleBase::timer::tick("Charge_Mixing", "recip_rho");
 
     std::complex<double>** rhog1 = new std::complex<double>*[PARAM.inp.nspin];
     std::complex<double>** rhog2 = new std::complex<double>*[PARAM.inp.nspin];
@@ -134,10 +134,11 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
-                continue;
-}
-            sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
+			if (this->rhopw->gg[ig] < 1e-8) 
+			{
+				continue;
+			}
+			sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
         return sum;
@@ -207,9 +208,10 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0) {
-                    continue;
-}
+				if (ig == this->rhopw->ig_gge0) 
+				{
+					continue;
+				}
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -243,20 +245,21 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum);
 #endif
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
 
     sum *= *this->omega * 0.5;
 
     delete[] rhog1;
     delete[] rhog2;
+
+    ModuleBase::timer::tick("Charge_Mixing", "recip_rho");
     return sum;
 }
 
 // a simple inner product, now is not used anywhere. For test only.
 double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2)
 {
-    ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_simple");
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_simple");
+    ModuleBase::TITLE("Charge_Mixing", "recip_simple");
+    ModuleBase::timer::tick("Charge_Mixing", "recip_simple");
 
     double rnorm = 0.0;
     // consider a resize for mixing_angle
@@ -274,7 +277,7 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     Parallel_Reduce::reduce_pool(rnorm);
 #endif
 
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_simple");
+    ModuleBase::timer::tick("Charge_Mixing", "recip_simple");
 
     return rnorm;
 }
@@ -282,8 +285,8 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
 // a Hartree-like inner product
 double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, std::complex<double>* rhog2)
 {
-    ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_hartree");
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_hartree");
+    ModuleBase::TITLE("Charge_Mixing", "recip_hartree");
+    ModuleBase::timer::tick("Charge_Mixing", "recip_hartree");
 
     static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / ((*this->tpiba) * (*this->tpiba));
     static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
@@ -444,9 +447,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     Parallel_Reduce::reduce_pool(sum);
 #endif
 
-    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_hartree");
-
     sum *= *this->omega * 0.5;
+
+    ModuleBase::timer::tick("Charge_Mixing", "recip_hartree");
 
     return sum;
 }
@@ -456,8 +459,10 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
+	if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) 
+	{ 
+		resize_tmp = 2;
+	}
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)

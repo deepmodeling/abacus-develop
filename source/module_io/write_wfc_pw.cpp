@@ -19,6 +19,9 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
 
+    assert(nkstot>0);
+    assert(nks>0);
+
     std::string* wfilename;
     wfilename = new std::string[nkstot];
     for (int ik = 0; ik < nkstot; ++ik)
@@ -47,9 +50,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
             }
         }
     }
-    // if(GlobalV::MY_RANK!=0) std::cout.clear();
-    // std::cout<<"Hello"<<std::endl;
-    // if(GlobalV::MY_RANK!=0) std::cout.setstate(ios::failbit);
+
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 

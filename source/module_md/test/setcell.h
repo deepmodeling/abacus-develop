@@ -11,28 +11,14 @@
 
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
-
-namespace ModuleIO
-{
-void print_force(std::ofstream& ofs_running,
-                 const UnitCell& cell,
-                 const std::string& name,
-                 const ModuleBase::matrix& force,
-                 bool ry = true)
-{
-}
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
-{
-}
-} // namespace ModuleIO
 
 class Setcell
 {

@@ -7,7 +7,7 @@
 #include "module_psi/psi.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
 #include <type_traits>
 

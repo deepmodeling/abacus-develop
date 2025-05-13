@@ -131,14 +131,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
                 double ef_spin = ef_all_spin[is];
-                ModuleIO::write_vdata_palgrid(pgrid,
-                    rho_save[is].data(),
-                    is,
-                    nspin,
-                    0,
-                    ssc.str(),
-                    ef_spin,
-                    ucell_in);
+                ModuleIO::write_vdata_palgrid(pgrid, rho_save[is].data(), is, nspin, 0, ssc.str(), ef_spin, ucell_in);
             }
 
             std::cout << " Complete!" << std::endl;
@@ -212,8 +205,11 @@ void IState_Charge::begin(Gint_k& gk,
         if (bands_picked_[ib])
         {
             // Using new density matrix inplementation (multi-k)
-            const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin];
-            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+            const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin];
+            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV,
+                                                                      nspin_dm,
+                                                                      kv.kvec_d,
+                                                                      kv.get_nks() / nspin_dm);
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);
@@ -259,13 +255,13 @@ void IState_Charge::begin(Gint_k& gk,
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,
-                            rho_save[is].data(),
-                            is,
-                            nspin,
-                            0,
-                            ssc.str(),
-                            ef_spin,
-                            ucell_in);
+                                                      rho_save[is].data(),
+                                                      is,
+                                                      nspin,
+                                                      0,
+                                                      ssc.str(),
+                                                      ef_spin,
+                                                      ucell_in);
                     }
 
                     std::cout << " Complete!" << std::endl;
@@ -318,13 +314,13 @@ void IState_Charge::begin(Gint_k& gk,
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_vdata_palgrid(pgrid,
-                        rho_save[is].data(),
-                        is,
-                        nspin,
-                        0,
-                        ssc.str(),
-                        ef_spin,
-                        ucell_in);
+                                                  rho_save[is].data(),
+                                                  is,
+                                                  nspin,
+                                                  0,
+                                                  ssc.str(),
+                                                  ef_spin,
+                                                  ucell_in);
                 }
 
                 std::cout << " Complete!" << std::endl;
@@ -480,7 +476,7 @@ void IState_Charge::idmatrix(const int& ib,
         this->psi_gamma->fix_k(is);
 
         // psi::Psi<double> wg_wfc(*this->psi_gamma, 1, this->psi_gamma->get_nbands());
-        psi::Psi<double> wg_wfc(1, 
+        psi::Psi<double> wg_wfc(1,
                                 this->psi_gamma->get_nbands(),
                                 this->psi_gamma->get_nbasis(),
                                 this->psi_gamma->get_nbasis(),
@@ -547,12 +543,13 @@ void IState_Charge::idmatrix(const int& ib,
         }
 
         this->psi_k->fix_k(ik);
-        
-        psi::Psi<std::complex<double>> wg_wfc(1, 
-                                              this->psi_k->get_nbands(), 
+
+        psi::Psi<std::complex<double>> wg_wfc(1,
+                                              this->psi_k->get_nbands(),
                                               this->psi_k->get_nbasis(),
                                               this->psi_k->get_nbasis(),
                                               true);
+        wg_wfc.set_all_psi(this->psi_k->get_pointer(), wg_wfc.size());
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {

@@ -78,13 +78,15 @@ if (ENABLE_MPI)
     TARGET HSolver_pw
     LIBS parameter  ${math_libs} psi device base container
     SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
+    ../../module_elecstate/elecstate_tools.cpp ../../module_elecstate/occupy.cpp 
   )
 
   AddTest(
     TARGET HSolver_sdft
     LIBS parameter  ${math_libs} psi device base container
     SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
-  )
+                ../../module_elecstate/elecstate_tools.cpp ../../module_elecstate/occupy.cpp 
+    )
 
   if(ENABLE_LCAO)
     if(USE_ELPA)

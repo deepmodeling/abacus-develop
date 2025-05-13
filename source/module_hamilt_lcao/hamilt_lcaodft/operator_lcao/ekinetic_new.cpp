@@ -51,7 +51,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1, I1;
+        int T1=0;
+        int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
@@ -111,7 +112,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1, I1;
+        int T1=0; 
+        int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = this->adjs_all[iat1];
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)

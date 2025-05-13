@@ -142,7 +142,7 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 
 void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    if (my_rank)
+    if (my_rank!=0)
     {
         return;
     }
@@ -158,6 +158,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
         press += stress(i, i) / 3;
     }
 
+    // screen output
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
     std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
@@ -182,9 +183,9 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
 
+    // running_log output
     ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8) << std::endl;
-    ofs << std::endl;
+    ofs << std::setprecision(8);
     ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
     ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
@@ -213,9 +214,6 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     {
         MD_func::print_stress(ofs, virial, stress);
     }
-
-    ofs << std::endl;
-    ofs << std::endl;
 
     return;
 }

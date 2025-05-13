@@ -13,6 +13,12 @@ if (USE_ROCM)
     module_fft/fft_rocm.cpp
   )
 endif()
+if (USE_DSP)
+  list (APPEND FFT_SRC
+      module_fft/fft_dsp.cpp
+      module_fft/fft_dsp_float.cpp
+      pw_transform_k_dsp.cpp)
+endif()
 
 list(APPEND objects
     pw_basis.cpp
@@ -24,6 +30,7 @@ list(APPEND objects
     pw_distributer.cpp
     pw_init.cpp
     pw_transform.cpp
+    pw_transform_gpu.cpp
     pw_transform_k.cpp
     module_fft/fft_bundle.cpp
     module_fft/fft_cpu.cpp
@@ -36,6 +43,12 @@ add_library(
     ${objects}
 )
 
+if (USE_DSP)
+target_link_libraries(planewave  PRIVATE
+${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
+target_compile_definitions( planewave PUBLIC 
+FFT_DAT_DIR="${MTBLAS_FFT_DIR}/datfile/mt_fft_blas.dat") 
+endif()
 if(ENABLE_COVERAGE)
   add_coverage(planewave)
 endif()
@@ -45,5 +58,6 @@ if(BUILD_TESTING)
     add_subdirectory(test)
     add_subdirectory(test_serial)
     add_subdirectory(kernels/test)
+    add_subdirectory(test_gpu)
   endif()
 endif()

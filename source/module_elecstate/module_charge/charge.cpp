@@ -7,7 +7,7 @@
 // nspina = 1 the total atomic charge density is calculated
 // nspina = 2 the spin up and spin down atomic charge
 // densities are calculated assuming an uniform atomic
-// spin-polarization equal to starting_magnetization(nt)
+// spin-polarization equal to starting_mag(nt)
 // nspina = 4 noncollinear case. The total density is
 // calculated in the first component and the magnetization
 // std::vector in the other three.
@@ -282,8 +282,10 @@ void Charge::atomic_rho(const int spin_number_need,
         double ne_tot = 0.0;
         std::vector<double> ne(spin_number_need);
         int spin0 = 1;
-        if (spin_number_need == 2) { spin0 = spin_number_need;
-}
+		if (spin_number_need == 2) 
+		{ 
+			spin0 = spin_number_need;
+		}
 
         for (int is = 0; is < spin0; ++is)
         {
@@ -301,33 +303,38 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-}
-}
+		for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
+			}
+		}
         
-        double* nhatgr;
+        double* nhatgr=nullptr;
         GlobalC::paw_cell.get_nhat(nhat,nhatgr);
 
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] -= nhat[is][ir];
-}
-}
+		for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] -= nhat[is][ir];
+			}
+		}
 #endif
     }
     else
     {
-        ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix {
-            // use interpolation to get three dimension charge density.
-            ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
+		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
+		{
+			// use interpolation to get three dimension charge density.
+			ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
 
             for (int it = 0; it < ucell.ntype; it++)
             {
                 // check the start magnetization
                 const int startmag_type = [&]() -> int {
-                    if (ucell.magnet.start_magnetization[it] != 0.0) 
+                    if (ucell.magnet.start_mag[it] != 0.0) 
                     {
                         return 1;
                     }
@@ -469,8 +476,10 @@ void Charge::atomic_rho(const int spin_number_need,
     #ifdef _OPENMP
     #pragma omp for
     #endif
-                            for (int igg = 0; igg < this->rhopw->ngg; igg++)
-                                rho_lgl[igg] /= omega;
+							for (int igg = 0; igg < this->rhopw->ngg; igg++)
+							{
+								rho_lgl[igg] /= omega;
+							}
     #ifdef _OPENMP
                         }
     #endif
@@ -500,8 +509,8 @@ void Charge::atomic_rho(const int spin_number_need,
                             for (int ig = 0; ig < this->rhopw->npw; ig++)
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
-                                const double up = 0.5 * (1 + ucell.magnet.start_magnetization[it] / atom->ncpp.zv);
-                                const double dw = 0.5 * (1 - ucell.magnet.start_magnetization[it] / atom->ncpp.zv);
+                                const double up = 0.5 * (1 + ucell.magnet.start_mag[it] / atom->ncpp.zv);
+                                const double dw = 0.5 * (1 - ucell.magnet.start_mag[it] / atom->ncpp.zv);
                                 rho_g3d(0, ig) += swap * up;
                                 rho_g3d(1, ig) += swap * dw;
                             }
@@ -556,17 +565,17 @@ void Charge::atomic_rho(const int spin_number_need,
                                 if (PARAM.globalv.domag)
                                 { // will not be used now, will be deleted later
                                     rho_g3d(1, ig)
-                                        += swap * (ucell.magnet.start_magnetization[it] / atom->ncpp.zv) * sin_a1 * cos_a2;
+                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * cos_a2;
                                     rho_g3d(2, ig)
-                                        += swap * (ucell.magnet.start_magnetization[it] / atom->ncpp.zv) * sin_a1 * sin_a2;
+                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * sin_a2;
                                     rho_g3d(3, ig)
-                                        += swap * (ucell.magnet.start_magnetization[it] / atom->ncpp.zv) * cos_a1;
+                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * cos_a1;
                                 }
                                 else if (PARAM.globalv.domag_z)
                                 {
                                     rho_g3d(1, ig) = 0.0;
                                     rho_g3d(2, ig) = 0.0;
-                                    rho_g3d(3, ig) += swap * (ucell.magnet.start_magnetization[it] / atom->ncpp.zv);
+                                    rho_g3d(3, ig) += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv);
                                 }
                             }
                         }
@@ -632,10 +641,12 @@ void Charge::atomic_rho(const int spin_number_need,
         {
             this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
 
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                ne[is] += rho_in[is][ir];
-}
-            ne[is] *= omega / (double)this->rhopw->nxyz;
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				ne[is] += rho_in[is][ir];
+			}
+
+			ne[is] *= omega / (double)this->rhopw->nxyz;
     #ifdef __MPI
             Parallel_Reduce::reduce_pool(ne[is]);
     #endif
@@ -668,16 +679,14 @@ void Charge::atomic_rho(const int spin_number_need,
                 GlobalV::ofs_warning << " neg = " << neg << " ima = " << ima << " SPIN = " << is << std::endl;
             }
 
-            //		std::cout << " sum rho for spin " << is << " = " << sumrea << std::endl;
-            //		std::cout << " sum rho for spin " << is << " = " << sumrea << std::endl;
-
         } // end is
 
         double ne_tot = 0.0;
         int spin0 = 1;
-        if (spin_number_need == 2) {
-            spin0 = spin_number_need;
-}
+		if (spin_number_need == 2) 
+		{
+			spin0 = spin_number_need;
+		}
         for (int is = 0; is < spin0; ++is)
         {
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
@@ -686,11 +695,14 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-}
-}
+
+        for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
+			}
+		}
     }
 
     ModuleBase::timer::tick("Charge", "atomic_rho");
@@ -707,9 +719,10 @@ void Charge::save_rho_before_sum_band()
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
         }
 #ifdef USE_PAW
-        if(PARAM.inp.use_paw) {
-            ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
-}
+		if(PARAM.inp.use_paw) 
+		{
+			ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
+		}
 #endif
     }
     return;

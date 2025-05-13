@@ -21,7 +21,7 @@ void psi_initializer_file<T>::initialize(const Structure_Factor* sf,
 template <typename T>
 void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
 {
-    ModuleBase::timer::tick("psi_initializer_file", "init_psig");
+    ModuleBase::timer::tick("psi_init_file", "init_psig");
     const int npol = PARAM.globalv.npol;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     const int nkstot = this->p_kv->get_nkstot();
@@ -39,7 +39,7 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
             psig[ib * nbasis + ig] = this->template cast_to_T<T>(wfcatom(ib, ig));
         }
     }
-    ModuleBase::timer::tick("psi_initializer_file", "init_psig");
+    ModuleBase::timer::tick("psi_init_file", "init_psig");
 }
 
 template class psi_initializer_file<std::complex<double>>;

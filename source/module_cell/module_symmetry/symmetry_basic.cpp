@@ -1,10 +1,7 @@
-//==========================================================
-// AUTHOR : Zhengpan , mohan , spshu
-// DATE : 2007-9
-//==========================================================
 #include "symmetry.h"
 #include "module_base/mymath.h"
 #include "module_parameter/parameter.h"
+
 bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry
@@ -111,162 +108,7 @@ void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) 
 
 	return;
 }
-/*
-// atom ordering for each atom type.
-void Symmetry_Basic::atom_ordering(double *posi, const int natom, int *subindex)
-{
-	//order the atomic positions inside a supercell by a unique ordering scheme	
-	subindex[0] = 0;
 
-	if(natom == 1)
-	{
-		//if there is only one atom, it is not necessary to order
-		return;
-	}
-
-	//order the x-dimension of the atomic position, 
-	//only get a permutation table, data in momery are not changed
-	//this->heapsort_pos(natom, posi, subindex);
-
-	double *tmppos = new double[natom];
-	for(int i=0; i<natom; i++)
-	{
-		tmppos[i] = posi[i*3];
-	}
-	ModuleBase::heapsort(natom, tmppos, subindex);
-
-//	for(int i=0; i<natom; i++)
-//	{
-//		std::cout << "\n subindex[" << i << "]=" << subindex[i];
-//	}
-	
-	this->order_atoms(posi, natom, subindex);
-
-//	std::cout << "\n after Order X:" << std::endl;
-//	print_pos(posi, natom);
-	
-	// order y
-	// the old x value 
-	// and the position
-	double oldv = posi[0];
-	int oldpos = 0;
-
-	// the new x value
-	// and the position
-	double vnew;
-	int newpos;
-	for(int ia=0; ia<natom; ia++)
-	{
-		vnew = posi[ia*3];
-		newpos = ia;
-		if( vnew != oldv )
-		{
-			this->order_y(&posi[oldpos*3], oldpos, newpos);
-			oldv = vnew;
-			oldpos = ia;
-		}
-		else if(ia==natom-1)
-		{
-			// in this case, the new one is the last one,
-			// also the same as the old one,
-			// so we need to add 1
-			this->order_y(&posi[oldpos*3], oldpos, newpos+1);	
-		}
-	}
-	delete[] tmppos;
-	return;
-}
-
-void Symmetry_Basic::order_y(double *pos1, const int &oldpos1, const int &newpos1)
-{
-//	ModuleBase::TITLE("Symmetry_Basic","order_y");
-	// how many atoms need to be reordered according to same x value.
-	const int nat1 = newpos1 - oldpos1;
-//	std::cout << "\n nat1=" << nat1 << std::endl; 
-	if(nat1 == 1) return;
-
-	double* tmp1 = new double[nat1];
-	int* index1 = new int[nat1];
-	ModuleBase::GlobalFunc::ZEROS(index1, nat1);
-	
-	for(int ia=0; ia<nat1; ia++)
-	{
-		//+1 means y
-		tmp1[ia] = pos1[3*ia+1];
-//		std::cout << "\n ia=" << ia << " y=" << tmp1[ia];
-	}
-
-	ModuleBase::heapsort(nat1, tmp1, index1);
-
-	this->order_atoms(pos1,nat1,index1);
-	
-//	for(int ia=0; ia<nat1; ia++)
-//	{
-//		std::cout << "\n index[" << ia << "]=" << index1[ia];
-//	}
-
-	double oldv2 = pos1[1];
-	int oldpos2 = 0;
-
-	double newv2;
-	int newpos2;
-
-	for(int ia=0; ia<nat1; ia++)
-	{
-		newv2 = pos1[ia*3+1];
-		newpos2 = ia;
-		
-		if(newv2 != oldv2)
-		{
-			this->order_z(&pos1[oldpos2*3], oldpos2, newpos2);
-			oldv2 = newv2;
-			oldpos2 = newpos2;
-		}
-		else if(ia==nat1-1)
-		{
-			this->order_z(&pos1[oldpos2*3], oldpos2, newpos2+1);
-		}
-	}
-
-	delete[] index1;
-	delete[] tmp1;
-
-	return;
-}
-
-void Symmetry_Basic::order_z(double* pos2, const int &oldpos2, const int &newpos2)
-{
-//	ModuleBase::TITLE("Symmetry_Basic","order_z");
-	const int nat2 = newpos2 - oldpos2;
-//	std::cout << "\n nat2=" << nat2; 
-//	if(nat2==1) return;
-	double* tmp2 = new double[nat2];
-	int* index2 = new int[nat2];
-	ModuleBase::GlobalFunc::ZEROS(index2, nat2);
-	for(int ia=0; ia<nat2; ia++)
-	{
-		//+2 means z
-		tmp2[ia] = pos2[3*ia+2];
-	}
-
-	ModuleBase::heapsort(nat2, tmp2, index2);
-
-//	for(int ia=0; ia<nat2; ia++)
-//	{
-//		std::cout << "\n Z1 pos2[" << ia << "]=" << pos2[3*ia] << " " << pos2[3*ia+1] << " " << pos2[3*ia+2];
-//	}
-	
-	this->order_atoms(pos2,nat2,index2);
-
-//	for(int ia=0; ia<nat2; ia++)
-//	{
-//		std::cout << "\n Z2 pos2[" << ia << "]=" << pos2[3*ia] << " " << pos2[3*ia+1] << " " << pos2[3*ia+2];
-//	}
-
-	delete[] index2;
-	delete[] tmp2;
-}
-*/
 //convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
 //to a set of vectors (vb) represented in the basis vectors new1, new2, new3
 void Symmetry_Basic::veccon(
@@ -328,13 +170,7 @@ void Symmetry_Basic::veccon(
 		direct_old.z = carpos[i * 3 + 2];
 
 		car = direct_old * oldlat;
-
-		
-		
 		direct_new = car * GT;
-
-		//std::cout << "\n car[" << i << "]=" << car.x << " " << car.y << " " << car.z;
-		//std::cout << "\n dir[" << i << "]=" << direct_new.x << " " << direct_new.y << " " << direct_new.z;
 
 		rotpos[i * 3 + 0] = direct_new.x;
 		rotpos[i * 3 + 1] = direct_new.y;
@@ -347,12 +183,15 @@ void Symmetry_Basic::veccon(
 //generate all point group symmetry operations from the generation group
 void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const
 {
-	int m1, m2;
-	int n;
+	int m1=0;
+    int m2=0;
+	int n=0;
+
 	ModuleBase::Matrix3 iden(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 sig(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp1(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp2(1,0,0,0,1,0,0,0,1);
+
 	bool flag = 0;
 	int order = 0;
 	int now = 0;
@@ -363,7 +202,6 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 	//take all generators
 	for(int i = 0; i < ngen; ++i)
 	{
-//		std::cout<<"\n symgen = "<<i<<std::endl;
 		sig = symgen[i];
 		flag = 1;
 		for(int j = 0; j < nop; ++j)
@@ -389,35 +227,18 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 				break;
 			}
 			temp1= sig * temp1;
-		//	temp1 = temp2;
 		}
-//		std::cout<<"\n order = "<<order<<std::endl;
 		now = nop;
 		for(int j = 0; j < nop; ++j)
 		{	
 			temp1 = symop[j];
-		//	std::cout<<"\n j = "<<j<<std::endl<<"================================================="<<std::endl;
-		//	out.printM3("temp1",temp1);
 			for(int k = 1; k < order; ++k)
 			{
 				temp1 = sig * temp1;
-			//	std::cout<<"\n k = "<<k<<std::endl<<"================================================="<<std::endl;
-			//	out.printM3("temp1",temp1);
-			//	out.printM3("temp2",temp2);
-
-				//if(i==0 && j==0 && k==1){
-					//std::cout<<"sig:"<<std::endl;
-					//for(l=0; l<3; l++)
-						//for(m=0; m<3; m++) std::cout<<sig[l][m]<<"\t";
-					//std::cout<<std::endl;
-				//}
 
 				for(int l = 0; l < nop; ++l)
 				{
 					temp2 = symop[l] * temp1;
-				//	std::cout<<"\n l = "<<l<<std::endl<<"================================================="<<std::endl;
-				//	out.printM3("temp1",temp1);
-				//	out.printM3("temp2",temp2);
 					flag = 1;
 					for(int m = 0; m < now; ++m)
 					{
@@ -432,13 +253,6 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 						continue;	//the new-found element has already existed.
 					}
 
-					//if(i==0 && j==0 && k==1 && l==0){
-						//std::cout<<"symop[0]:"<<std::endl;
-						//for(m=0; m<3; m++)
-							//for(t=0; t<3; t++) std::cout<<temp2[m][t]<<"\t";
-						//std::cout<<std::endl;
-					//}
-
 					++now;	//the number of elements we found
 					if(now > 48)
 					{
@@ -447,8 +261,6 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 						return;
 					}
 					symop[now - 1] = temp2;
-				//	std::cout<<"\n symop[now]:  "<<now<<std::endl;
-				//	out.printM3("",temp2);
 				}
 			}
 			if(j == 0)
@@ -498,18 +310,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 			m2 = now;
 		}
 		nop = now;
-//		for(int i = 0; i < nop; ++i)
-//		{
-//			std::cout<<"\n i = "<<i + 1<<std::endl;
-//			out.printM3("",symop[i]);
-//		}
 	}
-//	std::cout<<"\n in matrigen:"<<std::endl;
-//	for(int i = 0; i < nop; ++i)
-//	{
-//		std::cout<<"\n i = "<<i<<std::endl;
-//		out.printM3("",symop[i]);
-//	}
 }
 
 //--------------------------------------------------------------
@@ -647,15 +448,14 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 			<< std::setw(4) << symop[i].e31
 			<< std::setw(4) << symop[i].e32
 			<< std::setw(4) << symop[i].e33 << std::endl;
-//			out.printM3("",symop[i]);
-//			GlobalV::ofs_running<<std::endl;
 		}
 	}
 
 	return;
 }
 
-int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, const int& nc2, const int& nc3, const int& nc4, const int& nc6,
+int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, 
+    const int& nc2, const int& nc3, const int& nc4, const int& nc6,
     const int& ns1, const int& ns3, const int& ns4, const int& ns6)const
 {
     if (nrot > 24)
@@ -732,7 +532,10 @@ int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, const int& nc2, c
     }
     return 1;//C_1
 }
-bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const
+
+
+bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, 
+  std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const
 {
 	//-------------------------------------------------------------------------
 	//return the name of the point group
@@ -751,8 +554,10 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 	//because the number of their elements are exclusive
     if (PARAM.inp.test_symmetry) ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
 
-    std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h", "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h", "D_4", "C_4v", "D_2d", "D_4h",
-    "C_6", "C_3h", "C_6h", "D_6", "C_6v", "D_3h", "D_6h", "T", "T_h", "O", "T_d", "O_h" };
+    std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h", 
+    "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h", 
+    "D_4", "C_4v", "D_2d", "D_4h", "C_6", "C_3h", "C_6h", "D_6", "C_6v", "D_3h", "D_6h", 
+    "T", "T_h", "O", "T_d", "O_h" };
 
 	if(nrot == 1)
 	{
@@ -805,15 +610,12 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 	int ns4 = 0;
 	int ns6 = 0; //mohan add 2012-01-15
 
-//	GlobalV::ofs_running << " " << std::setw(5) << "NROT" << std::setw(15) << "TRACE" << std::setw(15) << "DET" << std::endl;
 	for(int i = 0; i < nrot; ++i)
 	{
 		//calculate the trace of a matrix
 		trace = int(gmatrix[i].e11+gmatrix[i].e22+gmatrix[i].e33);
 		//calculate the determinant of a matrix
 		det = int(gmatrix[i].Det());
-
-//		GlobalV::ofs_running << " " << std::setw(5) << i+1 << std::setw(15) << trace << std::setw(15) << det << std::endl;
 
 		if(trace == 3)
 		{
@@ -836,7 +638,7 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
 		else if(trace == -2 && det == -1) ++ns3; //mohan add 2012-01-15
 	}
 
-        if(test_brav)
+    if(test_brav)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C2",nc2);
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C3",nc3);
@@ -1109,7 +911,7 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	double z_max = *max_element(tmpz.begin(),tmpz.end());
 	double z_min = *min_element(tmpz.begin(),tmpz.end());
 
-	double*  weighted_func = new double[natom];
+	double* weighted_func = new double[natom];
 	
 	//the first time: f(x, y, z)
 	for(int i=0; i<natom; i++)
@@ -1129,7 +931,11 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	for(int i=0; i<natom-1;)
 	{
 		int ix_right=i+1;	//right bound is no included
-		while(ix_right<natom && equal(tmpx[ix_right],tmpx[i])) ++ix_right;
+		while(ix_right<natom && equal(tmpx[ix_right],tmpx[i])) 
+		{
+			++ix_right;
+		}
+
 		int nxequal=ix_right-i;
 		if(nxequal>1)	//need a new sort
 		{

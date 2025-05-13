@@ -53,6 +53,56 @@ void ReadInput::item_postprocess()
         read_sync_int(input.dos_nche);
         this->add_item(item);
     }
+    {
+        Input_Item item("stm_bias");
+        item.annotation = "bias voltage used to calculate ldos";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias should have 1 or 3 values");
+            }
+            para.input.stm_bias[0] = std::stod(item.str_values[0]);
+            para.input.stm_bias[1] = (count == 3) ? std::stod(item.str_values[1]) : 0.1;
+            para.input.stm_bias[2] = (count == 3) ? std::stod(item.str_values[2]) : 1;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.stm_bias[2] <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[2] should be greater than 0");
+            }
+            if (para.input.stm_bias[1] == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[1] should be nonzero");
+            }
+        };
+        sync_doublevec(input.stm_bias, 3, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("ldos_line");
+        item.annotation = "start and end point of the line (direct coordinates) and number of points";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 6 && count != 7)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ldos_line should have 6 or 7 values");
+            }
+            for (int i = 0; i < 6; ++i)
+            {
+                para.input.ldos_line[i] = std::stod(item.str_values[i]);
+            }
+            para.input.ldos_line[6] = (count == 7) ? std::stoi(item.str_values[6]) : 100;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ldos_line[6] <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ldos_line[6] should be greater than 0");
+            }
+        };
+        sync_doublevec(input.ldos_line, 7, 0);
+        this->add_item(item);
+    }
 
     // Electronic Conductivity
     {

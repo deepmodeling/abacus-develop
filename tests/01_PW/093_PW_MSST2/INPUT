@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+calculation     md
+nbands          8
+pseudo_dir      ../../PP_ORB
+
+#Parameters (Accuracy)
+ecutwfc         10
+scf_thr         1e-9
+scf_nmax        20
+basis_type      pw
+ks_solver       cg
+mixing_type     broyden
+mixing_beta     0.7
+smearing_method    gauss
+smearing_sigma     0.001
+
+cal_stress       1
+cal_force        1
+
+md_nstep         3
+md_type          msst
+md_prec_level    2
+md_tfirst        10
+md_dt            1
+md_restart       0
+init_vel         1
+
+msst_qmass       1
+msst_vel         10

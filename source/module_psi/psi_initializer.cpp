@@ -32,7 +32,7 @@ void psi_initializer<T>::initialize(const Structure_Factor* sf,
 template <typename T>
 void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
 {
-    ModuleBase::timer::tick("psi_initializer", "random_t");
+    ModuleBase::timer::tick("psi_init", "random_t");
     assert(mode <= 1);
     assert(iw_start >= 0);
     const int ng = this->pw_wfc_->npwk[ik];
@@ -163,14 +163,14 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
             }
         }
     }
-    ModuleBase::timer::tick("psi_initializer_random", "random_t");
+    ModuleBase::timer::tick("psi_init", "random_t");
 }
 
 #ifdef __MPI
 template <typename T>
 void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
 {
-    ModuleBase::timer::tick("psi_initializer", "stick_to_pool");
+    ModuleBase::timer::tick("psi_init", "stick_to_pool");
     MPI_Status ierror;
     const int is = this->ixy2is_[ir];
     const int ip = this->pw_wfc_->fftixy2ip[ir];
@@ -218,8 +218,8 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
         }
     }
 
+    ModuleBase::timer::tick("psi_init", "stick_to_pool");
     return;
-    ModuleBase::timer::tick("psi_initializer", "stick_to_pool");
 }
 #endif
 

@@ -637,7 +637,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
 
     // =================================================================
     // Step 4 : update G,GT and other stuff

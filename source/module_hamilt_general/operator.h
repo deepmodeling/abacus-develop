@@ -18,6 +18,7 @@ enum class calculation_type
     pw_veff,
     pw_meta,
     pw_onsite,
+    pw_exx,
     lcao_overlap,
     lcao_fixed,
     lcao_gint,
@@ -41,7 +42,6 @@ class Operator
 
     // this is the core function for Operator
     //  do H|psi> from input |psi> ,
-
     /// as default, different operators donate hPsi independently
     /// run this->act function for the first operator and run all act() for other nodes in chain table
     /// if this procedure is not suitable for your operator, just override this function.
@@ -73,8 +73,10 @@ class Operator
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
-    // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
-    virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out, const int nbands) const {};
+	// virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+	virtual void act(const psi::Psi<T, Device>& psi_in, 
+			psi::Psi<T, Device>& psi_out, 
+			const int nbands) const {};
 
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };
@@ -88,6 +90,11 @@ class Operator
     int get_act_type() const
     {
         return this->act_type;
+    }
+
+    calculation_type get_cal_type() const
+    {
+        return this->cal_type;
     }
 
   protected:

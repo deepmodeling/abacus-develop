@@ -16,7 +16,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/cube_io.h"
 #include "module_io/rhog_io.h"
-#include "module_io/read_wfc_to_rho.h"
+#include "module_io/read_wf2rho_pw.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -40,7 +40,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     bool read_kin_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
-        GlobalV::ofs_running << " try to read charge from file" << std::endl;
+        GlobalV::ofs_running << " Read electron density from file" << std::endl;
 
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
@@ -48,7 +48,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
-            GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
+            GlobalV::ofs_running << " Read electron density from file: " << binary.str() << std::endl;
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 rhopw->recip2real(rhog[is], rho[is]);
@@ -67,24 +67,24 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     this->rho[is],
                     ucell.nat))
                 {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                    GlobalV::ofs_running << " Read electron density from file: " << ssc.str() << std::endl;
                 }
                 else if (is > 0)    // nspin=2 or 4
                 {
                     if (is == 1)    // failed at the second spin
                     {
-                        std::cout << "Incomplete charge density file!" << std::endl;
+                        std::cout << " Incomplete electron density file." << std::endl;
                         read_error = true;
                         break;
                     }
                     else if (is == 2)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+                        GlobalV::ofs_running << " Didn't read in the electron density but would rearrange it later. "
                             << std::endl;
                     }
                     else if (is == 3)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+                        GlobalV::ofs_running << " rearrange electron density " << std::endl;
                         for (int ir = 0; ir < this->rhopw->nrxx; ir++)
                         {
                             this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
@@ -105,15 +105,15 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         if (read_error)
         {
             const std::string warn_msg
-                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
-                  " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the "
+                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read\n charge density from file.\n"
+                  " Please check if there is SPINX_CHG.cube (X=1,...) or\n {suffix}-CHARGE-DENSITY.restart in the "
                   "directory.\n";
-            std::cout << std::endl << warn_msg;
+            std::cout << warn_msg;
             if (PARAM.inp.init_chg == "file")
             {
                 ModuleBase::WARNING_QUIT("Charge::init_rho",
-                                         "Failed to read in charge density from file.\nIf you want to use atomic "
-                                         "charge initialization, \nplease set init_chg to atomic in INPUT.");
+                                         "Failed to read in charge density from file.\n For initializing atomic "
+                                         "charge in calculations,\n please set init_chg to atomic in INPUT.");
             }
         }
 
@@ -196,8 +196,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::cout << " Charge::init_rho: init kinetic energy density from rho." << std::endl;
             }
-            const double pi = 3.141592653589790;
-            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            const double fact = (3.0 / 5.0) * pow(3.0 * ModuleBase::PI * ModuleBase::PI, 2.0 / 3.0);
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
@@ -229,7 +228,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     this->rho[is],
                     ucell.nat))
                 {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                    GlobalV::ofs_running << " Read in the electron density: " << ssc.str() << std::endl;
                 }
             }
         }
@@ -248,7 +247,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
         const int nkstot = kv->get_nkstot();
         const std::vector<int>& isk = kv->isk;
-        ModuleIO::read_wfc_to_rho(pw_wfc, symm, kv->ik2iktot.data(), nkstot, isk, *this);
+        ModuleIO::read_wf2rho_pw(pw_wfc, symm, kv->ik2iktot.data(), nkstot, isk, *this);
     }
 }
 
@@ -261,17 +260,6 @@ void Charge::set_rho_core(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Charge","set_rho_core");
     ModuleBase::timer::tick("Charge","set_rho_core");
-
-    // double eps = 1.e-10;
-    //----------------------------------------------------------
-    // LOCAL VARIABLES :
-    // counter on mesh points
-    // counter on atomic types
-    // counter on g vectors
-    //----------------------------------------------------------
-    // int ir = 0;
-    // int it = 0;
-    // int ig = 0;
 
     bool bl = false;
     for (int it = 0; it<ucell.ntype; it++)
@@ -378,6 +366,7 @@ void Charge::set_rho_core_paw()
     this->rhopw->real2recip(this->rho_core,this->rhog_core);
 #endif
 }
+
 
 void Charge::non_linear_core_correction
 (

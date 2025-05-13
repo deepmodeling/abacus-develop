@@ -196,12 +196,18 @@ TEST_F(vdwd2Test, WrongVdwType)
     std::string output = testing::internal::GetCapturedStdout();
 }
 
+
+// mohan comment out 2025-04-05 since the original code has been removed.
+// further investigation is needed.
+/*
 TEST_F(vdwd2Test, OneAtomWarning)
 {
     UnitCell ucell1;
     stru_ structure1{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
                      std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}}}}};
+
     construct_ucell(structure1,ucell1);
+
     GlobalV::ofs_warning.open("warning.log");
     std::ifstream ifs;
     std::string output;
@@ -217,6 +223,7 @@ TEST_F(vdwd2Test, OneAtomWarning)
     ifs.close();
     ClearUcell(ucell1);
 }
+*/
 
 TEST_F(vdwd2Test, D2ReadFile)
 {
@@ -377,7 +384,7 @@ class vdwd3Test: public testing::Test
 TEST_F(vdwd3Test, D30Default)
 {
     vdw::Vdwd3 vdwd3_test(ucell);
-    vdwd3_test.parameter().initial_parameters(input);
+    vdwd3_test.parameter().initial_parameters("pbe", input);
 
     EXPECT_EQ(vdwd3_test.parameter().s6(), 1.0);
     EXPECT_EQ(vdwd3_test.parameter().s18(), 0.7875);
@@ -396,7 +403,8 @@ TEST_F(vdwd3Test, D30UnitA)
     input.vdw_cn_thr_unit = "A";
     vdw::Vdwd3 vdwd3_test(ucell);
 
-    vdwd3_test.parameter().initial_parameters(input);
+    const std::string xc = "pbe";
+    vdwd3_test.parameter().initial_parameters(xc, input);
 
     EXPECT_EQ(vdwd3_test.parameter().rthr2(), std::pow(95/ModuleBase::BOHR_TO_A, 2));
     EXPECT_EQ(vdwd3_test.parameter().cn_thr2(), std::pow(40/ModuleBase::BOHR_TO_A, 2));   
@@ -407,7 +415,8 @@ TEST_F(vdwd3Test, D30Period)
     input.vdw_cutoff_type = "period";
     vdw::Vdwd3 vdwd3_test(ucell);
 
-    vdwd3_test.parameter().initial_parameters(input);
+    const std::string xc = "pbe";
+    vdwd3_test.parameter().initial_parameters(xc, input);
     vdwd3_test.init();
     std::vector<int> rep_vdw_ref = {input.vdw_cutoff_period.x, input.vdw_cutoff_period.y, input.vdw_cutoff_period.z};
 

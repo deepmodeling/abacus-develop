@@ -4,9 +4,48 @@
 #include "module_cell/unitcell.h"
 #include "module_base/matrix.h"
 #include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/relax_old/matrix_methods.h"
+
+class BFGSTest : public ::testing::Test {
+protected:
+    BFGS bfgs;
+    UnitCell ucell;
+    std::vector<std::vector<double>> force;
+
+    void SetUp() override {
+        int size = 10; 
+        bfgs.allocate(size);
+
+        ucell.ntype = 2;
+        ucell.lat0 = 1.0;
+        ucell.nat = 10;
+        ucell.atoms = new Atom[ucell.ntype];
+        for (int i = 0; i < ucell.ntype; i++) {
+            ucell.atoms[i].na = 5; 
+            ucell.atoms[i].tau = std::vector<ModuleBase::Vector3<double>>(5);
+            ucell.atoms[i].taud = std::vector<ModuleBase::Vector3<double>>(5);
+            ucell.atoms[i].mbl = std::vector<ModuleBase::Vector3<int>>(5, {1, 1, 1});
+        }
+
+        force = std::vector<std::vector<double>>(size, std::vector<double>(3, 0.0));
+        for (int i = 0; i < force.size(); ++i) {
+            for (int j = 0; j < 3; ++j) {
+                force[i][j] =  -0.1 * (i + 1);
+            }
+        }
+    }
+};
+
+TEST_F(BFGSTest, PrepareStep) {
+    bfgs.PrepareStep(force, bfgs.pos, bfgs.H, bfgs.pos0, bfgs.force0, bfgs.steplength, bfgs.dpos, ucell);
+    EXPECT_EQ(bfgs.steplength.size(), 10);
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_GT(bfgs.steplength[i], 0);
+    }
+}
 
 
-TEST(BFGSTest, AllocateTest) {
+TEST_F(BFGSTest, AllocateTest) {
     BFGS bfgs;
     int size = 5;
     bfgs.allocate(size);
@@ -20,47 +59,7 @@ TEST(BFGSTest, AllocateTest) {
     }
 }
 
-
-/*TEST(BFGSTest, RelaxStepTest) {
-    BFGS bfgs;
-    UnitCell ucell;
-    ModuleBase::matrix force(3, 3,true);  
-    int size = 3;
-
-    bfgs.allocate(size);
-
-    force(0, 0)=0.1;
-    force(1, 1)=0.2;
-    force(2, 2)=0.3;
-
-    ASSERT_NO_THROW(bfgs.relax_step(force, ucell));  
-
-
-    EXPECT_EQ(bfgs.pos.size(), size);
-}
-
-TEST(BFGSTest, PrepareStepIntegrationTest) {
-    BFGS bfgs;
-    int size = 3;
-    bfgs.allocate(size);
-
-    std::vector<std::vector<double>> force = {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, {7.0, 8.0, 9.0}};
-    std::vector<std::vector<double>> pos = {{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {2.0, 2.0, 2.0}};
-    std::vector<std::vector<double>> H = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
-    std::vector<double> pos0(size, 0.0);
-    std::vector<double> force0(size, 0.0);
-    std::vector<double> steplength(size, 0.0);
-    std::vector<std::vector<double>> dpos(size, std::vector<double>(size, 0.0));
-
-    bfgs.PrepareStep(force, pos, H, pos0, force0, steplength, dpos);
-
-    for (double step : steplength) {
-        EXPECT_GT(step, 0.0);
-    }
-}*/
-
-
-TEST(BFGSTest, FullStepTest) 
+TEST_F(BFGSTest, FullStepTest) 
 { 
     BFGS bfgs; 
     UnitCell ucell; 

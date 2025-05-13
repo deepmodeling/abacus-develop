@@ -62,7 +62,7 @@ AddTest(
 AddTest(
   TARGET io_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp
 )
 
 AddTest(
@@ -171,14 +171,14 @@ add_test(NAME read_wfc_pw_test_parallel
 )
 
 AddTest(
-  TARGET read_wfc_to_rho_test
+  TARGET read_wf2rho_pw_test
   LIBS parameter base ${math_libs} device planewave psi
-  SOURCES read_wfc_to_rho_test.cpp ../read_wfc_pw.cpp ../read_wfc_to_rho.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wf2rho_pw_test.cpp ../read_wfc_pw.cpp ../read_wf2rho_pw.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
    ../../module_elecstate/module_charge/charge_mpi.cpp ../write_wfc_pw.cpp
 )
 
-add_test(NAME read_wfc_to_rho_parallel
-      COMMAND mpirun -np 4 ./read_wfc_to_rho_test
+add_test(NAME read_wf2rho_pw_parallel
+      COMMAND mpirun -np 4 ./read_wf2rho_pw_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -261,3 +261,26 @@ add_test(
   COMMAND mpirun -np 2 ./io_read_wfc_nao_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET cal_pLpR_test
+  LIBS parameter base ${math_libs} device neighbor
+  SOURCES 
+  cal_pLpR_test.cpp 
+  ../cal_pLpR.cpp
+  ../../module_basis/module_ao/ORB_atomic_lm.cpp
+  ../../module_basis/module_ao/ORB_atomic.cpp
+  ../../module_basis/module_nao/radial_set.cpp
+  ../../module_basis/module_nao/numerical_radial.cpp
+  ../../module_basis/module_nao/beta_radials.cpp
+  ../../module_basis/module_nao/hydrogen_radials.cpp
+  ../../module_basis/module_nao/pswfc_radials.cpp
+  ../../module_basis/module_nao/atomic_radials.cpp
+  ../../module_basis/module_nao/sphbes_radials.cpp
+  ../../module_basis/module_nao/two_center_integrator.cpp
+  ../../module_basis/module_nao/two_center_table.cpp
+  ../../module_basis/module_nao/real_gaunt_table.cpp
+  ../../module_basis/module_nao/radial_collection.cpp
+)
+endif()

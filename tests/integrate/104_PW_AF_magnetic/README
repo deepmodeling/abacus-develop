@@ -1,6 +1,0 @@
-Fe Anti-ferromagnetic
-NSPIN 2
-pw
-init magnet: up + down
-SG15
-

@@ -8,9 +8,9 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"       // Taoni add 2025-02-20
-#include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
-#include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
+#include "module_elecstate/module_pot/efield.h"           // liuyu add 2022-05-18
+#include "module_elecstate/module_pot/gatefield.h"        // liuyu add 2022-09-13
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
@@ -52,7 +52,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
 #ifdef __DEEPKS
-                                          LCAO_Deepks& ld,
+                                          LCAO_Deepks<T>& ld,
 #endif
 #ifdef __EXX
                                           Exx_LRI<double>& exx_lri_double,
@@ -482,11 +482,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
 
             // xiaohui add "OUT_LEVEL", 2015-09-16
-            if (PARAM.inp.out_level != "m")
-            {
-                GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
-                                     << sum / nat << std::endl;
-            }
+//            if (PARAM.inp.out_level != "m")
+//            {
+//                GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
+//                                     << sum / nat << std::endl;
+//            }
         }
 
         if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
@@ -504,17 +504,23 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // DeePKS force
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
-            LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Ry/Bohr, F_tot
+            const std::string file_ftot = PARAM.globalv.global_out_dir
+                                          + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
+            LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
 
-            const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-            if (PARAM.inp.deepks_scf)
+            if (PARAM.inp.deepks_out_labels == 1)
             {
-                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs - fvnl_dalpha, GlobalV::MY_RANK); // Ry/Bohr, F_base
-            }
-            else
-            {
-                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
+                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
+                if (PARAM.inp.deepks_scf)
+                {
+                    LCAO_deepks_io::save_matrix2npy(file_fbase,
+                                                    fcs - fvnl_dalpha,
+                                                    GlobalV::MY_RANK); // Hartree/Bohr, F_base
+                }
+                else
+                {
+                    LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
+                }
             }
         }
 #endif
@@ -684,7 +690,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         } // end symmetry
 
 #ifdef __DEEPKS
-        if (PARAM.inp.deepks_out_labels) // not parallelized yet
+        if (PARAM.inp.deepks_out_labels == 1)
         {
             const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
             LCAO_deepks_io::save_matrix2npy(file_stot,
@@ -704,8 +710,18 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             else
             {
-                LCAO_deepks_io::save_matrix2npy(file_sbase, scs, GlobalV::MY_RANK, ucell.omega, 'U'); // sbase = stot
+                LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                scs,
+                                                GlobalV::MY_RANK,
+                                                ucell.omega,
+                                                'U'); // sbase = stot
             }
+        }
+        else if (PARAM.inp.deepks_out_labels == 2)
+        {
+            const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stress.npy";
+            LCAO_deepks_io::save_matrix2npy(file_stot, scs, GlobalV::MY_RANK, ucell.omega,
+                                            'F'); // flat mode
         }
 #endif
 
@@ -729,42 +745,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
             }
 
+            const bool screen = PARAM.inp.test_stress;
+
             GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
             GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-            ModuleIO::print_stress("OVERLAP  STRESS", soverlap, PARAM.inp.test_stress, ry);
-            // test
-            ModuleIO::print_stress("T        STRESS", stvnl_dphi, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("VNL      STRESS", svnl_dbeta, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("T_VNL    STRESS", stvnl, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("VL_dPHI  STRESS", svl_dphi, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("VL_dVL   STRESS", sigmadvl, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("HAR      STRESS", sigmahar, PARAM.inp.test_stress, ry);
-
-            ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
-            ModuleIO::print_stress("cc       STRESS", sigmacc, PARAM.inp.test_stress, ry);
-            //		ModuleIO::print_stress("NLCC       STRESS",sigmacc,PARAM.inp.test_stress,ry);
-            ModuleIO::print_stress("XC       STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+            ModuleIO::print_stress("OVERLAP  STRESS", soverlap, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("T        STRESS", stvnl_dphi, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VNL      STRESS", svnl_dbeta, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("T_VNL    STRESS", stvnl, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VL_dPHI  STRESS", svl_dphi, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("VL_dVL   STRESS", sigmadvl, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("HAR      STRESS", sigmahar, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("cc       STRESS", sigmacc, screen, ry, GlobalV::ofs_running);
+            ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_stress("VDW      STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("VDW      STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.dft_plus_u)
             {
-                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("DFTU     STRESS", stress_dftu, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.sc_mag_switch)
             {
-                ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, PARAM.inp.test_stress, ry);
+                ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, screen, ry, GlobalV::ofs_running);
             }
-            ModuleIO::print_stress("TOTAL    STRESS", scs, PARAM.inp.test_stress, ry);
-
+            ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
         } // end of test
+
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
+
         // print total stress
-        ModuleIO::print_stress("TOTAL-STRESS", scs, true, ry);
+        bool screen = false;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen, ry, GlobalV::ofs_running);
 
         double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
@@ -838,7 +853,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #if __DEEPKS
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
-                                              LCAO_Deepks& ld,
+                                              LCAO_Deepks<double>& ld,
 #endif
                                               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                               Gint_k& gint_k,         // mohan add 2024-04-01
@@ -895,7 +910,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #if __DEEPKS
                                                             ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
-                                                            LCAO_Deepks& ld,
+                                                            LCAO_Deepks<std::complex<double>>& ld,
 #endif
                                                             Gint_Gamma& gint_gamma,
                                                             Gint_k& gint_k,

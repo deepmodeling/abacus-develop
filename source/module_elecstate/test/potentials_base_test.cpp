@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "module_elecstate/potentials/pot_base.h"
+#include "module_elecstate/module_pot/pot_base.h"
 
 ModuleBase::matrix::~matrix(){}
 

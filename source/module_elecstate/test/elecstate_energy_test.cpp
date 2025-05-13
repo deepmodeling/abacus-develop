@@ -89,10 +89,6 @@ const double* ElecState::getRho(int spin) const
 {
     return &(this->eferm.ef);
 } // just for mock
-void ElecState::calculate_weights()
-{
-    return;
-} // just for mock
 } // namespace elecstate
 
 class ElecStateEnergyTest : public ::testing::Test

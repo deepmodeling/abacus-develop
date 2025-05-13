@@ -10,6 +10,8 @@
 #include "module_parameter/parameter.h"
 #include "nonlocal_maths.hpp"
 
+#include "module_base/parallel_comm.h" // different MPI worlds (POOL_WORLD)
+
 namespace hamilt
 {
 
@@ -269,8 +271,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_becp(const int& ik,
     const char transb = 'N';
     const int npm_npol = npm * npol;
     const int index0 = nbd0 * npol * nkb;
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               this->nkb,
               npm_npol,
@@ -283,7 +284,6 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_becp(const int& ik,
               &ModuleBase::ZERO,
               this->becp + index0,
               this->nkb);
-    ModuleBase::timer::tick("FS_Nonlocal_tools", "cal_becp");
 }
 
 template <typename FPTYPE, typename Device>
@@ -295,7 +295,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::reduce_pool_becp(const int& npm)
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Common::reduce_dev<std::complex<FPTYPE>, Device>(this->becp, size_becp_act, POOL_WORLD);
+        Parallel_Common::reduce_data(this->becp, size_becp_act, POOL_WORLD);
     }
 #endif
 }
@@ -433,8 +433,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(const int& ik,
     // 2.b calculate dbecp = dbecp_noevc * psi
     const char transa = 'C';
     const char transb = 'N';
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               this->nkb,
               npm_npol,
@@ -587,8 +586,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_f(const int& ik,
     // do gemm to get dbecp and revert the ppcell_vkb for next ipol
     const char transa = 'C';
     const char transb = 'N';
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               this->nkb,
               npm_npol,

@@ -1,7 +1,7 @@
 #ifndef VEFFLCAO_H
 #define VEFFLCAO_H
 #include "module_base/timer.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
