@@ -51,6 +51,16 @@ void ReadInput::item_deepks()
         this->add_item(item);
     }
     {
+        Input_Item item("deepks_band_range");
+        item.annotation = "(int, int) range of bands for bandgap label";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.deepks_band_range[0] = std::stod(item.str_values[0]);
+            para.input.deepks_band_range[1] = std::stod(item.str_values[1]);
+        };
+        sync_intvec(input.deepks_band_range, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("deepks_v_delta");
         item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for phialpha and grad_evdm ( "
                           "can save memory )";
