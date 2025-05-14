@@ -13,6 +13,7 @@ namespace Conv_Coulomb_Pot_K
 		Ccp,					//
 		Hf,						//		"hf_Rcut"
 		Erfc,					//		"hse_omega"
+		Erf,    //  	"hse_omega", "hf_Rcut"
         Cam,    //  	"hse_omega", "hybrid_alpha", "hybrid_beta", "hf_Rcut"
 		Ccp_Cam // "hse_omega", "hybrid_alpha", "hybrid_beta"
     };

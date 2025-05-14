@@ -33,8 +33,8 @@ class LRI_CV
     LRI_CV();
     ~LRI_CV();
 
-    void set_orbitals(const LCAO_Orbitals& orb,
-                      const UnitCell &ucell,
+    void set_orbitals(const UnitCell &ucell,
+                      const LCAO_Orbitals& orb,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_ccp_in,

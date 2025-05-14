@@ -69,7 +69,7 @@ void Matrix_Orbs11::init_radial(const std::vector<std::vector<std::vector<Numeri
                         for (size_t NB = 0; NB != orb_B[TB][LB].size(); ++NB) {
                             center2_orb11_s[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
-                                Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, this->MGT)));
+                                Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
@@ -94,7 +94,7 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
                                                Center2_Orb::Orb11(orb_A.Phi[TA].PhiLN(LA, NA),
                                                                   orb_B.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
-                                                                  this->MGT)));
+                                                                  MGT)));
                         }
                     }
                 }

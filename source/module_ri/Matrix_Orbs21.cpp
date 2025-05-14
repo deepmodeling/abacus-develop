@@ -131,7 +131,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                           orb_A2.Phi[TA].PhiLN(LA2, NA2),
                                                                           orb_B.Phi[TB].PhiLN(LB, NB),
                                                                           psb_,
-                                                                          this->MGT)));
+                                                                          MGT)));
                                 }
                             }
                         }

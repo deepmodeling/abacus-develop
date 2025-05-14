@@ -164,12 +164,12 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
 
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri, GlobalC::exx_info.info_ewald);
             Vxc_fromRI_d->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
         else
         {
-            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri, GlobalC::exx_info.info_ewald);
             Vxc_fromRI_c->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
     }

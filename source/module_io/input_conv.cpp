@@ -298,7 +298,7 @@ void Input_Conv::Convert()
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"
-            || ddft_functional_lower == "scan0"
+            || dft_functional_lower == "scan0"
             || dft_functional_lower == "lc_pbe"
             || dft_functional_lower == "lc_wpbe" 
             || dft_functional_lower == "lrc_wpbe"

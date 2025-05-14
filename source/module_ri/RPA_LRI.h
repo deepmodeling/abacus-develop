@@ -38,7 +38,7 @@ template <typename T, typename Tdata> class RPA_LRI
     ~RPA_LRI(){};
     void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const std::vector<double>& orb_cutoff);
     void cal_rpa_cv(const UnitCell &ucell);
-    void cal_postSCF_exx(const int istep, 
+    void cal_postSCF_exx(
         const elecstate::DensityMatrix<T, Tdata>& dm,
         const MPI_Comm& mpi_comm_in,
         const UnitCell& ucell,

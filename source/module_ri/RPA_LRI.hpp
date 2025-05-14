@@ -73,7 +73,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv(const UnitCell& ucell)
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::cal_postSCF_exx(const int istep, 
+void RPA_LRI<T, Tdata>::cal_postSCF_exx(
                                         const elecstate::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
                                         const UnitCell& ucell,
@@ -110,7 +110,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const int istep,
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
 
     exx_lri_rpa.init(mpi_comm_in, ucell, kv, orb);
-    exx_lri_rpa.cal_exx_ions(ucell,0, PARAM.inp.out_ri_cv);
+    exx_lri_rpa.cal_exx_ions(ucell, PARAM.inp.out_ri_cv);
 
     if (exx_spacegroup_symmetry && PARAM.inp.exx_symmetry_realspace) {
         exx_lri_rpa.cal_exx_elec(Ds, ucell,*dm.get_paraV_pointer(), &symrot);

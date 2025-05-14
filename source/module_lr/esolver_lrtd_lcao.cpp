@@ -279,7 +279,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri, exx_info.info_ewald);
             this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, ks_sol.orb_);
-            this->exx_lri->cal_exx_ions(ucell,0, input.out_ri_cv);
+            this->exx_lri->cal_exx_ions(ucell, input.out_ri_cv);
         }
     }
 #endif
@@ -457,7 +457,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
         this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri, exx_info.info_ewald);
         this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, orb);
-        this->exx_lri->cal_exx_ions(ucell,0, input.out_ri_cv);
+        this->exx_lri->cal_exx_ions(ucell, input.out_ri_cv);
     }
     // else
 #endif

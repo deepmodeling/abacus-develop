@@ -25,7 +25,8 @@
 #include <cmath>
 
 template <typename Tdata>
-void Ewald_Vq<Tdata>::init(const LCAO_Orbitals& orb,
+void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
+                           const LCAO_Orbitals& orb,
                            const MPI_Comm& mpi_comm_in,
                            const K_Vectors* kv_in,
                            std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
@@ -57,13 +58,13 @@ void Ewald_Vq<Tdata>::init(const LCAO_Orbitals& orb,
     this->index_abfs = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
     this->cv
-        .set_orbitals(orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, this->info.kmesh_times, MGT_in, false, false);
+        .set_orbitals(ucell, orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, this->info.kmesh_times, MGT_in, false, false);
     this->gaunt.create(MGT_in.Gaunt_Coefficients.getBound1(),
                        MGT_in.Gaunt_Coefficients.getBound2(),
                        MGT_in.Gaunt_Coefficients.getBound3());
     this->gaunt = MGT_in.Gaunt_Coefficients;
 
-    this->atoms_vec.resize(GlobalC::ucell.nat);
+    this->atoms_vec.resize(ucell.nat);
     std::iota(this->atoms_vec.begin(), this->atoms_vec.end(), 0);
     this->nmp = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
@@ -71,7 +72,7 @@ void Ewald_Vq<Tdata>::init(const LCAO_Orbitals& orb,
 }
 
 template <typename Tdata>
-void Ewald_Vq<Tdata>::init_ions(const std::array<Tcell, Ndim>& period_Vs_NAO)
+void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO)
 {
     ModuleBase::TITLE("Ewald_Vq", "init_ions");
     ModuleBase::timer::tick("Ewald_Vq", "init_ions");
@@ -114,16 +115,13 @@ void Ewald_Vq<Tdata>::init_ions(const std::array<Tcell, Ndim>& period_Vs_NAO)
                    this->kvec_c.end(),
                    neg_kvec.begin(),
                    [](ModuleBase::Vector3<double>& vec) -> ModuleBase::Vector3<double> { return -vec; });
-    this->gaussian_abfs.init(2 * GlobalC::exx_info.info_ri.abfs_Lmax + 1,
-                             neg_kvec,
-                             GlobalC::ucell.G,
-                             this->ewald_lambda);
+    this->gaussian_abfs.init(2 * GlobalC::exx_info.info_ri.abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
 
     ModuleBase::timer::tick("Ewald_Vq", "init_ions");
 }
 
 template <typename Tdata>
-double Ewald_Vq<Tdata>::get_singular_chi(const Singular_Value::Fq_type& fq_type, const double& qdiv)
+double Ewald_Vq<Tdata>::get_singular_chi(const UnitCell& ucell, const Singular_Value::Fq_type& fq_type, const double& qdiv)
 {
     ModuleBase::TITLE("Ewald_Vq", "get_singular_chi");
     ModuleBase::timer::tick("Ewald_Vq", "get_singular_chi");
@@ -132,10 +130,10 @@ double Ewald_Vq<Tdata>::get_singular_chi(const Singular_Value::Fq_type& fq_type,
     switch (fq_type)
     {
     case Singular_Value::Fq_type::Type_0:
-        chi = Singular_Value::cal_type_0(this->kvec_c, qdiv, 100, 30, 1e-6, 3);
+        chi = Singular_Value::cal_type_0(ucell, this->kvec_c, qdiv, 100, 30, 1e-6, 3);
         break;
     case Singular_Value::Fq_type::Type_1:
-        chi = Singular_Value::cal_type_1(this->nmp, qdiv, 1, 5, 1e-4);
+        chi = Singular_Value::cal_type_1(ucell, this->nmp, qdiv, 1, 5, 1e-4);
         break;
     default:
         throw std::domain_error(std::string(__FILE__) + " line " + std::to_string(__LINE__));
@@ -147,22 +145,22 @@ double Ewald_Vq<Tdata>::get_singular_chi(const Singular_Value::Fq_type& fq_type,
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vs_gauss(const std::vector<TA>& list_A0,
-                                   const std::vector<TAC>& list_A1) -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
+auto Ewald_Vq<Tdata>::cal_Vs_gauss(const UnitCell& ucell, const std::vector<TA>& list_A0, const std::vector<TAC>& list_A1)
+    -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_Vs_gauss");
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_gauss");
 
     std::map<std::string, bool> flags = {{"writable_Vws", true}};
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_gauss = this->cv.cal_Vs(list_A0, list_A1, flags);
-    this->cv.Vws = LRI_CV_Tools::get_CVws(Vs_gauss);
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_gauss = this->cv.cal_Vs(ucell, list_A0, list_A1, flags);
+    this->cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_gauss");
     return Vs_gauss;
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_dVs_gauss(const std::vector<TA>& list_A0, const std::vector<TAC>& list_A1)
+auto Ewald_Vq<Tdata>::cal_dVs_gauss(const UnitCell& ucell, const std::vector<TA>& list_A0, const std::vector<TAC>& list_A1)
     -> std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_dVs_gauss");
@@ -179,7 +177,8 @@ auto Ewald_Vq<Tdata>::cal_dVs_gauss(const std::vector<TA>& list_A0, const std::v
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vs_minus_gauss(const std::vector<TA>& list_A0,
+auto Ewald_Vq<Tdata>::cal_Vs_minus_gauss(const UnitCell& ucell,
+                                         const std::vector<TA>& list_A0,
                                          const std::vector<TAC>& list_A1,
                                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in)
     -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
@@ -187,16 +186,17 @@ auto Ewald_Vq<Tdata>::cal_Vs_minus_gauss(const std::vector<TA>& list_A0,
     ModuleBase::TITLE("Ewald_Vq", "cal_Vs_minus_gauss");
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_minus_gauss");
 
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_gauss = this->cal_Vs_gauss(list_A0, list_A1);
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_gauss = this->cal_Vs_gauss(ucell, list_A0, list_A1);
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss
-        = this->set_Vs_dVs_minus_gauss(list_A0, list_A1, Vs_in, Vs_gauss);
+        = this->set_Vs_dVs_minus_gauss(ucell, list_A0, list_A1, Vs_in, Vs_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_minus_gauss");
     return Vs_minus_gauss;
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_dVs_minus_gauss(const std::vector<TA>& list_A0,
+auto Ewald_Vq<Tdata>::cal_dVs_minus_gauss(const UnitCell& ucell,
+                                          const std::vector<TA>& list_A0,
                                           const std::vector<TAC>& list_A1,
                                           std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in)
     -> std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
@@ -206,7 +206,7 @@ auto Ewald_Vq<Tdata>::cal_dVs_minus_gauss(const std::vector<TA>& list_A0,
 
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_gauss = this->cal_dVs_gauss(list_A0, list_A1);
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_minus_gauss
-        = this->set_Vs_dVs_minus_gauss(list_A0, list_A1, dVs_in, dVs_gauss);
+        = this->set_Vs_dVs_minus_gauss(ucell, list_A0, list_A1, dVs_in, dVs_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVs_minus_gauss");
     return dVs_minus_gauss;
@@ -228,7 +228,8 @@ double Ewald_Vq<Tdata>::get_Rcut_max(const int it0, const int it1)
 
 template <typename Tdata>
 template <typename Tresult>
-auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const std::vector<TA>& list_A0,
+auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const UnitCell& ucell,
+                                             const std::vector<TA>& list_A0,
                                              const std::vector<TAC>& list_A1,
                                              std::map<TA, std::map<TAC, Tresult>>& Vs_dVs_in,
                                              std::map<TA, std::map<TAC, Tresult>>& Vs_dVs_gauss_in)
@@ -246,20 +247,20 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const std::vector<TA>& list_A0,
         for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
         {
             const TA iat0 = list_A0[i0];
-            const int it0 = GlobalC::ucell.iat2it[iat0];
-            const int ia0 = GlobalC::ucell.iat2ia[iat0];
+            const int it0 = ucell.iat2it[iat0];
+            const int ia0 = ucell.iat2ia[iat0];
             const TA iat1 = list_A1[i1].first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
-            const int ia1 = GlobalC::ucell.iat2ia[iat1];
+            const int it1 = ucell.iat2it[iat1];
+            const int ia1 = ucell.iat2ia[iat1];
             const TC& cell1 = list_A1[i1].second;
 
-            const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
-            const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+            const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+            const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
 
             const double Rcut = std::min(this->cal_V_Rcut(it0, it1), this->cal_V_Rcut(it1, it0));
             const Abfs::Vector3_Order<double> R_delta
-                = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
-            if (R_delta.norm() * GlobalC::ucell.lat0 < Rcut)
+                = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+            if (R_delta.norm() * ucell.lat0 < Rcut)
             {
                 const size_t size0 = this->index_abfs[it0].count_size;
                 const size_t size1 = this->index_abfs[it1].count_size;
@@ -310,7 +311,8 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const std::vector<TA>& list_A0,
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vq_gauss(const std::vector<TA>& list_A0_k,
+auto Ewald_Vq<Tdata>::cal_Vq_gauss(const UnitCell& ucell,
+                                   const std::vector<TA>& list_A0_k,
                                    const std::vector<TAK>& list_A1_k,
                                    const double& chi,
                                    const int& shift_for_mpi)
@@ -321,20 +323,22 @@ auto Ewald_Vq<Tdata>::cal_Vq_gauss(const std::vector<TA>& list_A0_k,
 
     const T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq,
                                                                                           &this->gaussian_abfs,
+                                                                                          ucell,
                                                                                           std::placeholders::_1,
                                                                                           std::placeholders::_2,
                                                                                           std::placeholders::_3,
                                                                                           chi,
                                                                                           std::placeholders::_4,
                                                                                           this->gaunt);
-    auto Vq_gauss = this->set_Vq_dVq_gauss(list_A0_k, list_A1_k, shift_for_mpi, func_DPget_Vq);
+    auto Vq_gauss = this->set_Vq_dVq_gauss(ucell, list_A0_k, list_A1_k, shift_for_mpi, func_DPget_Vq);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vq_gauss");
     return Vq_gauss;
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_dVq_gauss(const std::vector<TA>& list_A0_k,
+auto Ewald_Vq<Tdata>::cal_dVq_gauss(const UnitCell& ucell,
+                                    const std::vector<TA>& list_A0_k,
                                     const std::vector<TAK>& list_A1_k,
                                     const double& chi,
                                     const int& shift_for_mpi)
@@ -346,6 +350,7 @@ auto Ewald_Vq<Tdata>::cal_dVq_gauss(const std::vector<TA>& list_A0_k,
     const T_func_DPget_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, Ndim>> func_DPget_dVq
         = std::bind(&Gaussian_Abfs::get_dVq,
                     &this->gaussian_abfs,
+                    ucell,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
@@ -355,16 +360,16 @@ auto Ewald_Vq<Tdata>::cal_dVq_gauss(const std::vector<TA>& list_A0_k,
 
     using namespace RI::Array_Operator;
     std::map<TA, std::map<TAK, std::array<RI::Tensor<std::complex<double>>, Ndim>>> dVq_gauss;
-    auto res = this->set_Vq_dVq_gauss(list_A0_k, list_A1_k, shift_for_mpi, func_DPget_dVq);
+    auto res = this->set_Vq_dVq_gauss(ucell, list_A0_k, list_A1_k, shift_for_mpi, func_DPget_dVq);
 
     for (size_t i0 = 0; i0 < list_A0_k.size(); ++i0)
     {
         const TA iat0 = list_A0_k[i0];
-        const int it0 = GlobalC::ucell.iat2it[iat0];
+        const int it0 = ucell.iat2it[iat0];
         for (size_t i1 = 0; i1 < list_A1_k.size(); ++i1)
         {
             const TA iat1 = list_A1_k[i1].first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
+            const int it1 = ucell.iat2it[iat1];
             if (iat0 != iat1)
             {
                 const int ik = list_A1_k[i1].second[0];
@@ -384,7 +389,8 @@ auto Ewald_Vq<Tdata>::cal_dVq_gauss(const std::vector<TA>& list_A0_k,
 
 template <typename Tdata>
 template <typename Tresult>
-auto Ewald_Vq<Tdata>::set_Vq_dVq_gauss(const std::vector<TA>& list_A0_k,
+auto Ewald_Vq<Tdata>::set_Vq_dVq_gauss(const UnitCell& ucell,
+                                       const std::vector<TA>& list_A0_k,
                                        const std::vector<TAK>& list_A1_k,
                                        const int& shift_for_mpi,
                                        const T_func_DPget_Vq_dVq<Tresult>& func_DPget_Vq_dVq)
@@ -402,14 +408,14 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq_gauss(const std::vector<TA>& list_A0_k,
         for (size_t i1 = 0; i1 < list_A1_k.size(); ++i1)
         {
             const TA iat0 = list_A0_k[i0];
-            const int it0 = GlobalC::ucell.iat2it[iat0];
-            const int ia0 = GlobalC::ucell.iat2ia[iat0];
-            const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
+            const int it0 = ucell.iat2it[iat0];
+            const int ia0 = ucell.iat2ia[iat0];
+            const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
 
             const TA iat1 = list_A1_k[i1].first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
-            const int ia1 = GlobalC::ucell.iat2ia[iat1];
-            const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+            const int it1 = ucell.iat2it[iat1];
+            const int ia1 = ucell.iat2ia[iat1];
+            const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
             const size_t ik = list_A1_k[i1].second[0] + shift_for_mpi;
 
             const ModuleBase::Vector3<double> tau = tau0 - tau1;
@@ -425,7 +431,8 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq_gauss(const std::vector<TA>& list_A0_k,
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vq_minus_gauss(const std::vector<TA>& list_A0,
+auto Ewald_Vq<Tdata>::cal_Vq_minus_gauss(const UnitCell& ucell,
+                                         const std::vector<TA>& list_A0,
                                          const std::vector<TAC>& list_A1,
                                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_minus_gauss)
     -> std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>>
@@ -434,7 +441,7 @@ auto Ewald_Vq<Tdata>::cal_Vq_minus_gauss(const std::vector<TA>& list_A0,
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vq_minus_gauss");
 
     auto Vq_minus_gauss
-        = this->set_Vq_dVq_minus_gauss<RI::Tensor<std::complex<double>>>(list_A0, list_A1, Vs_minus_gauss);
+        = this->set_Vq_dVq_minus_gauss<RI::Tensor<std::complex<double>>>(ucell, list_A0, list_A1, Vs_minus_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vq_minus_gauss");
     return Vq_minus_gauss;
@@ -442,6 +449,7 @@ auto Ewald_Vq<Tdata>::cal_Vq_minus_gauss(const std::vector<TA>& list_A0,
 
 template <typename Tdata>
 auto Ewald_Vq<Tdata>::cal_dVq_minus_gauss(
+    const UnitCell& ucell,
     const std::vector<TA>& list_A0,
     const std::vector<TAC>& list_A1,
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_minus_gauss)
@@ -451,7 +459,8 @@ auto Ewald_Vq<Tdata>::cal_dVq_minus_gauss(
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVq_minus_gauss");
 
     auto dVq_minus_gauss
-        = this->set_Vq_dVq_minus_gauss<std::array<RI::Tensor<std::complex<double>>, Ndim>>(list_A0,
+        = this->set_Vq_dVq_minus_gauss<std::array<RI::Tensor<std::complex<double>>, Ndim>>(ucell,
+                                                                                           list_A0,
                                                                                            list_A1,
                                                                                            dVs_minus_gauss);
 
@@ -461,7 +470,8 @@ auto Ewald_Vq<Tdata>::cal_dVq_minus_gauss(
 
 template <typename Tdata>
 template <typename Tout, typename Tin>
-auto Ewald_Vq<Tdata>::set_Vq_dVq_minus_gauss(const std::vector<TA>& list_A0,
+auto Ewald_Vq<Tdata>::set_Vq_dVq_minus_gauss(const UnitCell& ucell,
+                                             const std::vector<TA>& list_A0,
                                              const std::vector<TAC>& list_A1,
                                              std::map<TA, std::map<TAC, Tin>>& Vs_dVs_minus_gauss)
     -> std::map<TA, std::map<TAK, Tout>>
@@ -487,24 +497,24 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq_minus_gauss(const std::vector<TA>& list_A0,
                 for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
                 {
                     const TA iat0 = list_A0[i0];
-                    const int it0 = GlobalC::ucell.iat2it[iat0];
-                    const int ia0 = GlobalC::ucell.iat2ia[iat0];
+                    const int it0 = ucell.iat2it[iat0];
+                    const int ia0 = ucell.iat2ia[iat0];
                     const TA iat1 = list_A1[i1].first;
-                    const int it1 = GlobalC::ucell.iat2it[iat1];
-                    const int ia1 = GlobalC::ucell.iat2ia[iat1];
+                    const int it1 = ucell.iat2it[iat1];
+                    const int ia1 = ucell.iat2ia[iat1];
                     const TC& cell1 = list_A1[i1].second;
 
-                    const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
-                    const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+                    const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+                    const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
                     const double Rcut = std::min(this->get_Rcut_max(it0, it1), this->get_Rcut_max(it1, it0));
                     const ModuleBase::Vector3<double> R_delta
-                        = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
+                        = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
 
-                    if (R_delta.norm() * GlobalC::ucell.lat0 < Rcut)
+                    if (R_delta.norm() * ucell.lat0 < Rcut)
                     {
-                        const std::complex<double> phase = std::exp(
-                            ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT
-                            * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec)));
+                        const std::complex<double> phase
+                            = std::exp(ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT
+                                       * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * ucell.latvec)));
 
                         Tout Vs_dVs_tmp = LRI_CV_Tools::mul2(
                             phase,
@@ -552,25 +562,36 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq_minus_gauss(const std::vector<TA>& list_A0,
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vq(const double& chi, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in)
+auto Ewald_Vq<Tdata>::cal_Vq(const UnitCell& ucell,
+                             const double& chi,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in)
     -> std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>>
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_Vq");
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vq");
 
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss = this->cal_Vs_minus_gauss(this->list_A0,
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss = this->cal_Vs_minus_gauss(ucell,
+                                                                                             this->list_A0,
                                                                                              this->list_A1,
                                                                                              Vs_in); //{ia0, {ia1, R}}
     const T_func_DPcal_Vq_dVq_minus_gauss<RI::Tensor<std::complex<double>>, RI::Tensor<Tdata>> func_cal_Vq_minus_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_Vq_minus_gauss,
                     this,
+                    ucell,
                     this->list_A0_pair_R,
                     this->list_A1_pair_R,
                     std::placeholders::_1);
     const T_func_DPcal_Vq_dVq_gauss<RI::Tensor<std::complex<double>>> func_cal_Vq_gauss
-        = std::bind(&Ewald_Vq<Tdata>::cal_Vq_gauss, this, this->list_A0_k, this->list_A1_k, chi, std::placeholders::_1);
+        = std::bind(&Ewald_Vq<Tdata>::cal_Vq_gauss,
+                    this,
+                    ucell,
+                    this->list_A0_k,
+                    this->list_A1_k,
+                    chi,
+                    std::placeholders::_1);
 
-    auto Vq = this->set_Vq_dVq(this->list_A0_pair_k,
+    auto Vq = this->set_Vq_dVq(ucell,
+                               this->list_A0_pair_k,
                                this->list_A1_pair_k,
                                Vs_minus_gauss,
                                func_cal_Vq_minus_gauss,
@@ -581,7 +602,8 @@ auto Ewald_Vq<Tdata>::cal_Vq(const double& chi, std::map<TA, std::map<TAC, RI::T
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_dVq(const double& chi,
+auto Ewald_Vq<Tdata>::cal_dVq(const UnitCell& ucell,
+                              const double& chi,
                               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in)
     -> std::map<TA, std::map<TAK, std::array<RI::Tensor<std::complex<double>>, Ndim>>>
 {
@@ -589,25 +611,29 @@ auto Ewald_Vq<Tdata>::cal_dVq(const double& chi,
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVq");
 
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_minus_gauss
-        = this->cal_dVs_minus_gauss(this->list_A0,
+        = this->cal_dVs_minus_gauss(ucell,
+                                    this->list_A0,
                                     this->list_A1,
                                     dVs_in); //{ia0, {ia1, R}}
     const T_func_DPcal_Vq_dVq_minus_gauss<std::array<RI::Tensor<std::complex<double>>, Ndim>,
                                           std::array<RI::Tensor<Tdata>, Ndim>>
         func_cal_dVq_minus_gauss = std::bind(&Ewald_Vq<Tdata>::cal_dVq_minus_gauss,
                                              this,
+                                             ucell,
                                              this->list_A0_pair_R,
                                              this->list_A1_pair_R,
                                              std::placeholders::_1);
     const T_func_DPcal_Vq_dVq_gauss<std::array<RI::Tensor<std::complex<double>>, Ndim>> func_cal_dVq_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_dVq_gauss,
                     this,
+                    ucell,
                     this->list_A0_k,
                     this->list_A1_k,
                     chi,
                     std::placeholders::_1);
 
-    auto dVq = this->set_Vq_dVq(this->list_A0_pair_k,
+    auto dVq = this->set_Vq_dVq(ucell,
+                                this->list_A0_pair_k,
                                 this->list_A1_pair_k,
                                 dVs_minus_gauss,
                                 func_cal_dVq_minus_gauss,
@@ -619,7 +645,8 @@ auto Ewald_Vq<Tdata>::cal_dVq(const double& chi,
 
 template <typename Tdata>
 template <typename Tout, typename Tin>
-auto Ewald_Vq<Tdata>::set_Vq_dVq(const std::vector<TA>& list_A0_pair_k,
+auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
+                                 const std::vector<TA>& list_A0_pair_k,
                                  const std::vector<TAK>& list_A1_pair_k,
                                  std::map<TA, std::map<TAC, Tin>>& Vs_dVs_minus_gauss_in,
                                  const T_func_DPcal_Vq_dVq_minus_gauss<Tout, Tin>& func_cal_Vq_dVq_minus_gauss,
@@ -669,9 +696,9 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const std::vector<TA>& list_A0_pair_k,
         for (size_t i1 = 0; i1 < list_A1_pair_k.size(); ++i1)
         {
             const TA iat0 = list_A0_pair_k[i0];
-            const int it0 = GlobalC::ucell.iat2it[iat0];
+            const int it0 = ucell.iat2it[iat0];
             const TA iat1 = list_A1_pair_k[i1].first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
+            const int it1 = ucell.iat2it[iat1];
             const int ik = list_A1_pair_k[i1].second[0] + shift_for_mpi;
             const TAK re_index = std::make_pair(iat1, std::array<int, 1>{ik});
 
@@ -724,14 +751,17 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const std::vector<TA>& list_A0_pair_k,
 }
 
 template <typename Tdata>
-auto Ewald_Vq<Tdata>::cal_Vs(const double& chi, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) //{ia0, {ia1, R}}
+auto Ewald_Vq<Tdata>::cal_Vs(const UnitCell& ucell,
+                             const double& chi,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) //{ia0, {ia1, R}}
     -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_Vs");
     ModuleBase::timer::tick("Ewald_Vq", "cal_Vs");
 
-    std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq = this->cal_Vq(chi, Vs_in);
-    auto Vs = this->set_Vs_dVs<RI::Tensor<Tdata>>(this->list_A0_pair_R_period,
+    std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq = this->cal_Vq(ucell, chi, Vs_in);
+    auto Vs = this->set_Vs_dVs<RI::Tensor<Tdata>>(ucell,
+                                                  this->list_A0_pair_R_period,
                                                   this->list_A1_pair_R_period,
                                                   Vq); //{ia0, ia1}
 
@@ -741,6 +771,7 @@ auto Ewald_Vq<Tdata>::cal_Vs(const double& chi, std::map<TA, std::map<TAC, RI::T
 
 template <typename Tdata>
 auto Ewald_Vq<Tdata>::cal_dVs(
+    const UnitCell& ucell,
     const double& chi,
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in) //{ia0, {ia1, R}}
     -> std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
@@ -748,8 +779,10 @@ auto Ewald_Vq<Tdata>::cal_dVs(
     ModuleBase::TITLE("Ewald_Vq", "cal_dVs");
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVs");
 
-    std::map<TA, std::map<TAK, std::array<RI::Tensor<std::complex<double>>, Ndim>>> dVq = this->cal_dVq(chi, dVs_in);
-    auto dVs = this->set_Vs_dVs<std::array<RI::Tensor<Tdata>, Ndim>>(this->list_A0_pair_R_period,
+    std::map<TA, std::map<TAK, std::array<RI::Tensor<std::complex<double>>, Ndim>>> dVq
+        = this->cal_dVq(ucell, chi, dVs_in);
+    auto dVs = this->set_Vs_dVs<std::array<RI::Tensor<Tdata>, Ndim>>(ucell,
+                                                                     this->list_A0_pair_R_period,
                                                                      this->list_A1_pair_R_period,
                                                                      dVq); //{ia0, ia1}
 
@@ -759,7 +792,8 @@ auto Ewald_Vq<Tdata>::cal_dVs(
 
 template <typename Tdata>
 template <typename Tout, typename Tin>
-auto Ewald_Vq<Tdata>::set_Vs_dVs(const std::vector<TA>& list_A0_pair_R,
+auto Ewald_Vq<Tdata>::set_Vs_dVs(const UnitCell& ucell,
+                                 const std::vector<TA>& list_A0_pair_R,
                                  const std::vector<TAC>& list_A1_pair_R,
                                  std::map<TA, std::map<TAK, Tin>>& Vq) -> std::map<TA, std::map<TAC, Tout>>
 {
@@ -789,7 +823,7 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs(const std::vector<TA>& list_A0_pair_R,
                     const TC& cell1 = list_A1_pair_R[i1].second;
                     const std::complex<double> frac
                         = std::exp(-ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT
-                                   * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec)))
+                                   * (this->kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1) * ucell.latvec)))
                           * cfrac;
 
                     const TAK index = std::make_pair(iat1, std::array<int, 1>{static_cast<int>(ik)});

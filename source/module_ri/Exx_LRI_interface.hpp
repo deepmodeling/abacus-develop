@@ -88,7 +88,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
                 XC_Functional::set_xc_type("pbe");
             }
         }
-        this->exx_ptr->cal_exx_ions(ucell,istep, PARAM.inp.out_ri_cv);
+        this->exx_ptr->cal_exx_ions(ucell, PARAM.inp.out_ri_cv);
     }
 
 		if (Exx_Abfs::Jle::generate_matrix)
