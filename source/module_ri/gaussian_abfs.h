@@ -49,7 +49,7 @@ Calculate the lattice sum over a Gaussian:
 \exp(i(k+G)\tau) d_S(k) := S(k) * i * (k+G)
 */
     std::vector<std::complex<double>> get_lattice_sum(
-        const UnitCell& ucell,
+        const double& tpiba,
         const size_t& ik,
         const double& power, // Will be 0. for straight GTOs and -2. for Coulomb
                              // interaction
@@ -59,7 +59,7 @@ Calculate the lattice sum over a Gaussian:
         const ModuleBase::Vector3<double>& tau);
 
     std::vector<std::array<std::complex<double>, 3>> get_d_lattice_sum(
-        const UnitCell& ucell,
+        const double& tpiba,
         const size_t& ik,
         const double& power, // Will be 0. for straight GTOs and -2. for Coulomb
                              // interaction
@@ -89,7 +89,7 @@ Calculate the lattice sum over a Gaussian:
                                              const int& lmax)>;
 
     template <typename Tout, typename Tin>
-    Tout DPcal_Vq_dVq(const UnitCell& ucell,
+    Tout DPcal_Vq_dVq(const double& omega,
                       const int& lp_max,
                       const int& lq_max, // Maximum L for which to calculate interaction.
                       const size_t& ik,
@@ -99,7 +99,7 @@ Calculate the lattice sum over a Gaussian:
                       const T_func_DPcal_lattice_sum<Tin>& func_DPcal_lattice_sum);
 
     template <typename Tresult>
-    std::vector<Tresult> DPcal_lattice_sum(const UnitCell& ucell,
+    std::vector<Tresult> DPcal_lattice_sum(const double& tpiba,
                                            const size_t& ik,
                                            const double& power, // Will be 0. for straight GTOs and -2. for Coulomb
                                                                 // interaction
@@ -110,7 +110,7 @@ Calculate the lattice sum over a Gaussian:
 
     // calculates the double factorial n!! of n
     static double double_factorial(const int& n);
-    static std::vector<int> get_n_supercells(const UnitCell& ucell, const ModuleBase::Matrix3& G, const double& Gmax);
+    static std::vector<int> get_n_supercells(const double& lat0, const ModuleBase::Matrix3& G, const double& Gmax);
 };
 
 #endif

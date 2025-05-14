@@ -37,7 +37,7 @@ double Singular_Value::sum_for_solve_chi(const std::vector<ModuleBase::Vector3<d
 }
 
 // for numerical integral of fq
-double Singular_Value::solve_chi(const UnitCell& ucell,
+double Singular_Value::solve_chi(const ModuleBase::Matrix3 &G,
                                  const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                  const T_cal_fq_type& func_cal_fq,
                                  const std::array<int, 3>& nq_arr,
@@ -46,7 +46,7 @@ double Singular_Value::solve_chi(const UnitCell& ucell,
                                  const int& a_rate)
 {
     // cal fq integral
-    double fq_int = Iter_Integral(ucell, func_cal_fq, nq_arr, niter, eps, a_rate);
+    double fq_int = Iter_Integral(G, func_cal_fq, nq_arr, niter, eps, a_rate);
 
     return sum_for_solve_chi(kvec_c, func_cal_fq, fq_int);
 }
@@ -67,7 +67,7 @@ double Singular_Value::solve_chi(const int& nks, const T_cal_fq_type_no& func_ca
     return chi;
 }
 
-double Singular_Value::fq_type_0(const UnitCell& ucell,
+double Singular_Value::fq_type_0(const double& tpiba,
                                  const ModuleBase::Vector3<double>& qvec,
                                  const int& qdiv,
                                  std::vector<ModuleBase::Vector3<double>>& avec,
@@ -82,8 +82,8 @@ double Singular_Value::fq_type_0(const UnitCell& ucell,
 
     for (size_t i = 0; i != 3; ++i)
     {
-        baq[i] = ucell.tpiba * bvec[i] * std::sin(avec[i] * qvec * ModuleBase::TWO_PI);
-        baq_2[i] = ucell.tpiba * bvec[i] * std::sin(avec[i] * qvec * ModuleBase::PI);
+        baq[i] = tpiba * bvec[i] * std::sin(avec[i] * qvec * ModuleBase::TWO_PI);
+        baq_2[i] = tpiba * bvec[i] * std::sin(avec[i] * qvec * ModuleBase::PI);
     }
 
     double sum_baq = 0;
@@ -128,28 +128,29 @@ double Singular_Value::cal_type_0(const UnitCell& ucell,
     bvec[2].z = ucell.G.e33;
 
     std::array<int, 3> nq_arr;
+    const double qdense_tpiba = qdense * ucell.tpiba;
     std::transform(bvec.begin(),
                    bvec.end(),
                    nq_arr.begin(),
-                   [&qdense, &a_rate, &ucell](ModuleBase::Vector3<double>& vec) -> int {
-                       int index = static_cast<int>(vec.norm() * qdense * ucell.tpiba);
+                   [&qdense_tpiba, &a_rate](ModuleBase::Vector3<double>& vec) -> int {
+                       int index = static_cast<int>(vec.norm() * qdense_tpiba);
                        return index ? index - index % a_rate : a_rate;
                    });
-    const T_cal_fq_type func_cal_fq_type_0 = std::bind(&fq_type_0, ucell, std::placeholders::_1, qdiv, avec, bvec);
+    const T_cal_fq_type func_cal_fq_type_0 = std::bind(&fq_type_0, ucell.tpiba, std::placeholders::_1, qdiv, avec, bvec);
 
-    double val = solve_chi(ucell, kvec_c, func_cal_fq_type_0, nq_arr, niter, eps, a_rate);
+    double val = solve_chi(ucell.G, kvec_c, func_cal_fq_type_0, nq_arr, niter, eps, a_rate);
     ModuleBase::timer::tick("Singular_Value", "cal_type_0");
     return val;
 }
 
-double Singular_Value::fq_type_1(const UnitCell& ucell, Gaussian_Abfs& gaussian_abfs, const int& qdiv, const double& lambda, const int& lmax)
+double Singular_Value::fq_type_1(const double& tpiba, Gaussian_Abfs& gaussian_abfs, const int& qdiv, const double& lambda, const int& lmax)
 {
     const size_t ik = 0;
     const double qexpo = -abs(qdiv);
     const bool exclude_Gamma = true;
     const ModuleBase::Vector3<double> tau(0, 0, 0);
 
-    auto lattice_sum = gaussian_abfs.get_lattice_sum(ucell, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
+    auto lattice_sum = gaussian_abfs.get_lattice_sum(tpiba, ik, qexpo, lambda, exclude_Gamma, lmax, tau);
     assert(lattice_sum[0].imag() < 1e-10);
     double fq = lattice_sum[0].real() * std::sqrt(ModuleBase::FOUR_PI);
 
@@ -187,7 +188,7 @@ double Singular_Value::cal_type_1(const UnitCell& ucell,
         Gaussian_Abfs gaussian_abfs;
         const double exponent = 1 / lambda;
         gaussian_abfs.init(ucell, lmax, qvec, bvec, exponent);
-        const T_cal_fq_type_no func_cal_fq_type_1 = std::bind(&fq_type_1, ucell, gaussian_abfs, qdiv, lambda, lmax);
+        const T_cal_fq_type_no func_cal_fq_type_1 = std::bind(&fq_type_1, ucell.tpiba, gaussian_abfs, qdiv, lambda, lmax);
         double prefactor
             = ModuleBase::TWO_PI * std::pow(lambda, -1.0 / qdiv) * ucell.omega / std::pow(ModuleBase::TWO_PI, 3);
         double fq_int;
@@ -226,7 +227,7 @@ double Singular_Value::cal_type_1(const UnitCell& ucell,
     return val_extra;
 }
 
-double Singular_Value::Iter_Integral(const UnitCell& ucell,
+double Singular_Value::Iter_Integral(const ModuleBase::Matrix3 &G,
                                      const T_cal_fq_type& func_cal_fq,
                                      const std::array<int, 3>& nq_arr,
                                      const int& niter,
@@ -273,7 +274,7 @@ double Singular_Value::Iter_Integral(const UnitCell& ucell,
                     qvec.x = qstep[0] * ig1;
                     qvec.y = qstep[1] * ig2;
                     qvec.z = qstep[2] * ig3;
-                    integ_iter += func_cal_fq(qvec * ucell.G);
+                    integ_iter += func_cal_fq(qvec * G);
                 }
         integ_iter /= nqs * pow(a_rate, ndim * iter); // Each iteration reduces dq by a
                                                       // multiple of a_rate

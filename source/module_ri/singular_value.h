@@ -42,7 +42,7 @@ class Singular_Value
                              const double& eps);
 
   private:
-    static double solve_chi(const UnitCell& ucell,
+    static double solve_chi(const ModuleBase::Matrix3 &G,
                             const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                             const T_cal_fq_type& func_cal_fq,
                             const std::array<int, 3>& nq_arr,
@@ -56,7 +56,7 @@ class Singular_Value
     static double sum_for_solve_chi(const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                     const T_cal_fq_type& func_cal_fq,
                                     const double& fq_int);
-    static double Iter_Integral(const UnitCell& ucell,
+    static double Iter_Integral(const ModuleBase::Matrix3 &G,
                                 const T_cal_fq_type& func_cal_fq,
                                 const std::array<int, 3>& nq_arr,
                                 const int& niter,
@@ -67,13 +67,13 @@ class Singular_Value
 
     // qdiv=2 i.e. q^{-2} for 3D;
     // qdiv=1 i.e. q^{-1} for 2D.
-    static double fq_type_0(const UnitCell& ucell,
+    static double fq_type_0(const double& tpiba,
                             const ModuleBase::Vector3<double>& qvec,
                             const int& qdiv,
                             std::vector<ModuleBase::Vector3<double>>& avec,
                             std::vector<ModuleBase::Vector3<double>>& bvec);
     // gamma: chosen as the radius of sphere which has the same volume as the Brillouin zone.
-    static double fq_type_1(const UnitCell& ucell, Gaussian_Abfs& gaussian_abfs, const int& qdiv, const double& lambda, const int& lmax);
+    static double fq_type_1(const double& tpiba, Gaussian_Abfs& gaussian_abfs, const int& qdiv, const double& lambda, const int& lmax);
 };
 
 #endif

@@ -169,7 +169,7 @@ auto Ewald_Vq<Tdata>::cal_dVs_gauss(const UnitCell& ucell, const std::vector<TA>
     std::map<std::string, bool> flags = {{"writable_dVws", true}};
 
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_gauss
-        = this->cv.cal_dVs(list_A0, list_A1, flags);
+        = this->cv.cal_dVs(ucell, list_A0, list_A1, flags);
     this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVs_gauss");

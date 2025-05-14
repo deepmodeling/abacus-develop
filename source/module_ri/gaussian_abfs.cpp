@@ -59,7 +59,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     {
         ModuleBase::Vector3<double> qvec = this->kvec_c[ik];
         const double Gmax = std::sqrt(eta * this->lambda) + qvec.norm() * ucell.tpiba;
-        std::vector<int> n_supercells = get_n_supercells(ucell, G, Gmax);
+        std::vector<int> n_supercells = get_n_supercells(ucell.lat0, G, Gmax);
         int total_cells = std::accumulate(n_supercells.begin(), n_supercells.end(), 1, [](int a, int b) {
             return a * (2 * b + 1);
         });
@@ -109,14 +109,14 @@ auto Gaussian_Abfs::get_Vq(const UnitCell& ucell,
     const T_func_DPcal_lattice_sum<std::complex<double>> func_DPcal_lattice_sum
         = std::bind(&Gaussian_Abfs::get_lattice_sum,
                     this,
-                    ucell,
+                    ucell.tpiba,
                     ik,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(ucell,
+    auto res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(ucell.omega,
                                                                     lp_max,
                                                                     lq_max,
                                                                     ik,
@@ -143,14 +143,14 @@ auto Gaussian_Abfs::get_dVq(const UnitCell& ucell,
     const T_func_DPcal_lattice_sum<std::array<std::complex<double>, 3>> func_DPcal_d_lattice_sum
         = std::bind(&Gaussian_Abfs::get_d_lattice_sum,
                     this,
-                    ucell,
+                    ucell.tpiba,
                     ik,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(ucell,
+    auto res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(ucell.omega,
                                                                                    lp_max,
                                                                                    lq_max,
                                                                                    ik,
@@ -164,7 +164,7 @@ auto Gaussian_Abfs::get_dVq(const UnitCell& ucell,
 }
 
 template <typename Tout, typename Tin>
-auto Gaussian_Abfs::DPcal_Vq_dVq(const UnitCell& ucell,
+auto Gaussian_Abfs::DPcal_Vq_dVq(const double& omega,
                                  const int& lp_max,
                                  const int& lq_max, // Maximum L for which to calculate interaction.
                                  const size_t& ik,
@@ -227,7 +227,7 @@ auto Gaussian_Abfs::DPcal_Vq_dVq(const UnitCell& ucell,
             double norm_2 = double_factorial(2 * lq - 1) * std::sqrt(ModuleBase::PI * 0.5);
             std::complex<double> phase = std::pow(ModuleBase::IMAG_UNIT, lp - lq);
             std::complex<double> cfac
-                = ModuleBase::FOUR_PI * phase * std::pow(ModuleBase::TWO_PI, 3) / (norm_1 * norm_2) / ucell.omega;
+                = ModuleBase::FOUR_PI * phase * std::pow(ModuleBase::TWO_PI, 3) / (norm_1 * norm_2) / omega;
             for (int L = std::abs(lp - lq); L <= lp + lq; L += 2) // if lp+lq-L == odd, then Gaunt_Coefficients = 0
             {
                 const int i_add_ksq = (lp + lq - L) / 2;
@@ -312,7 +312,7 @@ double Gaussian_Abfs::double_factorial(const int& n)
     return result;
 }
 
-auto Gaussian_Abfs::get_lattice_sum(const UnitCell& ucell,
+auto Gaussian_Abfs::get_lattice_sum(const double& tpiba,
                                     const size_t& ik,
                                     const double& power, // Will be 0. for straight GTOs and -2. for Coulomb interaction
                                     const double& exponent,
@@ -326,11 +326,11 @@ auto Gaussian_Abfs::get_lattice_sum(const UnitCell& ucell,
     };
 
     return this
-        ->DPcal_lattice_sum<std::complex<double>>(ucell, ik, power, exponent, exclude_Gamma, lmax, func_DPcal_phase);
+        ->DPcal_lattice_sum<std::complex<double>>(tpiba, ik, power, exponent, exclude_Gamma, lmax, func_DPcal_phase);
 }
 
 auto Gaussian_Abfs::get_d_lattice_sum(
-    const UnitCell& ucell,
+    const double& tpiba,
     const size_t& ik,
     const double& power, // Will be 0. for straight GTOs and -2. for Coulomb interaction
     const double& exponent,
@@ -339,16 +339,16 @@ auto Gaussian_Abfs::get_d_lattice_sum(
     const ModuleBase::Vector3<double>& tau) -> std::vector<std::array<std::complex<double>, 3>>
 {
     const T_func_DPcal_phase<std::array<std::complex<double>, 3>> func_DPcal_d_phase
-        = [&tau, &ucell](const ModuleBase::Vector3<double>& vec) -> std::array<std::complex<double>, 3> {
+        = [&tau, &tpiba](const ModuleBase::Vector3<double>& vec) -> std::array<std::complex<double>, 3> {
         using namespace RI::Array_Operator;
         std::complex<double> phase = std::exp(ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (vec * tau));
         std::array<std::complex<double>, 3> ip_vec = {phase * vec.x, phase * vec.y, phase * vec.z};
-        std::array<std::complex<double>, 3> d_phase = ucell.tpiba * ModuleBase::IMAG_UNIT * ip_vec;
+        std::array<std::complex<double>, 3> d_phase = tpiba * ModuleBase::IMAG_UNIT * ip_vec;
 
         return d_phase;
     };
 
-    return this->DPcal_lattice_sum<std::array<std::complex<double>, 3>>(ucell,
+    return this->DPcal_lattice_sum<std::array<std::complex<double>, 3>>(tpiba,
                                                                         ik,
                                                                         power,
                                                                         exponent,
@@ -359,7 +359,7 @@ auto Gaussian_Abfs::get_d_lattice_sum(
 
 template <typename Tresult>
 auto Gaussian_Abfs::DPcal_lattice_sum(
-    const UnitCell& ucell,
+    const double& tpiba,
     const size_t& ik,
     const double& power, // Will be 0. for straight GTOs and -2. for Coulomb interaction
     const double& exponent,
@@ -390,7 +390,7 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
             continue;
 
         ModuleBase::Vector3<double> vec = this->qGvecs[ik][idx];
-        const double vec_sq = vec.norm2() * ucell.tpiba2;
+        const double vec_sq = vec.norm2() * tpiba  * tpiba;
         const double vec_abs = std::sqrt(vec_sq);
 
         const double val_s = std::exp(-exponent * vec_sq) * std::pow(vec_abs, power);
@@ -419,14 +419,14 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
     return result;
 }
 
-std::vector<int> Gaussian_Abfs::get_n_supercells(const UnitCell& ucell,
+std::vector<int> Gaussian_Abfs::get_n_supercells(const double& lat0,
                                                  const ModuleBase::Matrix3& G,
                                                  const double& Gmax)
 {
     std::vector<int> n_supercells(3);
     ModuleBase::Matrix3 GI = G.Inverse();
     ModuleBase::Matrix3 latvec = GI.Transpose();
-    latvec *= ucell.lat0;
+    latvec *= lat0;
     std::vector<ModuleBase::Vector3<double>> lat;
     lat.resize(3);
     lat[0].x = latvec.e11;
