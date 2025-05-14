@@ -245,6 +245,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
                 Vs_sr);
             this->sr_cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_sr);
         }
+        this->evq.init_ions(ucell, period_Vs);
 
         double chi = this->evq.get_singular_chi(ucell, this->info_ewald.fq_type, 2.0);
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full

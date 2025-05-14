@@ -78,7 +78,7 @@ void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, N
     ModuleBase::timer::tick("Ewald_Vq", "init_ions");
 
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, this->g_lcaos_rcut);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, this->g_lcaos_rcut);
 
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, this->atoms_vec, period_Vs, 2, false);
@@ -115,7 +115,7 @@ void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, N
                    this->kvec_c.end(),
                    neg_kvec.begin(),
                    [](ModuleBase::Vector3<double>& vec) -> ModuleBase::Vector3<double> { return -vec; });
-    this->gaussian_abfs.init(2 * GlobalC::exx_info.info_ri.abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
+    this->gaussian_abfs.init(ucell, 2 * GlobalC::exx_info.info_ri.abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
 
     ModuleBase::timer::tick("Ewald_Vq", "init_ions");
 }
