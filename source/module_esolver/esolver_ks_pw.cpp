@@ -939,10 +939,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! The write_psi_r_1 interface will be removed in the very 
     //! near future. Don't use it!
     //----------------------------------------------------------
-    // if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
-    // {
-    //     ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
-    // }
+    if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+    {
+        ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+    }
 
     const std::vector<int> out_wfc_norm = PARAM.inp.out_wfc_norm;
     const std::vector<int> out_wfc_re_im = PARAM.inp.out_wfc_re_im;
