@@ -1670,7 +1670,7 @@ These variables are used to control the output of properties.
   - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
 - **Default**: 0
 
-### out_wfc_r
+### out_wfc_r (deprecated)
 
 - **Type**: Boolean
 - **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
@@ -1911,14 +1911,14 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 ### out_wfc_norm
 
 - **Type**: String
-- **Availability**: For LCAO, used when `calculation = get_wf`.
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, used when `calculation = get_wf`.
 - **Description**: Specifies the bands to calculate the real-space wave function modulus (norm, or known as the envelope function) $|\psi(r)|$. The syntax and band selection rules are identical to [`out_pchg`](#out_pchg), but the output is the norm of the wave function.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
-- **Availability**: For LCAO, used when `calculation = get_wf`.
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, used when `calculation = get_wf`.
 - **Description**: Specifies the bands to calculate the real and imaginary parts of the wave function $\text{Re}(\psi(r))$ and $\text{Im}(\psi(r))$. The syntax and band selection rules are identical to [`out_pchg`](#out_pchg), but the output contains both the real and imaginary components of the wave function.
 - **Default**: none
 
