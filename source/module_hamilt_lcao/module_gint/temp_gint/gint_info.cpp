@@ -51,7 +51,8 @@ GintInfo::GintInfo(
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
-        init_bgrid_batches_(nbz_local);
+        const int batch_size = nbz_local;
+        init_bgrid_batches_(batch_size);
         gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);
     }
     #endif
