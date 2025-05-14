@@ -51,9 +51,9 @@ if [[ ! -f H2O_scf.output ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_H2.log)" == " Total  Time  :"* ) ]] ||
    [ $(echo "$abs_difference < 0.00001" | bc) -ne 1 ]
 then
-	echo "job is failed!"
+	echo "job failed!"
 	exit 1
 else
-	echo "job is successed!"
+	echo "job succeeded!"
 	exit 0
 fi

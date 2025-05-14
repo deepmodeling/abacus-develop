@@ -12,7 +12,7 @@
  *    the maximum L of a given atom, the number of chi of a given atom and a given L, the atom label of a given atom,
  * etc. The class provides the interface to get the information of the atoms and orbitals indices in the unit cell. It
  * also provides the interface to write the orbital information into a file. It is now used only in the Output_Mulliken
- * class. However, it is supposed to be able to replace GlobalC::ucell in LCAO codes where only cell indices are needed.
+ * class. However, it is supposed to be able to replace ucell in LCAO codes where only cell indices are needed.
  * Take care that the three key vectors atomCounts, lnchiCounts, and atomLabels should be set from the UnitCell class.
  *    It depends on nspin because the functions get_nw() and get_iwt() are related to nspin, and can
  *    be used in the LCAO Hamiltonian construction.

@@ -479,3 +479,12 @@ void Pseudopot_upf::setqfnew(const int& nqf,
         rho[ir] *= pow(r[ir], l + n);
     }
 }
+
+void Pseudopot_upf::skip_number(std::ifstream& ifs, bool mesh_changed)
+{
+	if (mesh_changed)
+	{
+		double temp = 0.;
+		ifs >> temp;
+	}
+}

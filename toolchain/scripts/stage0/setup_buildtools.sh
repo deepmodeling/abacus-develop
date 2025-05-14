@@ -3,7 +3,7 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-0901
+# Last Update in 2025-0310
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_NAME}")/.." && pwd -P)"
@@ -27,19 +27,15 @@ if [ "${with_intel}" != "__DONTUSE__" ]; then
   CFLAGS="-O2 -fPIC -fp-model=precise -funroll-loops -g -qopenmp -qopenmp-simd -traceback"
   if [ "${TARGET_CPU}" = "native" ]; then
     CFLAGS="${CFLAGS} -xHost"
-  elif [ "${TARGET_CPU}" = "generic" ]; then
-    CFLAGS="${CFLAGS} -mtune=${TARGET_CPU}"
   else
-    CFLAGS="${CFLAGS} -march=${TARGET_CPU} -mtune=${TARGET_CPU}"
+    CFLAGS="${CFLAGS} -mtune=${TARGET_CPU}"
   fi
   FFLAGS="${CFLAGS}"
+elif [ "${with_amd}" != "__DONTUSE__" ]; then
+  CFLAGS="-O2 -fPIC -fopenmp -g -mtune=${TARGET_CPU}"
+  FFLAGS="${CFLAGS}"
 else
-  CFLAGS="-O2 -fPIC -fno-omit-frame-pointer -fopenmp -g"
-  if [ "${TARGET_CPU}" = "generic" ]; then
-    CFLAGS="${CFLAGS} -mtune=generic ${TSANFLAGS}"
-  else
-    CFLAGS="${CFLAGS} -march=${TARGET_CPU} -mtune=${TARGET_CPU} ${TSANFLAGS}"
-  fi
+  CFLAGS="-O2 -fPIC -fno-omit-frame-pointer -fopenmp -g -mtune=${TARGET_CPU} ${TSANFLAGS}"
   FFLAGS="${CFLAGS} -fbacktrace"
 fi
 CXXFLAGS="${CFLAGS}"
@@ -47,7 +43,7 @@ F77FLAGS="${FFLAGS}"
 F90FLAGS="${FFLAGS}"
 FCFLAGS="${FFLAGS}"
 
-if [ "${with_intel}" == "__DONTUSE__" ]; then
+if [ "${with_intel}" == "__DONTUSE__" ] && [ "${with_amd}" == "__DONTUSE__" ]; then
   export CFLAGS="$(allowed_gcc_flags ${CFLAGS})"
   export FFLAGS="$(allowed_gfortran_flags ${FFLAGS})"
   export F77FLAGS="$(allowed_gfortran_flags ${F77FLAGS})"
@@ -55,7 +51,7 @@ if [ "${with_intel}" == "__DONTUSE__" ]; then
   export FCFLAGS="$(allowed_gfortran_flags ${FCFLAGS})"
   export CXXFLAGS="$(allowed_gxx_flags ${CXXFLAGS})"
 else
-  # TODO Check functions for allowed Intel compiler flags
+  # TODO Check functions for allowed Intel or AMD compiler flags
   export CFLAGS
   export FFLAGS
   export F77FLAGS

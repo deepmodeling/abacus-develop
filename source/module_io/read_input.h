@@ -83,10 +83,12 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
-    //set globalv parameters
-    void set_globalv(Parameter& para);
-    // add bcast functions for global values
-    void set_globalv_bcast();
+    /// @brief set System_para according to input parameters
+    /// INPUT and STRU need to refer to each other in ABACUS, 
+    /// so it is necessary to obtain the file paths related to all inputs
+    void set_global_dir(const Input_para& inp, System_para& sys);
+    // set System_para according to input parameters
+    void set_globalv(const Input_para& inp, System_para& sys);
     // system items
     void item_system();
     // items for electronic structure
@@ -139,14 +141,10 @@ class ReadInput
     std::vector<std::function<void(Parameter&)>> bcastfuncs;
 };
 
-// convert string to lower case
-void strtolower(char* sa, char* sb);
 // convert string vector to a long string
 std::string longstring(const std::vector<std::string>& str_values);
 // convert string to bool
-bool convert_bool(std::string str);
-// if find a string in a vector of strings
-bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
+bool assume_as_boolean(const std::string& val);
 // convert to directory format
 std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector

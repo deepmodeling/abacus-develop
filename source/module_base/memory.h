@@ -49,6 +49,39 @@ class Memory
       const bool accumulate = false
     );
 
+#if defined(__CUDA) || defined(__ROCM)
+
+    /**
+     * @brief Record memory consumed on gpu during computation
+     *
+     * @param class_name The name of a class
+     * @param name The name of a quantity
+     * @param n The number of the quantity
+     * @param type The type of data
+     * @param accumulate Useless, always set false
+     * @return double
+     */
+    static double record_gpu(const std::string &class_name,
+                         const std::string &name,
+                         const long &n,
+                         const std::string &type,
+                         const bool accumulate = false);
+
+    /**
+     * @brief Record memory consumed on gpu during computation
+     *
+     * @param name The name of a quantity
+     * @param n The number of the quantity
+     * @param accumulate Useless, always set false
+     */
+    static void record_gpu(
+      const std::string &name_in,
+      const size_t &n_in,
+      const bool accumulate = false
+    );
+
+#endif
+
     static double &get_total(void)
     {
         return total;
@@ -83,6 +116,15 @@ class Memory
     static int n_memory;
     static int n_now;
     static bool init_flag;
+
+#if defined(__CUDA) || defined(__ROCM)
+    static double total_gpu;
+    static std::string *name_gpu;
+    static std::string *class_name_gpu;
+    static double *consume_gpu;
+    static int n_now_gpu;
+    static bool init_flag_gpu;
+#endif
 
     static int complex_matrix_memory; //(16 Byte)
     static int double_memory; //(8 Byte)

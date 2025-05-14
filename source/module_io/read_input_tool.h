@@ -8,7 +8,7 @@
 #define strvalue item.str_values[0]
 #define intvalue std::stoi(item.str_values[0])
 #define doublevalue std::stod(item.str_values[0])
-#define boolvalue convert_bool(item.str_values[0])
+#define boolvalue assume_as_boolean(item.str_values[0])
 
 #ifdef __MPI
 #define add_double_bcast(PARAMETER)                                                                                    \
@@ -202,5 +202,14 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         {
             throw std::runtime_error("Invalid expression: " + expr + " - More than one '*' found.");
         }
+    }
+}
+
+template <typename T>
+void reset_vector(std::vector<T>& vec, int size, T default_value)
+{
+    if (vec.size() != size)
+    {
+        vec.resize(size, default_value);
     }
 }

@@ -12,19 +12,23 @@ namespace LR
         const int ldim = nk * px.get_local_size();
         int npairs = no * nv;
         std::vector<T> Amat_full(this->nk * npairs * this->nk * npairs, 0.0);
-        for (int ik = 0;ik < this->nk;++ik)
-            for (int j = 0;j < no;++j)
+        for (int ik = 0;ik < this->nk;++ik) {
+            for (int j = 0;j < no;++j) {
                 for (int b = 0;b < nv;++b)
                 {//calculate A^{ai} for each bj
                     int bj = j * nv + b;    //global
                     int kbj = ik * npairs + bj; //global
-                    psi::Psi<T> X_bj(1, 1, this->nk * px.get_local_size()); // k1-first, like in iterative solver
+                    psi::Psi<T> X_bj(1, 1, this->nk * px.get_local_size(), this->nk * px.get_local_size(), true); // k1-first, like in iterative solver
                     X_bj.zero_out();
                     // X_bj(0, 0, lj * px.get_row_size() + lb) = this->one();
                     int lj = px.global2local_col(j);
                     int lb = px.global2local_row(b);
                     if (px.in_this_processor(b, j)) { X_bj(0, 0, ik * px.get_local_size() + lj * px.get_row_size() + lb) = this->one(); }
-                    psi::Psi<T> A_aibj(1, 1, this->nk * px.get_local_size()); // k1-first
+                    psi::Psi<T> A_aibj(1, 
+                                       1, 
+                                       this->nk * px.get_local_size(),
+                                       this->nk * px.get_local_size(),
+                                       true); // k1-first
                     A_aibj.zero_out();
 
                     this->cal_dm_trans(0, X_bj.get_pointer());
@@ -37,12 +41,15 @@ namespace LR
                     // reduce ai for a fixed bj
                     A_aibj.fix_kb(0, 0);
 #ifdef __MPI
-                    for (int ik_ai = 0;ik_ai < this->nk;++ik_ai)
+                    for (int ik_ai = 0;ik_ai < this->nk;++ik_ai) {
                         LR_Util::gather_2d_to_full(px, &A_aibj.get_pointer()[ik_ai * px.get_local_size()],
                             Amat_full.data() + kbj * this->nk * npairs /*col, bj*/ + ik_ai * npairs/*row, ai*/,
                             false, nv, no);
+}
 #endif
                 }
+}
+}
         // output Amat
         std::cout << "Full A matrix: (elements < 1e-10 is set to 0)" << std::endl;
         LR_Util::print_value(Amat_full.data(), nk * npairs, nk * npairs);

@@ -74,8 +74,6 @@ class DMTest : public testing::Test
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
     }
 
 #ifdef __MPI

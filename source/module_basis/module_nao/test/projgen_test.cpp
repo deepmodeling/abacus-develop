@@ -1,4 +1,4 @@
-#include "module_basis/module_nao/projgen.h"
+#include "module_base/projgen.h"
 #include "gtest/gtest.h"
 
 #include "module_base/math_integral.h"

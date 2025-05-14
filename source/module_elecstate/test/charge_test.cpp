@@ -3,13 +3,11 @@
 
 #define private public
 #define protected public
-#include "module_parameter/parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "prepare_unitcell.h"
-#undef protected
-#undef private
-
 // mock functions for UnitCell
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
@@ -21,28 +19,21 @@ InfoNonlocal::~InfoNonlocal()
 #endif
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 
 // mock functions for Charge
+int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 double tmp_ucell_omega = 500.0;
-double get_ucell_omega()
-{
-    return tmp_ucell_omega;
-}
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
@@ -122,7 +113,8 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
     PARAM.input.test_charge = 2;
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     charge->allocate(PARAM.input.nspin);
@@ -146,7 +138,7 @@ TEST_F(ChargeTest, SumRho)
             charge->rho[is][ir] = 0.1;
         }
     }
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     EXPECT_NEAR(charge->sum_rho(), 0.1 * nspin * rhopw->nrxx * ucell->omega / rhopw->nxyz, 1E-10);
 }
 
@@ -165,7 +157,7 @@ TEST_F(ChargeTest, RenormalizeRho)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
 }
@@ -185,7 +177,7 @@ TEST_F(ChargeTest, CheckNe)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
     EXPECT_NEAR(charge->cal_rho2ne(charge->rho[0]), 8.0, 1e-10);
@@ -206,8 +198,9 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_xc_func_type = 3;
-    elecstate::tmp_ucell_omega = ucell->omega;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
     EXPECT_NEAR(charge->cal_rho2ne(charge->rho_save[0]), 8.0, 1e-10);
@@ -216,7 +209,8 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
 TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
-    elecstate::tmp_xc_func_type = 1;
+    XC_Functional::func_type = 1;
+    XC_Functional::ked_flag = false;
     PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);

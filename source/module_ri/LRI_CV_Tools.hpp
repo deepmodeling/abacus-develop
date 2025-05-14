@@ -305,94 +305,76 @@ std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
 
 template <typename Tcell>
 std::array<Tcell, 3> LRI_CV_Tools::cal_latvec_range(const double& rcut_times,
-                                                    const std::vector<double>& orb_cutoff) {
+							   const UnitCell &ucell,
+							   const std::vector<double>& orb_cutoff) {
     double Rcut_max = 0;
-    for(int T=0; T<GlobalC::ucell.ntype; ++T)
+    for(int T=0; T<ucell.ntype; ++T)
 		Rcut_max = std::max(Rcut_max, orb_cutoff[T]);
-    const ModuleBase::Vector3<double> proj
-        = ModuleBase::Mathzone::latvec_projection(
-            std::array<ModuleBase::Vector3<double>, 3>{GlobalC::ucell.a1,
-                                                       GlobalC::ucell.a2,
-                                                       GlobalC::ucell.a3});
-    const ModuleBase::Vector3<double> latvec_times
-        = Rcut_max * rcut_times / (proj * GlobalC::ucell.lat0);
-    const ModuleBase::Vector3<Tcell> latvec_times_ceil
-        = {static_cast<Tcell>(std::ceil(latvec_times.x)),
-           static_cast<Tcell>(std::ceil(latvec_times.y)),
-           static_cast<Tcell>(std::ceil(latvec_times.z))};
-    const ModuleBase::Vector3<Tcell> period
-        = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1, 1, 1};
-    return std::array<Tcell, 3>{period.x, period.y, period.z};
+	const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
+		std::array<ModuleBase::Vector3<double>,3>{ucell.a1, ucell.a2, ucell.a3});
+	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * ucell.lat0);
+    const ModuleBase::Vector3<Tcell> latvec_times_ceil = {static_cast<Tcell>(std::ceil(latvec_times.x)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.y)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.z))};
+    const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
+	return std::array<Tcell,3>{period.x, period.y, period.z};
 }
 
-template <typename TA, typename Tcell, typename Tdata>
-std::map<
-    int,
-    std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>>
-    LRI_CV_Tools::get_CVws(
-        const std::map<TA,
-                       std::map<std::pair<TA, std::array<Tcell, 3>>,
-                                RI::Tensor<Tdata>>>& CVs) {
-    std::map<
-        int,
-        std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>>
-        CVws;
-    for (const auto& CVs_A: CVs) {
-        const TA iat0 = CVs_A.first;
-        const int it0 = GlobalC::ucell.iat2it[iat0];
-        const int ia0 = GlobalC::ucell.iat2ia[iat0];
-        const ModuleBase::Vector3<double> tau0
-            = GlobalC::ucell.atoms[it0].tau[ia0];
-        for (const auto& CVs_B: CVs_A.second) {
-            const TA iat1 = CVs_B.first.first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
-            const int ia1 = GlobalC::ucell.iat2ia[iat1];
-            const std::array<int, 3>& cell1 = CVs_B.first.second;
-            const ModuleBase::Vector3<double> tau1
-                = GlobalC::ucell.atoms[it1].tau[ia1];
-            const Abfs::Vector3_Order<double> R_delta
-                = -tau0 + tau1
-                  + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
-            CVws[it0][it1][R_delta] = CVs_B.second;
-        }
-    }
-    return CVws;
+template<typename TA, typename Tcell, typename Tdata>
+std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>
+LRI_CV_Tools::get_CVws(
+	const UnitCell &ucell,
+	const std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>> &CVs)
+{
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> CVws;
+	for(const auto &CVs_A : CVs)
+	{
+		const TA iat0 = CVs_A.first;
+		const int it0 = ucell.iat2it[iat0];
+		const int ia0 = ucell.iat2ia[iat0];
+		const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+		for(const auto &CVs_B : CVs_A.second)
+		{
+			const TA iat1 = CVs_B.first.first;
+			const int it1 = ucell.iat2it[iat1];
+			const int ia1 = ucell.iat2ia[iat1];
+			const std::array<int,3> &cell1 = CVs_B.first.second;
+			const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
+			CVws[it0][it1][R_delta] = CVs_B.second;
+		}
+	}
+	return CVws;
 }
 
-template <typename TA, typename Tcell, typename Tdata>
-std::map<int,
-         std::map<int,
-                  std::map<Abfs::Vector3_Order<double>,
-                           std::array<RI::Tensor<Tdata>, 3>>>>
-    LRI_CV_Tools::get_dCVws(
-        const std::map<TA,
-                       std::map<std::pair<TA, std::array<Tcell, 3>>,
-                                std::array<RI::Tensor<Tdata>, 3>>>& dCVs) {
-    std::map<int,
-             std::map<int,
-                      std::map<Abfs::Vector3_Order<double>,
-                               std::array<RI::Tensor<Tdata>, 3>>>>
-        dCVws;
-    for (const auto& dCVs_A: dCVs) {
-        const TA iat0 = dCVs_A.first;
-        const int it0 = GlobalC::ucell.iat2it[iat0];
-        const int ia0 = GlobalC::ucell.iat2ia[iat0];
-        const ModuleBase::Vector3<double> tau0
-            = GlobalC::ucell.atoms[it0].tau[ia0];
-        for (const auto& dCVs_B: dCVs_A.second) {
-            const TA iat1 = dCVs_B.first.first;
-            const int it1 = GlobalC::ucell.iat2it[iat1];
-            const int ia1 = GlobalC::ucell.iat2ia[iat1];
-            const std::array<int, 3>& cell1 = dCVs_B.first.second;
-            const ModuleBase::Vector3<double> tau1
-                = GlobalC::ucell.atoms[it1].tau[ia1];
-            const Abfs::Vector3_Order<double> R_delta
-                = -tau0 + tau1
-                  + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
-            dCVws[it0][it1][R_delta] = dCVs_B.second;
-        }
-    }
-    return dCVws;
+template<typename TA, typename Tcell, typename Tdata>
+std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>>
+LRI_CV_Tools::get_dCVws(
+	const UnitCell &ucell,
+	const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs)
+{
+	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>> dCVws;
+	for(int ix=0; ix<3; ++ix)
+	{
+		for(const auto &dCVs_A : dCVs[ix])
+		{
+			const TA iat0 = dCVs_A.first;
+			const int it0 = ucell.iat2it[iat0];
+			const int ia0 = ucell.iat2ia[iat0];
+			const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+			for(const auto &dCVs_B : dCVs_A.second)
+			{
+				const TA iat1 = dCVs_B.first.first;
+				const int it1 = ucell.iat2it[iat1];
+				const int ia1 = ucell.iat2ia[iat1];
+				const std::array<int,3> &cell1 = dCVs_B.first.second;
+				const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+				const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
+				dCVws[it0][it1][R_delta][ix] = dCVs_B.second;
+			}
+		}
+	}
+	return dCVws;
 }
 
 template <typename T, std::size_t N>
@@ -482,19 +464,20 @@ std::array<RI::Tensor<Tout>, N>
 template<typename TA, typename TC, typename Tdata>
 std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
 LRI_CV_Tools::cal_dMRs(
+	const UnitCell &ucell,
 	const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs)
 {
 	auto get_R_delta = [&](const TA &iat0, const std::pair<TA,TC> &A1) -> std::array<Tdata,3>
 	{
 		const TA iat1 = A1.first;
 		const TC &cell1 = A1.second;
-		const int it0 = GlobalC::ucell.iat2it[iat0];
-		const int ia0 = GlobalC::ucell.iat2ia[iat0];
-		const int it1 = GlobalC::ucell.iat2it[iat1];
-		const int ia1 = GlobalC::ucell.iat2ia[iat1];
-		const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
-		const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
-		const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
+		const int it0 = ucell.iat2it[iat0];
+		const int ia0 = ucell.iat2ia[iat0];
+		const int it1 = ucell.iat2it[iat1];
+		const int ia1 = ucell.iat2ia[iat1];
+		const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+		const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+		const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
 		return std::array<Tdata,3>{R_delta.x, R_delta.y, R_delta.z};
 	};
 	constexpr int Npos = 3;

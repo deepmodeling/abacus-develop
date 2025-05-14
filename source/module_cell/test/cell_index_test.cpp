@@ -28,7 +28,7 @@ TEST_F(CellIndexTest, EmptyTest)
     EXPECT_EQ(0, cell_index1.get_ntype());
     EXPECT_EQ(0, cell_index1.get_nw());
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(cell_index1.get_atom_label(0), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(cell_index1.get_atom_label(0), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("iat out of range [0, nat)"));
 }

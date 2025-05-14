@@ -2,21 +2,18 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
-#undef private
 #include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
+
 #include <string>
 Parameter PARMA;
 
 // mock functions
+int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 void Potential::get_vnew(Charge const*, ModuleBase::matrix&)
 {
     return;
@@ -47,15 +44,13 @@ double ElecState::get_dftu_energy()
     return 0.6;
 }
 #endif
+double ElecState::get_local_pp_energy()
+{
+    return 0.7;
+}
 } // namespace elecstate
 
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
 
 /***************************************************************
@@ -93,10 +88,6 @@ class MockElecState : public ElecState
 const double* ElecState::getRho(int spin) const
 {
     return &(this->eferm.ef);
-} // just for mock
-void ElecState::calculate_weights()
-{
-    return;
 } // just for mock
 } // namespace elecstate
 

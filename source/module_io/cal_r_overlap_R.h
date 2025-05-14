@@ -9,6 +9,8 @@
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
@@ -30,13 +32,13 @@ class cal_r_overlap_R
     double sparse_threshold = 1e-10;
     bool binary = false;
 
-    void init(const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void out_rR(const int& istep);
-    void out_rR_other(const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
+    void init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep);
+    void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
   private:
-    void initialize_orb_table(const LCAO_Orbitals& orb);
-    void construct_orbs_and_orb_r(const LCAO_Orbitals& orb);
+    void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void construct_orbs_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;

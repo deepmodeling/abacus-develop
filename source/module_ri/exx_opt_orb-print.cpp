@@ -3,6 +3,7 @@
 #include "exx_abfs-jle.h"
 
 void Exx_Opt_Orb::print_matrix(
+	const UnitCell& ucell,
     const K_Vectors &kv,
     const std::string& file_name,
 	const std::vector<RI::Tensor<double>> &matrix_Q, 
@@ -15,47 +16,47 @@ void Exx_Opt_Orb::print_matrix(
 {
 	auto print_header = [&]( std::ofstream &ofs )
 	{
-		ofs << GlobalC::ucell.lat0 << std::endl;
+		ofs << ucell.lat0 << std::endl;
 
-		ofs << GlobalC::ucell.latvec.e11 << " " << GlobalC::ucell.latvec.e12 << " " << GlobalC::ucell.latvec.e13 << std::endl;
-		ofs << GlobalC::ucell.latvec.e21 << " " << GlobalC::ucell.latvec.e22 << " " << GlobalC::ucell.latvec.e23 << std::endl;
-		ofs << GlobalC::ucell.latvec.e31 << " " << GlobalC::ucell.latvec.e32 << " " << GlobalC::ucell.latvec.e33 << std::endl;
+		ofs << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13 << std::endl;
+		ofs << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23 << std::endl;
+		ofs << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33 << std::endl;
 		
 		if( TA==TB )
 		{
 			ofs << 1 << " ntype" << std::endl;
-			ofs << GlobalC::ucell.atoms[TA].label << " label" << std::endl;
+			ofs << ucell.atoms[TA].label << " label" << std::endl;
 			if( IA==IB )
 			{
 				ofs << 1 << " na" << std::endl;
-				ofs << GlobalC::ucell.atoms[TA].tau[IA].x << " " 
-					<< GlobalC::ucell.atoms[TA].tau[IA].y << " " 
-					<< GlobalC::ucell.atoms[TA].tau[IA].z << std::endl;
+				ofs << ucell.atoms[TA].tau[IA].x << " " 
+					<< ucell.atoms[TA].tau[IA].y << " " 
+					<< ucell.atoms[TA].tau[IA].z << std::endl;
 			}
 			else
 			{
 				ofs << 2 << " na" << std::endl;
-				ofs << GlobalC::ucell.atoms[TA].tau[IA].x << " " 
-					<< GlobalC::ucell.atoms[TA].tau[IA].y << " "
-					<< GlobalC::ucell.atoms[TA].tau[IA].z << std::endl;
-				ofs << GlobalC::ucell.atoms[TB].tau[IB].x << " " 
-					<< GlobalC::ucell.atoms[TB].tau[IB].y << " " 
-					<< GlobalC::ucell.atoms[TB].tau[IB].z << std::endl;
+				ofs << ucell.atoms[TA].tau[IA].x << " " 
+					<< ucell.atoms[TA].tau[IA].y << " "
+					<< ucell.atoms[TA].tau[IA].z << std::endl;
+				ofs << ucell.atoms[TB].tau[IB].x << " " 
+					<< ucell.atoms[TB].tau[IB].y << " " 
+					<< ucell.atoms[TB].tau[IB].z << std::endl;
 			}
 		}
 		else
 		{
 			ofs << 2 << " ntype" << std::endl;
-			ofs << GlobalC::ucell.atoms[TA].label << " label" << std::endl;
+			ofs << ucell.atoms[TA].label << " label" << std::endl;
 			ofs << 1 << " na" << std::endl;
-			ofs << GlobalC::ucell.atoms[TA].tau[IA].x << " " 
-				<< GlobalC::ucell.atoms[TA].tau[IA].y << " " 
-				<< GlobalC::ucell.atoms[TA].tau[IA].z << std::endl;
-			ofs << GlobalC::ucell.atoms[TB].label << " label" << std::endl;
+			ofs << ucell.atoms[TA].tau[IA].x << " " 
+				<< ucell.atoms[TA].tau[IA].y << " " 
+				<< ucell.atoms[TA].tau[IA].z << std::endl;
+			ofs << ucell.atoms[TB].label << " label" << std::endl;
 			ofs << 1 << " na" << std::endl;
-			ofs << GlobalC::ucell.atoms[TB].tau[IB].x << " " 
-				<< GlobalC::ucell.atoms[TB].tau[IB].y << " " 
-				<< GlobalC::ucell.atoms[TB].tau[IB].z << std::endl;
+			ofs << ucell.atoms[TB].tau[IB].x << " " 
+				<< ucell.atoms[TB].tau[IB].y << " " 
+				<< ucell.atoms[TB].tau[IB].z << std::endl;
 		}
 		
 		// ecutwfc_jlq determine the jlq corresponding to plane wave calculation.
@@ -64,10 +65,11 @@ void Exx_Opt_Orb::print_matrix(
 		// this parameter determine the total number of jlq.
 		ofs << Exx_Abfs::Jle::Ecut_exx << " ecutwfc_jlq" << std::endl;//mohan modify 2009-09-08
 
-		if(TA==TB)
+		if(TA==TB) {
 			ofs << orb_cutoff[TA] << " rcut_Jlq" << std::endl;
-		else
+		} else {
 			ofs << orb_cutoff[TA] << " " << orb_cutoff[TB] << " rcut_Jlq" << std::endl;
+}
 
 		// mohan add 'smooth' and 'smearing_sigma' 2009-08-28
 		ofs << 0 << " smooth" << std::endl;
@@ -84,8 +86,9 @@ void Exx_Opt_Orb::print_matrix(
 		auto cal_sum_M = [&range_jles](size_t T) -> size_t
 		{
 			size_t sum_M = 0;
-			for( size_t L = 0; L!=range_jles[T].size(); ++L )
+			for( size_t L = 0; L!=range_jles[T].size(); ++L ) {
 				sum_M += range_jles[T][L].M;
+}
 			return sum_M;
 		};
 		const size_t nwfc = (TA==TB && IA==IB) ? cal_sum_M(TA) : cal_sum_M(TA)+cal_sum_M(TB);
@@ -93,10 +96,11 @@ void Exx_Opt_Orb::print_matrix(
 		
 		const size_t ecut_numberA = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TA] / ModuleBase::PI ); // Rydberg Unit
 		const size_t ecut_numberB = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TB] / ModuleBase::PI ); // Rydberg Unit
-		if(TA==TB)
+		if(TA==TB) {
 			ofs	<< ecut_numberA << " ne" << std::endl;
-		else
+		} else {
 			ofs	<< ecut_numberA << " " << ecut_numberB << " ne" << std::endl;
+}
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;
 		for( int ik=0; ik!=kv.get_nkstot(); ++ik )		

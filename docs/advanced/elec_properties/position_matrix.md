@@ -18,4 +18,7 @@ Each file or each section of the appended file starts with "STEP: " followed by 
 
 Each block here contains the matrix for the corresponding cell. There are three columns in each block, giving the matrix elements in x, y, z directions, respectively. There are altogether nbasis * nbasis lines in each block, which emulates the matrix elements.
 
-In molecular dynamics (MD) calculations, if [out_app_flag](../input_files/input-main.md#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, The output frequency is controlled by [out_interval](../input_files/input-main.md#out_interval). For example, if we are running a 10-step MD with out_interval = 3, then `$x` will be 0, 3, 6, and 9.
+In molecular dynamics (MD) calculations, if [out_app_flag](../input_files/input-main.md#out_app_flag) is set to true, then `data-rR-tr` is written in an append manner. Otherwise, output files will be put in a separate directory, `matrix`, and named as `$x`_data-rR-tr, where `$x` is the number of MD step. In addition, the output frequency is controlled by [out_interval](../input_files/input-main.md#out_interval). For example, if we are running a 10-step MD with out_interval = 3, then `$x` will be 0, 3, 6, and 9.
+
+## get_S
+We also offer the option of only calculating the position matrix without running SCF. For that purpose, in `INPUT` file we need to set the keyword [calculation](../input_files/input-main.md#calculation) to `get_S`, and [out_mat_r](../input_files/input-main.md#out_mat_r) to `true`.

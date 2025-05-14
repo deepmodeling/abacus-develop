@@ -1,27 +1,36 @@
 #include "LCAO_deepks_test.h"
 #define private public
 #include "module_parameter/parameter.h"
+
+#include <torch/script.h>
+#include <torch/torch.h>
 #undef private
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.h"
 namespace Test_Deepks
 {
 Grid_Driver GridD(PARAM.input.test_deconstructor, PARAM.input.test_grid);
 }
 
-test_deepks::test_deepks()
+template <typename T>
+test_deepks<T>::test_deepks()
 {
 }
 
-test_deepks::~test_deepks()
+template <typename T>
+test_deepks<T>::~test_deepks()
 {
 }
 
-void test_deepks::check_dstable()
+template <typename T>
+void test_deepks<T>::check_dstable()
 {
     // OGT.talpha.print_Table_DSR(ORB);
     // this->compare_with_ref("S_I_mu_alpha.dat","S_I_mu_alpha_ref.dat");
 }
 
-void test_deepks::check_psialpha()
+template <typename T>
+void test_deepks<T>::check_phialpha()
 {
     std::vector<int> na;
     na.resize(ucell.ntype);
@@ -29,61 +38,66 @@ void test_deepks::check_psialpha()
     {
         na[it] = ucell.atoms[it].na;
     }
-    ld.init(ORB, ucell.nat, ucell.ntype, ParaO, na);
+    this->ld.init(ORB, ucell.nat, ucell.ntype, kv.nkstot, ParaO, na, GlobalV::ofs_running);
 
-    ld.build_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
+    DeePKS_domain::allocate_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, &ParaO, this->ld.phialpha);
 
-    ld.check_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    DeePKS_domain::build_phialpha(PARAM.input.cal_force,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  &ParaO,
+                                  overlap_orb_alpha_,
+                                  this->ld.phialpha);
 
-    this->compare_with_ref("psialpha.dat", "psialpha_ref.dat");
-    this->compare_with_ref("dpsialpha_x.dat", "dpsialpha_x_ref.dat");
-    this->compare_with_ref("dpsialpha_y.dat", "dpsialpha_y_ref.dat");
-    this->compare_with_ref("dpsialpha_z.dat", "dpsialpha_z_ref.dat");
+    DeePKS_domain::check_phialpha(PARAM.input.cal_force,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  &ParaO,
+                                  this->ld.phialpha,
+                                  0); // 0 for rank
+
+    this->compare_with_ref("phialpha.dat", "phialpha_ref.dat");
+    this->compare_with_ref("dphialpha_x.dat", "dphialpha_x_ref.dat");
+    this->compare_with_ref("dphialpha_y.dat", "dphialpha_y_ref.dat");
+    this->compare_with_ref("dphialpha_z.dat", "dphialpha_z_ref.dat");
 }
 
-void test_deepks::read_dm()
+template <typename T>
+void test_deepks<T>::read_dm(const int nks)
 {
-    std::ifstream ifs("dm");
-    dm.resize(1);
-    dm[0].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
-
-    for (int mu = 0; mu < PARAM.sys.nlocal; mu++)
-    {
-        for (int nu = 0; nu < PARAM.sys.nlocal; nu++)
-        {
-            double c;
-            ifs >> c;
-            dm[0](mu, nu) = c;
-        }
-    }
-}
-
-void test_deepks::read_dm_k(const int nks)
-{
-    dm_k.resize(nks);
+    dm.resize(nks);
     std::stringstream ss;
     for (int ik = 0; ik < nks; ik++)
     {
         ss.str("");
-        ss << "dm_" << ik;
+        if (nks == 1)
+        {
+            ss << "dm";
+        }
+        else
+        {
+            ss << "dm_" << ik;
+        }
         std::ifstream ifs(ss.str().c_str());
-        dm_k[ik].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
+        dm[ik].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
 
         for (int mu = 0; mu < PARAM.sys.nlocal; mu++)
         {
             for (int nu = 0; nu < PARAM.sys.nlocal; nu++)
             {
-                std::complex<double> c;
+                T c;
                 ifs >> c;
-                dm_k[ik](mu, nu) = c;
+                dm[ik](mu, nu) = c;
             }
         }
     }
 }
 
-void test_deepks::set_dm_new()
+template <typename T>
+void test_deepks<T>::set_dm_new()
 {
-    // dm_gamma
     dm_new.resize(dm.size());
     for (int i = 0; i < dm.size(); i++)
     {
@@ -92,47 +106,91 @@ void test_deepks::set_dm_new()
     }
 }
 
-void test_deepks::set_dm_k_new()
+template <typename T>
+void test_deepks<T>::set_p_elec_DM()
 {
-    // dm_k
-    dm_k_new.resize(dm_k.size());
-    for (int i = 0; i < dm_k.size(); i++)
-    {
-        dm_k_new[i].resize(dm_k[i].nr * dm_k[i].nc);
-        dm_k_new[i].assign(dm_k[i].c, dm_k[i].c + dm_k[i].nr * dm_k[i].nc);
-    }
-}
-
-void test_deepks::check_pdm()
-{
+    int nk = 1;
+    const int nspin = PARAM.inp.nspin;
     if (PARAM.sys.gamma_only_local)
     {
-        this->read_dm();
-        this->set_dm_new();
-        this->ld.cal_projected_DM(dm_new, ucell, ORB, Test_Deepks::GridD);
+        nk = nspin;
+        this->p_elec_DM = new elecstate::DensityMatrix<T, double>(&ParaO, nspin);
     }
     else
     {
-        this->read_dm_k(kv.get_nkstot());
-        this->set_dm_k_new();
-        this->ld.cal_projected_DM_k(dm_k_new, ucell, ORB, Test_Deepks::GridD);
+        nk = kv.nkstot;
+        this->p_elec_DM
+            = new elecstate::DensityMatrix<T, double>(&ParaO, nspin, kv.kvec_d, kv.nkstot / PARAM.inp.nspin);
     }
-    this->ld.check_projected_dm();
-    this->compare_with_ref("pdm.dat", "pdm_ref.dat");
+    p_elec_DM->init_DMR(&Test_Deepks::GridD, &ucell);
+
+    for (int ik = 0; ik < nk; ik++)
+    {
+        p_elec_DM->set_DMK_pointer(ik, dm_new[ik].data());
+    }
+    p_elec_DM->cal_DMR();
 }
 
-void test_deepks::check_gdmx()
+template <typename T>
+void test_deepks<T>::check_pdm()
 {
-    this->ld.init_gdmx(ucell.nat);
-    if (PARAM.sys.gamma_only_local)
-    {
-        this->ld.cal_gdmx(dm_new[0], ucell, ORB, Test_Deepks::GridD, 0);
-    }
-    else
-    {
-        this->ld.cal_gdmx_k(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
-    }
-    this->ld.check_gdmx(ucell.nat);
+    this->read_dm(kv.nkstot);
+    this->set_dm_new();
+    this->set_p_elec_DM();
+    this->ld.init_DMR(ucell, ORB, ParaO, Test_Deepks::GridD);
+    DeePKS_domain::update_dmr(kv.kvec_d,
+                              p_elec_DM->get_DMK_vector(),
+                              ucell,
+                              ORB,
+                              ParaO,
+                              Test_Deepks::GridD,
+                              this->ld.dm_r);
+    DeePKS_domain::cal_pdm<T>(this->ld.init_pdm,
+                              this->ld.inlmax,
+                              this->ld.lmaxd,
+                              this->ld.inl2l,
+                              this->ld.inl_index,
+                              kv.kvec_d,
+                              this->ld.dm_r,
+                              this->ld.phialpha,
+                              ucell,
+                              ORB,
+                              Test_Deepks::GridD,
+                              ParaO,
+                              this->ld.pdm);
+    DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl2l, this->ld.pdm);
+    this->compare_with_ref("deepks_projdm.dat", "pdm_ref.dat");
+}
+
+template <typename T>
+void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
+{
+    DeePKS_domain::cal_descriptor(ucell.nat,
+                                  this->ld.inlmax,
+                                  this->ld.inl2l,
+                                  this->ld.pdm,
+                                  descriptor,
+                                  this->ld.des_per_atom);
+    DeePKS_domain::check_descriptor(this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, ucell, "./", descriptor, 0);
+    this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
+}
+
+template <typename T>
+void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
+{
+    DeePKS_domain::cal_gdmx<T>(this->ld.lmaxd,
+                               this->ld.inlmax,
+                               kv.nkstot,
+                               kv.kvec_d,
+                               this->ld.phialpha,
+                               this->ld.inl_index,
+                               this->ld.dm_r,
+                               ucell,
+                               ORB,
+                               ParaO,
+                               Test_Deepks::GridD,
+                               gdmx);
+    DeePKS_domain::check_gdmx(gdmx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -159,17 +217,14 @@ void test_deepks::check_gdmx()
     }
 }
 
-void test_deepks::check_descriptor()
+template <typename T>
+void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
 {
-    this->ld.cal_descriptor(ucell.nat);
-    this->ld.check_descriptor(ucell);
-    this->compare_with_ref("descriptor.dat", "descriptor_ref.dat");
-}
-
-void test_deepks::check_gvx()
-{
-    this->ld.cal_gvx(ucell.nat);
-    this->ld.check_gvx(ucell.nat);
+    std::vector<torch::Tensor> gevdm;
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    torch::Tensor gvx;
+    DeePKS_domain::cal_gvx(ucell.nat, this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, gevdm, gdmx, gvx, 0);
+    DeePKS_domain::check_gvx(gvx, 0);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -195,39 +250,180 @@ void test_deepks::check_gvx()
     }
 }
 
-void test_deepks::check_edelta()
+template <typename T>
+void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl)
 {
-    this->ld.load_model("model.ptg");
-    if (PARAM.sys.gamma_only_local)
+    DeePKS_domain::cal_gdmepsl<T>(this->ld.lmaxd,
+                                  this->ld.inlmax,
+                                  kv.nkstot,
+                                  kv.kvec_d,
+                                  this->ld.phialpha,
+                                  this->ld.inl_index,
+                                  this->ld.dm_r,
+                                  ucell,
+                                  ORB,
+                                  ParaO,
+                                  Test_Deepks::GridD,
+                                  gdmepsl);
+    DeePKS_domain::check_gdmepsl(gdmepsl);
+
+    for (int i = 0; i < 6; i++)
     {
-        this->ld.allocate_V_delta(ucell.nat);
+        std::stringstream ss;
+        std::stringstream ss1;
+        ss.str("");
+        ss << "gdmepsl_" << i << ".dat";
+        ss1.str("");
+        ss1 << "gdmepsl_" << i << "_ref.dat";
+        this->compare_with_ref(ss.str(), ss1.str());
+    }
+}
+
+template <typename T>
+void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
+{
+    std::vector<torch::Tensor> gevdm;
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    torch::Tensor gvepsl;
+    DeePKS_domain::cal_gvepsl(ucell.nat,
+                              this->ld.inlmax,
+                              this->ld.des_per_atom,
+                              this->ld.inl2l,
+                              gevdm,
+                              gdmepsl,
+                              gvepsl,
+                              0);
+    DeePKS_domain::check_gvepsl(gvepsl, 0);
+
+    for (int i = 0; i < 6; i++)
+    {
+        std::stringstream ss;
+        std::stringstream ss1;
+        ss.str("");
+        ss << "gvepsl_" << i << ".dat";
+        ss1.str("");
+        ss1 << "gvepsl_" << i << "_ref.dat";
+        this->compare_with_ref(ss.str(), ss1.str());
+    }
+}
+
+template <typename T>
+void test_deepks<T>::check_orbpre()
+{
+    using TH = std::conditional_t<std::is_same<T, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
+    std::vector<torch::Tensor> gevdm;
+    torch::Tensor orbpre;
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_orbital_precalc<T, TH>(dm,
+                                       this->ld.lmaxd,
+                                       this->ld.inlmax,
+                                       ucell.nat,
+                                       kv.nkstot,
+                                       this->ld.inl2l,
+                                       kv.kvec_d,
+                                       this->ld.phialpha,
+                                       gevdm,
+                                       this->ld.inl_index,
+                                       ucell,
+                                       ORB,
+                                       ParaO,
+                                       Test_Deepks::GridD,
+                                       orbpre);
+    DeePKS_domain::check_orbpre(orbpre);
+    this->compare_with_ref("orbital_precalc.dat", "orbpre_ref.dat");
+}
+
+template <typename T>
+void test_deepks<T>::check_vdpre()
+{
+    std::vector<torch::Tensor> gevdm;
+    torch::Tensor vdpre;
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_v_delta_precalc<T>(PARAM.sys.nlocal,
+                                          this->ld.lmaxd,
+                                          this->ld.inlmax,
+                                          ucell.nat,
+                                          kv.nkstot,
+                                          this->ld.inl2l,
+                                          kv.kvec_d,
+                                          this->ld.phialpha,
+                                          gevdm,
+                                          this->ld.inl_index,
+                                          ucell,
+                                          ORB,
+                                          ParaO,
+                                          Test_Deepks::GridD,
+                                          vdpre);
+    DeePKS_domain::check_v_delta_precalc<T>(vdpre);
+    this->compare_with_ref("v_delta_precalc.dat", "vdpre_ref.dat");
+}
+
+template <typename T>
+void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
+{
+    DeePKS_domain::load_model("model.ptg", ld.model_deepks);
+    ld.allocate_V_delta(ucell.nat, kv.nkstot);
+    if (PARAM.inp.deepks_equiv)
+    {
+        DeePKS_domain::cal_edelta_gedm_equiv(ucell.nat,
+                                             this->ld.lmaxd,
+                                             this->ld.nmaxd,
+                                             this->ld.inlmax,
+                                             this->ld.des_per_atom,
+                                             this->ld.inl2l,
+                                             descriptor,
+                                             this->ld.gedm,
+                                             this->ld.E_delta,
+                                             0); // 0 for rank
     }
     else
     {
-        this->ld.allocate_V_delta(ucell.nat, kv.get_nkstot());
+        DeePKS_domain::cal_edelta_gedm(ucell.nat,
+                                       this->ld.inlmax,
+                                       this->ld.des_per_atom,
+                                       this->ld.inl2l,
+                                       descriptor,
+                                       this->ld.pdm,
+                                       this->ld.model_deepks,
+                                       this->ld.gedm,
+                                       this->ld.E_delta);
     }
-    this->ld.cal_gedm(ucell.nat);
 
     std::ofstream ofs("E_delta.dat");
     ofs << std::setprecision(10) << this->ld.E_delta << std::endl;
     ofs.close();
     this->compare_with_ref("E_delta.dat", "E_delta_ref.dat");
 
-    this->ld.check_gedm();
-    this->compare_with_ref("gedm.dat", "gedm_ref.dat");
+    // DeePKS_domain::check_gedm(this->ld.inlmax, this->ld.inl2l, this->ld.gedm);
+    // this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 
-void test_deepks::check_e_deltabands()
+template <typename T>
+void test_deepks<T>::cal_V_delta()
 {
-    if (PARAM.sys.gamma_only_local)
+    hamilt::HS_Matrix_K<T>* hsk = new hamilt::HS_Matrix_K<T>(&ParaO);
+    hamilt::HContainer<double>* hR = new hamilt::HContainer<double>(ucell, &ParaO);
+    hamilt::Operator<T>* op_deepks = new hamilt::DeePKS<hamilt::OperatorLCAO<T, double>>(hsk,
+                                                                                         kv.kvec_d,
+                                                                                         hR, // no explicit call yet
+                                                                                         &ucell,
+                                                                                         &Test_Deepks::GridD,
+                                                                                         &overlap_orb_alpha_,
+                                                                                         &ORB,
+                                                                                         kv.nkstot,
+                                                                                         p_elec_DM,
+                                                                                         &this->ld);
+    for (int ik = 0; ik < kv.nkstot; ++ik)
     {
-        this->ld.cal_e_delta_band(dm_new);
+        op_deepks->init(ik);
     }
-    else
-    {
-        this->folding_nnr(kv);
-        this->ld.cal_e_delta_band_k(dm_k_new, kv.get_nkstot());
-    }
+}
+
+template <typename T>
+void test_deepks<T>::check_e_deltabands()
+{
+    this->cal_V_delta();
+    this->ld.dpks_cal_e_delta_band(dm_new, kv.nkstot);
 
     std::ofstream ofs("E_delta_bands.dat");
     ofs << std::setprecision(10) << this->ld.e_delta_band << std::endl;
@@ -235,24 +431,54 @@ void test_deepks::check_e_deltabands()
     this->compare_with_ref("E_delta_bands.dat", "E_delta_bands_ref.dat");
 }
 
-void test_deepks::check_f_delta()
+template <typename T>
+void test_deepks<T>::check_f_delta_and_stress_delta()
 {
+    ModuleBase::matrix fvnl_dalpha;
+    fvnl_dalpha.create(ucell.nat, 3);
+
     ModuleBase::matrix svnl_dalpha;
     svnl_dalpha.create(3, 3);
-    if (PARAM.sys.gamma_only_local)
-    {
-        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, 1, svnl_dalpha);
-    }
-    else
-    {
-        ld.cal_f_delta_k(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 1, svnl_dalpha);
-    }
-    ld.check_f_delta(ucell.nat, svnl_dalpha);
+    const int cal_stress = 1;
+    const int nks = kv.nkstot;
+    DeePKS_domain::cal_f_delta<T>(this->ld.dm_r,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  ParaO,
+                                  nks,
+                                  kv.kvec_d,
+                                  this->ld.phialpha,
+                                  this->ld.gedm,
+                                  this->ld.inl_index,
+                                  fvnl_dalpha,
+                                  cal_stress,
+                                  svnl_dalpha);
+    DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
 
     this->compare_with_ref("F_delta.dat", "F_delta_ref.dat");
+    this->compare_with_ref("stress_delta.dat", "stress_delta_ref.dat");
 }
 
-void test_deepks::compare_with_ref(const std::string f1, const std::string f2)
+template <typename T>
+void test_deepks<T>::check_o_delta()
+{
+    const int nspin = PARAM.inp.nspin;
+    const int nks = kv.nkstot;
+    ModuleBase::matrix o_delta;
+    o_delta.create(nks, 1);
+    DeePKS_domain::cal_o_delta<T>(dm,
+                                  ld.V_delta,
+                                  o_delta,
+                                  ParaO,
+                                  nks,
+                                  nspin);
+    DeePKS_domain::check_o_delta(o_delta);
+    this->compare_with_ref("o_delta.dat", "o_delta_ref.dat");
+}
+
+template <typename T>
+void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2)
 {
     this->total_check += 1;
     std::ifstream file1(f1.c_str());
@@ -275,6 +501,22 @@ void test_deepks::compare_with_ref(const std::string f1, const std::string f2)
                 return;
             }
         }
+        else if (word1[0] == '(' && word1[word1.size() - 1] == ')' && 
+                 word2[0] == '(' && word2[word2.size() - 1] == ')') // complex number
+        {
+            std::string word1_str = word1.substr(1, word1.size() - 2);
+            std::string word2_str = word2.substr(1, word2.size() - 2);
+            double word1_real = std::stof(word1_str.substr(0, word1_str.find(',')));
+            double word1_imag = std::stof(word1_str.substr(word1_str.find(',') + 1));
+            double word2_real = std::stof(word2_str.substr(0, word2_str.find(',')));
+            double word2_imag = std::stof(word2_str.substr(word2_str.find(',') + 1));
+            if (std::abs(word1_real - word2_real) > test_thr || std::abs(word1_imag - word2_imag) > test_thr)
+            {
+                this->failed_check += 1;
+                std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;
+                return;
+            }
+        }
         else
         {
             if (word1 != word2)
@@ -286,3 +528,6 @@ void test_deepks::compare_with_ref(const std::string f1, const std::string f2)
     }
     return;
 }
+
+template class test_deepks<double>;
+template class test_deepks<std::complex<double>>;

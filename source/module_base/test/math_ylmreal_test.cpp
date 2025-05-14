@@ -36,16 +36,6 @@
  *
  */
 
-
-
-//mock functions of WARNING_QUIT and WARNING
-namespace ModuleBase
-{
-    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
-    void WARNING(const std::string &file,const std::string &description) {return ;}
-}
-
-
 class YlmRealTest : public testing::Test
 {
     protected:

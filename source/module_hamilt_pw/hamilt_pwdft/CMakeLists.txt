@@ -8,11 +8,14 @@ list(APPEND objects
     operator_pw/meta_pw.cpp
     operator_pw/velocity_pw.cpp
     operator_pw/operator_pw.cpp
+    operator_pw/onsite_proj_pw.cpp
+    operator_pw/op_exx_pw.cpp
     forces_nl.cpp
     forces_cc.cpp
     forces_scc.cpp
     forces.cpp
     forces_us.cpp
+    forces_onsite.cpp
     stress_func_cc.cpp
     stress_func_ewa.cpp
     stress_func_gga.cpp
@@ -22,13 +25,11 @@ list(APPEND objects
     stress_func_loc.cpp
     stress_func_nl.cpp
     stress_func_us.cpp
+    stress_func_onsite.cpp
     stress_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
     VNL_grad_pw.cpp
-    wavefunc.cpp
-    wf_atomic.cpp
-    wfinit.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
@@ -36,13 +37,17 @@ list(APPEND objects
     parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
+    fs_kin_tools.cpp
     radial_proj.cpp
+    onsite_projector.cpp
+    onsite_proj_tools.cpp
 )
 
 add_library(
     hamilt_pwdft
     OBJECT
     ${objects}
+        stress_func_exx.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -4,7 +4,7 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-
+FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(
     const double lat0_in, // unit length (unit in bohr)
     const ModuleBase::Matrix3
@@ -45,9 +45,6 @@ double& PW_Basis_K::getgk2(const int ik, const int igl) const {
     return this->gk2[igl];
 }
 
-FFT::FFT() {}
-
-FFT::~FFT() {}
 
 } // namespace ModulePW
 
@@ -100,6 +97,7 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
                               const Func& spsi_func,
                               ct::Tensor& psi,
                               ct::Tensor& eigen,
+                              const std::vector<double>& ethr_band,
                               const ct::Tensor& prec) {
     auto n_bands = psi.shape().dim_size(0);
     auto n_basis = psi.shape().dim_size(1);
@@ -141,24 +139,22 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid() {
-    delmem_complex_op()(this->ctx, this->hpsi);
-    delmem_complex_op()(this->ctx, this->spsi);
-    delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
-    delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(
-        this->cpu_ctx,
-        this->eigenvalue);
+    delmem_complex_op()(this->hpsi);
+    delmem_complex_op()(this->spsi);
+    delmem_complex_op()(this->hcc);
+    delmem_complex_op()(this->scc);
+    delmem_complex_op()(this->vcc);
+    delmem_complex_op()(this->lagrange_matrix);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->eigenvalue);
 }
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
                                 const std::function<void(T*, T*, const int, const int)>& spsi_func,
                                 const int ld_psi,
-                                T *psi_in,
+                                T* psi_in,
                                 Real* eigenvalue_in,
-                                const Real david_diag_thr,
+                                const std::vector<double>& ethr_band,
                                 const int david_maxiter,
                                 const int ntry_max,
                                 const int notconv_max) {
@@ -182,34 +178,3 @@ template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
 } // namespace hsolver
-
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-namespace hamilt {
-
-template <>
-void diago_PAO_in_pw_k2(
-    const base_device::DEVICE_CPU* ctx,
-    const int& ik,
-    psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
-    ModulePW::PW_Basis_K* wfc_basis,
-    wavefunc* p_wf,
-    hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in) {
-    for (int i = 0; i < wvf.size(); i++) {
-        wvf.get_pointer()[i] = std::complex<float>((float)i + 1, 0);
-    }
-}
-
-template <>
-void diago_PAO_in_pw_k2(
-    const base_device::DEVICE_CPU* ctx,
-    const int& ik,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
-    ModulePW::PW_Basis_K* wfc_basis,
-    wavefunc* p_wf,
-    hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in) {
-    for (int i = 0; i < wvf.size(); i++) {
-        wvf.get_pointer()[i] = std::complex<double>((double)i + 1, 0);
-    }
-}
-
-}//namespace hsolver

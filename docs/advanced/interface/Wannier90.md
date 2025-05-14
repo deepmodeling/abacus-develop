@@ -2,11 +2,11 @@
 
 [Wannier90](http://www.wannier.org/) is a useful package to generating the maximally-localized Wannier functions (MLWFs), which can be used to compute advanced electronic properties. Some post-processing tools (such as WannierTools, etc.) will use MLWFs for further analysis and calculations. 
 
-Currently ABACUS provides an interface to Wannier90 package. The users are assumed to be familiar with the use of Wannier90. The ABACUS-Wannier90 interface is only suitable for nspin=1 or 2, not for nspin=4 or spin-orbit coupling (SOC). 
+Currently ABACUS provides an interface to Wannier90 package. The users are assumed to be familiar with the use of Wannier90. The ABACUS-Wannier90 interface is suitable for nspin=1, 2, 4 (including lspinorb=1).
 
 To construct the MLWFs using the wave functions of ABACUS generally requires four steps. Here we use the diamond as an example which can be found in [examples/interface_wannier90/](https://github.com/abacusmodeling/abacus-develop/tree/develop/examples/interface_wannier90).
 
-1. Enter the `ABACUS_towannier90/` folder, prepare a Wannier90 input file `diamond.win`, which is the main input file for Wannier90. Then To generate `diamond.nnkp` file by running Wannier90,  which ABACUS will read later: 
+1. Enter the `ABACUS_towannier90_pw/` folder, prepare a Wannier90 input file `diamond.win`, which is the main input file for Wannier90. Then To generate `diamond.nnkp` file by running Wannier90,  which ABACUS will read later: 
 
     ```
     wannier90 -pp diamond.win
@@ -73,17 +73,22 @@ To construct the MLWFs using the wave functions of ABACUS generally requires fou
     ```
     INPUT_PARAMETERS
 
+    pseudo_dir              ../../../tests/PP_ORB
+    orbital_dir             ../../../tests/PP_ORB
     ntype                   1
     ecutwfc                 50
     nbands                  4
+    smearing_method         fixed
     calculation             nscf
     scf_nmax                50
     pw_diag_thr             1.0e-12
-    scf_thr                 1.0e-15
+    scf_thr                 1.0e-13
     init_chg                file
-    symmetry                0
+    symmetry                -1
     towannier90             1
     nnkpfile                diamond.nnkp
+    basis_type              pw
+    out_wannier_unk         0
     ```
 
     There are seven interface-related parameters in the `INPUT` file:
@@ -97,7 +102,7 @@ To construct the MLWFs using the wave functions of ABACUS generally requires fou
     - [out_wannier_unk](../input_files/input-main.md#out_wannier_unk): control whether to output the "UNK.*" file.
     - [out_wannier_wvfn_formatted](../input_files/input-main.md#out_wannier_wvfn_formatted): control what format of the Wannier function file to output, `true`: output the formatted text file; `false`: output the binary file. Note that the `wvfn_formatted` option in `*.win` file (input file of Wannier90) has to be set accordingly with this option.
 
-    Note: You need to turn off the symmetry during the entire nscf calculation.
+    **Note: You need to turn off the symmetry during the entire nscf calculation.**
 
     To setup the `KPT` file according to the `diamond.win` file, which is similar to "begin kpoints ..." in the `diamond.win` file: 
 

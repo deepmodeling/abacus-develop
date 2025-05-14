@@ -5,7 +5,11 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv,const Parallel_Kpoints* Pkpoints)
+#ifdef __MPI
+#include <mpi.h> // use MPI_Barrier
+#endif
+
+void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
 	ModuleBase::TITLE("ModuleIO","write_istate_info");
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
@@ -24,8 +28,10 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
         MPI_Barrier(MPI_COMM_WORLD);
         if (GlobalV::MY_POOL == ip)
         {
-            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) { continue;
-}
+			if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_BNDGROUP != 0 ) 
+			{ 
+				continue;
+			}
 #endif
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
@@ -33,7 +39,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                 for (int ik = 0; ik < kv.get_nks(); ik++)
                 {
 #ifdef __MPI
-                    int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
+                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
 #else
                     int ik_global = ik + 1;
 #endif
@@ -41,7 +47,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                           << std::setw(25) << "Kpoint = " << ik_global
                           << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
                           << " " << kv.kvec_d[ik].z << ")" << std::endl;
-                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+                    for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
                     {
                         ofsi2.precision(16);
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
@@ -57,7 +63,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                 for (int ik = 0; ik < kv.get_nks() / 2; ik++)
                 {
 #ifdef __MPI
-                    int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
+                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
 #else
                     int ik_global = ik + 1;
 #endif

@@ -4,7 +4,7 @@
 
 ### A quick LCAO example
 
-ABACUS is well known for its support of LCAO (Linear Combination of Atomic Orbital) basis set in calculating periodic condensed matter systems, so it's a good choice to start from a LCAO example of self-consistent field (SCF) calculation. Here, FCC MgO has been chosen as a quick start example. The default name of a structure file in ABACUS is `STRU`. The `STRU` file for FCC MgO in a LCAO calculation is shown below:
+ABACUS is well known for its support of LCAO (Linear Combination of Atomic Orbital) basis set in calculating periodic condensed matter systems. It's a good choice to start from a LCAO example of self-consistent field (SCF) calculation. Here, FCC MgO has been chosen as a quick start example. The default name of a structure file in ABACUS is `STRU`. The `STRU` file for FCC MgO in a LCAO calculation is shown below:
 
 ```
 #This is the atom file containing all the information
@@ -48,11 +48,10 @@ Next, the `INPUT` file is required, which sets all key parameters to direct ABAC
 ```
 INPUT_PARAMETERS
 suffix                  MgO
-ntype                   2
 pseudo_dir              ./
 orbital_dir		./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# Rydberg
+scf_thr                 1e-6		    # SCF criterion
 basis_type              lcao            
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
@@ -71,7 +70,7 @@ Gamma
 After all the above input files have been set, one should be able to run the first quick example. The simplest way is to use the command line, e.g.:
 
 ```
-mpirun -np 2 abacus
+OMP_NUM_THREADS=1 mpirun -np 2 abacus
 ```
 
 The main output information is stored in the file `OUT.MgO/running_scf.log`, which starts with
@@ -138,10 +137,9 @@ The `INPUT` file follows as:
 ```
 INPUT_PARAMETERS
 suffix                  MgO
-ntype                   2
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# Rydberg
+scf_thr                 1e-6		    # SCF criterion
 basis_type              pw              # changes the type of basis set
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
@@ -201,12 +199,11 @@ The `INPUT` is provided as follows:
 ```
 INPUT_PARAMETERS
 suffix                  MgO
-ntype                   2
 nelec                   0.0
 pseudo_dir              ./
 orbital_dir             ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# Rydberg
+scf_thr                 1e-6		# SCF criterion
 basis_type              lcao 
 calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
 force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
@@ -223,11 +220,10 @@ The `INPUT` is provided as follows:
 ```
 INPUT_PARAMETERS
 suffix                  MgO
-ntype                   2
 nelec                   0.0
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# Rydberg
+scf_thr                 1e-6		# SCF criterion
 basis_type              pw
 calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
 force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
@@ -236,4 +232,4 @@ relax_nmax		100		# the maximal number of ionic iteration steps
 out_stru		1
 ```
 
-Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `OUT.MgO/running_cell-relax.log`.
+Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `STRU_ION_D` with different format.

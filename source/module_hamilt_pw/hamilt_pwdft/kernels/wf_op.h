@@ -26,18 +26,18 @@ struct cal_sk_op {
     /// @param eigts1_nc - GlobalC::sf.eigts1.nc
     /// @param eigts2_nc - GlobalC::sf.eigts2.nc
     /// @param eigts3_nc - GlobalC::sf.eigts3.nc
-    /// @param atom_na - GlobalC::ucell.atoms[ii].na
+    /// @param atom_na - ucell.atoms[ii].na
     /// @param igl2isz - wfc_basis->igl2isz_k
     /// @param is2fftixy - wfc_basis->is2fftixy
     /// @param TWO_PI - ModuleBase::TWO_PI
     /// @param kvec_c - GlobalC::kv.kvec_c
-    /// @param atom_tau - GlobalC::ucell.atoms[it].tau
+    /// @param atom_tau - ucell.atoms[it].tau
     /// @param eigts1 - GlobalC::sf.eigts1
     /// @param eigts2 - GlobalC::sf.eigts2
     /// @param eigts3 - GlobalC::sf.eigts3
     ///
     /// Output Parameters
-    /// @param sk - output results matrix with size GlobalC::ucell.nat * npw
+    /// @param sk - output results matrix with size ucell.nat * npw
     void operator()(const Device* ctx,
                     const int& ik,
                     const int& ntype,

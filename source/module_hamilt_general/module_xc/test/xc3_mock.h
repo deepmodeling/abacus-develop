@@ -132,8 +132,6 @@ namespace ModulePW
                                                                              const double factor) const;
 #endif
 
-    FFT::FFT(){};
-    FFT::~FFT(){};
 
     void PW_Basis::initgrids(double, ModuleBase::Matrix3, double){};
     void PW_Basis::distribute_r(){};
@@ -165,7 +163,7 @@ namespace ModuleBase
 namespace GlobalV
 {
     std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
+    bool CAL_STRESS = false;
     int CAL_FORCE = 0;
     int NSPIN;
     int NPOL;
@@ -190,15 +188,18 @@ Charge::~Charge(){};
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
 
-void UnitCell::cal_ux()
+namespace elecstate
 {
-    magnet.lsign_ = false;
+    void cal_ux(UnitCell& ucell)
+    {
+        ucell.magnet.lsign_ = false;
 
-    magnet.ux_[0] = 0;
-    magnet.ux_[1] = 1;
-    magnet.ux_[2] = 2;
+        ucell.magnet.ux_[0] = 0;
+        ucell.magnet.ux_[1] = 1;
+        ucell.magnet.ux_[2] = 2;
 
-    magnet.lsign_ = true;
+        ucell.magnet.lsign_ = true;
+    };
 }
 
 #ifdef __LCAO

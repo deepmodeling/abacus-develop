@@ -5,7 +5,7 @@
 #include "mpi.h"
 #endif
 #include "module_base/timer.h"
-
+#include "module_cell/update_cell.h"
 Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
@@ -272,7 +272,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
 }
 
 
-void Nose_Hoover::second_half(void)
+void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
@@ -809,7 +809,7 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
     }
 
     /// reset ucell and pos due to change of lattice
-    ucell.setup_cell_after_vc(ofs);
+    unitcell::setup_cell_after_vc(ucell,ofs);
 }
 
 void Nose_Hoover::target_stress()

@@ -10,9 +10,3 @@ AddTest(
   LIBS parameter ${math_libs} base device vdw 
   SOURCES vdw_test.cpp 
 )
-
-AddTest(
-  TARGET dftd3_xc
-  LIBS parameter ${math_libs} base device
-  SOURCES dftd3_xc_test.cpp
-)

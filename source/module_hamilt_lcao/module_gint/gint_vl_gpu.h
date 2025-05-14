@@ -14,9 +14,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
                  const double dr,
                  const double* rcut,
                  const Grid_Technique& gridt,
-                 const UnitCell& ucell,
-                 double* pvpR,
-                 const bool is_gamma_only);
+                 const UnitCell& ucell);
 
 void gtask_vlocal(const Grid_Technique& gridt,
                   const UnitCell& ucell,
@@ -30,8 +28,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
                   double* dr_part,
                   double* vldr3);
 
-void alloc_mult_vlocal(const bool is_gamma_only,
-                       const hamilt::HContainer<double>* hRGint,
+void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
                        const Grid_Technique& gridt,
                        const UnitCell& ucell,
                        const int grid_index_ij,

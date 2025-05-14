@@ -3,6 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
+
 namespace MD_func
 {
 
@@ -255,16 +256,16 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->runner(istep, unit_in);
+    p_esolver->runner(unit_in, istep);
 
     potential = p_esolver->cal_energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_force(force_temp);
+    p_esolver->cal_force(unit_in, force_temp);
 
     if (cal_stress)
     {
-        p_esolver->cal_stress(virial);
+        p_esolver->cal_stress(unit_in, virial);
     }
 
     /// convert Rydberg to Hartree
@@ -293,16 +294,18 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 
     for (int i = 0; i < 3; i++)
     {
-        stress_scalar += stress(i, i) / 3;
-        virial_scalar += virial(i, i) / 3;
+        stress_scalar += stress(i, i) / 3.0;
+        virial_scalar += virial(i, i) / 3.0;
     }
 
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
-    ofs << "Virtual Pressure is " << stress_scalar * unit_transform << " kbar " << std::endl;
-    ofs << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
-    ofs << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar " << std::endl;
+    ofs << " MD PRESSURE (ELECTRONS+IONS)  : " << stress_scalar * unit_transform << " kbar" << std::endl;
+    ofs << " ELECTRONIC      PART OF STRESS: " << virial_scalar * unit_transform << " kbar" << std::endl;
+    ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar" << std::endl;
 
+    // one should use 'print_stress' function in ../source/module_io/output_log.cpp
+/*
     ofs.unsetf(std::ios::fixed);
     ofs << std::setprecision(8) << std::endl;
     ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
@@ -312,6 +315,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
             << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
     ofs << std::setiosflags(std::ios::left);
+*/
 
     return;
 }
@@ -453,6 +457,7 @@ double current_temp(double& kinetic,
 {
     if (3 * natom == frozen_freedom)
     {
+        kinetic = 0.0;
         return 0.0;
     }
     else

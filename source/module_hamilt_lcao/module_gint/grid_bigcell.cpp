@@ -131,7 +131,6 @@ void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 	this->dxe = static_cast<int>( this->orbital_rmax * g1) +1;
 	this->dye = static_cast<int>( this->orbital_rmax * g2) +1;
 	this->dze = static_cast<int>( this->orbital_rmax * g3) +1;
-
 	//xiaohui add 'PARAM.inp.out_level' line, 2015-09-16
 	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"extended fft grid",dxe,dye,dze);
 

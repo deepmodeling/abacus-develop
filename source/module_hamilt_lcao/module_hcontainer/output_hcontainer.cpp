@@ -18,6 +18,14 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
                                         int precision)
     : _hcontainer(hcontainer), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
 {
+    if (this->_sparse_threshold == -1)
+    {
+        this->_sparse_threshold = 1e-10;
+    }
+    if (this->_precision == -1)
+    {
+        this->_precision = 8;
+    }
 }
 
 template <typename T>
@@ -25,10 +33,35 @@ void Output_HContainer<T>::write()
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
     int rx, ry, rz;
+    int R_range[2] = {0, 0};
+    // find the range of R
     for (int iR = 0; iR < size_for_loop_R; iR++)
     {
         this->_hcontainer->loop_R(iR, rx, ry, rz);
-        this->write_single_R(rx, ry, rz);
+        int max_R = std::max({rx, ry, rz});
+        int min_R = std::min({rx, ry, rz});
+        if (max_R > R_range[1])
+        {
+            R_range[1] = max_R;
+        }
+        if (min_R < R_range[0])
+        {
+            R_range[0] = min_R;
+        }
+    }
+    // write in order of R
+    for (int ix = R_range[0]; ix <= R_range[1]; ix++)
+    {
+        for (int iy = R_range[0]; iy <= R_range[1]; iy++)
+        {
+            for (int iz = R_range[0]; iz <= R_range[1]; iz++)
+            {
+                if (this->_hcontainer->find_R(ix, iy, iz) != -1)
+                {
+                    this->write_single_R(ix, iy, iz);
+                }
+            }
+        }
     }
 }
 
@@ -50,17 +83,25 @@ void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
     }
     if (find_R == 0)
     {
-        ModuleBase::WARNING_QUIT("Output_HContainer::write", "Cannot find the R vector from the HContaine");
+        ModuleBase::WARNING_QUIT("Output_HContainer::write", "Cannot find the R vector from the HContainer.");
     }
 }
 
 template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
+    if (this->_hcontainer->get_paraV() == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("Output_HContainer::write_single_R", "paraV is nullptr! Unable to write the matrix.");
+    }
     this->_hcontainer->fix_R(rx, ry, rz);
+
     ModuleIO::SparseMatrix<T> sparse_matrix
         = ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
+    assert(_hcontainer->get_nbasis()>0);
+
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
+
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
@@ -77,6 +118,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
             }
         }
     }
+
     if (sparse_matrix.getNNZ() != 0)
     {
         _ofs << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
@@ -85,9 +127,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     this->_hcontainer->unfix_R();
 }
 
-// explicit instantiation of template class with double type
 template class Output_HContainer<double>;
-// to do: explicit instantiation of template class with std::complex<double> type
-// template class Output_HContainer<std::complex<double>>;
+template class Output_HContainer<std::complex<double>>;
 
 } // namespace hamilt

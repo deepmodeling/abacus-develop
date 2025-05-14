@@ -1,7 +1,7 @@
 #ifndef DM_IO_H
 #define DM_IO_H
 
-#include "module_basis/module_ao/parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include "module_cell/unitcell.h"
 
 #include <string>

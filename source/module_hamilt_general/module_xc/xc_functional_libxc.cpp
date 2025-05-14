@@ -3,6 +3,7 @@
 #include "xc_functional_libxc.h"
 #include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
+#include "module_base/formatter.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"		// just for GlobalC::exx_info
@@ -10,7 +11,7 @@
 
 #include <xc.h>
 #include <vector>
-bool xc_with_laplacian(const std::string& xc_func_in)
+bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
 	// see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
 	// ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
@@ -26,16 +27,9 @@ bool xc_with_laplacian(const std::string& xc_func_in)
 	return false;
 }
 
-std::string _uppercase(const std::string& str)
-{
-	std::string result = str;
-	std::transform(result.begin(), result.end(), result.begin(), ::toupper);
-	return result;
-}
-
 bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 {
-	const std::string xc_func = _uppercase(xc_func_in);
+	const std::string xc_func = FmtCore::upper(xc_func_in);
 	if(xc_func.find("VDW") != std::string::npos) { return true; }
 	/* known excluded: GGA_X_OPTB86B_VDW, GGA_X_OPTB88_VDW, GGA_X_OPTPBE_VDW, GGA_X_PBEK1_VDW */
 
@@ -64,7 +58,7 @@ bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::string xc_func_in)
 {
     // determine the type (lda/gga/mgga)
-	if (xc_with_laplacian(xc_func_in))
+	if (not_supported_xc_with_laplacian(xc_func_in))
 	{
 		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
 			"XC Functional involving Laplacian of rho is not implemented.");
@@ -80,7 +74,7 @@ std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::stri
 
     // determine the id
 	std::vector<int> func_id; // libxc id of functional
-    int pos = 0;
+    size_t pos = 0;
     std::string delimiter = "+";
     std::string token;
     while ((pos = xc_func_in.find(delimiter)) != std::string::npos)
@@ -88,13 +82,27 @@ std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::stri
         token = xc_func_in.substr(0, pos);
         int id = xc_functional_get_number(token.c_str());
         std::cout << "func,id" << token << " " << id << std::endl;
-        if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!"); }
+        if (id == -1) 
+		{
+			std::string message = "Unrecognized exchange-correlation functional '"+ xc_func_in +"'.\n"
+								  " Possible source: Pseudopotential file or dft_functional parameter.\n"
+								  " Please explicitly set dft_functional in INPUT,\n"
+								  " or verify the functional name is supported.";
+			ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",message);
+		}
         func_id.push_back(id);
         xc_func_in.erase(0, pos + delimiter.length());
     }
     int id = xc_functional_get_number(xc_func_in.c_str());
     std::cout << "func,id" << xc_func_in << " " << id << std::endl;
-    if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!"); }
+    if (id == -1)
+	{ 
+		std::string message = "Unrecognized exchange-correlation functional '"+ xc_func_in +"'.\n"
+							  " Possible source: Pseudopotential file or dft_functional parameter.\n"
+							  " Please explicitly set dft_functional in INPUT,\n"
+							  " or verify the functional name is supported.";
+		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",message);
+	}
     func_id.push_back(id);
 
     return std::make_pair(func_type, func_id);
@@ -141,6 +149,20 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
 				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
+        // added by jghan, 2024-07-06
+		else if( id == XC_GGA_X_ITYH ) // short-range of B88_X
+		{
+			add_func( XC_GGA_X_ITYH );
+			double parameter_omega[1] = {PARAM.inp.exx_hse_omega}; // GlobalC::exx_info.info_global.hse_omega
+			xc_func_set_ext_params(&funcs.back(), parameter_omega);	
+		}
+		else if( id == XC_GGA_C_LYPR ) // short-range of LYP_C
+		{
+			add_func( XC_GGA_C_LYPR );
+            // the first six parameters come from libxc, and may need to be modified in some cases
+			double parameter_lypr[7] = {0.04918, 0.132, 0.2533, 0.349, 0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega};
+			xc_func_set_ext_params(&funcs.back(), parameter_lypr);	
+		}
         // Long-range corrected functionals:
         else if( id == XC_HYB_GGA_XC_LC_PBEOP ) // LC version of PBE
 		{
@@ -148,8 +170,8 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_PBEOP );
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
+			double parameter_lcpbe[3] = { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
+			xc_func_set_ext_params(&funcs.back(), parameter_lcpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LC_WPBE ) // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
 		{
@@ -157,10 +179,10 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_WPBE );	
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+			double parameter_lcwpbe[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
 				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.4
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
+			xc_func_set_ext_params(&funcs.back(), parameter_lcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBE ) // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
 		{
@@ -168,10 +190,10 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBE );	
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+			double parameter_lrcwpbe[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
 				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.3
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
+			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBEH ) // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
 		{
@@ -179,10 +201,10 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and 20.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBEH );	
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+			double parameter_lrcwpbeh[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
 				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.2
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
+			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbeh);
 		}
         else if( id == XC_HYB_GGA_XC_CAM_PBEH ) // CAM hybrid screened exchange PBE version
 		{
@@ -190,10 +212,10 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and 100.0% short-range and 20.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_CAM_PBEH);	
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
+			double parameter_campbeh[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
 				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: 0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.7
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
+			xc_func_set_ext_params(&funcs.back(), parameter_campbeh);
 		}
 #endif
 		else

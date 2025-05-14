@@ -11,8 +11,8 @@ The wave function is output in a file called 'WAVEFUNC1.txt'
 
 For LCAO basis:
 	- set 'out_wfc_lcao' to '1'
-Several `LOWF_K_#.dat` files will be output in multi-k calculation and 
-`LOWF_GAMMA_S1.dat` in gamma-only calculation.
+Several `WFC_NAO_K#.txt` files will be output in multi-k calculation and 
+`WFC_NAO_GAMMA1.txt` in gamma-only calculation.
 
 
 For the wave functions in Real Space:

@@ -14,7 +14,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 
 //-------------------------------------------------------------------
@@ -66,23 +66,28 @@ class Stress_Func
                     ModuleSymmetry::Symmetry* p_symm,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // electron kinetic part in PW basis
+                    const UnitCell& ucell_in,
+                    const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
-    void stress_har(ModuleBase::matrix& sigma,
+    void stress_har(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const bool is_pw,
                     const Charge* const chr); // hartree part in PW or LCAO basis
 
     // 3) the stress from the ewald term (ion-ion intraction under
     //		periodic boundary conditions).
-    void stress_ewa(ModuleBase::matrix& sigma,
+    void stress_ewa(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const bool is_pw); // ewald part in PW or LCAO basis
 
     // 4) the stress from the local pseudopotentials
-    void stress_loc(ModuleBase::matrix& sigma,
+    void stress_loc(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
+                    const ModuleBase::matrix& vloc,
                     const Structure_Factor* p_sf,
                     const bool is_pw,
                     const Charge* const chr); // local pseudopotential part in PW or LCAO
@@ -101,18 +106,23 @@ class Stress_Func
      *        D V(g^2) / D g^2 = 4pi e^2/omegai /G^4
      *
      */
-    void dvloc_coulomb(const FPTYPE& zp,
+    void dvloc_coulomb(const UnitCell& ucell,
+                       const FPTYPE& zp,
                        FPTYPE* dvloc,
                        ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
 
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
+                   UnitCell& ucell,
                    const Structure_Factor* p_sf,
                    const bool is_pw,
+                   const bool *numeric,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
+                     const double& omega,
+                     const double& tpiba2,
                      const int mesh,
                      const FPTYPE* r,
                      const FPTYPE* rab,
@@ -122,10 +132,12 @@ class Stress_Func
                      int type); // used in nonlinear core correction stress
                      
     // 6) the stress from the exchange-correlation functional term
-    void stress_gga(ModuleBase::matrix& sigma,
+    void stress_gga(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const Charge* const chr); // gga part in both PW and LCAO basis
-    void stress_mgga(ModuleBase::matrix& sigma,
+    void stress_mgga(const UnitCell& ucell,
+                     ModuleBase::matrix& sigma,
                      const ModuleBase::matrix& wg,
                      const ModuleBase::matrix& v_ofk,
                      const Charge* const chr,
@@ -151,8 +163,25 @@ class Stress_Func
                    ModuleSymmetry::Symmetry* p_symm,
                    ModulePW::PW_Basis_K* wfc_basis,
                    const psi::Psi<complex<FPTYPE>, Device>* psi_in,
-                   pseudopot_cell_vnl* nlpp_in,
+                   const pseudopot_cell_vnl& nlpp_in,
                    const UnitCell& ucell_in); // nonlocal part in PW basis
+    // 8) the stress from the DFT+U and DeltaSpin calculations
+    /**
+     * @brief This routine computes the stress contribution from the DFT+U and DeltaSpin calculations
+     *    Stress^{NL}_{ij} = -1/\Omega \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}(V^U_{lmm'\sigma\sigma'} +
+     * f(\lambda,\sigma\sigma')) [ \sum_G \langle c_{nk}(\mathbf{G+K})|\alpha_{lm}^I(\mathbf{G+K})\rangle *
+     *               \sum_{G'}\langle \partial \alpha_{lm}^I(\mathbf{G+K})/\partial \varepsilon_{ij}
+     * |c_{nk}(\mathbf{G+K})\rangle ] there would be three parts in the above equation: (1) sum over becp and dbecp with
+     * f(U+\lambda, \sigma\sigma', lmm')^{I} ----- first line in the above equation (2) calculate becp = <psi | alpha>
+     * ----- second line in the above equation (3) calculate dbecp = <psi | dalpha> ----- third line in the above
+     * equation
+     */
+    void stress_onsite(ModuleBase::matrix& sigma,
+                       const ModuleBase::matrix& wg,
+                       const ModulePW::PW_Basis_K* wfc_basis,
+                       const UnitCell& ucell_in,
+                       const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                       ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
                    const int ik,
@@ -194,7 +223,7 @@ class Stress_Func
      * @param dylmk0 [in] derivetives of spherical harmonics
      * @param dqg [out] the Fourier transform of interest
      */
-    void dqvan2(const pseudopot_cell_vnl* ppcell_in,
+    void dqvan2(const pseudopot_cell_vnl& ppcell_in,
                 const int ih,
                 const int jh,
                 const int itype,
@@ -207,11 +236,12 @@ class Stress_Func
                 const ModuleBase::matrix& dylmk0,
                 std::complex<FPTYPE>* dqg);
 
-  private:
+  protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+  private:
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 

@@ -9,7 +9,7 @@ TEST(LR_Util, PsiWrapper)
     int nbands = 5;
     int nbasis = 6;
 
-    psi::Psi<float> k1(1, nbands, nk * nbasis);
+    psi::Psi<float> k1(1, nbands, nk * nbasis, nk * nbasis, true);
     for (int i = 0;i < nbands * nk * nbasis;++i)k1.get_pointer()[i] = i;
 
     k1.fix_b(2);

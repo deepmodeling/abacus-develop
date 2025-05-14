@@ -654,9 +654,9 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
         // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
         int pool = 0;
         if (PARAM.inp.nspin != 2) {
-            pool = GlobalC::Pkpoints.whichpool[ik];
+            pool = kv.para_k.whichpool[ik];
 }
-        const int iknow = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+        const int iknow = ik - kv.para_k.startk_pool[GlobalV::MY_POOL];
         if (GlobalV::RANK_IN_POOL == 0)
         {
             if (GlobalV::MY_POOL == 0)
@@ -671,7 +671,7 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
                 else
                 {
 
-                    int startpro_pool = GlobalC::Pkpoints.get_startpro_pool(pool);
+                    int startpro_pool = kv.para_k.get_startpro_pool(pool);
                     MPI_Status ierror;
                     MPI_Recv(&kx, 1, MPI_DOUBLE, startpro_pool, ik * 4, MPI_COMM_WORLD, &ierror);
                     MPI_Recv(&ky, 1, MPI_DOUBLE, startpro_pool, ik * 4 + 1, MPI_COMM_WORLD, &ierror);
@@ -755,7 +755,7 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs, const std::vector<Mod
     {
         ModuleBase::ComplexArray Qtmp(overlap_Q[ik].getBound1(), overlap_Q[ik].getBound2(), overlap_Q[ik].getBound3());
         Qtmp.zero_out();
-        GlobalC::Pkpoints.pool_collection(Qtmp.ptr, overlap_Q_k, ik);
+        kv.para_k.pool_collection(Qtmp.ptr, overlap_Q_k, ik);
         if (GlobalV::MY_RANK == 0)
         {
             //        ofs << "\n ik=" << ik;
@@ -803,12 +803,12 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name, std::ofstream& 
     {
         for (int ik = 0; ik < nkstot; ik++)
         {
-            if (GlobalV::MY_POOL == GlobalC::Pkpoints.whichpool[ik])
+            if (GlobalV::MY_POOL == kv.para_k.whichpool[ik])
             {
                 if (GlobalV::RANK_IN_POOL == 0)
                 {
                     ofs.open(name.c_str(), std::ios::app);
-                    const int ik_now = ik - GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] + is * nkstot;
+                    const int ik_now = ik - kv.para_k.startk_pool[GlobalV::MY_POOL] + is * nkstot;
 
                     const int size = overlap_Sq[ik_now].getSize();
                     for (int i = 0; i < size; i++)

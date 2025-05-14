@@ -35,9 +35,9 @@ for i in "${logs[@]}";do
 done
 
 if [ $allpass == 0 ];then
-        echo "job is failed!"
+        echo "job failed!"
         exit 1
 else
-        echo "job is successed!"
+        echo "job succeeded!"
         exit 0
 fi

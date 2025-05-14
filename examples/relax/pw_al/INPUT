@@ -9,7 +9,7 @@ out_stru            1
 out_level           ie
 pseudo_rcut         10.0
 pseudo_mesh         1
-ecutwfc             50
+ecutwfc              60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 basis_type          pw
 ks_solver           cg
 smearing_method     gaussian
@@ -19,7 +19,12 @@ mixing_beta         0.7
 scf_thr             1e-08
 cal_force           1
 cal_stress          1
-kspacing            0.12
+kspacing            0.12 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
 pseudo_dir	    ../../../tests/PP_ORB
 
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

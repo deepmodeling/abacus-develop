@@ -12,10 +12,12 @@
 namespace hamilt
 {
     using TAC = std::pair<int, std::array<int, 3>>;
+
     // allocate according to the read-in HexxR, used in nscf
     template <typename Tdata, typename TR>
-    inline void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
-        HContainer<TR>* hR)
+    void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+        HContainer<TR>* hR,
+        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
     {
         auto* pv = hR->get_paraV();
         bool need_allocate = false;
@@ -27,7 +29,10 @@ namespace hamilt
                 const int& iat1 = Htmp2.first.first;
                 if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
                 {
-                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(Htmp2.first.second);
+                    const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
+                        (cell_nearest ?
+                            cell_nearest->get_cell_nearest_discrete(iat0, iat1, Htmp2.first.second)
+                            : Htmp2.first.second));
                     BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
                     if (HlocR == nullptr)
                     { // add R to HContainer
@@ -40,18 +45,19 @@ namespace hamilt
         }
         if (need_allocate) { hR->allocate(nullptr, true); }
     }
+
     /// allocate according to BvK cells, used in scf
     template <typename TR>
-    inline void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
+    void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
         const std::array<int, 3>& Rs_period,
-        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr)
+        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
     {
         auto* pv = hR->get_paraV();
         auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
         bool need_allocate = false;
-        for (int iat0 = 0;iat0 < GlobalC::ucell.nat;++iat0)
+        for (int iat0 = 0;iat0 < nat;++iat0)
         {
-            for (int iat1 = 0;iat1 < GlobalC::ucell.nat;++iat1)
+            for (int iat1 = 0;iat1 < nat;++iat1)
             {
                 // complete the atom pairs that has orbitals in this processor but not in hR due to the adj_list 
                 // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal 
@@ -81,6 +87,7 @@ namespace hamilt
 template <typename TK, typename TR>
 OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     HContainer<TR>*hR_in,
+    const UnitCell& ucell_in,
 	const K_Vectors& kv_in,
 	std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
 	std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
@@ -89,6 +96,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     int* two_level_step_in,
 	const bool restart_in)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
+    ucell(ucell_in),
     kv(kv_in),
     Hexxd(Hexxd_in),
     Hexxc(Hexxc_in),
@@ -104,15 +112,45 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
         const std::string file_name_exx = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number)
+        bool all_exist = true;
+        for (int is=0;is<PARAM.inp.nspin;++is)
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
-            if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
+            std::ifstream ifs(file_name_exx + "_" + std::to_string(is) + ".csr");
+            if (!ifs) { all_exist = false; break; }
+        }
+        if (all_exist)
+        {
+            // Read HexxR in CSR format
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                ModuleIO::read_Hexxs_csr(file_name_exx, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
+            }
+            else
+            {
+                ModuleIO::read_Hexxs_csr(file_name_exx, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
+            }
         }
         else
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
-            if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
+            // Read HexxR in binary format (old version)
+            const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+            std::ifstream ifs(file_name_exx_cereal, std::ios::binary);
+            if (!ifs)
+            {
+                ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
+            }
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
+                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
+            }
+            else
+            {   
+                ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxc);
+                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
+            }
         }
         this->use_cell_nearest = false;
     }
@@ -127,21 +165,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             const std::array<int, 3> Rs_period = { this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2] };
             if (this->use_cell_nearest)
             {
-                // set cell_nearest
-                std::map<int, std::array<double, 3>> atoms_pos;
-                for (int iat = 0; iat < GlobalC::ucell.nat; ++iat) {
-                    atoms_pos[iat] = RI_Util::Vector3_to_array3(
-                        GlobalC::ucell.atoms[GlobalC::ucell.iat2it[iat]]
-                        .tau[GlobalC::ucell.iat2ia[iat]]);
-                }
-                const std::array<std::array<double, 3>, 3> latvec
-                    = { RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
-                       RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
-                       RI_Util::Vector3_to_array3(GlobalC::ucell.a3) };
-                this->cell_nearest.init(atoms_pos, latvec, Rs_period);
-                reallocate_hcontainer(GlobalC::ucell.nat, this->hR, Rs_period, &this->cell_nearest);
+                this->cell_nearest = init_cell_nearest(ucell, Rs_period);
+                reallocate_hcontainer(ucell.nat, this->hR, Rs_period, &this->cell_nearest);
             }
-            else { reallocate_hcontainer(GlobalC::ucell.nat, this->hR, Rs_period); }
+            else { reallocate_hcontainer(ucell.nat, this->hR, Rs_period); }
         }
 
         if (this->restart)
@@ -180,12 +207,33 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
                 // read in Hexx(R)
-                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
-                if (GlobalC::exx_info.info_ri.real_number) {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                const std::string restart_HR_path = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+                bool all_exist = true;
+                for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    std::ifstream ifs(restart_HR_path + "_" + std::to_string(is) + ".csr");
+                    if (!ifs) { all_exist = false; break; }
                 }
-                else {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                if (all_exist)
+                {
+                    // Read HexxR in CSR format
+                    if (GlobalC::exx_info.info_ri.real_number) {
+                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                    }
+                    else {
+                        ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                    }
+                }
+                else
+                {
+                    // Read HexxR in binary format (old version)
+                    const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+                    if (GlobalC::exx_info.info_ri.real_number) {
+                        ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
+                    }
+                    else {
+                        ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
+                    }
                 }
             }
 
@@ -203,7 +251,14 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (this->istep == 0 && PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+    if (this->istep == 0
+        && PARAM.inp.calculation != "nscf"
+        && this->two_level_step != nullptr && *this->two_level_step == 0
+        && PARAM.inp.init_wfc != "file"
+        && !this->restart)
+    {
+        return;
+    }  //in the non-exx loop, do nothing 
     if (this->add_hexx_type == Add_Hexx_Type::k) { return; }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -278,6 +333,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                                  : GlobalC::exx_info.info_global.hybrid_alpha;
         if (GlobalC::exx_info.info_ri.real_number) {
             RI_2D_Comm::add_Hexx(
+                ucell,
                 this->kv,
                 ik,
                 coeff,
@@ -286,6 +342,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 this->hsk->get_hk());
         } else {
             RI_2D_Comm::add_Hexx(
+                ucell,
                 this->kv,
                 ik,
                 coeff,

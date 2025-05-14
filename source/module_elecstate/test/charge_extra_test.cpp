@@ -18,12 +18,14 @@ InfoNonlocal::~InfoNonlocal()
 #endif
 Magnetism::Magnetism()
 {
-    this->start_magnetization = nullptr;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
+Parallel_Grid::~Parallel_Grid(){};
+
 
 // mock functions for Charge
 Charge::Charge()
@@ -64,12 +66,7 @@ PW_Basis::PW_Basis()
 PW_Basis::~PW_Basis()
 {
 }
-FFT::FFT()
-{
-}
-FFT::~FFT()
-{
-}
+FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
 {
 }
@@ -92,7 +89,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup_structure_factor(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
 {
 }
 
@@ -118,6 +115,7 @@ class ChargeExtraTest : public ::testing::Test
     Charge_Extra CE;
     UcellTestPrepare utp = UcellTestLib["Si"];
     std::unique_ptr<UnitCell> ucell;
+    Parallel_Grid* pgrid = nullptr;
     Charge charge;
     Structure_Factor sf;
     void SetUp() override
@@ -137,7 +135,7 @@ TEST_F(ChargeExtraTest, InitCEWarningQuit)
     PARAM.input.chg_extrap = "wwww";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
@@ -188,7 +186,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -210,7 +208,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -232,7 +230,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -253,7 +251,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
     CE.istep = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results

@@ -64,7 +64,7 @@ std::vector<double> cal_psi_hf(const std::vector<double>& psif,
     return psik2_ccp;
 }
 
-std::vector<double> cal_psi_hse(const std::vector<double>& psif,
+std::vector<double> cal_psi_erfc(const std::vector<double>& psif,
                                 const std::vector<double>& k_radial,
                                 const double hse_omega) {
     std::vector<double> psik2_ccp(psif.size());
@@ -129,7 +129,7 @@ Numerical_Orbital_Lm cal_orbs_ccp<Numerical_Orbital_Lm>(
                                parameter.at("hf_Rcut"));
         break;
     case Ccp_Type::Hse:
-        psik2_ccp = cal_psi_hse(orbs.get_psif(),
+        psik2_ccp = cal_psi_erfc(orbs.get_psif(),
                                 orbs.get_k_radial(),
                                 parameter.at("hse_omega"));
         break;

@@ -1,13 +1,10 @@
-
 #ifndef CHARGE_MIXING_H
 #define CHARGE_MIXING_H
 #include "charge.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/module_mixing/mixing.h"
 #include "module_base/module_mixing/plain_mixing.h"
-#include "module_cell/unitcell.h"
+
 class Charge_Mixing
 {
   /// Charge_Mixing class
@@ -36,6 +33,8 @@ class Charge_Mixing
      * @param mixing_gg0_min_in minimum kerker coefficient
      * @param mixing_angle_in mixing angle for nspin=4
      * @param mixing_dmr_in whether to mixing real space density matrix
+     * @param omega_in omega for non-linear core correction
+     * @param tpiba_in 2*pi/beta for non-linear core correction
      */
     void set_mixing(const std::string& mixing_mode_in,
                     const double& mixing_beta_in,
@@ -46,7 +45,9 @@ class Charge_Mixing
                     const double& mixing_gg0_mag_in,
                     const double& mixing_gg0_min_in,
                     const double& mixing_angle_in,
-                    const bool& mixing_dmr_in);
+                    const bool& mixing_dmr_in,
+                    double& omega_in,
+                    double& tpiba_in);
 
     void close_kerker_gg0() { mixing_gg0 = 0.0; mixing_gg0_mag = 0.0; }
     /**
@@ -59,7 +60,7 @@ class Charge_Mixing
      * @brief allocate memory of dmr_mdata
      * @param nnr size of real-space density matrix
      */
-    void allocate_mixing_dmr(int nnr);
+    void allocate_mixing_dmr(const int nnr);
 
     /**
      * @brief charge mixing
@@ -102,8 +103,9 @@ class Charge_Mixing
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
 
     // for mixing restart
-    int mixing_restart_step = 0; //which step to restart mixing during SCF
+    int mixing_restart_step = 0; //which step to restart mixing during SCF, always equal to scf_namx except for the mixing restart
     int mixing_restart_count = 0; // the number of restart mixing during SCF. Do not set mixing_restart_count as bool since I want to keep some flexibility in the future
+    int mixing_restart_last = 0; // the label of mixing restart step, store the step number of the last mixing restart
 
     // to calculate the slope of drho curve during SCF, which is used to determine if SCF oscillate
     bool if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold);
@@ -131,7 +133,9 @@ class Charge_Mixing
     double mixing_gg0_min = 0.1;         ///< minimum kerker coefficient
     double mixing_angle = 0.0;           ///< mixing angle for nspin=4
     bool mixing_dmr = false;             ///< whether to mixing real space density matrix
-
+    double* omega = nullptr;                  ///< omega for non-linear core correction
+    double* tpiba = nullptr;                  ///< 2*pi/beta for non-linear core correction
+    double* tpiba2 = nullptr;                 ///< 2*pi/beta^2 for non-linear core correction
     std::vector<double> _drho_history; ///< history of drho used to determine the oscillation, size is scf_nmax
     
     bool new_e_iteration = true;

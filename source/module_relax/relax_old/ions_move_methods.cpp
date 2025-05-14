@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
+
 Ions_Move_Methods::Ions_Move_Methods()
 {
 }
@@ -32,6 +33,14 @@ void Ions_Move_Methods::allocate(const int &natom)
         this->cg.allocate();
         this->bfgs.allocate(); // added by pengfei  13-8-8
     }
+    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    {
+        this->bfgs_trad.allocate(natom);       
+    }
+    else if(Ions_Move_Basic::relax_method == "lbfgs")
+    {
+        this->lbfgs.allocate(natom);       
+    }
     else
     {
         ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
@@ -44,7 +53,8 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const int &force_step,
                                      const ModuleBase::matrix &f,
                                      const double &etot,
-                                     UnitCell &ucell)
+                                     UnitCell &ucell,
+                                     ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
 
@@ -69,6 +79,14 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     else if (Ions_Move_Basic::relax_method == "cg_bfgs")
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
+    }
+    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    {
+        bfgs_trad.relax_step(f,ucell);        
+    }
+    else if(Ions_Move_Basic::relax_method == "lbfgs")
+    {
+        lbfgs.relax_step(f,ucell,etot,p_esolver);        
     }
     else
     {

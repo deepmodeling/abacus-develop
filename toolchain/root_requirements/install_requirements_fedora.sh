@@ -1,0 +1,36 @@
+#!/bin/bash -e
+
+# Install Fedora packages required for the toolchain.
+
+echo "Installing Fedora packages..."
+
+dnf -qy install \
+  autoconf \
+  autogen \
+  automake \
+  bzip2 \
+  ca-certificates \
+  diffutils \
+  g++ \
+  gcc \
+  gfortran \
+  git \
+  less \
+  libtool \
+  make \
+  nano \
+  patch \
+  perl-open \
+  perl-FindBin \
+  pkg-config \
+  python3 \
+  unzip \
+  vim-common \
+  wget \
+  which \
+  zlib-devel \
+  zlib-static
+
+dnf clean -q all
+
+#EOF

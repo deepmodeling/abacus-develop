@@ -28,15 +28,21 @@ case "${with_mkl}" in
   __INSTALL__)
     echo "==================== Installing MKL ===================="
     report_error ${LINENO} "To install MKL, please contact your system administrator."
-    exit 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding MKL from system paths ===================="
-    if ! [ -z "${MKLROOT}" ]; then
-      echo "MKLROOT is found to be ${MKLROOT}"
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
     else
-      report_error ${LINENO} "Cannot find env variable MKLROOT, the script relies on it being set. Please check in MKL installation and use --with-mkl=<location> to pass the path to MKL root directory to this script."
-      exit 1
+      if ! [ -z "${MKLROOT}" ]; then
+        echo "MKLROOT is found to be ${MKLROOT}"
+      else
+        report_error ${LINENO} "Cannot find env variable MKLROOT, the script relies on it being set. Please check in MKL installation and use --with-mkl=<location> to pass the path to MKL root directory to this script."
+        exit 1
+      fi
     fi
     check_lib -lm
     check_lib -ldl

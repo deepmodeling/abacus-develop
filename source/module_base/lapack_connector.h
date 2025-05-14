@@ -61,10 +61,10 @@ extern "C"
 
 
     void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
-                const int* n, double* A, const int* lda, double* B, const int* ldb,
-                const double* vl, const double* vu, const int* il, const int* iu,
-                const double* abstol, const int* m, double* w, double* Z, const int* ldz,
-                double* work, int* lwork, int*iwork, int* ifail, int* info);
+        const int* n, double* A, const int* lda, double* B, const int* ldb,
+        const double* vl, const double* vu, const int* il, const int* iu,
+        const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+        double* work, const int* lwork, int* iwork, int* ifail, int* info);
 
     void chegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
              const int* n,std::complex<float> *a,const int* lda,std::complex<float> *b,
@@ -133,8 +133,8 @@ extern "C"
 
     // zgetrf computes the LU factorization of a general matrix
     // while zgetri takes its output to perform matrix inversion
-    void zgetrf_(const int* m, const int *n, const std::complex<double> *A, const int *lda, int *ipiv, const int* info);
-    void zgetri_(const int* n, std::complex<double> *A, const int *lda, int *ipiv, std::complex<double> *work, int *lwork, const int *info);
+    void zgetrf_(const int* m, const int *n, std::complex<double> *A, const int *lda, int *ipiv, int* info);
+    void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
 
     // if trans=='N':	C = alpha * A * A.H + beta * C
 	// if trans=='C':	C = alpha * A.H * A + beta * C

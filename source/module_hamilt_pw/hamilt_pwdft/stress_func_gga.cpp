@@ -5,28 +5,30 @@
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
+void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
+											 ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
                                              const Charge* const chr)
 {
-    ModuleBase::TITLE("Stress_Func","stress_gga");
-	ModuleBase::timer::tick("Stress_Func","stress_gga");
+    ModuleBase::TITLE("Stress","stress_gga");
+	ModuleBase::timer::tick("Stress","stress_gga");
      
 	int func_type = XC_Functional::get_func_type();
 	if (func_type == 0 || func_type == 1)
 	{
-		ModuleBase::timer::tick("Stress_Func","stress_gga");
+		ModuleBase::timer::tick("Stress","stress_gga");
 		return;
 	}
 
 	FPTYPE sigma_gradcorr[3][3];
 	std::vector<FPTYPE> stress_gga;
-	FPTYPE dum1, dum2;
+	FPTYPE dum1=0.0;
+    FPTYPE dum2=0.0;
 	ModuleBase::matrix dum3;
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &GlobalC::ucell, stress_gga, 1);
+    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &ucell, stress_gga, 1);
 
     for(int l = 0;l< 3;l++)
 	{
@@ -54,7 +56,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
         }
 	}
 
-	ModuleBase::timer::tick("Stress_Func","stress_gga");
+	ModuleBase::timer::tick("Stress","stress_gga");
 	return;
 }
 

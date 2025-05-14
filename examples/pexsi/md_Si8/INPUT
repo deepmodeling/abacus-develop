@@ -8,14 +8,14 @@ pseudo_dir             ../../../tests/PP_ORB
 orbital_dir            ../../../tests/PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc                30
+ecutwfc                 60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                1e-5
 scf_nmax               100
 
 #Parameters (3.Basis)
 basis_type             lcao
 ks_solver              pexsi
-gamma_only             1
+gamma_only             1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
 #Parameters (5.Mixing)
 mixing_type            broyden
@@ -30,3 +30,8 @@ md_nstep               10
 md_dt                  1
 md_tfirst              300
 md_tfreq               0.025
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

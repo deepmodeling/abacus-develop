@@ -4049,34 +4049,34 @@ TEST_F(TestSrcPWVnlMultiDevice, cal_vnl_op_gpu)
            *d_tab = nullptr, *d_vkb1 = nullptr;
     std::complex<double>*d_sk = nullptr, *d_vkb = nullptr;
 
-    resmem_int_op()(gpu_ctx, d_atom_na, atom_na.size());
-    resmem_int_op()(gpu_ctx, d_atom_nb, atom_nb.size());
-    resmem_int_op()(gpu_ctx, d_atom_nh, atom_nh.size());
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_na, atom_na.data(), atom_na.size());
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_nb, atom_nb.data(), atom_nb.size());
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_nh, atom_nh.data(), atom_nh.size());
+    resmem_int_op()(d_atom_na, atom_na.size());
+    resmem_int_op()(d_atom_nb, atom_nb.size());
+    resmem_int_op()(d_atom_nh, atom_nh.size());
+    syncmem_int_h2d_op()(d_atom_na, atom_na.data(), atom_na.size());
+    syncmem_int_h2d_op()(d_atom_nb, atom_nb.data(), atom_nb.size());
+    syncmem_int_h2d_op()(d_atom_nh, atom_nh.data(), atom_nh.size());
 
-    resmem_var_op()(gpu_ctx, d_gk, gk.size());
-    resmem_var_op()(gpu_ctx, d_ylm, ylm.size());
-    resmem_var_op()(gpu_ctx, d_indv, indv.size());
-    resmem_var_op()(gpu_ctx, d_nhtol, nhtol.size());
-    resmem_var_op()(gpu_ctx, d_nhtolm, nhtolm.size());
-    resmem_var_op()(gpu_ctx, d_tab, tab.size());
-    resmem_var_op()(gpu_ctx, d_vkb1, vkb1.size());
+    resmem_var_op()(d_gk, gk.size());
+    resmem_var_op()(d_ylm, ylm.size());
+    resmem_var_op()(d_indv, indv.size());
+    resmem_var_op()(d_nhtol, nhtol.size());
+    resmem_var_op()(d_nhtolm, nhtolm.size());
+    resmem_var_op()(d_tab, tab.size());
+    resmem_var_op()(d_vkb1, vkb1.size());
 
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_gk, gk.data(), gk.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_ylm, ylm.data(), ylm.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_indv, indv.data(), indv.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_nhtol, nhtol.data(), nhtol.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_nhtolm, nhtolm.data(), nhtolm.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_tab, tab.data(), tab.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_vkb1, vkb1.data(), vkb1.size());
+    syncmem_var_h2d_op()(d_gk, gk.data(), gk.size());
+    syncmem_var_h2d_op()(d_ylm, ylm.data(), ylm.size());
+    syncmem_var_h2d_op()(d_indv, indv.data(), indv.size());
+    syncmem_var_h2d_op()(d_nhtol, nhtol.data(), nhtol.size());
+    syncmem_var_h2d_op()(d_nhtolm, nhtolm.data(), nhtolm.size());
+    syncmem_var_h2d_op()(d_tab, tab.data(), tab.size());
+    syncmem_var_h2d_op()(d_vkb1, vkb1.data(), vkb1.size());
 
-    resmem_complex_op()(gpu_ctx, d_sk, sk.size());
-    resmem_complex_op()(gpu_ctx, d_vkb, vkb.size());
+    resmem_complex_op()(d_sk, sk.size());
+    resmem_complex_op()(d_vkb, vkb.size());
 
-    syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_sk, sk.data(), sk.size());
-    syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_vkb, vkb.data(), vkb.size());
+    syncmem_complex_h2d_op()(d_sk, sk.data(), sk.size());
+    syncmem_complex_h2d_op()(d_vkb, vkb.data(), vkb.size());
 
     hamilt::cal_vnl_op<double, base_device::DEVICE_GPU>()(gpu_ctx,
                                                           ntype,
@@ -4101,26 +4101,26 @@ TEST_F(TestSrcPWVnlMultiDevice, cal_vnl_op_gpu)
                                                           d_sk,
                                                           d_vkb);
 
-    syncmem_complex_d2h_op()(cpu_ctx, gpu_ctx, vkb.data(), d_vkb, vkb.size());
+    syncmem_complex_d2h_op()(vkb.data(), d_vkb, vkb.size());
 
     for (int ii = 0; ii < vkb.size(); ii++)
     {
         EXPECT_LT(fabs(vkb[ii] - expected_vkb[ii]), 6e-5);
     }
 
-    delmem_int_op()(gpu_ctx, d_atom_na);
-    delmem_int_op()(gpu_ctx, d_atom_nh);
-    delmem_int_op()(gpu_ctx, d_atom_nb);
+    delmem_int_op()(d_atom_na);
+    delmem_int_op()(d_atom_nh);
+    delmem_int_op()(d_atom_nb);
 
-    delmem_var_op()(gpu_ctx, d_gk);
-    delmem_var_op()(gpu_ctx, d_ylm);
-    delmem_var_op()(gpu_ctx, d_indv);
-    delmem_var_op()(gpu_ctx, d_nhtol);
-    delmem_var_op()(gpu_ctx, d_nhtolm);
-    delmem_var_op()(gpu_ctx, d_tab);
-    delmem_var_op()(gpu_ctx, d_vkb1);
+    delmem_var_op()(d_gk);
+    delmem_var_op()(d_ylm);
+    delmem_var_op()(d_indv);
+    delmem_var_op()(d_nhtol);
+    delmem_var_op()(d_nhtolm);
+    delmem_var_op()(d_tab);
+    delmem_var_op()(d_vkb1);
 
-    delmem_complex_op()(gpu_ctx, d_sk);
-    delmem_complex_op()(gpu_ctx, d_vkb);
+    delmem_complex_op()(d_sk);
+    delmem_complex_op()(d_vkb);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -7,6 +7,7 @@ Numerical_Nonlocal::Numerical_Nonlocal()
 	//question remains
 	this->type = 0;
 	this->lmax = 0;
+	this->rcut_max = 0.0;
 	this->Proj = new Numerical_Nonlocal_Lm[1];
 	this->nproj = -1;
 	//zhengdy-soc, for optimize nonlocal part
@@ -49,6 +50,7 @@ void Numerical_Nonlocal::set_type_info
 //----------------------------------------------------------
 	//only store radial function
 	delete[] Proj;
+	this->Proj = nullptr;
 	this->Proj = new Numerical_Nonlocal_Lm[this->nproj];
 
 	for (int p1=0; p1<nproj; p1++)

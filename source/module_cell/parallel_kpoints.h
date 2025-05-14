@@ -9,8 +9,8 @@
 class Parallel_Kpoints
 {
   public:
-    Parallel_Kpoints();
-    ~Parallel_Kpoints();
+    Parallel_Kpoints(){};
+    ~Parallel_Kpoints(){};
 
     void kinfo(int& nkstot_in,
                const int& kpar_in,
@@ -28,9 +28,9 @@ class Parallel_Kpoints
                          const ModuleBase::realArray& a,
                          const ModuleBase::realArray& b,
                          const int& ik);
-    void pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik);
+    void pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik) const;
     template <class T, class V>
-    void pool_collection_aux(T* value, const V& w, const int& dim, const int& ik);
+    void pool_collection_aux(T* value, const V& w, const int& dim, const int& ik) const;
 #ifdef __MPI
     /**
      * @brief gather kpoints from all processors
@@ -46,8 +46,8 @@ class Parallel_Kpoints
     // int* nproc_pool = nullptr;    it is not used
 
     // inforamation about kpoints, dim: KPAR
-    std::vector<int> nks_pool;    // number of k-points in each pool
-    std::vector<int> startk_pool; // the first k-point in each pool
+    std::vector<int> nks_pool;    // number of k-points in each pool, here use k-points without spin
+    std::vector<int> startk_pool; // the first k-point in each pool, here use k-points without spin
 
     // information about which pool each k-point belongs to,
     std::vector<int> whichpool; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
@@ -68,14 +68,13 @@ class Parallel_Kpoints
         return *std::max_element(nks_pool.begin(), nks_pool.end());
     }
 
-  private:
-
+  public:
     int kpar = 0;         // number of pools
     int my_pool = 0;      // the pool index of the present processor
     int rank_in_pool = 0; // the rank in the present pool
     int nproc = 1;        // number of processors
     int nspin = 1;        // number of spins
-
+  private:
     std::vector<int> startpro_pool; // the first processor in each pool
 #ifdef __MPI
     void get_nks_pool(const int& nkstot);

@@ -8,8 +8,7 @@ namespace ModuleIO
 {
 	void write_istate_info(const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg,
-		const K_Vectors& kv,
-		const Parallel_Kpoints* Pkpoints);
+		const K_Vectors& kv);
 }
 
 #endif

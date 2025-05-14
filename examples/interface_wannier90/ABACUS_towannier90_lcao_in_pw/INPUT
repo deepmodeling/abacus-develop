@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 pseudo_dir              ../../../tests/PP_ORB
 orbital_dir             ../../../tests/PP_ORB
 ntype                   1
-ecutwfc                 50
+ecutwfc                  60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 nbands                  12
 calculation             nscf
 scf_nmax                50
@@ -16,3 +16,8 @@ wannier_method 1
 nnkpfile                diamond.nnkp
 basis_type		lcao
 
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

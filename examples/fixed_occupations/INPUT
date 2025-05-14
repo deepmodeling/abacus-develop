@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-ecutwfc                       100
+ecutwfc                       100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 nbands                        220
 scf_nmax                      400
 scf_thr                       1e-08
@@ -12,7 +12,7 @@ pseudo_dir                    ../../tests/PP_ORB
 orbital_dir                   ../../tests/PP_ORB
 nspin                         2
 nelec                         254
-gamma_only                    1
+gamma_only                    1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 relax_nmax                    50
 cal_force                     1
 force_thr_ev                  0.01
@@ -22,3 +22,8 @@ ocp                           1
 ocp_set                       128*1 92*0 125*1 0 0.5 0.5 92*0
 suffix                        autotest
 calculation                   relax
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

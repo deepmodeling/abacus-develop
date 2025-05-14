@@ -8,7 +8,6 @@ if(ENABLE_LCAO)
       ORB_nonlocal.cpp
       ORB_nonlocal_lm.cpp
       ORB_read.cpp
-      parallel_2d.cpp
       parallel_orbitals.cpp
   )
 

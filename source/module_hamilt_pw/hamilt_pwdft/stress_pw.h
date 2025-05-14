@@ -2,6 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_STRESS_PW_H
 
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "stress_func.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
@@ -13,13 +14,13 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
                     UnitCell& ucell,
-                    pseudopot_cell_vnl* nlpp,
+                    const pseudopot_cell_vl& locpp,
+                    const pseudopot_cell_vnl& nlpp,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,
                     Structure_Factor* p_sf,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr,
                     const psi::Psi<complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:
@@ -31,8 +32,18 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // which is due to the dependence of the Q function on the atomic position
     void stress_us(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
-                   pseudopot_cell_vnl* ppcell_in,
+                   const pseudopot_cell_vnl& nlpp,
                    const UnitCell& ucell); // nonlocal part of uspp in PW basis
+
+    // exx stress due to the scaling of the lattice vectors
+    // see 10.1103/PhysRevB.73.125120 for details
+    void stress_exx(ModuleBase::matrix& sigma,
+                    const ModuleBase::matrix& wg,
+                    ModulePW::PW_Basis* rho_basis,
+                    ModulePW::PW_Basis_K* wfc_basis,
+                    const K_Vectors* p_kv,
+                    const psi::Psi<complex<FPTYPE>, Device>* d_psi_in,
+                    const UnitCell& ucell); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;
 };

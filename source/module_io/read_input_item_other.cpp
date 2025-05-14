@@ -122,18 +122,19 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("sc_file");
-        item.annotation = "file name for parameters used in non-collinear "
-                          "spin-constrained DFT (json format)";
-        read_sync_string(input.sc_file);
+        Input_Item item("sc_drop_thr");
+        item.annotation = "Convergence criterion ratio of lambda iteration in Spin-constrained DFT";
+        read_sync_double(input.sc_drop_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scf_thr");
+        item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
+        read_sync_double(input.sc_scf_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_mag_switch)
+            if (para.input.sc_scf_thr <= 0.0)
             {
-                const std::string ss = "test -f " + para.input.sc_file;
-                if (system(ss.c_str()))
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "sc_file does not exist");
-                }
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
             }
         };
         this->add_item(item);
@@ -493,5 +494,51 @@ void ReadInput::item_others()
         sync_intvec(input.aims_nbasis, para.input.aims_nbasis.size(), 0);
         this->add_item(item);
     }
+
+    // RDMFT, added by jghan, 2024-10-16
+    {
+        Input_Item item("rdmft");
+        item.annotation = "whether to perform rdmft calculation, default is false";
+        read_sync_bool(input.rdmft);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rdmft_power_alpha");
+        item.annotation = "the alpha parameter of power-functional, g(occ_number) = occ_number^alpha"
+                          " used in exx-type functionals such as muller and power";
+        read_sync_double(input.rdmft_power_alpha);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
+            {
+                para.input.rdmft_power_alpha = 1.0;
+            }
+            else if( para.input.dft_functional == "muller" )
+            {
+                para.input.rdmft_power_alpha = 0.5;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if( (para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1) )
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "rdmft_power_alpha should be greater than 0.0 and less than 1.0");
+            }
+        };
+        this->add_item(item);
+    }
+
+    // EXX PW by rhx0820, 2025-03-10
+    {
+        Input_Item item("exxace");
+        item.annotation = "whether to perform ace calculation in exxpw";
+        read_sync_bool(input.exxace);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_gamma_extrapolation");
+        item.annotation = "whether to perform gamma extrapolation in exxpw";
+        read_sync_bool(input.exx_gamma_extrapolation);
+        this->add_item(item);
+    }
+
 }
 } // namespace ModuleIO

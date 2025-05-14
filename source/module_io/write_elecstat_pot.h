@@ -1,9 +1,11 @@
 #ifndef POTENTIAL_IO_H
 #define POTENTIAL_IO_H
-#include <string>
-#include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis.h"
+#include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_general/module_surchem/surchem.h"
+
+#include <string>
 
 namespace ModuleIO
 {
@@ -27,7 +29,8 @@ void write_elecstat_pot(
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell_,
-    const double* v_effective_fixed);
+    const double* v_effective_fixed,
+    const surchem& solvent);
 
 } // namespace ModuleIO
 

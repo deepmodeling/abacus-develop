@@ -49,7 +49,7 @@ class MSST_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(param_in.inp, ucell);
+        p_esolver->before_all_runners(ucell, param_in.inp);
 
         mdrun = new MSST(param_in, ucell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
@@ -219,14 +219,12 @@ TEST_F(MSST_test, restart)
 
 TEST_F(MSST_test, print_md)
 {
-    std::ofstream ofs("running.log");
+    std::ofstream ofs("running_msst.log");
     mdrun->print_md(ofs, true);
     ofs.close();
 
-    std::ifstream ifs("running.log");
+    std::ifstream ifs("running_msst.log");
     std::string output_str;
-    getline(ifs, output_str);
-    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
@@ -248,5 +246,5 @@ TEST_F(MSST_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-    remove("running.log");
+//  remove("running_msst.log");
 }

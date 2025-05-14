@@ -3,12 +3,18 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_cell/unitcell.h"
-
+#include "module_elecstate/cal_ux.h"
+#include "module_elecstate/read_orb.h"
+#include "module_elecstate/read_pseudo.h"
+#include "module_cell/read_stru.h"
+#include "module_cell/print_cell.h"
 #include "memory"
+#include "module_cell/read_stru.h"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "prepare_unitcell.h"
+#include "module_cell/update_cell.h"
+#include "module_cell/read_stru.h"
 #include <streambuf>
 #include <valarray>
 #include <vector>
@@ -30,18 +36,15 @@ LCAO_Orbitals::~LCAO_Orbitals()
 #endif
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/
@@ -97,7 +100,7 @@ Magnetism::~Magnetism()
  *   - UpdateVel
  *     - update_vel(const ModuleBase::Vector3<double>* vel_in)
  *   - CalUx
- *     - cal_ux(): calculate magnetic moments of cell
+ *     - cal_ux(UnitCell& ucell): calculate magnetic moments of cell
  *   - ReadOrbFile
  *     - read_orb_file(): read header part of orbital file
  *   - ReadOrbFileWarning
@@ -105,7 +108,7 @@ Magnetism::~Magnetism()
  *   - ReadAtomSpecies
  *     - read_atom_species(): a successful case
  *   - ReadAtomSpeciesWarning1
- *     - read_atom_species(): unrecongnized pseudo type.
+ *     - read_atom_species(): unrecognized pseudopotential type.
  *   - ReadAtomSpeciesWarning2
  *     - read_atom_species(): lat0<=0.0
  *   - ReadAtomSpeciesWarning3
@@ -146,7 +149,7 @@ Magnetism::~Magnetism()
  *   - ReadAtomPositionsWarning4
  *     - read_atom_positions(): mismatch in atom number for atom type
  *   - ReadAtomPositionsWarning5
- *     - read_atom_positions(): no atom can move in MD!
+ *     - read_atom_positions(): no atoms can move in MD simulations!
  */
 
 // mock function
@@ -183,7 +186,6 @@ TEST_F(UcellTest, Constructor)
     EXPECT_DOUBLE_EQ(ucell->tpiba, 0.0);
     EXPECT_DOUBLE_EQ(ucell->tpiba2, 0.0);
     EXPECT_DOUBLE_EQ(ucell->omega, 0.0);
-    EXPECT_EQ(ucell->atom_mass, nullptr);
     EXPECT_FALSE(ucell->set_atom_flag);
 }
 
@@ -271,7 +273,7 @@ TEST_F(UcellDeathTest, SetupWarningQuit1)
     std::string fixed_axes_in = "volume";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
@@ -289,7 +291,7 @@ TEST_F(UcellDeathTest, SetupWarningQuit2)
     std::string fixed_axes_in = "shape";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("set relax_new to be 1 for fixed_shape relaxation"));
@@ -310,7 +312,7 @@ TEST_F(UcellDeathTest, CompareAatomLabel)
     std::string atom_label_in_orbtial = "atom label in orbital file ";
     std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr(atom_label_in_orbtial + stru_label[0] + mismatch_with_pseudo + pseudo_label[0]));
@@ -344,7 +346,7 @@ TEST_F(UcellTest, RemakeCell)
         ucell->latvec.e32 = 0.00;
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
-        ucell->remake_cell();
+        unitcell::remake_cell(ucell->lat);
         if (latname_in[i] == "sc")
         {
             double celldm
@@ -589,7 +591,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ucell->remake_cell(), ::testing::ExitedWithCode(0), "");
+        EXPECT_EXIT(unitcell::remake_cell(ucell->lat), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         if (latname_in[i] == "none")
         {
@@ -610,7 +612,7 @@ TEST_F(UcellTest, JudgeParallel)
 {
     ModuleBase::Vector3<double> b(1.0, 1.0, 1.0);
     double a[3] = {1.0, 1.0, 1.0};
-    EXPECT_TRUE(ucell->judge_parallel(a, b));
+    EXPECT_TRUE(elecstate::judge_parallel(a, b));
 }
 
 TEST_F(UcellTest, Index)
@@ -736,7 +738,7 @@ TEST_F(UcellTest, CheckDTau)
     UcellTestPrepare utp = UcellTestLib["C1H2-CheckDTau"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     for (int it = 0; it < utp.natom.size(); ++it)
     {
         for (int ia = 0; ia < utp.natom[it]; ++ia)
@@ -751,13 +753,13 @@ TEST_F(UcellTest, CheckDTau)
     }
 }
 
-TEST_F(UcellTest, CheckTau)
+TEST_F(UcellTest, CheckTauFalse)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-CheckTau"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_warning.open("checktau_warning");
-    ucell->check_tau();
+    unitcell::check_tau(ucell->atoms ,ucell->ntype, ucell->lat0);
     GlobalV::ofs_warning.close();
     std::ifstream ifs;
     ifs.open("checktau_warning");
@@ -765,6 +767,33 @@ TEST_F(UcellTest, CheckTau)
     EXPECT_THAT(str, testing::HasSubstr("two atoms are too close!"));
     ifs.close();
     remove("checktau_warning");
+}
+
+TEST_F(UcellTest, CheckTauTrue)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-CheckTau"];
+    PARAM.input.relax_new = utp.relax_new;
+    ucell = utp.SetUcellInfo();
+    GlobalV::ofs_warning.open("checktau_warning");
+    int atom=0;
+    //cause the ucell->lat0 is 0.5,if the type of the check_tau has 
+    //an int type,it will set to zero,and it will not pass the unittest
+    ucell->lat0=0.5;
+    ucell->nat=3;
+    for (int it=0;it<ucell->ntype;it++)
+    {
+        for(int ia=0; ia<ucell->atoms[it].na; ++ia)
+        {
+            
+            for (int i=0;i<3;i++)
+            {
+                ucell->atoms[it].tau[ia][i]=((atom+i)/(ucell->nat*3.0));
+            }
+            atom+=3;
+        }
+    }
+    EXPECT_EQ(unitcell::check_tau(ucell->atoms ,ucell->ntype, ucell->lat0),true);
+    GlobalV::ofs_warning.close();
 }
 
 TEST_F(UcellTest, SelectiveDynamics)
@@ -781,7 +810,9 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->periodic_boundary_adjustment(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::periodic_boundary_adjustment(
+                ucell->atoms,ucell->latvec,ucell->ntype),
+                ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("the movement of atom is larger than the length of cell"));
 }
@@ -791,7 +822,8 @@ TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    EXPECT_NO_THROW(ucell->periodic_boundary_adjustment());
+    EXPECT_NO_THROW(unitcell::periodic_boundary_adjustment(
+                    ucell->atoms,ucell->latvec,ucell->ntype));
 }
 
 TEST_F(UcellTest, PrintCell)
@@ -821,7 +853,7 @@ TEST_F(UcellTest, PrintUnitcellPseudo)
     ucell = utp.SetUcellInfo();
     PARAM.input.test_pseudo_cell = 1;
     std::string fn = "printcell.log";
-    ucell->print_unitcell_pseudo(fn);
+    elecstate::print_unitcell_pseudo(fn, *ucell);
     std::ifstream ifs;
     ifs.open("printcell.log");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -863,7 +895,8 @@ TEST_F(UcellTest, PrintSTRU)
      * CASE: nspin1|Cartesian|no vel|no mag|no orb|no dpks_desc|rank0
      *
      */
-    ucell->print_stru_file(fn, 1, false, false, false, false, false, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                              fn, 1, false, false, false, false, false, 0);
     std::ifstream ifs;
     ifs.open("C1H2_STRU");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -894,7 +927,8 @@ TEST_F(UcellTest, PrintSTRU)
      * CASE: nspin2|Direct|vel|no mag|no orb|no dpks_desc|rank0
      *
      */
-    ucell->print_stru_file(fn, 2, true, true, false, false, false, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                            fn, 2, true, true, false, false, false, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
@@ -935,7 +969,8 @@ TEST_F(UcellTest, PrintSTRU)
     ucell->orbital_fn[1] = "__unittest_orbital_fn_1__";
     ucell->atom_mulliken
         = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}}; // first index is iat, the second is components, starts seems from 1
-    ucell->print_stru_file(fn, 2, true, false, true, true, true, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                            fn, 2, true, false, true, true, true, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
@@ -975,16 +1010,22 @@ TEST_F(UcellTest, PrintTauDirect)
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    GlobalV::ofs_running.open("print_tau_direct");
     EXPECT_EQ(ucell->Coordinate, "Direct");
-    ucell->print_tau();
-    GlobalV::ofs_running.close();
+
+    // open a file
+    std::ofstream ofs("print_tau_direct");
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0,ofs);
+    ofs.close();
+ 
+    // readin the data
     std::ifstream ifs;
     ifs.open("print_tau_direct");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
-    EXPECT_THAT(str, testing::HasSubstr("taud_C1            0.1000000000        0.1000000000        0.1000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("    C     0.100000000000     0.100000000000     0.100000000000  0.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("    H     0.150000000000     0.150000000000     0.150000000000  0.0000")); 
     ifs.close();
+
     remove("print_tau_direct");
 }
 
@@ -993,16 +1034,23 @@ TEST_F(UcellTest, PrintTauCartesian)
     UcellTestPrepare utp = UcellTestLib["C1H2-Cartesian"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    GlobalV::ofs_running.open("print_tau_Cartesian");
     EXPECT_EQ(ucell->Coordinate, "Cartesian");
-    ucell->print_tau();
-    GlobalV::ofs_running.close();
+
+    // open a file
+    std::ofstream ofs("print_tau_Cartesian");
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0,ofs);
+    ofs.close();
+
+    // readin the data
     std::ifstream ifs;
     ifs.open("print_tau_Cartesian");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("CARTESIAN COORDINATES"));
-    EXPECT_THAT(str, testing::HasSubstr("tauc_C1            1.0000000000        1.0000000000        1.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("    C     1.000000000000     1.000000000000     1.000000000000  0.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("    H     1.500000000000     1.500000000000     1.500000000000  0.0000"));
     ifs.close();
+
+    // remove the file
     remove("print_tau_Cartesian");
 }
 
@@ -1016,7 +1064,7 @@ TEST_F(UcellTest, UpdateVel)
     {
         vel_in[iat].set(iat * 0.1, iat * 0.1, iat * 0.1);
     }
-    ucell->update_vel(vel_in);
+    unitcell::update_vel(vel_in,ucell->ntype,ucell->nat,ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         EXPECT_DOUBLE_EQ(vel_in[iat].x, 0.1 * iat);
@@ -1034,7 +1082,8 @@ TEST_F(UcellTest, CalUx1)
     ucell->atoms[0].m_loc_[0].set(0, -1, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
-    ucell->cal_ux();
+    PARAM.input.nspin = 4;
+    elecstate::cal_ux(*ucell);
     EXPECT_FALSE(ucell->magnet.lsign_);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0], 0);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[1], -1);
@@ -1050,7 +1099,8 @@ TEST_F(UcellTest, CalUx2)
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     //(0,0,0) is also parallel to (1,1,1)
-    ucell->cal_ux();
+    PARAM.input.nspin = 4;
+    elecstate::cal_ux(*ucell);
     EXPECT_TRUE(ucell->magnet.lsign_);
     EXPECT_NEAR(ucell->magnet.ux_[0], 0.57735, 1e-5);
     EXPECT_NEAR(ucell->magnet.ux_[1], 0.57735, 1e-5);
@@ -1066,7 +1116,7 @@ TEST_F(UcellTest, ReadOrbFile)
     std::string orb_file = "./support/C.orb";
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
-    ucell->read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
     ofs_running.close();
     EXPECT_EQ(ucell->atoms[0].nw, 25);
     remove("tmp_readorbfile");
@@ -1081,14 +1131,33 @@ TEST_F(UcellDeathTest, ReadOrbFileWarning)
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0])), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0])), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ABACUS Cannot find the ORBITAL file"));
     ofs_running.close();
     remove("tmp_readorbfile");
 }
+class UcellTestReadStru : public ::testing::Test
+{
+  protected:
+    std::unique_ptr<UnitCell> ucell{new UnitCell};
+    std::string output;
+  	void SetUp() override
+    {
+    	ucell->ntype = 2;
+        ucell->atom_mass.resize(ucell->ntype);
+        ucell->atom_label.resize(ucell->ntype);
+        ucell->pseudo_fn.resize(ucell->ntype);
+        ucell->pseudo_type.resize(ucell->ntype);
+        ucell->orbital_fn.resize(ucell->ntype);
+    }
+    void TearDown() override
+    {
+        ucell->orbital_fn.shrink_to_fit();
+    }
+};
 
-TEST_F(UcellTest, ReadAtomSpecies)
+TEST_F(UcellTestReadStru, ReadAtomSpecies)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1100,7 +1169,8 @@ TEST_F(UcellTest, ReadAtomSpecies)
     PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running, ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
@@ -1109,25 +1179,25 @@ TEST_F(UcellTest, ReadAtomSpecies)
     remove("read_atom_species.tmp");
 }
 
-TEST_F(UcellDeathTest, ReadAtomSpeciesWarning1)
+TEST_F(UcellTestReadStru, ReadAtomSpeciesWarning1)
 {
     std::string fn = "./support/STRU_MgO_Warning1";
     std::ifstream ifa(fn.c_str());
     std::ofstream ofs_running;
-    ofs_running.open("read_atom_species.tmp");
+    ofs_running.open("read_atom_species.txt");
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_species(ifa, ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::read_atom_species(ifa, ofs_running,*ucell), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("unrecongnized pseudo type."));
+    EXPECT_THAT(output, testing::HasSubstr("unrecognized pseudopotential type."));
     ofs_running.close();
     ifa.close();
-    remove("read_atom_species.tmp");
+    //remove("read_atom_species.txt");
 }
 
-TEST_F(UcellDeathTest, ReadAtomSpeciesWarning2)
+TEST_F(UcellTestReadStru, ReadLatticeConstantWarning1)
 {
     std::string fn = "./support/STRU_MgO_Warning2";
     std::ifstream ifa(fn.c_str());
@@ -1137,15 +1207,15 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning2)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_species(ifa, ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("lat0<=0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("lattice constant <= 0.0"));
     ofs_running.close();
     ifa.close();
     remove("read_atom_species.tmp");
 }
 
-TEST_F(UcellDeathTest, ReadAtomSpeciesWarning3)
+TEST_F(UcellTestReadStru, ReadLatticeConstantWarning2)
 {
     std::string fn = "./support/STRU_MgO_Warning3";
     std::ifstream ifa(fn.c_str());
@@ -1155,7 +1225,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning3)
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_species(ifa, ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("do not use LATTICE_PARAMETERS without explicit specification of lattice type"));
@@ -1164,7 +1234,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning3)
     remove("read_atom_species.tmp");
 }
 
-TEST_F(UcellDeathTest, ReadAtomSpeciesWarning4)
+TEST_F(UcellTestReadStru, ReadLatticeConstantWarning3)
 {
     std::string fn = "./support/STRU_MgO_Warning4";
     std::ifstream ifa(fn.c_str());
@@ -1175,7 +1245,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning4)
     ucell->set_atom_flag = true;
     ucell->latName = "bcc";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_species(ifa, ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("do not use LATTICE_VECTORS along with explicit specification of lattice type"));
@@ -1184,7 +1254,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning4)
     remove("read_atom_species.tmp");
 }
 
-TEST_F(UcellTest, ReadAtomSpeciesLatName)
+TEST_F(UcellTestReadStru, ReadAtomSpeciesLatName)
 {
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
@@ -1210,7 +1280,7 @@ TEST_F(UcellTest, ReadAtomSpeciesLatName)
         std::ofstream ofs_running;
         ofs_running.open("read_atom_species.tmp");
         ucell->latName = latName_in[i];
-        EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+        EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
         if (ucell->latName == "sc")
         {
             EXPECT_DOUBLE_EQ(ucell->latvec.e11, 1.0);
@@ -1234,7 +1304,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning5)
     ucell->set_atom_flag = true;
     ucell->latName = "arbitrary";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_species(ifa, ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("latname not supported"));
     ofs_running.close();
@@ -1242,7 +1312,7 @@ TEST_F(UcellDeathTest, ReadAtomSpeciesWarning5)
     remove("read_atom_species.tmp");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsS1)
+TEST_F(UcellTestReadStru, ReadAtomPositionsS1)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1258,14 +1328,15 @@ TEST_F(UcellTest, ReadAtomPositionsS1)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1273,7 +1344,7 @@ TEST_F(UcellTest, ReadAtomPositionsS1)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsS2)
+TEST_F(UcellTestReadStru, ReadAtomPositionsS2)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1289,14 +1360,15 @@ TEST_F(UcellTest, ReadAtomPositionsS2)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 2;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1304,7 +1376,7 @@ TEST_F(UcellTest, ReadAtomPositionsS2)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
+TEST_F(UcellTestReadStru, ReadAtomPositionsS4Noncolin)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1321,14 +1393,15 @@ TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 4;
     PARAM.input.noncolin = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1336,7 +1409,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Noncolin)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsS4Colin)
+TEST_F(UcellTestReadStru, ReadAtomPositionsS4Colin)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1353,14 +1426,15 @@ TEST_F(UcellTest, ReadAtomPositionsS4Colin)
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 4;
     PARAM.input.noncolin = false;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1368,7 +1442,7 @@ TEST_F(UcellTest, ReadAtomPositionsS4Colin)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsC)
+TEST_F(UcellTestReadStru, ReadAtomPositionsC)
 {
     std::string fn = "./support/STRU_MgO_c";
     std::ifstream ifa(fn.c_str());
@@ -1384,14 +1458,15 @@ TEST_F(UcellTest, ReadAtomPositionsC)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1399,7 +1474,7 @@ TEST_F(UcellTest, ReadAtomPositionsC)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCA)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCA)
 {
     std::string fn = "./support/STRU_MgO_ca";
     std::ifstream ifa(fn.c_str());
@@ -1415,14 +1490,15 @@ TEST_F(UcellTest, ReadAtomPositionsCA)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1430,7 +1506,7 @@ TEST_F(UcellTest, ReadAtomPositionsCA)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCACXY)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCACXY)
 {
     std::string fn = "./support/STRU_MgO_cacxy";
     std::ifstream ifa(fn.c_str());
@@ -1446,14 +1522,15 @@ TEST_F(UcellTest, ReadAtomPositionsCACXY)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1461,7 +1538,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXY)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCACXZ)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCACXZ)
 {
     std::string fn = "./support/STRU_MgO_cacxz";
     std::ifstream ifa(fn.c_str());
@@ -1477,14 +1554,15 @@ TEST_F(UcellTest, ReadAtomPositionsCACXZ)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1492,7 +1570,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXZ)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCACYZ)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCACYZ)
 {
     std::string fn = "./support/STRU_MgO_cacyz";
     std::ifstream ifa(fn.c_str());
@@ -1508,14 +1586,15 @@ TEST_F(UcellTest, ReadAtomPositionsCACYZ)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1523,7 +1602,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACYZ)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCACXYZ)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCACXYZ)
 {
     std::string fn = "./support/STRU_MgO_cacxyz";
     std::ifstream ifa(fn.c_str());
@@ -1539,14 +1618,15 @@ TEST_F(UcellTest, ReadAtomPositionsCACXYZ)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1554,7 +1634,7 @@ TEST_F(UcellTest, ReadAtomPositionsCACXYZ)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsCAU)
+TEST_F(UcellTestReadStru, ReadAtomPositionsCAU)
 {
     std::string fn = "./support/STRU_MgO_cau";
     std::ifstream ifa(fn.c_str());
@@ -1571,14 +1651,15 @@ TEST_F(UcellTest, ReadAtomPositionsCAU)
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 1;
     PARAM.input.fixed_atoms = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1586,7 +1667,7 @@ TEST_F(UcellTest, ReadAtomPositionsCAU)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
+TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1602,14 +1683,15 @@ TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
     PARAM.input.nspin = 2;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1620,9 +1702,9 @@ TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
     }
     // for nspin == 4
     PARAM.input.nspin = 4;
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    ucell->read_atom_positions(ifa, ofs_running, ofs_warning);
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1640,7 +1722,7 @@ TEST_F(UcellTest, ReadAtomPositionsAutosetMag)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsWarning1)
+TEST_F(UcellTestReadStru, ReadAtomPositionsWarning1)
 {
     std::string fn = "./support/STRU_MgO_WarningC1";
     std::ifstream ifa(fn.c_str());
@@ -1655,14 +1737,15 @@ TEST_F(UcellTest, ReadAtomPositionsWarning1)
     PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    EXPECT_NO_THROW(ucell->read_atom_positions(ifa, ofs_running, ofs_warning));
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1683,7 +1766,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning1)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsWarning2)
+TEST_F(UcellTestReadStru, ReadAtomPositionsWarning2)
 {
     std::string fn = "./support/STRU_MgO_WarningC2";
     std::ifstream ifa(fn.c_str());
@@ -1698,14 +1781,15 @@ TEST_F(UcellTest, ReadAtomPositionsWarning2)
     PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    EXPECT_NO_THROW(ucell->read_atom_positions(ifa, ofs_running, ofs_warning));
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1720,7 +1804,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning2)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsWarning3)
+TEST_F(UcellTestReadStru, ReadAtomPositionsWarning3)
 {
     std::string fn = "./support/STRU_MgO_WarningC3";
     std::ifstream ifa(fn.c_str());
@@ -1734,14 +1818,15 @@ TEST_F(UcellTest, ReadAtomPositionsWarning3)
     PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    EXPECT_NO_THROW(ucell->read_atom_positions(ifa, ofs_running, GlobalV::ofs_warning));
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, GlobalV::ofs_warning));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();
@@ -1755,7 +1840,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning3)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellDeathTest, ReadAtomPositionsWarning4)
+TEST_F(UcellTestReadStru, ReadAtomPositionsWarning4)
 {
     std::string fn = "./support/STRU_MgO_WarningC4";
     std::ifstream ifa(fn.c_str());
@@ -1766,19 +1851,21 @@ TEST_F(UcellDeathTest, ReadAtomPositionsWarning4)
     // mandatory preliminaries
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
+    ucell->orbital_fn.resize(ucell->ntype);
     ucell->set_atom_flag = true;
     PARAM.input.test_pseudo_cell = 2;
     PARAM.input.basis_type = "lcao";
     PARAM.sys.deepks_setorb = true;
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_atom_positions(ifa, ofs_running, ofs_warning), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("read_atom_positions, mismatch in atom number for atom type: Mg"));
     ofs_running.close();
@@ -1788,7 +1875,7 @@ TEST_F(UcellDeathTest, ReadAtomPositionsWarning4)
     remove("read_atom_positions.warn");
 }
 
-TEST_F(UcellTest, ReadAtomPositionsWarning5)
+TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
 {
     std::string fn = "./support/STRU_MgO";
     std::ifstream ifa(fn.c_str());
@@ -1804,14 +1891,15 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     PARAM.sys.deepks_setorb = true;
     PARAM.input.calculation = "md";
     PARAM.input.esolver_type = "arbitrary";
-    EXPECT_NO_THROW(ucell->read_atom_species(ifa, ofs_running));
+    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     // mandatory preliminaries
-    delete[] ucell->magnet.start_magnetization;
-    ucell->magnet.start_magnetization = new double[ucell->ntype];
-    EXPECT_NO_THROW(ucell->read_atom_positions(ifa, ofs_running, GlobalV::ofs_warning));
+    delete[] ucell->magnet.start_mag;
+    ucell->magnet.start_mag = new double[ucell->ntype];
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, GlobalV::ofs_warning));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();
@@ -1819,7 +1907,7 @@ TEST_F(UcellTest, ReadAtomPositionsWarning5)
     std::ifstream ifs_tmp;
     ifs_tmp.open("read_atom_positions.warn");
     std::string str((std::istreambuf_iterator<char>(ifs_tmp)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("read_atoms  warning : no atom can move in MD!"));
+    EXPECT_THAT(str, testing::HasSubstr("read_atoms  warning : no atoms can move in MD simulations!"));
     ifs_tmp.close();
     remove("read_atom_positions.tmp");
     remove("read_atom_positions.warn");

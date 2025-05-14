@@ -22,6 +22,7 @@ RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B2,
 	const Matrix_Order &matrix_order) const
 {
+	const double lat0 = *this->lat0;
 	RI::Tensor<Tdata> m;
 	const size_t sizeA1 = index_A1[TA].count_size;
 	const size_t sizeA2 = index_A2[TA].count_size;
@@ -88,7 +89,7 @@ RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
 												const size_t NB2 = co10.first;
 												for( size_t MB2=0; MB2!=2*LB2+1; ++MB2 )
 												{
-													const Tdata overlap = co10.second.cal_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 );
+													const Tdata overlap = co10.second.cal_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 );
 													const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
 													const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
 													const size_t iB1 = index_B1[TB][LB1][NB1][MB1];
@@ -184,7 +185,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 			default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 		}
 	}
-
+	const double lat0 = *this->lat0;
 	for( const auto &co3 : center2_orb22_s.at(TA).at(TB) )
 	{
 		const int LA1 = co3.first;
@@ -217,10 +218,10 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 												const size_t NB2 = co10.first;
 												for( size_t MB2=0; MB2!=2*LB2+1; ++MB2 )
 												{
-													const Tdata overlap = co10.second.cal_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 );
+													const Tdata overlap = co10.second.cal_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 );
 													switch(matrix_order)
 													{										
-														const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co10.second.cal_grad_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB1, MB2 ));
+														const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co10.second.cal_grad_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 ));
 														const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
 														const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
 														const size_t iB1 = index_B1[TB][LB1][NB1][MB1];
@@ -275,6 +276,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 // 4-parameter interface, for opt_orb
 template<typename Tdata>
 std::map < size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor<Tdata>>>>> Matrix_Orbs22::cal_overlap_matrix_all(
+	const UnitCell &ucell,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A1,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A2,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B1,
@@ -285,22 +287,22 @@ std::map < size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor
 	for( const auto &co1 : center2_orb22_s )
 	{
 		const size_t TA = co1.first;
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
+		for( size_t IA=0; IA!=ucell.atoms[TA].na; ++IA )
 		{
-			const ModuleBase::Vector3<double> &tauA( GlobalC::ucell.atoms[TA].tau[IA] );
+			const ModuleBase::Vector3<double> &tauA( ucell.atoms[TA].tau[IA] );
 
 			for( const auto &co2 : co1.second )
 			{
 				const size_t TB = co2.first;
-				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
+				for( size_t IB=0; IB!=ucell.atoms[TB].na; ++IB )
 				{
-					const ModuleBase::Vector3<double> &tauB( GlobalC::ucell.atoms[TB].tau[IB] );
+					const ModuleBase::Vector3<double> &tauB( ucell.atoms[TB].tau[IB] );
 
 					matrixes[TA][IA][TB][IB] = cal_overlap_matrix<Tdata>(
 						TA,
 						TB,
-						GlobalC::ucell.atoms[TA].tau[IA],
-						GlobalC::ucell.atoms[TB].tau[IB],
+						ucell.atoms[TA].tau[IA],
+						ucell.atoms[TB].tau[IB],
 						index_A1,
 						index_A2,
 						index_B1,

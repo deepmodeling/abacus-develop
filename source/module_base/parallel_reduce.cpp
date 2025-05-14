@@ -110,9 +110,9 @@ void Parallel_Reduce::reduce_pool<double>(double* object, const int n)
 
 // (1) the value is same in each pool.
 // (2) we need to reduce the value from different pool.
-void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double& object)
+void Parallel_Reduce::reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object)
 {
-    if (kpar == 1) 
+    if (npool == 1) 
     {
         return;
     }
@@ -124,9 +124,9 @@ void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in
 
 // (1) the value is same in each pool.
 // (2) we need to reduce the value from different pool.
-void Parallel_Reduce::reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double* object, const int n)
+void Parallel_Reduce::reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n)
 {
-    if (kpar == 1) 
+    if (npool == 1) 
     {
         return;
     }

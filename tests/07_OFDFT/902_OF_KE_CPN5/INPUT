@@ -1,0 +1,40 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     scf
+esolver_type    ofdft
+ntype			1
+symmetry		1
+out_chg                 1
+pseudo_dir      ../../PP_ORB/
+pseudo_rcut     16
+
+#Parameters (2.Iteration)
+ecutwfc			20
+scf_nmax        200
+
+#OFDFT
+of_kinetic      cpn5
+of_method       tn
+of_conv         energy
+of_tole         2e-6
+of_full_pw      1
+of_full_pw_dim  0
+
+#Parameters (3.Basis)
+basis_type		pw
+of_ml_device	cpu
+# of_ml_feg       3
+# of_ml_nkernel   5
+# of_ml_chi_xi    0.6 0.8 1.0 1.5 3.0
+# of_ml_chi_p    0.2
+# of_ml_chi_q    0.1
+# of_ml_chi_pnl    0.2 0.2 0.2 0.2 0.2
+# of_ml_chi_qnl    0.1 0.1 0.1 0.1 0.1
+# of_ml_kernel    1 1 1 1 1
+# of_ml_yukawa_alpha    1 1 1 1 1
+# of_ml_kernel_scaling    2.0 1.5 1.0 0.75 0.5
+# of_ml_tanhxi    1 1 1 1 1
+# of_ml_tanhxi_nl    1 1 1 1 1
+# of_ml_tanhp    1
+# of_ml_tanhp_nl    1 1 1 1 1

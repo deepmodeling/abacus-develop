@@ -1,110 +1,117 @@
 #ifndef ESOLVER_KS_LCAO_H
 #define ESOLVER_KS_LCAO_H
+
 #include "esolver_ks.h"
+
+// for adjacent atoms
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+
+// for NAO basis
+#include "module_basis/module_nao/two_center_bundle.h"
+
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
+
+// for DeePKS
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
+// for EXX
 #ifdef __EXX
 #include "module_ri/Exx_LRI_interface.h"
 #include "module_ri/Mix_DMk_2D.h"
 #endif
-#include "module_basis/module_nao/two_center_bundle.h"
-#include "module_io/output_mat_sparse.h"
+
+// for RDMFT
+#include "module_rdmft/rdmft.h"
 
 #include <memory>
 
+
+// for Linear Response
 namespace LR
 {
-    template<typename T, typename TR>
-    class ESolver_LR;
+template <typename T, typename TR>
+class ESolver_LR;
 }
+
+//-----------------------------------
+// ESolver for LCAO
+//-----------------------------------
 namespace ModuleESolver
 {
+
 template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS<TK> {
+class ESolver_KS_LCAO : public ESolver_KS<TK>
+{
   public:
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
-
-    void init_after_vc(const Input_para& inp, UnitCell& cell) override;
+    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(ModuleBase::matrix& force) override;
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    void cal_stress(ModuleBase::matrix& stress) override;
+    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-    void after_all_runners() override;
-
-    void nscf() override;
-
-    void get_S();
-
-    void cal_mag(const int istep, const bool print = false);
+    void after_all_runners(UnitCell& ucell) override;
 
   protected:
-    virtual void before_scf(const int istep) override;
+    virtual void before_scf(UnitCell& ucell, const int istep) override;
 
-    virtual void iter_init(const int istep, const int iter) override;
+    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void update_pot(const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 
-    virtual void iter_finish(const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void others(const int istep) override;
+    virtual void others(UnitCell& ucell, const int istep) override;
 
-    // we will get rid of this class soon, don't use it, mohan 2024-03-28
+    //! Store information about Adjacent Atoms 
     Record_adj RA;
 
-    // 2d block-cyclic distribution info
+    //! Store information about Adjacent Atoms 
+    Grid_Driver gd;
+
+    //! NAO orbitals: 2d block-cyclic distribution info
     Parallel_Orbitals pv;
 
-    // used for k-dependent grid integration.
+    //! Grid integration: used for k-point-dependent algorithm
     Gint_k GK;
 
-    // used for gamma only algorithms.
+    //! Grid integration: used for gamma only algorithms.
     Gint_Gamma GG;
 
+    //! Grid integration: used to store some basic information
     Grid_Technique GridT;
 
+    //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
 
-    // temporary introduced during removing GlobalC::ORB
+    //! For RDMFT calculations, added by jghan, 2024-03-16 
+    rdmft::RDMFT<TK, TR> rdmft_solver;
+
+    //! NAO: store related information 
     LCAO_Orbitals orb_;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.
-    // The copy costs memory and time !
-    // Are there any better way to solve this problem ?
     ModuleBase::matrix scs;
     bool have_force = false;
 
-    //--------------common for all calculation, not only scf-------------
-    // set matrix and grid integral
-    void set_matrix_grid(Record_adj& ra);
-
-    void beforesolver(const int istep);
-    //----------------------------------------------------------------------
-
-    /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse
-    /// density matrix of H, S, T, r
-    ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
-
-    void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
-    void output_mat_npz(std::string& zipname,
-                        const hamilt::HContainer<double>& hR);
-
-    /// @brief check if skip the corresponding output in md calculation
-    bool md_skip_out(std::string calculation, int istep, int interval);
+#ifdef __DEEPKS
+    LCAO_Deepks<TK> ld;
+#endif
 
 #ifdef __EXX
     std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;
@@ -113,17 +120,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
 
-  private:
-    // tmp interfaces  before sub-modules are refactored
-    void dftu_cal_occup_m(const int& iter,
-                          const std::vector<std::vector<TK>>& dm) const;
-
-#ifdef __DEEPKS
-    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
-
-    void dpks_cal_projected_DM(
-        const elecstate::DensityMatrix<TK, double>* dm) const;
-#endif
     friend class LR::ESolver_LR<double, double>;
     friend class LR::ESolver_LR<std::complex<double>, double>;
 };

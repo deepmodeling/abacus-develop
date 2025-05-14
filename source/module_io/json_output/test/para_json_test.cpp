@@ -255,13 +255,13 @@ LCAO_Orbitals::~LCAO_Orbitals()
 #endif
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
 TEST(AbacusJsonTest, InitInfo)
 {
@@ -337,10 +337,10 @@ TEST(AbacusJsonTest, Init_stru_test)
 
     double lat0 = 10.0;
     ucell.ntype = 1;
-    ucell.pseudo_fn = new std::string[1];
-    ucell.orbital_fn = new std::string[1];
+    ucell.pseudo_fn.resize(1);
+    ucell.orbital_fn.resize(1);
     ucell.atoms = atomlist;
-    ucell.atom_label = new std::string[1];
+    ucell.atom_label.resize(1);
     ucell.lat0 = lat0;
 
     ModuleBase::Vector3<double> tau[2];
@@ -355,8 +355,8 @@ TEST(AbacusJsonTest, Init_stru_test)
         atomlist[i].na = 2;
         atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
-        ucell.atoms[i].tau = new ModuleBase::Vector3<double>[2];
-        atomlist[i].mag = new double[2];
+        ucell.atoms[i].tau.resize(2);
+        atomlist[i].mag.resize(2);
         for (int j = 0; j < atomlist[i].na; j++)
         {
             atomlist[i].mag[j] = j * 131;

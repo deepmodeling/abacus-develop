@@ -34,7 +34,9 @@ def dav_subspace(
     max_iter: int = 1000,
     need_subspace: bool = False,
     diag_ethr: Union[List[float], None] = None,
-    scf_type: bool = False
+    scf_type: bool = False,
+    diag_subspace: int = 0,
+    nb2d: int = 0
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
     """ A function to diagonalize a matrix using the Davidson-Subspace method.
 
@@ -67,6 +69,11 @@ def dav_subspace(
         If True, the initial precision of eigenvalue calculation can be coarse. 
         If False, it indicates a non-self-consistent field (non-SCF) calculation, 
         where high precision in eigenvalue calculation is required from the start.  
+    diag_subspace : int, optional
+        The method to do the diagonalization, by default 0.
+        0: LAPACK, 1: Gen-elpa, 2: Scalapack
+    nb2d : int, optional
+        The block size for 2D decomposition, by default 0, which will be automatically set.
     
     Returns
     -------
@@ -101,7 +108,9 @@ def dav_subspace(
         need_subspace,
         diag_ethr,
         scf_type,
-        comm_info
+        comm_info,
+        diag_subspace,
+        nb2d
     )
     
     e = _diago_obj_dav_subspace.get_eigenvalue()
@@ -118,6 +127,7 @@ def davidson(
     dav_ndim: int = 2,
     tol: float = 1e-2,
     max_iter: int = 1000,
+    diag_ethr: Union[List[float], None] = None,
     use_paw: bool = False,
     # scf_type: bool = False
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
@@ -143,6 +153,8 @@ def davidson(
         The tolerance for the convergence, by default 1e-2.
     max_iter : int, optional    
         The maximum number of iterations, by default 1000.
+    diag_ethr : List[float] | None, optional
+        The list of thresholds of bands, by default None.    
     use_paw : bool, optional
         Whether to use projector augmented wave (PAW) method, by default False.
     
@@ -164,12 +176,16 @@ def davidson(
     _diago_obj_david.init_eigenvalue()
     
     comm_info = diag_comm_info(0, 1)
+
+    if diag_ethr is None:
+        diag_ethr = [tol] * num_eigs
     
     _ = _diago_obj_david.diag(
         mvv_op,
         precondition,
         dav_ndim,
         tol,
+        diag_ethr,
         max_iter,
         use_paw,
         comm_info
@@ -188,6 +204,7 @@ def cg(
     precondition: NDArray[np.float64],
     tol: float = 1e-2,
     max_iter: int = 1000,
+    diag_ethr: Union[List[float], None] = None,
     need_subspace: bool = False,
     scf_type: bool = False,
     nproc_in_pool: int = 1
@@ -237,6 +254,9 @@ def cg(
         if init_v.ndim == 2:
             init_v = init_v.T
         init_v = init_v.flatten().astype(np.complex128, order='C')
+
+    if diag_ethr is None:
+        diag_ethr = [tol] * num_eigs
     
     _diago_obj_cg = diago_cg(dim, num_eigs)
     _diago_obj_cg.set_psi(init_v)
@@ -248,6 +268,7 @@ def cg(
         mvv_op,
         max_iter, 
         tol,
+        diag_ethr,
         need_subspace,
         scf_type,
         nproc_in_pool

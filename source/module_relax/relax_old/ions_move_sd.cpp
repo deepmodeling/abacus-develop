@@ -20,7 +20,7 @@ Ions_Move_SD::~Ions_Move_SD()
     delete[] pos_saved;
 }
 
-void Ions_Move_SD::allocate(void)
+void Ions_Move_SD::allocate()
 {
     ModuleBase::TITLE("Ions_Move_SD", "allocate");
     assert(dim > 0);
@@ -37,8 +37,8 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
     assert(dim > 0);
-    assert(grad_saved != 0);
-    assert(pos_saved != 0);
+    assert(grad_saved != nullptr);
+    assert(pos_saved != nullptr);
 
     std::vector<double> pos(dim);
     std::vector<double> grad(dim);
@@ -49,15 +49,18 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
 
     // 1: ediff = 0
     // 0: ediff < 0
-    bool judgement = 0;
+    bool judgement = false;
     setup_etot(etot_in, judgement);
     setup_gradient(ucell, force, pos.data(), grad.data());
 
     if (istep == 1 || etot_in <= energy_saved)
     {
+        printf("in cheak_converged");
+        printf("pos[0]: %f\n", pos[0]);
         energy_saved = etot_in;
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++) {
             pos_saved[i] = pos[i];
+}
         for (int i = 0; i < dim; i++)
         {
             grad_saved[i] = grad[i];
@@ -91,7 +94,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     return;
 }
 
-void Ions_Move_SD::cal_tradius_sd(void) const
+void Ions_Move_SD::cal_tradius_sd() const
 {
     static int accepted_number = 0;
 

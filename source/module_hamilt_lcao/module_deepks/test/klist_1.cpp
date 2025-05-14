@@ -68,11 +68,11 @@ namespace Test_Deepks
 		this->set_both_kvec(reciprocal_vec, latvec, ofs_running);
 
 		int deg = 0;
-		if(PARAM.input.nspin == 1)
+		if(PARAM.inp.nspin == 1)
 		{
 			deg = 2;
 		}
-		else if(PARAM.input.nspin == 2||PARAM.input.nspin==4)
+		else if(PARAM.inp.nspin == 2||PARAM.inp.nspin==4)
 		{
 			deg = 1;
 		}

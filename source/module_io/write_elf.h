@@ -18,6 +18,7 @@ void write_elf(
     const double* const* rho,
     const double* const* tau,
     ModulePW::PW_Basis* rho_basis,
+    const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision);
 }

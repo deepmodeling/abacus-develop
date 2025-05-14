@@ -13,15 +13,15 @@ class Ions_Move_CG
     void start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot);
 
     static double RELAX_CG_THR;
-    int sd_step;
-    int cg_step;
+    int sd_step=0;
+    int cg_step=0;
 
   private:
     double *pos0;
     double *grad0;
     double *cg_grad0;
     double *move0;
-    double e0;
+    double e0=0.0;
     // setup gradients.
     void setup_cg_grad(double *grad,
                        const double *grad0,

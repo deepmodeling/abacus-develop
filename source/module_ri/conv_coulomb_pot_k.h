@@ -12,7 +12,7 @@ namespace Conv_Coulomb_Pot_K
 	enum class Ccp_Type{		//	parameter:
 		Ccp,					//
 		Hf,						//		"hf_Rcut"
-		Hse,    //  	"hse_omega"
+		Erfc,					//		"hse_omega"
         Cam,    //  	"hse_omega", "hybrid_alpha", "hybrid_beta", "hf_Rcut"
 		Ccp_Cam // "hse_omega", "hybrid_alpha", "hybrid_beta"
     };

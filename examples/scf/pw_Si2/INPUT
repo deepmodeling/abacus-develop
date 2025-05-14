@@ -4,9 +4,14 @@ pseudo_dir      ../../../tests/PP_ORB
 symmetry        1	
 #Parameters  (Accuracy)
 basis_type      pw
-ecutwfc         60 
+ecutwfc         60  ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr         1e-7
 scf_nmax        100
 device          cpu
 ks_solver       dav_subspace
 precision       double
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

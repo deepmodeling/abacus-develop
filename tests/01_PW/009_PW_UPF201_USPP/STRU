@@ -1,0 +1,19 @@
+ATOMIC_SPECIES
+H  1.008   H_ONCV_PBE-1.0.upf
+Cl 35.453  Cl.pbe-nl-rrkjus_psl.1.0.0.UPF
+
+LATTICE_CONSTANT
+7
+
+ATOMIC_POSITIONS
+Direct
+
+H #label
+0 #magnetism
+1 #number of atoms
+0.00 0.00 0.00
+
+Cl #label
+0 #magnetism
+1 #number of atoms
+0.51 0.00 0.00

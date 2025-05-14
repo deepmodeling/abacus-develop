@@ -12,8 +12,8 @@ void ReadInput::item_relax()
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         read_sync_string(input.relax_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
-            if (!find_str(relax_methods, para.input.relax_method))
+            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs","bfgs_trad","lbfgs"};
+            if (std::find(relax_methods.begin(),relax_methods.end(), para.input.relax_method)==relax_methods.end())
             {
                 const std::string warningstr = nofound_str(relax_methods, "relax_method");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -52,13 +52,16 @@ void ReadInput::item_relax()
             const std::string& calculation = para.input.calculation;
             const std::vector<std::string> singlelist
                 = {"scf", "nscf", "get_S", "get_pchg", "get_wf", "test_memory", "test_neighbour", "gen_bessel"};
-            if (find_str(singlelist, calculation))
+            if (std::find(singlelist.begin(), singlelist.end(), calculation) != singlelist.end())
             {
-                para.input.relax_nmax = 1;
+                if (para.input.relax_nmax != 0)
+                {
+                    para.input.relax_nmax = 1;
+                }
             }
             else if (calculation == "relax" || calculation == "cell-relax")
             {
-                if (!para.input.relax_nmax)
+                if (para.input.relax_nmax < 0)
                 {
                     para.input.relax_nmax = 50;
                 }

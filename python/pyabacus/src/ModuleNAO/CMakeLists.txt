@@ -12,11 +12,13 @@ list(APPEND _naos
     ${NAO_PATH}/two_center_bundle.cpp
     ${NAO_PATH}/two_center_integrator.cpp
     ${NAO_PATH}/two_center_table.cpp
-    ${NAO_PATH}/projgen.cpp
     # dependency
-    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_ylm_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_kernel_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_kernel_op_vec.cpp
     # ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
     ${ABACUS_SOURCE_DIR}/module_base/module_device/memory_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/module_device/device.cpp
 )
 add_library(naopack SHARED 
     ${_naos}

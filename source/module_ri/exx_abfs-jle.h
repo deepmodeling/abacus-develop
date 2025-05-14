@@ -4,6 +4,7 @@
 #include "exx_abfs.h"
 
 #include <vector>
+#include "module_cell/unitcell.h"
 #include "../module_basis/module_ao/ORB_read.h"
 
 class Exx_Abfs::Jle
@@ -15,7 +16,9 @@ public:
 			std::vector<
 				Numerical_Orbital_Lm>>> jle;
 
-	void init_jle( const double kmesh_times, const LCAO_Orbitals& orb );
+	void init_jle(const double kmesh_times, 
+				  const UnitCell& ucell,
+				  const LCAO_Orbitals& orb);
 
 	static bool generate_matrix;
 	static int Lmax;

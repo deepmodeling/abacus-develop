@@ -71,8 +71,6 @@ public:
         const bool xprime_in = true
     );
 
-    void get_ig2ixyz_k();
-
   public:
     int nks=0;//number of k points in this pool
     ModuleBase::Vector3<double> *kvec_d=nullptr; // Direct coordinates of k points
@@ -88,15 +86,14 @@ public:
 
     int *igl2isz_k=nullptr, * d_igl2isz_k = nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz)
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
-    int *ig2ixyz_k=nullptr;
-    int *ig2ixyz_k_=nullptr;
-
+    int *ig2ixyz_k=nullptr; ///< [npw] map ig to ixyz
+    std::vector<int> ig2ixyz_k_cpu; /// [npw] map ig to ixyz,which is used in dsp fft.
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
     // liuyu add 2023-09-06
-    double erf_ecut;   // the value of the constant energy cutoff
-    double erf_height; // the height of the energy step for reciprocal vectors
-    double erf_sigma;  // the width of the energy step for reciprocal vectors
+    double erf_ecut=0.0;   // the value of the constant energy cutoff
+    double erf_height=0.0; // the height of the energy step for reciprocal vectors
+    double erf_sigma=0.0;  // the width of the energy step for reciprocal vectors
 
     //collect gdirect, gcar, gg
     void collect_local_pw(const double& erf_ecut_in = 0.0,
@@ -108,6 +105,8 @@ public:
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
     void setupIndGk();
+    // get ig2ixyz_k
+    void get_ig2ixyz_k();
     //calculate G+K, it is a private function
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 
@@ -136,8 +135,33 @@ public:
                     const int ik,
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
-
+    #if defined(__DSP)
     template <typename FPTYPE, typename Device>
+    void convolution(const Device* ctx,
+                      const int ik,
+                      const int size,
+                      const std::complex<FPTYPE>* input,
+                      const FPTYPE*               input1,
+                      std::complex<FPTYPE>*       output,
+                      const bool add = false,
+                      const FPTYPE factor =1.0) const ;
+
+    template <typename FPTYPE>
+    void real2recip_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    
+    #endif
+
+     template <typename FPTYPE, typename Device>
     void real_to_recip(const Device* ctx,
                        const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
@@ -151,6 +175,76 @@ public:
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void real_to_recip(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+      #if defined(__DSP)
+        this->recip2real_dsp(in, out, ik, add, factor);
+      #else
+        this->real2recip(in,out,ik,add,factor);
+      #endif
+    }
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void recip_to_real(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+      
+      #if defined(__DSP)
+        this->recip2real_dsp(in,out,ik,add,factor);
+      #else
+        this->recip2real(in,out,ik,add,factor);
+      #endif
+    }
+    template <typename FPTYPE>
+    void real2recip_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+                    
+    template <typename FPTYPE>
+    void recip2real_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int ik,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+    template <typename FPTYPE,
+              typename Device,
+              typename std::enable_if<!std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+    void real_to_recip(const FPTYPE* in,
+                       FPTYPE* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<FPTYPE>::type factor = 1.0) const
+    {
+        this->real2recip_gpu(in, out, ik, add, factor);
+    }
+
+    template <typename TK,
+              typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_GPU>::value, int>::type = 0>
+    void recip_to_real(const TK* in,
+                       TK* out,
+                       const int ik,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+        this->recip2real_gpu(in, out, ik, add, factor);
+    }
 
   public:
     //operator:
@@ -181,7 +275,6 @@ public:
 private:
     float * s_gcar = nullptr, * s_kvec_c = nullptr;
     double * d_gcar = nullptr, * d_kvec_c = nullptr;
-
 };
 
 }

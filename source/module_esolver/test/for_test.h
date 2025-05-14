@@ -22,7 +22,7 @@ UnitCell::UnitCell()
     ntype = 2;
     nat = 2;
 
-    atom_label = new std::string[ntype];
+    atom_label.resize(ntype);
     atom_label[0] = "Al";
     atom_label[1] = "Cu";
 
@@ -53,13 +53,11 @@ Magnetism::~Magnetism()
 Atom::Atom()
 {
     na = 1;
-    tau = new ModuleBase::Vector3<double>[na];
-    mbl = new ModuleBase::Vector3<int>[na];
+    tau.resize(na);
+    mbl.resize(na);
 }
 Atom::~Atom()
 {
-    delete[] tau;
-    delete[] mbl;
 }
 Atom_pseudo::Atom_pseudo()
 {

@@ -49,15 +49,15 @@ class Parallel_Grid
     int **startz = nullptr;
     int **whichpro = nullptr;
 
-	int ncx;
-	int ncy;
-	int ncz;
-	int ncxy;
-	int ncxyz;
-    int nczp; // number of z-layers (xy-planes) in each processor
-	int nrxx;
-	int nbz;
-	int bz;
+	int ncx=0;
+	int ncy=0;
+	int ncz=0;
+	int ncxy=0;
+	int ncxyz=0;
+    int nczp=0; // number of z-layers (xy-planes) in each processor
+	int nrxx=0;
+	int nbz=0;
+	int bz=0;
 
     bool allocate = false;
     bool allocate_final_scf = false; //LiuXh add 20180619

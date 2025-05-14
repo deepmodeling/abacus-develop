@@ -15,33 +15,32 @@ namespace LR
     {
     public:
         //when nspin=2, nks is 2 times of real number of k-points. else (nspin=1 or 4), nks is the real number of k-points
-        OperatorLRHxc(const int& nspin,
-            const int& naos,
-            const std::vector<int>& nocc,
-            const std::vector<int>& nvirt,
-            const psi::Psi<T, Device>& psi_ks_in,
-            std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans_in,
-            typename TGint<T>::type* gint_in,
-            std::weak_ptr<PotHxcLR> pot_in,
-            const UnitCell& ucell_in,
-            const std::vector<double>& orb_cutoff,
-            Grid_Driver& gd_in,
-            const K_Vectors& kv_in,
-            const std::vector<Parallel_2D>& pX_in,
-            const Parallel_2D& pc_in,
-            const Parallel_Orbitals& pmat_in,
-            const std::vector<int>& ispin_ks = { 0 })
-            : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin),
-            psi_ks(psi_ks_in), DM_trans(DM_trans_in), gint(gint_in), pot(pot_in),
-            ucell(ucell_in), orb_cutoff_(orb_cutoff), gd(gd_in), kv(kv_in),
-            pX(pX_in), pc(pc_in), pmat(pmat_in), ispin_ks(ispin_ks)
-        {
-            ModuleBase::TITLE("OperatorLRHxc", "OperatorLRHxc");
-            this->cal_type = hamilt::calculation_type::lcao_gint;
-            this->is_first_node = true;
-            this->hR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&pmat_in));
-            LR_Util::initialize_HR<T, T>(*this->hR, ucell_in, gd_in, orb_cutoff);
-            assert(&pmat_in == this->hR->get_paraV());
+      OperatorLRHxc(const int& nspin,
+                    const int& naos,
+                    const std::vector<int>& nocc,
+                    const std::vector<int>& nvirt,
+                    const psi::Psi<T, Device>& psi_ks_in,
+                    std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans_in,
+                    typename TGint<T>::type* gint_in,
+                    std::weak_ptr<PotHxcLR> pot_in,
+                    const UnitCell& ucell_in,
+                    const std::vector<double>& orb_cutoff,
+                    const Grid_Driver& gd_in,
+                    const K_Vectors& kv_in,
+                    const std::vector<Parallel_2D>& pX_in,
+                    const Parallel_2D& pc_in,
+                    const Parallel_Orbitals& pmat_in,
+                    const std::vector<int>& ispin_ks = {0})
+          : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin), psi_ks(psi_ks_in),
+            DM_trans(DM_trans_in), gint(gint_in), pot(pot_in), ucell(ucell_in), orb_cutoff_(orb_cutoff), gd(gd_in),
+            kv(kv_in), pX(pX_in), pc(pc_in), pmat(pmat_in), ispin_ks(ispin_ks)
+      {
+          ModuleBase::TITLE("OperatorLRHxc", "OperatorLRHxc");
+          this->cal_type = hamilt::calculation_type::lcao_gint;
+          this->is_first_node = true;
+          this->hR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&pmat_in));
+          LR_Util::initialize_HR<T, T>(*this->hR, ucell_in, gd_in, orb_cutoff);
+          assert(&pmat_in == this->hR->get_paraV());
         };
         ~OperatorLRHxc() { };
 
@@ -87,7 +86,7 @@ namespace LR
 
         const UnitCell& ucell;
         std::vector<double> orb_cutoff_;
-        Grid_Driver& gd;
+        const Grid_Driver& gd;
 
         /// test
         mutable bool first_print = true;

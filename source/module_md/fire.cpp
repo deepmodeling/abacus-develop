@@ -18,6 +18,8 @@ FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     f_alpha = 0.99;
     n_min = 4;
     negative_count = 0;
+    max = 0.0;
+    force_thr = 1e-3;
 }
 
 FIRE::~FIRE()
@@ -74,9 +76,10 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
 
-    ofs << "\n Largest gradient in force is " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << " eV/A." << std::endl;
-    ofs << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A." << std::endl;
-    std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
+    const double max_force = max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
+
+	ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
+	std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
 
     return;
 }

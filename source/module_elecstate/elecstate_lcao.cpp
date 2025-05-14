@@ -1,7 +1,5 @@
 #include "elecstate_lcao.h"
 
-#include <vector>
-
 #include "cal_dm.h"
 #include "module_base/timer.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
@@ -10,6 +8,10 @@
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
+
+#include <vector>
 
 namespace elecstate
 {
@@ -20,35 +22,6 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 {
     ModuleBase::TITLE("ElecStateLCAO", "psiToRho");
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-
-    this->calculate_weights();
-
-    // the calculations of dm, and dm -> rho are, technically, two separate
-    // functionalities, as we cannot rule out the possibility that we may have a
-    // dm from other sources, such as read from file. However, since we are not
-    // separating them now, I opt to add a flag to control how dm is obtained as
-    // of now
-    if (!PARAM.inp.dm_to_rho)
-    {
-        this->calEBand();
-
-        ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
-
-        // this part for calculating DMK in 2d-block format, not used for charge
-        // now
-        //    psi::Psi<std::complex<double>> dm_k_2d();
-
-        if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
-            || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp"
-            || PARAM.inp.ks_solver == "cg_in_lcao") // Peize Lin test 2019-05-15
-        {
-            elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
-                                  this->wg,
-                                  psi,
-                                  *(this->DM));
-            this->DM->cal_DMR();
-        }
-    }
 
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -61,11 +34,15 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+#ifndef __NEW_GINT
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         this->cal_tau(psi);
     }
@@ -83,23 +60,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     ModuleBase::TITLE("ElecStateLCAO", "psiToRho");
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
 
-    this->calculate_weights();
-    this->calEBand();
-
-    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
-        || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp" || PARAM.inp.ks_solver == "cg_in_lcao")
-    {
-        ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-
-        // get DMK in 2d-block format
-        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
-                              this->wg,
-                              psi,
-                              *(this->DM));
-        this->DM->cal_DMR();
-        ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-    }
-
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
@@ -111,13 +71,15 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
 
+#ifndef __NEW_GINT 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
-
     this->gint_gamma->cal_gint(&inout);
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         this->cal_tau(psi);
     }
@@ -138,15 +100,15 @@ void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* pa
 template <>
 double ElecStateLCAO<double>::get_spin_constrain_energy()
 {
-    SpinConstrain<double, base_device::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
+    spinconstrain::SpinConstrain<double>& sc = spinconstrain::SpinConstrain<double>::getScInstance();
     return sc.cal_escon();
 }
 
 template <>
 double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 {
-    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>>& sc
+        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
     return sc.cal_escon();
 }
 
@@ -177,17 +139,25 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+#ifndef __NEW_GINT
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
+    if (XC_Functional::get_ked_flag())
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
+#ifndef __NEW_GINT
         Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_gamma->cal_gint(&inout1);
+#else
+        ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
+#endif
     }
 
     this->charge->renormalize_rho();

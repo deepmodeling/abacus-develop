@@ -82,7 +82,7 @@ public:
 		//do Diago_David::diag()
 		float* en = new float[npw];		
 		hamilt::Hamilt<std::complex<float>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
+		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr, nullptr,nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
@@ -90,7 +90,7 @@ public:
        	const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
 
-		const int dim = phi.get_current_nbas() ;
+		const int dim = phi.get_current_ngk() ;
 		const int nband = phi.get_nbands();
 		const int ld_psi =phi.get_nbasis();
 		hsolver::DiagoDavid<std::complex<float>> dav(precondition, nband, dim, order, false, comm_info);
@@ -113,16 +113,18 @@ public:
 		auto hpsi_func = [phm](std::complex<float>* psi_in,std::complex<float>* hpsi_out,
 					const int ld_psi, const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nvec, ld_psi, nullptr);
+                        auto psi_iter_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nvec, ld_psi, true);
                         psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<std::complex<float>>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
                     };
-		auto spsi_func = [phm](const std::complex<float>* psi_in, std::complex<float>* spsi_out,const int ld_psi, const int nbands){
-			phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
-		};
-		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, eps, maxiter);
+        auto spsi_func = [phm](const std::complex<float>* psi_in,
+                               std::complex<float>* spsi_out,
+                               const int ld_psi,
+                               const int nbands) { phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands); };
+        std::vector<double> ethr_band(phi.get_nbands(), eps);
+		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
 
 #ifdef __MPI		
 		end = MPI_Wtime();
@@ -194,7 +196,15 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 TEST(DiagoDavRealSystemTest,dataH)
 {
 	std::vector<std::complex<float>> hmatrix;
-	std::ifstream ifs("H-KPoints-Si64.dat");
+	std::ifstream ifs;
+	std::string filename = "H-KPoints-Si64.dat";
+	ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
 	DIAGOTEST::readh(ifs,hmatrix);
 	ifs.close();
 	DIAGOTEST::hmatrix_f = hmatrix;

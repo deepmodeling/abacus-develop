@@ -18,7 +18,7 @@
 namespace ModuleIO
 {
 template <typename Device>
-void get_pchg_pw(const std::vector<int>& bands_to_print,
+void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nbands,
                  const int nspin,
                  const int nx,
@@ -36,39 +36,39 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                  const ModulePW::PW_Basis* pw_rhod,
                  const ModulePW::PW_Basis_K* pw_wfc,
                  const Device* ctx,
-                 Parallel_Grid& Pgrid,
+                 const Parallel_Grid& pgrid,
                  const std::string& global_out_dir,
                  const bool if_separate_k)
 {
     // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
     std::vector<int> bands_picked(nbands, 0);
 
-    // Check if length of bands_to_print is valid
-    if (static_cast<int>(bands_to_print.size()) > nbands)
+    // Check if length of out_pchg is valid
+    if (static_cast<int>(out_pchg.size()) > nbands)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW::get_pchg_pw",
-                                 "The number of bands specified by `bands_to_print` in the "
+        ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
+                                 "The number of bands specified by `out_pchg` in the "
                                  "INPUT file exceeds `nbands`!");
     }
 
     // Check if all elements in bands_picked are 0 or 1
-    for (int value: bands_to_print)
+    for (int value: out_pchg)
     {
         if (value != 0 && value != 1)
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::get_pchg_pw",
-                                     "The elements of `bands_to_print` must be either 0 or 1. "
+            ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
+                                     "The elements of `out_pchg` must be either 0 or 1. "
                                      "Invalid values found!");
         }
     }
 
-    // Fill bands_picked with values from bands_to_print
+    // Fill bands_picked with values from out_pchg
     // Remaining bands are already set to 0
-    int length = std::min(static_cast<int>(bands_to_print.size()), nbands);
+    int length = std::min(static_cast<int>(out_pchg.size()), nbands);
     for (int i = 0; i < length; ++i)
     {
-        // bands_to_print rely on function parse_expression
-        bands_picked[i] = static_cast<int>(bands_to_print[i]);
+        // out_pchg rely on function parse_expression
+        bands_picked[i] = static_cast<int>(out_pchg[i]);
     }
 
     std::vector<std::complex<double>> wfcr(nxyz);
@@ -118,7 +118,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                 ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik % (nks / nspin) + 1 << "_SPIN" << spin_index + 1
                     << "_CHG.cube";
 
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     rho_band[spin_index].data(),
                     spin_index,
                     nspin,
@@ -186,7 +186,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                 std::stringstream ssc;
                 ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     rho_band[is].data(),
                     is,
                     nspin,

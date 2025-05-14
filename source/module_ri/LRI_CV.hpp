@@ -36,7 +36,8 @@ LRI_CV<Tdata>::~LRI_CV() {
 
 template <typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
-    const LCAO_Orbitals& orb,
+	const UnitCell &ucell,
+	const LCAO_Orbitals& orb,
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in,
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
@@ -70,11 +71,11 @@ void LRI_CV<Tdata>::set_orbitals(
 
     // this->m_abfs_abfs.init( 2, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
     int Lmax_v = std::numeric_limits<double>::min();
-    this->m_abfs_abfs.init(2, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
+    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
     // this->m_abfslcaos_lcaos.init( 1, kmesh_times, 1 );
     int Lmax_c = std::numeric_limits<double>::min();
     if (init_C)
-        this->m_abfslcaos_lcaos.init(1, orb, kmesh_times, lcaos_rmax, Lmax_c);
+        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, Lmax_c);
     int Lmax = std::max(Lmax_v, Lmax_c);
 
     if (init_MGT) {
@@ -108,7 +109,8 @@ double LRI_CV<Tdata>::cal_C_Rcut(const int it0, const int it1) {
 
 template <typename Tdata>
 template <typename Tresult>
-auto LRI_CV<Tdata>::cal_datas(const std::vector<TA>& list_A0,
+auto LRI_CV<Tdata>::cal_datas(const UnitCell &ucell,
+                              const std::vector<TA>& list_A0,
                               const std::vector<TAC>& list_A1,
                               const std::map<std::string, bool>& flags,
                               const T_func_cal_Rcut& func_cal_Rcut,
@@ -125,14 +127,14 @@ auto LRI_CV<Tdata>::cal_datas(const std::vector<TA>& list_A0,
             const TA iat0 = list_A0[i0];
             const TA iat1 = list_A1[i1].first;
             const TC& cell1 = list_A1[i1].second;
-            const int it0 = GlobalC::ucell.iat2it[iat0];
-            const int ia0 = GlobalC::ucell.iat2ia[iat0];
-            const int it1 = GlobalC::ucell.iat2it[iat1];
-            const int ia1 = GlobalC::ucell.iat2ia[iat1];
+            const int it0 = ucell.iat2it[iat0];
+            const int ia0 = ucell.iat2ia[iat0];
+            const int it1 = ucell.iat2it[iat1];
+            const int ia1 = ucell.iat2ia[iat1];
             const ModuleBase::Vector3<double> tau0
-                = GlobalC::ucell.atoms[it0].tau[ia0];
+                = ucell.atoms[it0].tau[ia0];
             const ModuleBase::Vector3<double> tau1
-                = GlobalC::ucell.atoms[it1].tau[ia1];
+                = ucell.atoms[it1].tau[ia1];
             // const double Rcut = std::min(
             // 	GlobalC::ORB.Phi[it0].getRcut() * rmesh_times +
             // GlobalC::ORB.Phi[it1].getRcut(),
@@ -142,8 +144,8 @@ auto LRI_CV<Tdata>::cal_datas(const std::vector<TA>& list_A0,
                 = std::min(func_cal_Rcut(it0, it1), func_cal_Rcut(it1, it0));
             const Abfs::Vector3_Order<double> R_delta
                 = -tau0 + tau1
-                  + (RI_Util::array3_to_Vector3(cell1) * GlobalC::ucell.latvec);
-            if (R_delta.norm() * GlobalC::ucell.lat0 < Rcut) {
+                  + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+            if (R_delta.norm() * ucell.lat0 < Rcut) {
                 const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
                 //				if(Data.norm(std::numeric_limits<double>::max())
                 //> threshold)
@@ -160,6 +162,7 @@ auto LRI_CV<Tdata>::cal_datas(const std::vector<TA>& list_A0,
 
 template <typename Tdata>
 auto LRI_CV<Tdata>::cal_Vs(
+    const UnitCell &ucell,
     const std::vector<TA>& list_A0,
     const std::vector<TAC>& list_A1,
     const std::map<std::string, bool>& flags) // + "writable_Vws"
@@ -177,7 +180,8 @@ auto LRI_CV<Tdata>::cal_Vs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-    return this->cal_datas(list_A0,
+    return this->cal_datas(ucell,
+                           list_A0,
                            list_A1,
                            flags,
                            func_cal_Rcut,
@@ -186,6 +190,7 @@ auto LRI_CV<Tdata>::cal_Vs(
 
 template <typename Tdata>
 auto LRI_CV<Tdata>::cal_dVs(
+    const UnitCell &ucell,
     const std::vector<TA>& list_A0,
     const std::vector<TAC>& list_A1,
     const std::map<std::string, bool>& flags) // + "writable_dVws"
@@ -202,7 +207,8 @@ auto LRI_CV<Tdata>::cal_dVs(
                                                     this,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2);
-    return this->cal_datas(list_A0,
+    return this->cal_datas(ucell,
+                           list_A0,
                            list_A1,
                            flags,
                            func_cal_Rcut,
@@ -211,6 +217,7 @@ auto LRI_CV<Tdata>::cal_dVs(
 
 template <typename Tdata>
 auto LRI_CV<Tdata>::cal_Cs_dCs(
+    const UnitCell &ucell,
     const std::vector<TA>& list_A0,
     const std::vector<TAC>& list_A1,
     const std::map<std::string, bool>&
@@ -236,7 +243,8 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
              std::map<TAC,
                       std::pair<RI::Tensor<Tdata>,
                                 std::array<RI::Tensor<Tdata>, 3>>>>
-        Cs_dCs_tmp = this->cal_datas(list_A0,
+        Cs_dCs_tmp = this->cal_datas(ucell,
+                                     list_A0,
                                      list_A1,
                                      flags,
                                      func_cal_Rcut,

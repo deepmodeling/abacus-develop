@@ -39,7 +39,7 @@ class Hamilt
                       const int nbands // number of bands
     ) const
     {
-        syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
+        syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
     }
 
 	/// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.

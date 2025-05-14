@@ -12,7 +12,7 @@ namespace Json
             template<size_t N>
             jsonKeyNode(const char (&s)[N]): key(s) {};
         
-            int i;
+            int i=0;
             std::string key;
     };
 

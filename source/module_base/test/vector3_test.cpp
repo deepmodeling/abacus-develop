@@ -64,6 +64,9 @@
  *   - VneV
  *     - overload operator "!=" to assert
  *     - the inequality between two 3d vectors
+ *	 - VltV
+ *     - overload operator "<" to sort
+ * 	   - the "less than" relationship between two 3d vectors
  *   - StdOutV
  *     - overload operator "<<" to print out
  *     - a 3d vectors on standard output
@@ -701,6 +704,22 @@ TEST_F(Vector3Test,VneV)
 	w.set(ia,ib,2*ic);
 	wp.set(ia,ib,ic);
 	EXPECT_TRUE(wp != w);
+}
+
+TEST_F(Vector3Test, VltV)
+{
+	ModuleBase::Vector3<double> u, up;
+	u.set(da, db, dc);
+	up.set(dc, db, da);
+	EXPECT_TRUE(u < up);
+	ModuleBase::Vector3<float> v, vp;
+	v.set(fa, fb, fc);
+	vp.set(fa, fb, fc);
+	EXPECT_FALSE(v < vp);
+	ModuleBase::Vector3<int> w, wp;
+	w.set(ia, ib, ic);
+	wp.set(ib, ib, ic);
+	EXPECT_TRUE(w < wp);
 }
 
 TEST_F(Vector3Test,StdOutV)

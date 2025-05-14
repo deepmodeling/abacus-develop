@@ -1,12 +1,11 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
-#include "module_parameter/parameter.h"
-
 #include "fp_energy.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
-#include "potentials/potential_new.h"
+#include "module_pot/potential_new.h"
 
 namespace elecstate
 {
@@ -14,10 +13,10 @@ namespace elecstate
 class ElecState
 {
   public:
-    ElecState(){}
-    ElecState(Charge* charge_in,
-              ModulePW::PW_Basis* rhopw_in,
-              ModulePW::PW_Basis_Big* bigpw_in)
+    ElecState()
+    {
+    }
+    ElecState(Charge* charge_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
     {
         this->charge = charge_in;
         this->charge->set_rhopw(rhopw_in);
@@ -26,20 +25,20 @@ class ElecState
     }
     virtual ~ElecState()
     {
-        if(this->pot != nullptr) 
+        if (this->pot != nullptr)
         {
             delete this->pot;
             this->pot = nullptr;
         }
     }
-    void init_ks(Charge *chg_in, // pointer for class Charge
-                      const K_Vectors *klist_in,
-                      int nk_in, // number of k points
-                      ModulePW::PW_Basis* rhopw_in,
-                      const ModulePW::PW_Basis_Big* bigpw_in); 
+    void init_ks(Charge* chg_in, // pointer for class Charge
+                 const K_Vectors* klist_in,
+                 int nk_in, // number of k points
+                 ModulePW::PW_Basis* rhopw_in,
+                 const ModulePW::PW_Basis_Big* bigpw_in);
 
     // return current electronic density rho, as a input for constructing Hamiltonian
-    virtual const double *getRho(int spin) const;
+    virtual const double* getRho(int spin) const;
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
@@ -61,6 +60,10 @@ class ElecState
     {
         return;
     }
+    virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
+    {
+        return;
+    }
 
     // update charge density for next scf step
     // in this function, 1. input rho for construct Hamilt and 2. calculated rho from Psi will mix to 3. new charge
@@ -73,22 +76,18 @@ class ElecState
         return;
     }
 
-    // calculate wg from ekb
-    virtual void calculate_weights();
+
 
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
-	void fixed_weights(
-			const std::vector<double>& ocp_kb,
-			const int &nbands,
-			const double &nelec);
+    
 
-    // if nupdown is not 0(TWO_EFERMI case), 
-    // nelec_spin will be fixed and weights will be constrained 
+    // if nupdown is not 0(TWO_EFERMI case),
+    // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();
-    //used to record number of electrons per spin index
-    //for NSPIN=2, it will record number of spin up and number of spin down
-    //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
+    // used to record number of electrons per spin index
+    // for NSPIN=2, it will record number of spin up and number of spin down
+    // for NSPIN=4, it will record total number, magnetization for x, y, z direction
     std::vector<double> nelec_spin;
 
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
@@ -102,14 +101,18 @@ class ElecState
 
     /**
      * @brief Init rho_core, init rho, renormalize rho, init pot
-     * 
+     *
      * @param istep i-th step
+     * @param ucell unit cell
      * @param strucfac structure factor
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
      */
     void init_scf(const int istep,
+                  const UnitCell& ucell,
+                  const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
+                  const bool* numeric,
                   ModuleSymmetry::Symmetry& symm,
                   const void* wfcpw = nullptr);
     std::string classname = "elecstate";
@@ -125,20 +128,16 @@ class ElecState
     void cal_bandgap();
     void cal_bandgap_updw();
 
-    double cal_delta_eband() const;
+    double cal_delta_eband(const UnitCell& ucell) const;
     double cal_delta_escf() const;
 
     ModuleBase::matrix vnew;
     bool vnew_exist = false;
     void cal_converged();
     void cal_energies(const int type);
-#ifdef __EXX
-#ifdef __LCAO
     void set_exx(const double& Eexx);
     void set_exx(const std::complex<double>& Eexx);
-#endif //__LCAO
-#endif //__EXX
- 
+
     double get_hartree_energy();
     double get_etot_efield();
     double get_etot_gatefield();
@@ -146,21 +145,16 @@ class ElecState
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
 
-    virtual double get_spin_constrain_energy() {
+    virtual double get_spin_constrain_energy()
+    {
         return 0.0;
     }
 
-#ifdef __LCAO
     double get_dftu_energy();
-#endif
+    double get_local_pp_energy();
 
-#ifdef __DEEPKS
-    double get_deepks_E_delta();
-    double get_deepks_E_delta_band();
-#endif
-
-    fenergy f_en;                                  ///< energies contribute to the total free energy
-    efermi eferm;                                  ///< fermi energies
+    fenergy f_en; ///< energies contribute to the total free energy
+    efermi eferm; ///< fermi energies
 
     // below defines the bandgap:
 
@@ -171,28 +165,12 @@ class ElecState
     ModuleBase::matrix ekb; ///< band energy at each k point, each band.
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
-  public: // print something. See elecstate_print.cpp
-    void print_etot(const bool converged,
-                    const int& iter,
-                    const double& scf_thr,
-                    const double& scf_thr_kin,
-                    const double& duration,
-                    const int printe,
-                    const double& pw_diag_thr = 0,
-                    const double& avg_iter = 0,
-                    bool print = true);
-    void print_format(const std::string& name, const double& value);
-
-    void print_band(const int& ik, const int& printe, const int& iter);
-
-    void print_eigenvalue(std::ofstream& ofs);
-
   public:
-    // calculate ebands for all k points and all occupied bands
-    void calEBand();
 
     bool skip_weights = false;
 };
+    
+
 
 } // namespace elecstate
 #endif

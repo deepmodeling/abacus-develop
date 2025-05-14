@@ -39,7 +39,7 @@ extern "C"
 		// Informational and Miscellaneous
 	void Cblacs_gridinfo(int icontxt, int* nprow, int *npcol, int *myprow, int *mypcol);
     void Cblacs_gridinit(int* icontxt, char* layout, int nprow, int npcol);
-    void Cblacs_gridexit(int* icontxt);
+    void Cblacs_gridexit(int icontxt);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);

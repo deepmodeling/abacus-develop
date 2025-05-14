@@ -55,6 +55,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool out_csr,
                const bool out_npz,
                const bool append,
+               const int* iat2iwt,
+               const int* nat,
                const int istep)
 {
     if (!out_csr && !out_npz)
@@ -73,7 +75,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
             Parallel_Orbitals serialV;
             serialV.init(nbasis, nbasis, nbasis, paraV.comm());
             serialV.set_serial(nbasis, nbasis);
-            serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, nbasis);
+            serialV.set_atomic_trace(iat2iwt, *nat, nbasis);
             hamilt::HContainer<double> dm_serial(&serialV);
             hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
 #else

@@ -32,7 +32,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     ModuleBase::timer::tick(this->classname, "real2recip");
 
     assert(this->gamma_only == false);
-    auto* auxr = this->ft.get_auxr_data<FPTYPE>();
+    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -40,15 +40,15 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
     {
         auxr[ir] = in[ir];
     }
-    this->ft.fftxyfor(ft.get_auxr_data<FPTYPE>(), ft.get_auxr_data<FPTYPE>());
+    this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
-    this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
+    this->gatherp_scatters(this->fft_bundle.get_auxr_data<FPTYPE>(), this->fft_bundle.get_auxg_data<FPTYPE>());
 
-    this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
+    this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
     if (add)
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
@@ -98,7 +98,7 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     assert(this->gamma_only == true);
     // for(int ir = 0 ; ir < this->nrxx ; ++ir)
     // {
-    //     this->ft.get_rspace_data<FPTYPE>()[ir] = in[ir];
+    //     this->fft_bundle.get_rspace_data<FPTYPE>()[ir] = in[ir];
     // }
     // r2c in place
     const int npy = this->ny * this->nplane;
@@ -109,19 +109,19 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
     {
         for (int ipy = 0; ipy < npy; ++ipy)
         {
-            this->ft.get_rspace_data<FPTYPE>()[ix * npy + ipy] = in[ix * npy + ipy];
+            this->fft_bundle.get_rspace_data<FPTYPE>()[ix * npy + ipy] = in[ix * npy + ipy];
         }
     }
 
-    this->ft.fftxyr2c(ft.get_rspace_data<FPTYPE>(), ft.get_auxr_data<FPTYPE>());
+    this->fft_bundle.fftxyr2c(fft_bundle.get_rspace_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
-    this->gatherp_scatters(this->ft.get_auxr_data<FPTYPE>(), this->ft.get_auxg_data<FPTYPE>());
+    this->gatherp_scatters(this->fft_bundle.get_auxr_data<FPTYPE>(), this->fft_bundle.get_auxg_data<FPTYPE>());
 
-    this->ft.fftzfor(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
+    this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
     if (add)
     {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
@@ -170,11 +170,11 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
     assert(this->gamma_only == false);
-    ModuleBase::GlobalFunc::ZEROS(ft.get_auxg_data<FPTYPE>(), this->nst * this->nz);
+    ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<FPTYPE>(), this->nst * this->nz);
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -182,13 +182,13 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     {
         auxg[this->igl2isz_k[igl + startig]] = in[igl];
     }
-    this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
+    this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
-    this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(), this->ft.get_auxr_data<FPTYPE>());
+    this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
-    this->ft.fftxybac(ft.get_auxr_data<FPTYPE>(), ft.get_auxr_data<FPTYPE>());
+    this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
-    auto* auxr = this->ft.get_auxr_data<FPTYPE>();
+    auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
     if (add)
     {
 #ifdef _OPENMP
@@ -234,11 +234,11 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
     assert(this->gamma_only == true);
-    ModuleBase::GlobalFunc::ZEROS(ft.get_auxg_data<FPTYPE>(), this->nst * this->nz);
+    ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<FPTYPE>(), this->nst * this->nz);
 
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
-    auto* auxg = this->ft.get_auxg_data<FPTYPE>();
+    auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -246,20 +246,20 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     {
         auxg[this->igl2isz_k[igl + startig]] = in[igl];
     }
-    this->ft.fftzbac(ft.get_auxg_data<FPTYPE>(), ft.get_auxg_data<FPTYPE>());
+    this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
-    this->gathers_scatterp(this->ft.get_auxg_data<FPTYPE>(), this->ft.get_auxr_data<FPTYPE>());
+    this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
-    this->ft.fftxyc2r(ft.get_auxr_data<FPTYPE>(), ft.get_rspace_data<FPTYPE>());
+    this->fft_bundle.fftxyc2r(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_rspace_data<FPTYPE>());
 
     // for(int ir = 0 ; ir < this->nrxx ; ++ir)
     // {
-    //     out[ir] = this->ft.get_rspace_data<FPTYPE>()[ir] / this->nxyz;
+    //     out[ir] = this->fft_bundle.get_rspace_data<FPTYPE>()[ir] / this->nxyz;
     // }
 
     // r2c in place
     const int npy = this->ny * this->nplane;
-    auto* rspace = this->ft.get_rspace_data<FPTYPE>();
+    auto* rspace = this->fft_bundle.get_rspace_data<FPTYPE>();
     if (add)
     {
 #ifdef _OPENMP
@@ -307,7 +307,11 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
                                const bool add,
                                const double factor) const
 {
-    this->real2recip(in, out, ik, add, factor);
+    #if defined(__DSP)
+        this->real2recip_dsp(in,out,ik,add,factor);
+    #else
+        this->real2recip(in, out, ik, add, factor);
+    #endif
 }
 
 template <>
@@ -328,7 +332,11 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
                                const bool add,
                                const double factor) const
 {
-    this->recip2real(in, out, ik, add, factor);
+    #if defined(__DSP)
+        this->recip2real_dsp(in,out,ik,add,factor);
+    #else
+        this->recip2real(in, out, ik, add, factor);
+    #endif
 }
 
 #if (defined(__CUDA) || defined(__ROCM))
@@ -345,23 +353,20 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->poolnproc == 1);
 
     base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-        ctx,
-        ctx,
-        this->ft.get_auxr_3d_data<float>(),
+        this->fft_bundle.get_auxr_3d_data<float>(),
         in,
         this->nrxx);
 
-    this->ft.fft3D_forward(ctx, this->ft.get_auxr_3d_data<float>(), this->ft.get_auxr_3d_data<float>());
+    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    set_real_to_recip_output_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                                  npw_k,
+    set_real_to_recip_output_op<float, base_device::DEVICE_GPU>()(npw_k,
                                                                   this->nxyz,
                                                                   add,
                                                                   factor,
                                                                   this->ig2ixyz_k + startig,
-                                                                  this->ft.get_auxr_3d_data<float>(),
+                                                                  this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
 }
@@ -379,23 +384,20 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
 
     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                base_device::DEVICE_GPU,
-                                               base_device::DEVICE_GPU>()(ctx,
-                                                                          ctx,
-                                                                          this->ft.get_auxr_3d_data<double>(),
+                                               base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<double>(),
                                                                           in,
                                                                           this->nrxx);
 
-    this->ft.fft3D_forward(ctx, this->ft.get_auxr_3d_data<double>(), this->ft.get_auxr_3d_data<double>());
+    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    set_real_to_recip_output_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_GPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
                                                                    this->ig2ixyz_k + startig,
-                                                                   this->ft.get_auxr_3d_data<double>(),
+                                                                   this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
 }
@@ -411,28 +413,25 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
-    // ModuleBase::GlobalFunc::ZEROS(ft.get_auxr_3d_data<float>(), this->nxyz);
+    // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<float>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(
-        ctx,
-        this->ft.get_auxr_3d_data<float>(),
+        this->fft_bundle.get_auxr_3d_data<float>(),
         0,
         this->nxyz);
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
 
-    set_3d_fft_box_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                        npw_k,
+    set_3d_fft_box_op<float, base_device::DEVICE_GPU>()(npw_k,
                                                         this->ig2ixyz_k + startig,
                                                         in,
-                                                        this->ft.get_auxr_3d_data<float>());
-    this->ft.fft3D_backward(ctx, this->ft.get_auxr_3d_data<float>(), this->ft.get_auxr_3d_data<float>());
+                                                        this->fft_bundle.get_auxr_3d_data<float>());
+    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
 
-    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                                  this->nrxx,
+    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(this->nrxx,
                                                                   add,
                                                                   factor,
-                                                                  this->ft.get_auxr_3d_data<float>(),
+                                                                  this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
@@ -448,32 +447,118 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
-    // ModuleBase::GlobalFunc::ZEROS(ft.get_auxr_3d_data<double>(), this->nxyz);
+    // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
     base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-        ctx,
-        this->ft.get_auxr_3d_data<double>(),
+        this->fft_bundle.get_auxr_3d_data<double>(),
         0,
         this->nxyz);
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
 
-    set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                         npw_k,
+    set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(npw_k,
                                                          this->ig2ixyz_k + startig,
                                                          in,
-                                                         this->ft.get_auxr_3d_data<double>());
-    this->ft.fft3D_backward(ctx, this->ft.get_auxr_3d_data<double>(), this->ft.get_auxr_3d_data<double>());
+                                                         this->fft_bundle.get_auxr_3d_data<double>());
+    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
 
-    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                                   this->nrxx,
+    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(this->nrxx,
                                                                    add,
                                                                    factor,
-                                                                   this->ft.get_auxr_3d_data<double>(),
+                                                                   this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }
+
+template <typename FPTYPE>
+void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    assert(this->gamma_only == false);
+    assert(this->poolnproc == 1);
+
+    base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
+                                               base_device::DEVICE_GPU,
+                                               base_device::DEVICE_GPU>()(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+                                                                          in,
+                                                                          this->nrxx);
+
+    this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), this->fft_bundle.get_auxr_3d_data<FPTYPE>());
+
+    const int startig = ik * this->npwk_max;
+    const int npw_k = this->npwk[ik];
+    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
+                                                                   this->nxyz,
+                                                                   add,
+                                                                   factor,
+                                                                   this->ig2ixyz_k + startig,
+                                                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+                                                                   out);
+    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+}
+template <typename FPTYPE>
+void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    assert(this->gamma_only == false);
+    assert(this->poolnproc == 1);
+    // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
+    base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
+        this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+        0,
+        this->nxyz);
+
+    const int startig = ik * this->npwk_max;
+    const int npw_k = this->npwk[ik];
+
+    set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
+                                                         this->ig2ixyz_k + startig,
+                                                         in,
+                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>());
+    this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), this->fft_bundle.get_auxr_3d_data<FPTYPE>());
+
+    set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
+                                                                   add,
+                                                                   factor,
+                                                                   this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+                                                                   out);
+
+    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+}
+
+template void PW_Basis_K::real2recip_gpu<float>(const std::complex<float>*,
+                                                std::complex<float>*,
+                                                const int,
+                                                const bool,
+                                                const float) const;
+
+template void PW_Basis_K::real2recip_gpu<double>(const std::complex<double>*,
+                                                 std::complex<double>*,
+                                                 const int,
+                                                 const bool,
+                                                 const double) const;
+
+template void PW_Basis_K::recip2real_gpu<float>(const std::complex<float>*,
+                                                std::complex<float>*,
+                                                const int,
+                                                const bool,
+                                                const float) const;
+
+template void PW_Basis_K::recip2real_gpu<double>(const std::complex<double>*,
+                                                 std::complex<double>*,
+                                                 const int,
+                                                 const bool,
+                                                 const double) const;
+
 #endif
 
 template void PW_Basis_K::real2recip<float>(const float* in,

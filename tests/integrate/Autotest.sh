@@ -13,6 +13,7 @@ stress_threshold=0.001
 ca=8
 # specify the test cases file
 cases_file=CASES_CPU.txt
+#cases_file=CASES_mylist.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
@@ -91,11 +92,11 @@ check_out(){
     properties=`awk '{print $1}' $outfile`
 
     #------------------------------------------------------
-    # jd = job description
+    # README 
     #------------------------------------------------------
-    if test -e "jd"; then
-        jd=`cat jd`
-         echo "[----------] $jd"
+    if test -e "README"; then
+        readme=`cat README`
+         echo "[----------] $readme"
     fi
 
     #------------------------------------------------------
@@ -176,9 +177,10 @@ check_out(){
     if [ $ifail -eq 1 ]; then
         let failed++
         failed_case_list+=$dir'\n'
-        calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-        running_path=`echo "OUT.autotest/running_$calculation"".log"`
-        cat $running_path
+        calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
+        # mohan comment out 2025-04-22, we don't need to print so many details on the screen
+        #running_path=`echo "OUT.autotest/running_$calculation"".log"`
+        #cat $running_path
         case_status+=$dir' 0\n'
     else
         case_status+=$dir' 1\n'
@@ -250,10 +252,39 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-        if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
+        if [ "$case" = "282_NO_RPA" ]; then
             mpirun -np 1 $abacus > log.txt
         else
             mpirun -np $np $abacus > log.txt
+        fi
+
+        # if ABACUS failed, print out the error message
+        if [ $? -ne 0 ]; then
+            echo -e "\e[0;31m[ERROR     ]\e[0m $dir failed."
+            let failed++
+            failed_case_list+=$dir'\n'
+            case_status+=$dir' 0\n'
+            cat log.txt
+        else
+            # check the output
+            test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
+            if test -z $g
+            then
+                bash -e ../../integrate/tools/catch_properties.sh result.out
+                if [ $? -ne 0 ]; then
+                    echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
+                    let fatal++
+                    fatal_case_list+=$dir'\n'
+                else
+                    my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
+                    my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
+                    my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
+                    my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
+                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
+                fi
+            else
+                ../tools/catch_properties.sh result.ref
+            fi
         fi
 
         if [ "$sanitize" == true ]; then
@@ -264,25 +295,6 @@ for dir in $testdir; do
                 cat ${diagnostic} >> ${report}
                 echo -e "\`\`\`\n" >> ${report}
             done
-        fi
-        #$abacus > log.txt
-        test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
-        if test -z $g
-        then
-            bash -e ../../integrate/tools/catch_properties.sh result.out
-            if [ $? -ne 0 ]; then
-                echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
-                let fatal++
-                fatal_case_list+=$dir'\n'
-            else
-                my_threshold=$(get_threshold $threshold_file "threshold" $threshold)
-                my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
-                my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
-                my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
-                check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
-            fi
-        else
-            ../tools/catch_properties.sh result.ref
         fi
     }
     echo ""

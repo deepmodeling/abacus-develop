@@ -19,7 +19,7 @@ kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 wh
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
-bands_to_print                 # specify the bands to be calculated in get_wf and get_pchg calculation
+out_pchg                       # specify the bands to be calculated in get_pchg calculation
 if_separate_k                  false #specify whether to write the partial charge densities for all k-points to individual files or merge them
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
@@ -50,6 +50,7 @@ erf_height                     20 #the height of the energy step for reciprocal 
 erf_sigma                      4 #the width of the energy step for reciprocal vectors
 fft_mode                       0 #mode of FFTW
 pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations
+diago_smooth_ethr              false #smooth ethr for iter methods
 scf_thr                        1e-08 #charge density error
 scf_ene_thr                    1e-06 #total energy error threshold
 scf_os_stop                    1 #whether to stop scf when oscillation is detected
@@ -64,6 +65,7 @@ out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
+out_ldos                       1 #output local density of states, second parameter controls the precision
 out_band                       0 #output energy and band structure
 out_proj_band                  FaLse #output projected band structure
 restart_save                   f #print to disk every step for restart
@@ -132,7 +134,6 @@ basis_type                     lcao #PW; LCAO in pw; LCAO
 nb2d                           0 #2d distribution of atoms
 gamma_only                     T #Only for localized orbitals set and gamma point. If set to 1, a fast algorithm is used
 search_radius                  -1 #input search radius (Bohr)
-search_pbc                     1 #input periodic boundary condition
 lcao_ecut                      20 #energy cutoff for LCAO
 lcao_dk                        0.01 #delta k for 1D integration in LCAO
 lcao_dr                        0.01 #delta r for 1D integration in LCAO
@@ -178,6 +179,8 @@ dos_edelta_ev                  0.01 #delta energy for dos
 dos_scale                      0.01 #scale dos range by
 dos_sigma                      0.07 #gauss b coefficeinet(default=0.07)
 dos_nche                       100 #orders of Chebyshev expansions for dos
+stm_bias                       2.0 0.1 5 #bias voltage used to calculate ldos
+ldos_line                      0.1 0.2 0.3 0.4 0.5 0.6 200 #start and end point of the line (direct coordinates) and number of points
 
 #Parameters (9.Molecular dynamics)
 md_type                        nvt #choose ensemble
@@ -393,4 +396,3 @@ nsc_min                        4 #Minimum number of spin-constrained iteration
 sc_scf_nmin                    4 #Minimum number of outer scf loop before initializing lambda loop
 alpha_trial                    0.02 #Initial trial step size for lambda in eV/uB^2
 sccut                          4 #Maximal step size for lambda in eV/uB
-sc_file                        sc.json #file name for parameters used in non-collinear spin-constrained DFT (json format)

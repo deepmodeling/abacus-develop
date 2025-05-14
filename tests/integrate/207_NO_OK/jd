@@ -1,6 +1,0 @@
-This test for: output of kinectic energy density
-*Si-diamond
-*LCAO
-*kpoints 1*1*1
-*sg15 pseudopotential
-*smearing_method gauss

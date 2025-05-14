@@ -316,7 +316,7 @@ void build_ST_new(ForceStressArrays& fsr,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
                   const TwoCenterBundle& two_center_bundle,
-                  Grid_Driver* GridD,
+                  const Grid_Driver* GridD,
                   double* HSloc,
                   bool cal_syns,
                   double dmax)

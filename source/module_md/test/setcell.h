@@ -11,28 +11,14 @@
 
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] this->start_mag;
 }
-
-namespace ModuleIO
-{
-void print_force(std::ofstream& ofs_running,
-                 const UnitCell& cell,
-                 const std::string& name,
-                 const ModuleBase::matrix& force,
-                 bool ry = true)
-{
-}
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
-{
-}
-} // namespace ModuleIO
 
 class Setcell
 {
@@ -43,11 +29,9 @@ class Setcell
 
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
-
-        delete[] ucell.atom_label;
-        delete[] ucell.atom_mass;
-        ucell.atom_mass = new double[ucell.ntype];
-        ucell.atom_label = new std::string[ucell.ntype];
+        
+        ucell.atom_mass.resize(ucell.ntype);
+        ucell.atom_label.resize(ucell.ntype);
         ucell.atom_mass[0] = 39.948;
         ucell.atom_label[0] = "Ar";
 
@@ -76,24 +60,16 @@ class Setcell
         ucell.atoms[0].na = 4;
         ucell.init_vel = true;
 
-        delete[] ucell.atoms[0].tau;
-        delete[] ucell.atoms[0].dis;
-        delete[] ucell.atoms[0].taud;
-        delete[] ucell.atoms[0].vel;
-        delete[] ucell.atoms[0].mbl;
-        delete[] ucell.atoms[0].angle1;
-        delete[] ucell.atoms[0].angle2;
-        delete[] ucell.atoms[0].m_loc_;
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].dis = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].vel = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[4];
+        ucell.atoms[0].tau.resize(4);
+        ucell.atoms[0].dis.resize(4);
+        ucell.atoms[0].taud.resize(4);
+        ucell.atoms[0].vel.resize(4);
+        ucell.atoms[0].mbl.resize(4);
         ucell.atoms[0].mass = ucell.atom_mass[0];
 
-        ucell.atoms[0].angle1 = new double[4];
-        ucell.atoms[0].angle2 = new double[4];
-        ucell.atoms[0].m_loc_ = new ModuleBase::Vector3<double>[4];
+        ucell.atoms[0].angle1.resize(4);
+        ucell.atoms[0].angle2.resize(4);
+        ucell.atoms[0].m_loc_.resize(4);
 
         ucell.atoms[0].taud[0].set(0.0, 0.0, 0.0);
         ucell.atoms[0].taud[1].set(0.52, 0.52, 0.0);

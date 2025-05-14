@@ -10,9 +10,9 @@ scf_nmax                50
 pw_diag_thr             1.0e-12
 scf_thr                 1.0e-13
 init_chg                file
-symmetry                0
+symmetry                -1
 towannier90             1
 nnkpfile                diamond.nnkp
-basis_type		        lcao
+basis_type              lcao
 wannier_method          2
 out_wannier_unk         0

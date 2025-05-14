@@ -43,7 +43,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      hamilt::HContainer<TR>* SR_in,
                                      const UnitCell* ucell_in,
                                      const std::vector<double>& orb_cutoff,
-                                     Grid_Driver* GridD_in,
+                                     const Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor);
 
     virtual void contributeHR() override;
@@ -68,7 +68,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the overlap matrix with specific <I,J,R> atom-pairs
      * the size of SR will be fixed after initialization
      */
-    void initialize_SR(Grid_Driver* GridD_in);
+    void initialize_SR(const Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the overlap matrix with specific <I,J,R> atom-pairs

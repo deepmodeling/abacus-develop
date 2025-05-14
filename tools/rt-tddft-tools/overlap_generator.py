@@ -1,11 +1,12 @@
-from pyatb.easy_use import stru_analyzer
-from pyabacus import ModuleNAO as nao
-from pyabacus import ModuleBase as base
-import numpy as np
-from collections import Counter
-import pyatb
-from pyatb.easy_use import stru_analyzer
 import re
+from collections import Counter
+
+import numpy as np
+import pyatb
+from pyabacus import ModuleBase as base
+from pyabacus import ModuleNAO as nao
+from pyatb.easy_use import stru_analyzer
+
 Bohr=0.5291772105638411
 class overlap_R:
     def __init__(self, orb_file_dir, atoms0, atomst):
@@ -17,7 +18,7 @@ class overlap_R:
         symbols = atoms0.get_chemical_symbols()
         element_counts = Counter(symbols)
         unique_elements = set(symbols)
-        assert orb_file_num == len(unique_elements), f"轨道数目{orb_file_num}与元素数目{len(unique_elements)}不一致！"
+        assert orb_file_num == len(unique_elements), f"The number of orbitals{orb_file_num}does not match the number of unique elements{len(unique_elements)}!"
 
         # Build orbital collection
         self.orb = nao.RadialCollection()

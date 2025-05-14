@@ -3,27 +3,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
-#undef private
 #define protected public
 #include "module_elecstate/elecstate_pw.h"
-#undef protected
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
+#include "module_parameter/parameter.h"
 // mock functions for testing
+int XC_Functional::func_type = 1;
 namespace elecstate
 {
-double get_ucell_omega()
-{
-    return 500.0;
-}
-double get_ucell_tpiba()
-{
-    return 2.0;
-}
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 void Potential::init_pot(int, Charge const*)
 {
 }
@@ -115,12 +103,14 @@ std::complex<double>* pseudopot_cell_vnl::get_vkb_data<double>() const
 }
 template <>
 void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                const UnitCell&,
                                                                 int const&,
                                                                 std::complex<float>*) const
 {
 }
 template <>
 void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                 const UnitCell&,
                                                                  int const&,
                                                                  std::complex<double>*) const
 {
@@ -132,20 +122,16 @@ Fcoef::~Fcoef()
 {
 }
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
-void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
+void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
 void Charge::set_rho_core_paw()
 {
 }
 void Charge::init_rho(elecstate::efermi&,
+                      const UnitCell&,
+                      const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
@@ -219,6 +205,8 @@ class ElecStatePWTest : public ::testing::Test
         klist = new K_Vectors;
         klist->set_nks(5);
         ucell = new UnitCell;
+        ucell->omega = 500.0;
+        ucell->tpiba = 2.0;
         ppcell = new pseudopot_cell_vnl;
         rhodpw = new ModulePW::PW_Basis;
         rhopw = new ModulePW::PW_Basis;
@@ -279,7 +267,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
 
 TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
     chg->nrxx = 1000;
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
@@ -298,7 +286,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
     PARAM.input.precision = "single";
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
     chg->nspin = PARAM.input.nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,

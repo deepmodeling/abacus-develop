@@ -13,15 +13,13 @@ FR_overlap<T>::FR_overlap()
 }
 
 template <typename T>
-void FR_overlap<T>::set_parameters(
-    fr_ptr fr_in, 
-    const UnitCell* ucell_in, 
-    const LCAO_Orbitals* ptr_orb, 
-    Grid_Driver* GridD_in, 
-    const Parallel_Orbitals* paraV,
-    int radial_grid_num,
-    int degree
-)
+void FR_overlap<T>::set_parameters(fr_ptr fr_in,
+                                   const UnitCell* ucell_in,
+                                   const LCAO_Orbitals* ptr_orb,
+                                   const Grid_Driver* GridD_in,
+                                   const Parallel_Orbitals* paraV,
+                                   int radial_grid_num,
+                                   int degree)
 {
     this->fr = fr_in;
     this->ucell = ucell_in;
@@ -70,7 +68,7 @@ FR_overlap<T>::~FR_overlap()
 }
 
 template <typename T>
-void FR_overlap<T>::initialize_FR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("FR_overlap", "initialize_FR");
     ModuleBase::timer::tick("FR_overlap", "initialize_FR");
@@ -161,12 +159,12 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
     const int npol = this->ucell->get_npol();
 
-    const int* iw2l1 = atom1.iw2l;
-    const int* iw2n1 = atom1.iw2n;
-    const int* iw2m1 = atom1.iw2m;
-    const int* iw2l2 = atom2.iw2l;
-    const int* iw2n2 = atom2.iw2n;
-    const int* iw2m2 = atom2.iw2m;
+    const int* iw2l1 = atom1.iw2l.data();
+    const int* iw2n1 = atom1.iw2n.data();
+    const int* iw2m1 = atom1.iw2m.data();
+    const int* iw2l2 = atom2.iw2l.data();
+    const int* iw2n2 = atom2.iw2n.data();
+    const int* iw2m2 = atom2.iw2m.data();
 
     const int maxL1 = atom1.nwl;
     const int maxL2 = atom2.nwl;

@@ -1,4 +1,6 @@
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "../broyden_mixing.h"
 #include "../plain_mixing.h"
@@ -151,7 +153,9 @@ class Mixing_Test : public testing::Test
 
 TEST_F(Mixing_Test, BroydenSolveLinearEq)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     init_method("broyden");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);
@@ -177,7 +181,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
@@ -185,7 +189,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
         testing::HasSubstr("One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients"));
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
@@ -196,7 +200,9 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
 
 TEST_F(Mixing_Test, PulaySolveLinearEq)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     init_method("pulay");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);
@@ -223,7 +229,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
@@ -231,7 +237,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
         testing::HasSubstr("One Pulay_Mixing object can only bind one Mixing_Data object to calculate coefficients"));
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
@@ -242,7 +248,9 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
 
 TEST_F(Mixing_Test, PlainSolveLinearEq)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     init_method("plain");
     std::vector<double> x_in = xd_ref;
     std::vector<double> x_out(3);

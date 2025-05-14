@@ -48,8 +48,10 @@ void lapackEigen(int& npw, std::vector<std::complex<double>>& hm, double* e, boo
 	char tmp_c1 = 'V', tmp_c2 = 'U';
 	zheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
 	end = clock();
-	if(info) std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
-	if (outtime) std::cout<<"Lapack Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
+	if(info) { std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
+}
+	if (outtime) { std::cout<<"Lapack Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
+}
 
 	delete [] rwork;
 	delete [] work2;
@@ -76,12 +78,13 @@ public:
 		//calculate eigenvalues by LAPACK;
 		double* e_lapack = new double[npw];
 		double* ev;
-		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
+		if(mypnum == 0) { lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
+}
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt<std::complex<double>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr);
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
@@ -89,7 +92,7 @@ public:
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
 
-		const int dim = phi.get_current_nbas();
+		const int dim = phi.get_current_ngk();
 		const int nband = phi.get_nbands();
 		const int ld_psi = phi.get_nbasis();
 		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, false, comm_info);
@@ -112,16 +115,18 @@ public:
 		auto hpsi_func = [phm](std::complex<double>* psi_in,std::complex<double>* hpsi_out,
 					const int ld_psi, const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<std::complex<double>>(psi_in, 1, nvec, ld_psi, nullptr);
-                        psi::Range bands_range(1, 0, 0, nvec-1);
+                        auto psi_iter_wrapper = psi::Psi<std::complex<double>>(psi_in, 1, nvec, ld_psi, true);
+                        psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<std::complex<double>>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
                     };
-		auto spsi_func = [phm](const std::complex<double>* psi_in, std::complex<double>* spsi_out,const int ld_psi, const int nbands){
-			phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
-		};
-		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, eps, maxiter);
+        auto spsi_func = [phm](const std::complex<double>* psi_in,
+                               std::complex<double>* spsi_out,
+                               const int ld_psi,
+                               const int nbands) { phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands); };
+        std::vector<double> ethr_band(phi.get_nbands(), eps);
+		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
 
 #ifdef __MPI		
 		end = MPI_Wtime();
@@ -133,7 +138,8 @@ public:
 
 		if(mypnum == 0)
 		{
-			if (DETAILINFO) std::cout<<"diag Run time: "<< use_time << std::endl;
+			if (DETAILINFO) { std::cout<<"diag Run time: "<< use_time << std::endl;
+}
 			for(int i=0;i<nband;i++)
 			{
 				EXPECT_NEAR(en[i],e_lapack[i],CONVTHRESHOLD);
@@ -150,8 +156,9 @@ class DiagoDavTest : public ::testing::TestWithParam<DiagoDavPrepare> {};
 TEST_P(DiagoDavTest,RandomHamilt)
 {
 	DiagoDavPrepare ddp = GetParam();
-	if (DETAILINFO&&ddp.mypnum==0) std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
+	if (DETAILINFO&&ddp.mypnum==0) { std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
 			  << ddp.sparsity << ", eps=" << ddp.eps << std::endl;
+}
 
     HPsi<std::complex<double>> hpsi(ddp.nband, ddp.npw, ddp.sparsity);
 	DIAGOTEST::hmatrix = hpsi.hamilt();
@@ -191,7 +198,15 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 TEST(DiagoDavRealSystemTest, dataH)
 {
 	std::vector<std::complex<double>> hmatrix;
-	std::ifstream ifs("H-KPoints-Si64.dat");
+	std::ifstream ifs;
+	std::string filename = "H-KPoints-Si64.dat";
+	ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
 	DIAGOTEST::readh(ifs,hmatrix);
 	ifs.close();
 	DIAGOTEST::hmatrix = hmatrix;
@@ -238,7 +253,8 @@ int main(int argc, char **argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) delete listeners.Release(listeners.default_result_printer());
+    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
+}
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

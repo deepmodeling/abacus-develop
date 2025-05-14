@@ -47,9 +47,20 @@ void Charge_Extra::Init_CE(const int& nspin, const int& natom, const int& nrxx, 
 
     if (pot_order > 0)
     {
-        delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
-        delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
-        delta_rho3.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho3.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // qianrui replace the above code with the following code.
+        // The above code cannot passed valgrind tests, which has an invalid read of size 32.
+        delta_rho1.resize(this->nspin);
+        delta_rho2.resize(this->nspin);
+        delta_rho3.resize(this->nspin);
+        for (int is = 0; is < this->nspin; is++)
+        {
+            delta_rho1[is].resize(nrxx, 0.0);
+            delta_rho2[is].resize(nrxx, 0.0);
+            delta_rho3[is].resize(nrxx, 0.0);
+        }
     }
 
     if(pot_order == 3)
@@ -64,9 +75,7 @@ void Charge_Extra::Init_CE(const int& nspin, const int& natom, const int& nrxx, 
 }
 
 void Charge_Extra::extrapolate_charge(
-#ifdef __MPI
     Parallel_Grid* Pgrid,
-#endif
     UnitCell& ucell,
     Charge* chr,
     Structure_Factor* sf,
@@ -98,7 +107,7 @@ void Charge_Extra::extrapolate_charge(
     rho_extr = std::min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup_structure_factor(&ucell, chr->rhopw);
+        sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
         ofs_running << " charge density from previous step !" << std::endl;
         return;
     }
@@ -160,7 +169,7 @@ void Charge_Extra::extrapolate_charge(
         }
     }
 
-    sf->setup_structure_factor(&ucell, chr->rhopw);
+    sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
     double** rho_atom = new double*[this->nspin];
     for (int is = 0; is < this->nspin; is++)
     {

@@ -3,6 +3,7 @@
 #include "module_cell/unitcell.h"
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
+#include "module_ri/serialization_cereal.h"
 #include <RI/global/Tensor.h>
 #include <map>
 
@@ -27,7 +28,12 @@ namespace ModuleIO
                     {
                         const std::vector<int>& R = csr.getRCoordinate(iR);
                         TC dR({ R[0], R[1], R[2] });
-                        Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
+						Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>(
+								{ 
+								static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), 
+								static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) 
+								}
+								);
                     }
                 }
             }
@@ -43,10 +49,27 @@ namespace ModuleIO
                     const int& npol = ucell.get_npol();
                     const int& i = ijv.first.first * npol;
                     const int& j = ijv.first.second * npol;
-                    Hexxs.at(is).at(ucell.iwt2iat[i]).at({ ucell.iwt2iat[j], { R[0], R[1], R[2] } })(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
+					Hexxs.at(is).at(ucell.iwt2iat[i]).at(
+							{ 
+								ucell.iwt2iat[j], 
+								{ R[0], R[1], R[2] } 
+							}
+							)(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
                 }
             }
         }
+    }
+
+    template<typename Tdata>
+    void read_Hexxs_cereal(const std::string& file_name, 
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
+    {
+        ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
+        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+        std::ifstream ifs(file_name, std::ios::binary);
+        cereal::BinaryInputArchive iar(ifs);
+        iar(Hexxs);
+        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
     }
 
     template<typename Tdata>
@@ -80,6 +103,7 @@ namespace ModuleIO
         }
         return target;
     }
+
     template<typename Tdata>
     void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
         const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)

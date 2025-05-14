@@ -1,5 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+
 class Projection:
     def __init__(self, stepref, klist, steps, fdir='./OUT.ABACUS', wfc_dir='', s_dir=''):
         self.stepref = stepref
@@ -97,10 +99,10 @@ class Projection:
 
 if __name__ == "__main__":
     #the kpoints you need, check kpoints file to get the index, for this example, 0 means gamma point
-    klist=[1]
+    klist=[0, 1]
     #the steps you need, check STRU_MD file to get the index
     start_step = 0
-    end_step = 2505
+    end_step = 10005
     out_interval = 25
     steps = range(start_step, end_step, out_interval)
     #the ground state step

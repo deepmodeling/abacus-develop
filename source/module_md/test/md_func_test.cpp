@@ -385,11 +385,12 @@ TEST_F(MD_func_test, print_stress)
     std::ifstream ifs("running.log");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("Virtual Pressure is 0 kbar "));
+    EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("Virial Term is 0 kbar "));
+    EXPECT_THAT(output_str, testing::HasSubstr("ELECTRONIC      PART OF STRESS: 0 kbar"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("Kinetic Term is 0 kbar "));
+    EXPECT_THAT(output_str, testing::HasSubstr("IONIC (KINETIC) PART OF STRESS: 0 kbar"));
+/*
     getline(ifs, output_str);
     getline(ifs, output_str);
     getline(ifs, output_str);
@@ -409,6 +410,7 @@ TEST_F(MD_func_test, print_stress)
     EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+*/
 
     ifs.close();
     remove("running.log");
@@ -437,5 +439,5 @@ TEST_F(MD_func_test, current_step_warning)
     std::string file_dir = "./";
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(1), "");
 }

@@ -7,7 +7,8 @@
 
 namespace ModuleIO
 {
-void write_dipole(const double* rho_save,
+void write_dipole(const UnitCell& ucell,
+                  const double* rho_save,
                   const ModulePW::PW_Basis* rhopw,
                   const int& is,
                   const int& istep,

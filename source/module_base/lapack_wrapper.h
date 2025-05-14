@@ -1,6 +1,6 @@
 #ifndef LAPACK_HPP
 #define LAPACK_HPP
-
+#include <iostream>
 extern "C"
 {
     // =================================================================================
@@ -49,10 +49,10 @@ extern "C"
     // =================================================================================
     // gvx
     void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
-                const int* n, double* A, const int* lda, double* B, const int* ldb,
-                const double* vl, const double* vu, const int* il, const int* iu,
-                const double* abstol, const int* m, double* w, double* Z, const int* ldz,
-                double* work, int* lwork, int*iwork, int* ifail, int* info);
+        const int* n, double* A, const int* lda, double* B, const int* ldb,
+        const double* vl, const double* vu, const int* il, const int* iu,
+        const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+        double* work, const int* lwork, int* iwork, int* ifail, int* info);
 
     void chegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
              const int* n,std::complex<float> *a,const int* lda,std::complex<float> *b,
@@ -424,8 +424,8 @@ class LapackWrapper
                               int* ifail,
                               int& info)
     {
-        // dsygvx_(&itype, &jobz, &range, &uplo, &n, a, &lda, b, &ldb, &vl,
-        //         &vu, &il,&iu, &abstol, &m, w, z, &ldz, work, &lwork, rwork, iwork, ifail, &info);
+        dsygvx_(&itype, &jobz, &range, &uplo, &n, a, &lda, b, &ldb, &vl,
+            &vu, &il, &iu, &abstol, &m, w, z, &ldz, work, &lwork, iwork, ifail, &info);
     }
 
     // wrap function of fortran lapack routine xhegvx ( pointer version ).

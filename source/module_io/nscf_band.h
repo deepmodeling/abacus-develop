@@ -16,7 +16,6 @@ namespace ModuleIO
  * @param precision precision of the output
  * @param ekb eigenvalues of k points and bands
  * @param kv klist
- * @param Pkpoints parallel kpoints
  */
 void nscf_band(const int& is,
                const std::string& out_band_dir,
@@ -24,8 +23,7 @@ void nscf_band(const int& is,
                const double& fermie,
                const int& precision,
                const ModuleBase::matrix& ekb,
-               const K_Vectors& kv,
-               const Parallel_Kpoints* Pkpoints);
+               const K_Vectors& kv);
 }
 
 #endif

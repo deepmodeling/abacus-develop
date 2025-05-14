@@ -6,7 +6,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
+void Gint_Gamma::cal_env(const double* wfc, double* rho,const UnitCell& ucell)
 {
     ModuleBase::TITLE("Grid_Integral", "cal_env");
 
@@ -19,7 +19,6 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho, UnitCell& ucell)
     }
     const int nbx = this->gridt->nbx;
     const int nby = this->gridt->nby;
-    const int nbz_start = this->gridt->nbzp_start;
     const int nbz = this->gridt->nbzp;
     const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
     const int bxyz = this->bxyz;

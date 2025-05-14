@@ -4,13 +4,13 @@ dft_functional    pbe
 symmetry	  0
 cal_force	  1
 calculation       scf
-ecutwfc		  60
+ecutwfc		  60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_nmax	  200
 scf_thr		  1.0e-7
 basis_type	  pw
-gamma_only        1
+gamma_only        1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 smearing_method	  gauss
-smearing_sigma	  0.02
+smearing_sigma	  0.015
 mixing_type       broyden
 mixing_beta       0.1
 
@@ -21,3 +21,8 @@ tau		  0.000010798
 sigma_k		  0.6
 nc_k		  0.00037
 
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

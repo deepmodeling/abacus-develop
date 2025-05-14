@@ -6,6 +6,7 @@
 #include "module_io/write_orb_info.h"
 #include "module_cell/unitcell.h"
 #include "prepare_unitcell.h"
+#include "module_elecstate/read_pseudo.h"
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
@@ -15,13 +16,13 @@ LCAO_Orbitals::~LCAO_Orbitals(){}
 #endif
 Magnetism::Magnetism()
 {
-	this->tot_magnetization = 0.0;
-	this->abs_magnetization = 0.0;
-	this->start_magnetization = nullptr;
+	this->tot_mag = 0.0;
+	this->abs_mag = 0.0;
+	this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-	delete[] this->start_magnetization;
+	delete[] this->start_mag;
 }
 
 /************************************************
@@ -50,8 +51,8 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
     PARAM.sys.nlocal = 18;
-    ucell->read_cell_pseudopots(pp_dir,ofs);
-    ucell->cal_nwfc(ofs);
+    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
+    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
     ModuleIO::write_orb_info(ucell);
     ofs.close();
     std::ifstream ifs("Orbital");

@@ -5,7 +5,6 @@
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
-#include "module_io/write_dos_pw.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
 
@@ -30,7 +29,7 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -46,32 +45,41 @@
 #include <ATen/kernels/lapack.h>
 #include "module_base/formatter.h"
 
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
+
 namespace ModuleESolver {
 
-
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::others(const int istep) {
+void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
+{
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
     const std::string cal_type = PARAM.inp.calculation;
 
-    if (cal_type == "test_memory") {
-        Cal_Test::test_memory(this->pw_rho,
+    if (cal_type == "test_memory") 
+    {
+        Cal_Test::test_memory(ucell.nat,
+                              ucell.ntype,
+                              ucell.GGT,
+                              this->pw_rho,
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
-    } else if (cal_type == "gen_bessel") {
+    } 
+    else if (cal_type == "gen_bessel") 
+    {
         Numerical_Descriptor nc;
-        nc.output_descriptor(this->psi[0],
+        nc.output_descriptor(ucell,
+                             this->psi[0],
                              PARAM.inp.bessel_descriptor_lmax,
                              PARAM.inp.bessel_descriptor_rcut,
                              PARAM.inp.bessel_descriptor_tolerence,
                              this->kv.get_nks());
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,
-                                     "GENERATE DESCRIPTOR FOR DEEPKS");
-    } else if (cal_type == "nscf") {
-        this->nscf();
-    } else {
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
+    } 
+    else 
+    {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW::others",
                                  "CALCULATION type not supported");
     }

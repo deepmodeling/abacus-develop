@@ -171,7 +171,7 @@ TEST_F(TestLS, LineSearch)
         {
             testing::internal::CaptureStdout();
             EXPECT_EXIT(ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10),
-                        ::testing::ExitedWithCode(0),
+                        ::testing::ExitedWithCode(1),
                         "");
             std::string output = testing::internal::GetCapturedStdout();
             EXPECT_THAT(output, testing::HasSubstr("something wrong with Brent line search!"));

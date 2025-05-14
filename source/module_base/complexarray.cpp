@@ -262,18 +262,4 @@ void point_mult(ComplexArray &in1, ComplexArray &in2, ComplexArray &out){
 		              in1.ptr[i].real() * in2.ptr[i].imag() +
 		              in1.ptr[i].imag() * in2.ptr[i].real());}
 }
-const std::complex <double> &ComplexArray::operator()(const int ind1, const int ind2, const int ind3, const int ind4) const{
-	assert(ind1>=0);	assert(ind1<bound1);
-	assert(ind2>=0);	assert(ind2<bound2);
-	assert(ind3>=0);	assert(ind3<bound3);
-	assert(ind4>=0);	assert(ind4<bound4);
-	const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
-	return ptr[ind];}
-std::complex<double>& ComplexArray::operator()(const int ind1,const int ind2,const int ind3,const int ind4){
-	assert(ind1>=0);	assert(ind1<bound1);
-	assert(ind2>=0);	assert(ind2<bound2);
-	assert(ind3>=0);	assert(ind3<bound3);
-	assert(ind4>=0);	assert(ind4<bound4);
-	const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
-	return ptr[ind];}
 }

@@ -1,0 +1,28 @@
+INPUT_PARAMETERS
+suffix    autotest
+
+nbands    10
+
+calculation   scf
+ecutwfc       8
+scf_thr           1.0e-10
+scf_nmax          1
+
+smearing_method  gaussian
+smearing_sigma     0.02
+
+mixing_type    broyden
+mixing_beta    0.4
+
+ks_solver    cg
+basis_type   pw
+symmetry     0
+nspin        2
+pseudo_dir	../../PP_ORB
+
+pw_seed 1
+
+kpar 2
+# out_wfc_pw 2
+init_wfc file
+init_chg wfc

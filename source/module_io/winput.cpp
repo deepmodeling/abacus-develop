@@ -96,14 +96,14 @@ void winput::Read(const std::string& fn)
 {
     ModuleBase::TITLE("winput", "Read");
 
-    if (GlobalV::MY_RANK != 0)
-        return;
+	if (GlobalV::MY_RANK != 0)
+	{
+		return;
+	}
 
     std::ifstream ifs(fn.c_str(), std::ios::in);
     if (!ifs)
     {
-        // xiaohui move warning 2015-09-30
-        // ModuleBase::WARNING("winput::Read","Can't find wannier input file.");
         return;
     }
     else
@@ -572,145 +572,6 @@ void winput::Check()
         sum_lm += il * 2 + 1;
     }
 
-    // xiaohui modify 2013-09-02
-    // if(LOCAL_BASIS==1)
-    //{
-    //	ModuleBase::WARNING("winput::Check","Using local basis.");
-    //	// turn on
-    //	if(!b_recon && !recon_wanq )
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Auto start reconstruction operation.");
-    //		b_recon = true;
-    //		ModuleBase::GlobalFunc::AUTO_SET("b_recon",b_recon);
-    //	}
-    //	// turn off
-    //	if(before_iter)
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Auto turn down 'before_iter'.");
-    //		before_iter = false;
-    //		ModuleBase::GlobalFunc::AUTO_SET("before_iter",before_iter);
-    //	}
-    //	if(after_iter)
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Auto turn down after_iter.");
-    //		after_iter = false;
-    //		ModuleBase::GlobalFunc::AUTO_SET("after_iter",after_iter);
-    //	}
-    //	if(build_wf)
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Not available to build wannier functions in local basis");
-    //		build_wf = 0;
-    //		ModuleBase::GlobalFunc::AUTO_SET("build_wf",build_wf);
-    //	}
-    //	// some meaning
-    //	if(sph_proj>0)
-    //	{
-    //		if(sph_proj==2)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Add self site wave functions during reconstruction.");
-    //			no_center = true;
-    //			ModuleBase::GlobalFunc::AUTO_SET("no_center",no_center);
-    //		}
-    //		else if(sph_proj==1)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Not meaning in reconstruction if sph_proj==1");
-    //		}
-    //		sph_proj=0;
-    //		ModuleBase::GlobalFunc::AUTO_SET("sph_proj",sph_proj);
-    //	}
-    //	if(imp_pao>0)
-    //	{
-    //		if(imp_pao==2)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Use improve_pao 2 method, add the center wave functions");
-    //		}
-    //		if(trunc_wan > 0)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Use real space truncation. So we must get fft_init started.");
-    //			b_fftwan = true;
-    //			ModuleBase::GlobalFunc::AUTO_SET("b_fftwan",b_fftwan);
-    //		}
-    //		clm2_lowest = 0.0;
-    //		ModuleBase::GlobalFunc::AUTO_SET("clm2_lowest",clm2_lowest);
-    //	}
-    // }
-    // else if(LOCAL_BASIS==0)
-    //{
-    //	ModuleBase::WARNING("winput::Check","Use plane wave basis.");
-    //	// turn off
-    //	if(b_recon)
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Auto turn off the reconstruction.");
-    //		ModuleBase::GlobalFunc::AUTO_SET("b_recon",b_recon);
-    //		b_recon = 0;
-    //	}
-    //	if(recon_wanq)
-    //	{
-    //		ModuleBase::WARNING("winput::Check","Auto turn off the recon_wanq");
-    //		ModuleBase::GlobalFunc::AUTO_SET("recon_wanq",recon_wanq);
-    //		recon_wanq = 0;
-    //	}
-    //	// if turn on
-    //	if(after_iter == true)
-    //	{
-    //		if(imp_pao == 2)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Use improve_pao method.");
-    //			OUT(GlobalV::ofs_warning,"imp_pao",imp_pao);
-
-    //			ModuleBase::WARNING("winput::Check","If use imp_pao>0 ,sph_proj must be 0.");
-    //			sph_proj=0;
-    //			ModuleBase::GlobalFunc::AUTO_SET("sph_proj",sph_proj);
-
-    //			ModuleBase::WARNING("winput::Check","If use imp_pao>0 ,build is no need, can be 0.");
-    //			build_wf=0;
-    //			ModuleBase::GlobalFunc::AUTO_SET("build_wf",build_wf);
-
-    //			if(trunc_wan > 0 && b_recon)
-    //			{
-    //				ModuleBase::WARNING("winput::Check","Use real space truncation. So we must get fft_init started.");
-    //				b_fftwan = true;
-    //				ModuleBase::GlobalFunc::AUTO_SET("b_fftwan",b_fftwan);
-    //			}
-    //			clm2_lowest = 0.0;
-    //			ModuleBase::GlobalFunc::AUTO_SET("clm2_lowest",clm2_lowest);
-    //		}
-    //		else if(sph_proj>0)
-    //		{
-    //			ModuleBase::WARNING("winput::Check","Auto build localized wave functions.");
-    //			build_wf = true;
-    //			ModuleBase::GlobalFunc::AUTO_SET("build_wf",build_wf);
-    //			if(sph_proj == 1)
-    //			{
-    //				no_center = false;
-    //				ModuleBase::GlobalFunc::AUTO_SET("no_center",no_center);
-    //			}
-    //			else if(sph_proj == 2)
-    //			{
-    //				ModuleBase::WARNING("winput::Check","Searching Adjacent without self site.");
-    //				no_center = true;
-    //				ModuleBase::GlobalFunc::AUTO_SET("no_center",no_center);
-    //			}
-    //			else
-    //			{
-    //				ModuleBase::WARNING_QUIT("winput::Check","sph_proj must be 0 1 or 2");
-    //			}
-    //		}
-
-    //		if(build_wf == true)
-    //		{
-    //			if(bloch_end == 0 || bloch_begin > bloch_end)
-    //			{
-    //				ModuleBase::WARNING_QUIT("winput::Check","Please check your bloch_end");
-    //			}
-    //			if(bloch_end > PARAM.inp.nbands)
-    //			{
-    //				ModuleBase::WARNING_QUIT("winput::Check","Bloch_end > PARAM.inp.nbands, reset either of them");
-    //			}
-    //		}
-    //	}// end after_iter
-    //}
-
     if (out_chg == true || cal_bands == true || out_all == true || cal_bands2 == true || cal_dos == true)
     {
         end_flag = true;
@@ -734,8 +595,10 @@ void winput::Check()
 
 void winput::Print(const std::string& fn)
 {
-    if (GlobalV::MY_RANK != 0)
-        return;
+	if (GlobalV::MY_RANK != 0)
+	{
+		return;
+	}
 
     std::ofstream ofs(fn.c_str());
     ofs << std::setiosflags(std::ios::left);

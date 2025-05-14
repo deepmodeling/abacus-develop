@@ -1,4 +1,6 @@
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "gint_force_gpu.h"
 #include "kernels/cuda/cuda_tools.cuh"
@@ -49,9 +51,11 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
     const int num_streams = gridt.nstreams;
 
     std::vector<cudaStream_t> streams(num_streams);
+    std::vector<cudaEvent_t> events(num_streams);
     for (int i = 0; i < num_streams; i++)
     {
         checkCuda(cudaStreamCreate(&streams[i]));
+        checkCuda(cudaEventCreateWithFlags(&events[i], cudaEventDisableTiming));
     }
 
     Cuda_Mem_Wrapper<double> dr_part(3 * max_atom_per_z, num_streams, true);
@@ -88,7 +92,21 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                          dm->get_nnr() * sizeof(double),
                          cudaMemcpyHostToDevice));
 
-    #pragma omp parallel for num_threads(num_streams) collapse(2)
+#ifdef _OPENMP
+const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
+#endif
+#pragma omp parallel num_threads(max_thread_num)
+{
+#ifdef _OPENMP
+    const int tid = omp_get_thread_num();
+    const int num_threads = omp_get_num_threads();
+    const int sid_start = tid * num_streams / num_threads;
+    const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
+#else
+    const int sid_start = 0;
+    const int thread_num_streams = num_streams;
+#endif
+#pragma omp for collapse(2) schedule(dynamic)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
@@ -96,7 +114,9 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
             checkCuda(cudaSetDevice(gridt.dev_id));
-            const int sid = omp_get_thread_num();
+
+            const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
+            checkCuda(cudaEventSynchronize(events[sid]));
 
             int max_m = 0;
             int max_n = 0;
@@ -154,6 +174,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
             gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
             gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+            checkCuda(cudaEventRecord(events[sid], streams[sid]));
 
             psi.memset_device_async(streams[sid], sid, 0);
             psi_dm.memset_device_async(streams[sid], sid, 0);
@@ -234,9 +255,9 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                                     stress.get_device_pointer(sid));
                 checkCudaLastError();
             }
-            checkCuda(cudaStreamSynchronize(streams[sid]));
         }
     }
+}
 
     for(int i = 0; i < num_streams; i++)
     {
@@ -247,6 +268,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
     for (int i = 0; i < num_streams; i++)
     {
         checkCuda(cudaStreamSynchronize(streams[i]));
+        checkCuda(cudaEventDestroy(events[i]));
     }
 
     if (isstress){

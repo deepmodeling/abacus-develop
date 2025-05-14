@@ -1,9 +1,7 @@
 #include "surchem.h"
 
-namespace GlobalC
-{
-surchem solvent_model;
-}
+double surchem::Acav = 0;
+double surchem::Ael = 0;
 
 surchem::surchem()
 {

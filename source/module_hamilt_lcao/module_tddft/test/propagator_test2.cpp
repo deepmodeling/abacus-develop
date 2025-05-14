@@ -77,7 +77,7 @@ TEST(PropagatorTest, testPropagatorTaylor)
     // Call the function
     int propagator = 1;
     module_tddft::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, print_matrix);
+    prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, GlobalV::ofs_running, print_matrix);
 
     // Check the results
     EXPECT_NEAR(U_operator[0].real(), 1.95473251028807, doublethreshold);

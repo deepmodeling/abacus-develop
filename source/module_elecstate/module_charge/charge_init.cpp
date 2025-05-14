@@ -16,12 +16,14 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/cube_io.h"
 #include "module_io/rhog_io.h"
-#include "module_io/read_wfc_to_rho.h"
+#include "module_io/read_wf2rho_pw.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const UnitCell& ucell,
+                      const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,
                       ModuleSymmetry::Symmetry& symm,
                       const void* klist,
@@ -30,10 +32,15 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
     std::cout << " START CHARGE      : " << PARAM.inp.init_chg << std::endl;
+    //here we need to set the omega for the charge density
+    set_omega(&ucell.omega);
+    this->pgrid = &pgrid;
+
     bool read_error = false;
+    bool read_kin_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
-        GlobalV::ofs_running << " try to read charge from file : " << std::endl;
+        GlobalV::ofs_running << " Read electron density from file" << std::endl;
 
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
@@ -41,7 +48,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
         if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
         {
-            GlobalV::ofs_running << " Read in the charge density: " << binary.str() << std::endl;
+            GlobalV::ofs_running << " Read electron density from file: " << binary.str() << std::endl;
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 rhopw->recip2real(rhog[is], rho[is]);
@@ -53,31 +60,31 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
-                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                if (ModuleIO::read_vdata_palgrid(pgrid,
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],
-                    GlobalC::ucell.nat))
+                    ucell.nat))
                 {
-                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                    GlobalV::ofs_running << " Read electron density from file: " << ssc.str() << std::endl;
                 }
                 else if (is > 0)    // nspin=2 or 4
                 {
                     if (is == 1)    // failed at the second spin
                     {
-                        std::cout << "Incomplete charge density file!" << std::endl;
+                        std::cout << " Incomplete electron density file." << std::endl;
                         read_error = true;
                         break;
                     }
                     else if (is == 2)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+                        GlobalV::ofs_running << " Didn't read in the electron density but would rearrange it later. "
                             << std::endl;
                     }
                     else if (is == 3)   // read 2 files when nspin=4
                     {
-                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
+                        GlobalV::ofs_running << " rearrange electron density " << std::endl;
                         for (int ir = 0; ir < this->rhopw->nrxx; ir++)
                         {
                             this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
@@ -93,55 +100,103 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     break;
                 }
             }
+        }
 
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (read_error)
+        {
+            const std::string warn_msg
+                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read\n charge density from file.\n"
+                  " Please check if there is SPINX_CHG.cube (X=1,...) or\n {suffix}-CHARGE-DENSITY.restart in the "
+                  "directory.\n";
+            std::cout << warn_msg;
+            if (PARAM.inp.init_chg == "file")
             {
+                ModuleBase::WARNING_QUIT("Charge::init_rho",
+                                         "Failed to read in charge density from file.\n For initializing atomic "
+                                         "charge in calculations,\n please set init_chg to atomic in INPUT.");
+            }
+        }
+
+        if (XC_Functional::get_ked_flag())
+        {
+            // If the charge density is not read in, then the kinetic energy density is not read in either
+            if (!read_error)
+            {
+                GlobalV::ofs_running << " try to read kinetic energy density from file" << std::endl;
+                // try to read charge from binary file first, which is the same as QE
+                std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->ngmc, {0.0, 0.0});
+                std::vector<std::complex<double>*> kin_g;
                 for (int is = 0; is < PARAM.inp.nspin; is++)
                 {
-                    std::stringstream ssc;
-                    ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
-                    GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
-                                         << std::endl;
-                    // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
-                        (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
-                        GlobalV::ofs_running,
-                        ssc.str(),
-                        this->kin_r[is],
-                        GlobalC::ucell.nat))
+                    kin_g.push_back(kin_g_space.data() + is * this->ngmc);
+                }
+
+                std::stringstream binary;
+                binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-TAU-DENSITY.restart";
+                if (ModuleIO::read_rhog(binary.str(), rhopw, kin_g.data()))
+                {
+                    GlobalV::ofs_running << " Read in the kinetic energy density: " << binary.str() << std::endl;
+                    for (int is = 0; is < PARAM.inp.nspin; ++is)
                     {
-                        GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+                        rhopw->recip2real(kin_g[is], this->kin_r[is]);
+                    }
+                }
+                else
+                {
+                    for (int is = 0; is < PARAM.inp.nspin; is++)
+                    {
+                        std::stringstream ssc;
+                        ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+                        // mohan update 2012-02-10, sunliang update 2023-03-09
+                        if (ModuleIO::read_vdata_palgrid(
+                                pgrid,
+                                (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
+                                GlobalV::ofs_running,
+                                ssc.str(),
+                                this->kin_r[is],
+                                ucell.nat))
+                        {
+                            GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+                        }
+                        else
+                        {
+                            read_kin_error = true;
+                            std::cout << " WARNING: \"init_chg\" is enabled but ABACUS failed to read kinetic energy "
+                                         "density from file.\n"
+                                         " Please check if there is SPINX_TAU.cube (X=1,...) or "
+                                         "{suffix}-TAU-DENSITY.restart in the directory.\n"
+                                      << std::endl;
+                            break;
+                        }
                     }
                 }
             }
-        }
-    }
-    if (read_error)
-    {
-        const std::string warn_msg = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
-                                     " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the directory.\n";
-        std::cout << std::endl << warn_msg;
-        if (PARAM.inp.init_chg == "auto")
-        {
-            std::cout << " Charge::init_rho: use atomic initialization instead." << std::endl << std::endl;
-        }
-        else if (PARAM.inp.init_chg == "file")
-        {
-            ModuleBase::WARNING_QUIT("Charge::init_rho", "Failed to read in charge density from file.\nIf you want to use atomic charge initialization, \nplease set init_chg to atomic in INPUT.");
+            else
+            {
+                read_kin_error = true;
+            }
         }
     }
 
-    if (PARAM.inp.init_chg == "atomic" || 
-        (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
+    if (PARAM.inp.init_chg == "atomic" || read_error) // mohan add 2007-10-17
     {
-        this->atomic_rho(PARAM.inp.nspin, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
-
-        // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
-        // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (read_error)
         {
-            const double pi = 3.141592653589790;
-            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            std::cout << " Charge::init_rho: use atomic initialization instead." << std::endl;
+        }
+        this->atomic_rho(PARAM.inp.nspin, ucell.omega, rho, strucFac, ucell);
+    }
+
+    // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
+    if (XC_Functional::get_ked_flag())
+    {
+        if (PARAM.inp.init_chg == "atomic" || read_kin_error)
+        {
+            if (read_kin_error)
+            {
+                std::cout << " Charge::init_rho: init kinetic energy density from rho." << std::endl;
+            }
+            const double fact = (3.0 / 5.0) * pow(3.0 * ModuleBase::PI * ModuleBase::PI, 2.0 / 3.0);
             for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
@@ -157,7 +212,25 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            try
+            {
+                GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            }
+            catch (const std::exception& e)
+            {
+                // try to load from the output of `out_chg` 
+                std::stringstream ssc;
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                if (ModuleIO::read_vdata_palgrid(pgrid,
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
+                    GlobalV::ofs_running,
+                    ssc.str(),
+                    this->rho[is],
+                    ucell.nat))
+                {
+                    GlobalV::ofs_running << " Read in the electron density: " << ssc.str() << std::endl;
+                }
+            }
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
@@ -174,35 +247,24 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
         const int nkstot = kv->get_nkstot();
         const std::vector<int>& isk = kv->isk;
-        ModuleIO::read_wfc_to_rho(pw_wfc, symm, nkstot, isk, *this);
+        ModuleIO::read_wf2rho_pw(pw_wfc, symm, kv->ik2iktot.data(), nkstot, isk, *this);
     }
 }
 
 //==========================================================
 // computes the core charge on the real space 3D mesh.
 //==========================================================
-void Charge::set_rho_core(
-    const ModuleBase::ComplexMatrix &structure_factor
-)
+void Charge::set_rho_core(const UnitCell& ucell,
+                          const ModuleBase::ComplexMatrix& structure_factor, 
+                          const bool* numeric)
 {
     ModuleBase::TITLE("Charge","set_rho_core");
     ModuleBase::timer::tick("Charge","set_rho_core");
 
-    // double eps = 1.e-10;
-    //----------------------------------------------------------
-    // LOCAL VARIABLES :
-    // counter on mesh points
-    // counter on atomic types
-    // counter on g vectors
-    //----------------------------------------------------------
-    // int ir = 0;
-    // int it = 0;
-    // int ig = 0;
-
     bool bl = false;
-    for (int it = 0; it<GlobalC::ucell.ntype; it++)
+    for (int it = 0; it<ucell.ntype; it++)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell.atoms[it].ncpp.nlcc)
         {
             bl = true;
             break;
@@ -222,20 +284,22 @@ void Charge::set_rho_core(
 	// three dimension.
     std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];	
 
-    for (int it = 0; it < GlobalC::ucell.ntype;it++)
+    for (int it = 0; it < ucell.ntype;it++)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell.atoms[it].ncpp.nlcc)
         {
 //----------------------------------------------------------
 // EXPLAIN : drhoc compute the radial fourier transform for
 // each shell of g vec
 //----------------------------------------------------------
             this->non_linear_core_correction(
-                GlobalC::ppcell.numeric,
-                GlobalC::ucell.atoms[it].ncpp.msh,
-                GlobalC::ucell.atoms[it].ncpp.r.data(),
-                GlobalC::ucell.atoms[it].ncpp.rab.data(),
-                GlobalC::ucell.atoms[it].ncpp.rho_atc.data(),
+                numeric,
+                ucell.omega,
+                ucell.tpiba2,
+                ucell.atoms[it].ncpp.msh,
+                ucell.atoms[it].ncpp.r.data(),
+                ucell.atoms[it].ncpp.rab.data(),
+                ucell.atoms[it].ncpp.rho_atc.data(),
                 rhocg);
 //----------------------------------------------------------
 // EXPLAIN : multiply by the structure factor and sum
@@ -260,8 +324,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {
-        rhoneg += std::min(0.0, this->rhopw->ft.get_auxr_data<double>()[ir].real());
-        rhoima += std::abs(this->rhopw->ft.get_auxr_data<double>()[ir].imag());
+        rhoneg += std::min(0.0, this->rhopw->fft_bundle.get_auxr_data<double>()[ir].real());
+        rhoima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.
@@ -280,8 +344,8 @@ void Charge::set_rho_core(
 
 	// mohan changed 2010-2-2, make this same as in atomic_rho.
 	// still lack something......
-    rhoneg /= this->rhopw->nxyz * GlobalC::ucell.omega;
-    rhoima /= this->rhopw->nxyz * GlobalC::ucell.omega;
+    rhoneg /= this->rhopw->nxyz * ucell.omega;
+    rhoima /= this->rhopw->nxyz * ucell.omega;
 
     // calculate core_only exch-corr energy etxcc=E_xc[rho_core] if required
     // The term was present in previous versions of the code but it shouldn't
@@ -303,9 +367,12 @@ void Charge::set_rho_core_paw()
 #endif
 }
 
+
 void Charge::non_linear_core_correction
 (
     const bool &numeric,
+    const double omega,
+    const double tpiba2,
     const int mesh,
     const double *r,
     const double *rab,
@@ -340,7 +407,7 @@ void Charge::non_linear_core_correction
 				}
 				ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
 				//rhocg [1] = fpi * rhocg1 / omega;
-				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / omega;//mohan modify 2008-01-19
 			}
             igl0 = 1;
         }
@@ -354,14 +421,14 @@ void Charge::non_linear_core_correction
         // G <> 0 term
         for (int igl = igl_beg; igl < igl_end;igl++) 
         {
-            gx = sqrt(this->rhopw->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+            gx = sqrt(this->rhopw->gg_uniq[igl] * tpiba2);
             ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
             for (int ir = 0;ir < mesh; ir++) 
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
             } //  enddo
             ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-            rhocg [igl] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
+            rhocg [igl] = ModuleBase::FOUR_PI * rhocg1 / omega;
         } //  enddo
         delete [] aux;
     }

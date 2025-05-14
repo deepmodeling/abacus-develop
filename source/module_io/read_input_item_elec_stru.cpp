@@ -76,7 +76,7 @@ void ReadInput::item_elec_stru()
 
             if (para.input.basis_type == "pw")
             {
-                if (!find_str(pw_solvers, ks_solver))
+                if (std::find(pw_solvers.begin(), pw_solvers.end(), ks_solver) == pw_solvers.end())
                 {
                     const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -84,7 +84,7 @@ void ReadInput::item_elec_stru()
             }
             else if (para.input.basis_type == "lcao")
             {
-                if (!find_str(lcao_solvers, ks_solver))
+                if (std::find(lcao_solvers.begin(), lcao_solvers.end(), ks_solver) == lcao_solvers.end())
                 {
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -122,9 +122,23 @@ void ReadInput::item_elec_stru()
                 }
                 else if (ks_solver == "cusolver" || ks_solver == "cusolvermp")
                 {
+                    std::string warningstr;
 #ifndef __MPI
                     ModuleBase::WARNING_QUIT("ReadInput", "Cusolver can not be used for series version.");
 #endif
+#ifndef __CUDA
+                    warningstr = "ks_solver is set to " + ks_solver + " but ABACUS is built with CPU only!\n"
+                    + " Please rebuild ABACUS with GPU support or change the ks_solver.";  
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+#endif
+                    if( ks_solver == "cusolvermp")
+                    {
+#ifndef __CUSOLVERMP
+                    warningstr = "ks_solver is set to cusolvermp, but ABACUS is not built with cusolvermp support\n"
+                    " Please rebuild ABACUS with cusolvermp support or change the ks_solver.";
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+#endif              
+                    }
                 }
                 else if (ks_solver == "pexsi")
                 {
@@ -163,7 +177,7 @@ void ReadInput::item_elec_stru()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (!find_str(basis_types, para.input.basis_type))
+            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -248,6 +262,7 @@ void ReadInput::item_elec_stru()
             }
         };
         sync_double(input.nupdown);
+        add_bool_bcast(sys.two_fermi);
         this->add_item(item);
     }
     {
@@ -315,6 +330,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("diago_smooth_ethr");
+        item.annotation = "smooth ethr for iter methods";
+        read_sync_bool(input.diago_smooth_ethr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("pw_diag_ndim");
         item.annotation = "dimension of workspace for Davidson diagonalization";
         read_sync_int(input.pw_diag_ndim);
@@ -330,6 +351,18 @@ void ReadInput::item_elec_stru()
         Input_Item item("smearing_method");
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         read_sync_string(input.smearing_method);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> methods = {"gauss", "gaussian", 
+                                                      "fd", "fermi-dirac",
+                                                      "fixed",
+                                                      "mp", "mp2", "mp3"
+                                                      "marzari-vanderbilt", "cold", "mv"};
+            if (std::find(methods.begin(), methods.end(), para.input.smearing_method) == methods.end())
+            {
+                const std::string warningstr = nofound_str(methods, "smearing_method");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
         this->add_item(item);
     }
     {
@@ -391,6 +424,19 @@ void ReadInput::item_elec_stru()
         Input_Item item("mixing_restart");
         item.annotation = "threshold to restart mixing during SCF";
         read_sync_double(input.mixing_restart);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.sc_mag_switch == 1)
+            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
+                if(para.input.sc_scf_thr != 10.0)
+                {
+                    para.input.mixing_restart = para.input.sc_scf_thr;
+                }
+                else
+                {// no mixing_restart until oscillation happen in PW base
+                    para.input.mixing_restart = para.input.scf_thr / 10.0;
+                }
+            }
+        };
         this->add_item(item);
     }
     {
@@ -482,7 +528,7 @@ void ReadInput::item_elec_stru()
             {
                 if (para.input.nspin == 4)
                 {
-                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
+                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4 (soc or noncollinear-spin) does not support gamma\n only calculation");
                 }
             }
         };
@@ -492,6 +538,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_nmax");
         item.annotation = "number of electron iterations";
         read_sync_int(input.scf_nmax);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "nscf")
+            {
+                para.input.scf_nmax = 1;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -556,6 +608,12 @@ void ReadInput::item_elec_stru()
                 para.input.scf_os_ndim = para.input.mixing_ndim;
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_os_ndim");
+        item.annotation = "number of old iterations used for oscillation detection, for Spin-Constrained DFT";
+        read_sync_int(input.sc_os_ndim);
         this->add_item(item);
     }
     {
@@ -652,12 +710,6 @@ void ReadInput::item_elec_stru()
         Input_Item item("search_radius");
         item.annotation = "input search radius (Bohr)";
         read_sync_double(input.search_radius);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("search_pbc");
-        item.annotation = "input periodic boundary condition";
-        read_sync_bool(input.search_pbc);
         this->add_item(item);
     }
     {

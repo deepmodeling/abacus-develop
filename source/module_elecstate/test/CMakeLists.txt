@@ -45,7 +45,7 @@ AddTest(
 AddTest(
   TARGET elecstate_base
   LIBS parameter  ${math_libs} base device 
-  SOURCES elecstate_base_test.cpp ../elecstate.cpp ../occupy.cpp ../../module_psi/psi.cpp
+  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../module_psi/psi.cpp
 )
 
 AddTest(
@@ -75,7 +75,7 @@ AddTest(
 AddTest(
   TARGET potentials_new
   LIBS parameter  ${math_libs} base device planewave_serial
-  SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
+  SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
 )
 
 AddTest(
@@ -89,8 +89,9 @@ AddTest(
   TARGET charge_mixing
   LIBS parameter   base ${math_libs}  psi  device planewave_serial cell_info 
   SOURCES charge_mixing_test.cpp  
-  ../module_charge/charge_mixing.cpp
-  ../../module_io/output.cpp
+  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
+  ../module_charge/charge_mixing_preconditioner.cpp ../module_charge/charge_mixing_rho.cpp
+  ../module_charge/charge_mixing_uspp.cpp ../../module_io/output.cpp
 )
 
 AddTest(

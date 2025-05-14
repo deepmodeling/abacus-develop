@@ -81,7 +81,7 @@ public:
         //do Diago_David::diag()
         double* en = new double[npw];
         hamilt::Hamilt<double>* phm;
-        phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr);
+        phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr,nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
@@ -89,7 +89,7 @@ public:
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
 
-		const int dim = phi.get_current_nbas();
+		const int dim = phi.get_current_ngk();
         const int nband = phi.get_nbands();
         const int ld_psi = phi.get_nbasis();
         hsolver::DiagoDavid<double> dav(precondition, nband, dim, order, false, comm_info);
@@ -112,16 +112,17 @@ public:
         auto hpsi_func = [phm](double* psi_in,double* hpsi_out,
 					const int ld_psi, const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<double>(psi_in, 1, nvec, ld_psi, nullptr);
+                        auto psi_iter_wrapper = psi::Psi<double>(psi_in, 1, nvec, ld_psi, true);
                         psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
                     };
-        auto spsi_func = [phm](const double* psi_in, double* spsi_out,const int ld_psi, const int nbands){
+        auto spsi_func = [phm](const double* psi_in, double* spsi_out, const int ld_psi, const int nbands) {
 			phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
-		};
-        dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, eps, maxiter);
+        };
+        std::vector<double> ethr_band(phi.get_nbands(), eps);
+        dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
 
 #ifdef __MPI		
         end = MPI_Wtime();
@@ -193,7 +194,15 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag, DiagoDavTest, ::testing::Values(
 TEST(DiagoDavRealSystemTest, dataH)
 {
     std::vector<double> hmatrix;
-    std::ifstream ifs("H-GammaOnly-Si64.dat");
+    std::ifstream ifs;
+    std::string filename = "H-GammaOnly-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hmatrix);
     ifs.close();
     DIAGOTEST::hmatrix_d = hmatrix;

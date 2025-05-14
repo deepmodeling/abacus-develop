@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 #include "../ri_benchmark.h"
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom_pseudo::Atom_pseudo() {}
@@ -17,16 +22,16 @@ UnitCell::UnitCell() {
 }
 UnitCell::~UnitCell() {
     delete[] atoms;
-    delete[] iat2it;
 }
 // inline const int* UnitCell::get_iat2iwt(int iat) { return iat2iwt; }
 
 TEST(RI_Benchmark, SlicePsi)
 {
     const int nk = 1, nbands = 2, nbasis = 3;
-    psi::Psi<double> psi(nk, nbands, nbasis);
-    for (int i = 0; i < nk * nbands * nbasis; i++)
+    psi::Psi<double> psi(nk, nbands, nbasis, nbasis, true);
+    for (int i = 0; i < nk * nbands * nbasis; i++) {
         psi.get_pointer()[i] = i;
+}
     std::vector<double> psi_slice = RI_Benchmark::slice_psi(psi, 1, 1, 1, 2);
     EXPECT_DOUBLE_EQ(psi_slice[0], 4);
     EXPECT_DOUBLE_EQ(psi_slice[1], 5);
@@ -50,7 +55,7 @@ TEST(RI_Benchmark, CalCsMO)
     for (int i = 0;i < nabf * nao * nao;++i) { Cs_ao[0][{0, { 0, 0, 0 }}].ptr()[i] = static_cast<double>(i); }
 
     const UnitCell ucell;
-    psi::Psi<double> psi_ks(1, 2, 2);
+    psi::Psi<double> psi_ks(1, 2, 2, 2, true);
     for (int i = 0;i < 4;++i) { psi_ks.get_pointer()[i] = static_cast<double>(i); }
     RI_Benchmark::TLRI<double> Cs_a_mo = RI_Benchmark::cal_Cs_mo(ucell, Cs_ao, psi_ks, nocc, nvirt, false);
     std::vector<double> Cs_a_mo_ref = { 11,31 };
@@ -62,10 +67,17 @@ TEST(RI_Benchmark, CalCsMO)
 
 int main(int argc, char** argv)
 {
-    srand(time(NULL));  // for random number generator
+    srand(time(nullptr));  // for random number generator
+#ifdef __MPI
     MPI_Init(&argc, &argv);
+#endif
+
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
     MPI_Finalize();
+#endif
+
     return result;
 }

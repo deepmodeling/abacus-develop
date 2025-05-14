@@ -32,7 +32,8 @@ void get_vindex(const int bxyz, const int bx, const int by, const int bz,
 				}
 			}
 		}
-	}
+
+}
 
 	// here vindex refers to local potentials
 

@@ -49,8 +49,6 @@ class TransferTest : public ::testing::Test
         delete HR_para;
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
     }
 
 #ifdef __MPI

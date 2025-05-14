@@ -217,6 +217,28 @@ TEST(FormatterTest, FmtTableDefaultArgs)
     EXPECT_EQ(result, ref);
 }
 
+TEST(FormatterTest, FmtTableHeadless)
+{
+    const std::vector<std::string> titles = {"", "", ""};
+    const std::vector<std::string> fmts = {"%s", "%d", "%f"};
+    FmtTable table(titles, 5, fmts);
+    const std::vector<std::string> col1 = {"row1", "row2", "row3", "row4", "row5"};
+    const std::vector<int> col2 = {1, 2, 3, 4, 5};
+    const std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
+    table << col1 << col2 << col3;
+    const std::string result = table.str();
+    std::cout << result << std::endl;
+    std::string ref = "";
+    ref += "-----------------\n";
+    ref += " row1 1 1.100000 \n";
+    ref += " row2 2 2.200000 \n";
+    ref += " row3 3 3.300000 \n";
+    ref += " row4 4 4.400000 \n";
+    ref += " row5 5 5.500000 \n";
+    ref += "-----------------\n";
+    EXPECT_EQ(result, ref);
+}
+
 TEST(FormatterTest, FmtTableCustomArgsAlign)
 {
     // shared data
@@ -226,7 +248,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
     // align: l and l
-    FmtTable table(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT});
+    FmtTable table(titles, 5, fmts, 0, {FmtTable::Align::LEFT, FmtTable::Align::LEFT});
     table << col1 << col2 << col3;
     std::string result = table.str();
     std::cout << result << std::endl;
@@ -243,7 +265,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: r and r
-    FmtTable table2(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
+    FmtTable table2(titles, 5, fmts, 0, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
     table2 << col1 << col2 << col3;
     result = table2.str();
     std::cout << result << std::endl;
@@ -260,7 +282,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: l and r
-    FmtTable table3(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+    FmtTable table3(titles, 5, fmts, 0, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
     table3 << col1 << col2 << col3;
     result = table3.str();
     std::cout << result << std::endl;
@@ -277,7 +299,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: r and l
-    FmtTable table4(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::RIGHT});
+    FmtTable table4(titles, 5, fmts, 0, {FmtTable::Align::LEFT, FmtTable::Align::RIGHT});
     table4 << col1 << col2 << col3;
     result = table4.str();
     std::cout << result << std::endl;
@@ -303,7 +325,12 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrame)
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
 
-    FmtTable table1(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, {'+', '?', '*', '.', '^'});
+    FmtTable table1(titles, 
+                    5, 
+                    fmts, 
+                    0, 
+                    {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, 
+                    {'+', '?', '*', '.', '^'});
     table1 << col1 << col2 << col3;
     std::string result = table1.str();
     std::cout << result << std::endl;
@@ -328,7 +355,10 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrameDelim)
     std::vector<std::string> col1 = {"row1", "row2", "row3", "row4", "row5"};
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
-    FmtTable table1(titles, 5, fmts, 
+    FmtTable table1(titles, 
+                    5, 
+                    fmts, 
+                    0,
                     {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, 
                     {'=', '/', '&', '#', '%'},
                     {'"', ']'});
@@ -345,6 +375,30 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrameDelim)
     ref += "#row4  ]4          ]4.400000   %\n";
     ref += "#row5  ]5          ]5.500000   %\n";
     ref += "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
+    EXPECT_EQ(result, ref);
+}
+
+TEST(FormatterTest, FmtTableCustomIndent)
+{
+    const std::vector<std::string> titles = {"title1", "t i t l e 2", "t-i-t-l-e-3"};
+    const std::vector<std::string> fmts = {"%s", "%d", "%f"};
+    FmtTable table(titles, 5, fmts, 4);
+    const std::vector<std::string> col1 = {"row1", "row2", "row3", "row4", "row5"};
+    const std::vector<int> col2 = {1, 2, 3, 4, 5};
+    const std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
+    table << col1 << col2 << col3;
+    const std::string result = table.str();
+    std::cout << result << std::endl;
+    std::string ref = "";
+    ref += "    --------------------------------\n";
+    ref += "     title1 t i t l e 2 t-i-t-l-e-3 \n";
+    ref += "    --------------------------------\n";
+    ref += "       row1           1    1.100000 \n";
+    ref += "       row2           2    2.200000 \n";
+    ref += "       row3           3    3.300000 \n";
+    ref += "       row4           4    4.400000 \n";
+    ref += "       row5           5    5.500000 \n";
+    ref += "    --------------------------------\n";
     EXPECT_EQ(result, ref);
 }
 

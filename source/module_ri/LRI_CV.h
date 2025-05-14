@@ -34,6 +34,7 @@ class LRI_CV
     ~LRI_CV();
 
     void set_orbitals(const LCAO_Orbitals& orb,
+                      const UnitCell &ucell,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos_in,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_ccp_in,
@@ -43,16 +44,19 @@ class LRI_CV
                       const bool& init_C);
 
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs(
+        const UnitCell &ucell,
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         const std::map<std::string, bool>& flags); // "writable_Vws"
     inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> cal_dVs(
+        const UnitCell &ucell,
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         const std::map<std::string, bool>& flags); // "writable_dVws"
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
-        cal_Cs_dCs(const std::vector<TA>& list_A0,
+        cal_Cs_dCs(const UnitCell &ucell,
+                   const std::vector<TA>& list_A0,
                    const std::vector<TAC>& list_A1,
                    const std::map<std::string, bool>&
                        flags); // "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
@@ -93,7 +97,8 @@ class LRI_CV
                                                     const std::map<std::string, bool>& flags)>;
     using T_func_cal_Rcut = std::function<double(const int it0, const int it1)>;
     template <typename Tresult>
-    std::map<TA, std::map<TAC, Tresult>> cal_datas(const std::vector<TA>& list_A0,
+    std::map<TA, std::map<TAC, Tresult>> cal_datas(const UnitCell &ucell,
+                                                   const std::vector<TA>& list_A0,
                                                    const std::vector<TAC>& list_A1,
                                                    const std::map<std::string, bool>& flags,
                                                    const T_func_cal_Rcut& func_cal_Rcut,

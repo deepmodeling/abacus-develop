@@ -12,6 +12,11 @@ extern "C"
 		int *desc, 
 		const int *m, const int *n, const int *mb, const int *nb, const int *irsrc, const int *icsrc, 
 		const int *ictxt, const int *lld, int *info);
+	
+	void pddot_(int* n, double* dot, double* x, int* ix, int* jx, int* descx, int* incx,
+		double* y, int* iy, int* jy, int* descy, int* incy);
+	void pzdotc_(int* n, std::complex<double>* dot, std::complex<double>* x, int* ix, int* jx, int* descx, int* incx,
+		std::complex<double>* y, int* iy, int* jy, int* descy, int* incy);
 
 	void pdpotrf_(char *uplo, int *n, double *a, int *ia, int *ja, int *desca, int *info);
 //	void pzpotrf_(char *uplo, int *n, double _Complex *a, int *ia, int *ja, int *desca, int *info);
@@ -69,22 +74,45 @@ extern "C"
 	void pztrmm_(char *side , char *uplo , char *transa , char *diag , int *m , int *n ,
 		std::complex<double> *alpha , std::complex<double> *a , int *ia , int *ja , int *desca ,
 		std::complex<double> *b , int *ib , int *jb , int *descb );
-
+	void pzhemm_(char* side , char* uplo , int* m , int* n ,
+		std::complex<double>* alpha , std::complex<double>* a , int* ia , int* ja , int* desca ,
+		std::complex<double>* b , int* ib , int* jb , int* descb ,
+		std::complex<double>* beta ,  std::complex<double>* c , int* ic , int* jc , int* descc );
 	void pzgetrf_(
 		const int *M, const int *N, 
 		std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
 		int *ipiv,  int *info);
+	
+	void pzgesv_(
+			const int *n, const int *nrhs,
+			const std::complex<double> *A, const int *ia, const int *ja, const int *desca,
+			int *ipiv, std::complex<double>* B, const int* ib, const int* jb, const int*descb, const int *info
+		);
 
 	void pdsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
 		const int* n, double* A, const int* ia, const int* ja, const int*desca, double* B, const int* ib, const int* jb, const int*descb,
 		const double* vl, const double* vu, const int* il, const int* iu,
 		const double* abstol, int* m, int* nz, double* w, const double*orfac, double* Z, const int* iz, const int* jz, const int*descz,
 		double* work, int* lwork, int*iwork, int*liwork, int* ifail, int*iclustr, double*gap, int* info);
+
 	void pzhegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
 		const int* n, std::complex<double>* A, const int* ia, const int* ja, const int*desca, std::complex<double>* B, const int* ib, const int* jb, const int*descb,
 		const double* vl, const double* vu, const int* il, const int* iu,
 		const double* abstol, int* m, int* nz, double* w, const double*orfac, std::complex<double>* Z, const int* iz, const int* jz, const int*descz,
 		std::complex<double>* work, int* lwork, double* rwork, int* lrwork, int*iwork, int*liwork, int* ifail, int*iclustr, double*gap, int* info);
+
+	void pssygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+		const int* n, float* A, const int* ia, const int* ja, const int*desca, float* B, const int* ib, const int* jb, const int*descb,
+		const float* vl, const float* vu, const int* il, const int* iu,
+		const float* abstol, int* m, int* nz, float* w, const float*orfac, float* Z, const int* iz, const int* jz, const int*descz,
+		float* work, int* lwork, int*iwork, int*liwork, int* ifail, int*iclustr, float*gap, int* info);
+		
+	void pchegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+		const int* n, std::complex<float>* A, const int* ia, const int* ja, const int*desca, std::complex<float>* B, const int* ib, const int* jb, const int*descb,
+		const float* vl, const float* vu, const int* il, const int* iu,
+		const float* abstol, int* m, int* nz, float* w, const float*orfac, std::complex<float>* Z, const int* iz, const int* jz, const int*descz,
+		std::complex<float>* work, int* lwork, float* rwork, int* lrwork, int*iwork, int*liwork, int* ifail, int*iclustr, float*gap, int* info);
+
 
 	void pzgetri_(
 		const int *n, 
@@ -180,6 +208,38 @@ public:
 		pzgeadd_(&transa, &m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
 	}
 
+	static inline
+	void dot(int n,
+		double& dot,
+		double* a,
+		int ia,
+		int ja,
+		int inca,
+		double* b,
+		int ib,
+		int jb,
+		int incb,
+		int* desc)
+	{
+		pddot_(&n, &dot, a, &ia, &ja, desc, &inca, b, &ib, &jb, desc, &incb);
+	}
+
+	static inline
+	void dot(int n,
+		std::complex<double>& dotc,
+		std::complex<double>* a,
+		int ia,
+		int ja,
+		int inca,
+		std::complex<double>* b,
+		int ib,
+		int jb,
+		int incb,
+		int* desc)
+	{
+		pzdotc_(&n, &dotc, a, &ia, &ja, desc, &inca, b, &ib, &jb, desc, &incb);
+	}
+
     static inline
         void gemm(
             const char transa, const char transb,
@@ -208,6 +268,85 @@ public:
 			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
 	}
 
+	static inline
+	void gemm(char transa, char transb, int M, int N, int K,
+		double alpha,
+		double* A,
+		double* B,
+		double beta,
+		double* C,
+		int* DESC)
+	{
+		int isrc = 1;
+		pdgemm_(&transa,
+				&transb,
+				&M,
+				&N,
+				&K,
+				&alpha,
+				A,
+				&isrc,
+				&isrc,
+				DESC,
+				B,
+				&isrc,
+				&isrc,
+				DESC,
+				&beta,
+				C,
+				&isrc,
+				&isrc,
+				DESC);
+	}
+
+    static inline
+	void gemm(char transa, char transb, int M, int N, int K,
+		std::complex<double> alpha,
+		std::complex<double>* A,
+		std::complex<double>* B,
+		std::complex<double> beta,
+		std::complex<double>* C,
+		int* DESC)
+	{
+		
+		int isrc = 1;
+		pzgemm_(&transa,
+			&transb,
+			&M,
+			&N,
+			&K,
+			&alpha,
+			A,
+			&isrc,
+			&isrc,
+			DESC,
+			B,
+			&isrc,
+			&isrc,
+			DESC,
+			&beta,
+			C,
+			&isrc,
+			&isrc,
+			DESC);
+	}
+
+	static inline 
+	void symm(char side,
+		char uplo,
+		int m,
+		int n,
+		double alpha,
+		double* a,
+		double* b,
+		double beta,
+		double* c,
+		int* desc)
+	{
+		int isrc = 1;
+		pdsymm_(&side, &uplo, &m, &n, &alpha, a, &isrc, &isrc, desc, b, &isrc, &isrc, desc, &beta, c, &isrc, &isrc, desc);
+	}
+
     static inline
 	void getrf(
 		const int M, const int N, 
@@ -227,12 +366,103 @@ public:
 	}
 
 	static inline
+	void gesv(
+		const int n, const int nrhs,
+		const std::complex<double> *A, const int ia, const int ja, const int *desca,
+		int *ipiv, std::complex<double>* B, const int ib, const int jb, const int*descb, int *info)
+	{
+		pzgesv_(&n, &nrhs, A, &ia, &ja, desca, ipiv, B, &ib, &jb, descb, info);
+	}
+
+	static inline
 	void tranu(
 		const int m, const int n,
 		const std::complex<double> alpha , std::complex<double> *a , const int ia , const int ja , const int *desca,
 		const std::complex<double> beta ,  std::complex<double> *c , const int ic , const int jc , const int *descc)
 	{
 		pztranu_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+
+	static inline
+	int potrf(char uplo, int na, double* U, int* desc)
+	{
+		int isrc = 1;
+		int info;
+		pdpotrf_(&uplo, &na, U, &isrc, &isrc, desc, &info);
+		return info;
+	}
+
+	static inline
+	int potrf(char uplo, int na, std::complex<double>* U, int* desc)
+	{
+		int isrc = 1;
+		int info;
+		pzpotrf_(&uplo, &na, U, &isrc, &isrc, desc, &info);
+		return info;
+	}
+
+	static inline
+	void trmm(char side,
+		char uplo,
+		char trans,
+		char diag,
+		int m,
+		int n,
+		double alpha,
+		double* a,
+		double* b,
+		int* desc)
+	{
+		int isrc = 1;
+		pdtrmm_(&side, &uplo, &trans, &diag, &m, &n, &alpha, a, &isrc, &isrc, desc, b, &isrc, &isrc, desc);
+	}
+
+	static inline
+	void trmm(char side,
+		char uplo,
+		char trans,
+		char diag,
+		int m,
+		int n,
+		std::complex<double> alpha,
+		std::complex<double>* a,
+		std::complex<double>* b,
+		int* desc)
+	{
+		int isrc = 1;
+		pztrmm_(&side, &uplo, &trans, &diag, &m, &n, &alpha, a, &isrc, &isrc, desc, b, &isrc, &isrc, desc);
+	}
+
+	static inline
+	void hemm(char side,
+		char uplo,
+		int na,
+		std::complex<double> alpha,
+		std::complex<double>* a,
+		std::complex<double>* b,
+		std::complex<double> beta,
+		std::complex<double>* c,
+		int* desc)
+	{
+		int isrc = 1;
+		pzhemm_(&side,
+		&uplo,
+		&na,
+		&na,
+		&alpha,
+		a,
+		&isrc,
+		&isrc,
+		desc,
+		b,
+		&isrc,
+		&isrc,
+		desc,
+		&beta,
+		c,
+		&isrc,
+		&isrc,
+		desc);
 	}
 };
 

@@ -171,8 +171,8 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
-* @brief set parallel orbital pointer to check parallel information
-*/
+    * @brief set parallel orbital pointer to check parallel information
+    */
     void set_paraV(const Parallel_Orbitals* paraV_in)
     {
         this->paraV = paraV_in;
@@ -332,6 +332,18 @@ class HContainer
      */
     size_t size_R_loop() const;
 
+    
+    /**
+     * @brief find index of R in tmp_R_index, used when current_R is fixed
+     *
+     * @param rx_in index of R in x direction
+     * @param ry_in index of R in y direction
+     * @param rz_in index of R in z direction
+     * @return int index of R in tmp_R_index
+     */
+    int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
+
     /**
      * @brief calculate number of AtomPairs for current R index
      */
@@ -401,6 +413,14 @@ class HContainer
     void insert_ijrs(const std::vector<int>* ijrs);
 
     /**
+     * @brief use infomation of IJ pairs to expand HContainer
+     * the number of wavefunctions are stored in UnitCell.
+     * HContainer has not been allocated after this function,
+     * user should call allocate(...) to allocate memory.
+     */
+    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol=1);
+    
+    /**
      * @brief return the wrapper_pointer
      */
     T* get_wrapper() const
@@ -457,16 +477,6 @@ class HContainer
     mutable std::vector<ModuleBase::Vector3<int>> tmp_R_index;
     // current index of R in tmp_atom_pairs, -1 means not initialized
     mutable int current_R = -1;
-    /**
-     * @brief find index of R in tmp_R_index, used when current_R is fixed
-     *
-     * @param rx_in index of R in x direction
-     * @param ry_in index of R in y direction
-     * @param rz_in index of R in z direction
-     * @return int index of R in tmp_R_index
-     */
-    int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
-    int find_R(const ModuleBase::Vector3<int>& R_in) const;
 
     bool gamma_only = false;
 

@@ -32,7 +32,6 @@ class Parameter
     void set_pal_param(const int& myrank, const int& nproc, const int& nthread_per_proc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
-
   private:
     // Only ReadInput and CalAtomInfo can modify the value of Parameter.
     // Do not add extra friend class here!!!

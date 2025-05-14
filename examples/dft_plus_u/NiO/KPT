@@ -2,3 +2,6 @@ K_POINTS
 0
 Gamma
 7 7 7 0.0 0.0 0.0
+### If you are running an energy calculation, please make sure your final energy is
+### converged with respect to the k-point settings, unless you set a loose k-point
+### mesh on purpose.

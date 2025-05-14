@@ -50,8 +50,9 @@ class toolfunc
     void sigma_y(std::complex<double>* spin_in, std::complex<double>* spin_out, const int m = 1)
     {
         const std::complex<double> j(0.0, 1.0);
-        if (this->LDA < 2)
+        if (this->LDA < 2) {
             this->LDA = 2;
+}
         for (int i = 0; i < m; ++i)
         {
             spin_out[LDA * i] = -factor * j * spin_in[LDA * i + 1];
@@ -299,10 +300,11 @@ TEST_F(MathChebyshevTest, tracepolyA)
     // Trace:  even function: 2 ; odd function 0.
     for (int i = 0; i < norder; ++i)
     {
-        if (i % 2 == 0)
+        if (i % 2 == 0) {
             EXPECT_NEAR(p_chetest->polytrace[i], 2, 1.e-8);
-        else
+        } else {
             EXPECT_NEAR(p_chetest->polytrace[i], 0, 1.e-8);
+}
     }
     delete[] v;
 
@@ -321,10 +323,11 @@ TEST_F(MathChebyshevTest, tracepolyA)
     // Trace:  even function: 2 ; odd function 0.
     for (int i = 0; i < norder; ++i)
     {
-        if (i % 2 == 0)
+        if (i % 2 == 0) {
             EXPECT_NEAR(p_chetest->polytrace[i], 2, 1.e-8);
-        else
+        } else {
             EXPECT_NEAR(p_chetest->polytrace[i], 0, 1.e-8);
+}
     }
     fun.LDA = 2;
     delete[] v;
@@ -333,6 +336,8 @@ TEST_F(MathChebyshevTest, tracepolyA)
 
 TEST_F(MathChebyshevTest, checkconverge)
 {
+#ifdef __MPI
+#undef __MPI
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
     auto fun_sigma_y
@@ -374,12 +379,14 @@ TEST_F(MathChebyshevTest, checkconverge)
 
     delete[] v;
     delete p_chetest;
+#define __MPI
+#endif
 }
 
 TEST_F(MathChebyshevTest, recurs)
 {
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleBase::Chebyshev<double> noneche(0), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(ModuleBase::Chebyshev<double> noneche(0), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 

@@ -6,6 +6,7 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_func.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 
+template <typename FPTYPE, typename Device>
 class Sto_DOS
 {
   public:
@@ -14,7 +15,7 @@ class Sto_DOS
             elecstate::ElecState* p_elec_in,
             psi::Psi<std::complex<double>>* p_psi_in,
             hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-            StoChe<double>& stoche,
+            StoChe<FPTYPE, Device>& stoche,
             Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
     ~Sto_DOS();
 

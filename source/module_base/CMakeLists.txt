@@ -6,12 +6,13 @@ list (APPEND LIBM_SRC
   libm/sincos.cpp
 )
 endif()
-
 add_library(
     base
     OBJECT
     assoc_laguerre.cpp
-    blas_connector.cpp
+    blas_connector_base.cpp
+    blas_connector_vector.cpp
+    blas_connector_matrix.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
@@ -38,6 +39,7 @@ add_library(
     mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
+    para_gemm.cpp
     realarray.cpp
     sph_bessel_recursive-d1.cpp
     sph_bessel_recursive-d2.cpp
@@ -51,8 +53,11 @@ add_library(
     parallel_global.cpp
     parallel_comm.cpp
     parallel_reduce.cpp
+    parallel_device.cpp
     spherical_bessel_transformer.cpp
     cubic_spline.cpp
+    parallel_2d.cpp
+    projgen.cpp
     module_mixing/mixing_data.cpp
     module_mixing/mixing.cpp
     module_mixing/plain_mixing.cpp
@@ -61,6 +66,11 @@ add_library(
     ${LIBM_SRC}
 )
 
+target_link_libraries(base PUBLIC container)
+if (USE_DSP)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a)
+endif()
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)

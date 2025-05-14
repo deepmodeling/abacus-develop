@@ -19,6 +19,9 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
 
+    assert(nkstot>0);
+    assert(nks>0);
+
     std::string* wfilename;
     wfilename = new std::string[nkstot];
     for (int ik = 0; ik < nkstot; ++ik)
@@ -47,9 +50,7 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
             }
         }
     }
-    // if(GlobalV::MY_RANK!=0) std::cout.clear();
-    // std::cout<<"Hello"<<std::endl;
-    // if(GlobalV::MY_RANK!=0) std::cout.setstate(ios::failbit);
+
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -66,16 +67,11 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                 int ikstot = 0;  // ikstot : the index within all k-points
                 const int ng = kv.ngk[ik];
                 const int ng_max = wfcpw->npwk_max;
+                ikstot = kv.ik2iktot[ik];
 #ifdef __MPI
                 MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
-
-                // ikstot=GlobalC::Pkpoints.startk_pool[ip]+ik;
-                // In the future, Pkpoints should be moved into Klist
-                // To avoid GlobalC, we use get_ik_global instead
-                ikstot = K_Vectors::get_ik_global(ik, nkstot);
 #else
-        ikngtot = kv.ngk[ik];
-        ikstot = ik;
+                ikngtot = kv.ngk[ik];
 #endif
                 const int ikngtot_npol = ikngtot * PARAM.globalv.npol;
 #ifdef __MPI

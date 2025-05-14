@@ -31,22 +31,26 @@ using TAC = std::pair<TA, TC>;
 // public:
 template <typename Tdata, typename Tmatrix>
 extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR(
-    const K_Vectors& kv,
-    const std::vector<const Tmatrix*>& mks_2D,
-    const Parallel_2D& pv,
-    const int nspin,
+    const UnitCell& ucell,
+	const K_Vectors& kv, 
+    const std::vector<const Tmatrix*>& mks_2D, 
+    const Parallel_2D& pv, 
+    const int nspin, 
     const bool spgsym = false);
 
-// judge[is] = {s0, s1}
-extern std::vector<std::tuple<std::set<TA>, std::set<TA>>> get_2D_judge(const Parallel_2D& pv);
+	// judge[is] = {s0, s1}
+	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
+        get_2D_judge(const UnitCell& ucell, const Parallel_2D& pv);
 
-template <typename Tdata, typename TK>
-extern void add_Hexx(const K_Vectors& kv,
-                     const int ik,
-                     const double alpha,
-                     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
-                     const Parallel_Orbitals& pv,
-                     TK* hk);
+    template<typename Tdata, typename TK>
+    extern void add_Hexx(
+        const UnitCell& ucell,
+        const K_Vectors& kv,
+        const int ik,
+        const double alpha,
+        const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+        const Parallel_Orbitals& pv,
+        TK* hk);
 
 template <typename Tdata, typename TR>
 extern void add_HexxR(const int current_spin,
@@ -71,10 +75,10 @@ inline RI::Tensor<std::complex<double>> tensor_real(const RI::Tensor<std::comple
 
 // private:
 extern std::vector<int> get_ik_list(const K_Vectors& kv, const int is_k);
-extern inline std::tuple<int, int, int> get_iat_iw_is_block(const int iwt);
+extern inline std::tuple<int, int, int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
 extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
 extern inline std::tuple<int, int> split_is_block(const int is_b);
-extern inline int get_iwt(const int iat, const int iw_b, const int is_b);
+extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
 
 template <typename TA, typename TAC, typename T>
 extern std::map<TA, std::map<TAC, T>> comm_map2_first(const MPI_Comm& mpi_comm,

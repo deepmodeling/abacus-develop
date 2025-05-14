@@ -7,21 +7,23 @@
 #include "spar_exx.h"
 #include "spar_u.h"
 
-void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    Grid_Driver& grid,
-    const int& current_spin,
-    const double& sparse_thr,
-    const int(&nmp)[3],
-    hamilt::Hamilt<std::complex<double>>* p_ham
+void sparse_format::cal_HSR(const UnitCell& ucell,
+                            const Parallel_Orbitals& pv,
+                            LCAO_HS_Arrays& HS_Arrays,
+                            const Grid_Driver& grid,
+                            const int& current_spin,
+                            const double& sparse_thr,
+                            const int (&nmp)[3],
+                            hamilt::Hamilt<std::complex<double>>* p_ham
 #ifdef __EXX
-    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
-    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+                            ,
+                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
 ) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
-    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
+    // sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nspin = PARAM.inp.nspin;
 
@@ -30,6 +32,8 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(
                 p_ham);
+
+        HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
         if (TD_Velocity::tddft_velocity) {
             sparse_format::cal_HContainer_td(
@@ -55,7 +59,9 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
         hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*
             p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
-                                              std::complex<double>>*>(p_ham);
+            std::complex<double>>*>(p_ham);
+
+        HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
         sparse_format::cal_HContainer_cd(pv,
                                          current_spin,
@@ -99,7 +105,8 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (Hexxd && GlobalC::exx_info.info_ri.real_number)
         {
-            sparse_format::cal_HR_exx(pv,
+            sparse_format::cal_HR_exx(ucell,
+                pv,
                 HS_Arrays,
                 current_spin,
                 sparse_thr,
@@ -108,7 +115,8 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
         }
         else if (Hexxc && !GlobalC::exx_info.info_ri.real_number)
         {
-            sparse_format::cal_HR_exx(pv,
+            sparse_format::cal_HR_exx(ucell,
+                pv,
                 HS_Arrays,
                 current_spin,
                 sparse_thr,

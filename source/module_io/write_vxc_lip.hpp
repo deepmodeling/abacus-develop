@@ -7,7 +7,7 @@
 #include "module_psi/psi.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
-#include "module_elecstate/potentials/potential_new.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
 #include <type_traits>
 
@@ -59,24 +59,27 @@ namespace ModuleIO
         assert(nbands >= 0);
 #endif
         std::vector<FPTYPE> e(nbands, 0.0);
-        for (int i = 0; i < nbands; ++i)
+        for (int i = 0; i < nbands; ++i) {
             e[i] = get_real(mat_mo[i * nbands + i]);
+}
         return e;
     }
     template <typename FPTYPE>
     FPTYPE all_band_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < nbands; ++i)
+        for (int i = 0; i < nbands; ++i) {
             e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
+}
         return e;
     }
     template <typename FPTYPE>
     FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < orbital_energy.size(); ++i)
+        for (int i = 0; i < orbital_energy.size(); ++i) {
             e += orbital_energy[i] * (FPTYPE)wg(ik, i);
+}
         return e;
     }
 
@@ -84,21 +87,23 @@ namespace ModuleIO
     /// including terms: local/semi-local XC and EXX
     template <typename FPTYPE>
     void write_Vxc(int nspin,
-        int naos,
-        int drank,
-        const psi::Psi<std::complex<FPTYPE>>& psi_pw,
-        // const psi::Psi<T>& psi_lcao,
-        const UnitCell& ucell,
-        Structure_Factor& sf,
-        const ModulePW::PW_Basis_K& wfc_basis,
-        const ModulePW::PW_Basis& rho_basis,
-        const ModulePW::PW_Basis& rhod_basis,
-        const ModuleBase::matrix& vloc,
-        const Charge& chg,
-        const K_Vectors& kv,
-        const ModuleBase::matrix& wg
+                   int naos,
+                   int drank,
+                   const psi::Psi<std::complex<FPTYPE>>& psi_pw,
+                   // const psi::Psi<T>& psi_lcao,
+                   const UnitCell& ucell,
+                   Structure_Factor& sf,
+                   surchem& solvent,
+                   const ModulePW::PW_Basis_K& wfc_basis,
+                   const ModulePW::PW_Basis& rho_basis,
+                   const ModulePW::PW_Basis& rhod_basis,
+                   const ModuleBase::matrix& vloc,
+                   const Charge& chg,
+                   const K_Vectors& kv,
+                   const ModuleBase::matrix& wg
 #ifdef __EXX
-        , const Exx_Lip<std::complex<FPTYPE>>& exx_lip
+                   ,
+                   const Exx_Lip<std::complex<FPTYPE>>& exx_lip
 #endif
     )
     {
@@ -111,7 +116,8 @@ namespace ModuleIO
         double vtxc = 0.0;
         // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
         // potxc.cal_v_eff(&chg, &ucell, vr_xc);
-        elecstate::Potential* potxc = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &etxc, &vtxc);
+        elecstate::Potential* potxc
+            = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
         std::vector<std::string> compnents_list = { "xc" };
 
         potxc->pot_register(compnents_list);
@@ -119,7 +125,7 @@ namespace ModuleIO
         // const ModuleBase::matrix vr_localxc = potxc->get_veff_smooth();
 
         // 2. allocate xc operator
-        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), psi_pw.get_ngk_pointer());
+        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), kv.ngk, true);
         hpsi_localxc.zero_out();
         // std::cout << "hpsi.nk=" << hpsi_localxc.get_nk() << std::endl;
         // std::cout << "hpsi.nbands=" << hpsi_localxc.get_nbands() << std::endl;
@@ -155,7 +161,7 @@ namespace ModuleIO
             //     psi::Psi<T> hpsi_single_band(&hpsi_localxc(ik, ib, 0), 1, 1, hpsi_localxc.get_current_nbas());
             //     vxcs_op_pw->act(1, psi_pw.get_current_nbas(), psi_pw.npol, psi_single_band.get_pointer(), hpsi_single_band.get_pointer(), psi_pw.get_ngk(ik));
             // }
-            vxcs_op_pw->act(psi_pw.get_nbands(), psi_pw.get_nbasis(), psi_pw.npol, &psi_pw(ik, 0, 0), &hpsi_localxc(ik, 0, 0), psi_pw.get_ngk(ik));
+            vxcs_op_pw->act(psi_pw.get_nbands(), psi_pw.get_nbasis(), psi_pw.get_npol(), &psi_pw(ik, 0, 0), &hpsi_localxc(ik, 0, 0), psi_pw.get_ngk(ik));
             delete vxcs_op_pw;
             std::vector<T> vxc_local_k_mo = psi_Hpsi(&psi_pw(ik, 0, 0), &hpsi_localxc(ik, 0, 0), psi_pw.get_nbasis(), psi_pw.get_nbands());
             Parallel_Reduce::reduce_pool(vxc_local_k_mo.data(), nbands * nbands);
@@ -167,9 +173,11 @@ namespace ModuleIO
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
             if (GlobalC::exx_info.info_global.cal_exx)
             {
-                for (int n = 0; n < naos; ++n)
-                    for (int m = 0; m < naos; ++m)
+                for (int n = 0; n < naos; ++n) {
+                    for (int m = 0; m < naos; ++m) {
                         vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
+}
+}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));
@@ -197,7 +205,7 @@ namespace ModuleIO
         // for (int ir = 0;ir < potxc->get_veff_smooth().nc;++ir)
         //     exc_by_rho += potxc->get_veff_smooth()(0, ir) * chg.rho[0][ir];
         // Parallel_Reduce::reduce_all(exc_by_rho);
-        // exc_by_rho *= ((FPTYPE)GlobalC::ucell.omega * (FPTYPE)GlobalV::NPROC / (FPTYPE)potxc->get_veff_smooth().nc);
+        // exc_by_rho *= ((FPTYPE)ucell.omega * (FPTYPE)GlobalV::NPROC / (FPTYPE)potxc->get_veff_smooth().nc);
         // std::cout << "xc all-bands energy by rho =" << exc_by_rho << std::endl;
         //===== test total xc energy =======
         //===== test total exx energy =======

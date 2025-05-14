@@ -1,7 +1,10 @@
 list(APPEND pymodule_base
     ${PROJECT_SOURCE_DIR}/src/ModuleBase/py_base_math.cpp
-    ${BASE_PATH}/kernels/math_op.cpp
+    ${BASE_PATH}/kernels/math_ylm_op.cpp
+    ${BASE_PATH}/kernels/math_kernel_op.cpp
+    ${BASE_PATH}/kernels/math_kernel_op_vec.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
+    ${BASE_PATH}/module_device/device.cpp
     )
 
 pybind11_add_module(_base_pack MODULE ${pymodule_base})

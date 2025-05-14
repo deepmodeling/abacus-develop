@@ -15,7 +15,7 @@
 #include "../module_ri/test_code/test_function.h"
 #include <sched.h>
 
-void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb) const
+void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, const LCAO_Orbitals& orb) const
 {
 // std::ofstream ofs_mpi(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
 
@@ -26,12 +26,12 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->kmesh_times );
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom( orb, lcaos, this->kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
+		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,orb, lcaos, this->kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 	
 	Exx_Abfs::Jle jle;
-	jle.init_jle( this->kmesh_times, orb );
+	jle.init_jle(this->kmesh_times, ucell , orb);
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 	
@@ -53,7 +53,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 // ofs_mpi<<range_abfs<<std::endl;
 // ofs_mpi<<range_jys<<std::endl;
 
-	std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R();
+	std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R(ucell);
 #if TEST_EXX_RADIAL==2
 	{
 		for(const auto & rA : radial_R)
@@ -75,7 +75,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_lcaoslcaos_lcaoslcaos.init( 1, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_lcaoslcaos_lcaoslcaos.init( 1, ucell,orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_lcaoslcaos_lcaoslcaos.init_radial( lcaos, lcaos, lcaos, lcaos, MGT );
@@ -84,7 +84,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		#else
 		m_lcaoslcaos_lcaoslcaos.init_radial_table();
 		#endif
-		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix_all<double>( index_lcaos, index_lcaos, index_lcaos, index_lcaos);
+		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix_all<double>(ucell,index_lcaos, index_lcaos, index_lcaos, index_lcaos);
 	}();
 	
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -95,16 +95,16 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs21 m_jyslcaos_lcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_jyslcaos_lcaos.init( 1, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_jyslcaos_lcaos.init( 1, ucell , orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_jyslcaos_lcaos.init_radial( jle.jle, lcaos, lcaos, MGT);
 		#if TEST_EXX_RADIAL>=1
-		m_jyslcaos_lcaos.init_radial_table(radial_R);
+		m_jyslcaos_lcaos.init_radial_table( radial_R);
 		#else
 		m_jyslcaos_lcaos.init_radial_table();
 		#endif
-		return m_jyslcaos_lcaos.cal_overlap_matrix_all<double>( index_jys, index_lcaos, index_lcaos );
+		return m_jyslcaos_lcaos.cal_overlap_matrix_all<double>(ucell,index_jys, index_lcaos, index_lcaos );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -115,7 +115,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs11 m_jys_jys;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_jys_jys.init( 2, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_jys_jys.init( 2,ucell,orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_jys_jys.init_radial( jle.jle, jle.jle, MGT );
@@ -124,7 +124,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		#else
 		m_jys_jys.init_radial_table();
 		#endif
-		return m_jys_jys.cal_overlap_matrix_all<double>( index_jys, index_jys );
+		return m_jys_jys.cal_overlap_matrix_all<double>(ucell,index_jys, index_jys );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -135,7 +135,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs11 m_abfs_abfs;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_abfs_abfs.init( 2, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_abfs_abfs.init( 2, ucell, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_abfs_abfs.init_radial( abfs, abfs, MGT );
@@ -144,7 +144,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		#else
 		m_abfs_abfs.init_radial_table();
 		#endif
-		return m_abfs_abfs.cal_overlap_matrix_all<double>( index_abfs, index_abfs );
+		return m_abfs_abfs.cal_overlap_matrix_all<double>(ucell,index_abfs, index_abfs );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -155,7 +155,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs21 m_abfslcaos_lcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_abfslcaos_lcaos.init( 1, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_abfslcaos_lcaos.init( 1, ucell , orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos, MGT );
@@ -164,7 +164,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		#else
 		m_abfslcaos_lcaos.init_radial_table();
 		#endif
-		return m_abfslcaos_lcaos.cal_overlap_matrix_all<double>( index_abfs, index_lcaos, index_lcaos );
+		return m_abfslcaos_lcaos.cal_overlap_matrix_all<double>(ucell,index_abfs, index_lcaos, index_lcaos );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -175,7 +175,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		Matrix_Orbs11 m_jys_abfs;
 		ORB_gaunt_table MGT;
 		int Lmax;
-		m_jys_abfs.init( 2, orb, this->kmesh_times, orb.get_Rmax(), Lmax );
+		m_jys_abfs.init( 2, ucell,orb, this->kmesh_times, orb.get_Rmax(), Lmax );
 		MGT.init_Gaunt_CH(Lmax);
         MGT.init_Gaunt(Lmax);
 		m_jys_abfs.init_radial( jle.jle, abfs, MGT );
@@ -184,7 +184,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 		#else
 		m_jys_abfs.init_radial_table();
 		#endif
-		return m_jys_abfs.cal_overlap_matrix_all<double>( index_jys, index_abfs );
+		return m_jys_abfs.cal_overlap_matrix_all<double>(ucell,index_jys, index_abfs );
 	}();
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
@@ -196,13 +196,13 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 // ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_lcaoslcaos_abfs",ms_lcaoslcaos_abfs);
 // ofs_matrixes(GlobalC::exx_lcao.test_dir.matrix+"ms_jys_abfs",ms_jys_abfs);
 
-	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA )
+	for( size_t TA=0; TA!=ucell.ntype; ++TA )
 	{
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
+		for( size_t IA=0; IA!=ucell.atoms[TA].na; ++IA )
 		{
-			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB )
+			for( size_t TB=0; TB!=ucell.ntype; ++TB )
 			{
-				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
+				for( size_t IB=0; IB!=ucell.atoms[TB].na; ++IB )
 				{
 					if( TA==TB && IA==IB )
 					{
@@ -232,7 +232,8 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)},
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})}};
-							print_matrix(kv,
+							print_matrix(ucell,
+								kv,
 								"matrix",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
@@ -243,7 +244,8 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 						}
 						else
 						{
-							print_matrix(kv,
+							print_matrix(ucell,
+								kv,
 								"matrix",
 								ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I),
 								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
@@ -300,7 +302,8 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) }};
-							print_matrix(kv,
+							print_matrix(ucell,
+								kv,
 								"matrix",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
@@ -311,7 +314,8 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const LCAO_Orbitals& orb)
 						}
 						else
 						{
-							print_matrix(kv,
+							print_matrix(ucell,
+								kv,
 								"matrix",
 								ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB),
 								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA), ms_jys_jys.at(TA).at(IA).at(TB).at(IB)},
@@ -378,23 +382,23 @@ std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
 	}
 }
 
-std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R() const
+std::map<size_t,std::map<size_t,std::set<double>>> Exx_Opt_Orb::get_radial_R(const UnitCell& ucell) const
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::get_radial_R");
 	std::map<size_t,std::map<size_t,std::set<double>>> radial_R;
-	for( size_t TA=0; TA!=GlobalC::ucell.ntype; ++TA ) {
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA ) {
-			for( size_t TB=0; TB!=GlobalC::ucell.ntype; ++TB ) {
-				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
+	for( size_t TA=0; TA!=ucell.ntype; ++TA ) {
+		for( size_t IA=0; IA!=ucell.atoms[TA].na; ++IA ) {
+			for( size_t TB=0; TB!=ucell.ntype; ++TB ) {
+				for( size_t IB=0; IB!=ucell.atoms[TB].na; ++IB )
 				{
-					const ModuleBase::Vector3<double> &tauA = GlobalC::ucell.atoms[TA].tau[IA];
-					const ModuleBase::Vector3<double> &tauB = GlobalC::ucell.atoms[TB].tau[IB];
+					const ModuleBase::Vector3<double> &tauA = ucell.atoms[TA].tau[IA];
+					const ModuleBase::Vector3<double> &tauB = ucell.atoms[TB].tau[IB];
 					const double delta_R = (-tauA+tauB).norm();
 					radial_R[TA][TB].insert( delta_R );
 					radial_R[TB][TA].insert( delta_R );
 				}
-}
-}
-}
+			}
+		}
+	}
 	return radial_R;
 }

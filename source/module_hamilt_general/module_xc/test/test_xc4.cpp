@@ -56,6 +56,7 @@ class XCTest_SCAN : public XCTest
 TEST_F(XCTest_SCAN, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),3);
+    EXPECT_TRUE(XC_Functional::get_ked_flag());
     std::vector<double> e_ref  = {-1.802228724,-1.802210367,-1.526620682,-0.03583190143,-19035.36827};
     std::vector<double> v1_ref = {-1.40580492,-1.405589907,-1.349177581,-0.5343722373,-14.09114168};
     std::vector<double> v2_ref = {-0.002302953645,-0.002306239202,-0.002688619206,-0.07677599434,-3.0633237e-07};

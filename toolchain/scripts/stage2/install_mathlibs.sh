@@ -25,6 +25,10 @@ case "$MATH_MODE" in
     "${SCRIPTDIR}"/stage2/install_mkl.sh "${with_mkl}"
     load "${BUILDDIR}/setup_mkl"
     ;;
+  aocl)
+    "${SCRIPTDIR}"/stage2/install_aocl.sh "${with_aocl}"
+    load "${BUILDDIR}/setup_aocl"
+    ;;
   openblas)
     "${SCRIPTDIR}"/stage2/install_openblas.sh "${with_openblas}"
     load "${BUILDDIR}/setup_openblas"

@@ -10,9 +10,9 @@ if [[ ! -f output ]] ||
    [[ ! -f OUT.ABACUS/running_scf.log ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] 
 then
-	echo "job is failed!"
+	echo "job failed!"
 	exit 1
 else
-	echo "job is successed!"
+	echo "job succeeded!"
 	exit 0
 fi

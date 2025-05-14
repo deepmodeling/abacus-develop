@@ -8,7 +8,7 @@
 #include "module_base/tool_threading.h"
 #include "module_base/vector3.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/module_tddft/td_current.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
@@ -117,7 +117,9 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
     ModuleBase::timer::tick("ModuleIO", "cal_tmp_DM");
 }
 
-void ModuleIO::write_current(const int istep,
+void ModuleIO::write_current(const UnitCell& ucell,
+                             const Grid_Driver& gd,
+                             const int istep,
                              const psi::Psi<std::complex<double>>* psi,
                              const elecstate::ElecState* pelec,
                              const K_Vectors& kv,
@@ -126,14 +128,15 @@ void ModuleIO::write_current(const int istep,
                              const LCAO_Orbitals& orb,
                              Record_adj& ra)
 {
-
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
+
     TD_current* cal_current = nullptr;
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
+
     if (!TD_Velocity::tddft_velocity)
     {
-        cal_current = new TD_current(&GlobalC::ucell, &GlobalC::GridD, pv, orb, intor);
+        cal_current = new TD_current(&ucell, &gd, pv, orb, intor);
         cal_current->calculate_vcomm_r();
         cal_current->calculate_grad_term();
         for (int dir = 0; dir < 3; dir++)
@@ -145,7 +148,7 @@ void ModuleIO::write_current(const int istep,
     {
         if (TD_Velocity::td_vel_op == nullptr)
         {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gague infos is null!");
+            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
         }
         for (int dir = 0; dir < 3; dir++)
         {
@@ -154,32 +157,39 @@ void ModuleIO::write_current(const int istep,
     }
 
     // construct a DensityMatrix object
-    // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
-    // be refactored in the future.
-    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[PARAM.inp.nspin];
+    // Since the function cal_dm_psi do not suport DMR in complex type, 
+    // I replace it with two DMR in double type.
+    // Should be refactored in the future.
+
+    const int nspin0 = PARAM.inp.nspin;
+    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin0];
+
     elecstate::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 
     // init DMR
-    DM_real.init_DMR(ra, &GlobalC::ucell);
-    DM_imag.init_DMR(ra, &GlobalC::ucell);
+    DM_real.init_DMR(ra, &ucell);
+    DM_imag.init_DMR(ra, &ucell);
 
     int nks = DM_real.get_DMK_nks();
-    if (PARAM.inp.nspin == 2)
+    if (nspin0 == 2)
     {
         nks /= 2;
     }
+
     double current_total[3] = {0.0, 0.0, 0.0};
-    for (int is = 1; is <= PARAM.inp.nspin; ++is)
+    for (int is = 1; is <= nspin0; ++is)
     {
         for (int ik = 0; ik < nks; ++ik)
         {
-            cal_tmp_DM(DM_real, DM_imag, ik, PARAM.inp.nspin, is);
+            cal_tmp_DM(DM_real, DM_imag, ik, nspin0, is);
             // check later
             double current_ik[3] = {0.0, 0.0, 0.0};
             int total_irr = 0;
+
 #ifdef _OPENMP
 #pragma omp parallel
             {
@@ -197,37 +207,37 @@ void ModuleIO::write_current(const int istep,
 #ifdef _OPENMP
 #pragma omp for schedule(dynamic)
 #endif
-                for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+                for (int iat = 0; iat < ucell.nat; iat++)
                 {
-                    const int T1 = GlobalC::ucell.iat2it[iat];
-                    Atom* atom1 = &GlobalC::ucell.atoms[T1];
-                    const int I1 = GlobalC::ucell.iat2ia[iat];
+                    const int T1 = ucell.iat2it[iat];
+                    Atom* atom1 = &ucell.atoms[T1];
+                    const int I1 = ucell.iat2ia[iat];
                     // get iat1
-                    int iat1 = GlobalC::ucell.itia2iat(T1, I1);
+                    int iat1 = ucell.itia2iat(T1, I1);
 
                     int irr = pv->nlocstart[iat];
-                    const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+                    const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                     for (int cb = 0; cb < ra.na_each[iat]; ++cb)
                     {
                         const int T2 = ra.info[iat][cb][3];
                         const int I2 = ra.info[iat][cb][4];
 
-                        const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                        const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
-                        Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                        Atom* atom2 = &ucell.atoms[T2];
 
                         // get iat2
-                        int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                        int iat2 = ucell.itia2iat(T2, I2);
                         double Rx = ra.info[iat][cb][0];
                         double Ry = ra.info[iat][cb][1];
                         double Rz = ra.info[iat][cb][2];
-                        // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:
-                        // " << Rz << std::endl;
+
                         //  get BaseMatrix
                         hamilt::BaseMatrix<double>* tmp_matrix_real
                             = DM_real.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         hamilt::BaseMatrix<double>* tmp_matrix_imag
                             = DM_imag.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                         // refactor
                         hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx
                             = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
@@ -235,12 +245,15 @@ void ModuleIO::write_current(const int istep,
                             = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz
                             = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                         if (tmp_matrix_real == nullptr)
                         {
                             continue;
                         }
+
                         int row_ap = pv->atom_begin_row[iat1];
                         int col_ap = pv->atom_begin_col[iat2];
+
                         // get DMR
                         for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
                         {
@@ -285,6 +298,7 @@ void ModuleIO::write_current(const int istep,
             {
                 current_total[i] += current_ik[i];
             }
+
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_Velocity::out_current_k)
             {

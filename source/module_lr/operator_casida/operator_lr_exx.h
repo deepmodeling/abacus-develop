@@ -32,7 +32,7 @@ namespace LR
             const Parallel_Orbitals& pmat_in,
             const double& alpha = 1.0,
             const std::vector<int>& aims_nbasis = {})
-            : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt),
+            : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin),
             psi_ks(psi_ks_in), DM_trans(DM_trans_in), exx_lri(exx_lri_in), kv(kv_in),
             pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in), alpha(alpha),
             aims_nbasis(aims_nbasis)
@@ -42,8 +42,11 @@ namespace LR
             this->is_first_node = false;
 
             // reduce psi_ks for later use
-            this->psi_ks_full.resize(this->kv.get_nks(), nocc + nvirt, this->naos);
-            LR_Util::gather_2d_to_full(this->pc, this->psi_ks.get_pointer(), this->psi_ks_full.get_pointer(), false, this->naos, nocc + nvirt);
+            this->psi_ks_full.resize(this->nk, nocc + nvirt, this->naos);
+            for (int ik = 0;ik < nk;++ik)
+            {
+                LR_Util::gather_2d_to_full(this->pc, &this->psi_ks(ik, 0, 0), &this->psi_ks_full(ik, 0, 0), false, this->naos, nocc + nvirt);
+            }
 
             // get cells in BvK supercell
             const TC period = RI_Util::get_Born_vonKarmen_period(kv_in);
@@ -63,12 +66,13 @@ namespace LR
                          const int ngk_ik = 0,
                          const bool is_first_node = false) const override;
 
-      private:
+    private:
         //global sizes
-        const int& nspin;
-        const int& naos;
-        const int& nocc;
-        const int& nvirt;
+        const int nspin = 1;
+        const int naos = 1;
+        const int nocc = 1;
+        const int nvirt = 1;
+        const int nk = 1;  ///< number of k-points
         const double alpha = 1.0;   //(allow non-ref constant)
         const bool cal_dm_trans = false;
         const bool tdm_sym = false; ///< whether transition density matrix is symmetric

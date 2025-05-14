@@ -71,24 +71,24 @@ public:
 	/// @brief  get energy cutoff, which is used to truncate SBF Jlq. 
 	/// @param  
 	/// @return energy cutoff in Ry
-	const double &get_ecut(void) const {return ecut;}
+	const double &get_ecut() const {return ecut;}
 	/// @brief cutoff radius of radial SBF Jlq.
 	/// @param  
 	/// @return cutoff radius in a.u.
-	const double &get_rcut(void) const {return rcut;}
+	const double &get_rcut() const {return rcut;}
 
-	const double &get_tolerence(void) const {return tolerence;}
+	const double &get_tolerence() const {return tolerence;}
 
 
 	/// @brief check if SBFs are smoothed (mohan add 2009-08-28)
 	/// @attention in this case, the Jlq are not the true Jlq.
 	/// @param  
 	/// @return boolean whether SBFs are smoothed
-	const bool &get_smooth(void) const {return smooth;}
+	const bool &get_smooth() const {return smooth;}
 	/// @brief get sigma the stddev (standard deviation) used in smooth function (Gaussian function)
 	/// @param  
 	/// @return stddev of smooth function
-	const double &get_sigma(void) const {return sigma;}
+	const double &get_sigma() const {return sigma;}
 
 private:
 	/// @brief the most important array to calculate spillage, has dimension (ntype, lmax+1, max_n, nk)
@@ -101,20 +101,20 @@ private:
 	ModuleBase::realArray TableOne;
 
 	/// @brief mesh of k vector, k is in j_l(k*r)
-	int kmesh;
+	int kmesh=0;
 	/// @brief grid of k
 	double Dk;
 	/// @brief number of q vector, q is in j_l(q*r)
 	int Ecut_number;
 	/// @brief Cutoff radius (in a.u.) of SBFs, for any SBF j_l(qr), r>=rcut, j_l(q*r) = 0 (if not smoothed)
-	double rcut;
+	double rcut=0.0;
 	/// @brief energy cutoff for determining kmesh and number of SBFs
-	double ecut;
-	double tolerence;
+	double ecut=0.0;
+	double tolerence=0.0;
 	/// @brief whether smooth SBFs around cutoff radius, resulting in non-zero values. For importance of smooth of SBFs, see J. Phys.: Condens. Matter 22 (2010) 445501, eqn 6. (mohan add 2009-01-18)
-	bool smooth;
+	bool smooth=false;
 	/// @brief stddev of smooth function (Gaussian function, centered at rcut)
-	double sigma;
+	double sigma=0.0;
 
 	/// @brief Allocate memory for C4 matrix and initialize all elements to one.
 	/// @param ntype number of atom types
@@ -146,7 +146,7 @@ private:
 		const UnitCell& ucell
 		);
 
-	void init_TableOne(void);
+	void init_TableOne();
 
 	/// @brief calculate F_{aln}(it, il, in, ik) = sum_{ie}{C4(it, il, in, ie)*TableOne(il, ie, ik)}, where TableOne is overlap integral between two spherical bessel functions (jle(r) and jlk(r))
 	/// @param ntype number of atomtype
@@ -162,7 +162,7 @@ private:
 		);
 	
 	/// @brief number of localized wave functions
-	int nwfc;
+	int nwfc=0;
 
 	/// @brief calculate element value of TableOne matrix
 	/// @details (be called in Bessel_Basis::init(), used for outputing overlap Q matrix) initialize the table whose matrix element is the result of integral int{dr r^2 jle(r)*jlk(r)}, TableOne has three subscript (l, ie, ik), the first runs over orbitals' angular momentum and ie, ik run over ecut_number and kmesh SBFs

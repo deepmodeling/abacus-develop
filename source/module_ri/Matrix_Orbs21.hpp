@@ -22,6 +22,7 @@ RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 	const Matrix_Order &matrix_order) const
 {
 	RI::Tensor<Tdata> m;
+	const double lat0 = *this->lat0;
 	const size_t sizeA1 = index_A1[TA].count_size;
 	const size_t sizeA2 = index_A2[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
@@ -60,7 +61,7 @@ RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 									const size_t NB = co8.first;
 									for( size_t MB=0; MB!=2*LB+1; ++MB )
 									{
-										const Tdata overlap = co8.second.cal_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB );
+										const Tdata overlap = co8.second.cal_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB );
 										const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
 										const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
 										const size_t iB = index_B[TB][LB][NB][MB];
@@ -98,6 +99,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 	const Matrix_Order &matrix_order) const
 {
 	std::array<RI::Tensor<Tdata>,3> m;
+	const double lat0 = *this->lat0;
 	const size_t sizeA1 = index_A1[TA].count_size;
 	const size_t sizeA2 = index_A2[TA].count_size;
 	const size_t sizeB = index_B[TB].count_size;
@@ -139,7 +141,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 									const size_t NB = co8.first;
 									for( size_t MB=0; MB!=2*LB+1; ++MB )
 									{
-										const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co8.second.cal_grad_overlap( tauA*GlobalC::ucell.lat0, tauB*GlobalC::ucell.lat0, MA1, MA2, MB ));
+										const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co8.second.cal_grad_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB ));
 										const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
 										const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
 										const size_t iB = index_B[TB][LB][NB][MB];
@@ -170,6 +172,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 
 template <typename Tdata> 
 std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<RI::Tensor<Tdata>>>>>> Matrix_Orbs21::cal_overlap_matrix_all(
+	const UnitCell &ucell,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A1,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A2,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B) const
@@ -181,16 +184,16 @@ std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<
 	for( const auto &co1 : center2_orb21_s )
 	{
 		const size_t TA = co1.first;
-		for( size_t IA=0; IA!=GlobalC::ucell.atoms[TA].na; ++IA )
+		for( size_t IA=0; IA!=ucell.atoms[TA].na; ++IA )
 		{
-			const ModuleBase::Vector3<double> &tauA( GlobalC::ucell.atoms[TA].tau[IA] );
+			const ModuleBase::Vector3<double> &tauA( ucell.atoms[TA].tau[IA] );
 
 			for( const auto &co2 : co1.second )
 			{
 				const size_t TB = co2.first;
-				for( size_t IB=0; IB!=GlobalC::ucell.atoms[TB].na; ++IB )
+				for( size_t IB=0; IB!=ucell.atoms[TB].na; ++IB )
 				{
-					const ModuleBase::Vector3<double> &tauB( GlobalC::ucell.atoms[TB].tau[IB] );
+					const ModuleBase::Vector3<double> &tauB( ucell.atoms[TB].tau[IB] );
 
 					const RI::Tensor<Tdata> &&m = cal_overlap_matrix<Tdata>( TA, TB, tauA, tauB, index_A1, index_A2, index_B, Matrix_Order::A2BA1 );
 					matrixes[TA][IA][TB][IB].resize(2);

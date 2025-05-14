@@ -178,12 +178,12 @@ int CellIndex::iw2l(int iat, int iw)
         iw -= blockSize;
         if (iw < 0)
         {
-            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
         }
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
     }
     throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
@@ -203,12 +203,12 @@ int CellIndex::iw2z(int iat, int iw)
         iw -= blockSize;
         if (iw < 0)
         {
-            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
         }
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
     }
     throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }
@@ -228,12 +228,12 @@ int CellIndex::iw2m(int iat, int iw)
         iw -= blockSize;
         if (iw < 0)
         {
-            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+            ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
         }
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "iw out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
     }
     throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 }

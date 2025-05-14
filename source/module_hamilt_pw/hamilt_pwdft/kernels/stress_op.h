@@ -23,7 +23,7 @@ struct cal_dbecp_noevc_nl_op
     /// @param npw - number of planewaves
     /// @param npwx - max number of planewaves
     /// @param ik - the current k point
-    /// @param tpiba - GlobalC::ucell.tpiba
+    /// @param tpiba - ucell.tpiba
     /// @param gcar - GlobalC::wfcpw->gcar
     /// @param kvec_c - GlobalC::wfcpw->kvec_c
     /// @param vkbi - _vkb0[ipol]
@@ -69,12 +69,13 @@ struct cal_stress_nl_op
     /// @param deeq_2 - the second dimension of deeq
     /// @param deeq_3 - the third dimension of deeq
     /// @param deeq_4 - the forth dimension of deeq
-    /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
-    /// @param atom_na - GlobalC::ucell.atoms[ii].na
+    /// @param atom_nh - ucell.atoms[ii].ncpp.nh
+    /// @param atom_na - ucell.atoms[ii].na
     /// @param d_wg - input parameter wg
+    /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb
-    /// @param qq_nt - GlobalC::ppcell.qq_nt
-    /// @param deeq - GlobalC::ppcell.deeq
+    /// @param qq_nt - ppcell.qq_nt
+    /// @param deeq - ppcell.deeq
     /// @param becp - intermediate matrix with PARAM.inp.nbands * nkb
     /// @param dbecp - intermediate matrix with 3 * PARAM.inp.nbands * nkb
     ///
@@ -94,6 +95,7 @@ struct cal_stress_nl_op
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -113,9 +115,39 @@ struct cal_stress_nl_op
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // kernel for DFT+U
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& wg_nc,
+                    const int& ik,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const std::complex<FPTYPE>* vu,
+                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // kernel for DeltaSpin
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& wg_nc,
+                    const int& ik,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const double* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
@@ -218,6 +250,16 @@ struct cal_force_npw_op{
     );
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_multi_dot_op{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
+
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -258,6 +300,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -277,9 +320,39 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // kernel for DFT+U
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& wg_nc,
+                    const int& ik,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const std::complex<FPTYPE>* vu,
+                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // kernel for DeltaSpin
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& wg_nc,
+                    const int& ik,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const double* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
@@ -351,6 +424,15 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
                     FPTYPE* vq);
 };
 
+template <typename FPTYPE>
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
 
 /**
  * The operator is used to compute the auxiliary amount of stress /force 

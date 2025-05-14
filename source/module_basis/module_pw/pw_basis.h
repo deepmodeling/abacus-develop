@@ -1,11 +1,13 @@
 #ifndef PWBASIS_H
 #define PWBASIS_H
 
+#include "module_base/macros.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_base/vector3.h"
 #include <complex>
-#include "fft.h"
+#include "module_fft/fft_bundle.h"
 #include <cstring>
 #ifdef __MPI
 #include "mpi.h"
@@ -98,10 +100,11 @@ public:
 //===============================================
 public:
 #ifdef __MPI
-    MPI_Comm pool_world;
+    MPI_Comm pool_world=MPI_COMM_NULL;
 #endif
 
     int *ig2isz=nullptr; // map ig to (is, iz).
+    int *ig2ixyz_gpu = nullptr;
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
@@ -236,14 +239,15 @@ public:
     int nx=0, ny=0, nz=0, nxyz=0, nxy=0; // Gamma_only: fftny = int(ny/2)-1 , others: fftny = ny
     int liy=0, riy=0;// liy: the left edge of the pw ball; riy: the right edge of the pw ball in the y direction
     int lix=0, rix=0;// lix: the left edge of the pw ball; rix: the right edge of the pw ball in the x direction
-    bool xprime = true; // true: when do recip2real, x-fft will be done last and when doing real2recip, x-fft will be done first; false: y-fft
-                         // For gamma_only, true: we use half x; false: we use half y
+    bool xprime = true; // true: when do recip2real, x-fft will be done last and when doing real2recip, x-fft will be
+                        // done first; false: y-fft For gamma_only, true: we use half x; false: we use half y
     int ng_xeq0 = 0; //only used when xprime = true, number of g whose gx = 0
-    int nmaxgr=0; // Gamma_only: max between npw and (nrxx+1)/2, others: max between npw and nrxx
-                // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
-    FFT ft;
+    int nmaxgr = 0;  // Gamma_only: max between npw and (nrxx+1)/2, others: max between npw and nrxx
+                     // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
+    // FFT ft;
+    FFT_Bundle fft_bundle;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
-
+    
     template <typename FPTYPE>
     void real2recip(const FPTYPE* in,
                     std::complex<FPTYPE>* out,
@@ -264,6 +268,148 @@ public:
                     std::complex<FPTYPE>* out,
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    
+    template <typename FPTYPE>
+    void real2recip_gpu(const FPTYPE* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void real2recip_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real_gpu(const std::complex<FPTYPE>* in,
+                    FPTYPE* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    template <typename FPTYPE>
+    void recip2real_gpu(const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const bool add = false,
+                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+
+    /**
+     * @brief Converts data from reciprocal space to real space on Cpu
+     *
+     * This function handles the conversion of data from reciprocal space (Fourier space) to real space.
+     * It supports complex types as input.
+     * The output can be either the same fundamental type or the underlying real type of a complex type.
+     *
+     * @tparam FPTYPE The type of the input data, which can only be a compelx type (e.g., std::complex<float>, std::complex<double>)
+     * @tparam Device The device type, must be base_device::DEVICE_CPU.
+     * @tparam std::enable_if<!std::is_same<FPTYPE, typename GetTypeReal<FPTYPE>::type>::value, int>::type
+     *         SFINAE constraint to ensure that FPTYPE is a complex type.
+     * @tparam std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type
+     *         SFINAE constraint to ensure that Device is base_device::DEVICE_CPU.
+     *
+     * @param in Pointer to the input data array in reciprocal space.
+     * @param out Pointer to the output data array in real space. If FPTYPE is a complex type,
+     *            this should point to an array of the underlying real type.
+     * @param add Boolean flag indicating whether to add the result to the existing values in the output array.
+     * @param factor A scaling factor applied to the output values.
+     */
+    template <typename TK,
+              typename TR,
+              typename Device,
+              typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
+                                          && (std::is_same<TR, typename GetTypeReal<TK>::type>::value
+                                              || std::is_same<TR, TK>::value)
+                                          && std::is_same<Device, base_device::DEVICE_CPU>::value,
+                                      int>::type
+              = 0>
+    void recip_to_real(TK* in, TR* out, const bool add = false, const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+        this->recip2real(in, out, add, factor);
+    };
+
+    /**
+     * @brief Converts data from reciprocal space (Fourier space) to real space.
+     *
+     * This function handles the conversion of data from reciprocal space (typically after a Fourier transform)
+     * to real space, supporting scenarios where the input is of a complex type and the output is of the underlying
+     * fundamental type.
+     *
+     * @tparam FPTYPE The underlying fundamental type of the input data (e.g., float, double).
+     *         Note that the actual type passed should be std::complex<FPTYPE>.
+     * @tparam Device The device type, which can be any supported device type (e.g., base_device::DEVICE_CPU).
+     *
+     * @param in Pointer to the input data array in reciprocal space, of type std::complex<FPTYPE>*.
+     * @param out Pointer to the output data array in real space, of type FPTYPE*.
+     * @param add Optional boolean flag, default value false, indicating whether to add the result to the existing
+     * values in the output array.
+     * @param factor Optional scaling factor, default value 1.0, applied to the output values.
+     */
+    template <typename TK,
+              typename TR,
+              typename Device,
+              typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
+                                          && (std::is_same<TR, typename GetTypeReal<TK>::type>::value
+                                              || std::is_same<TR, TK>::value)
+                                          && std::is_same<Device, base_device::DEVICE_GPU>::value,
+                                      int>::type
+              = 0>
+    void recip_to_real(TK* in,
+                       TR* out,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->recip2real_gpu(in,out,add,factor);
+                       };
+
+    // template <typename FPTYPE,
+    //         typename Device,
+    //         typename std::enable_if<!std::is_same<FPTYPE, typename GetTypeReal<FPTYPE>::type>::value, int>::type = 0>
+    // void recip_to_real(FPTYPE* in,
+    //                    FPTYPE* out,
+    //                    const bool add = false,
+    //                    const typename GetTypeReal<FPTYPE>::type factor = 1.0) const;
+    /**
+     * @brief Converts data from real space to reciprocal space (Fourier space).
+     *
+     * This function handles the conversion of data from real space to reciprocal space (typically after performing a
+     * Fourier transform), supporting scenarios where the input is of a fundamental type (e.g., float, double) and the
+     * output is of a complex type.
+     *
+     * @tparam FPTYPE The underlying fundamental type of the input data (e.g., float, double).
+     *         SFINAE constraint ensures that FPTYPE is a fundamental type, not a complex type.
+     * @tparam Device The device type, which must be base_device::DEVICE_CPU.
+     * @tparam std::enable_if<std::is_same<FPTYPE, typename GetTypeReal<FPTYPE>::type>::value, int>::type
+     *         SFINAE constraint to ensure that FPTYPE is a fundamental type.
+     * @tparam std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type
+     *         SFINAE constraint to ensure that Device is base_device::DEVICE_CPU.
+     *
+     * @param in Pointer to the input data array in real space, of type FPTYPE*.
+     * @param out Pointer to the output data array in reciprocal space, of type std::complex<FPTYPE>*.
+     * @param ik Optional parameter, default value 0, representing some index or identifier.
+     * @param add Optional boolean flag, default value false, indicating whether to add the result to the existing
+     * values in the output array.
+     * @param factor Optional scaling factor, default value 1.0, applied to the output values.
+     */
+    template <typename TR,typename TK,typename Device,
+            typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
+                    && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
+                    && std::is_same<Device, base_device::DEVICE_CPU>::value ,int>::type = 0>
+    void real_to_recip(TR* in,
+                       TK* out,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+    {
+        this->real2recip(in, out, add, factor);
+    }
+
+    template <typename TR, typename TK, typename Device,
+            typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
+                    && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
+                    && std::is_same<Device, base_device::DEVICE_GPU>::value ,int>::type = 0>
+    void real_to_recip(TR* in,
+                       TK* out,
+                       const bool add = false,
+                       const typename GetTypeReal<TK>::type factor = 1.0) const
+                       {
+                        this->real2recip_gpu(in,out,add,factor);
+                       };
 
   protected:
     //gather planes and scatter sticks of all processors
@@ -280,19 +426,20 @@ public:
 
     using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
-    using syncmem_int_h2d_op
-        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
-
+    using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    // using default_device_cpu = base_device::DEVICE_CPU;
+    
     void set_device(std::string device_);
     void set_precision(std::string precision_);
 
 protected:
-    std::string device = "cpu";
-    std::string precision = "double";
-};
 
+  std::string device = "cpu";       ///< cpu or gpu
+  std::string precision = "double"; ///< single, double, mixing
+  bool double_data_ = true;         ///<  if has double data
+  bool float_data_ = false;         ///< if has float data
+};
 }
 #endif // PWBASIS_H
-
 #include "pw_basis_sup.h"
 #include "pw_basis_big.h" //temporary it will be removed

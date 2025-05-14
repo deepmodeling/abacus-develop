@@ -5,13 +5,14 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_dm/density_matrix.h"
+#include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_psi/psi.h"
-#include "module_elecstate/potentials/potential_new.h"
-#include "module_elecstate/elecstate.h"
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -51,6 +52,7 @@ class Force_LCAO
                 const bool isstress,
                 ForceStressArrays& fsr, // mohan add 2024-06-16
                 const UnitCell& ucell,
+                const Grid_Driver& gd,
                 const psi::Psi<T>* psi,
                 const elecstate::ElecState* pelec,
                 ModuleBase::matrix& foverlap,
@@ -62,7 +64,9 @@ class Force_LCAO
                 ModuleBase::matrix& svnl_dbeta,
                 ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
+                ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
+                LCAO_Deepks<T>& ld,
 #endif
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
@@ -72,7 +76,9 @@ class Force_LCAO
                 Record_adj* ra = nullptr);
 
     // get the ds, dt, dvnl.
-    void allocate(const Parallel_Orbitals& pv,
+    void allocate(const UnitCell& ucell,
+                  const Grid_Driver& gd,
+                  const Parallel_Orbitals& pv,
                   ForceStressArrays& fsr, // mohan add 2024-06-15
                   const TwoCenterBundle& two_center_bundle,
                   const LCAO_Orbitals& orb,
@@ -83,7 +89,7 @@ class Force_LCAO
 
     void average_force(double* fm);
 
-    //void test(Parallel_Orbitals& pv, double* mm, const std::string& name);
+    // void test(Parallel_Orbitals& pv, double* mm, const std::string& name);
 
     //-------------------------------------------------------------
     // forces reated to overlap matrix
@@ -116,17 +122,6 @@ class Force_LCAO
                         ModuleBase::matrix& stvnl_dphi,
                         Record_adj* ra = nullptr);
 
-    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* dm,
-                        const Parallel_Orbitals& pv,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const TwoCenterIntegrator& intor_orb_beta,
-                        Grid_Driver& gd,
-                        const bool isforce,
-                        const bool isstress,
-                        ModuleBase::matrix& fvnl_dbeta,
-                        ModuleBase::matrix& svnl_dbeta);
-
     //-------------------------------------------
     // forces related to local pseudopotentials
     //-------------------------------------------
@@ -138,14 +133,14 @@ class Force_LCAO
                       ModuleBase::matrix& svl_dphi);
 
     elecstate::DensityMatrix<T, double> cal_edm(const elecstate::ElecState* pelec,
-        const psi::Psi<T>& psi,
-        const elecstate::DensityMatrix<T, double>& dm,
-        const K_Vectors& kv,
-        const Parallel_Orbitals& pv,
-        const int& nspin, 
-        const int& nbands,
-        const UnitCell& ucell,
-        Record_adj& ra) const;
+                                                const psi::Psi<T>& psi,
+                                                const elecstate::DensityMatrix<T, double>& dm,
+                                                const K_Vectors& kv,
+                                                const Parallel_Orbitals& pv,
+                                                const int& nspin,
+                                                const int& nbands,
+                                                const UnitCell& ucell,
+                                                Record_adj& ra) const;
 };
 
 #endif

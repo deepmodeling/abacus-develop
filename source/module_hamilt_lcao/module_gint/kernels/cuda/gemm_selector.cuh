@@ -2,7 +2,7 @@
 #define GEMM_SELECTOR_H
 
 #include "module_cell/unitcell.h"
-
+#include "cuda_runtime.h"
 typedef std::function<void(int,
                            int,
                            int*,

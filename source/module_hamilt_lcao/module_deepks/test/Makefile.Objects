@@ -7,15 +7,14 @@ HEADERS= *.h
 
 OBJS_MAIN=klist_1.o\
 parallel_orbitals.o\
-nnr.o\
+deepks_basic.o\
+deepks_force.o\
+deepks_iterate.o\
+deepks_vdelta.o\
+deepks_pdm.o\
+deepks_phialpha.o\
 LCAO_deepks.o\
-LCAO_deepks_fdelta.o\
 LCAO_deepks_io.o\
-LCAO_deepks_mpi.o\
-LCAO_deepks_pdm.o\
-LCAO_deepks_psialpha.o\
-LCAO_deepks_vdelta.o\
-LCAO_deepks_torch.o\
 
 OBJS_IO=output.o\
 
@@ -68,9 +67,10 @@ ORB_nonlocal.o\
 ORB_nonlocal_lm.o\
 ORB_gaunt_table.o\
 
-OBJS_NEIGHBOR=sltk_adjacent_set.o\
-sltk_atom_arrange.o\
+OBJS_NEIGHBOR=sltk_atom_arrange.o\
 sltk_atom.o\
-sltk_atom_input.o\
 sltk_grid.o\
 sltk_grid_driver.o
+
+OBJS_ELECSTATE=read_pseudo.o\
+cal_nelec_nband.o\

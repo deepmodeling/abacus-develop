@@ -3,11 +3,14 @@
 
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 #include "sto_wf.h"
+
 // qianrui create 2021-6-4
 
-class Sto_Stress_PW : public Stress_Func<double>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
+class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
 {
   public:
     Sto_Stress_PW(){};
@@ -21,11 +24,12 @@ class Sto_Stress_PW : public Stress_Func<double>
                     Structure_Factor* p_sf,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<double>>* psi_in,
-                    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
+                    const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                     const Charge* const chr,
-                    pseudopot_cell_vnl* nlpp_in,
-                    const UnitCell& ucell_in);
+                    const pseudopot_cell_vl* locpp,
+                    const pseudopot_cell_vnl* nlpp,
+                    UnitCell& ucell_in);
 
   private:
     void sto_stress_kin(ModuleBase::matrix& sigma,
@@ -33,8 +37,8 @@ class Sto_Stress_PW : public Stress_Func<double>
                         ModuleSymmetry::Symmetry* p_symm,
                         K_Vectors* p_kv,
                         ModulePW::PW_Basis_K* wfc_basis,
-                        const psi::Psi<complex<double>>* psi_in,
-                        Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf);
+                        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                        const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
 
     void sto_stress_nl(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
@@ -42,8 +46,15 @@ class Sto_Stress_PW : public Stress_Func<double>
                        ModuleSymmetry::Symmetry* p_symm,
                        K_Vectors* p_kv,
                        ModulePW::PW_Basis_K* wfc_basis,
-                       const psi::Psi<complex<double>>* psi_in,
-                       Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
-                       pseudopot_cell_vnl* nlpp_in);
+                       const pseudopot_cell_vnl& nlpp,
+                       const UnitCell& ucell,
+                       const psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                       const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
+
+  private:
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 };
 #endif

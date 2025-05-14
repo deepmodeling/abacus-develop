@@ -6,7 +6,9 @@
 #ifndef NORM_PSI_H
 #define NORM_PSI_H
 
+#include "module_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
+
 #include <complex>
 
 namespace module_tddft
@@ -28,9 +30,27 @@ void norm_psi(const Parallel_Orbitals* pv,
               const int nlocal,
               const std::complex<double>* Stmp,
               std::complex<double>* psi_k,
+              std::ofstream& ofs_running,
               const int print_matrix);
 
-#endif
+void norm_psi_tensor(const Parallel_Orbitals* pv,
+                     const int nband,
+                     const int nlocal,
+                     const ct::Tensor& Stmp,
+                     ct::Tensor& psi_k,
+                     std::ofstream& ofs_running,
+                     const int print_matrix);
+
+template <typename Device>
+void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
+                            const int nband,
+                            const int nlocal,
+                            const ct::Tensor& Stmp,
+                            ct::Tensor& psi_k,
+                            std::ofstream& ofs_running,
+                            const int print_matrix);
+
+#endif // __MPI
 } // namespace module_tddft
 
 #endif

@@ -45,7 +45,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       HContainer<TR>* hR_in,
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
-                                      Grid_Driver* GridD_in,
+                                      const Grid_Driver* GridD_in,
                                       const TwoCenterIntegrator* intor);
 
     /**
@@ -78,7 +78,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in);
+    void initialize_HR(const Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the electronic kinetic matrix with specific <I,J,R> atom-pairs

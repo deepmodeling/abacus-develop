@@ -22,14 +22,16 @@ unkOverlap_lcao::~unkOverlap_lcao()
         delete [] cal_tag;
     }
 
-    // GlobalV::ofs_running << "this is ~unkOverlap_lcao()" << std::endl;
 }
 
-void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCAO_Orbitals& orb)
+void unkOverlap_lcao::init(const UnitCell& ucell,
+                           const Grid_Technique& gt, 
+                           const int nkstot, 
+                           const LCAO_Orbitals& orb)
 {
-    // std::cout << "unkOverlap_lcao::init start" << std::endl;
 
-    int Lmax_used, Lmax;
+    int Lmax_used = 0;
+    int Lmax = 0;
     int exx_lmax = 0;
 #ifdef __EXX
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
@@ -40,7 +42,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
+        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
@@ -66,11 +68,11 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
 
-    const int T = 0;                                                    // any selected element type
+    const int T = 0;                                           // any selected element type
     orb_r.set_orbital_info(orb.Phi[T].PhiLN(0, 0).getLabel(),  // atom label
-                           T,                                           // atom type
-                           1,                                           // angular momentum L
-                           1,                                           // number of orbitals of this L , just N
+                           T,                                  // atom type
+                           1,                                  // angular momentum L
+                           1,                                  // number of orbitals of this L , just N
                            orb.Phi[T].PhiLN(0, 0).getNr(),     // number of radial mesh
                            orb.Phi[T].PhiLN(0, 0).getRab(),    // the mesh interval in radial mesh
                            orb.Phi[T].PhiLN(0, 0).getRadial(), // radial mesh value(a.u.)
@@ -98,7 +100,8 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
 
 #ifdef __MPI
     // parallel scheme
-    int nproc, myrank;
+    int nproc=0;
+    int myrank=0;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     const int total_term = PARAM.globalv.nlocal * PARAM.globalv.nlocal;
@@ -140,9 +143,9 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
         }
     }
 
-    for (int TA = 0; TA < GlobalC::ucell.ntype; TA++)
+    for (int TA = 0; TA < ucell.ntype; TA++)
     {
-        for (int TB = 0; TB < GlobalC::ucell.ntype; TB++)
+        for (int TB = 0; TB < ucell.ntype; TB++)
         {
             for (int LA = 0; LA <= orb.Phi[TA].getLmax(); LA++)
             {
@@ -165,9 +168,9 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
         }
     }
 
-    for (int TA = 0; TA < GlobalC::ucell.ntype; TA++)
+    for (int TA = 0; TA < ucell.ntype; TA++)
     {
-        for (int TB = 0; TB < GlobalC::ucell.ntype; TB++)
+        for (int TB = 0; TB < ucell.ntype; TB++)
         {
             for (int LA = 0; LA <= orb.Phi[TA].getLmax(); LA++)
             {
@@ -191,43 +194,66 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
         }
     }
 
-    for (auto& co1: center2_orb11)
-        for (auto& co2: co1.second)
-            for (auto& co3: co2.second)
-                for (auto& co4: co3.second)
-                    for (auto& co5: co4.second)
-                        for (auto& co6: co5.second)
-                            co6.second.init_radial_table();
+    for (auto& co1: center2_orb11) 
+	{
+		for (auto& co2: co1.second) 
+		{
+			for (auto& co3: co2.second) 
+			{
+				for (auto& co4: co3.second) 
+				{
+					for (auto& co5: co4.second) 
+					{
+						for (auto& co6: co5.second) 
+						{
+							co6.second.init_radial_table();
+						}
+					}
+				}
+			}
+		}
+	}
 
-    for (auto& co1: center2_orb21_r)
-        for (auto& co2: co1.second)
-            for (auto& co3: co2.second)
-                for (auto& co4: co3.second)
-                    for (auto& co5: co4.second)
-                        for (auto& co6: co5.second)
-                            co6.second.init_radial_table();
+	for (auto& co1: center2_orb21_r) 
+	{
+		for (auto& co2: co1.second) 
+		{
+			for (auto& co3: co2.second) 
+			{
+				for (auto& co4: co3.second) 
+				{
+					for (auto& co5: co4.second) 
+					{
+						for (auto& co6: co5.second) 
+						{
+							co6.second.init_radial_table();
+						}
+					}
+				}
+			}
+		}
+	}
 
-    rcut_orb_.resize(orb.get_ntype());
-    for (int it = 0; it < orb.get_ntype(); ++it) {
-        rcut_orb_[it] = orb.Phi[it].getRcut();
-    }
+	rcut_orb_.resize(orb.get_ntype());
+	for (int it = 0; it < orb.get_ntype(); ++it) 
+	{
+		rcut_orb_[it] = orb.Phi[it].getRcut();
+	}
 
-    // std::cout << "unkOverlap_lcao::init end" << std::endl;
     return;
 }
 
-int unkOverlap_lcao::iw2it(int iw)
+int unkOverlap_lcao::iw2it(const UnitCell& ucell, int iw)
 {
-    int ic, type;
-    ic = 0;
-    type = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    int ic = 0;
+    int type = 0;
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
+            for (int L = 0; L < ucell.atoms[it].nwl + 1; L++)
             {
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for (int N = 0; N < ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for (int i = 0; i < (2 * L + 1); i++)
                     {
@@ -244,18 +270,17 @@ int unkOverlap_lcao::iw2it(int iw)
     return type;
 }
 
-int unkOverlap_lcao::iw2ia(int iw)
+int unkOverlap_lcao::iw2ia(const UnitCell& ucell,int iw)
 {
-    int ic, na;
-    ic = 0;
-    na = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    int ic = 0;
+    int na = 0;
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
+            for (int L = 0; L < ucell.atoms[it].nwl + 1; L++)
             {
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for (int N = 0; N < ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for (int i = 0; i < (2 * L + 1); i++)
                     {
@@ -272,18 +297,17 @@ int unkOverlap_lcao::iw2ia(int iw)
     return na;
 }
 
-int unkOverlap_lcao::iw2iL(int iw)
+int unkOverlap_lcao::iw2iL(const UnitCell& ucell, int iw)
 {
-    int ic, iL;
-    ic = 0;
-    iL = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    int ic = 0;
+    int iL = 0;
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
+            for (int L = 0; L < ucell.atoms[it].nwl + 1; L++)
             {
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for (int N = 0; N < ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for (int i = 0; i < (2 * L + 1); i++)
                     {
@@ -300,18 +324,18 @@ int unkOverlap_lcao::iw2iL(int iw)
     return iL;
 }
 
-int unkOverlap_lcao::iw2iN(int iw)
+int unkOverlap_lcao::iw2iN(const UnitCell& ucell,int iw)
 {
     int ic, iN;
     ic = 0;
     iN = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
+            for (int L = 0; L < ucell.atoms[it].nwl + 1; L++)
             {
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for (int N = 0; N < ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for (int i = 0; i < (2 * L + 1); i++)
                     {
@@ -328,18 +352,17 @@ int unkOverlap_lcao::iw2iN(int iw)
     return iN;
 }
 
-int unkOverlap_lcao::iw2im(int iw)
+int unkOverlap_lcao::iw2im(const UnitCell& ucell, int iw)
 {
-    int ic, im;
-    ic = 0;
-    im = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    int ic = 0;
+    int im = 0;
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
+            for (int L = 0; L < ucell.atoms[it].nwl + 1; L++)
             {
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for (int N = 0; N < ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for (int i = 0; i < (2 * L + 1); i++)
                     {
@@ -357,7 +380,7 @@ int unkOverlap_lcao::iw2im(int iw)
 }
 
 // search for the nearest neighbor atoms
-void unkOverlap_lcao::cal_R_number()
+void unkOverlap_lcao::cal_R_number(const UnitCell& ucell, const Grid_Driver& gd)
 {
     // The number of overlaps between atomic orbitals 1 and atomic orbitals 2,
     // or the number of R, is empty when there is no overlap
@@ -368,39 +391,39 @@ void unkOverlap_lcao::cal_R_number()
     }
 
     ModuleBase::Vector3<double> tau1, tau2, dtau;
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+        Atom* atom1 = &ucell.atoms[T1];
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
+            gd.Find_atom(ucell, tau1, T1, I1);
 
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
+            for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad)
             {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
-                const double R_direct_x = (double)GlobalC::GridD.getBox(ad).x;
-                const double R_direct_y = (double)GlobalC::GridD.getBox(ad).y;
-                const double R_direct_z = (double)GlobalC::GridD.getBox(ad).z;
+                const int T2 = gd.getType(ad);
+                const int I2 = gd.getNatom(ad);
+                Atom* atom2 = &ucell.atoms[T2];
+                const double R_direct_x = (double)gd.getBox(ad).x;
+                const double R_direct_y = (double)gd.getBox(ad).y;
+                const double R_direct_z = (double)gd.getBox(ad).z;
 
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
+                tau2 = gd.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
+                double distance = dtau.norm() * ucell.lat0;
                 double rcut = rcut_orb_[T1] + rcut_orb_[T2];
                 if (distance < rcut - 1.0e-15)
                 {
-                    // translate: the unit of R_car is GlobalC::ucell.lat0
-                    ModuleBase::Vector3<double> R_car = R_direct_x * GlobalC::ucell.a1 + R_direct_y * GlobalC::ucell.a2
-                                                        + R_direct_z * GlobalC::ucell.a3;
+                    // translate: the unit of R_car is ucell.lat0
+                    ModuleBase::Vector3<double> R_car = R_direct_x * ucell.a1 + R_direct_y * ucell.a2
+                                                        + R_direct_z * ucell.a3;
 
                     for (int iw1 = 0; iw1 < atom1->nw; iw1++)
                     {
-                        int orb_index_in_NLOCAL_1 = GlobalC::ucell.itiaiw2iwt(T1, I1, iw1);
+                        int orb_index_in_NLOCAL_1 = ucell.itiaiw2iwt(T1, I1, iw1);
                         for (int iw2 = 0; iw2 < atom2->nw; iw2++)
                         {
-                            int orb_index_in_NLOCAL_2 = GlobalC::ucell.itiaiw2iwt(T2, I2, iw2);
+                            int orb_index_in_NLOCAL_2 = ucell.itiaiw2iwt(T2, I2, iw2);
                             orb1_orb2_R[orb_index_in_NLOCAL_1][orb_index_in_NLOCAL_2].push_back(R_car);
                         } // end iw2
 
@@ -416,7 +439,7 @@ void unkOverlap_lcao::cal_R_number()
     return;
 }
 
-void unkOverlap_lcao::cal_orb_overlap()
+void unkOverlap_lcao::cal_orb_overlap(const UnitCell& ucell)
 {
     // std::cout << "the cal_orb_overlap is start" << std::endl;
     psi_psi.resize(PARAM.globalv.nlocal);
@@ -436,26 +459,28 @@ void unkOverlap_lcao::cal_orb_overlap()
             // if ( !pv.in_this_processor(iw1,iw2) ) continue;
 
             // iw1 and iw2 never have overlap
-            if (orb1_orb2_R[iw1][iw2].empty())
-                continue;
+			if (orb1_orb2_R[iw1][iw2].empty()) 
+			{
+				continue;
+			}
 
-            int atomType1 = iw2it(iw1);
-            int ia1 = iw2ia(iw1);
-            int N1 = iw2iN(iw1);
-            int L1 = iw2iL(iw1);
-            int m1 = iw2im(iw1);
-            int atomType2 = iw2it(iw2);
-            int ia2 = iw2ia(iw2);
-            int N2 = iw2iN(iw2);
-            int L2 = iw2iL(iw2);
-            int m2 = iw2im(iw2);
+            int atomType1 = iw2it(ucell,iw1);
+            int ia1 = iw2ia(ucell,iw1);
+            int N1 = iw2iN(ucell,iw1);
+            int L1 = iw2iL(ucell,iw1);
+            int m1 = iw2im(ucell,iw1);
+            int atomType2 = iw2it(ucell,iw2);
+            int ia2 = iw2ia(ucell,iw2);
+            int N2 = iw2iN(ucell,iw2);
+            int L2 = iw2iL(ucell,iw2);
+            int m2 = iw2im(ucell,iw2);
 
             for (int iR = 0; iR < orb1_orb2_R[iw1][iw2].size(); iR++)
             {
                 ModuleBase::Vector3<double> r_distance
-                    = (GlobalC::ucell.atoms[atomType2].tau[ia2] - GlobalC::ucell.atoms[atomType1].tau[ia1]
+                    = (ucell.atoms[atomType2].tau[ia2] - ucell.atoms[atomType1].tau[ia1]
                        + orb1_orb2_R[iw1][iw2][iR])
-                      * GlobalC::ucell.lat0;
+                      * ucell.lat0;
                 psi_psi[iw1][iw2].push_back(
                     center2_orb11[atomType1][atomType2][L1][N1][L2].at(N2).cal_overlap(origin_point,
                                                                                        r_distance,
@@ -487,18 +512,19 @@ void unkOverlap_lcao::cal_orb_overlap()
         }
     }
 
-    // std::cout << "the cal_orb_overlap is end" << std::endl;
     return;
 }
 
-void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
+void unkOverlap_lcao::prepare_midmatrix_pblas(const UnitCell& ucell,
+                                              const int ik_L,
                                               const int ik_R,
                                               const ModuleBase::Vector3<double> dk,
                                               std::complex<double>*& midmatrix,
                                               const Parallel_Orbitals& pv,
                                               const K_Vectors& kv)
 {
-    // ModuleBase::Vector3<double> dk = kv.kvec_c[ik_R] - kv.kvec_c[ik_L];
+    assert(pv.nloc>0);
+ 
     midmatrix = new std::complex<double>[pv.nloc];
     ModuleBase::GlobalFunc::ZEROS(midmatrix, pv.nloc);
     for (int iw_row = 0; iw_row < PARAM.globalv.nlocal; iw_row++) // global
@@ -511,13 +537,13 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
             if (ir >= 0 && ic >= 0)
             {
                 int index = ic * pv.nrow + ir;
-                ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[iw2it(iw_row)].tau[iw2ia(iw_row)];
+                ModuleBase::Vector3<double> tau1 = ucell.atoms[iw2it(ucell,iw_row)].tau[iw2ia(ucell,iw_row)];
                 for (int iR = 0; iR < orb1_orb2_R[iw_row][iw_col].size(); iR++)
                 {
                     double kRn = (kv.kvec_c[ik_R] * orb1_orb2_R[iw_row][iw_col][iR] - dk * tau1) * ModuleBase::TWO_PI;
                     std::complex<double> kRn_phase(cos(kRn), sin(kRn));
                     std::complex<double> orb_overlap(psi_psi[iw_row][iw_col][iR],
-                                                     (-dk * GlobalC::ucell.tpiba * psi_r_psi[iw_row][iw_col][iR]));
+                                                     (-dk * ucell.tpiba * psi_r_psi[iw_row][iw_col][iR]));
                     midmatrix[index] = midmatrix[index] + kRn_phase * orb_overlap;
                 }
             }
@@ -525,7 +551,8 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
     }
 }
 
-std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
+std::complex<double> unkOverlap_lcao::det_berryphase(const UnitCell& ucell,
+                                                     const int ik_L,
                                                      const int ik_R,
                                                      const ModuleBase::Vector3<double> dk,
                                                      const int occ_bands,
@@ -541,7 +568,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
     ModuleBase::GlobalFunc::ZEROS(C_matrix, para_orb.nloc);
     ModuleBase::GlobalFunc::ZEROS(out_matrix, para_orb.nloc);
 
-    this->prepare_midmatrix_pblas(ik_L, ik_R, dk, midmatrix, para_orb, kv);
+    this->prepare_midmatrix_pblas(ucell,ik_L, ik_R, dk, midmatrix, para_orb, kv);
 
     char transa = 'C';
     char transb = 'N';
@@ -590,8 +617,10 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
             &one,
             para_orb.desc);
 
+    assert(para_orb.nrow>0);
+
     int* ipiv = new int[para_orb.nrow];
-    int info;
+    int info = 0;
     pzgetrf_(&occBands, &occBands, out_matrix, &one, &one, para_orb.desc, ipiv, &info);
 
     for (int i = 0; i < occBands; i++) // global

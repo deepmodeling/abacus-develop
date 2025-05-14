@@ -13,55 +13,37 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-K_Vectors::K_Vectors()
+void K_Vectors::cal_ik_global()
 {
-#ifdef _MCD_CHECK
-    FILE* out;
-    out = fopen("1_Memory", "w");
-    if (out == NULL)
+    const int my_pool = this->para_k.my_pool;
+    this->ik2iktot.resize(this->nks);
+#ifdef __MPI
+    if(this->nspin == 2)
     {
-        std::cout << "\n Can't open file!";
-        ModuleBase::QUIT();
-    }
-    _MCD_RealTimeLog(out);
-    _MCD_MemStatLog(out);
-//	showMemStats();
-#endif
-
-    nspin = 0; // default spin.
-    kc_done = false;
-    kd_done = false;
-    kc_done_full = false;
-    kd_done_full = false;
-
-    nks = 0;
-    nkstot = 0;
-    k_nkstot = 0; // LiuXh add 20180619
-}
-
-K_Vectors::~K_Vectors()
-{
-//	ModuleBase::TITLE("K_Vectors","~K_Vectors");
-#ifdef _MCD_CHECK
-    showMemStats();
-#endif
-}
-
-int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
-{
-    int nkp = nkstot / PARAM.inp.kpar;
-    int rem = nkstot % PARAM.inp.kpar;
-    if (GlobalV::MY_POOL < rem)
-    {
-        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
+        for (int ik = 0; ik < this->nks / 2; ++ik)
+        {
+            this->ik2iktot[ik] = this->para_k.startk_pool[my_pool] + ik;
+            this->ik2iktot[ik + this->nks / 2] = this->nkstot / 2 + this->para_k.startk_pool[my_pool] + ik;
+        }
     }
     else
     {
-        return GlobalV::MY_POOL * nkp + rem + ik;
+        for (int ik = 0; ik < this->nks; ++ik)
+        {
+            this->ik2iktot[ik] = this->para_k.startk_pool[my_pool] + ik;
+        }
     }
+#else
+    for (int ik = 0; ik < this->nks; ++ik)
+    {
+        this->ik2iktot[ik] = ik;
+    }
+#endif
+
 }
 
-void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
+void K_Vectors::set(const UnitCell& ucell,
+                    const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
                     const int& nspin_in,
                     const ModuleBase::Matrix3& reciprocal_vec,
@@ -70,7 +52,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " | Setup K-points                                                     |" << std::endl;
@@ -79,7 +61,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     ofs << " | We treat the spin as another set of k-points.                      |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    ofs << "\n\n\n\n";
+    ofs << "\n\n";
 
     ofs << "\n SETUP K-POINTS" << std::endl;
 
@@ -95,7 +77,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     this->nspin = (this->nspin == 4) ? 1 : this->nspin;
 
     // read KPT file and generate K-point grid
-    bool read_succesfully = this->read_kpoints(k_file_name);
+    bool read_succesfully = this->read_kpoints(ucell,k_file_name);
 #ifdef __MPI
     Parallel_Common::bcast_bool(read_succesfully);
 #endif
@@ -120,7 +102,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     {
         bool match = true;
         // calculate kpoints in IBZ and reduce kpoints according to symmetry
-        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, ucell, match);
 #ifdef __MPI
         Parallel_Common::bcast_bool(match);
 #endif
@@ -135,7 +117,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                 std::cout << "Automatically set symmetry to 0 and continue ..." << std::endl;
                 ModuleSymmetry::Symmetry::symm_flag = 0;
                 match = true;
-                this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+                this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, ucell, match);
             } else {
                 ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint",
                                          "Possible solutions: \n \
@@ -157,7 +139,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     {
         // output kpoints file
         std::stringstream skpt;
-        skpt << PARAM.globalv.global_readin_dir << "kpoints";
+        skpt << PARAM.globalv.global_out_dir << "KPT.info"; //mohan modified 20250325
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
@@ -170,12 +152,12 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     // It's very important in parallel case,
     // firstly do the mpi_k() and then
     // do set_kup_and_kdw()
-    GlobalC::Pkpoints.kinfo(nkstot,
-                            GlobalV::KPAR,
-                            GlobalV::MY_POOL,
-                            GlobalV::RANK_IN_POOL,
-                            GlobalV::NPROC,
-                            nspin_in); // assign k points to several process pools
+    this->para_k.kinfo(nkstot,
+                       GlobalV::KPAR,
+                       GlobalV::MY_POOL,
+                       GlobalV::RANK_IN_POOL,
+                       GlobalV::NPROC,
+                       nspin_in); // assign k points to several process pools
 #ifdef __MPI
     // distribute K point data to the corresponding process
     this->mpi_k(); // 2008-4-29
@@ -183,6 +165,9 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
 
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
+
+    // get ik2iktot
+    this->cal_ik_global();
 
     this->print_klists(ofs);
 
@@ -227,7 +212,8 @@ void K_Vectors::renew(const int& kpoint_number)
 
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
 // Generate K-point grid according to different parameters of the KPT file
-bool K_Vectors::read_kpoints(const std::string& fn)
+bool K_Vectors::read_kpoints(const UnitCell& ucell,
+                             const std::string& fn)
 {
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
@@ -254,16 +240,16 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             ModuleBase::WARNING_QUIT("K_Vectors", "kspacing should > 0");
         };
         // number of K points = max(1,int(|bi|/KSPACING+1))
-        ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
+        ModuleBase::Matrix3 btmp = ucell.G;
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
         int nk1
-            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / ucell.lat0 + 1));
         int nk2
-            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / ucell.lat0 + 1));
         int nk3
-            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
@@ -665,9 +651,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
-        GlobalV::ofs_running << "(for reciprocal lattice: )" << std::endl;
-          ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
+						  nullptr);
+		GlobalV::ofs_running << "\n For reciprocal-space lattice:" << std::endl;
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", recip_brav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
 
@@ -710,7 +696,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                               ucell.atoms,
                               false,
                               nullptr);
-            GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
+            GlobalV::ofs_running << "\n For k vectors:" << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", k_brav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", k_brav_name);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", k_brav_type);
@@ -979,7 +965,8 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                         break;
                     }
                 }
-                if (exist_number != -1) break;
+                if (exist_number != -1) { break;
+}
             }
             this->kstars[exist_number].insert(std::make_pair(isym, kvec_d[i]));
         }
@@ -1018,7 +1005,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot_ibz", nkstot_ibz);
 
     table.clear();
-    table += "K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
+    table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY:\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n", "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz");
     for (int ik = 0; ik < nkstot_ibz; ik++)
     {
@@ -1123,7 +1110,7 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Ma
         kd_done = true;
     }
     std::string table;
-    table += "K-POINTS DIRECT COORDINATES\n";
+    table += " K-POINTS DIRECT COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
     for (int i = 0; i < nkstot; i++)
     {
@@ -1194,7 +1181,7 @@ void K_Vectors::mpi_k()
 
     Parallel_Common::bcast_double(koffset, 3);
 
-    this->nks = GlobalC::Pkpoints.nks_pool[GlobalV::MY_POOL];
+    this->nks = this->para_k.nks_pool[GlobalV::MY_POOL];
 
     GlobalV::ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "k-point number in this process", nks);
@@ -1248,7 +1235,7 @@ void K_Vectors::mpi_k()
     for (int i = 0; i < nks; i++)
     {
         // 3 is because each k point has three value:kx, ky, kz
-        k_index = i + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+        k_index = i + this->para_k.startk_pool[GlobalV::MY_POOL];
         kvec_c[i].x = kvec_c_aux[k_index * 3];
         kvec_c[i].y = kvec_c_aux[k_index * 3 + 1];
         kvec_c[i].z = kvec_c_aux[k_index * 3 + 2];
@@ -1360,7 +1347,7 @@ void K_Vectors::print_klists(std::ofstream& ofs)
         ModuleBase::WARNING_QUIT("print_klists", "nkstot < nks");
     }
     std::string table;
-    table += "K-POINTS CARTESIAN COORDINATES\n";
+    table += " K-POINTS CARTESIAN COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "CARTESIAN_X", "CARTESIAN_Y", "CARTESIAN_Z", "WEIGHT");
     for (int i = 0; i < nks; i++)
     {
@@ -1374,7 +1361,7 @@ void K_Vectors::print_klists(std::ofstream& ofs)
     GlobalV::ofs_running << "\n" << table << std::endl;
 
     table.clear();
-    table += "K-POINTS DIRECT COORDINATES\n";
+    table += " K-POINTS DIRECT COORDINATES\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s\n", "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
     for (int i = 0; i < nks; i++)
     {
@@ -1442,12 +1429,6 @@ void K_Vectors::set_after_vc(const int& nspin_in,
         ModuleBase::Matrix3 RT = latvec.Transpose();
         for (int i = 0; i < nks; i++)
         {
-            //			std::cout << " ik=" << i
-            //				<< " kvec.x=" << kvec_c[i].x
-            //				<< " kvec.y=" << kvec_c[i].y
-            //				<< " kvec.z=" << kvec_c[i].z << std::endl;
-            // wrong!            kvec_d[i] = RT * kvec_c[i];
-            // mohan fixed bug 2011-03-07
             kvec_d[i] = kvec_c[i] * RT;
         }
         kd_done = true;

@@ -17,9 +17,9 @@ protected:
     double tol = 1e-5;
     int final_iter = 0;
     int flag = 0;
-    char *task = NULL;
-    double *p = NULL;
-    double *x = NULL;
+    char *task = nullptr;
+    double *p = nullptr;
+    double *x = nullptr;
 
     void SetUp()
     {
@@ -61,7 +61,8 @@ protected:
         {
             tools.dfuncdx(x, gradient, func_label);
             residual = 0;
-            for (int i = 0; i<3 ;++i) residual += gradient[i] * gradient[i];
+            for (int i = 0; i<3 ;++i) { residual += gradient[i] * gradient[i];
+}
             if (residual < tol) 
             {
                 final_iter = iter;
@@ -75,7 +76,8 @@ protected:
             {
                 tn.next_direct(x, gradient, flag, p, &(tools.mf), &ModuleESolver::ESolver_OF::dfuncdx);
             }
-            for (int i = 0; i < 3; ++i) temp_x[i] = x[i];
+            for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
+}
             task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
             while (true)
             {
@@ -84,7 +86,8 @@ protected:
                 ds.dcSrch(f, g, step, task);
                 if (task[0] == 'F' && task[1] == 'G')
                 {
-                    for (int j = 0; j < 3; ++j) temp_x[j] = x[j] + step * p[j];
+                    for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
+}
                     continue;
                 }
                 else if (task[0] == 'C' && task[1] == 'O')
@@ -100,7 +103,8 @@ protected:
                     break;
                 }
             }
-            for (int i = 0; i < 3; ++i) x[i] += step * p[i];
+            for (int i = 0; i < 3; ++i) { x[i] += step * p[i];
+}
         }
         delete[] temp_x;
         delete[] gradient;
@@ -110,20 +114,28 @@ protected:
 
 TEST_F(TN_test, TN_Solve_LinearEq)
 {
+#ifdef __MPI
+#undef __MPI
     Solve(0);
     EXPECT_NEAR(x[0], 0.50000000000003430589, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000166533, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 1);
     ASSERT_EQ(tn.get_iter(), 1);
+#define __MPI
+#endif
 }
 
 TEST_F(TN_test, TN_Min_Func)
 {
+#ifdef __MPI
+#undef __MPI
     Solve(1);
     EXPECT_NEAR(x[0], 4.0049968540891525137, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.1208751163987624722, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.4951527720891863993, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 6);
     ASSERT_EQ(tn.get_iter(), 6);
+#define __MPI
+#endif
 }

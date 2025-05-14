@@ -14,32 +14,33 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+        void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-        void runner(const int istep, UnitCell& cell) override;
+        void runner(UnitCell& cell, const int istep) override;
 
         double cal_energy() override;
 
-        void cal_force(ModuleBase::matrix& force) override;
+        void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-        void cal_stress(ModuleBase::matrix& stress) override;
+        void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-        void after_all_runners() override;
+        void after_all_runners(UnitCell& ucell) override;
 
       private:
+        double LJ_energy(const double& d, const int& i, const int& j);
 
-        double LJ_energy(const double d, const int i, const int j);
+        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j);
 
-        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double> dr, const int i, const int j);
+        void LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau);
 
-        void LJ_virial(const ModuleBase::Vector3<double>& force,
-            const ModuleBase::Vector3<double>& dtau);
+        void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
 
-        void rcut_search_radius(const std::vector<double>& rcut);
+        void set_c6_c12(const int& ntype,
+                        const int& rule,
+                        const std::vector<double>& epsilon,
+                        const std::vector<double>& sigma);
 
-        void set_c6_c12(const int rule, const std::vector<double> epsilon, const std::vector<double> sigma);
-
-        void cal_en_shift(const bool is_shift);
+        void cal_en_shift(const int& ntype, const bool& is_shift);
 
         //--------------temporary----------------------------
         double search_radius=-1.0;
@@ -48,10 +49,9 @@ namespace ModuleESolver
         ModuleBase::matrix lj_c6;
         ModuleBase::matrix en_shift;
 
-        double lj_potential;
+        double lj_potential=0.0;
         ModuleBase::matrix lj_force;
         ModuleBase::matrix lj_virial;
-        UnitCell* ucell_; ///< pointer to the unitcell information
         //---------------------------------------------------
     };
 }

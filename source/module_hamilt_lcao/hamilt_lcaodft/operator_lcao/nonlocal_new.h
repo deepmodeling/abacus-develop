@@ -44,7 +44,7 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       hamilt::HContainer<TR>* hR_in,
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
-                                      Grid_Driver* GridD_in,
+                                      const Grid_Driver* GridD_in,
                                       const TwoCenterIntegrator* intor);
     ~NonlocalNew<OperatorLCAO<TK, TR>>();
 
@@ -53,6 +53,12 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * <phi_{\mu, 0}|beta_p1>D_{p1, p2}<beta_p2|phi_{\nu, R}>
      */
     virtual void contributeHR() override;
+
+    void cal_force_stress(const bool cal_force,
+                          const bool cal_stress,
+                          const HContainer<TR>* dmR,
+                          ModuleBase::matrix& force,
+                          ModuleBase::matrix& stress);
 
     virtual void set_HR_fixed(void*) override;
 
@@ -75,7 +81,7 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in);
+    void initialize_HR(const Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
@@ -94,6 +100,34 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
                     TR* data_pointer);
+
+    const Grid_Driver* gridD = nullptr;
+
+    /**
+     * @brief calculate the atomic Force of <I,J,R> atom pair
+     */
+    void cal_force_IJR(const int& iat1,
+                       const int& iat2,
+                       const int& T0,
+                       const Parallel_Orbitals* paraV,
+                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                       const hamilt::BaseMatrix<TR>* dmR_pointer,
+                       double* force1,
+                       double* force2);
+    /**
+     * @brief calculate the Stress of <I,J,R> atom pair
+     */
+    void cal_stress_IJR(const int& iat1,
+                        const int& iat2,
+                        const int& T0,
+                        const Parallel_Orbitals* paraV,
+                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                        const hamilt::BaseMatrix<TR>* dmR_pointer,
+                        const ModuleBase::Vector3<double>& dis1,
+                        const ModuleBase::Vector3<double>& dis2,
+                        double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
 };

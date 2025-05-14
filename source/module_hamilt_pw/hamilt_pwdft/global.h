@@ -15,6 +15,8 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #ifdef __CUDA
 #include "cublas_v2.h"
+#include "cufft.h"
+
 static const char* _cublasGetErrorString(cublasStatus_t error)
 {
     switch (error)
@@ -253,20 +255,15 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
 //==========================================================
 namespace GlobalC
 {
-#ifdef __EXX
+//#ifdef __EXX
     extern Exx_Info exx_info;
-#endif
-extern pseudopot_cell_vnl ppcell;
+//#endif
 } // namespace GlobalC
 
 #include "module_cell/parallel_kpoints.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 namespace GlobalC
 {
-extern UnitCell ucell;
-extern Parallel_Grid Pgrid;
-extern Parallel_Kpoints Pkpoints;
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC
 

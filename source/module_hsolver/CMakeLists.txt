@@ -4,11 +4,15 @@ list(APPEND objects
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
+    para_linear_transform.cpp
     hsolver_pw.cpp
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     hsolver.cpp
+    diago_pxxxgvx.cpp
+    diag_hs_para.cpp
+
 )
 
 if(ENABLE_LCAO)
@@ -33,7 +37,6 @@ if(ENABLE_LCAO)
 
   if(USE_CUDA)
       list(APPEND objects
-          ./kernels/math_kernel_op.cpp
           ./kernels/dngvd_op.cpp
           ./kernels/cuda/diag_cusolver.cu
           diago_cusolver.cpp

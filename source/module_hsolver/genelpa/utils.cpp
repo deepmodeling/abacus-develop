@@ -1,6 +1,7 @@
 #include "utils.h"
 
-#include "my_math.hpp"
+#include "module_base/blacs_connector.h"
+#include "module_base/scalapack_connector.h"
 
 #include <complex>
 #include <cstring>

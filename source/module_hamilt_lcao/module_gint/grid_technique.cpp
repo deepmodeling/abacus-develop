@@ -10,8 +10,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
 
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_helper.h"
+
 Grid_Technique::Grid_Technique() {
-    allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
         is_malloced = false;
@@ -32,29 +33,30 @@ Grid_Technique::~Grid_Technique() {
 // after the orbital information has been read,
 // this function control the routinue to generate
 // grid technique parameters.
-void Grid_Technique::set_pbc_grid(
-    const int& ncx_in,
-    const int& ncy_in,
-    const int& ncz_in,
-    const int& bx_in,
-    const int& by_in,
-    const int& bz_in,
-    const int& nbx_in,
-    const int& nby_in,
-    const int& nbz_in,
-    const int& nbxx_in,
-    const int& nbzp_start_in,
-    const int& nbzp_in,
-    const int& ny,
-    const int& nplane,
-    const int& startz_current,
-    const UnitCell& ucell,
-    const double& dr_uniform,
-    const std::vector<double>& rcuts,
-    const std::vector<std::vector<double>>& psi_u,
-    const std::vector<std::vector<double>>& dpsi_u,
-    const std::vector<std::vector<double>>& d2psi_u,
-    const int& num_stream) {
+void Grid_Technique::set_pbc_grid(const int& ncx_in,
+                                  const int& ncy_in,
+                                  const int& ncz_in,
+                                  const int& bx_in,
+                                  const int& by_in,
+                                  const int& bz_in,
+                                  const int& nbx_in,
+                                  const int& nby_in,
+                                  const int& nbz_in,
+                                  const int& nbxx_in,
+                                  const int& nbzp_start_in,
+                                  const int& nbzp_in,
+                                  const int& ny,
+                                  const int& nplane,
+                                  const int& startz_current,
+                                  const UnitCell& ucell,
+                                  const Grid_Driver& gd,
+                                  const double& dr_uniform,
+                                  const std::vector<double>& rcuts,
+                                  const std::vector<std::vector<double>>& psi_u,
+                                  const std::vector<std::vector<double>>& dpsi_u,
+                                  const std::vector<std::vector<double>>& d2psi_u,
+                                  const int& num_stream)
+{
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
@@ -114,8 +116,9 @@ void Grid_Technique::set_pbc_grid(
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
+    this->init_atoms_on_grid(ny, nplane, ucell);
 
+    this->init_ijr_and_nnrg(ucell, gd);
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
@@ -128,8 +131,7 @@ void Grid_Technique::set_pbc_grid(
 }
 
 void Grid_Technique::get_startind(const int& ny,
-                                  const int& nplane,
-                                  const int& startz_current) {
+                                  const int& nplane) {
     ModuleBase::TITLE("Grid_Technique", "get_startind");
 
     assert(nbxx >= 0);
@@ -154,7 +156,7 @@ void Grid_Technique::get_startind(const int& ny,
 
         ix = ibx * this->bx;
         iy = iby * this->by;
-        iz = (ibz + nbzp_start) * this->bz - startz_current;
+        iz = ibz * this->bz;
 
         int ind = iz + iy * nplane + ix * ny * nplane;
 
@@ -169,12 +171,11 @@ void Grid_Technique::get_startind(const int& ny,
 // mohan add 2021-04-06
 void Grid_Technique::init_atoms_on_grid(const int& ny,
                                         const int& nplane,
-                                        const int& startz_current,
                                         const UnitCell& ucell) {
     ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
 
     assert(nbxx >= 0);
-    this->get_startind(ny, nplane, startz_current);
+    this->get_startind(ny, nplane);
 
     // (1) prepare data.
     // counting the number of atoms whose orbitals have
@@ -377,6 +378,8 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     int count = 0;
     this->how_many_atoms = std::vector<int>(nbxx, 0);
     ModuleBase::Memory::record("GT::how many atoms", sizeof(int) * nbxx);
+    std::vector<double> coord_x(total_atoms_on_grid* bxyz, 0.0);
+    std::vector<double> coords3(bxyz * 3, 0.0);
     for(int iat = 0; iat < ucell.nat; iat++)
     {
         const int it = ucell.iat2it[iat];
@@ -430,10 +433,22 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
             this->which_atom[index] = iat;
             this->which_bigcell[index] = im;
             this->which_unitcell[index] = index2ucell[extgrid];
+            for(int imcell = 0; imcell < this -> bxyz; imcell++)
+            {
+                const double dr_x = this->meshcell_pos[imcell][0] + dr_x_part;
+                coord_x[index * bxyz + imcell] = dr_x;
+            }
 
             ++count;
             ++how_many_atoms[bcell_idx_on_proc];
             }
+        }
+    }
+    for(int i = 0; i < this->bxyz; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            coords3[i * 3 + j] = this->meshcell_pos[i][j];
         }
     }
     assert(count == total_atoms_on_grid);
@@ -537,25 +552,79 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     return;
 }
 
-int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, const int iat2) const
-	{
-		const int R1x=this->ucell_index2x[id1];
-		const int R2x=this->ucell_index2x[id2];
-		const int dRx=R1x-R2x;
-		const int R1y=this->ucell_index2y[id1];
-		const int R2y=this->ucell_index2y[id2];
-		const int dRy=R1y-R2y;
-		const int R1z=this->ucell_index2z[id1];
-		const int R2z=this->ucell_index2z[id2];
-		const int dRz=R1z-R2z;
+void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver& gd)
+{
+    ModuleBase::TITLE("Grid_Technique", "init_ijr_and_nnrg");
 
-		const int index=this->cal_RindexAtom(dRx, dRy, dRz, iat2);
+    hamilt::HContainer<double> hRGint_tmp(ucell.nat);
+    // prepare the row_index and col_index for construct AtomPairs, they are
+    // same, name as orb_index
+    std::vector<int> orb_index(ucell.nat + 1);
+    orb_index[0] = 0;
+    for (int i = 1; i < orb_index.size(); i++) {
+        int type = ucell.iat2it[i - 1];
+        orb_index[i] = orb_index[i - 1] + ucell.atoms[type].nw;
+    }
 
-		const int offset = this->binary_search_find_R2_offset(index, iat1);
+    for (int T1 = 0; T1 < ucell.ntype; ++T1) {
+            const Atom* atom1 = &(ucell.atoms[T1]);
+            for (int I1 = 0; I1 < atom1->na; ++I1) {
+                auto& tau1 = atom1->tau[I1];
 
-		assert(offset < this->nad[iat1]);
-		return offset;
-	};
+                gd.Find_atom(ucell, tau1, T1, I1);
+
+                const int iat1 = ucell.itia2iat(T1, I1);
+                // whether this atom is in this processor.
+                if (this->in_this_processor[iat1]) {
+                    for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad) {
+                        const int T2 = gd.getType(ad);
+                        const int I2 = gd.getNatom(ad);
+                        const int iat2 = ucell.itia2iat(T2, I2);
+                        const Atom* atom2 = &(ucell.atoms[T2]);
+
+                        // NOTE: hRGint wil save total number of atom pairs,
+                        // if only upper triangle is saved, the lower triangle will
+                        // be lost in 2D-block parallelization. if the adjacent atom
+                        // is in this processor.
+                        if (this->in_this_processor[iat2]) {
+                            ModuleBase::Vector3<double> dtau
+                                = gd.getAdjacentTau(ad) - tau1;
+                            double distance = dtau.norm() * ucell.lat0;
+                            double rcut
+                                = this->rcuts[T1] + this->rcuts[T2];
+
+                            // if(distance < rcut)
+                            //  mohan reset this 2013-07-02 in Princeton
+                            //  we should make absolutely sure that the distance is
+                            //  smaller than rcuts[it] this should be consistant
+                            //  with LCAO_nnr::cal_nnrg function typical example : 7
+                            //  Bohr cutoff Si orbital in 14 Bohr length of cell.
+                            //  distance = 7.0000000000000000
+                            //  rcuts[it] = 7.0000000000000008
+                            if (distance < rcut - 1.0e-15) {
+                                // calculate R index
+                                auto& R_index = gd.getBox(ad);
+                                // insert this atom-pair into this->hRGint
+                                    hamilt::AtomPair<double> tmp_atom_pair(
+                                        iat1,
+                                        iat2,
+                                        R_index.x,
+                                        R_index.y,
+                                        R_index.z,
+                                        orb_index.data(),
+                                        orb_index.data(),
+                                        ucell.nat);
+                                    hRGint_tmp.insert_pair(tmp_atom_pair);
+                            }
+                        }
+                    }
+                }
+            }
+    }
+    this->ijr_info = hRGint_tmp.get_ijr_info();
+    this->nnrg = hRGint_tmp.get_nnr();
+    return;
+}
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 

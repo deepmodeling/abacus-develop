@@ -1,14 +1,21 @@
+#this is the input of using counterpoise to correct the BSSE error
+#
 INPUT_PARAMETERS
 #Parameters	(General)
 pseudo_dir		../../../tests/PP_ORB
 orbital_dir		../../../tests/PP_ORB
 #Parameters (Accuracy)
-ecutwfc			50
+ecutwfc			 60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_nmax		100
 scf_thr                 1e-6
 basis_type		lcao
 
-gamma_only 1
+gamma_only 1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
 smearing_method gauss
-smearing_sigma 0.02
+smearing_sigma 0.015
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

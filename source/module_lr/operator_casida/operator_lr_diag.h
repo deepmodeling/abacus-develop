@@ -1,6 +1,6 @@
 #pragma once
 #include "module_lr/utils/lr_util.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_hamilt_general/operator.h"
 #ifdef __MPI
 #include "module_base/parallel_common.h"
@@ -46,9 +46,7 @@ namespace LR
             const bool is_first_node = false)const override
         {
             ModuleBase::TITLE("OperatorLRDiag", "act");
-            const int nlocal_ph = nk * pX.get_local_size();   // local size of particle-hole basis
-            hsolver::vector_mul_vector_op<T, Device>()(this->ctx,
-                nk * pX.get_local_size(),
+            ModuleBase::vector_mul_vector_op<T, Device>()(nk * pX.get_local_size(),   // local size of particle-hole basis
                 hpsi,
                 psi_in,
                 this->eig_ks_diff.c);
