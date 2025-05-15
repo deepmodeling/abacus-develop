@@ -47,7 +47,7 @@ void ReadInput::item_deepks()
     {
         Input_Item item("deepks_bandgap");
         item.annotation = ">0 for bandgap label";
-        read_sync_bool(input.deepks_bandgap);
+        read_sync_int(input.deepks_bandgap);
         this->add_item(item);
     }
     {
