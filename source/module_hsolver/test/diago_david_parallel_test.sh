@@ -8,9 +8,9 @@ for i in 6 3 2;do
         continue
     fi
     echo "TEST DIAGO davidson in parallel, nprocs=$i"
-    OMP_NUM_THREADS=1 mpirun -np $i ./HSolver_dav
+    OMP_NUM_THREADS=1 mpirun -np $i ./MODULE_HSOLVER_dav
     e1=$?
-    OMP_NUM_THREADS=1 mpirun -np $i ./HSolver_dav_float
+    OMP_NUM_THREADS=1 mpirun -np $i ./MODULE_HSOLVER_dav_float
     e2=$?
     if [[ e1 -ne 0 || e2 -ne 0 ]];then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\
