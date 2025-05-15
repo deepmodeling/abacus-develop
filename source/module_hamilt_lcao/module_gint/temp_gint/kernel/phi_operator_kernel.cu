@@ -270,7 +270,7 @@ __global__ void phi_dot_phi_kernel(
 
     if(tid == 0)
     {
-        rho[mgrid_local_idx] = tmp_sum;
+        rho[mgrid_local_idx] += tmp_sum;
     }
 }
 
