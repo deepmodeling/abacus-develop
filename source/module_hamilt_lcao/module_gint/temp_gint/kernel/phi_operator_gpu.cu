@@ -122,7 +122,7 @@ void PhiOperatorGpu::set_phi(double* phi_d) const
         phi_d);
 }
 
-void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d)
+void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const
 {
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
@@ -151,6 +151,48 @@ void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_
         dphi_x_d,
         dphi_y_d,
         dphi_z_d);
+}
+
+void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
+                               double* ddphi_yy_d, double* ddphi_yz_d, double* ddphi_zz_d) const
+{
+    // Since the underlying implementation of `set_ddphi` uses `ddphi +=` instead of `ddphi =`,
+    // the ddphi array needs to be zeroed out at the beginning of the function.
+    checkCuda(cudaMemsetAsync(ddphi_xx_d, 0, phi_len_ * sizeof(double), stream_));
+    checkCuda(cudaMemsetAsync(ddphi_xy_d, 0, phi_len_ * sizeof(double), stream_));
+    checkCuda(cudaMemsetAsync(ddphi_xz_d, 0, phi_len_ * sizeof(double), stream_));
+    checkCuda(cudaMemsetAsync(ddphi_yy_d, 0, phi_len_ * sizeof(double), stream_));
+    checkCuda(cudaMemsetAsync(ddphi_yz_d, 0, phi_len_ * sizeof(double), stream_));
+    checkCuda(cudaMemsetAsync(ddphi_zz_d, 0, phi_len_ * sizeof(double), stream_));
+    dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
+    dim3 threads_per_block(64);
+    set_ddphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
+        gint_gpu_vars_->nwmax,
+        mgrids_num_,
+        gint_gpu_vars_->nr_max,
+        gint_gpu_vars_->dr_uniform,
+        gint_gpu_vars_->ylmcoef_d,
+        gint_gpu_vars_->ucell_atom_nwl_d,
+        gint_gpu_vars_->atom_iw2_new_d,
+        gint_gpu_vars_->atom_iw2_ylm_d,
+        gint_gpu_vars_->atom_iw2_l_d,
+        gint_gpu_vars_->atom_nw_d,
+        gint_gpu_vars_->iat2it_d,
+        gint_gpu_vars_->rcut_d,
+        gint_gpu_vars_->psi_u_d,
+        gint_gpu_vars_->dpsi_u_d,
+        gint_gpu_vars_->mgrids_pos_d,
+        atoms_iat_.get_device_ptr(),
+        atoms_bgrids_rcoords_.get_device_ptr(),
+        atoms_num_info_.get_device_ptr(),
+        atoms_phi_start_.get_device_ptr(),
+        bgrids_phi_len_.get_device_ptr(),
+        ddphi_xx_d,
+        ddphi_xy_d,
+        ddphi_xz_d,
+        ddphi_yy_d,
+        ddphi_yz_d,
+        ddphi_zz_d);
 }
 
 void PhiOperatorGpu::phi_mul_vldr3(

@@ -21,7 +21,10 @@ public:
 
     void set_phi(double* phi_d) const;
 
-    void set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d);
+    void set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const;
+
+    void set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
+                   double* ddphi_yy_d, double* ddphi_yz_d, double* ddphi_zz_d) const;
 
     void phi_mul_vldr3(
         const double* vl_d,
