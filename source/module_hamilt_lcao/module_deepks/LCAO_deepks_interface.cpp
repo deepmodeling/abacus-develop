@@ -331,8 +331,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                 wg_hl_range[ir](iks, nocc - 1) = -1.0;
                                 wg_hl_range[ir](iks, nocc + ir + PARAM.inp.deepks_band_range[0]) = 1.0;
                             }
+                            elecstate::cal_dm(ParaV, wg_hl_range[ir - 1], psi, dm_bandgap_range[ir - 1]);
                         }
-                        elecstate::cal_dm(ParaV, wg_hl_range[ir - 1], psi, dm_bandgap_range[ir - 1]);
                     }
 
                     ModuleBase::matrix o_delta(nks, range);
