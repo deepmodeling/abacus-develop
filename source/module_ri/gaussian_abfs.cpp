@@ -33,6 +33,9 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     const int nks0 = kvec_c.size();
 
     this->lambda = lambda;
+    this->tpiba = ucell.tpiba;
+    this->lat0 = ucell.lat0;
+    this->omega = ucell.omega;
     const double eta = 35;
     std::vector<ModuleBase::Vector3<double>> Gvec;
     Gvec.resize(3);
@@ -58,8 +61,8 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     for (size_t ik = 0; ik != nks0; ++ik)
     {
         ModuleBase::Vector3<double> qvec = this->kvec_c[ik];
-        const double Gmax = std::sqrt(eta * this->lambda) + qvec.norm() * ucell.tpiba;
-        std::vector<int> n_supercells = get_n_supercells(ucell.lat0, G, Gmax);
+        const double Gmax = std::sqrt(eta * this->lambda) + qvec.norm() * this->tpiba;
+        std::vector<int> n_supercells = get_n_supercells(this->lat0, G, Gmax);
         int total_cells = std::accumulate(n_supercells.begin(), n_supercells.end(), 1, [](int a, int b) {
             return a * (2 * b + 1);
         });
@@ -95,8 +98,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     ModuleBase::timer::tick("Gaussian_Abfs", "init");
 }
 
-auto Gaussian_Abfs::get_Vq(const UnitCell& ucell,
-                           const int& lp_max,
+auto Gaussian_Abfs::get_Vq(const int& lp_max,
                            const int& lq_max, // Maximum L for which to calculate interaction.
                            const size_t& ik,
                            const double& chi, // Singularity corrected value at q=0.
@@ -109,14 +111,14 @@ auto Gaussian_Abfs::get_Vq(const UnitCell& ucell,
     const T_func_DPcal_lattice_sum<std::complex<double>> func_DPcal_lattice_sum
         = std::bind(&Gaussian_Abfs::get_lattice_sum,
                     this,
-                    ucell.tpiba,
+                    this->tpiba,
                     ik,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(ucell.omega,
+    auto res = this->DPcal_Vq_dVq<RI::Tensor<std::complex<double>>>(this->omega,
                                                                     lp_max,
                                                                     lq_max,
                                                                     ik,
@@ -129,8 +131,7 @@ auto Gaussian_Abfs::get_Vq(const UnitCell& ucell,
     return res;
 }
 
-auto Gaussian_Abfs::get_dVq(const UnitCell& ucell,
-                            const int& lp_max,
+auto Gaussian_Abfs::get_dVq(const int& lp_max,
                             const int& lq_max, // Maximum L for which to calculate interaction.
                             const size_t& ik,
                             const double& chi, // Singularity corrected value at q=0.
@@ -143,14 +144,14 @@ auto Gaussian_Abfs::get_dVq(const UnitCell& ucell,
     const T_func_DPcal_lattice_sum<std::array<std::complex<double>, 3>> func_DPcal_d_lattice_sum
         = std::bind(&Gaussian_Abfs::get_d_lattice_sum,
                     this,
-                    ucell.tpiba,
+                    this->tpiba,
                     ik,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
                     std::placeholders::_4,
                     tau);
-    auto res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(ucell.omega,
+    auto res = this->DPcal_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, 3>>(this->omega,
                                                                                    lp_max,
                                                                                    lq_max,
                                                                                    ik,
@@ -390,7 +391,7 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
             continue;
 
         ModuleBase::Vector3<double> vec = this->qGvecs[ik][idx];
-        const double vec_sq = vec.norm2() * tpiba  * tpiba;
+        const double vec_sq = vec.norm2() * tpiba * tpiba;
         const double vec_abs = std::sqrt(vec_sq);
 
         const double val_s = std::exp(-exponent * vec_sq) * std::pow(vec_abs, power);
@@ -419,9 +420,7 @@ auto Gaussian_Abfs::DPcal_lattice_sum(
     return result;
 }
 
-std::vector<int> Gaussian_Abfs::get_n_supercells(const double& lat0,
-                                                 const ModuleBase::Matrix3& G,
-                                                 const double& Gmax)
+std::vector<int> Gaussian_Abfs::get_n_supercells(const double& lat0, const ModuleBase::Matrix3& G, const double& Gmax)
 {
     std::vector<int> n_supercells(3);
     ModuleBase::Matrix3 GI = G.Inverse();

@@ -170,7 +170,7 @@ auto Ewald_Vq<Tdata>::cal_dVs_gauss(const UnitCell& ucell, const std::vector<TA>
 
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_gauss
         = this->cv.cal_dVs(ucell, list_A0, list_A1, flags);
-    this->cv.dVws = LRI_CV_Tools::get_dCVws(dVs_gauss);
+    this->cv.dVws = LRI_CV_Tools::get_dCVws(ucell, dVs_gauss);
 
     ModuleBase::timer::tick("Ewald_Vq", "cal_dVs_gauss");
     return dVs_gauss;
@@ -323,7 +323,6 @@ auto Ewald_Vq<Tdata>::cal_Vq_gauss(const UnitCell& ucell,
 
     const T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq,
                                                                                           &this->gaussian_abfs,
-                                                                                          ucell,
                                                                                           std::placeholders::_1,
                                                                                           std::placeholders::_2,
                                                                                           std::placeholders::_3,
@@ -350,7 +349,6 @@ auto Ewald_Vq<Tdata>::cal_dVq_gauss(const UnitCell& ucell,
     const T_func_DPget_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, Ndim>> func_DPget_dVq
         = std::bind(&Gaussian_Abfs::get_dVq,
                     &this->gaussian_abfs,
-                    ucell,
                     std::placeholders::_1,
                     std::placeholders::_2,
                     std::placeholders::_3,
@@ -577,14 +575,14 @@ auto Ewald_Vq<Tdata>::cal_Vq(const UnitCell& ucell,
     const T_func_DPcal_Vq_dVq_minus_gauss<RI::Tensor<std::complex<double>>, RI::Tensor<Tdata>> func_cal_Vq_minus_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_Vq_minus_gauss,
                     this,
-                    ucell,
+                    std::ref(ucell),
                     this->list_A0_pair_R,
                     this->list_A1_pair_R,
                     std::placeholders::_1);
     const T_func_DPcal_Vq_dVq_gauss<RI::Tensor<std::complex<double>>> func_cal_Vq_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_Vq_gauss,
                     this,
-                    ucell,
+                    std::ref(ucell),
                     this->list_A0_k,
                     this->list_A1_k,
                     chi,
@@ -619,14 +617,14 @@ auto Ewald_Vq<Tdata>::cal_dVq(const UnitCell& ucell,
                                           std::array<RI::Tensor<Tdata>, Ndim>>
         func_cal_dVq_minus_gauss = std::bind(&Ewald_Vq<Tdata>::cal_dVq_minus_gauss,
                                              this,
-                                             ucell,
+                                             std::ref(ucell),
                                              this->list_A0_pair_R,
                                              this->list_A1_pair_R,
                                              std::placeholders::_1);
     const T_func_DPcal_Vq_dVq_gauss<std::array<RI::Tensor<std::complex<double>>, Ndim>> func_cal_dVq_gauss
         = std::bind(&Ewald_Vq<Tdata>::cal_dVq_gauss,
                     this,
-                    ucell,
+                    std::ref(ucell),
                     this->list_A0_k,
                     this->list_A1_k,
                     chi,

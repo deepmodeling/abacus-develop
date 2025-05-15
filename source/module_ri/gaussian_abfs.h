@@ -26,8 +26,7 @@ class Gaussian_Abfs
               const ModuleBase::Matrix3& G,
               const double& lambda);
 
-    RI::Tensor<std::complex<double>> get_Vq(const UnitCell& ucell,
-                                            const int& lp_max,
+    RI::Tensor<std::complex<double>> get_Vq(const int& lp_max,
                                             const int& lq_max, // Maximum L for which to calculate interaction.
                                             const size_t& ik,
                                             const double& chi, // Singularity corrected value at q=0.
@@ -35,7 +34,6 @@ class Gaussian_Abfs
                                             const ModuleBase::realArray& gaunt);
 
     std::array<RI::Tensor<std::complex<double>>, 3> get_dVq(
-        const UnitCell& ucell,
         const int& lp_max,
         const int& lq_max, // Maximum L for which to calculate interaction.
         const size_t& ik,
@@ -73,6 +71,9 @@ Calculate the lattice sum over a Gaussian:
 
   private:
     double lambda;
+    double tpiba;
+    double lat0;
+    double omega;
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     std::vector<std::vector<ModuleBase::Vector3<double>>> qGvecs;
     std::vector<int> n_cells;
