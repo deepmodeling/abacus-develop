@@ -83,7 +83,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             ModuleBase::GlobalFunc::OUT(ofs_running, "atom label", ucell.atoms[it].label);
 
             bool set_element_mag_zero = false;
-            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_magnetization[it]);
+            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it]);
 
 #ifndef __SYMMETRY
             //===========================================
