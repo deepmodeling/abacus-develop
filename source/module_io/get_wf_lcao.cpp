@@ -58,10 +58,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
-    if (out_wfc_pw || out_wfc_r)
-    {
-        psi_g.resize(nspin, nbands, kv.ngk[0]);
-    }
+
+    // if (out_wfc_pw || out_wfc_r)
+    psi_g.resize(nspin, nbands, kv.ngk[0]);
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
@@ -158,84 +157,67 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // Set this->bands_picked_ according to the mode
     this->select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
 
-    if (out_wfc_pw || out_wfc_r)
+    // Calculate out_wfc_re_im
+    for (int ib = 0; ib < nbands; ++ib)
     {
-        // Calculate out_wfc_re_im
-        for (int ib = 0; ib < nbands; ++ib)
+        if (bands_picked_[ib])
         {
-            if (bands_picked_[ib])
+            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+
+            for (int is = 0; is < nspin; ++is)
             {
-                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
 
-                for (int is = 0; is < nspin; ++is)
-                {
-                    ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
-
-                    psid->fix_k(is);
+                psid->fix_k(is);
 #ifdef __MPI
-                    wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
+                wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
 #else
-                    // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
-                    // different spin channels (actually kpoints, because now the same kpoint in different spin channels
-                    // are treated as distinct kpoints)
+                // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
+                // different spin channels (actually kpoints, because now the same kpoint in different spin channels
+                // are treated as distinct kpoints)
 
-                    for (int i = 0; i < nbands; ++i)
+                for (int i = 0; i < nbands; ++i)
+                {
+                    for (int j = 0; j < nlocal; ++j)
                     {
-                        for (int j = 0; j < nlocal; ++j)
-                        {
-                            wfc_gamma_grid[is][i][j] = psid[0](i, j);
-                        }
+                        wfc_gamma_grid[is][i][j] = psid[0](i, j);
                     }
+                }
 #endif
 
-                    gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
 
-                    pes_->charge->save_rho_before_sum_band();
+                pes_->charge->save_rho_before_sum_band();
 
-                    const double ef_tmp = this->pes_->eferm.get_efval(is);
+                const double ef_tmp = this->pes_->eferm.get_efval(is);
 
-                    // only for gamma_only now
-                    psi_g.fix_k(is);
-                    this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
+                // only for gamma_only now
+                psi_g.fix_k(is);
+                this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
 
-                    // Calculate real-space wave functions
-                    psi_g.fix_k(is);
-                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
+                // Calculate real-space wave functions
+                psi_g.fix_k(is);
+                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
 
-                    // Extract real and imaginary parts
-                    std::vector<double> wfc_real(pw_wfc->nrxx);
-                    std::vector<double> wfc_imag(pw_wfc->nrxx);
-                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                    {
-                        wfc_real[ir] = wfc_r[ir].real();
-                        wfc_imag[ir] = wfc_r[ir].imag();
-                    }
-
-                    // Output real part
-                    std::stringstream ss_real;
-                    ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_real.data(),
-                                                  is,
-                                                  nspin,
-                                                  0,
-                                                  ss_real.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
-
-                    // Output imaginary part
-                    std::stringstream ss_imag;
-                    ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_imag.data(),
-                                                  is,
-                                                  nspin,
-                                                  0,
-                                                  ss_imag.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
+                // Extract real and imaginary parts
+                std::vector<double> wfc_real(pw_wfc->nrxx);
+                std::vector<double> wfc_imag(pw_wfc->nrxx);
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
+                {
+                    wfc_real[ir] = wfc_r[ir].real();
+                    wfc_imag[ir] = wfc_r[ir].imag();
                 }
+
+                // Output real part
+                std::stringstream ss_real;
+                ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
+
+                // Output imaginary part
+                std::stringstream ss_imag;
+                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
     }
