@@ -90,10 +90,19 @@ void K_Vectors::set(const UnitCell& ucell,
     std::string skpt1;
     std::string skpt2;
 
-    Parallel_Common::bcast_bool(kc_done);
-    Parallel_Common::bcast_bool(kd_done);
-    this->kd_done_full = this->kd_done;
-    this->kc_done_full = this->kc_done;
+    if (GlobalV::MY_RANK == 0)
+    {
+        if (!this->kc_done && this->kd_done)
+        {
+            for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+                this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+        }
+        else if (this->kc_done && !this->kd_done)
+        {
+            for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+                this->kvec_c_full[ik] = this->kvec_c[ik];
+        }
+    }
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -172,17 +181,6 @@ void K_Vectors::set(const UnitCell& ucell,
     this->print_klists(ofs);
 
     // std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
-    if (!this->kc_done_full && this->kd_done_full)
-    {
-        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
-            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
-    }
-    else if (this->kc_done_full && !this->kd_done_full)
-    {
-        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
-            this->kvec_c_full[ik] = this->kvec_c[ik];
-    }
-
 #ifdef USE_PAW
     GlobalC::paw_cell.set_isk(nks, isk.data());
 #endif
@@ -1202,6 +1200,7 @@ void K_Vectors::mpi_k()
     std::vector<double> wk_aux(nkstot);
     std::vector<double> kvec_c_aux(nkstot * 3);
     std::vector<double> kvec_d_aux(nkstot * 3);
+    std::vector<double> kvec_c_full_aux(nkstot_full * 3);
 
     // collect and process in rank 0
     if (GlobalV::MY_RANK == 0)
@@ -1216,6 +1215,9 @@ void K_Vectors::mpi_k()
             kvec_d_aux[3 * ik] = kvec_d[ik].x;
             kvec_d_aux[3 * ik + 1] = kvec_d[ik].y;
             kvec_d_aux[3 * ik + 2] = kvec_d[ik].z;
+            kvec_c_full_aux[3 * ik] = kvec_c_full[ik].x;
+            kvec_c_full_aux[3 * ik + 1] = kvec_c_full[ik].y;
+            kvec_c_full_aux[3 * ik + 2] = kvec_c_full[ik].z;
         }
     }
 
@@ -1225,6 +1227,7 @@ void K_Vectors::mpi_k()
     Parallel_Common::bcast_double(wk_aux.data(), nkstot);
     Parallel_Common::bcast_double(kvec_c_aux.data(), nkstot * 3);
     Parallel_Common::bcast_double(kvec_d_aux.data(), nkstot * 3);
+    Parallel_Common::bcast_double(kvec_c_full_aux.data(), nkstot_full * 3);
 
     // process k point data in each processor
     this->renew(this->nks * this->nspin);
@@ -1242,6 +1245,9 @@ void K_Vectors::mpi_k()
         kvec_d[i].x = kvec_d_aux[k_index * 3];
         kvec_d[i].y = kvec_d_aux[k_index * 3 + 1];
         kvec_d[i].z = kvec_d_aux[k_index * 3 + 2];
+        kvec_c_full[i].x = kvec_c_full_aux[k_index * 3];
+        kvec_c_full[i].y = kvec_c_full_aux[k_index * 3 + 1];
+        kvec_c_full[i].z = kvec_c_full_aux[k_index * 3 + 2];
         wk[i] = wk_aux[k_index];
         isk[i] = isk_aux[k_index];
     }

@@ -157,8 +157,6 @@ public:
     int nspin = 0;
     bool kc_done = false;
     bool kd_done = false;
-    bool kc_done_full = false;
-    bool kd_done_full = false;
     double koffset[3] = {0.0}; // used only in automatic k-points.
     std::string k_kword;       // LiuXh add 20180619
     int k_nkstot = 0;          // LiuXh add 20180619
