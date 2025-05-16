@@ -13,57 +13,14 @@ void dgemm_nn_vbatch(
     int batchCount, cudaStream_t stream,
     const double* alpha)
 {
-    if (max_k < 32)
-    {
-        if(max_k == 8 && max_m ==24)
-        {
-            vbatched_gemm_nn_impl<double, 8, 8, 16, 24, 8, 8, 8, 8, 8>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-        else if (max_m < 32)
-        {
-            vbatched_gemm_nn_impl<double, 8, 8, 32, 16, 8, 8, 8, 8, 8>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-        else
-        {
-            vbatched_gemm_nn_impl<double, 16, 16, 48, 32, 16, 16, 16, 16, 16>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-    }
-    else
-    {
-        if (max_n < 80)
-        {
-            vbatched_gemm_nn_impl<double, 16, 8, 32, 24, 16, 16, 8, 16, 8>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-        else
-        {
-            vbatched_gemm_nn_impl<double, 16, 16, 48, 32, 16, 16, 16, 16, 16>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-    }
+
+    vbatched_gemm_nn_impl<double, 8, 4, 16, 16, 8, 8, 4, 8, 4>
+    (max_m, max_n, m_d, n_d, k_d,
+    A_array_d, lda_d,
+    B_array_d, ldb_d,
+    C_array_d, ldc_d,
+    batchCount, stream, alpha);
+
 }
 
 // the template parameters refer to the settings for the "nt" shape in dgemm_vbatched_core.
@@ -76,34 +33,10 @@ void dgemm_tn_vbatch(
     int batchCount, cudaStream_t stream,
     const double* alpha)
 {
-    if (max_k < 128)
-    {
-        vbatched_gemm_tn_impl<double, 16, 8, 32, 32, 8, 16, 8, 16, 8>
+    vbatched_gemm_tn_impl<double, 8,4,16,16,4,8,4,8,4>
         (max_m, max_n, m_d, n_d, k_d,
         A_array_d, lda_d,
         B_array_d, ldb_d,
         C_array_d, ldc_d,
         batchCount, stream, alpha);
-    }
-    else
-    {
-        if (max_n < 256)
-        {
-            vbatched_gemm_tn_impl<double, 16, 8, 32, 32, 8, 16, 8, 16, 8>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-        else
-        {
-            vbatched_gemm_tn_impl<double, 16, 16, 48, 48, 16, 16, 16, 16, 16>
-            (max_m, max_n, m_d, n_d, k_d,
-            A_array_d, lda_d,
-            B_array_d, ldb_d,
-            C_array_d, ldc_d,
-            batchCount, stream, alpha);
-        }
-    }
 }
