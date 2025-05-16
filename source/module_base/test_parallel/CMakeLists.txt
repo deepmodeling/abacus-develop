@@ -40,6 +40,12 @@ AddTest(
   SOURCES test_para_gemm.cpp
 )
 
+AddTest(
+  TARGET MODULE_BASE_math_chebyshev_mpi
+  LIBS MPI::MPI_CXX parameter ${math_libs} base device container
+  SOURCES math_chebyshev_mpi_test.cpp
+)
+
 add_test(NAME MODULE_BASE_para_gemm_parallel
       COMMAND mpirun -np 4 ./MODULE_BASE_para_gemm
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
