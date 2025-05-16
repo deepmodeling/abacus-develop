@@ -64,6 +64,7 @@ if(NEW_GINT)
         temp_gint/gint_fvl_gpu.cpp
         temp_gint/gint_vl_metagga_gpu.cpp
         temp_gint/gint_vl_nspin4_gpu.cpp
+        temp_gint/gint_vl_metagga_nspin4_gpu.cpp
         temp_gint/gint_tau_gpu.cpp
         temp_gint/kernel/dgemm_vbatch.cu
     )

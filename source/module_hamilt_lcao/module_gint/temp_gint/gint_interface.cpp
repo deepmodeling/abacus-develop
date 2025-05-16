@@ -15,6 +15,7 @@
 #include "gint_fvl_gpu.h"
 #include "gint_vl_nspin4_gpu.h"
 #include "gint_vl_metagga_gpu.h"
+#include "gint_vl_metagga_nspin4_gpu.h"
 #include "gint_tau_gpu.h"
 #endif
 
@@ -40,6 +41,7 @@ void cal_gint_vl(
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
+// nspin == 4 case
 void cal_gint_vl(
     std::vector<const double*> vr_eff,
     HContainer<std::complex<double>>* hR)
@@ -65,7 +67,7 @@ void cal_gint_vl_metagga(
     HContainer<double>* hR)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
-    #ifdef __CUDA
+#ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
         Gint_vl_metagga_gpu gint_vl_metagga(vr_eff, vfork, hR);
@@ -79,14 +81,24 @@ void cal_gint_vl_metagga(
     ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 }
 
+// nspin == 4 case
 void cal_gint_vl_metagga(
     std::vector<const double*> vr_eff,
     std::vector<const double*> vofk,
     HContainer<std::complex<double>>* hR)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
-    Gint_vl_metagga_nspin4 gint_vl_metagga_nspin4(vr_eff, vofk, hR);
-    gint_vl_metagga_nspin4.cal_gint();
+#ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Gint_vl_metagga_nspin4_gpu gint_vl_metagga_nspin4(vr_eff, vofk, hR);
+        gint_vl_metagga_nspin4.cal_gint();
+    } else
+#endif
+    {
+        Gint_vl_metagga_nspin4 gint_vl_metagga_nspin4(vr_eff, vofk, hR);
+        gint_vl_metagga_nspin4.cal_gint();
+    }
     ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 }
 
