@@ -24,8 +24,7 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_hybrid_alpha = "1";
                 }
-                else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-                         || dft_functional_lower == "scan0")
+                else if (dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
                 {
                     para.input.exx_hybrid_alpha = "0.25";
                 }
@@ -42,6 +41,15 @@ void ReadInput::item_exx()
                 else if (dft_functional_lower == "cam_pbeh")
                 {
                     para.input.exx_hybrid_alpha = "0.2";
+                }
+                else if (dft_functional_lower == "hse")
+                {
+                    if (para.input.exx_use_ewald)
+                    {
+                        para.input.exx_hybrid_alpha = "0";
+                    }
+                    else
+                        para.input.exx_hybrid_alpha = "0.25";
                 }
                 else
                 { // no exx in scf, but will change to non-zero in

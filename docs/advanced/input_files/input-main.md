@@ -164,9 +164,11 @@
     - [out\_interval](#out_interval)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
-    - [rpa](#rpa)
+    - [rpa (Under Development Feature)](#rpa-under-development-feature)
     - [nbands\_istate](#nbands_istate)
     - [out\_pchg](#out_pchg)
+    - [out\_wfc\_norm](#out_wfc_norm)
+    - [out\_wfc\_re\_im](#out_wfc_re_im)
     - [if\_separate\_k](#if_separate_k)
     - [out\_elf](#out_elf)
   - [Density of states](#density-of-states)
@@ -261,7 +263,9 @@
     - [block\_height](#block_height)
   - [Exact Exchange](#exact-exchange)
     - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
+    - [exx\_hybrid\_beta](#exx_hybrid_beta)
     - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_use\_ewald](#exx_use_ewald)
     - [exx\_separate\_loop](#exx_separate_loop)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
@@ -283,6 +287,8 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
+    - [exx\_spencer\_type](#exx_spencer_type)
+    - [exx\_fq\_type](#exx_fq_type)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
@@ -458,7 +464,7 @@
     - [pexsi\_mu\_guard](#pexsi_mu_guard)
     - [pexsi\_elec\_thr](#pexsi_elec_thr)
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
-  - [Linear Response TDDFT](#linear-response-tddft)
+  - [Linear Response TDDFT (Under Development Feature)](#linear-response-tddft-under-development-feature)
     - [xc\_kernel](#xc_kernel)
     - [lr\_init\_xc\_kernel](#lr_init_xc_kernel)
     - [lr\_solver](#lr_solver)
@@ -472,7 +478,7 @@
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
-  - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
+  - [Reduced Density Matrix Functional Theory (Under Development Feature)](#reduced-density-matrix-functional-theory-under-development-feature)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
@@ -2653,21 +2659,39 @@ These variables are relevant to gate field (compensating charge) [Detailed intro
 
 These variables are relevant when using hybrid functionals.
 
-**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb/...* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
+
+#### Hybrid Functional Parameters {#hybrid_func_params}
+|[dft_functional](#dft_functional)|[exx_hybrid_alpha](#exx_hybrid_alpha)|[exx_hybrid_beta](#exx_hybrid_beta)|[exx_hse_omega](#exx_hse_omega)|
+|:-:|:-:|:-:|:-:|
+|hf|1|0|0|
+|lc_pbe|1|-1|0.33|
+|lc_wpbe|1|-1|0.4|
+|lrc_wpbe|1|-1|0.3|
+|lrc_wpbeh|1|-0.8|0.2|
+|pbe0|0.25|0|0|
+|hse([exx_use_ewald](#exx_use_ewald)=0)|0.25|0|0.11|
+|hse([exx_use_ewald](#exx_use_ewald)=1)|0.0|0.25|0.11|
+|scan0|0.25|0|0|
+|cam_pbeh|0.2|0.8|0.7|
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
 - **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**:
-  - 1: if *[dft_functional](#dft_functional)==hf*
-  - 0.25: else
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
+
+### exx_hybrid_beta
+
+- **Type**: Real
+- **Description**: another fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_hse_omega
 
 - **Type**: Real
 - **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
-- **Default**: 0.11
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_separate_loop
 
@@ -2675,6 +2699,12 @@ These variables are relevant when using hybrid functionals.
 - **Description**: There are two types of iterative approaches provided by ABACUS to evaluate Fock exchange.
   - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
   - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
+- **Default**: True
+
+### exx_use_ewald
+
+- **Type**: Boolean
+- **Description**: if True, use Ewald method to construct V matrix 
 - **Default**: True
 
 ### exx_hybrid_step
@@ -2814,6 +2844,24 @@ These variables are relevant when using hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only
   - False: else
+
+### exx_spencer_type
+
+- **Type**: Integer
+- **Description**:
+  - 0: see Phys. Rev. B 77, 193110 (2008).
+  - 1: see Phys. Rev. Mater. 5, 013807 (2021).
+  Set Spencer-Alavi scheme type.
+- **Default**: 0
+
+### exx_fq_type
+
+- **Type**: Integer
+- **Description**:
+  - 0: see Phys. Rev. B, 75:205126, May 2007. (In test)
+  - 1: see Phys. Rev. B 48, 5058. August 1993.
+  Auxiliary-function fq used in correction to V(q) at q->0.
+- **Default**: 1
 
 ### rpa_ccp_rmesh_times
 
