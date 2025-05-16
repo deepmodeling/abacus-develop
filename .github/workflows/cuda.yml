@@ -52,6 +52,11 @@ jobs:
           cd tests/13_NAO_multik_GPU
           bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
 
+      - name: Test 15_rtTDDFT_GPU
+        run: |
+          cd tests/15_rtTDDFT_GPU
+          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
       - name: Test 16_SDFT_GPU
         run: |
           cd tests/16_SDFT_GPU

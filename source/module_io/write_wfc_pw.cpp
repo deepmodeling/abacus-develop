@@ -19,6 +19,9 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
 
+    assert(nkstot>0);
+    assert(nks>0);
+
     std::string* wfilename;
     wfilename = new std::string[nkstot];
     for (int ik = 0; ik < nkstot; ++ik)

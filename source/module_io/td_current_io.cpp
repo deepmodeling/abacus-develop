@@ -148,7 +148,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         if (TD_Velocity::td_vel_op == nullptr)
         {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gague infos is null!");
+            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
         }
         for (int dir = 0; dir < 3; dir++)
         {

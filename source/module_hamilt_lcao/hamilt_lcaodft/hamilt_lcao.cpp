@@ -314,7 +314,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                            orb.cutoffs(),
                                                                            &grid_d,
                                                                            two_center_bundle.overlap_orb_beta.get());
-            // TDDFT velocity gague will calculate full non-local potential including the original one and the
+            // TDDFT velocity gauge will calculate full non-local potential including the original one and the
             // correction on its own. So the original non-local potential term should be skipped
             if (PARAM.inp.esolver_type != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
             {
@@ -343,7 +343,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
         }
 #endif
-        // TDDFT_velocity_gague
+        // TDDFT_velocity_gauge
         if (TD_Velocity::tddft_velocity)
         {
             if (!TD_Velocity::init_vecpot_file)
