@@ -187,7 +187,6 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
     this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
     this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
-
     auto* auxr = this->fft_bundle.get_auxr_data<FPTYPE>();
     if (add)
     {
