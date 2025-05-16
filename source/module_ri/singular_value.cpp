@@ -19,10 +19,12 @@
 #include <cmath>
 #include <numeric>
 
+namespace Singular_Value
+{
 // for analytic integral of fq
-double Singular_Value::sum_for_solve_chi(const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                         const T_cal_fq_type& func_cal_fq,
-                                         const double& fq_int)
+double sum_for_solve_chi(const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                         const T_cal_fq_type& func_cal_fq,
+                         const double& fq_int)
 {
     const int nks = kvec_c.size();
 
@@ -37,13 +39,13 @@ double Singular_Value::sum_for_solve_chi(const std::vector<ModuleBase::Vector3<d
 }
 
 // for numerical integral of fq
-double Singular_Value::solve_chi(const ModuleBase::Matrix3 &G,
-                                 const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                 const T_cal_fq_type& func_cal_fq,
-                                 const std::array<int, 3>& nq_arr,
-                                 const int& niter,
-                                 const double& eps,
-                                 const int& a_rate)
+double solve_chi(const ModuleBase::Matrix3& G,
+                 const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                 const T_cal_fq_type& func_cal_fq,
+                 const std::array<int, 3>& nq_arr,
+                 const int& niter,
+                 const double& eps,
+                 const int& a_rate)
 {
     // cal fq integral
     double fq_int = Iter_Integral(G, func_cal_fq, nq_arr, niter, eps, a_rate);
@@ -52,26 +54,26 @@ double Singular_Value::solve_chi(const ModuleBase::Matrix3 &G,
 }
 
 // for analytic integral of fq
-double Singular_Value::solve_chi(const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                 const T_cal_fq_type& func_cal_fq,
-                                 const double& fq_int)
+double solve_chi(const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                 const T_cal_fq_type& func_cal_fq,
+                 const double& fq_int)
 {
     return sum_for_solve_chi(kvec_c, func_cal_fq, fq_int);
 }
 
 // for analytic integral of fq with gaussian sum
-double Singular_Value::solve_chi(const int& nks, const T_cal_fq_type_no& func_cal_fq, const double& fq_int)
+double solve_chi(const int& nks, const T_cal_fq_type_no& func_cal_fq, const double& fq_int)
 {
     double chi = fq_int * nks - func_cal_fq();
 
     return chi;
 }
 
-double Singular_Value::fq_type_0(const double& tpiba,
-                                 const ModuleBase::Vector3<double>& qvec,
-                                 const int& qdiv,
-                                 std::vector<ModuleBase::Vector3<double>>& avec,
-                                 std::vector<ModuleBase::Vector3<double>>& bvec)
+double fq_type_0(const double& tpiba,
+                 const ModuleBase::Vector3<double>& qvec,
+                 const int& qdiv,
+                 std::vector<ModuleBase::Vector3<double>>& avec,
+                 std::vector<ModuleBase::Vector3<double>>& bvec)
 {
     assert(qvec.norm2());
 
@@ -101,13 +103,13 @@ double Singular_Value::fq_type_0(const double& tpiba,
     return fq;
 }
 
-double Singular_Value::cal_type_0(const UnitCell& ucell,
-                                  const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                  const int& qdiv,
-                                  const double& qdense,
-                                  const int& niter,
-                                  const double& eps,
-                                  const int& a_rate)
+double cal_type_0(const UnitCell& ucell,
+                  const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                  const int& qdiv,
+                  const double& qdense,
+                  const int& niter,
+                  const double& eps,
+                  const int& a_rate)
 {
     ModuleBase::TITLE("Singular_Value", "cal_type_0");
     ModuleBase::timer::tick("Singular_Value", "cal_type_0");
@@ -136,14 +138,19 @@ double Singular_Value::cal_type_0(const UnitCell& ucell,
                        int index = static_cast<int>(vec.norm() * qdense_tpiba);
                        return index ? index - index % a_rate : a_rate;
                    });
-    const T_cal_fq_type func_cal_fq_type_0 = std::bind(&fq_type_0, ucell.tpiba, std::placeholders::_1, qdiv, avec, bvec);
+    const T_cal_fq_type func_cal_fq_type_0
+        = std::bind(&fq_type_0, ucell.tpiba, std::placeholders::_1, qdiv, avec, bvec);
 
     double val = solve_chi(ucell.G, kvec_c, func_cal_fq_type_0, nq_arr, niter, eps, a_rate);
     ModuleBase::timer::tick("Singular_Value", "cal_type_0");
     return val;
 }
 
-double Singular_Value::fq_type_1(const double& tpiba, Gaussian_Abfs& gaussian_abfs, const int& qdiv, const double& lambda, const int& lmax)
+double fq_type_1(const double& tpiba,
+                 Gaussian_Abfs& gaussian_abfs,
+                 const int& qdiv,
+                 const double& lambda,
+                 const int& lmax)
 {
     const size_t ik = 0;
     const double qexpo = -abs(qdiv);
@@ -157,12 +164,12 @@ double Singular_Value::fq_type_1(const double& tpiba, Gaussian_Abfs& gaussian_ab
     return fq;
 }
 
-double Singular_Value::cal_type_1(const UnitCell& ucell,
-                                  const std::array<int, 3>& nmp,
-                                  const int& qdiv,
-                                  const double& start_lambda,
-                                  const int& niter,
-                                  const double& eps)
+double cal_type_1(const UnitCell& ucell,
+                  const std::array<int, 3>& nmp,
+                  const int& qdiv,
+                  const double& start_lambda,
+                  const int& niter,
+                  const double& eps)
 {
     ModuleBase::TITLE("Singular_Value", "cal_type_1");
     ModuleBase::timer::tick("Singular_Value", "cal_type_1");
@@ -188,7 +195,8 @@ double Singular_Value::cal_type_1(const UnitCell& ucell,
         Gaussian_Abfs gaussian_abfs;
         const double exponent = 1 / lambda;
         gaussian_abfs.init(ucell, lmax, qvec, bvec, exponent);
-        const T_cal_fq_type_no func_cal_fq_type_1 = std::bind(&fq_type_1, ucell.tpiba, gaussian_abfs, qdiv, lambda, lmax);
+        const T_cal_fq_type_no func_cal_fq_type_1
+            = std::bind(&fq_type_1, ucell.tpiba, gaussian_abfs, qdiv, lambda, lmax);
         double prefactor
             = ModuleBase::TWO_PI * std::pow(lambda, -1.0 / qdiv) * ucell.omega / std::pow(ModuleBase::TWO_PI, 3);
         double fq_int;
@@ -227,12 +235,12 @@ double Singular_Value::cal_type_1(const UnitCell& ucell,
     return val_extra;
 }
 
-double Singular_Value::Iter_Integral(const ModuleBase::Matrix3 &G,
-                                     const T_cal_fq_type& func_cal_fq,
-                                     const std::array<int, 3>& nq_arr,
-                                     const int& niter,
-                                     const double& eps,
-                                     const int& a_rate)
+double Iter_Integral(const ModuleBase::Matrix3& G,
+                     const T_cal_fq_type& func_cal_fq,
+                     const std::array<int, 3>& nq_arr,
+                     const int& niter,
+                     const double& eps,
+                     const int& a_rate)
 {
     bool any_negative = std::any_of(nq_arr.begin(), nq_arr.end(), [](int i) { return i < 0; });
     bool any_nthree = std::any_of(nq_arr.begin(), nq_arr.end(), [&a_rate](int i) { return i % a_rate != 0; });
@@ -290,5 +298,6 @@ double Singular_Value::Iter_Integral(const ModuleBase::Matrix3 &G,
 
     return integ;
 }
+} // namespace Singular_Value
 
 #endif

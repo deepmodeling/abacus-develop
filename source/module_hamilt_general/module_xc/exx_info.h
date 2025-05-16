@@ -2,7 +2,7 @@
 #define EXX_INFO_H
 
 #include "module_ri/conv_coulomb_pot_k.h"
-#include "module_ri/singular_value.h"
+#include "module_ri/fq_type.h"
 #include "xc_functional.h"
 
 struct Exx_Info
