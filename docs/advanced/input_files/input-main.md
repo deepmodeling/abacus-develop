@@ -136,7 +136,6 @@
     - [out\_dm](#out_dm)
     - [out\_dm1](#out_dm1)
     - [out\_wfc\_pw](#out_wfc_pw)
-    - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
     - [out\_ldos](#out_ldos)
@@ -1593,7 +1592,7 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
+- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
 - **Default**: [scf_nmax](#scf_nmax)
 
 ### out_chg
@@ -1669,13 +1668,6 @@ These variables are used to control the output of properties.
   - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points.
   - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
 - **Default**: 0
-
-### out_wfc_r (deprecated)
-
-- **Type**: Boolean
-- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
-- **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
-- **Default**: False
 
 ### out_wfc_lcao
 

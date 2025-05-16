@@ -29,7 +29,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const Parallel_Orbitals& para_orb,
                         Gint_Gamma& gg,
                         const int& out_wfc_pw,
-                        const int& out_wfc_r,
                         const K_Vectors& kv,
                         const double nelec,
                         const int nbands_istate,
@@ -231,10 +230,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
     }
 
-    if (out_wfc_r)
-    {
-        ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-    }
+    // if (out_wfc_r)
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
+    // }
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -257,7 +256,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const Parallel_Orbitals& para_orb,
                         Gint_k& gk,
                         const int& out_wf,
-                        const int& out_wf_r,
                         const K_Vectors& kv,
                         const double nelec,
                         const int nbands_istate,
@@ -292,10 +290,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
-    if (out_wf || out_wf_r)
-    {
-        psi_g.resize(nks, nbands, pw_wfc->npwk_max);
-    }
+
+    // if (out_wf || out_wf_r)
+    psi_g.resize(nks, nbands, pw_wfc->npwk_max);
 
     int mode_norm = 0;
     if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
@@ -377,95 +374,75 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               3,
                                               1);
 
-                if (out_wf || out_wf_r)
-                {
-                    psi_g.fix_k(ik);
-                    this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
-                }
+                // if (out_wf || out_wf_r)
+                psi_g.fix_k(ik);
+                this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
             }
         }
     }
 
-    if (out_wf || out_wf_r)
+    if (out_wf)
     {
-        if (out_wf)
-        {
-            std::stringstream ssw;
-            ssw << global_out_dir << "WAVEFUNC";
-            std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
-                      << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
-        }
-        if (out_wf_r)
-        {
-            ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-        }
+        std::stringstream ssw;
+        ssw << global_out_dir << "WAVEFUNC";
+        std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
+                  << std::endl;
+        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
+    }
+    // if (out_wf_r)
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
+    // }
 
-        std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
+    std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 
-        for (int ib = 0; ib < nbands; ++ib)
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (bands_picked_[ib])
         {
-            if (bands_picked_[ib])
+            const int nspin0 = (nspin == 2) ? 2 : 1;
+            for (int ik = 0; ik < nks; ++ik)
             {
-                const int nspin0 = (nspin == 2) ? 2 : 1;
-                for (int ik = 0; ik < nks; ++ik)
+                const int ispin = kv.isk[ik];
+                std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1 << std::endl;
+
+                psi_g.fix_k(ik);
+
+                // Calculate real-space wave functions
+                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
+
+                // Extract real and imaginary parts
+                std::vector<double> wfc_real(pw_wfc->nrxx);
+                std::vector<double> wfc_imag(pw_wfc->nrxx);
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
                 {
-                    const int ispin = kv.isk[ik];
-                    std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1
-                              << std::endl;
-
-                    psi_g.fix_k(ik);
-
-                    // Calculate real-space wave functions
-                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
-
-                    // Extract real and imaginary parts
-                    std::vector<double> wfc_real(pw_wfc->nrxx);
-                    std::vector<double> wfc_imag(pw_wfc->nrxx);
-                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                    {
-                        wfc_real[ir] = wfc_r[ir].real();
-                        wfc_imag[ir] = wfc_r[ir].imag();
-                    }
-
-                    // ik0 is the real k-point index, starting from 0
-                    int ik0 = kv.ik2iktot[ik];
-                    if (nspin == 2)
-                    {
-                        const int half_k = kv.get_nkstot() / 2;
-                        if (ik0 >= half_k)
-                        {
-                            ik0 -= half_k;
-                        }
-                    }
-
-                    // Output real part
-                    std::stringstream ss_real;
-                    ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "real.cube";
-
-                    const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_real.data(),
-                                                  ispin,
-                                                  nspin,
-                                                  0,
-                                                  ss_real.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
-
-                    // Output imaginary part
-                    std::stringstream ss_imag;
-                    ss_imag << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "imag.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_imag.data(),
-                                                  ispin,
-                                                  nspin,
-                                                  0,
-                                                  ss_imag.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
+                    wfc_real[ir] = wfc_r[ir].real();
+                    wfc_imag[ir] = wfc_r[ir].imag();
                 }
+
+                // ik0 is the real k-point index, starting from 0
+                int ik0 = kv.ik2iktot[ik];
+                if (nspin == 2)
+                {
+                    const int half_k = kv.get_nkstot() / 2;
+                    if (ik0 >= half_k)
+                    {
+                        ik0 -= half_k;
+                    }
+                }
+
+                // Output real part
+                std::stringstream ss_real;
+                ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "real.cube";
+
+                const double ef_tmp = this->pes_->eferm.get_efval(ispin);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
+
+                // Output imaginary part
+                std::stringstream ss_imag;
+                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "imag.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
     }
