@@ -67,7 +67,7 @@ __global__ void set_phi_kernel(
             int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
                           bgrids_phi_len[bgrid_id] * mgrid_id;
 
-            for (int iw = 0; iw < atom_nw[atom_type]; iw++)
+            for (int iw = 0; iw < atom_nw[atom_type]; iw++, iw_nr += nrmax)
             {
                 if (atom_iw2_new[it_nw + iw])
                 {
@@ -75,7 +75,6 @@ __global__ void set_phi_kernel(
                           + c3 * psi_u[iw_nr + 1] + c4 * dpsi_u[iw_nr + 1];
                 }
                 phi[phi_idx + iw] = psi * ylma[atom_iw2_ylm[it_nw + iw]];
-                iw_nr += nrmax;
             }
         }
         else
@@ -156,7 +155,7 @@ __global__ void set_phi_dphi_kernel(
             int iw_nr = it_nw * nrmax + ip;
             int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
                           bgrids_phi_len[bgrid_id] * mgrid_id;
-            for (int iw = 0; iw < atom_nw[atom_type]; iw++)
+            for (int iw = 0; iw < atom_nw[atom_type]; iw++, iw_nr += nrmax)
             {
                 if (atom_iw2_new[it_nw + iw])
                 {
@@ -181,7 +180,6 @@ __global__ void set_phi_dphi_kernel(
                 dphi_x[phi_idx + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_ylm * 3 + 0];
                 dphi_y[phi_idx + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_ylm * 3 + 1];
                 dphi_z[phi_idx + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_ylm * 3 + 2];
-                iw_nr += nrmax;
             }
         }
         else
@@ -276,7 +274,7 @@ __global__ void set_ddphi_kernel(
                 double dtmp = 0;
                 const int it_nw = atom_type * nwmax;
                 int iw_nr = it_nw * nrmax + ip;
-                for (int iw = 0; iw < atom_nw[atom_type]; iw++)
+                for (int iw = 0; iw < atom_nw[atom_type]; iw++, iw_nr += nrmax)
                 {
                     if (atom_iw2_new[it_nw + iw])
                     {
@@ -330,6 +328,7 @@ __global__ void set_ddphi_kernel(
                 }
                 coord[i/2] -= std::pow(-1, i%2) * 0.0001;  // recover coord
             }
+
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
             {
                 ddphi_xx[phi_idx + iw] /= 0.0002;

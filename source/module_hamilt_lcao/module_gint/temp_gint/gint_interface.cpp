@@ -17,6 +17,7 @@
 #include "gint_vl_metagga_gpu.h"
 #include "gint_vl_metagga_nspin4_gpu.h"
 #include "gint_tau_gpu.h"
+#include "gint_fvl_meta_gpu.h"
 #endif
 
 namespace ModuleGint
@@ -177,8 +178,17 @@ void cal_gint_fvl_meta(
     ModuleBase::matrix* svl)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
-    Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
-    gint_fvl_meta.cal_gint();
+#ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Gint_fvl_meta_gpu gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
+        gint_fvl_meta.cal_gint();
+    } else
+#endif
+    {
+        Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
+        gint_fvl_meta.cal_gint();
+    }
     ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
 }
 
