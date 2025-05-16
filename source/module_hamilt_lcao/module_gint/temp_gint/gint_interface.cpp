@@ -1,18 +1,22 @@
 #include "gint_interface.h"
 #include "source_base/timer.h"
 #include "gint_vl.h"
-#include "gint_vl_gpu.h"
 #include "gint_vl_metagga.h"
-#include "gint_vl_metagga_gpu.h"
 #include "gint_vl_nspin4.h"
 #include "gint_vl_metagga_nspin4.h"
 #include "gint_fvl.h"
-#include "gint_fvl_gpu.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
-#include "gint_rho_gpu.h"
 #include "gint_tau.h"
+
+#ifdef __CUDA
+#include "gint_vl_gpu.h"
+#include "gint_rho_gpu.h"
+#include "gint_fvl_gpu.h"
+#include "gint_vl_nspin4_gpu.h"
+#include "gint_vl_metagga_gpu.h"
 #include "gint_tau_gpu.h"
+#endif
 
 namespace ModuleGint
 {
@@ -41,8 +45,17 @@ void cal_gint_vl(
     HContainer<std::complex<double>>* hR)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
-    Gint_vl_nspin4 gint_vl_nspin4(vr_eff, hR);
-    gint_vl_nspin4.cal_gint();
+    #ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Gint_vl_nspin4_gpu gint_vl_nspin4(vr_eff, hR);
+        gint_vl_nspin4.cal_gint();
+    } else
+    #endif
+    {
+        Gint_vl_nspin4 gint_vl_nspin4(vr_eff, hR);
+        gint_vl_nspin4.cal_gint();
+    }
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
