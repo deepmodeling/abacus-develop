@@ -3,15 +3,16 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 
-#nbands			8
+nbands			6
 symmetry		1
+pseudo_dir	../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc			60
+ecutwfc			20
 scf_thr				1e-8
 scf_nmax			100
-cal_force 1
-cal_stress 1
+
+
 #Parameters (3.Basis)
 basis_type		pw
 
@@ -20,5 +21,9 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		broyden
-mixing_beta		0.3
+mixing_type		plain
+mixing_beta		0.5
+
+ks_solver      cg
+device         cpu
+precision      single
