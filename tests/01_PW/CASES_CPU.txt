@@ -106,6 +106,8 @@
 109_PW_PBE0
 110_PW_ONCV_skip
 111_PW_CG_float
+112_PW_get_wf
+113_PW_get_pchg
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc
