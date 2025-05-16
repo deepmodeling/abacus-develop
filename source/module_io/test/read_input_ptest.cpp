@@ -456,6 +456,8 @@ TEST_F(InputParaTest, Check)
         emptyfile << "stru_file    ./support/STRU     \n";
         emptyfile.close();
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+
     ModuleIO::ReadInput::check_mode = true;
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
@@ -469,15 +471,18 @@ TEST_F(InputParaTest, Check)
 
     } catch (const std::exception& e) {
         // if exit with error, then the test is failed
-        FAIL() << "read_parameters threw an exception: " << e.what();
+        std::cerr << "Rank " << GlobalV::MY_RANK << " error: " << e.what() << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     } catch (...) {
         // if exit with unknown error, then the test is failed
-        FAIL() << "read_parameters threw an unknown exception.";
+        std::cerr << "Rank " << GlobalV::MY_RANK << " unknown error." << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
     // Note : the EXPECT_EXIT is not working with MPI, so we use try-catch to test the exit
     // EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
     // std::string output = testing::internal::GetCapturedStdout();
     // EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    MPI_Barrier(MPI_COMM_WORLD);
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
