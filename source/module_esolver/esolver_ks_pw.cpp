@@ -709,17 +709,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 4) output wavefunctions in pw basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    //------------------------------------------------------------------
-    // 5) calculate band-decomposed (partial) charge density in pw basis
+    // 4) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
     const std::vector<int> out_pchg = PARAM.inp.out_pchg;
     if (out_pchg.size() > 0)
@@ -748,7 +738,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 6) calculate Wannier functions in pw basis
+    //! 5) calculate Wannier functions in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
@@ -766,7 +756,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 7) calculate Berry phase polarization in pw basis
+    //! 6) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -777,7 +767,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 8) write spin constrian results in pw basis
+    // 7) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -789,7 +779,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 9) write onsite occupations for charge and magnetizations
+    // 8) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
