@@ -593,7 +593,7 @@ These variables are used to control general system parameters.
 
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
-  - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
+  - file: from binary files `wf*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
@@ -608,7 +608,7 @@ These variables are used to control general system parameters.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
-  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `WAVEFUNC*.dat` while occupations are read in from file `istate.info`.
+  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `istate.info`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -1663,10 +1663,13 @@ These variables are used to control the output of properties.
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
-- **Description**:
-  - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points.
-  - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
+- **Availability**: Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in [calculation](#calculation) with NAO basis)
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k}{k-point index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
+  - 0: no output
+  - 1: (txt format)
+    - non-gamma-only: `wfs1k1_pw.txt` or `wfs1k2_pw.txt`, ...;
+  - 2: (binary format)
+    - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
 - **Default**: 0
 
 ### out_wfc_lcao
