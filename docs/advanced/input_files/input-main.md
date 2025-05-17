@@ -527,9 +527,9 @@ These variables are used to control general system parameters.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**:
   - 0:
-    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only](#gamma_only)==True*;
-    - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
-    - If *[efield_flag](#efield_flag)==1*
+    - if [calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S or [gamma_only](#gamma_only)==True;
+    - If ([dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb or [rpa](#rpa)==True). 
+    - If [efield_flag](#efield_flag)==1
   - 1: else
 
 ### symmetry_prec
@@ -1832,18 +1832,18 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Description**: Whether to print the band energy terms separately in the file `OUT.${suffix}/${term}_out.dat`. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
 - **Default**: False
 
-### out_hr_npz/out_dm_npz
+### out_hr_npz/out_dm_npz (Under Development Feature)
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
+- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations.
 - **Default**: False
 
-### dm_to_rho
+### dm_to_rho (Under Development Feature)
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
+- **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations.
 - **Default**: False
 
 ### out_app_flag
@@ -4069,17 +4069,17 @@ These variables are used to control the usage of implicit solvation model. This 
 
 [back to top](#full-list-of-input-keywords)
 
-## Quasiatomic Orbital (QO) analysis
+## Quasiatomic Orbital (QO) analysis (Under Development Feature)
 
 These variables are used to control the usage of QO analysis. QO further compress information from LCAO: usually PW basis has dimension in million, LCAO basis has dimension below thousand, and QO basis has dimension below hundred.
 
-### qo_switch
+### qo_switch (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: whether to let ABACUS output QO analysis required files
 - **Default**: 0
 
-### qo_basis
+### qo_basis (Under Development Feature)
 
 - **Type**: String
 - **Description**: specify the type of atomic basis
@@ -4091,7 +4091,7 @@ These variables are used to control the usage of QO analysis. QO further compres
   *Developer notes: for ABACUS-lcao calculation, it is the most recommend to use `szv` instead of `pswfc` which is originally put forward in work of QO implementation on PW basis. The information loss always happens if `pswfc` or `hydrogen` orbitals are not well tuned, although making kpoints sampling more dense will mitigate this problem, but orbital-adjust parameters are needed to test system-by-system in this case.*
 - **Default**: `szv`
 
-### qo_strategy
+### qo_strategy (Under Development Feature)
 
 - **Type**: String \[String...\](optional)
 - **Description**: specify the strategy to generate radial orbitals for each atom type. If one parameter is given, will apply to all atom types. If more than one parameters are given but fewer than number of atom type, those unspecified atom type will use default value.
@@ -4111,7 +4111,7 @@ These variables are used to control the usage of QO analysis. QO further compres
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
 - **Default**: for `hydrogen`: `energy-valence`, for `pswfc` and `szv`: `all`
 
-### qo_screening_coeff
+### qo_screening_coeff (Under Development Feature)
 
 - **Type**: Real \[Real...\](optional)
 - **Description**: rescale the shape of radial orbitals, available for both `qo_basis hydrogen` and `qo_basis pswfc`. cases but has different meaning.
@@ -4124,7 +4124,7 @@ These variables are used to control the usage of QO analysis. QO further compres
 - **Default**: 0.1
 - **Unit**: Bohr^-1
 
-### qo_thr
+### qo_thr (Under Development Feature)
 
 - **Type**: Real
 - **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
@@ -4278,14 +4278,14 @@ These variables are used to control the usage of PEXSI (Pole Expansion and Selec
 
 These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 
-### xc_kernel
+### xc_kernel (Under Development Feature)
 
 - **Type**: String
 - **Description**: The exchange-correlation kernel used in the calculation. 
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
 
-### lr_init_xc_kernel
+### lr_init_xc_kernel (Under Development Feature)
 
 - **Type**: String
 - **Description**: The method to initalize the xc kernel. 
@@ -4294,7 +4294,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
   - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
 - **Default**: "default"
 
-### lr_solver
+### lr_solver (Under Development Feature)
 
 - **Type**: String
 - **Description**: The method to solve the Casida equation $AX=\Omega X$ in LR-TDDFT under Tamm-Dancoff approximation (TDA), where $A_{ai,bj}=(\epsilon_a-\epsilon_i)\delta_{ij}\delta_{ab}+(ai|f_{Hxc}|bj)+\alpha_{EX}(ab|ij)$ is the particle-hole excitation matrix and $X$ is the transition amplitude.
@@ -4305,57 +4305,57 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
    output by setting `out_wfc_lr` to true.
 - **Default**: dav
 
-### lr_thr
+### lr_thr (Under Development Feature)
 
 - **Type**: Real
 - **Description**: The convergence threshold of iterative diagonalization solver fo LR-TDDFT. It is a pure-math number with the same as [pw_diag_thr](#pw_diag_thr), but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
 - **Default**: 1e-2
 
-### nocc
+### nocc (Under Development Feature)
 
 - **Type**: Integer
 - **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation. 
   - Note: If the value is illegal ( > [nelec](#nelec)\/2 or <= 0), it will be autoset to [nelec](#nelec)\/2.
 - **Default**: [nband](#nband)
 
-### nvirt
+### nvirt (Under Development Feature)
 
 - **Type**: Integer
 - **Description**: The number of virtual orbitals (staring from LUMO) used in the LR-TDDFT calculation.
 - **Default**: 1
 
-### lr_nstates
+### lr_nstates (Under Development Feature)
 
 - **Type**: Integer
 - **Description**:  The number of 2-particle states to be solved
 - **Default**: 0
 
-### lr_unrestricted
+### lr_unrestricted (Under Development Feature)
 - **Type**: Boolean
 - **Description**: Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
   - True:  Always use unrestricted LR-TDDFT. 
   - False: Use unrestricted LR-TDDFT only when the system is open-shell.
 - **Default**: False
 
-### abs_wavelen_range
+### abs_wavelen_range (Under Development Feature)
 
 - **Type**: Real Real
 - **Description**: The range of the wavelength for the absorption spectrum calculation.
 - **Default**: 0.0 0.0
 
-### out_wfc_lr
+### out_wfc_lr (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation.
 The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Excitation_Amplitude_${processor_rank}.dat`.
 - **Default**: False
 
-### abs_broadening
+### abs_broadening (Under Development Feature)
 - **Type**: Real
 - **Description**: The broadening factor $\eta$ for the absorption spectrum calculation.
 - **Default**: 0.01
 
-### ri_hartree_benchmark
+### ri_hartree_benchmark (Under Development Feature)
 - **Type**: String
 - **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). Now it only supports molecular systems running with a single processor, and a large enough supercell should be used to make LRI C, V tensors contain only the R=(0 0 0) cell. 
   - `aims`: The `OUT.${suffix}`directory should contain the FHI-aims output files: RI-LVL tensors`Cs_data_0.txt` and `coulomb_mat_0.txt`, and KS eigenstates from FHI-aims: `band_out`and `KS_eigenvectors.out`. The Casida equation will be constructed under FHI-aims' KS eigenpairs.
@@ -4366,7 +4366,7 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
   - `none`: Construct the Hartree term by Poisson equation and grid integration as usual.
 - **Default**: none
 
-### aims_nbasis
+### aims_nbasis (Under Development Feature)
 - **Type**: A number(ntype) of Integers
 - **Availability**: `ri_hartree_benchmark` = `aims`
 - **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
@@ -4377,13 +4377,13 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 ab-initio methods and the xc-functional parameters used in RDMFT.
 The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 
-### rdmft
+### rdmft (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
 - **Default**: false
 
-### rdmft_power_alpha
+### rdmft_power_alpha (Under Development Feature)
 
 - **Type**: Real
 - **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
