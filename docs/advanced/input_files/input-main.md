@@ -1917,7 +1917,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 ### if_separate_k
 
 - **Type**: Boolean
-- **Availability**: Only for LCAO, used only when `calculation = get_pchg` and `gamma_only` is turned off.
+- **Availability**: For both PW and LCAO. When `basis_type = pw`, used if `out_pchg` is set. When `basis_type = lcao`, used only when `calculation = get_pchg` and `gamma_only` is turned off.
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. **Warning**: Enabling symmetry may produce incorrect results due to incorrect k-point weights. Therefore, when calculating partial charge densities, it is strongly recommended to set `symmetry = -1`.
 - **Default**: false
 
