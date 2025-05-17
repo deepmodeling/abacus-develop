@@ -222,7 +222,8 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    ModuleIO::read_wf2rho_pw(wfcpw, symm, kv->ik2iktot.data(), nkstot, kv->isk, chg);
+    std::ofstream running_log("running_log.txt"); 
+    ModuleIO::read_wf2rho_pw(wfcpw, symm, kv->ik2iktot, nkstot, kv->isk, chg, running_log);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)

@@ -9,13 +9,26 @@
 
 void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
-                               const int* ik2iktot,
+                               const std::vector<int> &ik2iktot,
                                const int nkstot,
-                               const std::vector<int>& isk,
-                               Charge& chg)
+                               const std::vector<int> &isk,
+							   Charge& chg,
+							   std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_wf2rho_pw");
     ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
+
+	ofs_running << " READING WAVE FUNCTIONS" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " | Reading electronic wave functions in plane wave basis set and      |" << std::endl;
+	ofs_running << " | evaluate charge density based on these wave functions              |" << std::endl;
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     const int kpar = GlobalV::KPAR;
     const int my_pool = GlobalV::MY_POOL;
@@ -39,8 +52,20 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
     {
         std::string filename = PARAM.globalv.global_readin_dir + "istate.info";
         std::ifstream ifs(filename);
+
+		if(!ifs)
+		{
+            std::stringstream sss;
+            sss << "Cannot find file " << filename;
+			ModuleBase::WARNING_QUIT("ModuleIO::read_wf2rho_pw", sss.str());
+		}
+        else
+        {
+            ofs_running << " Find file containing weights of wave function: " << filename << std::endl;
+        }
+
         std::string useless;
-        if (PARAM.inp.nspin == 2)
+        if (nspin == 2)
         {
             const int nkstot_np = nkstot / 2;
             for (int iktot_np = 0; iktot_np < nkstot_np; ++iktot_np)
@@ -82,7 +107,7 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
         const int ikstot = ik2iktot[ik];
         filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
         ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, ikstot, nkstot, wfc_tmp);
-        if (PARAM.inp.nspin == 4)
+        if (nspin == 4)
         {
             std::vector<std::complex<double>> rho_tmp2(nrxx);
             for (int ib = 0; ib < nbands; ++ib)

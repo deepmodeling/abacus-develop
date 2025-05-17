@@ -247,7 +247,8 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
         const int nkstot = kv->get_nkstot();
         const std::vector<int>& isk = kv->isk;
-        ModuleIO::read_wf2rho_pw(pw_wfc, symm, kv->ik2iktot.data(), nkstot, isk, *this);
+        ModuleIO::read_wf2rho_pw(pw_wfc, symm, kv->ik2iktot, 
+          nkstot, isk, *this, GlobalV::ofs_running);
     }
 }
 

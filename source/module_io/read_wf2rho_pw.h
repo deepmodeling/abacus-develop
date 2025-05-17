@@ -5,6 +5,7 @@
 #include "module_elecstate/module_charge/charge.h"
 
 #include <string>
+#include <fstream>
 
 namespace ModuleIO
 {
@@ -19,10 +20,11 @@ namespace ModuleIO
  */
 void read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
                      ModuleSymmetry::Symmetry& symm,
-                     const int* ik2iktot,
+                     const std::vector<int> &ik2iktot,
                      const int nkstot,
-                     const std::vector<int>& isk,
-                     Charge& chg);
+					 const std::vector<int> &isk,
+					 Charge& chg,
+					 std::ofstream &ofs_running);
 
 } // namespace ModuleIO
 
