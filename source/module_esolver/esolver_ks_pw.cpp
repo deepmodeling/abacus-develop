@@ -734,14 +734,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
 
-// tmp 2025-05-17, mohan note
-	if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
+	// tmp 2025-05-17, mohan note
+	ModuleIO::write_wfc_pw(PARAM.inp.out_wfc_pw, PARAM.globalv.global_out_dir, 
+			this->psi[0], this->kv, this->pw_wfc);
 
     //------------------------------------------------------------------
     //! 5) calculate Wannier functions in pw basis

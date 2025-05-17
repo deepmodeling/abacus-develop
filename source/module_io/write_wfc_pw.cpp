@@ -9,51 +9,76 @@
 #include "module_base/parallel_global.h"
 #include "module_base/tool_title.h"
 #include "module_parameter/parameter.h"
+#include "module_io/filename.h"
 
-void ModuleIO::write_wfc_pw(const std::string& fn,
-                            const psi::Psi<std::complex<double>>& psi,
-                            const K_Vectors& kv,
-                            const ModulePW::PW_Basis_K* wfcpw)
+void ModuleIO::write_wfc_pw(
+        const int out_wfc_pw,
+        const std::string& global_out_dir,
+        const psi::Psi<std::complex<double>>& psi,
+        const K_Vectors& kv,
+        const ModulePW::PW_Basis_K* wfcpw)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_pw");
+
+	if(out_wfc_pw!=1 && out_wfc_pw!=2)
+	{
+		return;
+	}
+
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
 
     assert(nkstot>0);
     assert(nks>0);
 
+    bool out_app_flag = false; // need to modify later, mohan 2025-05-17
+    bool gamma_only = false; // need to modify later, mohan 2025-05-17
+    int istep = -1; // need to modify later, mohan 2025-05-17
+
     std::string* wfilename;
     wfilename = new std::string[nkstot];
-    for (int ik = 0; ik < nkstot; ++ik)
+
+
+    for (int ip = 0; ip < GlobalV::KPAR; ip++)
     {
-        std::stringstream wfss;
-        if (PARAM.inp.out_wfc_pw == 1)
+        if (GlobalV::MY_POOL != ip) continue;
+        if (GlobalV::RANK_IN_POOL != 0) continue;
+
+        for (int ik_local = 0; ik_local < kv.get_nks(); ik_local++)
         {
-            wfss << fn << ik + 1 << ".txt";
-        }
-        else if (PARAM.inp.out_wfc_pw == 2)
-        {
-            wfss << fn << ik + 1 << ".dat";
-        }
-        wfilename[ik] = wfss.str();
-        if (GlobalV::MY_RANK == 0)
-        {
-            if (PARAM.inp.out_wfc_pw == 1)
-            {
-                std::ofstream ofs(wfss.str().c_str()); // clear all wavefunc files.
-                ofs.close();
-            }
-            else if (PARAM.inp.out_wfc_pw == 2)
-            {
-                Binstream wfs(wfss.str(), "w");
-                wfs.close();
-            }
-        }
-    }
+            std::string fn = filename_output(global_out_dir,"wf","pw",
+                    ik_local,kv.ik2iktot,PARAM.inp.nspin,nkstot,
+                    out_wfc_pw,out_app_flag,gamma_only,istep);
+
+            GlobalV::ofs_running << " Write G-space wave functions into file "
+                << fn << std::endl;
+
+			const int ik_global = kv.ik2iktot[ik_local];
+			wfilename[ik_global] = fn;
+			if (GlobalV::MY_RANK == 0)
+			{
+				if (out_wfc_pw == 1)
+				{
+					std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
+					ofs.close();
+				}
+				else if (out_wfc_pw == 2)
+				{
+					Binstream wfs(fn, "w");
+					wfs.close();
+				}
+			}
+		}
+	}
+
 
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
+
+
+#ifdef __MPI
     // out put the wave functions in plane wave basis.
     for (int ip = 0; ip < GlobalV::KPAR; ip++)
     {

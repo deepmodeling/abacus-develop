@@ -7,96 +7,12 @@
 #include "module_base/parallel_2d.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/global_variable.h"
-#include "binstream.h"
 #include "module_base/global_function.h"
+#include "binstream.h"
+#include "filename.h"
 
 namespace ModuleIO
 {
-
-std::string wfc_nao_gen_fname(const int out_type,
-			const bool gamma_only,
-			const bool out_app_flag,
-			const int ik,
-			const std::vector<int> &ik2iktot,
-			const int nkstot,
-			const int nspin,
-			const int istep)
-{
-    // fn_out = "{PARAM.globalv.global_out_dir}/wf{s}{spin index}{k(optinal)}{k-point index}
-    // {g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}""
-
-    assert(nspin>0);
-
-	assert( ik2iktot.size() == nkstot );
-
-	// spin index
-	int is0 = -1;
-	// ik0 is the k-point index, starting from 1
-	int ik0 = ik2iktot[ik];
-
-    if(nspin == 1)
-    {
-        is0 = 1;
-    }
-	else if(nspin == 2)
-	{
-		const int half_k = nkstot/2;
-		if(ik0 >= half_k)
-		{
-			is0 = 2;
-			ik0 -= half_k;
-		}
-		else
-		{
-			is0 = 1;
-		}
-    }
-    else if(nspin==4)
-    {
-        is0 = 12;
-    }
-
-    // spin part
-    std::string spin_block;
-    spin_block = "s" + std::to_string(is0);
-
-    // k-point part
-    std::string kpoint_block;
-    if(gamma_only)
-    {
-        // do nothing;
-    }
-    else
-    {
-        kpoint_block = "k" + std::to_string(ik0+1);
-    }
-
-    std::string istep_block
-        = (istep >= 0 && (!out_app_flag))
-              ? "g" + std::to_string(istep + 1)
-              : ""; // only when istep >= 0 and out_app_flag is false will write each wfc to a separate file
-
-    std::string suffix_block;
-    if (out_type == 1)
-    {
-        suffix_block = "_nao.txt";
-    }
-    else if (out_type == 2)
-    {
-        suffix_block = "_nao.dat";
-    }
-    else
-    {
-        std::cout << "WARNING: the type of output wave function is not 1 or 2, so 1 is chosen." << std::endl;
-        suffix_block = "_nao.txt";
-    }
-
-    std::string fn_out
-        = "wf" + spin_block + kpoint_block 
-          + istep_block + suffix_block;
-
-    return fn_out;
-}
 
 void wfc_nao_write2file(const std::string& name,
                         const double* ctot,
@@ -353,9 +269,8 @@ void write_wfc_nao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = PARAM.globalv.global_out_dir 
-            + wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
-              ik2iktot, nkstot, nspin, istep);
+            std::string fn = filename_output(PARAM.globalv.global_out_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
+              out_type,out_app_flag,gamma_only,istep);
 
             bool append_flag = (istep > 0 && out_app_flag);
             if (std::is_same<double, T>::value)

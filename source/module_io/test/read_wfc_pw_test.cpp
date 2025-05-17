@@ -42,7 +42,7 @@ class ReadWfcPwTest : public ::testing::Test
 // Test the read_wfc_pw function
 TEST_F(ReadWfcPwTest, ReadWfcPw)
 {
-    std::string filename = "./support/WAVEFUNC1.dat";
+    std::string filename = "./support/wfs1k1_pw.dat";
 
 #ifdef __MPI
     wfcpw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
@@ -152,7 +152,7 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
 {
     if (GlobalV::NPROC_IN_POOL == 1)
     {
-        std::string filename = "./support/WAVEFUNC1.dat";
+        std::string filename = "./support/wfs1k1_pw.dat";
 
 #ifdef __MPI
         wfcpw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
@@ -182,7 +182,7 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
 {
     if (GlobalV::NPROC_IN_POOL == 1)
     {
-        std::string filename = "./support/WAVEFUNC1.dat";
+        std::string filename = "./support/wfs1k1_pw.dat";
 
         kvec_d[0] = ModuleBase::Vector3<double>(0.0, 0.0, 1.0);
 
@@ -211,7 +211,8 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
 {
     if (GlobalV::NPROC_IN_POOL == 1)
     {
-        std::string filename = "./support/WAVEFUNC1.dat";
+        std::string filename = "./support/wfs1k1_pw.dat";
+
         kvec_d[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
 
 #ifdef __MPI
@@ -239,7 +240,7 @@ TEST_F(ReadWfcPwTest, InconsistentG)
 {
     if (GlobalV::NPROC_IN_POOL == 1)
     {
-        std::string filename = "./support/WAVEFUNC1.dat";
+        std::string filename = "./support/wfs1k1_pw.dat";
         kvec_d[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
 
 #ifdef __MPI

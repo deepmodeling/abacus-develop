@@ -12,6 +12,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/read_wf2rho_pw.h"
 #include "module_io/write_wfc_pw.h"
+#include "module_io/filename.h" // mohan add 2025-05-17
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
 
@@ -219,10 +220,11 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 #endif
 
     // Write the wave functions to file
-    ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
+    const std::string global_out_dir = "./";
+    ModuleIO::write_wfc_pw(PARAM.input.out_wfc_pw, global_out_dir, *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    std::ofstream running_log("running_log.txt"); 
+    std::ofstream running_log("running_log.txt");
     ModuleIO::read_wf2rho_pw(wfcpw, symm, kv->ik2iktot, nkstot, kv->isk, chg, running_log);
 
     // compare the charge density
@@ -232,22 +234,24 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     }
     // std::cout.precision(16);
     // std::cout<<chg.rho[0][0]<<std::endl;
-    if (GlobalV::NPROC == 1) {
-        EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-    } else if (GlobalV::NPROC == 4)
-    {
-        const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
-        EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
-        // for (int ip = 0; ip < GlobalV::NPROC; ++ip)
-        // {
-        //     if (GlobalV::MY_RANK == ip)
-        //     {
-        //         std::cout.precision(16);
-        //         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
-        //     }
-        //     MPI_Barrier(MPI_COMM_WORLD);
-        // }
-    }
+	if (GlobalV::NPROC == 1) 
+	{
+		EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
+	} 
+	else if (GlobalV::NPROC == 4)
+	{
+		const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
+		EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
+		// for (int ip = 0; ip < GlobalV::NPROC; ++ip)
+		// {
+		//     if (GlobalV::MY_RANK == ip)
+		//     {
+		//         std::cout.precision(16);
+		//         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
+		//     }
+		//     MPI_Barrier(MPI_COMM_WORLD);
+		// }
+	}
 
     delete[] chg.rho;
     delete[] chg._space_rho;
