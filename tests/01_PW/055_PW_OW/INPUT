@@ -1,20 +1,17 @@
 INPUT_PARAMETERS
-#Parameters (1.General)
-suffix			autotest
-calculation     scf
+basis_type    pw
+nspin         2
+calculation   scf
+out_wfc_pw    1
 
-nbands			6
-symmetry		1
-pseudo_dir	../../PP_ORB
+nbands        6
+symmetry      1
 
-#Parameters (2.Iteration)
-ecutwfc			20
-scf_thr				1e-9
-scf_nmax			100
+pseudo_dir    ../../PP_ORB
+suffix        autotest
 
-#Parameters (3.Basis)
-basis_type		pw
+ecutwfc       20
+scf_thr       1e-9
+scf_nmax      100
 
-out_wfc_pw 1
-
-pw_seed 1
+pw_seed       1
