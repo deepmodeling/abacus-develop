@@ -647,15 +647,11 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-        {
-            std::stringstream ssw;
-            ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-        }
-    }
+	if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+	{
+		ModuleIO::write_wfc_pw(PARAM.inp.out_wfc_pw, PARAM.globalv.global_out_dir, 
+				this->psi[0], this->kv, this->pw_wfc);
+	}
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -736,6 +732,16 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               PARAM.globalv.global_out_dir,
                               PARAM.inp.if_separate_k);
     }
+
+
+// tmp 2025-05-17, mohan note
+	if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
+    {
+        std::stringstream ssw;
+        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
+        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
+    }
+
 
     //------------------------------------------------------------------
     //! 5) calculate Wannier functions in pw basis
