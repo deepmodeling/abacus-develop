@@ -6,6 +6,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/kernels/elecstate_op.h"
+#include "module_io/filename.h"
 
 void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
@@ -103,10 +104,22 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
         {
             is = isk[ik];
         }
-        std::stringstream filename;
         const int ikstot = ik2iktot[ik];
-        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
-        ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, ikstot, nkstot, wfc_tmp);
+
+        // mohan add 2025-05-17
+        // .dat file
+        const int out_type = 2;
+        const bool out_app_flag = false;
+        const bool gamma_only = false;
+        const int istep = -1;
+
+        std::string fn = filename_output(PARAM.globalv.global_readin_dir,"wf","pw",ik,ik2iktot,nspin,nkstot,
+                out_type,out_app_flag,gamma_only,istep);
+
+        ofs_running << " Wave function file name is " << fn << std::endl;
+
+        ModuleIO::read_wfc_pw(fn, pw_wfc, ik, ikstot, nkstot, wfc_tmp);
+
         if (nspin == 4)
         {
             std::vector<std::complex<double>> rho_tmp2(nrxx);
@@ -143,8 +156,9 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
 
                 if (w1 != 0.0)
                 {
-                    base_device::DEVICE_CPU* ctx = nullptr;
-                    elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, w1, chg.rho, rho_tmp.data());
+					base_device::DEVICE_CPU* ctx = nullptr;
+					elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, 
+							w1, chg.rho, rho_tmp.data());
                 }
             }
         }
