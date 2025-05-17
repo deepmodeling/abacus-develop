@@ -1,33 +1,29 @@
 INPUT_PARAMETERS
-#Parameters (1.General)
-suffix			autotest
-calculation     relax
+# Directories
+suffix           autotest
+pseudo_dir       ../../PP_ORB
 
-nbands			8
-symmetry		1
-pseudo_dir	../../PP_ORB
-pw_seed         1
-
-#Parameters (2.Iteration)
-ecutwfc			20
-scf_thr				1e-9
-scf_nmax			100
-
-#Parameters (3.Relaxation)
-relax_nmax           2
-cal_force           1
-force_thr_ev    0.01
+# Relaxation Method
+calculation      relax
+relax_nmax       2
+cal_force        1
+force_thr_ev     0.01
 relax_method     bfgs
+relax_new        0
 
-#Parameters (4.Basis)
-basis_type		pw
+# Self-Consistent Field
+basis_type       pw
+nbands           8
+symmetry         1
+pw_seed          1
+ecutwfc          20
+scf_thr          1e-9
+scf_nmax         100
 
-#Parameters (5.Smearing)
-smearing_method		gauss
-smearing_sigma			0.002
+# Smearing Method
+smearing_method  gauss
+smearing_sigma   0.002
 
-#Parameters (6.Mixing)
-mixing_type		broyden
-mixing_beta		0.5
-
-relax_new 0
+# Charge Mixing Method
+mixing_type      broyden
+mixing_beta      0.5
