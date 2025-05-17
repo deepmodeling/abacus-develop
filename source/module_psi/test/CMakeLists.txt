@@ -20,6 +20,7 @@ AddTest(
         ../../module_io/write_pao.cpp
         ../../module_io/read_wfc_pw.cpp
         ../../module_io/binstream.cpp
+        ../../module_io/filename.cpp
 )
 endif()
 

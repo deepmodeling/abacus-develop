@@ -5,6 +5,7 @@
 #include "module_io/read_wfc_pw.h"
 #include "module_io/filename.h"
 #include "module_parameter/parameter.h"
+
 template <typename T>
 void psi_initializer_file<T>::initialize(const Structure_Factor* sf,
                                          const ModulePW::PW_Basis_K* pw_wfc,
@@ -27,10 +28,7 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     const int nkstot = this->p_kv->get_nkstot();
     ModuleBase::ComplexMatrix wfcatom(this->nbands_start_, nbasis);
-    std::stringstream filename;
     int ik_tot = this->p_kv->ik2iktot[ik];
-    filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
-
 
     // mohan update, this is for plane wave, 2025-05-17
 	const int out_type = 2;
