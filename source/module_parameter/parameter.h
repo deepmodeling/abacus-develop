@@ -4,9 +4,11 @@
 #include "system_parameter.h"
 namespace ModuleIO
 {
-class ReadInput;
+	class ReadInput;
 }
+
 class CalAtomInfo;
+
 class Parameter
 {
   public:
@@ -50,9 +52,9 @@ extern Parameter PARAM;
 // temperarily put here
 namespace GlobalV
 {
-extern int NPROC;
-extern int MY_RANK;
-extern std::ofstream ofs_running;
-extern std::ofstream ofs_warning;
+	extern int NPROC;
+	extern int MY_RANK;
+	extern std::ofstream ofs_running;
+	extern std::ofstream ofs_warning;
 } // namespace GlobalV
 #endif
