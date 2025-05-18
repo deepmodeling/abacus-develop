@@ -107,6 +107,7 @@ class ReadWfcRhoTest : public ::testing::Test
         kv = new K_Vectors;
         PARAM.input.nbands = 4;
         PARAM.input.nspin = 1;
+        // output .dat file
         PARAM.input.out_wfc_pw = 2;
     }
     virtual void TearDown()
@@ -120,11 +121,22 @@ class ReadWfcRhoTest : public ::testing::Test
 // Test the read_wfc_pw function
 TEST_F(ReadWfcRhoTest, ReadWfcRho)
 {
-    // Init K_Vectors
+    // kpar=1, if nproc=1
+    // kpar=2, if nproc>1
+    const int kpar = GlobalV::KPAR;
+
+    int nspin=1;
+    if(kpar==2)
+    {
+        nspin=2;
+    }
+
     const int my_pool = GlobalV::MY_POOL;
+    const int my_rank = GlobalV::MY_RANK;
     const int nbands = PARAM.input.nbands;
     const int nks = 2;
-    const int nkstot = GlobalV::KPAR * nks;
+    const int nkstot = nspin * nks;
+
     kv->set_nkstot(nkstot);
     kv->set_nks(nks);
     kv->isk = {0, 0};
@@ -220,20 +232,23 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 #endif
 
     // Write the wave functions to file
-    const std::string global_out_dir = "./";
-    ModuleIO::write_wfc_pw(PARAM.input.out_wfc_pw, global_out_dir, *psi, *kv, wfcpw);
+    const std::string out_dir = "./";
+    ModuleIO::write_wfc_pw(PARAM.input.out_wfc_pw, out_dir, *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    std::ofstream running_log("running_log.txt");
-    ModuleIO::read_wf2rho_pw(wfcpw, symm, kv->ik2iktot, nkstot, kv->isk, chg, running_log);
+	std::ofstream running_log("running_log.txt");
+
+    // for spin=1 or 2, npol=1
+    const int npol=1;
+	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg, 
+			out_dir, kpar, my_pool, my_rank, nbands, nspin, npol, 
+			nkstot, kv->ik2iktot, kv->isk, running_log);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
     {
         EXPECT_NEAR(chg.rho[0][ir], chg_ref.rho[0][ir], 1e-8);
     }
-    // std::cout.precision(16);
-    // std::cout<<chg.rho[0][0]<<std::endl;
 	if (GlobalV::NPROC == 1) 
 	{
 		EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
@@ -261,12 +276,12 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     if (GlobalV::MY_RANK == 0)
     {
         remove("istate.info");
-        remove("WAVEFUNC1.dat");
-        remove("WAVEFUNC2.dat");
+        remove("wfs1k1_pw.dat");
+        remove("wfs1k2_pw.dat");
         if (GlobalV::KPAR > 1)
         {
-            remove("WAVEFUNC3.dat");
-            remove("WAVEFUNC4.dat");
+            remove("wfs1k3_pw.dat");
+            remove("wfs1k4_pw.dat");
         }
     }
 }
@@ -275,6 +290,8 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
+
+    // when kpar == 2, nspin == 2
     PARAM.input.kpar = (GlobalV::NPROC > 1) ? 2 : 1;
     GlobalV::KPAR = PARAM.input.kpar;
     PARAM.input.bndpar = 1;

@@ -8,13 +8,21 @@
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_io/filename.h"
 
-void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
-                               ModuleSymmetry::Symmetry& symm,
-                               const std::vector<int> &ik2iktot,
-                               const int nkstot,
-                               const std::vector<int> &isk,
-							   Charge& chg,
-							   std::ofstream &ofs_running)
+void ModuleIO::read_wf2rho_pw(
+		const ModulePW::PW_Basis_K* pw_wfc,
+		ModuleSymmetry::Symmetry& symm,
+		Charge& chg,
+        const std::string &readin_dir,
+		const int kpar,
+		const int my_pool,
+		const int my_rank,
+		const int nbands,
+		const int nspin,
+		const int npol,
+		const int nkstot,
+		const std::vector<int> &ik2iktot,
+		const std::vector<int> &isk,
+		std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_wf2rho_pw");
     ModuleBase::timer::tick("ModuleIO", "read_wf2rho_pw");
@@ -31,18 +39,22 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
-    const int kpar = GlobalV::KPAR;
-    const int my_pool = GlobalV::MY_POOL;
-    const int my_rank = GlobalV::MY_RANK;
-    const int nbands = PARAM.inp.nbands;
-    const int nspin = PARAM.inp.nspin;
+    assert(kpar>=1);
+    assert(my_pool>=0);
+    assert(my_rank>=0);
+    assert(nbands>0);
+    assert(nspin>0);
+    assert(npol==1 || npol==2);
 
-    const int ng_npol = pw_wfc->npwk_max * PARAM.globalv.npol;
     const int nrxx = pw_wfc->nrxx;
+    assert(nrxx>=0);
+
     for (int is = 0; is < nspin; ++is)
     {
         ModuleBase::GlobalFunc::ZEROS(chg.rho[is], nrxx);
     }
+
+    const int ng_npol = pw_wfc->npwk_max * npol;
 
     ModuleBase::ComplexMatrix wfc_tmp(nbands, ng_npol);
     std::vector<std::complex<double>> rho_tmp(nrxx);
@@ -51,7 +63,7 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
     ModuleBase::matrix wg_tmp(nkstot, nbands);
     if (my_rank == 0)
     {
-        std::string filename = PARAM.globalv.global_readin_dir + "istate.info";
+        std::string filename = readin_dir + "istate.info";
         std::ifstream ifs(filename);
 
 		if(!ifs)
@@ -113,7 +125,7 @@ void ModuleIO::read_wf2rho_pw(const ModulePW::PW_Basis_K* pw_wfc,
         const bool gamma_only = false;
         const int istep = -1;
 
-        std::string fn = filename_output(PARAM.globalv.global_readin_dir,"wf","pw",ik,ik2iktot,nspin,nkstot,
+        std::string fn = filename_output(readin_dir,"wf","pw",ik,ik2iktot,nspin,nkstot,
                 out_type,out_app_flag,gamma_only,istep);
 
         ofs_running << " Wave function file name is " << fn << std::endl;
