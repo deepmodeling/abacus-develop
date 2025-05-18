@@ -36,9 +36,7 @@
 #include "module_parameter/parameter.h"
 
 #include <iostream>
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 #ifdef __MLKEDF
 #include "module_hamilt_pw/hamilt_ofdft/ml_data.h"
 #endif

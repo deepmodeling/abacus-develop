@@ -33,10 +33,6 @@
 
 #include <vector>
 
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
-
 Charge::Charge()
 {
     allocate_rho = false;
@@ -273,57 +269,6 @@ void Charge::atomic_rho(const int spin_number_need,
     ModuleBase::TITLE("Charge", "atomic_rho");
     ModuleBase::timer::tick("Charge", "atomic_rho");
 
-    if(PARAM.inp.use_paw)
-    {
-    // In ABINIT, the initial charge density is calculated using some Gaussian functions
-    // centered at the nuclei
-#ifdef USE_PAW
-        GlobalC::paw_cell.init_rho(rho_in);
-        double ne_tot = 0.0;
-        std::vector<double> ne(spin_number_need);
-        int spin0 = 1;
-		if (spin_number_need == 2) 
-		{ 
-			spin0 = spin_number_need;
-		}
-
-        for (int is = 0; is < spin0; ++is)
-        {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
-            {
-                ne[is] += rho_in[is][ir];
-            }
-            ne[is] *= omega / (double)this->rhopw->nxyz;
-#ifdef __MPI
-            Parallel_Reduce::reduce_pool(ne[is]);
-#endif
-            GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "Electron number from rho", ne[is]);
-            ne_tot += ne[is];
-        }
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
-		for (int is = 0; is < spin_number_need; ++is) 
-		{
-			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
-			{
-				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-			}
-		}
-        
-        double* nhatgr=nullptr;
-        GlobalC::paw_cell.get_nhat(nhat,nhatgr);
-
-		for (int is = 0; is < spin_number_need; ++is) 
-		{
-			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
-			{
-				rho_in[is][ir] -= nhat[is][ir];
-			}
-		}
-#endif
-    }
-    else
     {
 		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
 		{
@@ -718,12 +663,6 @@ void Charge::save_rho_before_sum_band()
         {
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
         }
-#ifdef USE_PAW
-		if(PARAM.inp.use_paw) 
-		{
-			ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
-		}
-#endif
     }
     return;
 }

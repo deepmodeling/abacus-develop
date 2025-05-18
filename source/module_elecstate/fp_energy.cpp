@@ -2,9 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 #include "module_base/tool_quit.h"
 
@@ -27,15 +25,6 @@ double fenergy::calculate_etot()
         etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
                + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
-
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        double ecore = GlobalC::paw_cell.calculate_ecore();
-        double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot += (ecore + epawdc);
-    }
-#endif
     return etot;
 }
 
@@ -52,14 +41,6 @@ double fenergy::calculate_harris()
         etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
                       + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        double ecore = GlobalC::paw_cell.calculate_ecore();
-        double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot_harris += (ecore + epawdc);
-    }
-#endif
     return etot_harris;
 }
 
