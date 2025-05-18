@@ -45,14 +45,11 @@ void ModuleIO::write_wfc_pw(
     bool gamma_only = false; // need to modify later, mohan 2025-05-17
     int istep = -1; // need to modify later, mohan 2025-05-17
 
-    std::string* wfilename;
-    wfilename = new std::string[nkstot];
-
+    std::string* wfilename = new std::string[nks];
 
     for (int ip = 0; ip < kpar; ip++)
     {
         if (my_pool != ip) continue;
-        if (rank_in_pool != 0) continue;
 
         for (int ik_local = 0; ik_local < kv.get_nks(); ik_local++)
         {
@@ -63,9 +60,9 @@ void ModuleIO::write_wfc_pw(
             ofs_running << " Write G-space wave functions into file "
                 << fn << std::endl;
 
-			const int ik_global = kv.ik2iktot[ik_local];
-			wfilename[ik_global] = fn;
-			if (my_rank == 0)
+			wfilename[ik_local] = fn;
+
+			if (rank_in_pool == 0)
 			{
 				if (out_wfc_pw == 1)
 				{
@@ -99,10 +96,9 @@ void ModuleIO::write_wfc_pw(
             {
                 psi.fix_k(ik);
                 int ikngtot = 0; // ikngtot: the total number of plane waves of ikpoint
-                int ikstot = 0;  // ikstot : the index within all k-points
                 const int ng = kv.ngk[ik];
                 const int ng_max = wfcpw->npwk_max;
-                ikstot = kv.ik2iktot[ik];
+                const int ikstot = kv.ik2iktot[ik];
 #ifdef __MPI
                 MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
 #else
@@ -120,7 +116,7 @@ void ModuleIO::write_wfc_pw(
 #endif
                         if (out_wfc_pw == 1)
                         {
-                            std::ofstream ofs2(wfilename[ikstot].c_str(), std::ios::app);
+                            std::ofstream ofs2(wfilename[ik].c_str(), std::ios::app);
                             if (id == 0)
                             {
                                 ofs2 << std::setprecision(6);
@@ -163,7 +159,7 @@ void ModuleIO::write_wfc_pw(
                         }
                         else if (out_wfc_pw == 2)
                         {
-                            Binstream wfs2(wfilename[ikstot], "a");
+                            Binstream wfs2(wfilename[ik], "a");
                             if (id == 0)
                             {
                                 wfs2 << int(72) << ikstot + 1 << nkstot << kv.kvec_c[ik].x << kv.kvec_c[ik].y
@@ -211,7 +207,7 @@ void ModuleIO::write_wfc_pw(
 #endif
                             if (out_wfc_pw == 1)
                             {
-                                std::ofstream ofs2(wfilename[ikstot].c_str(), std::ios::app);
+                                std::ofstream ofs2(wfilename[ik].c_str(), std::ios::app);
                                 if (id == 0)
                                 {
                                     ofs2 << "\n< Band " << ib + 1 << " >" << std::endl;
@@ -233,7 +229,7 @@ void ModuleIO::write_wfc_pw(
                             }
                             else if (out_wfc_pw == 2)
                             {
-                                Binstream wfs2(wfilename[ikstot], "a");
+                                Binstream wfs2(wfilename[ik], "a");
                                 if (id == 0)
                                 {
                                     wfs2 << ikngtot_npol * 16;
@@ -265,7 +261,7 @@ void ModuleIO::write_wfc_pw(
 #endif
                                 if (out_wfc_pw == 1)
                                 {
-                                    std::ofstream ofs2(wfilename[ikstot].c_str(), std::ios::app);
+                                    std::ofstream ofs2(wfilename[ik].c_str(), std::ios::app);
 
                                     ofs2 << std::scientific;
                                     for (int ig = 0; ig < ng; ig++)
@@ -285,7 +281,7 @@ void ModuleIO::write_wfc_pw(
                                 }
                                 else if (out_wfc_pw == 2)
                                 {
-                                    Binstream wfs2(wfilename[ikstot], "a");
+                                    Binstream wfs2(wfilename[ik], "a");
                                     for (int ig = 0; ig < ng; ig++)
                                     {
                                         wfs2 << psi(ib, ig + ng_max).real() << psi(ib, ig + ng_max).imag();
