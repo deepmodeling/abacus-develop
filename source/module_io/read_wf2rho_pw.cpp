@@ -111,10 +111,6 @@ void ModuleIO::read_wf2rho_pw(
     MPI_Bcast(wg_tmp.c, nkstot * nbands, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
-
-
-ofs_running << "pw_wfc->nks=" << pw_wfc->nks << std::endl;
-
     for (int ik = 0; ik < pw_wfc->nks; ++ik)
     {
         int is = 0;
