@@ -499,43 +499,35 @@ if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
 fi
 
 #--------------------------------------------
-# obtain wave functions for each electronic
-# state 
+# Process .cube files for:
+# 1. get_wf/get_pchg calculation tag (LCAO)
+# 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
-if [ $calculation == "get_wf" ]; then
-	nfile=0
-	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-    #echo "The cube files are $cubefiles"
-	if test -z "$cubefiles"; then
-		echo "Can't find $cubefiles files"
-		exit 1
-	else
-		for cube in $cubefiles;
-		do
-			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
-			echo "$cube $total_chg" >>$1
-		done
-	fi
+need_process_cube=false
+# Check if this is a LCAO calculation with get_wf/get_pchg
+if [ $calculation == "get_wf" ] || [ $calculation == "get_pchg" ]; then
+    need_process_cube=true
 fi
-
-
-#--------------------------------------------
-# obtian electron charge density for each 
-# electronic state
-#--------------------------------------------
-if [ $calculation == "get_pchg" ]; then
-	nfile=0
-	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-	if test -z "$cubefiles"; then
-		echo "Can't find cube files"
-		exit 1
-	else
-		for cube in $cubefiles;
-		do
-			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
-			echo "$cube $total_chg" >>$1
-		done
-	fi
+# Check if this is a PW calculation with out_wfc_norm/out_wfc_re_im
+out_wfc_norm=$(get_input_key_value "out_wfc_norm" "INPUT")
+out_wfc_re_im=$(get_input_key_value "out_wfc_re_im" "INPUT")
+out_pchg=$(get_input_key_value "out_pchg" "INPUT")
+if [ -n "$out_wfc_norm" ] || [ -n "$out_wfc_re_im" ] || [ -n "$out_pchg" ]; then
+    need_process_cube=true
+fi
+# Process .cube files if needed
+if [ "$need_process_cube" = true ]; then
+    cubefiles=$(ls OUT.autotest/ | grep -E '.cube$')
+    
+    if [ -z "$cubefiles" ]; then
+        echo "Error: No .cube files found in OUT.autotest/"
+        exit 1
+    else
+        for cube in $cubefiles; do
+            total_chg=$($SUM_CUBE_EXE OUT.autotest/$cube)
+            echo "$cube $total_chg" >> $1
+        done
+    fi
 fi
 
 #--------------------------------------------

@@ -24,6 +24,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
+#include "module_io/get_wf_pw.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -933,9 +934,41 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     //! 5) Print out electronic wave functions in real space
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+
+    //----------------------------------------------------------
+    //! The write_psi_r_1 interface will be removed in the very 
+    //! near future. Don't use it!
+    //----------------------------------------------------------
+    // if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+    // }
+
+    const std::vector<int> out_wfc_norm = PARAM.inp.out_wfc_norm;
+    const std::vector<int> out_wfc_re_im = PARAM.inp.out_wfc_re_im;
+    if (out_wfc_norm.size() > 0 || out_wfc_re_im.size() > 0)
     {
-        ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+        ModuleIO::get_wf_pw(out_wfc_norm,
+                            out_wfc_re_im,
+                            this->kspw_psi->get_nbands(),
+                            PARAM.inp.nspin,
+                            this->pw_rhod->nx,
+                            this->pw_rhod->ny,
+                            this->pw_rhod->nz,
+                            this->pw_rhod->nxyz,
+                            this->kv.get_nks(),
+                            this->kv.isk,
+                            this->kv.wk,
+                            this->pw_big->bz,
+                            this->pw_big->nbz,
+                            this->chr.ngmc,
+                            &ucell,
+                            this->psi,
+                            this->pw_rhod,
+                            this->pw_wfc,
+                            this->ctx,
+                            this->Pgrid,
+                            PARAM.globalv.global_out_dir);
     }
 
     //----------------------------------------------------------

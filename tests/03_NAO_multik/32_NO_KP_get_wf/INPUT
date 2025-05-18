@@ -16,6 +16,9 @@ basis_type		lcao
 scf_thr			1e-10
 read_file_dir	./
 
+out_wfc_norm    1
+out_wfc_re_im   1
+
 bx 2
 by 2
 bz 2

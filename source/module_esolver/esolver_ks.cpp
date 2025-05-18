@@ -36,6 +36,27 @@ namespace ModuleESolver
 template <typename T, typename Device>
 ESolver_KS<T, Device>::ESolver_KS()
 {
+}
+
+
+template <typename T, typename Device>
+ESolver_KS<T, Device>::~ESolver_KS()
+{
+    delete this->psi;
+    delete this->pw_wfc;
+    delete this->p_hamilt;
+    delete this->p_chgmix;
+    this->ppcell.release_memory();
+}
+
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+{
+    ModuleBase::TITLE("ESolver_KS", "before_all_runners");
+    //! 1) initialize "before_all_runniers" in ESolver_FP
+    ESolver_FP::before_all_runners(ucell, inp);
+    
     classname = "ESolver_KS";
     basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
 
@@ -75,27 +96,8 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // cell_factor
     this->ppcell.cell_factor = PARAM.inp.cell_factor;
-}
 
 
-template <typename T, typename Device>
-ESolver_KS<T, Device>::~ESolver_KS()
-{
-    delete this->psi;
-    delete this->pw_wfc;
-    delete this->p_hamilt;
-    delete this->p_chgmix;
-    this->ppcell.release_memory();
-}
-
-
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
-{
-    ModuleBase::TITLE("ESolver_KS", "before_all_runners");
-
-    //! 1) initialize "before_all_runniers" in ESolver_FP
-    ESolver_FP::before_all_runners(ucell, inp);
 
     /// PAW Section
 #ifdef USE_PAW

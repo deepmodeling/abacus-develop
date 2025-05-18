@@ -8,7 +8,7 @@ for i in 4;do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./cell_unitcell_test_para
+    mpirun -np $i ./MODULE_CELL_unitcell_test_para
     if [[ $? -ne 0 ]]; then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\
 			"execute UT with $i cores error."

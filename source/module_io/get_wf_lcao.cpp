@@ -21,27 +21,26 @@ Get_wf_lcao::~Get_wf_lcao()
 
 // For gamma_only
 void Get_wf_lcao::begin(const UnitCell& ucell,
-		const psi::Psi<double>* psid,
-		const ModulePW::PW_Basis* pw_rhod,
-		const ModulePW::PW_Basis_K* pw_wfc,
-		const ModulePW::PW_Basis_Big* pw_big,
-		const Parallel_Grid& pgrid,
-		const Parallel_Orbitals& para_orb,
-		Gint_Gamma& gg,
-		const int& out_wfc_pw,
-		const int& out_wfc_r,
-		const K_Vectors& kv,
-		const double nelec,
-		const int nbands_istate,
-		const std::vector<int>& out_wfc_norm,
-		const std::vector<int>& out_wfc_re_im,
-		const int nbands,
-		const int nspin,
-		const int nlocal,
-		const std::string& global_out_dir)
+                        const psi::Psi<double>* psid,
+                        const ModulePW::PW_Basis* pw_rhod,
+                        const ModulePW::PW_Basis_K* pw_wfc,
+                        const ModulePW::PW_Basis_Big* pw_big,
+                        const Parallel_Grid& pgrid,
+                        const Parallel_Orbitals& para_orb,
+                        Gint_Gamma& gg,
+                        const int& out_wfc_pw,
+                        const K_Vectors& kv,
+                        const double nelec,
+                        const int nbands_istate,
+                        const std::vector<int>& out_wfc_norm,
+                        const std::vector<int>& out_wfc_re_im,
+                        const int nbands,
+                        const int nspin,
+                        const int nlocal,
+                        const std::string& global_out_dir)
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
- 
+
     int fermi_band = 0;
     prepare_get_wf(GlobalV::ofs_running, nelec, fermi_band);
 
@@ -58,10 +57,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
-    if (out_wfc_pw || out_wfc_r)
-    {
-        psi_g.resize(nspin, nbands, kv.ngk[0]);
-    }
+
+    // if (out_wfc_pw || out_wfc_r)
+    psi_g.resize(nspin, nbands, kv.ngk[0]);
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
@@ -97,8 +95,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 #ifdef __MPI
                 wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
 #else
-                // if not MPI enabled, it is the case psid holds a global matrix. 
-                // use fix_k to switch between different spin channels (actually kpoints, 
+                // if not MPI enabled, it is the case psid holds a global matrix.
+                // use fix_k to switch between different spin channels (actually kpoints,
                 // because now the same kpoint in different spin channels are treated
                 // as distinct kpoints)
 
@@ -117,16 +115,15 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // pint out information
                 std::stringstream ss_file;
-                ss_file << "wf" << ib + 1 << "s" << is + 1 << ".cube"; 
+                ss_file << "wf" << ib + 1 << "s" << is + 1 << ".cube";
 
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
 
                 std::stringstream ss_info;
-                ss_info << "Wave func. " << ib+1 << " spin " << is+1 << " saved in";
+                ss_info << "Wave func. " << ib + 1 << " spin " << is + 1 << " saved in";
 
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
-
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
@@ -159,84 +156,67 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // Set this->bands_picked_ according to the mode
     this->select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
 
-    if (out_wfc_pw || out_wfc_r)
+    // Calculate out_wfc_re_im
+    for (int ib = 0; ib < nbands; ++ib)
     {
-        // Calculate out_wfc_re_im
-        for (int ib = 0; ib < nbands; ++ib)
+        if (bands_picked_[ib])
         {
-            if (bands_picked_[ib])
+            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+
+            for (int is = 0; is < nspin; ++is)
             {
-                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
 
-                for (int is = 0; is < nspin; ++is)
-                {
-                    ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
-
-                    psid->fix_k(is);
+                psid->fix_k(is);
 #ifdef __MPI
-                    wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
+                wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
 #else
-                    // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
-                    // different spin channels (actually kpoints, because now the same kpoint in different spin channels
-                    // are treated as distinct kpoints)
+                // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
+                // different spin channels (actually kpoints, because now the same kpoint in different spin channels
+                // are treated as distinct kpoints)
 
-                    for (int i = 0; i < nbands; ++i)
+                for (int i = 0; i < nbands; ++i)
+                {
+                    for (int j = 0; j < nlocal; ++j)
                     {
-                        for (int j = 0; j < nlocal; ++j)
-                        {
-                            wfc_gamma_grid[is][i][j] = psid[0](i, j);
-                        }
+                        wfc_gamma_grid[is][i][j] = psid[0](i, j);
                     }
+                }
 #endif
 
-                    gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
 
-                    pes_->charge->save_rho_before_sum_band();
+                pes_->charge->save_rho_before_sum_band();
 
-                    const double ef_tmp = this->pes_->eferm.get_efval(is);
+                const double ef_tmp = this->pes_->eferm.get_efval(is);
 
-                    // only for gamma_only now
-                    psi_g.fix_k(is);
-                    this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
+                // only for gamma_only now
+                psi_g.fix_k(is);
+                this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
 
-                    // Calculate real-space wave functions
-                    psi_g.fix_k(is);
-                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
+                // Calculate real-space wave functions
+                psi_g.fix_k(is);
+                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
 
-                    // Extract real and imaginary parts
-                    std::vector<double> wfc_real(pw_wfc->nrxx);
-                    std::vector<double> wfc_imag(pw_wfc->nrxx);
-                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                    {
-                        wfc_real[ir] = wfc_r[ir].real();
-                        wfc_imag[ir] = wfc_r[ir].imag();
-                    }
-
-                    // Output real part
-                    std::stringstream ss_real;
-                    ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_real.data(),
-                                                  is,
-                                                  nspin,
-                                                  0,
-                                                  ss_real.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
-
-                    // Output imaginary part
-                    std::stringstream ss_imag;
-                    ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_imag.data(),
-                                                  is,
-                                                  nspin,
-                                                  0,
-                                                  ss_imag.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
+                // Extract real and imaginary parts
+                std::vector<double> wfc_real(pw_wfc->nrxx);
+                std::vector<double> wfc_imag(pw_wfc->nrxx);
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
+                {
+                    wfc_real[ir] = wfc_r[ir].real();
+                    wfc_imag[ir] = wfc_r[ir].imag();
                 }
+
+                // Output real part
+                std::stringstream ss_real;
+                ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
+
+                // Output imaginary part
+                std::stringstream ss_imag;
+                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
     }
@@ -250,10 +230,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
     }
 
-    if (out_wfc_r)
-    {
-        ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-    }
+    // if (out_wfc_r)
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
+    // }
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -268,24 +248,23 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
 // For multi-k
 void Get_wf_lcao::begin(const UnitCell& ucell,
-                            const psi::Psi<std::complex<double>>* psi,
-                            const ModulePW::PW_Basis* pw_rhod,
-                            const ModulePW::PW_Basis_K* pw_wfc,
-                            const ModulePW::PW_Basis_Big* pw_big,
-                            const Parallel_Grid& pgrid,
-                            const Parallel_Orbitals& para_orb,
-                            Gint_k& gk,
-                            const int& out_wf,
-                            const int& out_wf_r,
-                            const K_Vectors& kv,
-                            const double nelec,
-                            const int nbands_istate,
-                            const std::vector<int>& out_wfc_norm,
-                            const std::vector<int>& out_wfc_re_im,
-                            const int nbands,
-                            const int nspin,
-                            const int nlocal,
-                            const std::string& global_out_dir)
+                        const psi::Psi<std::complex<double>>* psi,
+                        const ModulePW::PW_Basis* pw_rhod,
+                        const ModulePW::PW_Basis_K* pw_wfc,
+                        const ModulePW::PW_Basis_Big* pw_big,
+                        const Parallel_Grid& pgrid,
+                        const Parallel_Orbitals& para_orb,
+                        Gint_k& gk,
+                        const int& out_wf,
+                        const K_Vectors& kv,
+                        const double nelec,
+                        const int nbands_istate,
+                        const std::vector<int>& out_wfc_norm,
+                        const std::vector<int>& out_wfc_re_im,
+                        const int nbands,
+                        const int nspin,
+                        const int nlocal,
+                        const std::string& global_out_dir)
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
@@ -311,10 +290,9 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
-    if (out_wf || out_wf_r)
-    {
-        psi_g.resize(nks, nbands, pw_wfc->npwk_max);
-    }
+
+    // if (out_wf || out_wf_r)
+    psi_g.resize(nks, nbands, pw_wfc->npwk_max);
 
     int mode_norm = 0;
     if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
@@ -343,7 +321,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[ispin],
                                               pw_wfc->nrxx); // terrible, you make changes on another instance's data???
 
-
                 //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
                 psi->fix_k(ik);
 
@@ -352,39 +329,35 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 #else
                 for (int i = 0; i < nbands; ++i)
                 {
-					for (int j = 0; j < nlocal; ++j)
-					{
-						wfc_k_grid[ik][i][j] = psi[0](i, j);
-					}
+                    for (int j = 0; j < nlocal; ++j)
+                    {
+                        wfc_k_grid[ik][i][j] = psi[0](i, j);
+                    }
                 }
 #endif
                 // deal with NSPIN=4
                 gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, ucell);
 
-
-                // ik0 is the real k-point index, starting from 0               
-				int ik0 = kv.ik2iktot[ik];
-				if(nspin == 2)
-				{
-					const int half_k = kv.get_nkstot()/2;
-					if(ik0 >= half_k)
-					{
-						ik0 -= half_k;
-					}
-				}
+                // ik0 is the real k-point index, starting from 0
+                int ik0 = kv.ik2iktot[ik];
+                if (nspin == 2)
+                {
+                    const int half_k = kv.get_nkstot() / 2;
+                    if (ik0 >= half_k)
+                    {
+                        ik0 -= half_k;
+                    }
+                }
 
                 // pint out information
                 std::stringstream ss_file;
-                ss_file << "wf" << ib+1 << "s" << ispin + 1 << "k" << ik0+1 << ".cube";
+                ss_file << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << ".cube";
 
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
 
                 std::stringstream ss_info;
-                ss_info << "Wave func. " << ib+1 
-                        << " spin " << ispin+1
-                        << " k-point " << ik0+1
-                        << " saved in";
+                ss_info << "Wave func. " << ib + 1 << " spin " << ispin + 1 << " k-point " << ik0 + 1 << " saved in";
 
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
 
@@ -401,85 +374,75 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               3,
                                               1);
 
-                if (out_wf || out_wf_r)
-                {
-                    psi_g.fix_k(ik);
-                    this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
-                }
+                // if (out_wf || out_wf_r)
+                psi_g.fix_k(ik);
+                this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
             }
         }
     }
 
-    if (out_wf || out_wf_r)
+    if (out_wf)
     {
-        if (out_wf)
-        {
-            std::stringstream ssw;
-            ssw << global_out_dir << "WAVEFUNC";
-            std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
-                      << std::endl;
-            ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
-        }
-        if (out_wf_r)
-        {
-            ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-        }
+        std::stringstream ssw;
+        ssw << global_out_dir << "WAVEFUNC";
+        std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
+                  << std::endl;
+        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
+    }
+    // if (out_wf_r)
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
+    // }
 
-        std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
+    std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 
-        for (int ib = 0; ib < nbands; ++ib)
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (bands_picked_[ib])
         {
-            if (bands_picked_[ib])
+            const int nspin0 = (nspin == 2) ? 2 : 1;
+            for (int ik = 0; ik < nks; ++ik)
             {
-                const int nspin0 = (nspin == 2) ? 2 : 1;
-                for (int ik = 0; ik < nks; ++ik)
+                const int ispin = kv.isk[ik];
+                std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1 << std::endl;
+
+                psi_g.fix_k(ik);
+
+                // Calculate real-space wave functions
+                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
+
+                // Extract real and imaginary parts
+                std::vector<double> wfc_real(pw_wfc->nrxx);
+                std::vector<double> wfc_imag(pw_wfc->nrxx);
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
                 {
-                    const int ispin = kv.isk[ik];
-                    std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1
-                              << std::endl;
-
-                    psi_g.fix_k(ik);
-
-                    // Calculate real-space wave functions
-                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
-
-                    // Extract real and imaginary parts
-                    std::vector<double> wfc_real(pw_wfc->nrxx);
-                    std::vector<double> wfc_imag(pw_wfc->nrxx);
-                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                    {
-                        wfc_real[ir] = wfc_r[ir].real();
-                        wfc_imag[ir] = wfc_r[ir].imag();
-                    }
-
-                    // Output real part
-
-                    std::stringstream ss_real;
-                    ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik+1 << "real.cube";
-
-                    const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_real.data(),
-                                                  ispin,
-                                                  nspin,
-                                                  0,
-                                                  ss_real.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
-
-                    // Output imaginary part
-                    std::stringstream ss_imag;
-                    ss_imag << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik+1 << "imag.cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  wfc_imag.data(),
-                                                  ispin,
-                                                  nspin,
-                                                  0,
-                                                  ss_imag.str(),
-                                                  ef_tmp,
-                                                  &(ucell));
+                    wfc_real[ir] = wfc_r[ir].real();
+                    wfc_imag[ir] = wfc_r[ir].imag();
                 }
+
+                // ik0 is the real k-point index, starting from 0
+                int ik0 = kv.ik2iktot[ik];
+                if (nspin == 2)
+                {
+                    const int half_k = kv.get_nkstot() / 2;
+                    if (ik0 >= half_k)
+                    {
+                        ik0 -= half_k;
+                    }
+                }
+
+                // Output real part
+                std::stringstream ss_real;
+                ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "real.cube";
+
+                const double ef_tmp = this->pes_->eferm.get_efval(ispin);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
+
+                // Output imaginary part
+                std::stringstream ss_imag;
+                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "imag.cube";
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
     }
@@ -497,11 +460,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 }
 
 void Get_wf_lcao::select_bands(const int nbands_istate,
-                                   const std::vector<int>& out_wfc_kb,
-                                   const int nbands,
-                                   const double nelec,
-                                   const int mode,
-                                   const int fermi_band)
+                               const std::vector<int>& out_wfc_kb,
+                               const int nbands,
+                               const double nelec,
+                               const int mode,
+                               const int fermi_band)
 {
     ModuleBase::TITLE("Get_wf_lcao", "select_bands");
 
@@ -610,11 +573,11 @@ void Get_wf_lcao::select_bands(const int nbands_istate,
 
 // for each band
 void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
-                                 const int& ik,
-                                 const int& ib,
-                                 const int& nspin,
-                                 const double* const* const rho,
-                                 psi::Psi<std::complex<double>>& wfc_g)
+                             const int& ik,
+                             const int& ib,
+                             const int& nspin,
+                             const double* const* const rho,
+                             psi::Psi<std::complex<double>>& wfc_g)
 {
     if (ib == 0)
     {
@@ -640,14 +603,14 @@ void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
 #ifdef __MPI
 template <typename T>
 int Get_wf_lcao::set_wfc_grid(const int naroc[2],
-                                  const int nb,
-                                  const int dim0,
-                                  const int dim1,
-                                  const int iprow,
-                                  const int ipcol,
-                                  const T* in,
-                                  T** out,
-                                  const std::vector<int>& trace_lo)
+                              const int nb,
+                              const int dim0,
+                              const int dim1,
+                              const int iprow,
+                              const int ipcol,
+                              const T* in,
+                              T** out,
+                              const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
     if (!out)
@@ -675,29 +638,29 @@ int Get_wf_lcao::set_wfc_grid(const int naroc[2],
 }
 
 template int Get_wf_lcao::set_wfc_grid(const int naroc[2],
-                                           const int nb,
-                                           const int dim0,
-                                           const int dim1,
-                                           const int iprow,
-                                           const int ipcol,
-                                           const double* in,
-                                           double** out,
-                                           const std::vector<int>& trace_lo);
+                                       const int nb,
+                                       const int dim0,
+                                       const int dim1,
+                                       const int iprow,
+                                       const int ipcol,
+                                       const double* in,
+                                       double** out,
+                                       const std::vector<int>& trace_lo);
 template int Get_wf_lcao::set_wfc_grid(const int naroc[2],
-                                           const int nb,
-                                           const int dim0,
-                                           const int dim1,
-                                           const int iprow,
-                                           const int ipcol,
-                                           const std::complex<double>* in,
-                                           std::complex<double>** out,
-                                           const std::vector<int>& trace_lo);
+                                       const int nb,
+                                       const int dim0,
+                                       const int dim1,
+                                       const int iprow,
+                                       const int ipcol,
+                                       const std::complex<double>* in,
+                                       std::complex<double>** out,
+                                       const std::vector<int>& trace_lo);
 
 template <typename T>
 void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
-                                     const Parallel_Orbitals& pv,
-                                     T** lowf_grid,
-                                     const std::vector<int>& trace_lo)
+                                 const Parallel_Orbitals& pv,
+                                 T** lowf_grid,
+                                 const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
     ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
@@ -763,33 +726,36 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
 }
 
 template void Get_wf_lcao::wfc_2d_to_grid(const double* lowf_2d,
-                                              const Parallel_Orbitals& pv,
-                                              double** lowf_grid,
-                                              const std::vector<int>& trace_lo);
+                                          const Parallel_Orbitals& pv,
+                                          double** lowf_grid,
+                                          const std::vector<int>& trace_lo);
 template void Get_wf_lcao::wfc_2d_to_grid(const std::complex<double>* lowf_2d,
-                                              const Parallel_Orbitals& pv,
-                                              std::complex<double>** lowf_grid,
-                                              const std::vector<int>& trace_lo);
+                                          const Parallel_Orbitals& pv,
+                                          std::complex<double>** lowf_grid,
+                                          const std::vector<int>& trace_lo);
 #endif
 
-
-void Get_wf_lcao::prepare_get_wf(std::ofstream &ofs_running, const int nelec, int& fermi_band)
+void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running, const int nelec, int& fermi_band)
 {
     ofs_running << "\n\n";
     ofs_running << " GET_WF CALCULATIONS BEGINS" << std::endl;
 
     ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
+                << std::endl;
     ofs_running << " |                                            "
-        "                        |" << std::endl;
+                   "                        |"
+                << std::endl;
     ofs_running << " | Here we use real-space (r) grid integral technique to calculate    |" << std::endl;
     ofs_running << " | the electronic wave function psi(i,r) for each electronic state i. |" << std::endl;
     ofs_running << " | The |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] are printed out      |" << std::endl;
     ofs_running << " | using numerical atomic orbitals as basis set.                      |" << std::endl;
     ofs_running << " |                                            "
-        "                        |" << std::endl;
+                   "                        |"
+                << std::endl;
     ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
+                << std::endl;
 
     ofs_running << "\n\n";
 
@@ -802,8 +768,6 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream &ofs_running, const int nelec, in
     ModuleBase::GlobalFunc::OUT(ofs_running, "Number of electrons", nelec);
     ModuleBase::GlobalFunc::OUT(ofs_running, "Number of occupied bands", fermi_band);
 }
-
-
 
 int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
