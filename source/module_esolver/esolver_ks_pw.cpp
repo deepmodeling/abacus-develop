@@ -649,8 +649,11 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     //----------------------------------------------------------
 	if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
 	{
-		ModuleIO::write_wfc_pw(PARAM.inp.out_wfc_pw, PARAM.globalv.global_out_dir, 
-				this->psi[0], this->kv, this->pw_wfc);
+		ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+				GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+				PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+				this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
 	}
 
     //----------------------------------------------------------
@@ -735,8 +738,11 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
 
 
 	// tmp 2025-05-17, mohan note
-	ModuleIO::write_wfc_pw(PARAM.inp.out_wfc_pw, PARAM.globalv.global_out_dir, 
-			this->psi[0], this->kv, this->pw_wfc);
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+			this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
 
     //------------------------------------------------------------------
     //! 5) calculate Wannier functions in pw basis

@@ -105,8 +105,6 @@ class ReadWfcRhoTest : public ::testing::Test
         wfcpw = new ModulePW::PW_Basis_K;
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
-        PARAM.input.nbands = 4;
-        PARAM.input.nspin = 1;
         // output .dat file
         PARAM.input.out_wfc_pw = 2;
     }
@@ -124,18 +122,12 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     // kpar=1, if nproc=1
     // kpar=2, if nproc>1
     const int kpar = GlobalV::KPAR;
-
-    int nspin=1;
-    if(kpar==2)
-    {
-        nspin=2;
-    }
-
+    const int nspin = 1;
+    const int nbands = 4;
     const int my_pool = GlobalV::MY_POOL;
     const int my_rank = GlobalV::MY_RANK;
-    const int nbands = PARAM.input.nbands;
     const int nks = 2;
-    const int nkstot = nspin * nks;
+    const int nkstot = GlobalV::KPAR * nks;
 
     kv->set_nkstot(nkstot);
     kv->set_nks(nks);
@@ -231,15 +223,23 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     chg_ref.reduce_diff_pools(chg_ref.rho[0]);
 #endif
 
+    // for spin=1 or 2, npol=1
+    const int npol=1;
+
     // Write the wave functions to file
-    const std::string out_dir = "./";
-    ModuleIO::write_wfc_pw(PARAM.input.out_wfc_pw, out_dir, *psi, *kv, wfcpw);
+	const std::string out_dir = "./";
 
     // Read the wave functions to charge density
 	std::ofstream running_log("running_log.txt");
 
-    // for spin=1 or 2, npol=1
-    const int npol=1;
+    const double ecutwfc = 20; // this is a fake number
+
+	ModuleIO::write_wfc_pw(
+			kpar, my_pool, my_rank, nbands, nspin, npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			PARAM.input.out_wfc_pw, ecutwfc, out_dir, *psi, *kv, wfcpw,
+			running_log);
+
 	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg, 
 			out_dir, kpar, my_pool, my_rank, nbands, nspin, npol, 
 			nkstot, kv->ik2iktot, kv->isk, running_log);
@@ -275,13 +275,14 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     delete psi;
     if (GlobalV::MY_RANK == 0)
     {
-        remove("istate.info");
-        remove("wfs1k1_pw.dat");
-        remove("wfs1k2_pw.dat");
+//        remove("running_log.txt");
+//        remove("istate.info");
+//        remove("wfs1k1_pw.dat");
+//        remove("wfs1k2_pw.dat");
         if (GlobalV::KPAR > 1)
         {
-            remove("wfs1k3_pw.dat");
-            remove("wfs1k4_pw.dat");
+//            remove("wfs1k3_pw.dat");
+//            remove("wfs1k4_pw.dat");
         }
     }
 }

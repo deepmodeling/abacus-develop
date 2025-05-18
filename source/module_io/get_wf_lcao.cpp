@@ -221,7 +221,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    ModuleIO::write_wfc_pw(out_wfc_pw,global_out_dir,psi_g, kv, pw_wfc);
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			nbands, nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			out_wfc_pw, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -369,7 +372,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    ModuleIO::write_wfc_pw(out_wf,global_out_dir,psi_g, kv, pw_wfc);
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			nbands, nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			out_wf, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
 
     std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 
