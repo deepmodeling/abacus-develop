@@ -40,7 +40,10 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
 			ik,this->p_kv->ik2iktot,PARAM.inp.nspin,nkstot,
 			out_type,out_app_flag,gamma_only,istep);
 
-    ModuleIO::read_wfc_pw(fn, this->pw_wfc_, ik, ik_tot, nkstot, wfcatom);
+	ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
+			PARAM.inp.nbands, PARAM.globalv.npol,
+			ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
     for (int ib = 0; ib < this->nbands_start_; ib++)

@@ -250,6 +250,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
 		ModuleIO::read_wf2rho_pw(pw_wfc, symm, *this,
                 PARAM.globalv.global_readin_dir,
 				GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+                GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
 				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
 				kv->get_nkstot(),kv->ik2iktot,kv->isk,GlobalV::ofs_running);
     }

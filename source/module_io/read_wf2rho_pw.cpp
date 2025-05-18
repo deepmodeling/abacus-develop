@@ -16,6 +16,8 @@ void ModuleIO::read_wf2rho_pw(
 		const int kpar,
 		const int my_pool,
 		const int my_rank,
+        const int nproc_in_pool,
+        const int rank_in_pool,
 		const int nbands,
 		const int nspin,
 		const int npol,
@@ -109,6 +111,10 @@ void ModuleIO::read_wf2rho_pw(
     MPI_Bcast(wg_tmp.c, nkstot * nbands, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
+
+
+ofs_running << "pw_wfc->nks=" << pw_wfc->nks << std::endl;
+
     for (int ik = 0; ik < pw_wfc->nks; ++ik)
     {
         int is = 0;
@@ -128,9 +134,11 @@ void ModuleIO::read_wf2rho_pw(
         std::string fn = filename_output(readin_dir,"wf","pw",ik,ik2iktot,nspin,nkstot,
                 out_type,out_app_flag,gamma_only,istep);
 
-        ofs_running << " Wave function file name is " << fn << std::endl;
+        ofs_running << " Reading wave function from file: " << fn << std::endl;
 
-        ModuleIO::read_wfc_pw(fn, pw_wfc, ik, ikstot, nkstot, wfc_tmp);
+		ModuleIO::read_wfc_pw(fn, pw_wfc, 
+				rank_in_pool, nproc_in_pool, nbands, npol,
+				ik, ikstot, nkstot, wfc_tmp);
 
         if (nspin == 4)
         {

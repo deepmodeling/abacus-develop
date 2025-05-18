@@ -241,7 +241,9 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 			running_log);
 
 	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg, 
-			out_dir, kpar, my_pool, my_rank, nbands, nspin, npol, 
+			out_dir, kpar, my_pool, my_rank, 
+			GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
+			nbands, nspin, npol, 
 			nkstot, kv->ik2iktot, kv->isk, running_log);
 
     // compare the charge density

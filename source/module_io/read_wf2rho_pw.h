@@ -27,6 +27,8 @@ void read_wf2rho_pw(
 		const int kpar,
 		const int my_pool,
 		const int my_rank,
+        const int nproc_in_pool,
+        const int rank_in_pool,
 		const int nbands,
 		const int nspin,
 		const int npol,
