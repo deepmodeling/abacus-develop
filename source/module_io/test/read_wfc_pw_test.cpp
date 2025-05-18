@@ -205,7 +205,7 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         EXPECT_THAT(
             output,
             testing::HasSubstr(
-                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands"));
+                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != nbands"));
     }
 }
 
