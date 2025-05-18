@@ -29,7 +29,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
 
     // first test
     std::string flowf = "./support/wfs1k1_nao.txt";
-    ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
+    ModuleIO::read_wfc_lcao(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(1, ik);
     EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
@@ -60,7 +60,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
     EXPECT_NEAR(lowf[62].imag(), -2.11799886e-03, 1e-7);
     // test reuse, expect to overwrite the previous values
     flowf = "./support/wfs1k2_nao.txt";
-    ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
+    ModuleIO::read_wfc_lcao(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(2, ik);
     EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
@@ -91,7 +91,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
     EXPECT_NEAR(lowf[62].imag(), -1.79940038e-03, 1e-7);
     // test reuse, the second time
     flowf = "./support/wfs1k3_nao.txt";
-    ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
+    ModuleIO::read_wfc_lcao(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(3, ik);
     EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
@@ -329,7 +329,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
 
     // first test
     const std::string flowf = "./support/wfs2_nao.txt";
-    ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
+    ModuleIO::read_wfc_lcao(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(0, ik);
     EXPECT_EQ(3, nbands);
     EXPECT_EQ(31, nbasis);
@@ -680,7 +680,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     std::vector<double> occ_k0;
     ModuleBase::Vector3<double> kvec_c_k0;
     double wk_k0 = -1.0;
-    ModuleIO::read_abacus_lowf("./support/wfs1k1_nao.txt", ik_k0, kvec_c_k0, nbands_k0, nbasis_k0, lowf_k0, ekb_k0,
+    ModuleIO::read_wfc_lcao("./support/wfs1k1_nao.txt", ik_k0, kvec_c_k0, nbands_k0, nbasis_k0, lowf_k0, ekb_k0,
                                occ_k0, wk_k0);
 
     EXPECT_EQ(1, ik_k0);
@@ -717,7 +717,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     std::vector<double> occ_k1;
     ModuleBase::Vector3<double> kvec_c_k1;
     double wk_k1 = -1.0;
-    ModuleIO::read_abacus_lowf("./support/wfs1k2_nao.txt", ik_k1, kvec_c_k1, nbands_k1, nbasis_k1, lowf_k1, ekb_k1,
+    ModuleIO::read_wfc_lcao("./support/wfs1k2_nao.txt", ik_k1, kvec_c_k1, nbands_k1, nbasis_k1, lowf_k1, ekb_k1,
                                occ_k1, wk_k1);
 
     EXPECT_EQ(2, ik_k1);

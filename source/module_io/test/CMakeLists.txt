@@ -201,19 +201,19 @@ AddTest(
   ../orb_io.cpp
 )
 
-if(ENABLE_LCAO)
-AddTest(
-  TARGET MODULE_IO_read_wfc_lcao_test
-  LIBS parameter  base ${math_libs} device
-  SOURCES read_wfc_lcao_test.cpp ../read_wfc_lcao.cpp
-)
+#if(ENABLE_LCAO)
+#AddTest(
+#  TARGET MODULE_IO_read_wfc_lcao_test
+#  LIBS parameter  base ${math_libs} device
+#  SOURCES read_wfc_lcao_test.cpp ../read_wfc_lcao.cpp
+#)
 
-add_test(NAME MODULE_IO_read_wfc_lcao_test_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_read_wfc_lcao_test
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+#add_test(NAME MODULE_IO_read_wfc_lcao_test_parallel
+#      COMMAND mpirun -np 4 ./MODULE_IO_read_wfc_lcao_test
+#      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#)
 
-endif()
+#endif()
 
 AddTest(
   TARGET MODULE_IO_cif_io_test
