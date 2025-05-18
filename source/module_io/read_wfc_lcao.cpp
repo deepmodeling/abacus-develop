@@ -261,10 +261,13 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     assert(gamma_only || multi_k);
     const std::string flowf_prefix = gamma_only ? "WFC_GAMMA" : "WFC_NAO_K";
     // MPI-related variables init
-    int iproc;
+    int iproc=0;
+
     MPI_Comm_rank(p2d.comm(), &iproc);
     // then start
     int nbands_ = -1, nbasis_ = -1;
+
+    // in LCAO, nks == nkstot
     for (int ik = 0; ik < nks; ik++)
     {
         // check existence of file
@@ -280,28 +283,36 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         std::vector<double> ekb_;
         std::vector<double> occ_;
         ModuleBase::Vector3<double> kvec;
-        double wk_;
+        double wk_ = 0.0;
+
         if (iproc == 0) // only one rank is needed to read the global lowf, ekb, ...
         {
-            int ik_;
+            int ik_ = 0;
             read_abacus_lowf(flowf, ik_, kvec, nbands, nbasis, lowf_glb, ekb_, occ_, wk_);
+
             assert(ik_ == ik + 1);                      // check the consistency of ik
             assert(nbands == nbands_ || nbands_ == -1); // check the consistency of nbands
             assert(nbasis == nbasis_ || nbasis_ == -1); // check the consistency of nbasis
+
             nbands_ = (nbands_ == -1) ? nbands : nbands_;
             nbasis_ = (nbasis_ == -1) ? nbasis : nbasis_;
+
             ekb.insert(ekb.end(), ekb_.begin(), ekb_.end());
             occ.insert(occ.end(), occ_.begin(), occ_.end());
             wk.push_back(wk_);
             kvec_c.push_back(kvec);
         }
+
         MPI_Barrier(p2d.comm()); // wait for finishing the reading task
+
         // scatter the lowf_glb to lowf_loc
         Parallel_2D p2d_glb;
         Parallel_Common::bcast_int(nbands);
         Parallel_Common::bcast_int(nbasis);
+
         p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm()); // in the same comm world
         lowf_loc_k.resize(p2d.nrow * p2d.ncol);
+
         Cpxgemr2d(nbasis,
                   nbands,
                   lowf_glb.data(),
@@ -336,6 +347,8 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         Parallel_Common::bcast_double(kvec_c[ik].z);
     }
 }
+
+
 // instantiate the template function
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const Parallel_2D& p2d,
@@ -347,6 +360,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const Parallel_2D& p2d,
                                           const int& nks,
@@ -357,6 +371,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const Parallel_2D& p2d,
                                           const int& nks,
@@ -367,6 +382,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const Parallel_2D& p2d,
                                           const int& nks,
@@ -434,6 +450,7 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
     assert(occ.size() == nks * nbands);
     assert(lowf.size() == nks * nbands * nbasis);
 }
+
 // instantiate the template function
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const int& nks,
@@ -444,6 +461,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const int& nks,
                                           int& nbands,
@@ -453,6 +471,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const int& nks,
                                           int& nbands,
@@ -462,6 +481,7 @@ template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           std::vector<double>& occ,
                                           std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                           std::vector<double>& wk);
+
 template void ModuleIO::restart_from_file(const std::string& out_dir,
                                           const int& nks,
                                           int& nbands,
