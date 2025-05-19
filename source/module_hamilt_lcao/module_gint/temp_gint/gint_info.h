@@ -90,11 +90,14 @@ class GintInfo
     std::vector<std::shared_ptr<BatchBigGrid>>& get_bgrid_batches() { return bgrid_batches_; };
     std::shared_ptr<const GintGpuVars> get_gpu_vars() const { return gpu_vars_; };
     int get_dev_id() const { return gpu_vars_->dev_id_; };
+    int get_streams_num() const { return streams_num_; };
     
     private:
     void init_bgrid_batches_(int batch_size);
     std::vector<std::shared_ptr<BatchBigGrid>> bgrid_batches_;
     std::shared_ptr<const GintGpuVars> gpu_vars_;
+    // More streams can improve parallelism and may speed up grid integration, at the cost of higher GPU memory usage.
+    int streams_num_;
     #endif
 };
 

@@ -51,6 +51,7 @@ GintInfo::GintInfo(
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
+        streams_num_ = PARAM.inp.nstream;  // the default value of num_stream is 4
         const int batch_size = nbz_local;
         init_bgrid_batches_(batch_size);
         gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);

@@ -49,7 +49,7 @@ void Gint_tau_gpu::transfer_gpu_to_cpu_()
 
 void Gint_tau_gpu::cal_tau_()
 {
-#pragma omp parallel
+#pragma omp parallel num_threads(gint_info_->get_streams_num())
     {
         // 20240620 Note that it must be set again here because 
         // cuda's device is not safe in a multi-threaded environment.
