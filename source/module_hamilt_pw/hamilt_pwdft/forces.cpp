@@ -52,15 +52,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential
-    // For PAW, calculated together in paw_cell.calculate_force
-    if (!PARAM.inp.use_paw)
-    {
-        this->cal_force_loc(ucell,forcelc, rho_basis, locpp->vloc, chr);
-    }
-    else
-    {
-        forcelc.zero_out();
-    }
+    this->cal_force_loc(ucell,forcelc, rho_basis, locpp->vloc, chr);
 
     // Ewald
     this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
@@ -85,26 +77,10 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     }
 
     // non-linear core correction
-    // not relevant for PAW
-    if (!PARAM.inp.use_paw)
-    {
-        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
-    }
-    else
-    {
-        forcecc.zero_out();
-    }
+    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
 
     // force due to core charge
-    // For PAW, calculated together in paw_cell.calculate_force
-    if (!PARAM.inp.use_paw)
-    {
-        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
-    }
-    else
-    {
-        forcescc.zero_out();
-    }
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
@@ -171,11 +147,6 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
             {
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
-
-                if (PARAM.inp.use_paw)
-                {
-                    force(iat, ipol) += forcepaw(iat, ipol);
-                }
 
                 if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
@@ -314,14 +285,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
-        if (PARAM.inp.use_paw)
-        {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "PAW      FORCE (eV/Angstrom)",
-                                  forcepaw,
-                                  false);
-        }
+
         if (PARAM.inp.efield_flag)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);

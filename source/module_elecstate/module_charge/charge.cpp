@@ -57,14 +57,6 @@ void Charge::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
     {
-        for (int i = 0; i < PARAM.inp.nspin; i++)
-        {
-            if(PARAM.inp.use_paw)
-            {
-                delete[] nhat[i];
-                delete[] nhat_save[i];
-            }
-        }
         delete[] rho;
         delete[] rhog;
         delete[] rho_save;
@@ -81,11 +73,6 @@ void Charge::destroy()
         {
             delete[] kin_r;
             delete[] kin_r_save;
-        }
-        if(PARAM.inp.use_paw)
-        {
-            delete[] nhat;
-            delete[] nhat_save;
         }
     }
 }
@@ -132,12 +119,6 @@ void Charge::allocate(const int& nspin_in)
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
     }
-    if(PARAM.inp.use_paw)
-    {
-        nhat = new double*[nspin];
-        nhat_save = new double*[nspin];
-    }
-
     for (int is = 0; is < nspin; is++)
     {
         rho[is] = _space_rho + is * nrxx;
@@ -155,13 +136,6 @@ void Charge::allocate(const int& nspin_in)
             kin_r_save[is] = _space_kin_r_save + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r_save[is], nrxx);
         }
-        if(PARAM.inp.use_paw)
-        {
-            nhat[is] = new double[nrxx];
-            ModuleBase::GlobalFunc::ZEROS(nhat[is], nrxx);
-            nhat_save[is] = new double[nrxx];
-            ModuleBase::GlobalFunc::ZEROS(nhat_save[is], nrxx);
-        }
     }
 
     ModuleBase::Memory::record("Chg::rho", sizeof(double) * nspin * nrxx);
@@ -172,11 +146,6 @@ void Charge::allocate(const int& nspin_in)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
-    }
-    if(PARAM.inp.use_paw)
-    {
-        ModuleBase::Memory::record("Chg::nhat", sizeof(double) * nspin * ngmc);
-        ModuleBase::Memory::record("Chg::nhat_save", sizeof(double) * nspin * ngmc);
     }
 
     this->rho_core = new double[nrxx]; // core charge in real space
@@ -203,14 +172,7 @@ double Charge::sum_rho() const
     {
         for (int ir = 0; ir < nrxx; ir++)
         {
-            if(PARAM.inp.use_paw)
-            {
-                sum_rho += this->rho[is][ir] + this->nhat[is][ir];
-            }
-            else
-            {
-                sum_rho += this->rho[is][ir];
-            }
+            sum_rho += this->rho[is][ir];
         }
     }
 

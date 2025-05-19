@@ -112,12 +112,6 @@ void Potential::allocate()
     this->veff_smooth.create(PARAM.inp.nspin, nrxx_smooth);
     ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
 
-    if(PARAM.inp.use_paw)
-    {
-        this->v_xc.create(PARAM.inp.nspin, nrxx);
-        ModuleBase::Memory::record("Pot::vxc", sizeof(double) * PARAM.inp.nspin * nrxx);
-    }
-
     if (XC_Functional::get_ked_flag())
     {
         this->vofk_effective.create(PARAM.inp.nspin, nrxx);

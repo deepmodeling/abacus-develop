@@ -36,14 +36,7 @@ void ElecState::init_scf(const int istep,
                          const void* wfcpw)
 {
     //! core correction potential.
-    if (!PARAM.inp.use_paw)
-    {
-        this->charge->set_rho_core(ucell,strucfac, numeric);
-    }
-    else
-    {
-        this->charge->set_rho_core_paw();
-    }
+    this->charge->set_rho_core(ucell,strucfac, numeric);
 
     //! other effective potentials need charge density,
     // choose charge density from ionic step 0.

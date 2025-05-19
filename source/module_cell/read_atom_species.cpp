@@ -34,47 +34,44 @@ bool read_atom_species(std::ifstream& ifa,
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
-            if(!PARAM.inp.use_paw)
+            bool end = false;
+            if (ss >> one_string)
             {
-                bool end = false;
-                if (ss >> one_string)
+                if (one_string[0] != '#')
                 {
-                    if (one_string[0] != '#')
-                    {
-                        ucell.pseudo_fn[i] = one_string;
-                    }
-                    else
-                    {
-                        end = true;
-                    }
+                    ucell.pseudo_fn[i] = one_string;
                 }
-
-                if (!end && ss >> one_string && one_string[0] != '#')
+                else
                 {
-                    if (one_string == "auto" || one_string == "upf" 
-                        || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
-                    {
-                        ucell.pseudo_type[i] = one_string;
-                    }
-                    else if (one_string == "1/r")
-                    {
-                        ucell.atoms[i].coulomb_potential = true;
-                    }
-                    else
-                    {
-                        GlobalV::ofs_warning << "unrecognized pseudopotential type: " 
-                        << one_string << ", check your STRU file." << std::endl;
-                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecognized pseudopotential type.");
-                    }
+                    end = true;
                 }
-
-                // Peize Lin test for bsse 2021.04.07
-                const std::string bsse_label = "empty";
-                ucell.atoms[i].flag_empty_element = 
-                    (search( ucell.atom_label[i].begin(), ucell.atom_label[i].end(), 
-                     bsse_label.begin(), bsse_label.end() ) != ucell.atom_label[i].end())
-                    ? true : false;
             }
+
+            if (!end && ss >> one_string && one_string[0] != '#')
+            {
+                if (one_string == "auto" || one_string == "upf" 
+                    || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
+                {
+                    ucell.pseudo_type[i] = one_string;
+                }
+                else if (one_string == "1/r")
+                {
+                    ucell.atoms[i].coulomb_potential = true;
+                }
+                else
+                {
+                    GlobalV::ofs_warning << "unrecognized pseudopotential type: " 
+                    << one_string << ", check your STRU file." << std::endl;
+                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecognized pseudopotential type.");
+                }
+            }
+
+            // Peize Lin test for bsse 2021.04.07
+            const std::string bsse_label = "empty";
+            ucell.atoms[i].flag_empty_element = 
+                (search( ucell.atom_label[i].begin(), ucell.atom_label[i].end(), 
+                    bsse_label.begin(), bsse_label.end() ) != ucell.atom_label[i].end())
+                ? true : false;
         }
     }
 

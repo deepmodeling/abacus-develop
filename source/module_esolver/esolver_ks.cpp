@@ -98,14 +98,8 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     //! 3) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
-    if (PARAM.inp.use_paw)
-    {
-        XC_Functional::set_xc_type(PARAM.inp.dft_functional);
-    }
-    else
-    {
-        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    }
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 4) setup the charge mixing parameters

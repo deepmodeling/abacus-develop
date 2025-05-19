@@ -78,10 +78,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     sf.set(pw_rhod, PARAM.inp.nbspline);
 
     //! 1) read pseudopotentials
-    if (!PARAM.inp.use_paw)
-    {
-        elecstate::read_pseudo(GlobalV::ofs_running, ucell);
-    }
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
     //! 2) initialie the plane wave basis for rho
 #ifdef __MPI

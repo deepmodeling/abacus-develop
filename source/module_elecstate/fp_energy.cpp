@@ -15,32 +15,16 @@ namespace elecstate
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    if (PARAM.inp.use_paw)
-    {
-        etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield + evdw
-               + esol_el + esol_cav + edftu + edeepks_scf;
-    }
-    else
-    {
-        etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-               + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
-    }
+    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot;
 }
 
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    if (PARAM.inp.use_paw)
-    {
-        etot_harris = eband + deband_harris + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield
-                      + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
-    }
-    else
-    {
-        etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                      + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
-    }
+    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
+                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot_harris;
 }
 
