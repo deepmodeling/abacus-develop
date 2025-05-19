@@ -7,7 +7,7 @@
 #define EXX_LRI_H
 
 #include "LRI_CV.h"
-#include "ewald_Vq.h"
+#include "ewald_vq.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_hamilt_general/module_xc/exx_info.h"

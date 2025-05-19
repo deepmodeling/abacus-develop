@@ -641,7 +641,6 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symmetry_rotation.o\
       symmetry_irreducible_sector.o\
       auxiliary_func.o\
-      ewald_Vq_tools.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\
