@@ -457,6 +457,7 @@ TEST_F(InputParaTest, Check)
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
+    bool original_check_mode = ModuleIO::ReadInput::check_mode;
     ModuleIO::ReadInput::check_mode = true;
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
@@ -486,6 +487,7 @@ TEST_F(InputParaTest, Check)
     {
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
     }
+    ModuleIO::ReadInput::check_mode = original_check_mode;
 }
 
 int main(int argc, char** argv)
