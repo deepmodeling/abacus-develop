@@ -284,7 +284,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exx_spencer_type, 0);
     EXPECT_EQ(param.inp.exx_fq_type, 1);
     EXPECT_EQ(param.inp.exx_real_number, "1");
-    EXPECT_DOUBLE_EQ(param.inp.exx_hse_omega, 0.11);
+    EXPECT_DOUBLE_EQ(std::stod(param.inp.exx_hse_omega), 0.11);
     EXPECT_TRUE(param.inp.exx_separate_loop);
     EXPECT_EQ(param.inp.exx_hybrid_step, 100);
     EXPECT_DOUBLE_EQ(param.inp.exx_lambda, 0.3);
