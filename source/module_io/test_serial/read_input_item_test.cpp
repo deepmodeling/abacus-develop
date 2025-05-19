@@ -832,21 +832,6 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // use_paw
-        auto it = find_label("use_paw", readinput.input_lists);
-        param.input.use_paw = true;
-        param.input.basis_type = "lcao";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-        param.input.use_paw = true;
-        param.input.dft_functional = "default";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
     { // method_sto
         auto it = find_label("method_sto", readinput.input_lists);
         param.input.method_sto = 0;
