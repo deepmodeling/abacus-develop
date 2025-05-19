@@ -20,11 +20,15 @@ namespace ModuleIO
  * @param wfc wave functions
  */
 void read_wfc_pw(const std::string& filedir,
-                 const ModulePW::PW_Basis_K* pw_wfc,
-                 const int& ik,
-                 const int& ikstot,
-                 const int& nkstot,
-                 ModuleBase::ComplexMatrix& wfc);
+		const ModulePW::PW_Basis_K* pw_wfc,
+		const int rank_in_pool,
+		const int nproc_in_pool,
+		const int nbands,
+		const int npol,
+		const int& ik,
+		const int& ikstot,
+		const int& nkstot,
+		ModuleBase::ComplexMatrix& wfc);
 } // namespace ModuleIO
 
 #endif

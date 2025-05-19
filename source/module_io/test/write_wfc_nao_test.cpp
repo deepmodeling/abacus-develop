@@ -1,4 +1,5 @@
 #include "../write_wfc_nao.h"
+#include "../filename.h"
 
 #define private public
 #include "module_parameter/parameter.h"
@@ -16,63 +17,78 @@
 
 TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
 {
-    // output .txt file when out_type=1
-    const int out_type = 1;
-    const bool gamma_only = true;
-    const bool out_app_flag = true;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
     const int ik = 0;
     const std::vector<int> ik2iktot = {0};
-    const int nkstot = 1;
     const int nspin = 1;
+    const int nkstot = 1;
+    const int out_type = 1;
+    const bool out_app_flag = true;
+    const bool gamma_only = true;
     // if out_app_flag = true, then the 'g' label will not show up
     const int istep = 0;
 
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
+
+    // output .txt file when out_type=1
 	std::string expected_output = "wfs1_nao.txt";
-	std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
-			ik2iktot, nkstot, nspin, istep);
 
     EXPECT_EQ(result, expected_output);
 }
 
 TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
 {
-    // output .dat file when out_type=2
-    const int out_type = 2;
-    const bool gamma_only = true;
-    // if out_app_flag = false, then the 'g' label appears
-    const bool out_app_flag = false;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
     const int ik = 1;
     const std::vector<int> ik2iktot = {0,1};
-    const int nkstot = 2;
     const int nspin = 2;
+    const int nkstot = 2;
+    const int out_type = 2;
+    const bool out_app_flag = false;
+    const bool gamma_only = true;
+    // if out_app_flag = false, then the 'g' label appears
     const int istep = 2;
 
-    std::string expected_output = "wfs2g3_nao.dat";
-	std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
-			ik2iktot, nkstot, nspin, istep);
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
 
+    // output .dat file when out_type=2
+    std::string expected_output = "wfs2g3_nao.dat";
     EXPECT_EQ(result, expected_output);
 }
 
 TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
 {
-    // a .txt is chosen if out_type is not 1 or 2
-    const int out_type = 3;
-    const bool gamma_only = false;
-    const bool out_app_flag = true;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
     const int ik = 2;
     const std::vector<int> ik2iktot = {0,1,2};
-    const int nkstot = 3;
     const int nspin = 1;
+    const int nkstot = 3;
+    const int out_type = 3;
+    const bool out_app_flag = true;
+    const bool gamma_only = false;
     const int istep = 3;
 
-    std::string expected_output = "wfs1k3_nao.txt";
     // catch the screen output
     testing::internal::CaptureStdout();
-	std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, 
-			ik2iktot, nkstot, nspin, istep);
+
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
+
     std::string output = testing::internal::GetCapturedStdout();
 
+    // a .txt is chosen if out_type is not 1 or 2
+    std::string expected_output = "wfs1k3_nao.txt";
     EXPECT_EQ(result, expected_output);
 }
 
@@ -191,23 +207,27 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 {
     PARAM.sys.global_out_dir = "./";
 
-    const int out_type = 2;
-    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
     const int nspin = 2;
+    const int out_type = 2;
+    const bool gamma_only = true;
     const int istep = -1;
+
+    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
 			ik2iktot, nkstot, pv, nspin, istep);
-
-    const bool gamma_only = true;
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
     {
         for (int ik = 0; ik < nk; ik++)
-        {
-			std::string fname = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, 
-					out_app_flag, ik, ik2iktot, nkstot, nspin, istep);
+		{
+			std::string fname = ModuleIO::filename_output(
+					directory, property, basis, ik, ik2iktot, nspin, 
+					nkstot, out_type, out_app_flag, gamma_only, istep);
 
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
@@ -230,23 +250,27 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
 {
     PARAM.sys.global_out_dir = "./";
 
-    const int out_type = 2;
-    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
     const int nspin = 1;
+    const int out_type = 2;
+    const bool gamma_only = false;
     const int istep = -1;
+
+    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
 
 	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
 			ik2iktot, nkstot, pv, nspin, istep);
-
-    const bool gamma_only = false;
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
     {
         for (int ik = 0; ik < nk; ik++)
         {
-			std::string fname = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, 
-					out_app_flag, ik, ik2iktot, nkstot, nspin, istep);
+			std::string fname = ModuleIO::filename_output(
+					directory, property, basis, ik, ik2iktot, nspin, 
+					nkstot, out_type, out_app_flag, gamma_only, istep);
 
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());

@@ -9,25 +9,6 @@
 namespace ModuleIO
 {
 
-/**
- * Generates the filename for the output of LCAO WFC.
- *
- * @param out_type The type of output.
- * @param gamma_only Whether gamma_only job.
- * @param out_app_flag Flag indicating whether to append to existing file.
- * @param ik The index of the k-point, and starting from 0.
- * @param istep The index of the ION step, and starting from 0. If < 0, the step number is not included in the file name.
- * @return The generated filename.
- */
-std::string wfc_nao_gen_fname(const int out_type,
-			const bool gamma_only,
-			const bool out_app_flag,
-			const int ik,
-			const std::vector<int> &ik2iktot,
-			const int nkstot,
-			const int nspin,
-			const int istep=-1);
-
 	/**
  * Writes the wavefunction coefficients for the LCAO method to a file.
  * Will loop all k-points by psi.get_nk().
