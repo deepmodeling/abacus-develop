@@ -58,7 +58,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     ESolver_FP::before_all_runners(ucell, inp);
     
     classname = "ESolver_KS";
-    basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
+    basisname = "";
 
     scf_thr = PARAM.inp.scf_thr;
     scf_ene_thr = PARAM.inp.scf_ene_thr;

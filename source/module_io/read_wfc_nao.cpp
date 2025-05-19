@@ -6,6 +6,7 @@
 
 #include "write_wfc_nao.h"
 #include "module_base/scalapack_connector.h"
+#include "module_io/filename.h"
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 {
@@ -154,11 +155,11 @@ bool ModuleIO::read_wfc_nao(
         if (myrank == 0)
         {
             const bool out_app_flag = false;
-            const int nstep = -1;
+            const int istep = -1;
             std::stringstream error_message;
-            std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(
-            out_type, gamma_only, out_app_flag, ik, 
-            ik2iktot, nkstot, nspin, nstep);
+
+            std::string ss = ModuleIO::filename_output(global_readin_dir,"wf","nao",
+                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,istep);
 
             read_success = read_one_file(ss, error_message, ik, ctot);
             errors = error_message.str();

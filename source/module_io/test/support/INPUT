@@ -63,7 +63,6 @@ chg_extrap                     atomic #atomic; first-order; second-order; dm:coe
 out_chg                        0 #>0 output charge density for selected electron steps
 out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
-out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
 out_ldos                       1 #output local density of states, second parameter controls the precision
 out_band                       0 #output energy and band structure
