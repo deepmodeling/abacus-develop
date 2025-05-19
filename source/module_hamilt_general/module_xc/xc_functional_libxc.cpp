@@ -136,24 +136,24 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
 		else if( id == XC_HYB_GGA_XC_PBEH ) // PBE0
 		{
 			add_func( XC_HYB_GGA_XC_PBEH );
-			double parameter_hse[3] = { PARAM.inp.exx_hybrid_alpha,
-				PARAM.inp.exx_hse_omega ,
-				PARAM.inp.exx_hse_omega  };
+			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_info.info_global.hse_omega,
+				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
 		else if( id == XC_HYB_GGA_XC_HSE06 ) // HSE06 hybrid functional
 		{
 			add_func( XC_HYB_GGA_XC_HSE06 );
-			double parameter_hse[3] = { PARAM.inp.exx_hybrid_alpha,
-				PARAM.inp.exx_hse_omega ,
-				 PARAM.inp.exx_hse_omega };
+			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha,
+				GlobalC::exx_info.info_global.hse_omega,
+				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
         // added by jghan, 2024-07-06
 		else if( id == XC_GGA_X_ITYH ) // short-range of B88_X
 		{
 			add_func( XC_GGA_X_ITYH );
-			double parameter_omega[1] = { PARAM.inp.exx_hse_omega }; // GlobalC::exx_info.info_global.hse_omega
+			double parameter_omega[1] = {GlobalC::exx_info.info_global.hse_omega}; // GlobalC::exx_info.info_global.hse_omega
 			xc_func_set_ext_params(&funcs.back(), parameter_omega);	
 		}
 		else if( id == XC_GGA_C_LYPR ) // short-range of LYP_C
@@ -170,7 +170,7 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_PBEOP );
-			double parameter_lcpbe[3] = { PARAM.inp.exx_hse_omega }; //Range separation constant: 0.33
+			double parameter_lcpbe[3] = { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
 			xc_func_set_ext_params(&funcs.back(), parameter_lcpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LC_WPBE ) // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
@@ -179,9 +179,9 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_WPBE );	
-			double parameter_lcwpbe[3] = { PARAM.inp.exx_hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
-				PARAM.inp.exx_hybrid_beta,  //Fraction of short-range exact exchange: -1.0
-				PARAM.inp.exx_hse_omega }; //Range separation constant: 0.4
+			double parameter_lcwpbe[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -1.0
+				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.4
 			xc_func_set_ext_params(&funcs.back(), parameter_lcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBE ) // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
@@ -190,9 +190,9 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBE );	
-			double parameter_lrcwpbe[3] = { PARAM.inp.exx_hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
-				PARAM.inp.exx_hybrid_beta,  //Fraction of short-range exact exchange: -1.0
-				 PARAM.inp.exx_hse_omega }; //Range separation constant: 0.3
+			double parameter_lrcwpbe[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -1.0
+				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.3
 			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBEH ) // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
@@ -201,9 +201,9 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and 20.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBEH );	
-			double parameter_lrcwpbeh[3] = { PARAM.inp.exx_hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
-				PARAM.inp.exx_hybrid_beta,  //Fraction of short-range exact exchange: -0.8
-				 PARAM.inp.exx_hse_omega  }; //Range separation constant: 0.2
+			double parameter_lrcwpbeh[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: -0.8
+				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.2
 			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbeh);
 		}
         else if( id == XC_HYB_GGA_XC_CAM_PBEH ) // CAM hybrid screened exchange PBE version
@@ -212,9 +212,9 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
             // and 100.0% short-range and 20.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_CAM_PBEH);	
-			double parameter_campbeh[3] = { PARAM.inp.exx_hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
-				PARAM.inp.exx_hybrid_beta,  //Fraction of short-range exact exchange: 0.8
-				 PARAM.inp.exx_hse_omega  }; //Range separation constant: 0.7
+			double parameter_campbeh[3] = { GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
+				GlobalC::exx_info.info_global.hybrid_beta,  //Fraction of short-range exact exchange: 0.8
+				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.7
 			xc_func_set_ext_params(&funcs.back(), parameter_campbeh);
 		}
 #endif
