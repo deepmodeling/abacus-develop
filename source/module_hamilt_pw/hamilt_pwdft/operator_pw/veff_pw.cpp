@@ -73,7 +73,7 @@ void Veff<OperatorPW<T, Device>>::act(
         }
     }else if (npol == 2)
     {
-        const Real* current_veff[4]=nullptr;
+        const Real* current_veff[4]={nullptr};
         for (int is = 0; is < 4; is++)
         {
             current_veff[is] = this->veff + is * this->veff_col;
@@ -82,7 +82,6 @@ void Veff<OperatorPW<T, Device>>::act(
         {
             wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
             wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
-  
             veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
             wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
@@ -109,7 +108,7 @@ void Veff<OperatorPW<T, Device>>::act(
     }
     else if (npol == 2)
     {
-        const Real* current_veff[4]=nullptr;
+        const Real* current_veff[4]={nullptr};
         for (int is = 0; is < 4; is++)
         {
             current_veff[is] = this->veff + is * this->veff_col;
