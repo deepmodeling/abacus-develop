@@ -561,6 +561,7 @@ OBJS_IO=input_conv.o\
     read_set_globalv.o\
     orb_io.o\
     cal_pLpR.o\
+    filename.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

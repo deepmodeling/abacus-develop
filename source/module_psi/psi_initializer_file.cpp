@@ -3,7 +3,9 @@
 #include "module_base/timer.h"
 #include "module_cell/klist.h"
 #include "module_io/read_wfc_pw.h"
+#include "module_io/filename.h"
 #include "module_parameter/parameter.h"
+
 template <typename T>
 void psi_initializer_file<T>::initialize(const Structure_Factor* sf,
                                          const ModulePW::PW_Basis_K* pw_wfc,
@@ -26,10 +28,22 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     const int nkstot = this->p_kv->get_nkstot();
     ModuleBase::ComplexMatrix wfcatom(this->nbands_start_, nbasis);
-    std::stringstream filename;
     int ik_tot = this->p_kv->ik2iktot[ik];
-    filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
-    ModuleIO::read_wfc_pw(filename.str(), this->pw_wfc_, ik, ik_tot, nkstot, wfcatom);
+
+    // mohan update, this is for plane wave, 2025-05-17
+	const int out_type = 2;
+	const bool out_app_flag = false;
+	const bool gamma_only = false;
+	const int istep = -1;
+
+	std::string fn = ModuleIO::filename_output(PARAM.globalv.global_readin_dir,"wf","pw",
+			ik,this->p_kv->ik2iktot,PARAM.inp.nspin,nkstot,
+			out_type,out_app_flag,gamma_only,istep);
+
+	ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
+			PARAM.inp.nbands, PARAM.globalv.npol,
+			ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
     for (int ib = 0; ib < this->nbands_start_; ib++)
