@@ -214,6 +214,6 @@ class Ewald_Vq
     inline double cal_V_Rcut(const int it0, const int it1);
     inline double get_Rcut_max(const int it0, const int it1);
 };
-#include "ewald_vq.hpp"
+#include "ewald_Vq.hpp"
 
 #endif
