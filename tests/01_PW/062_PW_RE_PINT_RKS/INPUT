@@ -1,8 +1,7 @@
 INPUT_PARAMETERS
-# Created by Atomic Simulation Enviroment
 calculation         cell-relax
-suffix		    autotest
-relax_nmax	    100
+suffix		        autotest
+relax_nmax	        100
 force_thr_ev        0.01
 stress_thr          1
 out_level           ie
@@ -20,7 +19,7 @@ cal_force           1
 cal_stress          1
 out_stru            1
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
-pseudo_dir	    ../../../tests/PP_ORB
-orbital_dir	    ../../../tests/PP_ORB
+pseudo_dir	        ../../../tests/PP_ORB
+orbital_dir	        ../../../tests/PP_ORB
 pw_seed             1
-init_wfc nao
+init_wfc            nao

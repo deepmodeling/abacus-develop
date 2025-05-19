@@ -18,7 +18,7 @@
 namespace ModuleIO
 {
 template <typename Device>
-void get_pchg_pw(const std::vector<int>& bands_to_print,
+void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nbands,
                  const int nspin,
                  const int nx,
@@ -43,32 +43,32 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
     // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
     std::vector<int> bands_picked(nbands, 0);
 
-    // Check if length of bands_to_print is valid
-    if (static_cast<int>(bands_to_print.size()) > nbands)
+    // Check if length of out_pchg is valid
+    if (static_cast<int>(out_pchg.size()) > nbands)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                 "The number of bands specified by `bands_to_print` in the "
+                                 "The number of bands specified by `out_pchg` in the "
                                  "INPUT file exceeds `nbands`!");
     }
 
     // Check if all elements in bands_picked are 0 or 1
-    for (int value: bands_to_print)
+    for (int value: out_pchg)
     {
         if (value != 0 && value != 1)
         {
             ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                     "The elements of `bands_to_print` must be either 0 or 1. "
+                                     "The elements of `out_pchg` must be either 0 or 1. "
                                      "Invalid values found!");
         }
     }
 
-    // Fill bands_picked with values from bands_to_print
+    // Fill bands_picked with values from out_pchg
     // Remaining bands are already set to 0
-    int length = std::min(static_cast<int>(bands_to_print.size()), nbands);
+    int length = std::min(static_cast<int>(out_pchg.size()), nbands);
     for (int i = 0; i < length; ++i)
     {
-        // bands_to_print rely on function parse_expression
-        bands_picked[i] = static_cast<int>(bands_to_print[i]);
+        // out_pchg rely on function parse_expression
+        bands_picked[i] = static_cast<int>(out_pchg[i]);
     }
 
     std::vector<std::complex<double>> wfcr(nxyz);

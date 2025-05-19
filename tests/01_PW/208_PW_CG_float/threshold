@@ -1,0 +1,5 @@
+# The float type possesses different precision compared to the double type. 
+# This integration aims to test the functionality of the float type 
+# within the plane-wave (pw) basis
+threshold 0.00001
+fatal_threshold 1

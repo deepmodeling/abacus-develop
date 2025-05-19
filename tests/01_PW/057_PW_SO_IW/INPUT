@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+# general commands
+calculation         scf
+#noncolin           1
+lspinorb            1
+gamma_only          0
+symmetry            0
+
+# directories to read wave functions
+suffix             autotest
+pseudo_dir         ../../PP_ORB
+read_file_dir      ./
+#out_wfc_pw        2
+init_chg           wfc
+init_wfc           file
+
+# plane wave basis and scf
+basis_type          pw
+ecutwfc             20
+scf_thr             1e-6
+scf_nmax            2
+ks_solver           dav
+pw_diag_thr         0.00001
+
+# charge mixing
+mixing_type         broyden
+mixing_beta         0.4
+mixing_gg0          1.5
+
+# smearing method
+smearing_method     gaussian
+smearing_sigma      0.001

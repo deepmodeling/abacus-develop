@@ -1,60 +1,70 @@
-#include <string>
-#include <iostream>
-#include <sstream>
+#include <cmath>
 #include <fstream>
 #include <iomanip>
-#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	string input_file = argv[1];
+    string input_file = argv[1];
 
-	ifstream inp(input_file.c_str(), ios::in);
+    ifstream inp(input_file.c_str(), ios::in);
 
-	if (!inp) 
-	{
-		cout << "Can't find " << input_file << " !" << endl;
-		return 1;
-	}
-    else
+    if (!inp)
     {
-//        cout << "Find the " << input_file << endl;
+        cout << "Can't find " << input_file << " !" << endl;
+        return 1;
     }
 
-	int nx = 0;
-	int ny = 0;
-	int nz = 0;
-	int nr = 0;
-	double mx = 0.0;
-	double my = 0.0;
-	double mz = 0.0;
-	double tmp = 0.0;
-	std::string tmpstring;
-	getline(inp, tmpstring);
-	getline(inp, tmpstring);
-	getline(inp, tmpstring);
-	inp >> nx >> mx >> tmp >> tmp;
-	inp >> ny >> tmp >> my >> tmp;
-	inp >> nz >> tmp >> tmp >> mz;
-	getline(inp, tmpstring);
-	getline(inp, tmpstring);
+    // skip the first two lines
+    string tmpstring;
+    for (int i = 0; i < 2; i++)
+    {
+        getline(inp, tmpstring);
+    }
 
-	nr = nx * ny * nz;
+    // read the 3rd line: number of atoms + origin coordinates
+    int natom;
+    double origin_x, origin_y, origin_z;
+    inp >> natom >> origin_x >> origin_y >> origin_z;
+    getline(inp, tmpstring);
 
-	double sum = 0.0;
-	double env = 0.0;
-	for (int i=0; i< nr; i++)
-	{
-		inp >> env;
-		sum += env;
-	}
+    // read the grid vectors (support non-orthogonal)
+    double v1[3], v2[3], v3[3];
+    int nx, ny, nz;
+    inp >> nx >> v1[0] >> v1[1] >> v1[2];
+    inp >> ny >> v2[0] >> v2[1] >> v2[2];
+    inp >> nz >> v3[0] >> v3[1] >> v3[2];
 
-	double ne = 0.0;
+    // calculate the volume element |v1 · (v2 × v3)|
+    double volume = fabs(v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) - v1[1] * (v2[0] * v3[2] - v2[2] * v3[0])
+                         + v1[2] * (v2[0] * v3[1] - v2[1] * v3[0]));
 
-	ne = sum * mx * my * mz;
-	std::cout<<setprecision(10)<<ne<<std::endl;
-	
-	return 0;
+    getline(inp, tmpstring);
+
+    // skip the atom coordinates
+    for (int i = 0; i < natom; ++i)
+    {
+        getline(inp, tmpstring);
+    }
+
+    int nr = nx * ny * nz;
+
+    double sum = 0.0;
+    double env = 0.0;
+    for (int i = 0; i < nr; i++)
+    {
+        inp >> env;
+        sum += env;
+    }
+
+    double ne = 0.0;
+
+    ne = sum * volume;
+    std::cout << setprecision(10) << ne << std::endl;
+
+    return 0;
 }

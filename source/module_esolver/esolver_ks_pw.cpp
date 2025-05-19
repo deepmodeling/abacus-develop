@@ -24,6 +24,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
+#include "module_io/get_wf_pw.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -121,12 +122,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
-	this->p_hamilt = new hamilt::HamiltPW<T, Device>(
-			this->pelec->pot, 
-			this->pw_wfc, 
-			&this->kv, 
-			&this->ppcell, 
-			&ucell);
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell, &ucell);
 }
 
 template <typename T, typename Device>
@@ -150,31 +146,31 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     {
         if (inp.esolver_type == "sdft")
         {
-			//! SDFT only supports double precision currently
-			this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
-					&(this->chr),
-					&(this->kv),
-					&ucell,
-					&(this->ppcell),
-					this->pw_rhod,
-					this->pw_rho,
-					this->pw_big);
-		}
-		else
-		{
-			this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-					&(this->chr),
-					&(this->kv),
-					&ucell,
-					&this->ppcell,
-					this->pw_rhod,
-					this->pw_rho,
-					this->pw_big);
-		}
-	}
+            //! SDFT only supports double precision currently
+            this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
+                                                                                        &(this->chr),
+                                                                                        &(this->kv),
+                                                                                        &ucell,
+                                                                                        &(this->ppcell),
+                                                                                        this->pw_rhod,
+                                                                                        this->pw_rho,
+                                                                                        this->pw_big);
+        }
+        else
+        {
+            this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
+                                                                &(this->chr),
+                                                                &(this->kv),
+                                                                &ucell,
+                                                                &this->ppcell,
+                                                                this->pw_rhod,
+                                                                this->pw_rho,
+                                                                this->pw_big);
+        }
+    }
 
-	//! set the cell volume variable in pelec
-	this->pelec->omega = ucell.omega;
+    //! set the cell volume variable in pelec
+    this->pelec->omega = ucell.omega;
 
     //! 3) inititlize the charge density.
     this->chr.allocate(PARAM.inp.nspin);
@@ -212,11 +208,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                    this->ppcell,
                                                    *this->pw_wfc);
 
-	allocate_psi(this->psi, 
-			this->kv.get_nks(), 
-			this->kv.ngk, 
-			PARAM.globalv.nbands_l, 
-			this->pw_wfc->npwk_max);
+    allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
 
     this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
 
@@ -238,13 +230,10 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     // 9) initialize exx pw
-    if (PARAM.inp.calculation == "scf"
-        || PARAM.inp.calculation == "relax"
-        || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
-        if (GlobalC::exx_info.info_global.cal_exx && 
-            GlobalC::exx_info.info_global.separate_loop == true)
+        if (GlobalC::exx_info.info_global.cal_exx && GlobalC::exx_info.info_global.separate_loop == true)
         {
             XC_Functional::set_xc_first_loop(ucell);
             exx_helper.set_firstiter();
@@ -255,7 +244,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
             exx_helper.set_wg(&this->pelec->wg);
         }
     }
-
 }
 
 template <typename T, typename Device>
@@ -270,7 +258,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     ESolver_KS<T, Device>::before_scf(ucell, istep);
 
     //----------------------------------------------------------
-    //! 2) Init variables (cell changed) 
+    //! 2) Init variables (cell changed)
     //----------------------------------------------------------
     if (ucell.cell_parameter_updated)
     {
@@ -299,9 +287,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     //! 4) Exx calculations
     //----------------------------------------------------------
-    if (PARAM.inp.calculation == "scf"
-        || PARAM.inp.calculation == "relax"
-        || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
@@ -309,27 +295,20 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
             auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
             hamilt_pw->set_exx_helper(exx_helper);
         }
-
     }
 
     //----------------------------------------------------------
     //! 5) Renew local pseudopotential
     //----------------------------------------------------------
-	this->pelec->init_scf(istep, 
-			ucell, 
-			this->Pgrid, 
-			this->sf.strucFac, 
-			this->locpp.numeric, 
-			ucell.symm, 
-			(void*)this->pw_wfc);
-
+    this->pelec
+        ->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
 
     //----------------------------------------------------------
     //! 6) Symmetrize the charge density (rho)
     //----------------------------------------------------------
 
     //! Symmetry_rho should behind init_scf, because charge should be
-    //! initialized first. liuyu comment: Symmetry_rho should be 
+    //! initialized first. liuyu comment: Symmetry_rho should be
     //! located between init_rho and v_of_rho?
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -342,14 +321,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     //! liuyu move here 2023-10-09
     //! D in uspp need vloc, thus behind init_scf()
-    //! calculate the effective coefficient matrix 
+    //! calculate the effective coefficient matrix
     //! for non-local pseudopotential projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
 
     this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
 
     //----------------------------------------------------------
-    //! 8) Onsite projectors 
+    //! 8) Onsite projectors
     //----------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     {
@@ -391,7 +370,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     }
 
     //----------------------------------------------------------
-    //! 10) DFT+U algorithm 
+    //! 10) DFT+U algorithm
     //----------------------------------------------------------
     if (PARAM.inp.dft_plus_u)
     {
@@ -400,23 +379,18 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     }
 
     //----------------------------------------------------------
-    //! 10) Initialize wave functions 
+    //! 10) Initialize wave functions
     //----------------------------------------------------------
     if (!this->already_initpsi)
     {
-		this->p_psi_init->initialize_psi(this->psi, 
-				this->kspw_psi, 
-				this->p_hamilt, 
-				GlobalV::ofs_running);
+        this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 
     //----------------------------------------------------------
-    //! 11) Exx calculations 
+    //! 11) Exx calculations
     //----------------------------------------------------------
-    if (PARAM.inp.calculation == "scf"
-        || PARAM.inp.calculation == "relax"
-        || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
@@ -444,8 +418,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // for mixing restart
     // the details should move somewhere else, 2025-04-13
     //----------------------------------------------------------
-    if (iter == this->p_chgmix->mixing_restart_step 
-        && PARAM.inp.mixing_restart > 0.0)
+    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
         this->p_chgmix->mixing_restart_count++;
@@ -493,19 +466,14 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
     //----------------------------------------------------------
-    if (PARAM.inp.dft_plus_u 
-        && (iter != 1 || istep != 0))
+    if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         // only old DFT+U method should calculate energy correction in esolver,
         // new DFT+U method will calculate energy when evaluating the Hamiltonian
         if (dftu->omc != 2)
         {
-			dftu->cal_occ_pw(iter, 
-					this->kspw_psi, 
-					this->pelec->wg, 
-					ucell, 
-					PARAM.inp.mixing_beta);
+            dftu->cal_occ_pw(iter, this->kspw_psi, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
         }
         dftu->output(ucell);
     }
@@ -513,10 +481,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell,
-                                                     const int istep,
-                                                     const int iter,
-                                                     const double ethr)
+void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 
@@ -595,13 +560,9 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell,
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 }
 
-
 // Temporary, it should be rewritten with Hamilt class.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell,
-		const int istep, 
-		const int iter, 
-		const bool conv_esolver)
+void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
 {
     if (!conv_esolver)
     {
@@ -618,18 +579,13 @@ void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell,
     }
 }
 
-
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, 
-		const int istep, 
-		int& iter, 
-		bool& conv_esolver)
+void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     //----------------------------------------------------------
     // Related to EXX
     //----------------------------------------------------------
-    if (GlobalC::exx_info.info_global.cal_exx 
-        && !exx_helper.op_exx->first_iter)
+    if (GlobalC::exx_info.info_global.cal_exx && !exx_helper.op_exx->first_iter)
     {
         this->pelec->set_exx(exx_helper.cal_exx_energy(kspw_psi));
     }
@@ -649,7 +605,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell,
     //----------------------------------------------------------
     // 2) Update USPP-related quantities
     // D in USPP needs vloc, thus needs update when veff updated
-    // calculate the effective coefficient matrix for non-local 
+    // calculate the effective coefficient matrix for non-local
     // pp projectors, liuyu 2023-10-24
     //----------------------------------------------------------
     if (PARAM.globalv.use_uspp)
@@ -674,8 +630,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell,
                 {
                     auto duration = std::chrono::high_resolution_clock::now() - start;
                     std::cout << " Setting Psi for EXX PW Inner Loop took "
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0
-                              << "s" << std::endl;
+                              << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() / 1000.0 << "s"
+                              << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                     update_pot(ucell, istep, iter, conv_esolver);
@@ -686,21 +642,19 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell,
         {
             exx_helper.set_psi(this->kspw_psi);
         }
-
     }
 
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-        {
-            std::stringstream ssw;
-            ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-        }
-    }
+	if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+	{
+		ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+				GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+				PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+				this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
+	}
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -752,24 +706,14 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
     }
-    
-    //------------------------------------------------------------------
-    // 4) output wavefunctions in pw basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
 
     //------------------------------------------------------------------
-    // 5) calculate band-decomposed (partial) charge density in pw basis
+    // 4) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
-    const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
-    if (bands_to_print.size() > 0)
+    const std::vector<int> out_pchg = PARAM.inp.out_pchg;
+    if (out_pchg.size() > 0)
     {
-        ModuleIO::get_pchg_pw(bands_to_print,
+        ModuleIO::get_pchg_pw(out_pchg,
                               this->kspw_psi->get_nbands(),
                               PARAM.inp.nspin,
                               this->pw_rhod->nx,
@@ -792,8 +736,16 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               PARAM.inp.if_separate_k);
     }
 
+
+	// tmp 2025-05-17, mohan note
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+			this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
+
     //------------------------------------------------------------------
-    //! 6) calculate Wannier functions in pw basis
+    //! 5) calculate Wannier functions in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
@@ -811,7 +763,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 7) calculate Berry phase polarization in pw basis
+    //! 6) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -822,7 +774,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 8) write spin constrian results in pw basis
+    // 7) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -834,7 +786,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 9) write onsite occupations for charge and magnetizations
+    // 8) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
@@ -930,20 +882,20 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     if (PARAM.inp.out_dos)
     {
-		ModuleIO::write_dos_pw(ucell, 
-				this->pelec->ekb,
-				this->pelec->wg,
-				this->kv,
-				PARAM.inp.nbands,
-				this->pelec->eferm,
-				PARAM.inp.dos_edelta_ev,
-				PARAM.inp.dos_scale,
-				PARAM.inp.dos_sigma,
-				GlobalV::ofs_running);
-	}
+        ModuleIO::write_dos_pw(ucell,
+                               this->pelec->ekb,
+                               this->pelec->wg,
+                               this->kv,
+                               PARAM.inp.nbands,
+                               this->pelec->eferm,
+                               PARAM.inp.dos_edelta_ev,
+                               PARAM.inp.dos_scale,
+                               PARAM.inp.dos_sigma,
+                               GlobalV::ofs_running);
+    }
 
     //----------------------------------------------------------
-    //! 3) Compute LDOS 
+    //! 3) Compute LDOS
     //----------------------------------------------------------
     if (PARAM.inp.out_ldos[0])
     {
@@ -954,7 +906,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 4) Calculate the spillage value, 
+    //! 4) Calculate the spillage value,
     //! which are used to generate numerical atomic orbitals
     //----------------------------------------------------------
     if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
@@ -979,9 +931,41 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     //! 5) Print out electronic wave functions in real space
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+
+    //----------------------------------------------------------
+    //! The write_psi_r_1 interface will be removed in the very 
+    //! near future. Don't use it!
+    //----------------------------------------------------------
+    // if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+    // }
+
+    const std::vector<int> out_wfc_norm = PARAM.inp.out_wfc_norm;
+    const std::vector<int> out_wfc_re_im = PARAM.inp.out_wfc_re_im;
+    if (out_wfc_norm.size() > 0 || out_wfc_re_im.size() > 0)
     {
-        ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+        ModuleIO::get_wf_pw(out_wfc_norm,
+                            out_wfc_re_im,
+                            this->kspw_psi->get_nbands(),
+                            PARAM.inp.nspin,
+                            this->pw_rhod->nx,
+                            this->pw_rhod->ny,
+                            this->pw_rhod->nz,
+                            this->pw_rhod->nxyz,
+                            this->kv.get_nks(),
+                            this->kv.isk,
+                            this->kv.wk,
+                            this->pw_big->bz,
+                            this->pw_big->nbz,
+                            this->chr.ngmc,
+                            &ucell,
+                            this->psi,
+                            this->pw_rhod,
+                            this->pw_wfc,
+                            this->ctx,
+                            this->Pgrid,
+                            PARAM.globalv.global_out_dir);
     }
 
     //----------------------------------------------------------

@@ -28,7 +28,6 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/cube_io.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif

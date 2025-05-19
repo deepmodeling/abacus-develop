@@ -362,7 +362,6 @@ struct Input_para
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r = false;               ///< 0: no; 1: yes
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
@@ -404,7 +403,6 @@ struct Input_para
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                     ///< rpa calculation
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
-    std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated for partial charge
     std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc

@@ -1,39 +1,39 @@
 INPUT_PARAMETERS
 
 # rt-TDDFT key parameters
-calculation		md
-esolver_type    tddft
-gamma_only		0     # multiple k points
-md_type		    nve
-md_dt           0.05  # MD time step
-md_nstep        2     # number of MD steps
-init_vel        1     # initial velocity
+calculation        md
+esolver_type       tddft
+gamma_only         0     # multiple k points
+md_type            nve
+md_dt              0.05  # MD time step
+md_nstep           2     # number of MD steps
+init_vel           1     # initial velocity
 
 # occupations of bands
-nbands			5     # number of bands
-ocp			    1     # set band occupations
-ocp_set		    1*1 1*1 3*0	
+nbands             5     # number of bands
+ocp                1     # set band occupations
+ocp_set            1*1 1*1 3*0 
 
-# propogator and ecut
-td_propagator   2  # ETRS algorithm
-ecutwfc			20
-scf_nmax		50
-ks_solver		scalapack_gvx
-basis_type		lcao
+# propagator and ecut
+td_propagator      2     # ETRS algorithm
+ecutwfc            20
+scf_nmax           50
+ks_solver          scalapack_gvx
+basis_type         lcao
 
 # charge mixing
-mixing_type		broyden
-mixing_beta		0.7
-mixing_gg0      0.0
-scf_thr			1.0e-6
+mixing_type        broyden
+mixing_beta        0.7
+mixing_gg0         0.0
+scf_thr            1.0e-6
 
 # force and stress
-cal_stress      1
-stress_thr      1e-6
-cal_force       1
-force_thr_ev    1e-3
+cal_stress         1
+stress_thr         1e-6
+cal_force          1
+force_thr_ev       1e-3
 
 # output directory and pp, orbs
-suffix			autotest
-pseudo_dir	    ../../PP_ORB
-orbital_dir	    ../../PP_ORB
+suffix             autotest
+pseudo_dir         ../../PP_ORB
+orbital_dir        ../../PP_ORB

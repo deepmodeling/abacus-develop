@@ -17,7 +17,6 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 		double &emin)
 {
 	ofs_running << " DOS CALCULATIONS BEGINS" << std::endl;
-
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	ofs_running << " |                                            "

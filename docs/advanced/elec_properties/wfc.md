@@ -9,8 +9,6 @@ In the LCAO basis case, several `WFC_NAO_K${k}.dat` files will be output in mult
 
 ## wave function in real space
 
-One can also choose to output real-space wave function in PW basis calculation with the key word ***[out_wfc_r](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out_wfc_r)***.
-
-After calculation, an additional directory named `wfc_realspace` will appear in the `OUT.${system}` directory.
+One can also choose to output real-space wave function in PW basis calculation with the key word ***[out_wfc_norm](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-norm)***.
 
 Notice: when the ***[basis_type](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#basis_type)*** is `lcao`, only `get_wf` ***[calculation](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#calculation)*** is effective. An example is [examples/wfc/lcao_ienvelope_Si2](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/wfc/lcao_ienvelope_Si2). 

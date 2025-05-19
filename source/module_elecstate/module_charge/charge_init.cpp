@@ -16,7 +16,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/cube_io.h"
 #include "module_io/rhog_io.h"
-#include "module_io/read_wfc_to_rho.h"
+#include "module_io/read_wf2rho_pw.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -243,11 +243,16 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         {
             ModuleBase::WARNING_QUIT("Charge::init_rho", "wfc is only supported for PW-KSDFT.");
         }
+
         const ModulePW::PW_Basis_K* pw_wfc = reinterpret_cast<ModulePW::PW_Basis_K*>(const_cast<void*>(wfcpw));
         const K_Vectors* kv = reinterpret_cast<const K_Vectors*>(klist);
-        const int nkstot = kv->get_nkstot();
-        const std::vector<int>& isk = kv->isk;
-        ModuleIO::read_wfc_to_rho(pw_wfc, symm, kv->ik2iktot.data(), nkstot, isk, *this);
+
+		ModuleIO::read_wf2rho_pw(pw_wfc, symm, *this,
+                PARAM.globalv.global_readin_dir,
+				GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+                GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
+				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+				kv->get_nkstot(),kv->ik2iktot,kv->isk,GlobalV::ofs_running);
     }
 }
 

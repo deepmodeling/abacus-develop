@@ -39,52 +39,52 @@ list(APPEND cell_simple_srcs
 add_library(cell_info OBJECT ${cell_simple_srcs})
 
 AddTest(
-  TARGET cell_read_pp
+  TARGET MODULE_CELL_read_pp
   LIBS parameter  ${math_libs} base device
   SOURCES read_pp_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp 
   ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_pseudo_nc
+  TARGET MODULE_CELL_pseudo_nc
   LIBS parameter  ${math_libs} base device
   SOURCES pseudo_nc_test.cpp ../pseudo.cpp ../atom_pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp ../read_pp_vwr.cpp 
   	../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_atom_pseudo
+  TARGET MODULE_CELL_atom_pseudo
   LIBS parameter  ${math_libs} base device
   SOURCES atom_pseudo_test.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp 
   	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_atom_spec
+  TARGET MODULE_CELL_atom_spec
   LIBS parameter ${math_libs} base device 
   SOURCES atom_spec_test.cpp ../atom_spec.cpp ../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp 
   	../read_pp_upf100.cpp ../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_klist_test
+  TARGET MODULE_CELL_klist_test
   LIBS parameter  ${math_libs} base device symmetry 
   SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_klist_test_para1
+  TARGET MODULE_CELL_klist_test_para1
   LIBS parameter  ${math_libs} base device symmetry 
   SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
 )
 
-add_test(NAME cell_klist_test_para4
+add_test(NAME MODULE_CELL_klist_test_para4
       COMMAND ${BASH} klist_test_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
-  TARGET cell_ParaKpoints
+  TARGET MODULE_CELL_ParaKpoints
   LIBS parameter  MPI::MPI_CXX
   SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp 
   	../../module_base/parallel_common.cpp ../../module_base/parallel_comm.cpp ../parallel_kpoints.cpp
@@ -92,53 +92,53 @@ AddTest(
 
 find_program(BASH bash)
 
-add_test(NAME cell_bcast_atom_pseudo_test
+add_test(NAME MODULE_CELL_bcast_atom_pseudo_test
       COMMAND ${BASH} bcast_atom_pseudo_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_test(NAME cell_bcast_atom_spec_test
+add_test(NAME MODULE_CELL_bcast_atom_spec_test
       COMMAND ${BASH} bcast_atom_spec_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_test(NAME cell_parallel_kpoints_test
+add_test(NAME MODULE_CELL_parallel_kpoints_test
       COMMAND ${BASH} parallel_kpoints_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
-  TARGET cell_unitcell_test
+  TARGET MODULE_CELL_unitcell_test
   LIBS parameter  ${math_libs} base device cell_info  symmetry
   SOURCES unitcell_test.cpp ../../module_io/output.cpp ../../module_elecstate/cal_ux.cpp 
 
 )
 
 AddTest(
-  TARGET cell_unitcell_test_readpp
+  TARGET MODULE_CELL_unitcell_test_readpp
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp 
 )
 
 AddTest(
-  TARGET cell_unitcell_test_para
+  TARGET MODULE_CELL_unitcell_test_para
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES unitcell_test_para.cpp ../../module_io/output.cpp
 )
 
 AddTest(
-  TARGET cell_unitcell_test_setupcell
+  TARGET MODULE_CELL_unitcell_test_setupcell
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp 
 )
 
-add_test(NAME cell_unitcell_test_parallel
+add_test(NAME MODULE_CELL_unitcell_test_parallel
       COMMAND ${BASH} unitcell_test_parallel.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
-  TARGET cell_index_test
+  TARGET MODULE_CELL_index_test
   LIBS parameter  ${math_libs} base device
   SOURCES cell_index_test.cpp ../cell_index.cpp
 )

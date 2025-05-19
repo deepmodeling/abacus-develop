@@ -1,24 +1,28 @@
 INPUT_PARAMETERS
-# Created by Atomic Simulation Enviroment
+
+# Relaxation
 calculation         cell-relax
-suffix		    autotest
-relax_nmax	    100
+relax_nmax	        100
+cal_force           1
+cal_stress          1
 force_thr_ev        0.01
 stress_thr          1
+chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
 out_stru            1
 out_level           ie
+
+# SCF
+basis_type          pw
+ecutwfc             20
+ks_solver           cg
 pseudo_rcut         10.0
 pseudo_mesh         1
-ecutwfc             20
-basis_type          pw
-ks_solver           cg
 smearing_method     gaussian
 smearing_sigma      0.01
 mixing_type         broyden
 mixing_beta         0.7
 scf_thr             1e-08
-cal_force           1
-cal_stress          1
-chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
-pseudo_dir	    ../../../tests/PP_ORB
 
+# Directories
+suffix		        autotest
+pseudo_dir	        ../../../tests/PP_ORB

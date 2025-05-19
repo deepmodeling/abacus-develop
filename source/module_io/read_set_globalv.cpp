@@ -72,7 +72,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
     bool float_cond = false;
 #endif
     sys.has_double_data = (inp.precision == "double") || (inp.precision == "mixing") || float_cond;
-    sys.has_float_data = (inp.precision == "float") || (inp.precision == "mixing") || float_cond;
+    sys.has_float_data = (inp.precision == "single") || (inp.precision == "mixing") || float_cond;
 }
 
 /// @note Here para.inp has not been synchronized of all ranks.
