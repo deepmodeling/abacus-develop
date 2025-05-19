@@ -49,12 +49,40 @@ jobs:
           cmake --build build -j8
           cmake --install build
 
-      - name: Integrated Test
+      - name: Integrated Tests Preparation
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           cmake --build build --target test ARGS="-V --timeout 1700 -R integrated_test"
+
+      - name: Module_Base Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_BASE"
+      
+      - name: Module_IO Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_IO"
+
+      - name: Module_HSolver Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_HSOLVER"
+      
+      - name: Module_Cell Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_CELL"
 
       - name: 01_PW Test
         env:
@@ -126,35 +154,7 @@ jobs:
         run: |
           cmake --build build --target test ARGS="-V --timeout 1700 -R 10_others"
 
-      - name: Module Base Unit Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_BASE"
-      
-      - name: Module IO Unit Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_IO"
-      
-      - name: Module HSolver Unit Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_HSOLVER"
-      
-      - name: Module Cell Unit Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_CELL"
-
-      - name: Other Unit Tests
+      - name: Other Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'

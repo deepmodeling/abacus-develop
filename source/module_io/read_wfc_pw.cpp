@@ -10,11 +10,15 @@
 #include "module_base/vector3.h"
 
 void ModuleIO::read_wfc_pw(const std::string& filename,
-                           const ModulePW::PW_Basis_K* pw_wfc,
-                           const int& ik,
-                           const int& ikstot,
-                           const int& nkstot,
-                           ModuleBase::ComplexMatrix& wfc)
+		const ModulePW::PW_Basis_K* pw_wfc,
+		const int rank_in_pool,
+		const int nproc_in_pool,
+		const int nbands,
+		const int npol,
+		const int& ik,
+		const int& ikstot,
+		const int& nkstot,
+		ModuleBase::ComplexMatrix& wfc)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_pw");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw");
@@ -72,15 +76,21 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     max_dim = npwk_max;
     npwtot = pw_wfc->npwk[ik];
 #endif
-    int npwtot_npol = npwtot * PARAM.globalv.npol;
+    int npwtot_npol = npwtot * npol;
 
-    
-
+   
     // read in some information
-    int ikstot_in, nkstot_in, npwtot_in, nbands_in;
-    double kvec[3], weight, ecutwfc_in, lat0_in, tpiba_in;
+    int ikstot_in = -1;
+    int nkstot_in = -1;
+    int npwtot_in = -1;
+    int nbands_in = -1;
+    double kvec[3] = {0.0, 0.0, 0.0};
+    double weight = -1.0;
+    double ecutwfc_in = -1.0;
+    double lat0_in = -1.0;
+    double tpiba_in = -1.0;
 
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (rank_in_pool == 0)
     {
         if (filetype == "txt")
         {
@@ -104,7 +114,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     MPI_Bcast(&tpiba_in, 1, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
 
-    if (ikstot_in != ikstot + 1 || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands)
+    if (ikstot_in != ikstot + 1 || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != nbands)
     {
         std::cout << "ikstot_in = " << ikstot_in << std::endl;
         std::cout << "ikstot = " << ikstot + 1 << std::endl;
@@ -113,10 +123,10 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         std::cout << "npwtot_in = " << npwtot_in << std::endl;
         std::cout << "npwtot = " << npwtot << std::endl;
         std::cout << "nbands_in = " << nbands_in << std::endl;
-        std::cout << "nbands = " << PARAM.inp.nbands << std::endl;
+        std::cout << "nbands = " << nbands << std::endl;
         ModuleBase::WARNING_QUIT(
             "ModuleIO::read_wfc_pw",
-            "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands");
+            "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != nbands");
     }
 
     if (kvec[0] != pw_wfc->kvec_c[ik].x || kvec[1] != pw_wfc->kvec_c[ik].y || kvec[2] != pw_wfc->kvec_c[ik].z)
@@ -138,7 +148,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
 
     // read in G
     ModuleBase::Vector3<double> G_in[3];
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (rank_in_pool == 0)
     {
         if (filetype == "txt")
         {
@@ -170,7 +180,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     // read in miller index
     ModuleBase::Vector3<int>* miller = new ModuleBase::Vector3<int>[npwtot];
     int* glo_order = nullptr;
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (rank_in_pool == 0)
     {
         if (filetype == "txt")
         {
@@ -214,7 +224,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     std::complex<double>* wfc_in = new std::complex<double>[npwtot_npol];
     for (int ib = 0; ib < nbands_in; ib++)
     {
-        if (GlobalV::RANK_IN_POOL == 0)
+        if (rank_in_pool == 0)
         {
             if (filetype == "txt")
             {
@@ -232,32 +242,32 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
 
         // distribute wave functions to processers
 #ifdef __MPI
-        for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ++ip)
+        for (int ip = 0; ip < nproc_in_pool; ++ip)
         {
             if (ip != 0)
             {
-                if (GlobalV::RANK_IN_POOL == ip)
+                if (rank_in_pool == ip)
                 {
                     MPI_Send(l2g_pw, pw_wfc->npwk[ik], MPI_INT, 0, ip, POOL_WORLD);
                     MPI_Recv(&wfc(ib, 0),
                              pw_wfc->npwk[ik],
                              MPI_DOUBLE_COMPLEX,
                              0,
-                             ip + GlobalV::NPROC_IN_POOL,
+                             ip + nproc_in_pool,
                              POOL_WORLD,
                              MPI_STATUS_IGNORE);
-                    if (PARAM.globalv.npol == 2)
+                    if (npol == 2)
                     {
                         MPI_Recv(&wfc(ib, npwk_max),
                                  pw_wfc->npwk[ik],
                                  MPI_DOUBLE_COMPLEX,
                                  0,
-                                 ip + 2 * GlobalV::NPROC_IN_POOL,
+                                 ip + 2 * nproc_in_pool,
                                  POOL_WORLD,
                                  MPI_STATUS_IGNORE);
                     }
                 }
-                if (GlobalV::RANK_IN_POOL == 0)
+                if (rank_in_pool == 0)
                 {
                     int* ig_ip = new int[max_dim];
                     std::complex<double>* wfc_ip = new std::complex<double>[max_dim];
@@ -270,14 +280,14 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
                     {
                         wfc_ip[i] = wfc_in[glo_order[ig_ip[i]]];
                     }
-                    MPI_Send(wfc_ip, size, MPI_DOUBLE_COMPLEX, ip, ip + GlobalV::NPROC_IN_POOL, POOL_WORLD);
-                    if (PARAM.globalv.npol == 2)
+                    MPI_Send(wfc_ip, size, MPI_DOUBLE_COMPLEX, ip, ip + nproc_in_pool, POOL_WORLD);
+                    if (npol == 2)
                     {
                         for (int i = 0; i < size; i++)
                         {
                             wfc_ip[i] = wfc_in[glo_order[ig_ip[i]] + npwtot];
                         }
-                        MPI_Send(wfc_ip, size, MPI_DOUBLE_COMPLEX, ip, ip + 2 * GlobalV::NPROC_IN_POOL, POOL_WORLD);
+                        MPI_Send(wfc_ip, size, MPI_DOUBLE_COMPLEX, ip, ip + 2 * nproc_in_pool, POOL_WORLD);
                     }
                     delete[] ig_ip;
                     delete[] wfc_ip;
@@ -285,13 +295,13 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
             }
             else
             {
-                if (GlobalV::RANK_IN_POOL == 0)
+                if (rank_in_pool == 0)
                 {
                     for (int i = 0; i < pw_wfc->npwk[ik]; ++i)
                     {
                         wfc(ib, i) = wfc_in[glo_order[l2g_pw[i]]];
                     }
-                    if (PARAM.globalv.npol == 2)
+                    if (npol == 2)
                     {
                         for (int i = 0; i < pw_wfc->npwk[ik]; ++i)
                         {
@@ -307,7 +317,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         {
             wfc(ib, i) = wfc_in[glo_order[l2g_pw[i]]];
         }
-        if (PARAM.globalv.npol == 2)
+        if (npol == 2)
         {
             for (int i = 0; i < pw_wfc->npwk[ik]; ++i)
             {
@@ -321,7 +331,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     delete[] miller;
     delete[] wfc_in;
 
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (rank_in_pool == 0)
     {
         delete[] glo_order;
         ifs.close();
