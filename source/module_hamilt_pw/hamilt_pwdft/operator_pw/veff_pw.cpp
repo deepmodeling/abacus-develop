@@ -73,7 +73,7 @@ void Veff<OperatorPW<T, Device>>::act(
         }
     }else if (npol == 2)
     {
-        const Real* current_veff[4];
+        const Real* current_veff[4]=nullptr;
         for (int is = 0; is < 4; is++)
         {
             current_veff[is] = this->veff + is * this->veff_col;
@@ -109,7 +109,7 @@ void Veff<OperatorPW<T, Device>>::act(
     }
     else if (npol == 2)
     {
-        const Real* current_veff[4];
+        const Real* current_veff[4]=nullptr;
         for (int is = 0; is < 4; is++)
         {
             current_veff[is] = this->veff + is * this->veff_col;
