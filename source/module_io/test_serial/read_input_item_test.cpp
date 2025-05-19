@@ -1360,7 +1360,7 @@ TEST_F(InputTest, Item_test2)
         param.input.exx_hybrid_beta = "default";
         param.input.dft_functional = "hse";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_beta, "0.25");
+        EXPECT_EQ(param.input.exx_hybrid_beta, "0");
 
         param.input.exx_hybrid_beta= "default";
         param.input.dft_functional = "none";
@@ -1378,7 +1378,7 @@ TEST_F(InputTest, Item_test2)
         param.input.exx_hse_omega = "default";
         param.input.dft_functional = "lc_pbe";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hse_omega, "0.11");
+        EXPECT_EQ(param.input.exx_hse_omega, "0.33");
 
         param.input.exx_hse_omega = "default";
         param.input.dft_functional = "lc_wpbe";
