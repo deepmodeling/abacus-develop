@@ -50,14 +50,14 @@ void FFT_Bundle::initfft(int nx_in,
     if (this->precision == "single" || this->precision == "mixing")
     {
         float_flag = true;
+        if (this->precision == "mixing")
+        {
+            double_flag = true;
+        }
 #if not defined(__ENABLE_FLOAT_FFTW)
         if (this->device == "cpu")
         {
             ModuleBase::WARNING_QUIT("FFT_Bundle", "Please enable float fftw in the cmake to use float fft");
-        }
-        if (this->precision == "mixing")
-        {
-            double_flag = true;
         }
 #endif
     }
