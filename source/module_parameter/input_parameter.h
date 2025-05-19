@@ -362,7 +362,6 @@ struct Input_para
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r = false;               ///< 0: no; 1: yes
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909

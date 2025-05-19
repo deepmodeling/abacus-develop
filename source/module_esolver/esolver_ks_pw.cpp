@@ -24,6 +24,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/cal_ldos.h"
 #include "module_io/get_pchg_pw.h"
+#include "module_io/get_wf_pw.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
 #include "module_io/to_wannier90_pw.h"
@@ -646,15 +647,14 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-        {
-            std::stringstream ssw;
-            ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-            ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-        }
-    }
+	if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+	{
+		ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+				GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+				PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+				this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
+	}
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -708,17 +708,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 4) output wavefunctions in pw basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    //------------------------------------------------------------------
-    // 5) calculate band-decomposed (partial) charge density in pw basis
+    // 4) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
     const std::vector<int> out_pchg = PARAM.inp.out_pchg;
     if (out_pchg.size() > 0)
@@ -746,8 +736,16 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               PARAM.inp.if_separate_k);
     }
 
+
+	// tmp 2025-05-17, mohan note
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
+			this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
+
     //------------------------------------------------------------------
-    //! 6) calculate Wannier functions in pw basis
+    //! 5) calculate Wannier functions in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
@@ -765,7 +763,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 7) calculate Berry phase polarization in pw basis
+    //! 6) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -776,7 +774,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 8) write spin constrian results in pw basis
+    // 7) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -788,7 +786,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 9) write onsite occupations for charge and magnetizations
+    // 8) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
@@ -933,9 +931,41 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     //! 5) Print out electronic wave functions in real space
     //----------------------------------------------------------
-    if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+
+    //----------------------------------------------------------
+    //! The write_psi_r_1 interface will be removed in the very 
+    //! near future. Don't use it!
+    //----------------------------------------------------------
+    // if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
+    // {
+    //     ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+    // }
+
+    const std::vector<int> out_wfc_norm = PARAM.inp.out_wfc_norm;
+    const std::vector<int> out_wfc_re_im = PARAM.inp.out_wfc_re_im;
+    if (out_wfc_norm.size() > 0 || out_wfc_re_im.size() > 0)
     {
-        ModuleIO::write_psi_r_1(ucell, this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+        ModuleIO::get_wf_pw(out_wfc_norm,
+                            out_wfc_re_im,
+                            this->kspw_psi->get_nbands(),
+                            PARAM.inp.nspin,
+                            this->pw_rhod->nx,
+                            this->pw_rhod->ny,
+                            this->pw_rhod->nz,
+                            this->pw_rhod->nxyz,
+                            this->kv.get_nks(),
+                            this->kv.isk,
+                            this->kv.wk,
+                            this->pw_big->bz,
+                            this->pw_big->nbz,
+                            this->chr.ngmc,
+                            &ucell,
+                            this->psi,
+                            this->pw_rhod,
+                            this->pw_wfc,
+                            this->ctx,
+                            this->Pgrid,
+                            PARAM.globalv.global_out_dir);
     }
 
     //----------------------------------------------------------

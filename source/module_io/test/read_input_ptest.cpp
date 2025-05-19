@@ -6,6 +6,7 @@
 #include "module_base/tool_quit.h"
 #include "module_io/read_input.h"
 #include "module_parameter/parameter.h"
+
 // #ifdef __MPI
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
@@ -25,7 +26,7 @@
 
 class InputParaTest : public testing::Test
 {
-  protected:
+	protected:
 };
 
 // #ifdef __MPI
@@ -197,7 +198,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.deepks_out_unittest, 0);
     EXPECT_EQ(param.inp.out_pot, 2);
     EXPECT_EQ(param.inp.out_wfc_pw, 0);
-    EXPECT_EQ(param.inp.out_wfc_r, 0);
     EXPECT_EQ(param.inp.out_dos, 0);
     EXPECT_EQ(param.inp.out_ldos[0], 1);
     EXPECT_EQ(param.inp.out_ldos[1], 3);
@@ -446,6 +446,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }
 
+// Note Parameter is in another directory now, mohan 2025-05-18
 TEST_F(InputParaTest, Check)
 {
     if (GlobalV::MY_RANK == 0)
@@ -460,6 +461,7 @@ TEST_F(InputParaTest, Check)
     bool original_check_mode = ModuleIO::ReadInput::check_mode;
     ModuleIO::ReadInput::check_mode = true;
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
+
     Parameter param;
     testing::internal::CaptureStdout();
     try {
@@ -502,4 +504,3 @@ int main(int argc, char** argv)
     MPI_Finalize();
     return result;
 }
-// #endif

@@ -79,12 +79,6 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_wfc_r");
-        item.annotation = "output wave functions in realspace";
-        read_sync_bool(input.out_wfc_r);
-        this->add_item(item);
-    }
-    {
         Input_Item item("printe");
         item.annotation = "Print out energy for each band for every printe steps";
         item.reset_value = [](const Input_Item& item, Parameter& para) {

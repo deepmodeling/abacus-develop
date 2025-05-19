@@ -1,5 +1,4 @@
 INPUT_PARAMETERS
-suffix    autotest
 
 nbands    10
 
@@ -18,6 +17,8 @@ ks_solver    cg
 basis_type   pw
 symmetry     0
 nspin        2
+
+suffix    autotest
 pseudo_dir	../../PP_ORB
 
 pw_seed 1
@@ -26,3 +27,5 @@ kpar 2
 # out_wfc_pw 2
 init_wfc file
 init_chg wfc
+
+read_file_dir          .
