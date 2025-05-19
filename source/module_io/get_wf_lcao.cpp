@@ -221,19 +221,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    if (out_wfc_pw)
-    {
-        std::stringstream ssw;
-        ssw << global_out_dir << "WAVEFUNC";
-        std::cout << " Write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
-                  << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
-    }
-
-    // if (out_wfc_r)
-    // {
-    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-    // }
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			nbands, nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			out_wfc_pw, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -381,18 +372,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    if (out_wf)
-    {
-        std::stringstream ssw;
-        ssw << global_out_dir << "WAVEFUNC";
-        std::cout << " write G-space wave functions into \"" << global_out_dir << "/" << ssw.str() << "\" files."
-                  << std::endl;
-        ModuleIO::write_wfc_pw(ssw.str(), psi_g, kv, pw_wfc);
-    }
-    // if (out_wf_r)
-    // {
-    //     ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
-    // }
+	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
+			nbands, nspin, PARAM.globalv.npol,
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			out_wf, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
 
     std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 

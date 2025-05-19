@@ -14,17 +14,25 @@ namespace elecstate
       const double* ElecState::getRho(int spin) const{return &(this->eferm.ef);}//just for mock
 }
 
-// mock wfc_lcao_gen_fname
-std::string ModuleIO::wfc_nao_gen_fname(const int out_type,
-			const bool gamma_only,
-			const bool out_app_flag,
-			const int ik,
-			const std::vector<int> &ik2iktot,
-			const int nkstot,
-			const int nspin,
-			const int istep)
+
+namespace ModuleIO
 {
-      return "wfs1_nao.txt";
+// mock filename_output
+std::string filename_output(
+            const std::string &directory,
+            const std::string &property,
+            const std::string &basis,
+            const int ik,
+            const std::vector<int> &ik2iktot,
+            const int nspin,
+            const int nkstot,
+            const int out_type,
+            const bool out_app_flag,
+            const bool gamma_only,
+            const int istep)
+{
+      return "./support/wfs1_nao.txt";
+}
 }
 
 /************************************************

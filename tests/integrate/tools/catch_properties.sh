@@ -421,8 +421,8 @@ fi
 # echo "$has_wfc_pw" ## test out_wfc_pw > 0
 #--------------------------------------------
 if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
-	if [[ ! -f OUT.autotest/WAVEFUNC1.txt ]];then
-		echo "Can't find file OUT.autotest/WAVEFUNC1.txt"
+	if [[ ! -f OUT.autotest/wfs1k1_pw.txt ]];then
+		echo "Can't find file OUT.autotest/wfs1k1_pw.txt"
 		exit 1
 	fi
 	awk 'BEGIN {max=0;read=0;band=1}
@@ -437,7 +437,7 @@ if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
 					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
 				}
 			} 
-	}' OUT.autotest/WAVEFUNC1.txt >> $1
+	}' OUT.autotest/wfs1k1_pw.txt >> $1
 fi
 
 
