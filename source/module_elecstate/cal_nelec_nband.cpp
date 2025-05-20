@@ -1,9 +1,6 @@
 #include "cal_nelec_nband.h"
 #include "module_base/constants.h"
 #include "module_parameter/parameter.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
 
 namespace elecstate {
 
@@ -14,37 +11,18 @@ void cal_nelec(const Atom* atoms, const int& ntype, double& nelec)
 
     if (nelec == 0)
     {
-        if (PARAM.inp.use_paw)
+        for (int it = 0; it < ntype; it++)
         {
-#ifdef USE_PAW
-            for (int it = 0; it < ntype; it++)
-            {
-                std::stringstream ss1, ss2;
-                ss1 << " electron number of element " << GlobalC::paw_cell.get_zat(it) << std::endl;
-                const int nelec_it = GlobalC::paw_cell.get_val(it) * atoms[it].na;
-                nelec += nelec_it;
-                ss2 << "total electron number of element " << GlobalC::paw_cell.get_zat(it);
+            std::stringstream ss1, ss2;
+            ss1 << "electron number of element " << atoms[it].label;
+            const double nelec_it = atoms[it].ncpp.zv * atoms[it].na;
+            nelec += nelec_it;
+            ss2 << "total electron number of element " << atoms[it].label;
 
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), GlobalC::paw_cell.get_val(it));
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
-            }
-#endif
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), atoms[it].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
         }
-        else
-        {
-            for (int it = 0; it < ntype; it++)
-            {
-                std::stringstream ss1, ss2;
-                ss1 << "electron number of element " << atoms[it].label;
-                const double nelec_it = atoms[it].ncpp.zv * atoms[it].na;
-                nelec += nelec_it;
-                ss2 << "total electron number of element " << atoms[it].label;
-
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), atoms[it].ncpp.zv);
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
-            }
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
-        }
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
     }
     if (PARAM.inp.nelec_delta != 0)
     {

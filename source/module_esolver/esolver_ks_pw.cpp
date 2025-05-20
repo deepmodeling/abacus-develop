@@ -36,9 +36,7 @@
 #include "module_parameter/parameter.h"
 
 #include <iostream>
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 #ifdef __MLKEDF
 #include "module_hamilt_pw/hamilt_ofdft/ml_data.h"
 #endif
@@ -531,7 +529,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.calculation,
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
-                                                     PARAM.inp.use_paw,
+                                                     false,
                                                      PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
