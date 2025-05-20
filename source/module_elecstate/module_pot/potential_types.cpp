@@ -25,14 +25,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
     {
-        if(!PARAM.inp.use_paw)
-        {
-            return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_, this->vl_of_0);
-        }
-        else
-        {
-            return new PotLocal_PAW();
-        }
+        return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_, this->vl_of_0);
     }
     else if (pot_type == "hartree")
     {

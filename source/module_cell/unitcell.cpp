@@ -18,10 +18,6 @@
 #include "mpi.h"
 #endif
 
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
-
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
@@ -359,40 +355,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     // set index for iat2it, iat2ia
     //===================================
     this->set_iat2itia();
-
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw) 
-    {
-        GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
-
-        int* typat = nullptr;
-        double* xred = nullptr;
-
-        typat = new int[nat];
-        xred = new double[nat * 3];
-
-        int iat = 0;
-        for (int it = 0; it < ntype; it++) 
-        {
-            for (int ia = 0; ia < atoms[it].na; ia++) 
-            {
-                typat[iat] = it + 1; // Fortran index starts from 1 !!!!
-                xred[iat * 3 + 0] = atoms[it].taud[ia].x;
-                xred[iat * 3 + 1] = atoms[it].taud[ia].y;
-                xred[iat * 3 + 2] = atoms[it].taud[ia].z;
-                iat++;
-            }
-        }
-
-        GlobalC::paw_cell.set_libpaw_atom(nat, ntype, typat, xred);
-        delete[] typat;
-        delete[] xred;
-
-        GlobalC::paw_cell.set_libpaw_files();
-
-        GlobalC::paw_cell.set_nspin(PARAM.inp.nspin);
-    }
-#endif
 
     return;
 }

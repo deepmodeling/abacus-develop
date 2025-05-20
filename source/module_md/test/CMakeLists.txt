@@ -1,6 +1,5 @@
 remove_definitions(-D__MPI -D__LCAO )
 add_definitions(-D__NORMAL)
-remove_definitions(-DUSE_PAW)
 
 list(APPEND depend_files 
   ../md_func.cpp

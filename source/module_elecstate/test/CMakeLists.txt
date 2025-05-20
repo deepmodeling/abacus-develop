@@ -6,7 +6,6 @@ remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__DEEPKS)
 remove_definitions(-D_OPENMP)
-remove_definitions(-DUSE_PAW)
 
 if (ENABLE_MPI)
 

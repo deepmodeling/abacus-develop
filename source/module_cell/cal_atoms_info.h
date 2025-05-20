@@ -30,30 +30,28 @@ class CalAtomsInfo
             GlobalV::ofs_running << " The readin total magnetization is " << para.inp.nupdown  << std::endl;
         }
 
-        if (!para.inp.use_paw)
+
+        // decide whether to be USPP
+        for (int it = 0; it < ntype; ++it)
         {
-            // decide whether to be USPP
-            for (int it = 0; it < ntype; ++it)
+            if (atoms[it].ncpp.tvanp)
             {
-                if (atoms[it].ncpp.tvanp)
-                {
-                    para.sys.use_uspp = true;
-                }
+                para.sys.use_uspp = true;
             }
-    
-            // calculate the total number of local basis
-            para.sys.nlocal = 0;
-            for (int it = 0; it < ntype; ++it)
+        }
+
+        // calculate the total number of local basis
+        para.sys.nlocal = 0;
+        for (int it = 0; it < ntype; ++it)
+        {
+            const int nlocal_it = atoms[it].nw * atoms[it].na;
+            if (para.inp.nspin != 4)
             {
-                const int nlocal_it = atoms[it].nw * atoms[it].na;
-                if (para.inp.nspin != 4)
-                {
-                    para.sys.nlocal += nlocal_it;
-                }
-                else
-                {
-                    para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
-                }
+                para.sys.nlocal += nlocal_it;
+            }
+            else
+            {
+                para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
             }
         }
 
