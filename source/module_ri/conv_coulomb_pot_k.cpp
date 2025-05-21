@@ -4,7 +4,6 @@
 #include "../module_base/math_erf_complex.h"
 #include "../module_basis/module_ao/ORB_atomic_lm.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#include "Faddeeva.hh"
 #include "module_parameter/parameter.h"
 namespace Conv_Coulomb_Pot_K
 {
@@ -101,7 +100,7 @@ std::vector<double> cal_psi_cam(const std::vector<double>& psif,
     for (size_t ik = 0; ik < psif.size(); ++ik)
     {
         double coulomb_part = 1 - std::cos(k_radial[ik] * Rc);
-        double temp0 = std::cos(k_radial[ik] * Rc) * Faddeeva::erfc(omega * Rc);
+        double temp0 = std::cos(k_radial[ik] * Rc) * std::erfc(omega * Rc);
         double temp1 = std::exp(-(k_radial[ik] * k_radial[ik]) / (4 * omega * omega));
         std::complex<double> temp2 = std::complex<double>(0, 0);
         std::complex<double> temp3 = std::complex<double>(0, 0);
