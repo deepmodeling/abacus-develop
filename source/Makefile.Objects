@@ -148,6 +148,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
+    math_erf_complex.o\
     math_ylm_op.o\
     math_kernel_op.o\
     math_kernel_op_vec.o\

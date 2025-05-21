@@ -32,6 +32,7 @@ add_library(
     math_ylmreal.cpp
     math_bspline.cpp
     math_chebyshev.cpp
+    math_erf_complex.cpp
     mathzone_add1.cpp
     matrix.cpp
     matrix3.cpp

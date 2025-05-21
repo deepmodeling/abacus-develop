@@ -90,18 +90,15 @@ void K_Vectors::set(const UnitCell& ucell,
     std::string skpt1;
     std::string skpt2;
 
-    if (GlobalV::MY_RANK == 0)
+    if (!this->kc_done && this->kd_done)
     {
-        if (!this->kc_done && this->kd_done)
-        {
-            for (size_t ik = 0; ik != this->nkstot_full; ++ik)
-                this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
-        }
-        else if (this->kc_done && !this->kd_done)
-        {
-            for (size_t ik = 0; ik != this->nkstot_full; ++ik)
-                this->kvec_c_full[ik] = this->kvec_c[ik];
-        }
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+    }
+    else if (this->kc_done && !this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_c[ik];
     }
 
     // (2)

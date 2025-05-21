@@ -1,6 +1,7 @@
 #include "conv_coulomb_pot_k.h"
 
 #include "../module_base/constants.h"
+#include "../module_base/math_erf_complex.h"
 #include "../module_basis/module_ao/ORB_atomic_lm.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "Faddeeva.hh"
@@ -106,9 +107,9 @@ std::vector<double> cal_psi_cam(const std::vector<double>& psif,
         std::complex<double> temp3 = std::complex<double>(0, 0);
         if (temp1 >= eps)
         {
-            temp2 = Faddeeva::erf(0.5 * (ModuleBase::IMAG_UNIT * k_radial[ik] + 2 * omega * omega * Rc) / omega);
+            temp2 = ModuleBase::ErrorFunc::erf(0.5 * (ModuleBase::IMAG_UNIT * k_radial[ik] + 2 * omega * omega * Rc) / omega);
             temp3 = ModuleBase::NEG_IMAG_UNIT
-                    * Faddeeva::erfi(0.5 * k_radial[ik] / omega + ModuleBase::IMAG_UNIT * omega * Rc);
+                    * ModuleBase::ErrorFunc::erfi(0.5 * k_radial[ik] / omega + ModuleBase::IMAG_UNIT * omega * Rc);
         }
         std::complex<double> fock_part = -0.5 * (-2 + 2 * temp0 + temp1 * (temp2 + temp3));
         psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (hybrid_alpha * coulomb_part + hybrid_beta * fock_part.real());
