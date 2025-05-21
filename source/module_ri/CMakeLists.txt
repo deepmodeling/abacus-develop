@@ -15,7 +15,6 @@ if (ENABLE_LIBRI)
 
   if(ENABLE_LCAO)
     list(APPEND objects
-        Faddeeva.cc
         conv_coulomb_pot_k.cpp
         exx_abfs-abfs_index.cpp
         exx_abfs-construct_orbs.cpp
