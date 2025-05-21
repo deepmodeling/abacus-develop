@@ -2678,7 +2678,7 @@ These variables are relevant when using hybrid functionals.
 ### exx_hybrid_beta
 
 - **Type**: Real
-- **Description**: another fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$
+- **Description**: another fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
 - **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_hse_omega
@@ -2699,7 +2699,7 @@ These variables are relevant when using hybrid functionals.
 
 - **Type**: Boolean
 - **Description**: if True, use Ewald method to construct V matrix 
-- **Default**: True
+- **Default**: False
 
 ### exx_hybrid_step
 
