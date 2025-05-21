@@ -25,10 +25,7 @@
 #include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
 
-#ifdef USE_PAW
-#include "module_base/parallel_common.h"
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 namespace ModuleESolver
 {
@@ -98,98 +95,11 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     this->ppcell.cell_factor = PARAM.inp.cell_factor;
 
 
-
-    /// PAW Section
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        int* atom_type = nullptr;
-        double** atom_coord = nullptr;
-        std::vector<std::string> filename_list;
-
-        atom_type = new int[ucell.nat];
-        atom_coord = new double*[ucell.nat];
-        filename_list.resize(ucell.ntype);
-
-        for (int ia = 0; ia < ucell.nat; ia++)
-        {
-            atom_coord[ia] = new double[3];
-        }
-
-        int iat = 0;
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
-                atom_type[iat] = it;
-                atom_coord[iat][0] = ucell.atoms[it].taud[ia].x;
-                atom_coord[iat][1] = ucell.atoms[it].taud[ia].y;
-                atom_coord[iat][2] = ucell.atoms[it].taud[ia].z;
-                iat++;
-            }
-        }
-
-        if (GlobalV::MY_RANK == 0)
-        {
-            std::ifstream ifa(PARAM.globalv.global_in_stru.c_str(), std::ios::in);
-            if (!ifa)
-            {
-                ModuleBase::WARNING_QUIT("set_libpaw_files", "can not open stru file");
-            }
-
-            std::string line;
-            while (!ifa.eof())
-            {
-                getline(ifa, line);
-                if (line.find("PAW_FILES") != std::string::npos) {
-                    break;
-                }
-            }
-
-            for (int it = 0; it < ucell.ntype; it++)
-            {
-                ifa >> filename_list[it];
-            }
-        }
-#ifdef __MPI
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            Parallel_Common::bcast_string(filename_list[it]);
-        }
-#endif
-
-        GlobalC::paw_cell.init_paw_cell(inp.ecutwfc,
-                                        inp.cell_factor,
-                                        ucell.omega,
-                                        ucell.nat,
-                                        ucell.ntype,
-                                        atom_type,
-                                        (const double**)atom_coord,
-                                        filename_list);
-
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
-            delete[] atom_coord[iat];
-        }
-        delete[] atom_coord;
-        delete[] atom_type;
-        CalAtomsInfo ca;
-        ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
-    }
-#endif
-    /// End PAW
-
     //! 3) it has been established that
     // xc_func is same for all elements, therefore
     // only the first one if used
-    if (PARAM.inp.use_paw)
-    {
-        XC_Functional::set_xc_type(PARAM.inp.dft_functional);
-    }
-    else
-    {
-        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    }
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 4) setup the charge mixing parameters
@@ -238,68 +148,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     //! 10) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
-
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc / 2.0,
-                                          inp.ecutwfc / 2.0); // in Hartree
-        GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,
-                                         this->pw_wfc->ny,
-                                         this->pw_wfc->nz,
-                                         this->pw_wfc->nx,
-                                         this->pw_wfc->ny,
-                                         this->pw_wfc->nz,
-                                         this->pw_wfc->startz,
-                                         this->pw_wfc->numz);
-#ifdef __MPI
-        if (GlobalV::RANK_IN_POOL == 0)
-        {
-            GlobalC::paw_cell.prepare_paw();
-        }
-#else
-        GlobalC::paw_cell.prepare_paw();
-#endif
-        GlobalC::paw_cell.set_sij();
-
-        GlobalC::paw_cell.set_eigts(this->pw_wfc->nx,
-                                    this->pw_wfc->ny,
-                                    this->pw_wfc->nz,
-                                    this->sf.eigts1.c,
-                                    this->sf.eigts2.c,
-                                    this->sf.eigts3.c);
-
-        std::vector<std::vector<double>> rhoijp;
-        std::vector<std::vector<int>> rhoijselect;
-        std::vector<int> nrhoijsel;
-#ifdef __MPI
-        if (GlobalV::RANK_IN_POOL == 0)
-        {
-            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
-
-            for (int iat = 0; iat < ucell.nat; iat++)
-            {
-                GlobalC::paw_cell.set_rhoij(iat,
-                                            nrhoijsel[iat],
-                                            rhoijselect[iat].size(),
-                                            rhoijselect[iat].data(),
-                                            rhoijp[iat].data());
-            }
-        }
-#else
-        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
-
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
-            GlobalC::paw_cell.set_rhoij(iat,
-                                        nrhoijsel[iat],
-                                        rhoijselect[iat].size(),
-                                        rhoijselect[iat].data(),
-                                        rhoijp[iat].data());
-        }
-#endif
-    }
-#endif
 }
 
 //------------------------------------------------------------------------------

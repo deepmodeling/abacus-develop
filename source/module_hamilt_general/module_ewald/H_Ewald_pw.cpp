@@ -7,9 +7,6 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
 
 double H_Ewald_pw::alpha=0.0;
 int H_Ewald_pw::mxr = 200;
@@ -72,13 +69,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     double charge = 0.0;
     for (int it = 0;it < cell.ntype;it++)
     {
-        if(PARAM.inp.use_paw)
-        {
-#ifdef USE_PAW
-            charge += cell.atoms[it].na * GlobalC::paw_cell.get_val(it);
-#endif
-        }
-        else
         {
             charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
         }
@@ -144,13 +134,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         std::complex<double> rhon = ModuleBase::ZERO;
         for (int it=0; it<cell.ntype; it++)
         {
-            if(PARAM.inp.use_paw)
-            {
-#ifdef USE_PAW
-                rhon += static_cast<double>(GlobalC::paw_cell.get_val(it)) * conj(strucFac(it, ig));
-#endif
-            }
-            else
             {
                 rhon += static_cast<double>(cell.atoms[it].ncpp.zv) * conj(strucFac(it, ig));
             }
@@ -168,14 +151,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 	{
     	for (int it = 0; it < cell.ntype;it++)
     	{
-            if(PARAM.inp.use_paw)
-            {
-#ifdef USE_PAW
-                ewaldg = ewaldg - cell.atoms[it].na * GlobalC::paw_cell.get_val(it) 
-                    * GlobalC::paw_cell.get_val(it) * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
-#endif
-            }
-            else
             {
                 ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
             }
@@ -232,14 +207,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
             for(nr=0; nr<nrm; nr++)
             {
                 rr = sqrt(r2[nr]) * cell.lat0;
-                if(PARAM.inp.use_paw)
-                {
-#ifdef USE_PAW
-                    ewaldr = ewaldr + GlobalC::paw_cell.get_val(it1) * GlobalC::paw_cell.get_val(it2) *
-                            erfc(sqrt(alpha) * rr) / rr;
-#endif
-                }
-                else
                 {
                     ewaldr = ewaldr + cell.atoms[it1].ncpp.zv * cell.atoms[it2].ncpp.zv *
                             erfc(sqrt(alpha) * rr) / rr;
@@ -285,14 +252,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
                         for (nr = 0;nr < nrm;nr++)
                         {
                             rr = sqrt(r2 [nr]) * cell.lat0;
-                            if(PARAM.inp.use_paw)
-                            {
-#ifdef USE_PAW
-                                ewaldr = ewaldr + GlobalC::paw_cell.get_val(nt1) * GlobalC::paw_cell.get_val(nt2) *
-                                        erfc(sqrt(alpha) * rr) / rr;
-#endif
-                            }
-                            else
                             {
                                 ewaldr = ewaldr + cell.atoms[nt1].ncpp.zv * cell.atoms[nt2].ncpp.zv *
                                         erfc(sqrt(alpha) * rr) / rr;

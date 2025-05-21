@@ -8,9 +8,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 namespace hamilt {
 

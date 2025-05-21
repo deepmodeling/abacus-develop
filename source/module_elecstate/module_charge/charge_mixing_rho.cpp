@@ -292,19 +292,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
     }
 
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-        double *nhat_out, *nhat_in;
-        nhat_in = chr->nhat_save[0];
-        nhat_out = chr->nhat[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
-
-        this->mixing->mix_data(this->nhat_mdata, nhat_out);
-    }
-#endif
 
     return;
 }
@@ -548,23 +535,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-#ifdef USE_PAW
-    std::vector<double> nhat_r123;
-    if(PARAM.inp.use_paw)
-    {
-        nhat_r123.resize(PARAM.inp.nspin * nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
-        for(int ir = 0 ; ir < nrxx ; ++ir)
-        {
-            for(int is = 0; is < PARAM.inp.nspin; ++is)
-            {
-                nhat_r123[ir+is*nrxx] = chr->nhat[0][ir];
-            }
-        }
-    }        
-#endif
     // --------------------Mixing Body--------------------
     if (PARAM.inp.scf_thr_type == 1)
     {
@@ -607,22 +577,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
-        for(int ir = 0 ; ir < nrxx ; ++ir)
-        {
-            for(int is = 0; is < PARAM.inp.nspin; ++is)
-            {
-                chr->nhat_save[is][ir] = nhat_r123[ir+is*nrxx];
-            }
-        }
-    }
-#endif
 
 	if (new_e_iteration) 
 	{
