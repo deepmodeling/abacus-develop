@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
 ntype			1
-symmetry		-1
+symmetry		0
 gamma_only      0
 nspin			1
 
