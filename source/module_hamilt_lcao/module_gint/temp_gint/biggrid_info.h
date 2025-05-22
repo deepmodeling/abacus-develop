@@ -24,7 +24,7 @@ class BigGridInfo
         
         Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; };
         Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; };
-        const Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; };
+        Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; };
 
         // Return the maximum number of big grids that can fit inside a sphere of radius r,
         // along the three lattice vector directions.
