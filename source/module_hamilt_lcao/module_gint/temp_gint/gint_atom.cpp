@@ -5,6 +5,33 @@
 
 namespace ModuleGint
 {
+GintAtom::GintAtom(
+    const Atom* atom,
+    int ia,
+    int iat,
+    Vec3i biggrid_idx,
+    Vec3i unitcell_idx,
+    Vec3d tau_in_biggrid,
+    const Numerical_Orbital* orb)
+: atom_(atom), ia_(ia), iat_(iat), biggrid_idx_(biggrid_idx),
+  unitcell_idx_(unitcell_idx), tau_in_biggrid_(tau_in_biggrid),
+  orb_(orb)
+{
+    p_psi_uniform_.resize(atom_->nw);
+    p_dpsi_uniform_.resize(atom_->nw);
+    p_ddpsi_uniform_.resize(atom_->nw);
+    for (int iw=0; iw < atom_->nw; ++iw)
+    {
+        if ( atom_->iw2_new[iw] )
+        {
+            int l = atom_->iw2l[iw];
+            int n = atom_->iw2n[iw];
+            p_psi_uniform_[iw] = orb_->PhiLN(l, n).psi_uniform.data();
+            p_dpsi_uniform_[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
+            p_ddpsi_uniform_[iw] = orb_->PhiLN(l, n).ddpsi_uniform.data();
+        }
+    }
+}
 
 template <typename T>
 void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* phi) const
@@ -14,20 +41,6 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
     // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
 
-    // store the pointer to reduce repeated address fetching
-    std::vector<const double*> p_psi_uniform(atom_->nw);
-    std::vector<const double*> p_dpsi_uniform(atom_->nw);
-    for(int iw = 0; iw < atom_->nw; iw++)
-    {
-        if(atom_->iw2_new[iw])
-        {
-            int l = atom_->iw2l[iw];
-            int n = atom_->iw2n[iw];
-            p_psi_uniform[iw] = orb_->PhiLN(l, n).psi_uniform.data();
-            p_dpsi_uniform[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-        }
-    }
-
     // store the spherical harmonics
     // it's outside the loop to reduce the vector allocation overhead
     std::vector<double> ylma;
@@ -35,7 +48,6 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
     for(int im = 0; im < num_mgrids; im++)
     {
         const Vec3d& coord = coords[im];
-
         // 1e-9 is to avoid division by zero
         const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
         if(dist > orb_->getRcut())
@@ -74,8 +86,8 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
             {
                 if(atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform[iw];
-                    auto dpsi_uniform = p_dpsi_uniform[iw];
+                    auto psi_uniform = p_psi_uniform_[iw];
+                    auto dpsi_uniform = p_dpsi_uniform_[iw];
                     psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
                         + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
                 }
@@ -94,22 +106,6 @@ void GintAtom::set_phi_dphi(
     
     // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
-
-    // store the pointer to reduce repeated address fetching
-    std::vector<const double*> p_psi_uniform(atom_->nw);
-    std::vector<const double*> p_dpsi_uniform(atom_->nw);
-    std::vector<int> phi_nr_uniform(atom_->nw);
-    for (int iw=0; iw< atom_->nw; ++iw)
-    {
-        if ( atom_->iw2_new[iw] )
-        {
-            int l = atom_->iw2l[iw];
-            int n = atom_->iw2n[iw];
-            p_psi_uniform[iw] = orb_->PhiLN(l, n).psi_uniform.data();
-            p_dpsi_uniform[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-            phi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
-        }
-    }
     
     std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
     // TODO: replace array_pool with std::vector
@@ -157,24 +153,16 @@ void GintAtom::set_phi_dphi(
                 // function from interpolation method.
                 if(atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform[iw];
-                    auto dpsi_uniform = p_dpsi_uniform[iw];
+                    auto psi_uniform = p_psi_uniform_[iw];
+                    auto dpsi_uniform = p_dpsi_uniform_[iw];
+                    // use Polynomia Interpolation method to get the
+                    // wave functions
 
-                    if(ip >= phi_nr_uniform[iw] - 4)
-                    {
-                        tmp = dtmp = 0.0;
-                    }
-                    else
-                    {
-                        // use Polynomia Interpolation method to get the
-                        // wave functions
+                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                        + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                        tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                            + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
-
-                        dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                            + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                    }
+                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
                 } // new l is used.
 
                 // get the 'l' of this localized wave function

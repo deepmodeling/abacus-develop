@@ -20,24 +20,6 @@ void GintAtom::set_ddphi(
     // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
 
-    // store the pointer to reduce repeated address fetching
-    std::vector<const double*> p_psi_uniform(atom_->nw);
-    std::vector<const double*> p_dpsi_uniform(atom_->nw);
-    std::vector<const double*> p_ddpsi_uniform(atom_->nw);
-    std::vector<int> phi_nr_uniform(atom_->nw);
-    for (int iw=0; iw< atom_->nw; ++iw)
-    {
-        if ( atom_->iw2_new[iw] )
-        {
-            int l = atom_->iw2l[iw];
-            int n = atom_->iw2n[iw];
-            p_psi_uniform[iw] = orb_->PhiLN(l, n).psi_uniform.data();
-            p_dpsi_uniform[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-            p_ddpsi_uniform[iw] = orb_->PhiLN(l, n).ddpsi_uniform.data();
-            phi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
-        }
-    }
-
     std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
     ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
     // TODO: A better data structure such as a 3D tensor can be used to store dphi
@@ -96,24 +78,15 @@ void GintAtom::set_ddphi(
             {
                 if(atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform[iw];
-                    auto dpsi_uniform = p_dpsi_uniform[iw];
+                    auto psi_uniform = p_psi_uniform_[iw];
+                    auto dpsi_uniform = p_dpsi_uniform_[iw];
+                    // use Polynomia Interpolation method to get the
+                    // wave functions
+                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                        + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                    if(ip >= phi_nr_uniform[iw] - 4)
-                    {
-                        tmp = dtmp = 0.0;
-                    }
-                    else
-                    {
-                        // use Polynomia Interpolation method to get the
-                        // wave functions
-
-                        tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                            + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
-
-                        dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                            + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                    }
+                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
                 }
 
                 // get the 'l' of this localized wave function

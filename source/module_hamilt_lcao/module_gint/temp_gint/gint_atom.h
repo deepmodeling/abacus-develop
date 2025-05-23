@@ -18,10 +18,7 @@ class GintAtom
             Vec3i biggrid_idx,
             Vec3i unitcell_idx,
             Vec3d tau_in_biggrid,
-            const Numerical_Orbital* orb)
-            : atom_(atom), ia_(ia), iat_(iat), biggrid_idx_(biggrid_idx),
-              unitcell_idx_(unitcell_idx), tau_in_biggrid_(tau_in_biggrid),
-              orb_(orb) {};
+            const Numerical_Orbital* orb);
 
         // getter functions
         const Atom* get_atom() const { return atom_; };
@@ -110,7 +107,10 @@ class GintAtom
 
         // the numerical orbitals of this atom
         const Numerical_Orbital* orb_;
-
+        
+        std::vector<const double*> p_psi_uniform_;
+        std::vector<const double*> p_dpsi_uniform_;
+        std::vector<const double*> p_ddpsi_uniform_;
 };
 
 } // namespace ModuleGint
