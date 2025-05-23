@@ -5,10 +5,12 @@
 
 namespace sparse_format
 {
+#ifdef __MPI
 // Synchronize all processes' R coordinates,
 // otherwise HS_Arrays.all_R_coor would have different sizes on different processes,
 // causing MPI communication errors.
 void sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm);
+#endif
 
 template <typename T>
 std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)

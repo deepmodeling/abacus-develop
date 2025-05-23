@@ -7,6 +7,7 @@
 #include "spar_exx.h"
 #include "spar_u.h"
 
+#ifdef __MPI
 void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm)
 {
     int my_rank, nproc;
@@ -64,6 +65,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
     // Step 6: Update all processes' all_R_coor
     all_R_coor = std::move(global_R_coor);
 }
+#endif // __MPI
 
 void sparse_format::cal_HSR(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
@@ -94,8 +96,10 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
+#ifdef __MPI
         // Fix: Sync all_R_coor across processes
         sparse_format::sync_all_R_coor(HS_Arrays.all_R_coor, MPI_COMM_WORLD);
+#endif
 
         if (TD_Velocity::tddft_velocity)
         {
@@ -124,8 +128,10 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
+#ifdef __MPI
         // Fix: Sync all_R_coor across processes
         sparse_format::sync_all_R_coor(HS_Arrays.all_R_coor, MPI_COMM_WORLD);
+#endif
 
         sparse_format::cal_HContainer_cd(pv, current_spin, sparse_thr, *(p_ham_lcao->getHR()), HS_Arrays.HR_soc_sparse);
 
