@@ -7,9 +7,6 @@
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_base/kernels/math_kernel_op.h"
 
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
 
 using namespace hsolver;
 
@@ -163,15 +160,6 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     for (int m = 0; m < nband; m++)
     {
-        if(this->use_paw)
-        {
-#ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,
-                                         reinterpret_cast<const std::complex<double>*>(psi_in + m * ld_psi),
-                                         reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
-#endif
-        }
-        else
         {
             // phm_in->sPsi(psi_in + m*ld_psi, &this->spsi[m * dim], dim, dim, 1);
             spsi_func(psi_in + m*ld_psi,&this->spsi[m*dim],dim, 1);
@@ -189,15 +177,6 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                          &this->lagrange_matrix[m * nband],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        if(this->use_paw)
-        {
-#ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,
-                                         reinterpret_cast<const std::complex<double>*>(basis + dim * m),
-                                         reinterpret_cast<std::complex<double>*>(&this->spsi[m * dim]));
-#endif
-        }
-        else
         {
             // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
             spsi_func(basis + dim*m, &this->spsi[m * dim], dim, 1);
@@ -497,14 +476,6 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     this->planSchmidtOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
     for (int m = 0; m < notconv; m++)
     {
-        if(this->use_paw)
-        {
-#ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*(nbase + m)),
-                reinterpret_cast<std::complex<double>*>(&spsi[(nbase + m) * dim]));
-#endif
-        }
-        else
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
             spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
@@ -537,14 +508,6 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          &lagrange[m * (nbase + notconv)],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        if(this->use_paw)
-        {
-#ifdef USE_PAW
-            GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (basis + dim*(nbase + m)),
-                reinterpret_cast<std::complex<double>*>(&spsi[(nbase + m) * dim]));
-#endif
-        }
-        else
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
             spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);

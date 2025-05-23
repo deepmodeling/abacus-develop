@@ -17,9 +17,6 @@
 #include "module_io/cube_io.h"
 #include "module_io/rhog_io.h"
 #include "module_io/read_wf2rho_pw.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
                       const UnitCell& ucell,
@@ -363,13 +360,6 @@ void Charge::set_rho_core(const UnitCell& ucell,
 void Charge::set_rho_core_paw()
 {
     ModuleBase::TITLE("Charge","set_rho_core_paw");
-#ifdef USE_PAW
-    double* tmp = new double[nrxx];
-    GlobalC::paw_cell.get_vloc_ncoret(tmp,this->rho_core);
-    delete[] tmp;
-
-    this->rhopw->real2recip(this->rho_core,this->rhog_core);
-#endif
 }
 
 

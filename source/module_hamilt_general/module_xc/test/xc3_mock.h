@@ -169,7 +169,6 @@ namespace GlobalV
     int NPOL;
     bool DOMAG;
     bool DOMAG_Z;
-    bool use_paw = false;
     std::ofstream ofs_device;
     std::ofstream ofs_running;
 }

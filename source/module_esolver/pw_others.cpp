@@ -37,9 +37,7 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
 #include "module_base/formatter.h"
