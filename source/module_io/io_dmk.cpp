@@ -59,11 +59,13 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
 {
     if (gamma_only)
     {
-        return "SPIN" + std::to_string(ispin + 1) + "_DM";
+        return std::string("dm") + "s" + std::to_string(ispin + 1) + "_nao.txt";
     }
     else
     {
-        return "SPIN" + std::to_string(ispin + 1) + "_K" + std::to_string(ik + 1) + "_DM";
+        // mohan update 2025-05-25, the index of 'ik' should be the correct 'ik' without spin
+        return std::string("dm") + "s" + std::to_string(ispin + 1) 
+               + "k" + std::to_string(ik + 1) + "_nao.txt";
     }
 }
 

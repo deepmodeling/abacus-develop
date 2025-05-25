@@ -16,20 +16,21 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
     {
         if (!append && istep >= 0)
         {
-            fname = std::to_string(istep + 1) + "_data-DMR-sparse_SPIN" + std::to_string(ispin) + ".csr";
+            // spa stands for sparse
+            fname = "dmrs" + std::to_string(ispin+1) + "g" + std::to_string(istep + 1) + "_nao.csr";
         }
         else
         {
-            fname = "data-DMR-sparse_SPIN" + std::to_string(ispin) + ".csr";
+            fname = "dmrs" + std::to_string(ispin+1) + "_nao.csr";
         }
     }
     else if (out_type == 2)
     {
-        fname = "output_DM" + std::to_string(ispin) + ".npz";
+        fname = "dmrs" + std::to_string(ispin+1) + "_nao.npz";
     }
     else
     {
-        ModuleBase::WARNING("write_dmr", "the output type of DMR should be npz or csr.");
+        ModuleBase::WARNING("write_dmr", "the output type of density matrix DM(R) should be csr or npz.");
     }
     return fname;
 }
@@ -38,13 +39,13 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
 {
     // write the head: ION step number, basis number and R loop number
     std::ofstream ofs(fname, std::ios::app);
-    ofs << "STEP: " << istep << std::endl;
+    ofs << "STEP: " << istep+1 << std::endl;
     ofs << "Matrix Dimension of DM(R): " << dm_serial->get_nbasis() << std::endl;
     ofs << "Matrix number of DM(R): " << dm_serial->size_R_loop() << std::endl;
 
     // write HR_serial to ofs
-    double sparse_threshold = 1e-10;
-    int precision = 8;
+    const double sparse_threshold = 1e-10;
+    const int precision = 8;
     hamilt::Output_HContainer<double> out_dm(dm_serial, ofs, sparse_threshold, precision);
     out_dm.write();
     ofs.close();
