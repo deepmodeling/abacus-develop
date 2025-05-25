@@ -1,20 +1,20 @@
 remove_definitions(-D__MPI)
 
 AddTest(
-  TARGET test_delley
+  TARGET MODULE_BASE_GRID_test_delley
   SOURCES test_delley.cpp
   ../delley.cpp
   ../../ylm.cpp
 )
 
 AddTest(
-  TARGET test_radial
+  TARGET MODULE_BASE_GRID_test_radial
   SOURCES test_radial.cpp
   ../radial.cpp
 )
 
 AddTest(
-  TARGET test_partition
+  TARGET MODULE_BASE_GRID_test_partition
   SOURCES test_partition.cpp
   ../partition.cpp
   ../radial.cpp
@@ -22,7 +22,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET test_batch
+  TARGET MODULE_BASE_GRID_test_batch
   SOURCES test_batch.cpp
   ../batch.cpp
   LIBS ${math_libs}
