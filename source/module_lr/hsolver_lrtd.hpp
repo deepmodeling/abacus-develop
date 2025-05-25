@@ -86,7 +86,7 @@ namespace LR
                                                  nband,
                                                  dim,
                                                  PARAM.inp.pw_diag_ndim,
-                                                 PARAM.inp.use_paw,
+                                                 false,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,

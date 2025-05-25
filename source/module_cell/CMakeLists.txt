@@ -1,8 +1,5 @@
 add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
-if(ENABLE_PAW)
-  add_subdirectory(module_paw)
-endif()
 
 add_library(
     cell

@@ -5,10 +5,6 @@
 #include "module_parameter/parameter.h"
 
 #include <cmath>
-#ifdef USE_PAW
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#endif
 
 namespace elecstate
 {
@@ -104,77 +100,53 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
     const bool v_ofk_flag = (XC_Functional::get_ked_flag());
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        ModuleBase::matrix v_xc;
-        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &ucell);
-        v_xc = std::get<2>(etxc_vtxc_v);
 
+    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
+    {
+        deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
+    }
+    if (v_ofk_flag)
+    {
+        v_ofk = this->pot->get_effective_vofk(0);
+        // cause in the get_effective_vofk, the func will return nullptr
+        if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
+        }
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
-            deband_aux -= this->charge->rho[0][ir] * v_xc(0, ir);
-        }
-        if (PARAM.inp.nspin == 2)
-        {
-            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-            {
-                deband_aux -= this->charge->rho[1][ir] * v_xc(1, ir);
-            }
+            deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
         }
     }
-#endif
 
-    if (!PARAM.inp.use_paw)
+    if (PARAM.inp.nspin == 2)
     {
+        v_eff = this->pot->get_effective_v(1);
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
-            deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
+            deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
         }
         if (v_ofk_flag)
         {
-            v_ofk = this->pot->get_effective_vofk(0);
-            // cause in the get_effective_vofk, the func will return nullptr
+            v_ofk = this->pot->get_effective_vofk(1);
             if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
             {
                 ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
             }
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
-                deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
+                deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
             }
         }
-
-        if (PARAM.inp.nspin == 2)
+    }
+    else if (PARAM.inp.nspin == 4)
+    {
+        for (int is = 1; is < 4; is++)
         {
-            v_eff = this->pot->get_effective_v(1);
+            v_eff = this->pot->get_effective_v(is);
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
-                deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
-            }
-            if (v_ofk_flag)
-            {
-                v_ofk = this->pot->get_effective_vofk(1);
-                if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
-                {
-                    ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
-                }
-                for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-                {
-                    deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
-                }
-            }
-        }
-        else if (PARAM.inp.nspin == 4)
-        {
-            for (int is = 1; is < 4; is++)
-            {
-                v_eff = this->pot->get_effective_v(is);
-                for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-                {
-                    deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
-                }
+                deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
             }
         }
     }

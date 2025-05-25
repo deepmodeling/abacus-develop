@@ -186,28 +186,6 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
-        Input_Item item("use_paw");
-        item.annotation = "whether to use PAW in pw calculation";
-        read_sync_bool(input.use_paw);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.use_paw)
-            {
-#ifndef USE_PAW
-                ModuleBase::WARNING_QUIT("ReadInput", "to use PAW, compile with USE_PAW");
-#endif
-                if (para.input.basis_type != "pw")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "PAW is for pw basis only");
-                }
-                if (para.input.dft_functional == "default")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "dft_functional must be set when use_paw is true");
-                }
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("nbands");
         item.annotation = "number of bands";
         read_sync_int(input.nbands);

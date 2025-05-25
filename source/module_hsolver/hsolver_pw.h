@@ -89,15 +89,6 @@ class HSolverPW
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
     void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
-
-#ifdef USE_PAW
-    void paw_func_in_kloop(const int ik,
-                           const double tpiba);
-
-    void call_paw_cell_set_currentk(const int ik);
-
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
-#endif
 };
 
 } // namespace hsolver
