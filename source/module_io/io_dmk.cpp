@@ -150,7 +150,8 @@ bool ModuleIO::read_dmk(const int nspin,
                         const int nk,
                         const Parallel_2D& pv,
                         const std::string& dmk_dir,
-                        std::vector<std::vector<T>>& dmk)
+                        std::vector<std::vector<T>>& dmk,
+                        std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_dmk");
     ModuleBase::timer::tick("ModuleIO", "read_dmk");
@@ -189,10 +190,15 @@ bool ModuleIO::read_dmk(const int nspin,
 
                 if (!ifs)
                 {
-                    ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open DENSITY MATRIX File < " + fn + " >.");
+                    ofs_running << " Cannot find density matrix file " << fn << " for k-point " << ik+1 << std::endl;
+                    ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open density matrix (k) file < " + fn + " >.");
                     read_success = false;
                     break;
                 }
+				else
+				{
+                    ofs_running << " Read density matrix file " << fn << " for k-point " << ik+1 << std::endl;
+				}
 
                 // read the UnitCell
                 dmk_read_ucell(ifs);
@@ -374,13 +380,15 @@ template bool ModuleIO::read_dmk<double>(const int nspin,
                                          const int nk,
                                          const Parallel_2D& pv,
                                          const std::string& dmk_dir,
-                                         std::vector<std::vector<double>>& dmk);
+										 std::vector<std::vector<double>>& dmk,
+										 std::ofstream &ofs);
 
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
                                                        const int nk,
                                                        const Parallel_2D& pv,
                                                        const std::string& dmk_dir,
-                                                       std::vector<std::vector<std::complex<double>>>& dmk);
+													   std::vector<std::vector<std::complex<double>>>& dmk,
+													   std::ofstream &ofs);
 
 template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>& dmk,
                                           const int precision,
