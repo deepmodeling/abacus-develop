@@ -21,6 +21,18 @@
 template <typename Tdata>
 class Ewald_Vq
 {
+    /**
+     * @brief The Ewald summation decomposes the bare Coulomb interaction into two components: 
+     *   the short-range contribution, evaluated in real space, and the long-range contribution, 
+     *   computed in reciprocal space. A similar strategy can be employed for calculating four-center
+     *   full-range Coulomb integrals Vq = (\psi\psi|1/r|\psi\psi) in reciprocal space. 
+     * To use:
+     *     1. Ewald_Vq<Tdata> evq
+     *     2. evq.init
+     *     3. evq.init_ions -> relate to latvec
+     *     4. evq.cal_Vq -> return full-range Vq
+     *     5. evq.cal_Vs -> return FT of Vq
+    */
   private:
     using TA = int;
     using Tcell = int;
