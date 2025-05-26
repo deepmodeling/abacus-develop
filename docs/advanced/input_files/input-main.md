@@ -197,6 +197,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_bandgap\_range](#deepks_bandgap_range)
     - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
@@ -2150,10 +2151,24 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### deepks_bandgap
 
-- **Type**: Boolean
+- **Type**: Int
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
-- **Default**: False
+  - 0: Don't include bandgap label
+  - 1: Include HOMO and LOMO for bandgap label
+  - 2: Include multiple bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
+  - 3: Include target bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
+  - 4: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between (HOMO, HOMO + 1)
+- **Default**: 0
+
+### deepks_bandgap_range
+
+- **Type**: Int*2
+- **Availability**: numerical atomic orbital basis, `deepks_scf` is true, and `deepks_bandgap` is 2 or 3
+- **Description**: 
+  - `deepks_bandgap` is 2: Bandgap labels are energies between (LUMO + deepks_bandgap_range[0], HOMO), (LUMO + deepks_bandgap_range[0] + 1, HOMO), ..., (LUMO + deepks_bandgap_range[1], HOMO) except (HOMO, HOMO)
+  - `deepks_bandgap` is 3: Bandgap label is the energy between (LUMO + deepks_bandgap_range[0], LUMO + deepks_bandgap_range[1])
+- **Default**: 0 0
 
 ### deepks_v_delta
 

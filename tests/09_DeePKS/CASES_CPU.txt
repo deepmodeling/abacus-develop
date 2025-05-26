@@ -12,7 +12,13 @@
 103_NO_GO_deepks_basic
 103_NO_KP_deepks_basic
 103_NO_GO_deepks_bandgap
+103_NO_GO_deepks_bandgap_2
+103_NO_GO_deepks_bandgap_3
+103_NO_GO_deepks_bandgap_4
 103_NO_KP_deepks_bandgap
+103_NO_KP_deepks_bandgap_2
+103_NO_KP_deepks_bandgap_3
+103_NO_KP_deepks_bandgap_4
 103_NO_GO_deepks_vdelta_1
 103_NO_KP_deepks_vdelta_1
 103_NO_GO_deepks_vdelta_2
