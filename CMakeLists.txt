@@ -269,6 +269,7 @@ if(ENABLE_MPI)
   list(APPEND math_libs MPI::MPI_CXX)
 endif()
 
+
 if (USE_DSP)
   add_compile_definitions(__DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${OMPI_LIBRARY1})

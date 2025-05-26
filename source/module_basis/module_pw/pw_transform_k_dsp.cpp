@@ -8,12 +8,30 @@
 #if defined (__DSP)
 namespace ModulePW
 {
-template <typename FPTYPE>
-void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
-                                std::complex<FPTYPE>* out,
+    template <>
+void PW_Basis_K::real2recip_dsp(const std::complex<float>* in,
+                                std::complex<float>* out,
                                 const int ik,
                                 const bool add,
-                                const FPTYPE factor) const
+                                const float factor) const
+                                {
+
+                                }
+    template <>
+void PW_Basis_K::recip2real_dsp(const std::complex<float>* in,
+                                std::complex<float>* out,
+                                const int ik,
+                                const bool add,
+                                const float factor) const
+                                {
+
+                                }
+template <>
+void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
+                                std::complex<double>* out,
+                                const int ik,
+                                const bool add,
+                                const double factor) const
 {
     const base_device::DEVICE_CPU* ctx;
     const base_device::DEVICE_GPU* gpux;
@@ -31,7 +49,7 @@ void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
                                    auxr);
     this->fft_bundle.resource_handler(0);
     // copy the result from the auxr to the out ,while consider the add
-    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_CPU>()(npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -39,12 +57,12 @@ void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
                                                                    auxr,
                                                                    out);
 }
-template <typename FPTYPE>
-void PW_Basis_K::recip2real_dsp(const std::complex<FPTYPE>* in,
-                                std::complex<FPTYPE>* out,
+template <>
+void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
+                                std::complex<double>* out,
                                 const int ik,
                                 const bool add,
-                                const FPTYPE factor) const
+                                const double factor) const
 {
     assert(this->gamma_only == false);
     const base_device::DEVICE_CPU* ctx;
@@ -128,16 +146,16 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     ModuleBase::timer::tick(this->classname, "convolution");
 }
 
-// template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,
-//                                             std::complex<float>* out,
-//                                             const int ik,
-//                                             const bool add,
-//                                             const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
-// template void PW_Basis_K::recip2real_dsp<float>(const std::complex<float>* in,
-//                                             std::complex<float>* out,
-//                                             const int ik,
-//                                             const bool add,
-//                                             const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,
+                                            std::complex<float>* out,
+                                            const int ik,
+                                            const bool add,
+                                            const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::recip2real_dsp<float>(const std::complex<float>* in,
+                                            std::complex<float>* out,
+                                            const int ik,
+                                            const bool add,
+                                            const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
 template void PW_Basis_K::real2recip_dsp<double>(const std::complex<double>* in,
                                                  std::complex<double>* out,
