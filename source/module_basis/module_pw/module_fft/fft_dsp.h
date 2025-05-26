@@ -12,6 +12,7 @@
 
 namespace ModulePW
 {
+    
 template <typename FPTYPE>
 class FFT_DSP : public FFT_BASE<FPTYPE>
 {
@@ -24,7 +25,12 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
         void clear() override;
 
         void cleanFFT() override;
-
+        /**
+         * @brief Control the allocation or deallocation of hthread 
+         * resource 
+         * @param flag  0: deallocate, 1: allocate
+         */
+        void resource_handler(const int flag) const override;
         /** 
         * @brief Initialize the fft parameters
         * @param nx_in  number of grid points in x direction

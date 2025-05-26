@@ -1,7 +1,7 @@
 remove_definitions(-D__MPI)
 
 AddTest(
-    TARGET Base_Libm_UTs
+    TARGET MODULE_BASE_LIBM_UTs
     SOURCES libm_test.cpp
     ../branred.cpp
     ../cexp.cpp
