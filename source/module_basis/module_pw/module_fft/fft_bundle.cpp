@@ -50,6 +50,10 @@ void FFT_Bundle::initfft(int nx_in,
     if (this->precision == "single" || this->precision == "mixing")
     {
         float_flag = true;
+        if (this->precision == "mixing")
+        {
+            double_flag = true;
+        }
 #if not defined(__ENABLE_FLOAT_FFTW)
         if (this->device == "cpu")
         {
@@ -57,9 +61,11 @@ void FFT_Bundle::initfft(int nx_in,
         }
 #endif
     }
-    if (this->precision == "double" || this->precision == "mixing")
+    else if (this->precision == "double")
     {
         double_flag = true;
+    }else{
+        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the precision to single or double or mixing");
     }
 #if defined(__DSP)
     if (device == "dsp")
@@ -70,24 +76,23 @@ void FFT_Bundle::initfft(int nx_in,
         }
         fft_double = make_unique<FFT_DSP<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
-    }
+    }else
 #endif
     if (device == "cpu")
     {
-        fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
-        fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
         if (float_flag)
         {
+            fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
             fft_float
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
         if (double_flag)
         {
+            fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
             fft_double
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
-    }
-    if (device == "gpu")
+    }else if (device == "gpu")
     {
 #if defined(__ROCM)
         fft_float = make_unique<FFT_ROCM<float>>();
@@ -100,6 +105,8 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_CUDA<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #endif
+    }else{
+        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
 }
 

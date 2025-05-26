@@ -203,5 +203,18 @@ class FFT_Bundle
     std::string device = "cpu";
     std::string precision = "double";
 };
+// Use RAII (Resource Acquisition Is Initialization) to 
+// control the resources used by hthread when setting the DSP
+struct FFT_Guard
+  {
+      const FFT_Bundle& fft_;
+      FFT_Guard(const FFT_Bundle& fft) : fft_(fft) 
+        {fft_.resource_handler(1);}
+      ~FFT_Guard()
+      {
+        fft_.resource_handler(0);
+      }
+  };
+
 } // namespace ModulePW
 #endif // FFT_H
