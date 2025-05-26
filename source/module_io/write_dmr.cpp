@@ -38,8 +38,20 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
 void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep)
 {
     // write the head: ION step number, basis number and R loop number
-    std::ofstream ofs(fname, std::ios::app);
-    ofs << "STEP: " << istep+1 << std::endl;
+
+	std::ofstream ofs;
+
+    // mohan update 2025-05-26
+	if(istep<=0)
+	{
+		ofs.open(fname);
+	}
+	else if(istep>0)
+	{
+		ofs.open(fname, std::ios::app);
+	}
+
+    ofs << "IONIC_STEP: " << istep+1 << std::endl;
     ofs << "Matrix Dimension of DM(R): " << dm_serial->get_nbasis() << std::endl;
     ofs << "Matrix number of DM(R): " << dm_serial->size_R_loop() << std::endl;
 

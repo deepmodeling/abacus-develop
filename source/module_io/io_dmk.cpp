@@ -334,13 +334,18 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 std::ofstream ofs(fn.c_str());
 
                 if (!ofs)
-                {
-                    ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
-                    continue;
-                }
+				{
+					ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
+					continue;
+				}
+				else
+				{
+//					std::cout << " Write the density matrix to file " << fn << std::endl;
+				}
 
                 // write the UnitCell information
                 dmk_write_ucell(ofs, ucell);
+
 
                 ofs << "\n " << nspin; // nspin
                 ofs << "\n " << std::fixed << std::setprecision(5) << efs[ispin]
