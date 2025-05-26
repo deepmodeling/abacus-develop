@@ -58,6 +58,12 @@ void ReadInput::item_deepks()
             para.input.deepks_band_range[1] = std::stod(item.str_values[1]);
         };
         sync_intvec(input.deepks_band_range, 2, 0);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_band_range[0] > para.input.deepks_band_range[1])
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "deepks_band_range[0] must be no more than deepks_band_range[1]");
+            }
+        };
         this->add_item(item);
     }
     {
