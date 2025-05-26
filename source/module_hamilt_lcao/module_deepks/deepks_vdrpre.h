@@ -32,14 +32,35 @@ void prepare_phialpha_r(const int nlocal,
                         const int lmaxd,
                         const int inlmax,
                         const int nat,
+                        const int R_size,
                         const std::vector<hamilt::HContainer<double>*> phialpha,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
                         const Parallel_Orbitals& pv,
                         const Grid_Driver& GridD,
-                        torch::Tensor& phialpha_r_out,
-                        torch::Tensor& R_query);
+                        torch::Tensor& phialpha_r_out);
 
+void cal_vdr_precalc(const int nlocal,
+                     const int lmaxd,
+                     const int inlmax,
+                     const int nat,
+                     const int nks,
+                     const int R_size,
+                     const std::vector<int>& inl2l,
+                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                     const std::vector<hamilt::HContainer<double>*> phialpha,
+                     const std::vector<torch::Tensor> gevdm,
+                     const ModuleBase::IntArray* inl_index,
+                     const UnitCell& ucell,
+                     const LCAO_Orbitals& orb,
+                     const Parallel_Orbitals& pv,
+                     const Grid_Driver& GridD,
+                     torch::Tensor& vdr_precalc);
+
+int mapping_R(int R);
+
+template <typename T>
+int get_R_size(const hamilt::HContainer<T>& hcontainer);
 } // namespace DeePKS_domain
 #endif
 #endif
