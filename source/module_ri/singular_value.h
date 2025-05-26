@@ -16,6 +16,13 @@
 
 namespace Singular_Value
 {
+/**
+     * @brief Calculating correction of Coulomb singularity
+     * 
+        Type_0, // Phys. Rev. B, 75:205126, May 2007.
+        Type_1, // Phys. Rev. B 48, 5058. August 1993.
+    */
+
 using T_cal_fq_type = std::function<double(const ModuleBase::Vector3<double>& gk)>;
 using T_cal_fq_type_no = std::function<double()>;
 

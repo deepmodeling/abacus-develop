@@ -19,6 +19,24 @@
 
 class Gaussian_Abfs
 {
+/**
+     * @brief Calculating bare Coulomb integrals in reciprocal space, using Gaussians.
+    */
+
+
+/* Gaussian integral
+ (f_{l_am_a}|f_{l_bm_b})=\sum_{LM}A_{LM}\sum_{\bfG}\largebra{k^{l_a+l_b-L}G_{LM}(\bfk)\tilde{v}(\bfk)e^{-\ci\bfk\cdot\tau}}\Bigg|_{\bfk=\bfq-\bfG}
+  
+  A_{LM}=\ci^{(l_a-l_b)}\tilde{N}_{l_a}^*\tilde{N}_{l_b}C^{LM}_{l_am_al_bm_b}
+  
+  G_{LM}(\bfk)=k^Le^{-\frac{k^2}{\gamma}}\tilde{Y}_{L}^{M}(\hat{\bfk})
+
+  N_l=\frac{\gamma^{l+3/2}}{\sqrt{\pi/2}(2l-1)!!}
+
+  \tilde{N}_l=\frac{N_l}{\gamma^{l+3/2}}=\frac{1}{\sqrt{\pi/2}(2l-1)!!}
+
+  C^{LM}_{lm,l'm'}： Gaunt coefficient
+*/
   public:
     void init(const UnitCell& ucell,
               const int& Lmax,
@@ -43,8 +61,8 @@ class Gaussian_Abfs
 
     /*
 Calculate the lattice sum over a Gaussian:
-  S(k) := \sum_G |k+G|^{power+L} \exp(-lambda*|k+G|^2) Y_{LM}(k+G) *
-\exp(i(k+G)\tau) d_S(k) := S(k) * i * (k+G)
+  S(k) := \sum_G |k+G|^{power+L} \exp(-lambda*|k+G|^2) Y_{LM}(k+G) * \exp(i(k+G)\tau) 
+ d_S(k) := S(k) * i * (k+G)
 */
     std::vector<std::complex<double>> get_lattice_sum(
         const double& tpiba,
