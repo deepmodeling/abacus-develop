@@ -598,7 +598,7 @@ These variables are used to control general system parameters.
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
   
-  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `set_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
+  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `get_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
 ### init_chg
