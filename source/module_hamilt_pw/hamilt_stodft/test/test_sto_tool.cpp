@@ -33,9 +33,13 @@ void hamilt::HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi, const 
 
 template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
+template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class hamilt::HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
 template class hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_GPU>;
+template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class hamilt::HamiltSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
 #endif
 
 /**

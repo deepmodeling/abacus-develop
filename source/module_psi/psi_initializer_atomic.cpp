@@ -79,10 +79,6 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
 template <typename T>
 void psi_initializer_atomic<T>::tabulate()
 {
-    if (PARAM.inp.use_paw)
-    {
-        return;
-    }
     ModuleBase::timer::tick("psi_init_atomic", "tabulate");
     
     GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;

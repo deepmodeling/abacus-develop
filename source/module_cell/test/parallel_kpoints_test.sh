@@ -9,7 +9,7 @@ do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./cell_ParaKpoints
+    mpirun -np $i ./MODULE_CELL_ParaKpoints
     if [ $? -ne 0 ]; then
         echo "TEST in parallel, nprocs=$i failed"
         exit 1

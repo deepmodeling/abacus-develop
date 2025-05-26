@@ -20,10 +20,6 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 void pseudopot_cell_vl::init_vloc(const UnitCell& ucell,
 								  const ModulePW::PW_Basis* rho_basis)
 {
-	if(PARAM.inp.use_paw) 
-	{ 
-		return;
-	}
 
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
@@ -87,10 +83,6 @@ void pseudopot_cell_vl::allocate(const UnitCell& ucell,
 	if(PARAM.inp.test_pp>0) 
 	{ 
 		ModuleBase::TITLE("pseudopot_cell_vl","allocate");
-	}
-	if(PARAM.inp.use_paw) 
-	{ 
-		return;
 	}
 
 	this->vloc.create(ucell.ntype, ngg);

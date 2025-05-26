@@ -59,11 +59,13 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
 {
     if (gamma_only)
     {
-        return "SPIN" + std::to_string(ispin + 1) + "_DM";
+        return std::string("dm") + "s" + std::to_string(ispin + 1) + "_nao.txt";
     }
     else
     {
-        return "SPIN" + std::to_string(ispin + 1) + "_K" + std::to_string(ik + 1) + "_DM";
+        // mohan update 2025-05-25, the index of 'ik' should be the correct 'ik' without spin
+        return std::string("dm") + "s" + std::to_string(ispin + 1) 
+               + "k" + std::to_string(ik + 1) + "_nao.txt";
     }
 }
 
@@ -148,7 +150,8 @@ bool ModuleIO::read_dmk(const int nspin,
                         const int nk,
                         const Parallel_2D& pv,
                         const std::string& dmk_dir,
-                        std::vector<std::vector<T>>& dmk)
+                        std::vector<std::vector<T>>& dmk,
+                        std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_dmk");
     ModuleBase::timer::tick("ModuleIO", "read_dmk");
@@ -187,10 +190,15 @@ bool ModuleIO::read_dmk(const int nspin,
 
                 if (!ifs)
                 {
-                    ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open DENSITY MATRIX File < " + fn + " >.");
+                    ofs_running << " Cannot find density matrix file " << fn << " for k-point " << ik+1 << std::endl;
+                    ModuleBase::WARNING("ModuleIO::read_dmk", "Can't open density matrix (k) file < " + fn + " >.");
                     read_success = false;
                     break;
                 }
+				else
+				{
+                    ofs_running << " Read density matrix file " << fn << " for k-point " << ik+1 << std::endl;
+				}
 
                 // read the UnitCell
                 dmk_read_ucell(ifs);
@@ -326,13 +334,18 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 std::ofstream ofs(fn.c_str());
 
                 if (!ofs)
-                {
-                    ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
-                    continue;
-                }
+				{
+					ModuleBase::WARNING("ModuleIO::write_dmk", "Can't create DENSITY MATRIX File < " + fn + " >.");
+					continue;
+				}
+				else
+				{
+//					std::cout << " Write the density matrix to file " << fn << std::endl;
+				}
 
                 // write the UnitCell information
                 dmk_write_ucell(ofs, ucell);
+
 
                 ofs << "\n " << nspin; // nspin
                 ofs << "\n " << std::fixed << std::setprecision(5) << efs[ispin]
@@ -372,13 +385,15 @@ template bool ModuleIO::read_dmk<double>(const int nspin,
                                          const int nk,
                                          const Parallel_2D& pv,
                                          const std::string& dmk_dir,
-                                         std::vector<std::vector<double>>& dmk);
+										 std::vector<std::vector<double>>& dmk,
+										 std::ofstream &ofs);
 
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
                                                        const int nk,
                                                        const Parallel_2D& pv,
                                                        const std::string& dmk_dir,
-                                                       std::vector<std::vector<std::complex<double>>>& dmk);
+													   std::vector<std::vector<std::complex<double>>>& dmk,
+													   std::ofstream &ofs);
 
 template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>& dmk,
                                           const int precision,

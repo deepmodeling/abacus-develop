@@ -52,8 +52,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
         {
             // total electron charge density
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-            if(PARAM.inp.use_paw && rhox < 1e-14) { rhox = 1e-14;
-}
+            
             double arhox = std::abs(rhox);
             if (arhox > vanishing_charge)
             {

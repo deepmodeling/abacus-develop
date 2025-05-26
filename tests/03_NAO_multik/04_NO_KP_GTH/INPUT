@@ -1,22 +1,21 @@
 INPUT_PARAMETERS
 #Parameters	(General)
 suffix      	autotest
-	
 calculation 	scf
+nspin           2
 
 #Parameters (Accuracy)
-ecutwfc			50
-scf_nmax			50
-scf_thr             1.0e-8
+ecutwfc			20
+scf_nmax		50
+scf_thr         1.0e-8
 
 basis_type		lcao
 
-cal_stress          1
-cal_force           1
+cal_stress      1
+cal_force       1
 
 mixing_type     broyden
 mixing_beta     0.7
 mixing_gg0      1.5
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
-
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB

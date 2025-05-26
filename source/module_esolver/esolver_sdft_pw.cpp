@@ -164,7 +164,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                            PARAM.inp.calculation,
                                                            PARAM.inp.basis_type,
                                                            PARAM.inp.ks_solver,
-                                                           PARAM.inp.use_paw,
+                                                           false,
                                                            PARAM.globalv.use_uspp,
                                                            PARAM.inp.nspin,
                                                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,

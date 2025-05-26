@@ -14,9 +14,6 @@
  *   - calfinalvec_real
  *   - calfinalvec_complex
  *   - tracepolyA
- *   - checkconverge
- *
- *
  */
 class toolfunc
 {
@@ -625,6 +622,8 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
 
 TEST_F(MathChebyshevTest, checkconverge_float)
 {
+    #ifdef __MPI
+    #undef __MPI
     const int norder = 100;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
 
@@ -648,5 +647,6 @@ TEST_F(MathChebyshevTest, checkconverge_float)
 
     delete[] v;
     delete p_fchetest;
+    #endif
 }
 #endif

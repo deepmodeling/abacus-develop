@@ -178,14 +178,18 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (istep % PARAM.inp.out_interval == 0))
     {
-        ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
-                                this->psi[0],
-                                this->pelec->ekb,
-                                this->pelec->wg,
-                                this->pelec->klist->kvec_c,
-                                this->pv,
-                                istep);
-    }
+		ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
+				PARAM.inp.out_app_flag,
+				this->psi[0],
+				this->pelec->ekb,
+				this->pelec->wg,
+				this->pelec->klist->kvec_c,
+				this->pelec->klist->ik2iktot,
+				this->pelec->klist->get_nkstot(),
+				this->pv,
+				PARAM.inp.nspin,
+				istep);
+	}
 
     //------------------------------------------------------------------
     //! 7) write DeePKS information in LCAO basis

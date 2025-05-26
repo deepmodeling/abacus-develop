@@ -102,14 +102,14 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
 
 TEST(DMKTest, GenFileName) {
     std::string fname = ModuleIO::dmk_gen_fname(true, 0, 0);
-    EXPECT_EQ(fname, "SPIN1_DM");
+    EXPECT_EQ(fname, "dms1_nao.txt");
     fname = ModuleIO::dmk_gen_fname(true, 1, 1);
-    EXPECT_EQ(fname, "SPIN2_DM");
+    EXPECT_EQ(fname, "dms2_nao.txt");
 
     fname = ModuleIO::dmk_gen_fname(false, 0, 0);
-    EXPECT_EQ(fname, "SPIN1_K1_DM");
+    EXPECT_EQ(fname, "dms1k1_nao.txt");
     fname = ModuleIO::dmk_gen_fname(false, 1, 1);
-    EXPECT_EQ(fname, "SPIN2_K2_DM");
+    EXPECT_EQ(fname, "dms2k2_nao.txt");
 };
 
 
@@ -139,7 +139,7 @@ TEST(DMKTest,WriteDMK) {
     int pass = 0;
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fn = "SPIN1_DM";
+        std::string fn = "dms1_nao.txt";
         ifs.open(fn);
         std::string str((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
@@ -158,7 +158,7 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("1.600e+00 1.700e+00 1.800e+00 1.900e+00\n"));
         ifs.close();
 
-        fn = "SPIN2_DM";
+        fn = "dms2_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
@@ -177,7 +177,7 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("2.600e+00 2.700e+00 2.800e+00 2.900e+00\n"));
         ifs.close();
 
-        fn = "SPIN1_K1_DM";
+        fn = "dms1k1_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
@@ -198,7 +198,7 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("(1.600e+00,1.600e+01) (1.700e+00,1.700e+01) (1.800e+00,1.800e+01) (1.900e+00,1.900e+01)\n"));
         ifs.close();
 
-        fn = "SPIN1_K2_DM";
+        fn = "dms1k2_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
@@ -219,7 +219,7 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("(2.600e+00,1.610e+01) (2.700e+00,1.710e+01) (2.800e+00,1.810e+01) (2.900e+00,1.910e+01)\n"));
         ifs.close();
 
-        fn = "SPIN2_K1_DM";
+        fn = "dms2k1_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
@@ -240,7 +240,7 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("(3.600e+00,1.620e+01) (3.700e+00,1.720e+01) (3.800e+00,1.820e+01) (3.900e+00,1.920e+01)\n"));
         ifs.close();
 
-        fn = "SPIN2_K2_DM";
+        fn = "dms2k2_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
@@ -260,12 +260,12 @@ TEST(DMKTest,WriteDMK) {
             str,
             testing::HasSubstr("(4.600e+00,1.630e+01) (4.700e+00,1.730e+01) (4.800e+00,1.830e+01) (4.900e+00,1.930e+01)\n"));
         ifs.close();
-        remove("SPIN1_DM");
-        remove("SPIN2_DM");
-        remove("SPIN1_K1_DM");
-        remove("SPIN1_K2_DM");
-        remove("SPIN2_K1_DM");
-        remove("SPIN2_K2_DM");
+        remove("dms1_nao.txt");
+        remove("dms2_nao.txt");
+        remove("dms1k1_nao.txt");
+        remove("dms1k2_nao.txt");
+        remove("dms2k1_nao.txt");
+        remove("dms2k2_nao.txt");
     }
 
     delete ucell;
@@ -274,7 +274,7 @@ TEST(DMKTest,WriteDMK) {
 };
 
 
-
+// no function in the main code calls read_dmk??? mohan note 2025-05-25
 TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
     std::vector<std::vector<double>> dmk;
@@ -284,9 +284,12 @@ TEST(DMKTest, ReadDMK) {
     PARAM.sys.global_out_dir = "./";
 
     init_pv(nlocal, pv);
-    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk));
-    ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik);
-    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik));
+
+    std::ofstream ofs_running("running_log.txt");
+
+    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk, ofs_running));
+    ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running);
+    EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running));
     EXPECT_EQ(dmk.size(), 1);
     EXPECT_EQ(dmk_multik.size(), 1);
     EXPECT_EQ(dmk[0].size(), pv.get_local_size());
@@ -297,6 +300,9 @@ TEST(DMKTest, ReadDMK) {
         EXPECT_NEAR(dmk_multik[0][1].real(), -4.479e-03, 1e-6);
         EXPECT_NEAR(dmk_multik[0][1].imag(), 3.208e-04, 1e-6);
     }
+
+    ofs_running.close();
+    remove("running_log.txt");
 }
 
 

@@ -20,9 +20,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 #ifdef USE_LIBXC
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"

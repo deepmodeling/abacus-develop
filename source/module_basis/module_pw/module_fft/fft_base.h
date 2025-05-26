@@ -12,7 +12,7 @@ class FFT_BASE
     virtual ~FFT_BASE() {};
 
     /**
-     * @brief Initialize the fft parameters As virtual function.
+     * @brief Initialize the fft parameters as virtual function.
      *
      * The function is used to initialize the fft parameters.
      */
@@ -30,32 +30,40 @@ class FFT_BASE
     virtual __attribute__((weak)) void initfft(int nx_in, int ny_in, int nz_in);
 
     /**
-     * @brief Setup the fft Plan and data As pure virtual function.
+     * @brief Setup the fft plan and data as pure virtual function.
      *
      * The function is set as pure virtual function.In order to
      * override the function in the derived class.In the derived
-     * class, the function is used to setup the fft Plan and data.
+     * class, the function is used to setup the fft plan and data.
      */
     virtual void setupFFT() = 0;
 
     /**
-     * @brief Clean the fft Plan  As pure virtual function.
+     * @brief Clean the fft plan as pure virtual function.
      *
      * The function is set as pure virtual function.In order to
      * override the function in the derived class.In the derived
-     * class, the function is used to clean the fft Plan.
+     * class, the function is used to clean the fft plan.
      */
     virtual void cleanFFT() = 0;
 
     /**
-     * @brief Clear the fft data As pure virtual function.
+     * @brief Clear the fft data as pure virtual function.
      *
      * The function is set as pure virtual function.In order to
      * override the function in the derived class.In the derived
      * class, the function is used to clear the fft data.
      */
     virtual void clear() = 0;
-
+    /**
+     * @brief Allocate and destory the resoure in FFT running time,
+     * Now it only used in the DSP mode.
+     * 
+     * The function is set as pure virtual function.In order to
+     * override the function in the derived class.In the derived
+     * class, the function is used to allocate and destory the
+     * resoure in FFT running time.
+     */
     virtual void resource_handler(const int flag) const {};
     /**
      * @brief Get the real space data in cpu-like fft

@@ -49,7 +49,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
             }
-            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : std::stoi(item.str_values[0]);
             para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -76,12 +76,6 @@ void ReadInput::item_output()
         Input_Item item("out_wfc_pw");
         item.annotation = "output wave functions";
         read_sync_int(input.out_wfc_pw);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_wfc_r");
-        item.annotation = "output wave functions in realspace";
-        read_sync_bool(input.out_wfc_r);
         this->add_item(item);
     }
     {
@@ -506,21 +500,6 @@ void ReadInput::item_output()
         Input_Item item("nbands_istate");
         item.annotation = "number of bands around Fermi level for get_wf and get_pchg calulation";
         read_sync_int(input.nbands_istate);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.bands_to_print);
-        };
-        item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if (item.is_read())
-            {
-                item.final_value.str(longstring(item.str_values));
-            }
-        };
-        add_intvec_bcast(input.bands_to_print, para.input.bands_to_print.size(), 0);
         this->add_item(item);
     }
     {

@@ -187,7 +187,7 @@ public:
                        const typename GetTypeReal<TK>::type factor = 1.0) const
     {
       #if defined(__DSP)
-        this->recip2real_dsp(in, out, ik, add, factor);
+        this->real2recip_dsp(in, out, ik, add, factor);
       #else
         this->real2recip(in,out,ik,add,factor);
       #endif
