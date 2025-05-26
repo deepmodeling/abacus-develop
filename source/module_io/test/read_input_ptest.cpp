@@ -448,6 +448,7 @@ TEST_F(InputParaTest, ParaRead)
 
 // comment out this part of tests, since Parameter is in another directory now, mohan 2025-05-18
 // besides, the following tests will cause strange error in MPI_Finalize()
+// I tried the following modification, it worked well in my own environment, but not in the Github test, Xinyuan 2025-05-25
 /*
 TEST_F(InputParaTest, Check)
 {
@@ -458,20 +459,40 @@ TEST_F(InputParaTest, Check)
         emptyfile << "stru_file    ./support/STRU     \n";
         emptyfile.close();
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    bool original_check_mode = ModuleIO::ReadInput::check_mode;
     ModuleIO::ReadInput::check_mode = true;
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
 
-//
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
-//
+    try {
+        readinput.read_parameters(param, "./empty_INPUT");
+
+        // if exit normally with exit(0)
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+
+    } catch (const std::exception& e) {
+        // if exit with error, then the test is failed
+        std::cerr << "Rank " << GlobalV::MY_RANK << " error: " << e.what() << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    } catch (...) {
+        // if exit with unknown error, then the test is failed
+        std::cerr << "Rank " << GlobalV::MY_RANK << " unknown error." << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
+    // Note : the EXPECT_EXIT is not working with MPI, so we use try-catch to test the exit
+    // EXPECT_EXIT(readinput.read_parameters(param, "./empty_INPUT"), ::testing::ExitedWithCode(0), "");
+    // std::string output = testing::internal::GetCapturedStdout();
+    // EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
+    MPI_Barrier(MPI_COMM_WORLD);
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_TRUE(std::remove("./empty_INPUT") == 0);
     }
+    ModuleIO::ReadInput::check_mode = original_check_mode;
 }
 */
 
