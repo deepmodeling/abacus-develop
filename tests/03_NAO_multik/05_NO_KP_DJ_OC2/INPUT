@@ -26,6 +26,7 @@ basis_type          lcao
 ks_solver           scalapack_gvx
 chg_extrap          second-order
 out_dm              0
+out_chg             2  3
 pw_diag_thr         0.00001
 
 mixing_type         broyden 
