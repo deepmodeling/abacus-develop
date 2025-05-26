@@ -1643,21 +1643,22 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: SPIN1_DM;
-    - nspin = 2: SPIN1_DM, and SPIN2_DM.
+    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - SPIN\*_K\*_DM, where \* stands for index of spin and kpoints;
+    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
+    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
 
 ### out_dm1
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (multi-k points)
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
-  - nspin = 1: data-DMR-sparse_SPIN0.csr;
-  - nspin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Description**: Whether to output the density matrix with Bravias lattice vector R, labelled as DM(R), into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optinal 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
+  - nspin = 1: `dmrs1_nao.csr`;
+  - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
 
 ### out_wfc_pw

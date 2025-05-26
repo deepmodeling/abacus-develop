@@ -63,7 +63,7 @@ void FFT_DSP<double>::setupFFT()
 template <>
 void FFT_DSP<double>::resource_handler(const int flag) const
 {
-    if (flag==0)
+    if (flag == 0)
     {
         hthread_barrier_destroy(b_id);
         hthread_group_destroy(thread_id_for);
@@ -76,6 +76,8 @@ void FFT_DSP<double>::resource_handler(const int flag) const
         b_id = hthread_barrier_create(cluster_id);
         args_for[0] = b_id;
         args_back[0] = b_id;
+    }else{
+        ModuleBase::WARNING_QUIT("FFT_DSP", "Error use of fft resource handle");
     }
 }
 template <>

@@ -61,8 +61,9 @@ template <typename T>
 bool read_dmk(const int nspin,
               const int nk,
               const Parallel_2D& pv,
-              const std::string& dmk_dir,
-              std::vector<std::vector<T>>& dmk);
+			  const std::string& dmk_dir,
+			  std::vector<std::vector<T>>& dmk,
+			  std::ofstream &ofs_running);
 
 /**
  * @brief Writes the DMK data to a file.
