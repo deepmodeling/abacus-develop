@@ -9,13 +9,23 @@
 
 namespace Conv_Coulomb_Pot_K
 {
-	enum class Ccp_Type{		//	parameter:
-		Ccp,					//
-		Hf,						//		"hf_Rcut"
-		Erfc,					//		"hse_omega"
-		Erf,    //  	"hse_omega", "hf_Rcut"
-        Cam,    //  	"hse_omega", "hybrid_alpha", "hybrid_beta", "hf_Rcut"
-		Ccp_Cam // "hse_omega", "hybrid_alpha", "hybrid_beta"
+	enum class Ccp_Type{												//	parameter:
+	    // bare Coulomb 
+		// 1/r
+		Ccp,					
+		// Spencer-Alavi truncated bare Coulomb	
+		Hf,																//	"hf_Rcut"
+		// short-range Coulomb 
+		// erfc(omega * r) / r
+		Erfc,															//	"hse_omega"
+		// truncated long-range Coulomb 
+		// erf(omega * r) / r
+		Erf,    														//  "hse_omega", "hf_Rcut"
+		// Coulomb-attenuating method for truncated range-separated Coulomb 
+        Cam,    														//  "hse_omega", "hybrid_alpha", "hybrid_beta", "hf_Rcut"
+		// Coulomb-attenuating method for range-separated Coulomb 
+		// (alpha + beta * erfc(omega * r)) / r
+		Ccp_Cam 														// "hse_omega", "hybrid_alpha", "hybrid_beta"
     };
 
 	template<typename T> T cal_orbs_ccp(
