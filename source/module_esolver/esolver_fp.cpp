@@ -196,7 +196,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+                std::string fn =PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
 
                 ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->pelec->pot->get_effective_v(is),
@@ -212,7 +212,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         }
         else if (PARAM.inp.out_pot == 2)
         {
-            std::string fn =PARAM.globalv.global_out_dir + "/ElecStaticPot.cube";
+            std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
             ModuleIO::write_elecstat_pot(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -359,7 +359,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "pots" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->pelec->pot->get_effective_v(is),
                                           is,

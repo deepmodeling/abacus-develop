@@ -157,8 +157,8 @@ fi
 # echo $out_dm1
 #-------------------------------
 if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
-	dm1ref=refdata-DMR-sparse_SPIN0.csr
-	dm1cal=OUT.autotest/data-DMR-sparse_SPIN0.csr
+	dm1ref=dmrs1_nao.csr.ref
+	dm1cal=OUT.autotest/dmrs1_nao.csr
 	python3 $COMPARE_SCRIPT $dm1ref $dm1cal 8
 	echo "CompareDM1_pass $?" >>$1
 fi
@@ -167,8 +167,8 @@ fi
 # echo $out_pot1
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
-	pot1ref=refSPIN1_POT.cube
-	pot1cal=OUT.autotest/SPIN1_POT.cube
+	pot1ref=pots1.cube.ref
+	pot1cal=OUT.autotest/pots1.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
@@ -177,8 +177,8 @@ fi
 #echo $out_pot2
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
-	pot1ref=refElecStaticPot.cube
-	pot1cal=OUT.autotest/ElecStaticPot.cube
+	pot1ref=pot_es.cube.ref
+	pot1cal=OUT.autotest/pot_es.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
 fi
@@ -479,8 +479,8 @@ fi
 # density matrix information 
 #--------------------------------------------
 if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
-      dmfile=OUT.autotest/SPIN1_DM
-	  dmref=SPIN1_DM.ref
+      dmfile=OUT.autotest/dms1_nao.txt
+	  dmref=dms1_nao.txt.ref
       if test -z "$dmfile"; then
               echo "Can't find DM files"
               exit 1

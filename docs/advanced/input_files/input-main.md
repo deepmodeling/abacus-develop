@@ -195,6 +195,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_bandgap\_range](#deepks_bandgap_range)
     - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
@@ -1625,16 +1626,15 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**:
   - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: SPIN1_POT.cube;
-    - nspin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
-    - nspin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
-  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
-
+    - nspin = 1: `pots1.cube`;
+    - nspin = 2: `pots1.cube` and `pots2.cube`;
+    - nspin = 4: `pots1.cube`, `pots2.cube`, `pots3.cube`, and `pots4.cube` 
+  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/pot_es.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the **total local potential** of the initial charge density. The files are named as:
-    - nspin = 1: SPIN1_POT_INI.cube;
-    - nspin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
-    - nspin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
+    - nspin = 1: `pots1_ini.cube`; 
+    - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`; 
+    - nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
@@ -1643,21 +1643,22 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: SPIN1_DM;
-    - nspin = 2: SPIN1_DM, and SPIN2_DM.
+    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - SPIN\*_K\*_DM, where \* stands for index of spin and kpoints;
+    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
+    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
 
 ### out_dm1
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (multi-k points)
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
-  - nspin = 1: data-DMR-sparse_SPIN0.csr;
-  - nspin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optinal 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
+  - nspin = 1: `dmrs1_nao.csr`;
+  - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
 
 ### out_wfc_pw
@@ -2144,10 +2145,24 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### deepks_bandgap
 
-- **Type**: Boolean
+- **Type**: Int
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
-- **Default**: False
+  - 0: Don't include bandgap label
+  - 1: Include HOMO and LOMO for bandgap label
+  - 2: Include multiple bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
+  - 3: Include target bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
+  - 4: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between (HOMO, HOMO + 1)
+- **Default**: 0
+
+### deepks_bandgap_range
+
+- **Type**: Int*2
+- **Availability**: numerical atomic orbital basis, `deepks_scf` is true, and `deepks_bandgap` is 2 or 3
+- **Description**: 
+  - `deepks_bandgap` is 2: Bandgap labels are energies between (LUMO + deepks_bandgap_range[0], HOMO), (LUMO + deepks_bandgap_range[0] + 1, HOMO), ..., (LUMO + deepks_bandgap_range[1], HOMO) except (HOMO, HOMO)
+  - `deepks_bandgap` is 3: Bandgap label is the energy between (LUMO + deepks_bandgap_range[0], LUMO + deepks_bandgap_range[1])
+- **Default**: 0 0
 
 ### deepks_v_delta
 

@@ -7,7 +7,7 @@ nbands			6
 symmetry		1
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
-out_pot			1
+out_pot			3
 
 #Parameters (2.Iteration)
 ecutwfc			5
