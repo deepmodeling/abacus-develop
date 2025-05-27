@@ -206,9 +206,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // Bandgap Part
         if (PARAM.inp.deepks_bandgap > 0)
         {
-            // Get the index of the highest occupied bands
+            // Get the number of the occupied bands
+            // Notice that the index of band starts from 0, so actually (nocc - 1) is the index of HOMO state
             int nocc = (PARAM.inp.nelec + 1) / 2;
-            if (PARAM.inp.deepks_bandgap == 4)
+            if (PARAM.inp.deepks_bandgap == 3)
             {
                 int natom_H = 0;
                 for (int it = 0; it < ucell.ntype; it++)
@@ -239,9 +240,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             for (int iks = 0; iks < nks; ++iks)
             {
                 int ib = 0;
-                if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 4)
+                if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 3)
                 {
-                    o_tot(iks, ib) = ekb(iks, nocc) - ekb(iks, nocc - 1);
+                    o_tot(iks, ib) = ekb(iks, nocc + PARAM.inp.deepks_band_range[1])
+                                     - ekb(iks, nocc + PARAM.inp.deepks_band_range[0]);
                 }
                 else if (PARAM.inp.deepks_bandgap == 2)
                 {
@@ -254,11 +256,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         }
                     }
                     assert(ib == range); // ensure that we have filled all the bandgap values
-                }
-                else if (PARAM.inp.deepks_bandgap == 3)
-                {
-                    o_tot(iks, ib) = ekb(iks, nocc + PARAM.inp.deepks_band_range[1])
-                                     - ekb(iks, nocc + PARAM.inp.deepks_band_range[0]);
                 }
             }
 
@@ -282,10 +279,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     for (int iks = 0; iks < nks; ++iks)
                     {
                         int ib = 0;
-                        if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 4)
+                        if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 3)
                         {
-                            wg_hl_range[ib](iks, nocc - 1) = -1.0;
-                            wg_hl_range[ib](iks, nocc) = 1.0;
+                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[0]) = -1.0;
+                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[1]) = 1.0;
                         }
                         else if (PARAM.inp.deepks_bandgap == 2)
                         {
@@ -298,11 +295,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                     ib++;
                                 }
                             }
-                        }
-                        else if (PARAM.inp.deepks_bandgap == 3)
-                        {
-                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[0]) = -1.0;
-                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[1]) = 1.0;
                         }
                     }
 

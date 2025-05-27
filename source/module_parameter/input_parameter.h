@@ -265,7 +265,7 @@ struct Input_para
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
     int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
-    std::vector<int> deepks_band_range = {0, 0}; ///< the range of bands to calculate bandgap
+    std::vector<int> deepks_band_range = {-1, 0}; ///< the range of bands to calculate bandgap
     int deepks_v_delta = 0;            ///< for v_delta label. xuan added
     bool deepks_equiv = false;         ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false;  ///< if set to true, prints intermediate quantities that shall
