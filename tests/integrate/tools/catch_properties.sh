@@ -167,8 +167,8 @@ fi
 # echo $out_pot1
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
-	pot1ref=refSPIN1_POT.cube
-	pot1cal=OUT.autotest/SPIN1_POT.cube
+	pot1ref=pots1.cube.ref
+	pot1cal=OUT.autotest/pots1.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
@@ -177,8 +177,8 @@ fi
 #echo $out_pot2
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
-	pot1ref=refElecStaticPot.cube
-	pot1cal=OUT.autotest/ElecStaticPot.cube
+	pot1ref=pot_es.cube.ref
+	pot1cal=OUT.autotest/pot_es.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
 fi
