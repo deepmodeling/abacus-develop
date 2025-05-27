@@ -125,7 +125,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
 
                 // To ensure the normalization of charge density in multi-k calculation
                 double wg_sum_k = 0;
-                for (int ik_tmp = 0; ik_tmp < kv.get_nks() / nspin; ++ik_tmp)
+                for (int ik_tmp = 0; ik_tmp < nkstot / nspin; ++ik_tmp)
                 {
                     wg_sum_k += kv.wk[ik_tmp];
                 }
