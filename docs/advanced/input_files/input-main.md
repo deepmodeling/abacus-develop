@@ -2149,8 +2149,8 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
   - 0: Don't include bandgap label
-  - 1: Include target bandgap label (see [deepks\_bandgap\_range](#deepks_band_range) for more details)
-  - 2: Include multiple bandgap label (see [deepks\_bandgap\_range](#deepks_band_range) for more details)
+  - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
+  - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
   - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
 - **Default**: 0
 
