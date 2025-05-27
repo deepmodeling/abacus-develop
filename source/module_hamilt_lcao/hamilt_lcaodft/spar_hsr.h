@@ -26,6 +26,12 @@ std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
             all_R_coor.insert(dR);
         }
     }
+
+#ifdef __MPI
+    // Fix: Sync all_R_coor across processes
+    sparse_format::sync_all_R_coor(all_R_coor, MPI_COMM_WORLD);
+#endif
+
     return all_R_coor;
 };
 

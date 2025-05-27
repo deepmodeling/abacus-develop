@@ -84,11 +84,6 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 {
     ModuleBase::TITLE("sparse_format", "cal_HSR");
 
-    int my_rank = 0;
-    int nproc = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
     // sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
     const int nspin = PARAM.inp.nspin;
@@ -100,25 +95,6 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
-
-#ifdef __MPI
-        // Fix: Sync all_R_coor across processes
-        sparse_format::sync_all_R_coor(HS_Arrays.all_R_coor, MPI_COMM_WORLD);
-
-        //===================== MPI debug =====================//
-        std::string debug_file = "debug_fix_rank_" + std::to_string(my_rank) + ".log";
-        std::ofstream fout(debug_file, std::ios::app);
-
-        fout << "Process " << my_rank + 1 << "/" << nproc
-             << ": HS_Arrays.all_R_coor.size() = " << HS_Arrays.all_R_coor.size() << std::endl;
-        for (const auto& R: HS_Arrays.all_R_coor)
-        {
-            fout << "R = (" << R.x << ", " << R.y << ", " << R.z << ")" << std::endl;
-        }
-        fout.close();
-        MPI_Barrier(MPI_COMM_WORLD);
-        //===================== debug end =====================//
-#endif
 
         if (TD_Velocity::tddft_velocity)
         {
@@ -146,11 +122,6 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham);
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
-
-#ifdef __MPI
-        // Fix: Sync all_R_coor across processes
-        sparse_format::sync_all_R_coor(HS_Arrays.all_R_coor, MPI_COMM_WORLD);
-#endif
 
         sparse_format::cal_HContainer_cd(pv, current_spin, sparse_thr, *(p_ham_lcao->getHR()), HS_Arrays.HR_soc_sparse);
 
