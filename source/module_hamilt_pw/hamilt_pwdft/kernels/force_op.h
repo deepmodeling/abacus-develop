@@ -146,6 +146,83 @@ struct cal_force_nl_op
                     const FPTYPE* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
+                                          FPTYPE* force);
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_loc_sincos_op
+{
+    /// @brief Calculate local pseudopotential forces (sincos loop only)
+    ///
+    /// Input Parameters
+    /// @param ctx - which device this function runs on
+    /// @param nat - number of atoms
+    /// @param npw - number of plane waves
+    /// @param ntype - number of atom types
+    /// @param gcar - G-vector Cartesian coordinates [npw * 3]
+    /// @param tau - atomic positions [nat * 3]
+    /// @param iat2it - atom to type mapping [nat]
+    /// @param vloc_factors - precomputed vloc factors [ntype * npw]
+    /// @param aux - charge density in G-space [npw]
+    ///
+    /// Output Parameters
+    /// @param force - output forces [nat * 3]
+    void operator()(const Device* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ntype,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const int* iat2it,
+                    const FPTYPE* vloc_factors,
+                    const std::complex<FPTYPE>* aux,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_ew_parallel_op
+{
+    /// @brief Calculate Ewald forces (parallel region only)
+    ///
+    /// Input Parameters
+    /// @param ctx - which device this function runs on
+    /// @param nat - number of atoms
+    /// @param npw - number of plane waves
+    /// @param ntype - number of atom types
+    /// @param ig_gge0 - index of G=0 vector (-1 if not present)
+    /// @param gcar - G-vector Cartesian coordinates [npw * 3]
+    /// @param tau - atomic positions [nat * 3]
+    /// @param iat2it - atom to type mapping [nat]
+    /// @param it_facts - precomputed it_fact for each atom [nat]
+    /// @param atom_na - number of atoms of each type [ntype]
+    /// @param zv_values - valence charge for each type [ntype]
+    /// @param aux - structure factor related array [npw]
+    /// @param alpha - Ewald parameter
+    /// @param fact - scaling factor
+    /// @param lat0 - lattice constant
+    /// @param latvec - lattice vectors [3 * 3]
+    /// @param G - reciprocal lattice vectors [3 * 3]
+    /// @param use_pwa - whether PAW is used
+    /// Output Parameters
+    /// @param force - output forces [nat * 3]
+    void operator()(const Device* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ntype,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const int* iat2it,
+                    const FPTYPE* it_facts,
+                    const int* atom_na,
+                    const FPTYPE* zv_values,
+                    const std::complex<FPTYPE>* aux,
+                    const FPTYPE& alpha,
+                    const FPTYPE& fact,
+                    const FPTYPE& lat0,
+                    const FPTYPE* latvec,
+                    const FPTYPE* G,
+                    const bool& use_paw,
                     FPTYPE* force);
 };
 
@@ -245,6 +322,36 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const FPTYPE* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE>
+struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ntype,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const int* iat2it,
+                    const FPTYPE* vloc_factors,
+                    const std::complex<FPTYPE>* aux,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE>
+struct cal_force_ew_parallel_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const int* iat2it,
+                    const FPTYPE* it_facts,
+                    const std::complex<FPTYPE>* aux,
                     FPTYPE* force);
 };
 
