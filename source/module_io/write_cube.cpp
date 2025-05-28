@@ -26,6 +26,7 @@ void ModuleIO::write_vdata_palgrid(
 
     const int my_rank = GlobalV::MY_RANK;
     const int my_pool = GlobalV::MY_POOL;
+    const int rank_in_pool = GlobalV::RANK_IN_POOL;
 
     time_t start;
     time_t end;
@@ -41,7 +42,8 @@ void ModuleIO::write_vdata_palgrid(
     // reduce
     std::vector<double> data_xyz_full(nxyz);    // data to be written
 #ifdef __MPI    // reduce to rank 0
-    if (my_pool == 0 && GlobalV::MY_BNDGROUP == 0)
+    // if (my_pool == 0 && GlobalV::MY_BNDGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0)
     {
         pgrid.reduce(data_xyz_full.data(), data);
     }
@@ -51,7 +53,8 @@ void ModuleIO::write_vdata_palgrid(
 #endif
 
     // build the info structure
-    if (my_rank == 0)
+    // if (my_rank == 0)
+    if (rank_in_pool == 0)
     {
         /// output header for cube file
         ss << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;

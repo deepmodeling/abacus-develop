@@ -48,6 +48,7 @@ class Parallel_Grid
     int **numz = nullptr;
     int **startz = nullptr;
     int **whichpro = nullptr;
+    int **whichpro_loc = nullptr;
 
 	int ncx=0;
 	int ncy=0;

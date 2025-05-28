@@ -16,10 +16,12 @@ Parallel_Grid::~Parallel_Grid()
 			delete[] numz[ip];
 			delete[] startz[ip];
 			delete[] whichpro[ip];
+            delete[] whichpro_loc[ip];
 		}
 		delete[] numz;
 		delete[] startz;
 		delete[] whichpro;
+        delete[] whichpro_loc;
         delete[] nproc_in_pool;
 	}
 }
@@ -70,10 +72,12 @@ void Parallel_Grid::init(
             delete[] numz[ip];
             delete[] startz[ip];
             delete[] whichpro[ip];
+            delete[] whichpro_loc[ip];
         }
         delete[] numz;
         delete[] startz;
         delete[] whichpro;
+        delete[] whichpro_loc;
         delete[] nproc_in_pool;
         this->allocate = false;
     }
@@ -99,6 +103,7 @@ void Parallel_Grid::init(
 	this->numz = new int*[GlobalV::KPAR];
 	this->startz = new int*[GlobalV::KPAR];
 	this->whichpro = new int*[GlobalV::KPAR];
+    this->whichpro_loc = new int*[GlobalV::KPAR];
 
 	for(int ip=0; ip<GlobalV::KPAR; ip++)
 	{
@@ -106,9 +111,11 @@ void Parallel_Grid::init(
 		this->numz[ip] = new int[nproc];
 		this->startz[ip] = new int[nproc];
 		this->whichpro[ip] = new int[this->ncz];
+        this->whichpro_loc[ip] = new int[this->ncz];
 		ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
 		ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
+        ModuleBase::GlobalFunc::ZEROS(this->whichpro_loc[ip], this->ncz);
 	}
 
 	this->allocate = true;
@@ -163,11 +170,13 @@ void Parallel_Grid::z_distribution()
 				if(iz>=startz[ip][nproc-1])
 				{
 					whichpro[ip][iz] = startp[ip] + nproc-1;
+                    whichpro_loc[ip][iz] = nproc-1;
 					break;
 				}
 				else if(iz>=startz[ip][proc] && iz<startz[ip][proc+1])
 				{
 					whichpro[ip][iz] = startp[ip] + proc;
+                    whichpro_loc[ip][iz] = proc;
 					break;
 				}
 			}
@@ -353,10 +362,11 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin)const
 
 	// if not the first pool, wait here until processpr 0
 	// send the Barrier command.
-	if(GlobalV::MY_POOL!=0) 
-	{
-		return;
-	}
+
+	// if(GlobalV::MY_POOL!=0) 
+	// {
+	// 	return;
+	// }
 
 	double* zpiece = new double[this->ncxy];
 	
@@ -364,38 +374,60 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin)const
 	{
 		const int znow = iz - this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
 		const int proc = this->whichpro[GlobalV::MY_POOL][iz];
+        const int proc_loc = this->whichpro_loc[GlobalV::MY_POOL][iz]; // Obtain the local processor index in the pool
 		ModuleBase::GlobalFunc::ZEROS(zpiece, this->ncxy);
 		int tag = iz;
 		MPI_Status ierror;
 
-		// case 1: the first part of rho in processor 0.
-		if(proc == 0 && GlobalV::RANK_IN_POOL ==0)
-		{
-			for(int ir=0; ir<ncxy; ir++)
-			{
-				zpiece[ir] = rhoin[ir*this->nczp + znow];
-			}
-		}
+		// // case 1: the first part of rho in processor 0.
+		// if(proc == 0 && GlobalV::RANK_IN_POOL ==0)
+		// {
+		// 	for(int ir=0; ir<ncxy; ir++)
+		// 	{
+		// 		zpiece[ir] = rhoin[ir*this->nczp + znow];
+		// 	}
+		// }
 
-		// case 2: > first part rho: send the rho to
-		// processor 0.
-		else if(proc == GlobalV::RANK_IN_POOL )
-		{
-			for(int ir=0; ir<ncxy; ir++)
-			{
-				zpiece[ir] = rhoin[ir*this->nczp + znow];
-			}
-			MPI_Send(zpiece, ncxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
-		}
+		// // case 2: > first part rho: send the rho to
+		// // processor 0.
+		// else if(proc == GlobalV::RANK_IN_POOL )
+		// {
+		// 	for(int ir=0; ir<ncxy; ir++)
+		// 	{
+		// 		zpiece[ir] = rhoin[ir*this->nczp + znow];
+		// 	}
+		// 	MPI_Send(zpiece, ncxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
+		// }
 
-		 // case 2: > first part rho: processor 0 receive the rho
-		 // from other processors
-		else if(GlobalV::RANK_IN_POOL==0)
-		{
-			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, proc, tag, POOL_WORLD, &ierror);
-		}
+        // Local processor 0 collects data from all other processors in the pool
+        if (proc_loc == GlobalV::RANK_IN_POOL)
+        {
+            for(int ir=0; ir<ncxy; ir++)
+            {
+                zpiece[ir] = rhoin[ir*this->nczp + znow];
+            }
+            // Send data to the root of the pool
+            if (GlobalV::RANK_IN_POOL != 0)
+            {
+                MPI_Send(zpiece, ncxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
+            }
+        }
 
-		if(GlobalV::MY_RANK==0)
+		//  // case 2: > first part rho: processor 0 receive the rho
+		//  // from other processors
+		// else if(GlobalV::RANK_IN_POOL==0)
+		// {
+		// 	MPI_Recv(zpiece, ncxy, MPI_DOUBLE, proc, tag, POOL_WORLD, &ierror);
+		// }
+
+        // The root of the pool receives data from other processors
+        if (GlobalV::RANK_IN_POOL == 0 && proc_loc != GlobalV::RANK_IN_POOL)
+        {
+            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, proc_loc, tag, POOL_WORLD, &ierror);
+        }
+
+		// if(GlobalV::MY_RANK==0)
+        if (GlobalV::RANK_IN_POOL == 0)
 		{
             for (int ixy = 0; ixy < this->ncxy;++ixy)
             {
