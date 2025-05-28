@@ -143,7 +143,10 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               0,
                                               ss_file.str(),
                                               0.0,
-                                              ucell);
+                                              ucell,
+                                              11,
+                                              1,
+                                              true); // reduce_all_pool is true
             }
         }
 
@@ -198,7 +201,10 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               0,
                                               ss_real.str(),
                                               0.0,
-                                              ucell);
+                                              ucell,
+                                              11,
+                                              1,
+                                              true); // reduce_all_pool is true
 
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "imag.cube";
@@ -210,7 +216,10 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               0,
                                               ss_imag.str(),
                                               0.0,
-                                              ucell);
+                                              ucell,
+                                              11,
+                                              1,
+                                              true); // reduce_all_pool is true
             }
         }
     }
