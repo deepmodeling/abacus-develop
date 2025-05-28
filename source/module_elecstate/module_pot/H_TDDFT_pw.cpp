@@ -99,7 +99,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
-    // skip if velocity_gague
+    // skip if velocity_gauge
     if (stype == 1)
     {
         return;

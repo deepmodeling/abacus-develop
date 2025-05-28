@@ -233,7 +233,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const Parallel_Orbitals* paraV = this->V_delta_R->get_paraV();
     const int npol = this->ucell->get_npol();
 
-    // 1. calculate <phi|alpha> for each pair of atoms
     #pragma omp parallel for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
@@ -290,9 +289,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
         const int trace_alpha_size = trace_alpha_row.size();
-        //--------------------------------------------------
 
-        // 2. calculate <phi_I|beta>D<beta|phi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
@@ -363,17 +360,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                         ps2t[i] = col_ptr[trace_alpha_col[i]];
                     }
                 }
-                /*for(int irow = 0;irow<row_size;irow++)
-                {
-                    for(int icol=0;icol<col_size;icol++)
-                    {
-                        for(int ialpha=0;ialpha<trace_alpha_size;ialpha++)
-                        {
-                            tmp->get_pointer()[irow*col_size+icol] +=
-                                s_1t[irow*trace_alpha_size+ialpha] * s_2t[icol*trace_alpha_size+ialpha];
-                        }
-                    }
-                }*/
                 // dgemm for s_2t and s_1t to get HR_12
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;

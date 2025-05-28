@@ -63,7 +63,7 @@ void define_fcc_cell(UnitCell& ucell)
     PARAM.sys.global_out_dir = "./";
     PARAM.input.qo_screening_coeff = {0.1, 0.1};
     PARAM.input.qo_thr = 1e-6;
-    GlobalV::ofs_running = std::ofstream("unittest.log");
+    // GlobalV::ofs_running = std::ofstream("unittest.log");
     GlobalV::MY_RANK = 0;
     GlobalV::NPROC = 1;
 }
@@ -98,7 +98,7 @@ void define_sc_cell(UnitCell& ucell)
     PARAM.sys.global_out_dir = "./";
     PARAM.input.qo_screening_coeff = {0.1};
     PARAM.input.qo_thr = 1e-6;
-    GlobalV::ofs_running = std::ofstream("unittest.log");
+    // GlobalV::ofs_running = std::ofstream("unittest.log");
     GlobalV::MY_RANK = 0;
     GlobalV::NPROC = 1;
 }
@@ -1298,7 +1298,7 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
     EXPECT_TRUE(all_real);
     for(int iR = 0; iR < tqo.nR(); iR++)
     {  
-        std::string fovlpk = "QO_ovlpk_" + std::to_string(iR) + ".dat";
+        std::string fovlpk = "QO_ovlpR_" + std::to_string(iR) + ".dat";
         std::remove(fovlpk.c_str());
     }
 }
@@ -1338,7 +1338,7 @@ TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
     EXPECT_TRUE(all_real);
     for(int iR = 0; iR < tqo.nR(); iR++)
     {  
-        std::string fovlpk = "QO_ovlpk_" + std::to_string(iR) + ".dat";
+        std::string fovlpk = "QO_ovlpR_" + std::to_string(iR) + ".dat";
         std::remove(fovlpk.c_str());
     }
 }

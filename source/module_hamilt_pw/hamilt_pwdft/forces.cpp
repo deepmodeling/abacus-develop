@@ -19,9 +19,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
@@ -54,15 +52,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential
-    // For PAW, calculated together in paw_cell.calculate_force
-    if (!PARAM.inp.use_paw)
-    {
-        this->cal_force_loc(ucell,forcelc, rho_basis, locpp->vloc, chr);
-    }
-    else
-    {
-        forcelc.zero_out();
-    }
+    this->cal_force_loc(ucell,forcelc, rho_basis, locpp->vloc, chr);
 
     // Ewald
     this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
@@ -70,94 +60,15 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     // Force due to nonlocal part of pseudopotential
     if (wfc_basis != nullptr)
     {
-        if (!PARAM.inp.use_paw)
+
+        this->npwx = wfc_basis->npwk_max;
+        Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, *p_nlpp, ucell, psi_in);
+
+        if (PARAM.globalv.use_uspp)
         {
-            this->npwx = wfc_basis->npwk_max;
-            Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, *p_nlpp, ucell, psi_in);
-
-            if (PARAM.globalv.use_uspp)
-            {
-                this->cal_force_us(forcenl, rho_basis, *p_nlpp, elec, ucell);
-            }
+            this->cal_force_us(forcenl, rho_basis, *p_nlpp, elec, ucell);
         }
-        else
-        {
-#ifdef USE_PAW
-            for (int ik = 0; ik < wfc_basis->nks; ik++)
-            {
-                const int npw = wfc_basis->npwk[ik];
-                ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
-                for (int ig = 0; ig < npw; ig++)
-                {
-                    _gk[ig] = wfc_basis->getgpluskcar(ik, ig);
-                }
 
-                double* kpt;
-                kpt = new double[3];
-                kpt[0] = wfc_basis->kvec_c[ik].x;
-                kpt[1] = wfc_basis->kvec_c[ik].y;
-                kpt[2] = wfc_basis->kvec_c[ik].z;
-
-                double** kpg;
-                double** gcar;
-                kpg = new double*[npw];
-                gcar = new double*[npw];
-                for (int ipw = 0; ipw < npw; ipw++)
-                {
-                    kpg[ipw] = new double[3];
-                    kpg[ipw][0] = _gk[ipw].x;
-                    kpg[ipw][1] = _gk[ipw].y;
-                    kpg[ipw][2] = _gk[ipw].z;
-
-                    gcar[ipw] = new double[3];
-                    gcar[ipw][0] = wfc_basis->getgcar(ik, ipw).x;
-                    gcar[ipw][1] = wfc_basis->getgcar(ik, ipw).y;
-                    gcar[ipw][2] = wfc_basis->getgcar(ik, ipw).z;
-                }
-
-                GlobalC::paw_cell.set_paw_k(npw,
-                                            wfc_basis->npwk_max,
-                                            kpt,
-                                            wfc_basis->get_ig2ix(ik).data(),
-                                            wfc_basis->get_ig2iy(ik).data(),
-                                            wfc_basis->get_ig2iz(ik).data(),
-                                            (const double**)kpg,
-                                            ucell.tpiba,
-                                            (const double**)gcar);
-
-                delete[] kpt;
-                for (int ipw = 0; ipw < npw; ipw++)
-                {
-                    delete[] kpg[ipw];
-                    delete[] gcar[ipw];
-                }
-                delete[] kpg;
-                delete[] gcar;
-
-                GlobalC::paw_cell.get_vkb();
-
-                GlobalC::paw_cell.set_currentk(ik);
-
-                psi_in[0].fix_k(ik);
-                double *weight, *epsilon;
-                weight = new double[PARAM.inp.nbands];
-                epsilon = new double[PARAM.inp.nbands];
-                for (int ib = 0; ib < PARAM.inp.nbands; ib++)
-                {
-                    weight[ib] = wg(ik, ib);
-                    epsilon[ib] = ekb(ik, ib);
-                }
-                GlobalC::paw_cell.paw_nl_force(reinterpret_cast<std::complex<double>*>(psi_in[0].get_pointer()),
-                                               epsilon,
-                                               weight,
-                                               PARAM.inp.nbands,
-                                               forcenl.c);
-
-                delete[] weight;
-                delete[] epsilon;
-            }
-#endif
-        }
         // DFT+U and DeltaSpin
         if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
@@ -166,26 +77,10 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     }
 
     // non-linear core correction
-    // not relevant for PAW
-    if (!PARAM.inp.use_paw)
-    {
-        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
-    }
-    else
-    {
-        forcecc.zero_out();
-    }
+    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
 
     // force due to core charge
-    // For PAW, calculated together in paw_cell.calculate_force
-    if (!PARAM.inp.use_paw)
-    {
-        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
-    }
-    else
-    {
-        forcescc.zero_out();
-    }
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
@@ -239,52 +134,6 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         }
     }
 
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        double* force_paw;
-        double* rhor;
-        rhor = new double[rho_basis->nrxx];
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
-            rhor[ir] = 0.0;
-        }
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            for (int ir = 0; ir < rho_basis->nrxx; ir++)
-            {
-                rhor[ir] += chr->rho[is][ir] + chr->nhat[is][ir];
-            }
-        }
-
-        force_paw = new double[3 * this->nat];
-        ModuleBase::matrix v_xc, v_effective;
-        v_effective.create(PARAM.inp.nspin, rho_basis->nrxx);
-        v_effective.zero_out();
-        elec.pot->update_from_charge(elec.charge, &ucell);
-        v_effective = elec.pot->get_effective_v();
-
-        v_xc.create(PARAM.inp.nspin, rho_basis->nrxx);
-        v_xc.zero_out();
-        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(rho_basis->nrxx, elec.charge, &ucell);
-        v_xc = std::get<2>(etxc_vtxc_v);
-
-        GlobalC::paw_cell.calculate_force(v_effective.c, v_xc.c, rhor, force_paw);
-
-        for (int iat = 0; iat < this->nat; iat++)
-        {
-            // Ha to Ry
-            forcepaw(iat, 0) = force_paw[3 * iat] * 2.0;
-            forcepaw(iat, 1) = force_paw[3 * iat + 1] * 2.0;
-            forcepaw(iat, 2) = force_paw[3 * iat + 2] * 2.0;
-        }
-
-        delete[] force_paw;
-        delete[] rhor;
-    }
-#endif
-
     // impose total force = 0
     int iat = 0;
     for (int ipol = 0; ipol < 3; ipol++)
@@ -298,11 +147,6 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
             {
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
-
-                if (PARAM.inp.use_paw)
-                {
-                    force(iat, ipol) += forcepaw(iat, ipol);
-                }
 
                 if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
@@ -441,14 +285,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
-        if (PARAM.inp.use_paw)
-        {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "PAW      FORCE (eV/Angstrom)",
-                                  forcepaw,
-                                  false);
-        }
+
         if (PARAM.inp.efield_flag)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
@@ -599,13 +436,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             if (ucell.atoms[it].na != 0)
             {
                 double dzv;
-                if (PARAM.inp.use_paw)
-                {
-    #ifdef USE_PAW
-                    dzv = GlobalC::paw_cell.get_val(it);
-    #endif
-                }
-                else
                 {
                     dzv = ucell.atoms[it].ncpp.zv;
                 }
@@ -622,13 +452,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     double charge = 0.0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        if (PARAM.inp.use_paw)
-        {
-#ifdef USE_PAW
-            charge += ucell.atoms[it].na * GlobalC::paw_cell.get_val(it);
-#endif
-        }
-        else
         {
             charge += ucell.atoms[it].na * ucell.atoms[it].ncpp.zv; // mohan modify 2007-11-7
         }
@@ -704,13 +527,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             if (it != last_it)
             { // calculate it_tact when it is changed
                 double zv;
-                if (PARAM.inp.use_paw)
-                {
-#ifdef USE_PAW
-                    zv = GlobalC::paw_cell.get_val(it);
-#endif
-                }
-                else
                 {
                     zv = ucell.atoms[it].ncpp.zv;
                 }
@@ -789,16 +605,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                             const double rr = sqrt(r2[n]) * ucell.lat0;
 
                             double factor;
-                            if (PARAM.inp.use_paw)
-                            {
-#ifdef USE_PAW
-                                factor = GlobalC::paw_cell.get_val(T1) * GlobalC::paw_cell.get_val(T2) * ModuleBase::e2
-                                         / (rr * rr)
-                                         * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
-                                         * ucell.lat0;
-#endif
-                            }
-                            else
                             {
                                 factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
                                          * ModuleBase::e2 / (rr * rr)

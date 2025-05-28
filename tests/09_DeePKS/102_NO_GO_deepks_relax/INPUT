@@ -1,0 +1,35 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			    autotest
+calculation     	relax
+relax_method        bfgs
+relax_nmax		    10
+dft_functional		pbe
+
+pseudo_dir		    ../../PP_ORB
+orbital_dir		    ../../PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc			    20
+scf_thr			    5e-6
+scf_nmax		    50
+
+#Parameters (3.Basis)
+basis_type		    lcao
+gamma_only		    1
+
+#Parameters (4.Smearing)
+smearing_method		gaussian
+smearing_sigma		0.02
+
+#Parameters (5.Mixing)
+mixing_type		    broyden
+mixing_beta		    0.8
+
+cal_force           1
+force_thr_ev        1e-4
+cal_stress          1
+stress_thr          1e-7
+deepks_scf	        1
+deepks_out_labels	0
+deepks_model	    ../Model_ProjOrb/model_Si_135.ptg

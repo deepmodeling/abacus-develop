@@ -26,11 +26,9 @@
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
-#include "module_io/write_dmr.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
-#include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
@@ -167,8 +165,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 5) read psi from file
     if (PARAM.inp.init_wfc == "file")
-    {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+	{
+		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
+					this->pv, 
+					*(this->psi), 
+					this->pelec, 
+                    this->pelec->klist->ik2iktot,
+                    this->pelec->klist->get_nkstot(),
+					PARAM.inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
         }
@@ -690,11 +694,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         this->p_hamilt->refresh();
     }
-    if (iter == 1 && istep == 0)
-    {
-        // initialize DMR
-        this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
-    }
+    // if (iter == 1 && istep == 0)
+    // {
+    //     // initialize DMR
+    //     this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    // }
 #endif
 
     if (PARAM.inp.vl_in_h)

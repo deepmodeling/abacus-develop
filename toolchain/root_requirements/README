@@ -1,0 +1,7 @@
+## Scripts in root_requirements directory
+
+These scripts are for basic requirements for using toolchain
+which should be implemented in your server global environments.
+if not, please contact your server manager.
+
+You should use these scripts under root permission.

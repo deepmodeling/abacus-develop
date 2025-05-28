@@ -25,6 +25,10 @@ void ReadInput::item_deepks()
                 ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
             }
 #endif
+            // if (!PARAM.inp.deepks_scf && PARAM.inp.deepks_out_labels == 1)
+            // {
+            //     ModuleBase::WARNING_QUIT("Input_conv", "deepks_out_labels = 1 requires deepks_scf = 1");
+            // }
         };
         this->add_item(item);
     }
@@ -43,7 +47,17 @@ void ReadInput::item_deepks()
     {
         Input_Item item("deepks_bandgap");
         item.annotation = ">0 for bandgap label";
-        read_sync_bool(input.deepks_bandgap);
+        read_sync_int(input.deepks_bandgap);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("deepks_band_range");
+        item.annotation = "(int, int) range of bands for bandgap label";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.deepks_band_range[0] = std::stod(item.str_values[0]);
+            para.input.deepks_band_range[1] = std::stod(item.str_values[1]);
+        };
+        sync_intvec(input.deepks_band_range, 2, 0);
         this->add_item(item);
     }
     {

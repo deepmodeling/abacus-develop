@@ -80,10 +80,10 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                 ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
                 return false;
             }
-            ModuleBase::GlobalFunc::OUT(ofs_running, "atom label",ucell.atoms[it].label);
+            ModuleBase::GlobalFunc::OUT(ofs_running, "atom label", ucell.atoms[it].label);
 
             bool set_element_mag_zero = false;
-            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it] );
+            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it]);
 
 #ifndef __SYMMETRY
             //===========================================

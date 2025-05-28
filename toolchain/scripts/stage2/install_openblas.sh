@@ -8,8 +8,8 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openblas_ver="0.3.28" # Keep in sync with get_openblas_arch.sh
-openblas_sha256="f1003466ad074e9b0c8d421a204121100b0751c96fc6fcf3d1456bd12f8a00a1"
+openblas_ver="0.3.29" # Keep in sync with get_openblas_arch.sh
+openblas_sha256="38240eee1b29e2bde47ebb5d61160207dc68668a54cac62c076bb5032013b1eb"
 openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -39,7 +39,10 @@ case "${with_openblas}" in
       if [ -f ${openblas_pkg} ]; then
         echo "${openblas_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${openblas_sha256}" "${openblas_pkg}"
+        #download_pkg_from_ABACUS_org "${openblas_sha256}" "${openblas_pkg}"
+        # using codeload.github
+        url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
+        download_pkg_from_url "${openblas_sha256}" "${openblas_pkg}" "${url}"
       fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
       echo "--pack-run mode specified, skip installation"
@@ -80,7 +83,7 @@ case "${with_openblas}" in
         make -j $(get_nprocs) \
           MAKE_NB_JOBS=0 \
           TARGET=${TARGET} \
-          NUM_THREADS=128 \
+          NUM_THREADS=64 \
           USE_THREAD=1 \
           USE_OPENMP=1 \
           NO_AFFINITY=1 \
@@ -92,7 +95,7 @@ case "${with_openblas}" in
         make -j $(get_nprocs) \
           MAKE_NB_JOBS=0 \
           TARGET=NEHALEM \
-          NUM_THREADS=128 \
+          NUM_THREADS=64 \
           USE_THREAD=1 \
           USE_OPENMP=1 \
           NO_AFFINITY=1 \
@@ -104,7 +107,7 @@ case "${with_openblas}" in
       make -j $(get_nprocs) \
         MAKE_NB_JOBS=0 \
         TARGET=${TARGET} \
-        NUM_THREADS=128 \
+        NUM_THREADS=64 \
         USE_THREAD=1 \
         USE_OPENMP=1 \
         NO_AFFINITY=1 \

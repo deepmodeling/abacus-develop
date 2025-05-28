@@ -15,7 +15,7 @@ TD_current::TD_current(const UnitCell* ucell_in,
                        const TwoCenterIntegrator* intor)
     : ucell(ucell_in), paraV(paraV), orb_(orb), Grid(GridD_in), intor_(intor)
 {
-    // for length gague, the A(t) = 0 for all the time.
+    // for length gauge, the A(t) = 0 for all the time.
     this->cart_At = ModuleBase::Vector3<double>(0, 0, 0);
     this->initialize_vcomm_r(GridD_in, paraV);
     this->initialize_grad_term(GridD_in, paraV);

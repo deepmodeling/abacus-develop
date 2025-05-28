@@ -136,6 +136,11 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         {
             // Read HexxR in binary format (old version)
             const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+            std::ifstream ifs(file_name_exx_cereal, std::ios::binary);
+            if (!ifs)
+            {
+                ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
+            }
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
@@ -202,13 +207,18 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
                 // read in Hexx(R)
-                const std::string restart_HR_path = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-                bool all_exist = true;
+                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+                int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
                     std::ifstream ifs(restart_HR_path + "_" + std::to_string(is) + ".csr");
-                    if (!ifs) { all_exist = false; break; }
+                    if (!ifs) { all_exist = 0; break; }
                 }
+// Add MPI communication to synchronize all_exist across processes
+#ifdef __MPI
+                // don't read in any files if one of the processes doesn't have it
+                MPI_Allreduce(MPI_IN_PLACE, &all_exist, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+#endif                
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
@@ -223,11 +233,24 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 {
                     // Read HexxR in binary format (old version)
                     const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(GlobalV::MY_RANK);
-                    if (GlobalC::exx_info.info_ri.real_number) {
-                        ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
+                    std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
+                    int all_exist_cereal = ifs ? 1 : 0;
+#ifdef __MPI                    
+                    MPI_Allreduce(MPI_IN_PLACE, &all_exist_cereal, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+#endif                     
+                    if (!all_exist_cereal)
+                    {
+                        //no HexxR file in CSR or binary format
+                        this->restart = false;
                     }
-                    else {
-                        ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
+                    else
+                    {
+                        if (GlobalC::exx_info.info_ri.real_number) {
+                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
+                        }
+                        else {
+                            ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
+                        }
                     }
                 }
             }

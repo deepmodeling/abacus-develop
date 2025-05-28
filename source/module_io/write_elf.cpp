@@ -22,27 +22,34 @@ void write_elf(
     std::vector<std::vector<double>> elf(nspin, std::vector<double>(rho_basis->nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
     std::vector<std::vector<double>> tau_vw(nspin, std::vector<double>(rho_basis->nrxx, 0.));
+    std::vector<double> phi(rho_basis->nrxx, 0.); // phi = sqrt(rho)
+
     for (int is = 0; is < nspin; ++is)
     {
-        std::vector<std::vector<double>> gradient_rho(3, std::vector<double>(rho_basis->nrxx, 0.));
-
-        std::vector<std::complex<double>> recip_rho(rho_basis->npw, 0.0);
-        std::vector<std::complex<double>> recip_gradient_rho(rho_basis->npw, 0.0);
-        rho_basis->real2recip(rho[is], recip_rho.data());
+        for (int ir = 0; ir < rho_basis->nrxx; ++ir)
+        {
+            phi[ir] = std::sqrt(std::abs(rho[is][ir]));
+        }
+        
+        std::vector<std::vector<double>> gradient_phi(3, std::vector<double>(rho_basis->nrxx, 0.));
+        std::vector<std::complex<double>> recip_phi(rho_basis->npw, 0.0);
+        std::vector<std::complex<double>> recip_gradient_phi(rho_basis->npw, 0.0);
+        
+        rho_basis->real2recip(phi.data(), recip_phi.data());
         
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
             for (int ip = 0; ip < rho_basis->npw; ++ip)
             {
-                recip_gradient_rho[ip] = img * rho_basis->gcar[ip][j] * recip_rho[ip] * rho_basis->tpiba;
+                recip_gradient_phi[ip] = img * rho_basis->gcar[ip][j] * recip_phi[ip] * rho_basis->tpiba;
             }
 
-            rho_basis->recip2real(recip_gradient_rho.data(), gradient_rho[j].data());
+            rho_basis->recip2real(recip_gradient_phi.data(), gradient_phi[j].data());
 
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_vw[is][ir] += gradient_rho[j][ir] * gradient_rho[j][ir] / (8. * rho[is][ir]) * 2.0; // convert Ha to Ry.
+                tau_vw[is][ir] += gradient_phi[j][ir] * gradient_phi[j][ir] / 2. * 2.; // convert Ha to Ry.
             }
         }
     }

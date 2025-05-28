@@ -1,5 +1,4 @@
 #include "phi_operator.h"
-#include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/matrix.h"
 
@@ -17,7 +16,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     biggrid_->set_mgrids_local_idx(meshgrids_local_idx_);
 
     // init is_atom_on_mgrid_ and atoms_relative_coords_
-    int atoms_num = biggrid_->get_atoms_num();
+    const int atoms_num = biggrid_->get_atoms_num();
     atoms_relative_coords_.resize(atoms_num);
     is_atom_on_mgrid_.resize(atoms_num);
     for(int i = 0; i < atoms_num; ++i)
@@ -32,16 +31,6 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 
     // init atom_pair_start_end_idx_
     init_atom_pair_start_end_idx_();
-}
-
-void PhiOperator::set_phi(double* phi) const
-{
-    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
-    {
-        const auto atom = biggrid_->get_atom(i);
-        atom->set_phi(atoms_relative_coords_[i], cols_, phi);
-        phi += atom->get_nw();
-    }
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
@@ -74,147 +63,6 @@ void PhiOperator::set_ddphi(
         ddphi_yy += atom->get_nw();
         ddphi_yz += atom->get_nw();
         ddphi_zz += atom->get_nw();
-    }
-}
-
-void PhiOperator::phi_mul_dm(
-    const double* phi, 
-    const HContainer<double>& dm, 
-    const bool is_symm, double* phi_dm) const
-{
-    ModuleBase::GlobalFunc::ZEROS(phi_dm, rows_ * cols_);
-    // parameters for lapack subroutines
-    constexpr char side = 'L';
-    constexpr char uplo = 'U';
-    const char trans = 'N';
-    const double alpha = 1.0;
-    const double beta = 1.0;
-    const double alpha1 = is_symm ? 2.0 : 1.0;
-
-    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
-    {
-        const auto atom_i = biggrid_->get_atom(i);
-        const auto r_i = atom_i->get_R();
-
-        if(is_symm)
-        {
-            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
-            dsymm_(&side, &uplo, &atoms_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atoms_phi_len_[i],
-                &phi[0 * cols_ + atoms_startidx_[i]], &cols_, &beta, &phi_dm[0 * cols_ + atoms_startidx_[i]], &cols_);
-        }
-
-        const int start = is_symm ? i + 1 : 0;
-
-        for(int j = start; j < biggrid_->get_atoms_num(); ++j)
-        {
-            const auto atom_j = biggrid_->get_atom(j);
-            const auto r_j = atom_j->get_R();
-            // FIXME may be r = r_j - r_i
-            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i-r_j);
-
-            // if dm_mat is nullptr, it means this atom pair does not affect any meshgrid in the unitcell
-            if(dm_mat == nullptr)
-            {
-                continue;
-            }
-
-            int start_idx = get_atom_pair_start_end_idx_(i, j).first;
-            int end_idx = get_atom_pair_start_end_idx_(i, j).second;
-            const int len = end_idx - start_idx + 1;
-
-            // if len<=0, it means this atom pair does not affect any meshgrid in this biggrid
-            if(len <= 0)
-            {
-                continue;
-            }
-
-            dgemm_(&trans, &trans, &atoms_phi_len_[j], &len, &atoms_phi_len_[i], &alpha1, dm_mat->get_pointer(), &atoms_phi_len_[j],
-                &phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, &phi_dm[start_idx * cols_ + atoms_startidx_[j]], &cols_);
-        }
-    }
-}
-
-void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* phi, double* result) const
-{
-    int idx = 0;
-    for(int i = 0; i < biggrid_->get_mgrids_num(); i++)
-    {
-        double vldr3_mgrid = vl[meshgrids_local_idx_[i]] * dr3;
-        for(int j = 0; j < cols_; j++)
-        {
-            result[idx] = phi[idx] * vldr3_mgrid;
-            idx++;
-        }
-    }
-}
-
-// this is a thread-safe function
-void PhiOperator::phi_mul_phi_vldr3(
-    const double* phi,
-    const double* phi_vldr3,
-    HContainer<double>& hr) const
-{
-    const char transa='N', transb='T';
-    const double alpha=1, beta=1;
-
-    std::vector<double> tmp_hr;
-    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
-    {
-        const auto atom_i = biggrid_->get_atom(i);
-        const auto& r_i = atom_i->get_R();
-        const int iat_i = atom_i->get_iat();
-        const int m = atoms_phi_len_[i];
-
-        for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
-        {
-            const auto atom_j = biggrid_->get_atom(j);
-            const auto& r_j = atom_j->get_R();
-            const int iat_j = atom_j->get_iat();
-            const int n = atoms_phi_len_[j];
-
-            // only calculate the upper triangle matrix
-            if(iat_i > iat_j)
-            {
-                continue;
-            }
-
-            tmp_hr.resize(m * n);
-            ModuleBase::GlobalFunc::ZEROS(tmp_hr.data(), m*n);
-
-            // FIXME may be r = r_j - r_i
-            const auto result = hr.find_matrix(iat_i, iat_j, r_i-r_j);
-
-            if(result == nullptr)
-            {
-                continue;
-            }
-
-            int start_idx = get_atom_pair_start_end_idx_(i, j).first;
-            int end_idx = get_atom_pair_start_end_idx_(i, j).second;
-            const int len = end_idx - start_idx + 1;
-
-            if(len <= 0)
-            {
-                continue;
-            }
-
-            dgemm_(&transa, &transb, &n, &m, &len, &alpha, &phi_vldr3[start_idx * cols_ + atoms_startidx_[j]],
-                &cols_,&phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, tmp_hr.data(), &n);
-
-            result->add_array_ts(tmp_hr.data());
-        }
-    }
-}
-
-void PhiOperator::phi_dot_phi_dm(
-    const double* phi,
-    const double* phi_dm,
-    double* rho) const
-{
-    const int inc = 1;
-    for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
-    {
-        rho[meshgrids_local_idx_[i]] += ddot_(&cols_, &phi[i * cols_], &inc, &phi_dm[i * cols_], &inc);
     }
 }
 

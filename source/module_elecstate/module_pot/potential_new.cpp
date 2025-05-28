@@ -8,11 +8,6 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
-#ifdef USE_PAW
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_cell/module_paw/paw_cell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#endif
 
 #include <map>
 
@@ -117,12 +112,6 @@ void Potential::allocate()
     this->veff_smooth.create(PARAM.inp.nspin, nrxx_smooth);
     ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
 
-    if(PARAM.inp.use_paw)
-    {
-        this->v_xc.create(PARAM.inp.nspin, nrxx);
-        ModuleBase::Memory::record("Pot::vxc", sizeof(double) * PARAM.inp.nspin * nrxx);
-    }
-
     if (XC_Functional::get_ked_flag())
     {
         this->vofk_effective.create(PARAM.inp.nspin, nrxx);
@@ -176,16 +165,6 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
     // interpolate potential on the smooth mesh if necessary
     this->interpolate_vrs();
 
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-        this->v_xc.zero_out();
-        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(chg->nrxx, chg, ucell);
-        v_xc = std::get<2>(etxc_vtxc_v);
-    }
-#endif
-
     if (this->use_gpu_)
     {
         if (PARAM.globalv.has_float_data)
@@ -208,14 +187,6 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
-
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-        GlobalC::paw_cell.calculate_dij(v_effective.c, v_xc.c);
-        GlobalC::paw_cell.set_dij();
-    }
-#endif
 
     //ModuleBase::timer::tick("Potential", "update_from_charge");
 }

@@ -37,8 +37,6 @@ option(INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 
-option(ENABLE_PAW "Enable PAW method" OFF)
-
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
@@ -190,6 +188,7 @@ find_program(CCACHE ccache)
 if(CCACHE)
   set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_CXX_COMPILER_LAUNCHER})
   set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_C_COMPILER_LAUNCHER})
+  set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_CUDA_COMPILER_LAUNCHER})
 endif()
 
 # Choose build type from: Debug Release RelWithDebInfo MinSizeRel Select
@@ -269,6 +268,7 @@ if(ENABLE_MPI)
   add_compile_definitions(__MPI)
   list(APPEND math_libs MPI::MPI_CXX)
 endif()
+
 
 if (USE_DSP)
   add_compile_definitions(__DSP)
@@ -610,18 +610,7 @@ if(ENABLE_LIBCOMM)
   include_directories(${LIBCOMM_DIR}/include)
 endif()
 
-if(ENABLE_PAW)
-  if(LIBPAW_DIR)
-    add_subdirectory(${LIBPAW_DIR})
-  elseif(GIT_SUBMODULE)
-    git_submodule_update()
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/libpaw_interface)
-  else()
-    message(FATAL_ERROR "Must provide LIBPAW_DIR for PAW related features.")
-  endif()
-  target_link_libraries(${ABACUS_BIN_NAME} paw)
-  add_compile_definitions(USE_PAW)
-endif()
+
 
 list(APPEND math_libs m)
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})

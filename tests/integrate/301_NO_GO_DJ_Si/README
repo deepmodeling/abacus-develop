@@ -1,9 +1,0 @@
-This test for:
-*Si-dojo-LCAO
-*LCAO
-*Gamma-only
-*dojo pseudopotential
-*smearing_method gauss
-*ks_solver genelpa
-*mixing_type broyden-kerker
-*mixing_beta 0.7

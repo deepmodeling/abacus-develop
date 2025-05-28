@@ -31,7 +31,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_MLKEDF=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_MLKEDF=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON
 
 # Temporarily removed because no one maintains this now.
 # And it will break the CI test workflow.
@@ -48,9 +48,136 @@ jobs:
         run: |
           cmake --build build -j8
           cmake --install build
-      - name: Test
+
+      - name: Integrated Tests Preparation
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 1700"
+          cmake --build build --target test ARGS="-V --timeout 1700 -R integrated_test"
+
+      - name: Module_Base Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_BASE"
+      
+      - name: Module_IO Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_IO"
+
+      - name: Module_HSolver Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_HSOLVER"
+      
+      - name: Module_Cell Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_CELL"
+      
+      - name: Module_MD Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_MD"
+      
+      - name: Module_Psi Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_PSI"
+      
+      - name: Module_RI Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R MODULE_RI"
+
+      - name: 01_PW Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 01_PW"
+
+      - name: 02_NAO_Gamma Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 02_NAO_Gamma"
+
+      - name: 03_NAO_multik Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 03_NAO_multik"
+
+      - name: 04_LJ_DP Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 04_LJ_DP"
+
+      - name: 05_rtTDDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 05_rtTDDFT"
+
+      - name: 06_SDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 06_SDFT"
+
+      - name: 07_OFDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 07_OFDFT"
+
+      - name: 08_EXX Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 08_EXX"
+
+      - name: 09_DeePKS Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 09_DeePKS"
+
+      - name: 10_others Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -R 10_others"
+
+      - name: Other Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          cmake --build build --target test ARGS="-V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_LJ_DP|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_RI'"

@@ -72,7 +72,6 @@ struct Input_para
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
-    bool use_paw = false;              ///< whether to use PAW in pw calculation
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
     double nelec_delta = 0.0;          ///< change in the number of total electrons
@@ -266,7 +265,8 @@ struct Input_para
                                        ///< descriptors for training, wenfei 2022-1-12
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
-    bool deepks_bandgap = false;       ///< for bandgap label. QO added 2021-12-15
+    int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
+    std::vector<int> deepks_band_range = {0, 0}; ///< the range of bands to calculate bandgap
     int deepks_v_delta = 0;            ///< for v_delta label. xuan added
     bool deepks_equiv = false;         ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false;  ///< if set to true, prints intermediate quantities that shall
@@ -363,7 +363,6 @@ struct Input_para
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r = false;               ///< 0: no; 1: yes
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
@@ -405,7 +404,6 @@ struct Input_para
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                     ///< rpa calculation
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
-    std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated for partial charge
     std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
@@ -420,6 +418,14 @@ struct Input_para
     double dos_sigma = 0.07; ///< pengfei 2014-10-13
     int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
     std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
+    std::vector<double> ldos_line
+        = {0.0,
+           0.0,
+           0.0,
+           0.0,
+           0.0,
+           1.0,
+           100}; ///< start and end point of the line (direct coordinates) and number of points
 
     bool cal_cond = false;      ///< calculate electronic conductivities
     double cond_che_thr = 1e-8; ///< control the error of Chebyshev expansions

@@ -1,4 +1,5 @@
 #include "../write_wfc_nao.h"
+#include "../filename.h"
 
 #define private public
 #include "module_parameter/parameter.h"
@@ -16,46 +17,78 @@
 
 TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
 {
-    int out_type = 1;
-    bool gamma_only = true;
-    bool out_app_flag = true;
-    int ik = 0;
-    int istep = 0;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
+    const int ik = 0;
+    const std::vector<int> ik2iktot = {0};
+    const int nspin = 1;
+    const int nkstot = 1;
+    const int out_type = 1;
+    const bool out_app_flag = true;
+    const bool gamma_only = true;
+    // if out_app_flag = true, then the 'g' label will not show up
+    const int istep = 0;
 
-    std::string expected_output = "WFC_NAO_GAMMA1.txt";
-    std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
+
+    // output .txt file when out_type=1
+	std::string expected_output = "wfs1_nao.txt";
 
     EXPECT_EQ(result, expected_output);
 }
 
 TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
 {
-    int out_type = 2;
-    bool gamma_only = true;
-    bool out_app_flag = false;
-    int ik = 1;
-    int istep = 2;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
+    const int ik = 1;
+    const std::vector<int> ik2iktot = {0,1};
+    const int nspin = 2;
+    const int nkstot = 2;
+    const int out_type = 2;
+    const bool out_app_flag = false;
+    const bool gamma_only = true;
+    // if out_app_flag = false, then the 'g' label appears
+    const int istep = 2;
 
-    std::string expected_output = "WFC_NAO_GAMMA2_ION3.dat";
-    std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
 
+    // output .dat file when out_type=2
+    std::string expected_output = "wfs2g3_nao.dat";
     EXPECT_EQ(result, expected_output);
 }
 
 TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
 {
-    int out_type = 3;
-    bool gamma_only = false;
-    bool out_app_flag = true;
-    int ik = 2;
-    int istep = 3;
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
+    const int ik = 2;
+    const std::vector<int> ik2iktot = {0,1,2};
+    const int nspin = 1;
+    const int nkstot = 3;
+    const int out_type = 3;
+    const bool out_app_flag = true;
+    const bool gamma_only = false;
+    const int istep = 3;
 
-    std::string expected_output = "WFC_NAO_K3.txt";
     // catch the screen output
     testing::internal::CaptureStdout();
-    std::string result = ModuleIO::wfc_nao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
+
+	std::string result = ModuleIO::filename_output(
+			directory, property, basis, ik, ik2iktot, nspin, 
+			nkstot, out_type, out_app_flag, gamma_only, istep);
+
     std::string output = testing::internal::GetCapturedStdout();
 
+    // a .txt is chosen if out_type is not 1 or 2
+    std::string expected_output = "wfs1k3_nao.txt";
     EXPECT_EQ(result, expected_output);
 }
 
@@ -64,7 +97,8 @@ void read_bin(const std::string& name, std::vector<T>& data)
 {
     std::ifstream ifs(name, std::ios::binary);
     ifs.seekg(0, std::ios::beg);
-    int nbands, nbasis;
+    int nbands=0;
+    int nbasis=0;
     if (std::is_same<T, std::complex<double>>::value)
     {
         ifs.ignore(sizeof(int));
@@ -92,6 +126,7 @@ class WriteWfcLcaoTest : public testing::Test
     ModuleBase::matrix ekb;
     ModuleBase::matrix wg;
     std::vector<ModuleBase::Vector3<double>> kvec_c;
+
     std::vector<double> psi_init_double;
     std::vector<std::complex<double>> psi_init_complex;
     std::vector<double> psi_local_double;
@@ -100,12 +135,16 @@ class WriteWfcLcaoTest : public testing::Test
     int nk = 2;
     int nbands = 3;
     int nbasis = 4;
-    int nbands_local;
-    int nbasis_local;
+    int nbands_local = 0;
+    int nbasis_local = 0;
+
+    // mohan add 2025-05-11
+    std::vector<int> ik2iktot = {0,1};
+    int nkstot = 2;
+    bool out_app_flag = true;
 
     void SetUp() override
     {
-        PARAM.input.out_app_flag = true;
         ekb.create(nk, nbands); // in this test the value of ekb and wg is not important and not used.
         wg.create(nk, nbands);
         kvec_c.resize(nk, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -166,17 +205,30 @@ class WriteWfcLcaoTest : public testing::Test
 
 TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 {
-    // create a psi object
-    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
     PARAM.sys.global_out_dir = "./";
-    ModuleIO::write_wfc_nao(2, my_psi, ekb, wg, kvec_c, pv, -1);
 
-    // check the output
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
+    const int nspin = 2;
+    const int out_type = 2;
+    const bool gamma_only = true;
+    const int istep = -1;
+
+    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
+
+	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
+			ik2iktot, nkstot, pv, nspin, istep);
+
+    // check the output file
     if (GlobalV::MY_RANK == 0)
     {
         for (int ik = 0; ik < nk; ik++)
-        {
-            std::string fname = ModuleIO::wfc_nao_gen_fname(2, true, PARAM.input.out_app_flag, ik, -1);
+		{
+			std::string fname = ModuleIO::filename_output(
+					directory, property, basis, ik, ik2iktot, nspin, 
+					nkstot, out_type, out_app_flag, gamma_only, istep);
+
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
             std::vector<double> data;
@@ -196,16 +248,30 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 
 TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
 {
-    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
     PARAM.sys.global_out_dir = "./";
-    ModuleIO::write_wfc_nao(2, my_psi, ekb, wg, kvec_c, pv, -1);
+
+    const std::string directory = "";
+    const std::string property = "wf";
+    const std::string basis = "nao";
+    const int nspin = 1;
+    const int out_type = 2;
+    const bool gamma_only = false;
+    const int istep = -1;
+
+    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
+
+	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
+			ik2iktot, nkstot, pv, nspin, istep);
 
     // check the output file
     if (GlobalV::MY_RANK == 0)
     {
         for (int ik = 0; ik < nk; ik++)
         {
-            std::string fname = ModuleIO::wfc_nao_gen_fname(2, false, PARAM.input.out_app_flag, ik, -1);
+			std::string fname = ModuleIO::filename_output(
+					directory, property, basis, ik, ik2iktot, nspin, 
+					nkstot, out_type, out_app_flag, gamma_only, istep);
+
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
             std::vector<std::complex<double>> data;
@@ -231,7 +297,6 @@ TEST(ModuleIOTest, WriteWfcNao)
         GlobalV::DRANK = 0;
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 2;
-        PARAM.input.out_app_flag = true;
 
         // Set up test data
         std::string filename = "test_wfc_nao.txt";
@@ -278,7 +343,6 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
         GlobalV::DRANK = 0;
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 2;
-        PARAM.input.out_app_flag = true;
 
         // Set up test data
         std::string filename = "test_wfc_nao.dat";
@@ -335,7 +399,6 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
         // Set up GlobalV
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
-        PARAM.input.out_app_flag = true;
         // set up test data
         std::string name = "test_wfc_nao_complex.txt";
         int ik = 0;
@@ -379,7 +442,6 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
         // Set up GlobalV
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
-        PARAM.input.out_app_flag = true;
         // set up test data
         std::string name = "test_wfc_nao_complex.dat";
         int ik = 0;

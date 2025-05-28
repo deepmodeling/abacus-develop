@@ -36,7 +36,7 @@ void Gint_vl::cal_hr_gint_()
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
-            if(biggrid->get_atoms().size() == 0)
+            if(biggrid->get_atoms().empty())
             {
                 continue;
             }
@@ -46,7 +46,7 @@ void Gint_vl::cal_hr_gint_()
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), *hr_gint_);
+            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
         }
     }
 }

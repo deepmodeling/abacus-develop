@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TOOLS_DIR="../../integrate/tools/"
+
 # The note for using the script.
 # input parameter: 
 	#'none': run and check for this example;
@@ -9,14 +11,14 @@
 if test -z $1
 then
 	echo "Run this example and check!"
-	./../tools/run_check.sh
+	$TOOLS_DIR/run_check.sh
 elif [ $1 == "debug" ]
 then
 	echo "Begin debug!"
-	cp ../tools/run_check.sh ./
-	cp ../tools/catch_properties.sh ./
+	cp $TOOLS_DIR/run_check.sh ./
+	cp $TOOLS_DIR/catch_properties.sh ./
 	./run_check.sh debug
 else
 	echo "Generate file result.ref ."
-	./../tools/run_check.sh $1
+	$TOOLS_DIR/run_check.sh $1
 fi

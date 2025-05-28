@@ -18,7 +18,7 @@ list(APPEND objects
     rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
-    read_wfc_to_rho.cpp
+    read_wf2rho_pw.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
@@ -33,6 +33,7 @@ list(APPEND objects
     para_json.cpp
     parse_args.cpp
     orb_io.cpp
+    filename.cpp
 )
 
 list(APPEND objects_advanced
