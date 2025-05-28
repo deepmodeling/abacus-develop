@@ -35,8 +35,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                const std::string& global_out_dir,
                const K_Vectors& kv,
                const int kpar,
-               const int my_pool,
-               const int my_rank)
+               const int my_pool)
 {
     // Get necessary parameters from kv
     const int nks = kv.get_nks();       // current process pool k-point count
@@ -117,9 +116,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 const int spin_index = kv.isk[ik];                  // spin index
                 const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
 
-                std::cout << " Calculating wave function norm for band " << ib + 1 << ", k-point " << k_number
-                          << ", spin " << spin_index + 1 << std::endl;
-
                 psi->fix_k(ik);
                 pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr_norm.data(), ik);
 
@@ -137,8 +133,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     rho_band_norm[spin_index][i] = std::abs(wfcr_norm[i]) * std::sqrt(w1);
                 }
 
-                std::cout << " Writing cube files...";
-
                 std::stringstream ss_file;
                 ss_file << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
 
@@ -150,8 +144,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               ss_file.str(),
                                               0.0,
                                               ucell);
-
-                std::cout << " Complete!" << std::endl;
             }
         }
 
@@ -178,15 +170,12 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 const int spin_index = kv.isk[ik];                  // spin index
                 const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
 
-                std::cout << " Calculating wave function real and imaginary part for band " << ib + 1 << ", k-point "
-                          << k_number << ", spin " << spin_index + 1 << std::endl;
-
                 psi->fix_k(ik);
                 pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfc_re_im.data(), ik);
 
                 // To ensure the normalization of charge density in multi-k calculation
                 double wg_sum_k = 0;
-                for (int ik_tmp = 0; ik_tmp < kv.get_nks() / nspin; ++ik_tmp)
+                for (int ik_tmp = 0; ik_tmp < nkstot / nspin; ++ik_tmp)
                 {
                     wg_sum_k += kv.wk[ik_tmp];
                 }
@@ -198,8 +187,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     rho_band_re[spin_index][i] = std::real(wfc_re_im[i]) * std::sqrt(w1);
                     rho_band_im[spin_index][i] = std::imag(wfc_re_im[i]) * std::sqrt(w1);
                 }
-
-                std::cout << " Writing cube files...";
 
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "real.cube";
@@ -224,8 +211,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               ss_imag.str(),
                                               0.0,
                                               ucell);
-
-                std::cout << " Complete!" << std::endl;
             }
         }
     }

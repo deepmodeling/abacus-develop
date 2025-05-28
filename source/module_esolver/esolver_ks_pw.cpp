@@ -979,8 +979,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                             PARAM.globalv.global_out_dir,
                             this->kv,
                             GlobalV::KPAR,
-                            GlobalV::MY_POOL,
-                            GlobalV::MY_RANK);
+                            GlobalV::MY_POOL);
     }
 
     //----------------------------------------------------------
