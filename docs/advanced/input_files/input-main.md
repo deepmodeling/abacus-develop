@@ -1638,6 +1638,7 @@ These variables are used to control the output of properties.
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
 ### out_dm
 
@@ -1651,6 +1652,7 @@ These variables are used to control the output of properties.
     - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
     - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dm1
 
@@ -1660,6 +1662,7 @@ These variables are used to control the output of properties.
   - nspin = 1: `dmrs1_nao.csr`;
   - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
 
 ### out_wfc_pw
 
@@ -1672,6 +1675,7 @@ These variables are used to control the output of properties.
   - 2: (binary format)
     - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
 - **Default**: 0
+- **NOTE**: In the 3.10-LTS version, the file names are OUT.${suffix}/WAVEFUNC${K}.dat, etc. 
 
 ### out_wfc_lcao
 
@@ -1689,7 +1693,8 @@ These variables are used to control the output of properties.
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
   Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: Flase
+- **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 
 ### out_dos
 
