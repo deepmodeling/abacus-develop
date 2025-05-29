@@ -17,7 +17,7 @@ class Gint_tau : public Gint
         double** tau)
         : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {};
     
-    void cal_gint() override;
+    void cal_gint();
     
     private:
     void init_dm_gint_();

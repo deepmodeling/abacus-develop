@@ -19,7 +19,7 @@ class Gint_rho_gpu: public Gint
         double **rho)
         : dm_vec_(dm_vec), nspin_(nspin), rho_(rho) {};
     
-    void cal_gint() override;
+    void cal_gint();
 
     private:
     void init_dm_gint_();

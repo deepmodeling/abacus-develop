@@ -26,7 +26,7 @@ class Gint_fvl_meta_gpu : public Gint
           isforce_(isforce), isstress_(isstress), fvl_(fvl), svl_(svl),
           dr3_(gint_info_->get_mgrid_volume()) {};
 
-    void cal_gint() override;
+    void cal_gint();
 
     private:
     void init_dm_gint_();

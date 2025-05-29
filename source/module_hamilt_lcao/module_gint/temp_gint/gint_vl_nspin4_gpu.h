@@ -18,7 +18,7 @@ class Gint_vl_nspin4_gpu : public Gint
         HContainer<std::complex<double>>* hR)
         : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
     
-    void cal_gint() override;
+    void cal_gint();
 
     private:
 
