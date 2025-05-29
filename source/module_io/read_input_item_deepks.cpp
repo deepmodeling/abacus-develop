@@ -48,6 +48,12 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_bandgap");
         item.annotation = ">0 for bandgap label";
         read_sync_int(input.deepks_bandgap);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_bandgap < 0 || para.input.deepks_bandgap > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "deepks_bandgap must be integer in [0, 3]");
+            }
+        };
         this->add_item(item);
     }
     {

@@ -359,7 +359,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // set the output
             const double sparse_threshold = 1e-10;
             const int precision = 8;
-            const std::string file_hrtot = PARAM.globalv.global_out_dir + (PARAM.inp.deepks_out_labels == 1 ? "deepks_hrtot.csr" : "hamiltonian_r.csr");
+            const std::string file_hrtot = PARAM.globalv.global_out_dir + (PARAM.inp.deepks_out_labels == 1 ? "deepks_hrtot.csr" : "deepks_hamiltonian_r.csr");
             hamilt::HContainer<TR>* hR_tot = (p_ham->getHR());
 
             if (rank == 0)

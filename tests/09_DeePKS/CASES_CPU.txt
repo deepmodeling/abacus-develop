@@ -21,5 +21,9 @@
 103_NO_KP_deepks_vdelta_1
 103_NO_GO_deepks_vdelta_2
 103_NO_KP_deepks_vdelta_2
+103_NO_GO_deepks_vdelta_r_1
+103_NO_KP_deepks_vdelta_r_1
+103_NO_GO_deepks_vdelta_r_2
+103_NO_KP_deepks_vdelta_r_2
 104_NO_GO_deepks_out_2
 104_NO_KP_deepks_out_2
