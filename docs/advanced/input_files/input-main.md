@@ -2167,8 +2167,11 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: int
 - **Availability**: numerical atomic orbital basis
-- **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
-  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output phialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0 (k space), ABACUS will output `deepks_hbase.npy`, `deepks_vdelta.npy` and `deepks_htot.npy`(htot=hbase+vdelta). When `deepks_out_labels` is true and `deepks_v_delta` < 0 (real space), ABACUS will output `deepks_hrtot.csr`, `deepks_hrdelta.csr`. Some more files output for different settings.
+  - `deepks_v_delta` = 1: `deepks_vdpre.npy`, which is used to calculate V_delta during DeePKS training.
+  - `deepks_v_delta` = 2: `deepks_phialpha.npy` and `deepks_gevdm.npy`, which can be used to calculate `deepks_vdpre.npy`. A recommanded method for memory saving.
+  - `deepks_v_delta` = -1: `deepks_vdrpre.npy`, which is used to calculate V_delta_R during DeePKS training.
+  - `deepks_v_delta` = -2: `deepks_phialpha_r.npy` and `deepks_gevdm.npy`, which can be used to calculate `deepks_vdrpre.npy`. A recommanded method for memory saving.
 - **Default**: 0
 
 ### deepks_out_unittest
