@@ -104,8 +104,6 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
         fi
         # For deepks_v_delta < 0
         if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
-            hrtotref=OUT.autotest/deepks_hrtot.csr.ref
-            hrtotcal=OUT.autotest/deepks_hrtot.csr
             python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8
             echo "deepks_hr_label_pass $?" >>$1
             python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8
