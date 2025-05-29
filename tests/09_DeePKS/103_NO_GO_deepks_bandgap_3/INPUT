@@ -21,4 +21,3 @@ deepks_scf          1
 deepks_model        ../Model_ProjOrb/model_lda_pbe_18.ptg
 deepks_out_labels   1
 deepks_bandgap      3
-deepks_band_range   -1 0

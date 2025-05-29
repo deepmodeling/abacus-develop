@@ -19,13 +19,13 @@ void ReadInput::item_deepks()
         read_sync_bool(input.deepks_scf);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
 #ifndef __DEEPKS
-            if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || PARAM.inp.deepks_bandgap
-                || PARAM.inp.deepks_v_delta)
+            if (para.input.deepks_scf || para.input.deepks_out_labels || para.input.deepks_bandgap
+                || para.input.deepks_v_delta)
             {
                 ModuleBase::WARNING_QUIT("Input_conv", "please compile with DeePKS");
             }
 #endif
-            // if (!PARAM.inp.deepks_scf && PARAM.inp.deepks_out_labels == 1)
+            // if (!para.input.deepks_scf && para.input.deepks_out_labels == 1)
             // {
             //     ModuleBase::WARNING_QUIT("Input_conv", "deepks_out_labels = 1 requires deepks_scf = 1");
             // }
@@ -58,6 +58,29 @@ void ReadInput::item_deepks()
             para.input.deepks_band_range[1] = std::stod(item.str_values[1]);
         };
         sync_intvec(input.deepks_band_range, 2, 0);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_bandgap == 1)
+            {
+                if (para.input.deepks_band_range[0] >= para.input.deepks_band_range[1])
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "deepks_band_range[0] must be smaller than deepks_band_range[1] for deepks_bandgap = 1.");
+                }
+            }
+            else if (para.input.deepks_bandgap == 2)
+            {
+                if (para.input.deepks_band_range[0] > para.input.deepks_band_range[1])
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "deepks_band_range[0] must be no more than deepks_band_range[1] for deepks_bandgap = 2.");
+                }
+            }
+            else
+            {
+                if (para.input.deepks_band_range[0] != -1 || para.input.deepks_band_range[1] != 0)
+                {
+                    ModuleBase::WARNING("ReadInput", "deepks_band_range is used for deepks_bandgap = 1/2. Ignore its setting for other cases.");
+                }
+            } 
+        };
         this->add_item(item);
     }
     {
