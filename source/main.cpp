@@ -12,8 +12,11 @@
 #include <omp.h>
 #endif
 
+#include <iostream>
+
 int main(int argc, char** argv)
 {
+    std::cout<<"test"<<std::endl;
     /*
     read the arguement in the command-line,
     with "abacus -v", the program exit and returns version info,
