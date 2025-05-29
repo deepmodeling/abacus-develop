@@ -44,8 +44,9 @@ public:
     void read_Hexxs_cereal(const std::string& file_name);
 
     std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
-
-    double& get_Eexx() const { return this->exx_ptr->Eexx; }
+    double &get_Eexx() const { return this->exx_ptr->Eexx; }
+    ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
+    ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
 
     // Processes in ESolver_KS_LCAO
     /// @brief Exx_LRI::init()
@@ -95,7 +96,7 @@ public:
                             const double& scf_ene_thr);
 
     /// @brief: in cal_exx_force: Exx_LRI::cal_exx_force()
-    void cal_exx_force(const double& omega, const double& lat0);
+    void cal_exx_force(const int& nat);
 
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
@@ -103,6 +104,7 @@ public:
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
+
 private:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
     Mix_DMk_2D mix_DMk_2D;

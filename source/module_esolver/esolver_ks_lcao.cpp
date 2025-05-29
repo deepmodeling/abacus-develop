@@ -327,8 +327,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->pw_rho,
                        this->solvent,
 #ifdef __EXX
-                       *this->exx_lri_double,
-                       *this->exx_lri_complex,
+                       *this->exd,
+                       *this->exc,
 #endif
                        &ucell.symm);
 
@@ -479,8 +479,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     this->gd
 #ifdef __EXX
                                     ,
-                                    this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-                                    this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+                                    this->exd ? &this->exd->get_Hexxs() : nullptr,
+                                    this->exc ? &this->exc->get_Hexxs() : nullptr
 #endif
         );
     }
@@ -508,8 +508,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             this->two_center_bundle_
 #ifdef __EXX
                                             ,
-                                            this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
-                                            this->exx_lri_complex ? &this->exx_lri_complex->Hexxs : nullptr
+                                            this->exd ? &this->exd->get_Hexxs() : nullptr,
+                                            this->exc ? &this->exc->get_Hexxs() : nullptr
 #endif
         );
     }

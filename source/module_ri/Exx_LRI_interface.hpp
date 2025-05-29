@@ -385,7 +385,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const double& omega, const double& lat0)
+void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
     if(!this->flag_finish.init || !this->flag_finish.ions)
@@ -393,7 +393,7 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const double& omega, const doubl
     if(!this->flag_finish.elec)
         { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 
-    this->exx_ptr->cal_exx_force(omega, lat0);
+    this->exx_ptr->cal_exx_force(nat);
 
     this->flag_finish.force = true;
 }
