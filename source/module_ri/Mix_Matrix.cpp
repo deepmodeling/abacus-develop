@@ -14,7 +14,6 @@
 template<>
 void Mix_Matrix<ModuleBase::matrix>::mix(const ModuleBase::matrix& data_in, const bool flag_restart)
 {
-	ModuleBase::TITLE("Mix_Matrix","mix");
 	if(separate_loop)
 	{
 			this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
@@ -40,7 +39,6 @@ void Mix_Matrix<ModuleBase::matrix>::mix(const ModuleBase::matrix& data_in, cons
 template<>
 void Mix_Matrix<ModuleBase::ComplexMatrix>::mix(const ModuleBase::ComplexMatrix& data_in, const bool flag_restart)
 {
-    ModuleBase::TITLE("Mix_Matrix", "mix");
     if (separate_loop)
     {
         this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
@@ -67,7 +65,6 @@ void Mix_Matrix<ModuleBase::ComplexMatrix>::mix(const ModuleBase::ComplexMatrix&
 template<>
 void Mix_Matrix<std::vector<double>>::mix(const std::vector<double>& data_in, const bool flag_restart)
 {
-    ModuleBase::TITLE("Mix_Matrix", "mix");
     if (separate_loop)
     {
         this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
@@ -93,7 +90,6 @@ void Mix_Matrix<std::vector<double>>::mix(const std::vector<double>& data_in, co
 template<>
 void Mix_Matrix<std::vector<std::complex<double>>>::mix(const std::vector<std::complex<double>>& data_in, const bool flag_restart)
 {
-    ModuleBase::TITLE("Mix_Matrix", "mix");
     if (separate_loop)
     {
         this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);

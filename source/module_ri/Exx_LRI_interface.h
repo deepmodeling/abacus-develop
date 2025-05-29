@@ -44,12 +44,19 @@ public:
     void read_Hexxs_cereal(const std::string& file_name);
 
     std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
-    
+
     double& get_Eexx() const { return this->exx_ptr->Eexx; }
 
     // Processes in ESolver_KS_LCAO
+    /// @brief Exx_LRI::init()
+    void init(const MPI_Comm &mpi_comm,
+              const UnitCell &ucell,
+              const K_Vectors &kv,
+              const LCAO_Orbitals& orb);
+
+    // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
-    /// since k-points are not reduced again after the variation of the cell and exx-symmetry must be consistent with k-points. 
+    /// since k-points are not reduced again after the variation of the cell and exx-symmetry must be consistent with k-points.
     /// In the future, we will reduce k-points again during cell-relax, then this setting can be moved to `exx_beforescf`.
     void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
 
@@ -58,23 +65,23 @@ public:
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
-                          const UnitCell& ucell, 
+                          const UnitCell& ucell,
                           const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
-                          const K_Vectors& kv, 
+                          const K_Vectors& kv,
                           const int& iter);
 
     /// @brief in hamilt2density: calculate Hexx and Eexx
     void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
 
     /// @brief in iter_finish: write Hexx, do something according to whether SCF is converged
-    void exx_iter_finish(const K_Vectors& kv, 
+    void exx_iter_finish(const K_Vectors& kv,
                          const UnitCell& ucell,
-                         hamilt::Hamilt<T>& hamilt, 
-                         elecstate::ElecState& elec, 
+                         hamilt::Hamilt<T>& hamilt,
+                         elecstate::ElecState& elec,
                          Charge_Mixing& chgmix,
-                         const double& scf_ene_thr, 
-                         int& iter, 
-                         const int istep, 
+                         const double& scf_ene_thr,
+                         int& iter,
+                         const int istep,
                          bool& conv_esolver);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
@@ -86,6 +93,13 @@ public:
                             const int& istep,
                             const double& etot,
                             const double& scf_ene_thr);
+
+    /// @brief: in cal_exx_force: Exx_LRI::cal_exx_force()
+    void cal_exx_force(const double& omega, const double& lat0);
+
+    /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
+    void cal_exx_stress(const double& omega, const double& lat0);
+
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
@@ -95,6 +109,16 @@ private:
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;
+
+    struct Flag_Finish
+    {
+        bool init = false;
+        bool ions = false;
+        bool elec = false;
+        bool force = false;
+        bool stress = false;
+    };
+    Flag_Finish flag_finish;
 };
 
 #include "Exx_LRI_interface.hpp"
