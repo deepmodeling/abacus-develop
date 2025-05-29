@@ -608,7 +608,7 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
-  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
   - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `istate.info`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
@@ -742,7 +742,7 @@ These variables are used to control parameters related to input files.
 ### read_file_dir
 
 - **Type**: String
-- **Description**: Indicates the location of files, such as electron density (`SPIN1_CHG.cube`), required as a starting point.
+- **Description**: Location of files, such as the electron density (`chgs1.cube`), required as a starting point.
   - Example: './' implies the files to be read are located in the working directory.
 - **Default**: OUT.$suffix
 
@@ -1602,13 +1602,10 @@ These variables are used to control the output of properties.
 - **Description**: 
   The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: SPIN1_CHG.cube;
-    - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
-    - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
-  - 2: On top of 1, also output the initial charge density. The files are named as:
-    - nspin = 1: SPIN1_CHG_INI.cube
-    - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
-    - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
+    - nspin = 1: `chgs1.cube`;
+    - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
+    - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
+  - 2: On top of 1, also output the initial charge density, the file names have suffix _ini, such as `chgs1_ini.cube`, etc.
   - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
     
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
@@ -1616,10 +1613,11 @@ These variables are used to control the output of properties.
   ---
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
-  If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
+  In EXX(exact exchange) calculations, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 
-  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
 
 ### out_pot
 

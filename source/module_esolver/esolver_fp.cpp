@@ -165,7 +165,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
                 ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->chr.rho_save[is],
                                               is,
@@ -176,9 +176,10 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                                               &(ucell),
                                               PARAM.inp.out_chg[1],
                                               1);
+
                 if (XC_Functional::get_ked_flag())
                 {
-                    fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
                     ModuleIO::write_vdata_palgrid(Pgrid,
                                                   this->chr.kin_r_save[is],
                                                   is,
@@ -339,7 +340,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "/chgs" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->chr.rho[is],
                                           is,
