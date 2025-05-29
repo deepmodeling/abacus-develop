@@ -151,7 +151,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             const bool flag_restart = (iter == 1) ? true : false;
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {
-                if(!this->flag_finish.init && !this->flag_finish.ions)
+                if(!this->flag_finish.init || !this->flag_finish.ions)
                     { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 
                 if (this->exx_spacegroup_symmetry)
@@ -335,7 +335,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         }
         else
         {
-            if(!this->flag_finish.init && !this->flag_finish.ions)
+            if(!this->flag_finish.init || !this->flag_finish.ions)
                 { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
 
             this->etot_last_outer_loop = etot;
@@ -388,7 +388,7 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const double& omega, const double& lat0)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
-    if(!this->flag_finish.init && !this->flag_finish.ions)
+    if(!this->flag_finish.init || !this->flag_finish.ions)
         { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
     if(!this->flag_finish.elec)
         { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
@@ -402,7 +402,7 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
-    if(!this->flag_finish.init && !this->flag_finish.ions)
+    if(!this->flag_finish.init || !this->flag_finish.ions)
         { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
     if(!this->flag_finish.elec)
         { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
