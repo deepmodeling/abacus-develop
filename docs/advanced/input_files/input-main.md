@@ -1605,7 +1605,11 @@ These variables are used to control the output of properties.
     - nspin = 1: `chgs1.cube`;
     - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
     - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
-  - 2: On top of 1, also output the initial charge density, the file names have suffix _ini, such as `chgs1_ini.cube`, etc.
+  Note that by using the Meta-GGA functional, additional files containing the kinetic energy density will be output with the following names:
+    - nspin = 1: `taus1.cube`;
+    - nspin = 2: `taus1.cube`, and `taus2.cube`;
+    - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
+  - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
   - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
     
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
