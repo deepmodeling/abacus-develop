@@ -731,8 +731,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->kv.get_nks(),
                               this->kv.isk,
                               this->kv.wk,
-                              this->pw_big->bz,
-                              this->pw_big->nbz,
                               this->chr.ngmc,
                               &ucell,
                               this->psi,
