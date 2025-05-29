@@ -91,14 +91,14 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
             echo "deepks_vdelta $deepks_vdelta" >>$1
             # For deepks_v_delta = 1
             if [ $deepks_v_delta -eq 1 ]; then
-                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy `
+                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy`
                 echo "deepks_vdp $deepks_vdp" >> $1
             fi
             # For deepks_v_delta = 2
             if [ $deepks_v_delta -eq 2 ]; then
-                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy `
+                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy`
                 echo "deepks_phialpha $deepks_phialpha" >> $1
-                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
+                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy`
                 echo "deepks_gevdm $deepks_gevdm" >> $1
             fi
         fi
@@ -110,14 +110,14 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
             echo "deepks_vdelta_r_pass $?" >>$1
             # For deepks_v_delta = -1
             if [ $deepks_v_delta -eq -1 ]; then
-                deepks_vdrp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdrpre.npy `
+                deepks_vdrp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdrpre.npy`
                 echo "deepks_vdrp $deepks_vdrp" >> $1
             fi
             # For deepks_v_delta = -2
             if [ $deepks_v_delta -eq -2 ]; then
-                deepks_phialpha_r=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha_r.npy `
+                deepks_phialpha_r=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha_r.npy`
                 echo "deepks_phialpha_r $deepks_phialpha_r" >> $1
-                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
+                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy`
                 echo "deepks_gevdm $deepks_gevdm" >> $1
             fi
         fi
