@@ -15,8 +15,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include <vector>
+#include "kernels/force_op.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -24,208 +23,6 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-
-// Data preparation function for Ewald parallel operator
-template <typename FPTYPE>
-void prepare_ew_parallel_data(const UnitCell& ucell,
-                              ModulePW::PW_Basis* rho_basis,
-                              const std::complex<double>* aux,
-                              const double alpha,
-                              const double fact,
-                              std::vector<FPTYPE>& gcar_flat,
-                              std::vector<FPTYPE>& tau_flat,
-                              std::vector<int>& iat2it_array,
-                              std::vector<FPTYPE>& it_facts,
-                              std::vector<int>& atom_na,
-                              std::vector<FPTYPE>& zv_values,
-                              std::vector<FPTYPE>& latvec_flat,
-                              std::vector<FPTYPE>& G_flat)
-{
-    const int nat = ucell.nat;
-    const int npw = rho_basis->npw;
-    const int ntype = ucell.ntype;
-    
-    // Prepare gcar_flat
-    gcar_flat.resize(npw * 3);
-    for (int ig = 0; ig < npw; ig++)
-    {
-        gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
-        gcar_flat[ig * 3 + 1] = static_cast<FPTYPE>(rho_basis->gcar[ig][1]);
-        gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
-    }
-    
-    // Prepare tau_flat and iat2it_array
-    tau_flat.resize(nat * 3);
-    iat2it_array.resize(nat);
-    int iat = 0;
-    for (int it = 0; it < ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].x);
-            tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].y);
-            tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].z);
-            iat2it_array[iat] = it;
-            iat++;
-        }
-    }
-    
-    // Prepare it_facts
-    it_facts.resize(nat);
-    iat = 0;
-    for (int it = 0; it < ntype; it++)
-    {
-        double zv;
-        if (PARAM.inp.use_paw)
-        {
-#ifdef USE_PAW
-            zv = GlobalC::paw_cell.get_val(it);
-#else
-            zv = ucell.atoms[it].ncpp.zv;
-#endif
-        }
-        else
-        {
-            zv = ucell.atoms[it].ncpp.zv;
-        }
-        
-        const FPTYPE it_fact = static_cast<FPTYPE>(zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact);
-        
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            it_facts[iat] = it_fact;
-            iat++;
-        }
-    }
-    
-    // Prepare atom_na
-    atom_na.resize(ntype);
-    for (int it = 0; it < ntype; it++)
-    {
-        atom_na[it] = ucell.atoms[it].na;
-    }
-    
-    // Prepare zv_values
-    zv_values.resize(ntype);
-    for (int it = 0; it < ntype; it++)
-    {
-        if (PARAM.inp.use_paw)
-        {
-#ifdef USE_PAW
-            zv_values[it] = static_cast<FPTYPE>(GlobalC::paw_cell.get_val(it));
-#else
-            zv_values[it] = static_cast<FPTYPE>(ucell.atoms[it].ncpp.zv);
-#endif
-        }
-        else
-        {
-            zv_values[it] = static_cast<FPTYPE>(ucell.atoms[it].ncpp.zv);
-        }
-    }
-    
-    // Prepare latvec_flat (row-major order)
-    latvec_flat.resize(9);
-    latvec_flat[0] = static_cast<FPTYPE>(ucell.latvec.e11);
-    latvec_flat[1] = static_cast<FPTYPE>(ucell.latvec.e12);
-    latvec_flat[2] = static_cast<FPTYPE>(ucell.latvec.e13);
-    latvec_flat[3] = static_cast<FPTYPE>(ucell.latvec.e21);
-    latvec_flat[4] = static_cast<FPTYPE>(ucell.latvec.e22);
-    latvec_flat[5] = static_cast<FPTYPE>(ucell.latvec.e23);
-    latvec_flat[6] = static_cast<FPTYPE>(ucell.latvec.e31);
-    latvec_flat[7] = static_cast<FPTYPE>(ucell.latvec.e32);
-    latvec_flat[8] = static_cast<FPTYPE>(ucell.latvec.e33);
-    
-    // Prepare G_flat (row-major order)
-    G_flat.resize(9);
-    G_flat[0] = static_cast<FPTYPE>(ucell.G.e11);
-    G_flat[1] = static_cast<FPTYPE>(ucell.G.e12);
-    G_flat[2] = static_cast<FPTYPE>(ucell.G.e13);
-    G_flat[3] = static_cast<FPTYPE>(ucell.G.e21);
-    G_flat[4] = static_cast<FPTYPE>(ucell.G.e22);
-    G_flat[5] = static_cast<FPTYPE>(ucell.G.e23);
-    G_flat[6] = static_cast<FPTYPE>(ucell.G.e31);
-    G_flat[7] = static_cast<FPTYPE>(ucell.G.e32);
-    G_flat[8] = static_cast<FPTYPE>(ucell.G.e33);
-}
-
-// Data preparation function for local force sincos operator
-template <typename FPTYPE>
-void prepare_loc_sincos_data(const UnitCell& ucell,
-                             ModulePW::PW_Basis* rho_basis,
-                             const ModuleBase::matrix& vloc,
-                             const std::complex<double>* aux,
-                             std::vector<FPTYPE>& gcar_flat,
-                             std::vector<FPTYPE>& tau_flat,
-                             std::vector<int>& iat2it_array,
-                             std::vector<FPTYPE>& vloc_factors)
-{
-    const int nat = ucell.nat;
-    const int npw = rho_basis->npw;
-    
-    // Prepare gcar_flat
-    gcar_flat.resize(npw * 3);
-    for (int ig = 0; ig < npw; ig++)
-    {
-        gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
-        gcar_flat[ig * 3 + 1] = static_cast<FPTYPE>(rho_basis->gcar[ig][1]);
-        gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
-    }
-    
-    // Prepare tau_flat and iat2it_array
-    tau_flat.resize(nat * 3);
-    iat2it_array.resize(nat);
-    int iat = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].x);
-            tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].y);
-            tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia].z);
-            iat2it_array[iat] = it;
-            iat++;
-        }
-    }
-    
-    // Prepare vloc_factors: vloc(it, ig2igg[ig]) for each G-vector and atom type
-    vloc_factors.resize(npw * ucell.ntype);
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ig = 0; ig < npw; ig++)
-        {
-            vloc_factors[it * npw + ig] = static_cast<FPTYPE>(vloc(it, rho_basis->ig2igg[ig]));
-        }
-    }
-}
-
-// Data copy back function for local force sincos operator
-template <typename FPTYPE>
-void copy_back_loc_force_data(const FPTYPE* force,
-                              const int nat,
-                              const FPTYPE& scale_factor,
-                              ModuleBase::matrix& forcelc)
-{
-    for (int iat = 0; iat < nat; iat++)
-    {
-        forcelc(iat, 0) = static_cast<double>(force[iat * 3 + 0] * scale_factor);
-        forcelc(iat, 1) = static_cast<double>(force[iat * 3 + 1] * scale_factor);
-        forcelc(iat, 2) = static_cast<double>(force[iat * 3 + 2] * scale_factor);
-    }
-}
-
-// Data copy back function for Ewald parallel operator
-template <typename FPTYPE>
-void copy_back_ew_force_data(const FPTYPE* force,
-                             const int nat,
-                             ModuleBase::matrix& forceion)
-{
-    for (int iat = 0; iat < nat; iat++)
-    {
-        forceion(iat, 0) = static_cast<double>(force[iat * 3 + 0]);
-        forceion(iat, 1) = static_cast<double>(force[iat * 3 + 1]);
-        forceion(iat, 2) = static_cast<double>(force[iat * 3 + 2]);
-    }
-}
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
@@ -735,39 +532,125 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-    // Prepare data for the sincos operator
-    std::vector<FPTYPE> gcar_flat, tau_flat, vloc_factors;
-    std::vector<int> iat2it_array;
-    prepare_loc_sincos_data<FPTYPE>(ucell, rho_basis, vloc, aux,
-                                    gcar_flat, tau_flat, iat2it_array, vloc_factors);
-
-    // Prepare force array for the operator
-    std::vector<FPTYPE> force_flat(this->nat * 3, 0.0);
-
-    // Convert aux to FPTYPE complex array
-    std::vector<std::complex<FPTYPE>> aux_fptype(rho_basis->npw);
-    for (int ig = 0; ig < rho_basis->npw; ig++)
-    {
-        aux_fptype[ig] = std::complex<FPTYPE>(static_cast<FPTYPE>(aux[ig].real()),
-                                              static_cast<FPTYPE>(aux[ig].imag()));
+    // =============== GPU/CPU异构优化：使用sincos op替换原循环 ===============
+    
+    
+    // 准备原子相关数据：按照全局原子索引iat顺序
+    std::vector<FPTYPE> tau_flat(this->nat * 3);
+    std::vector<int> iat2it_host(this->nat);
+    std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
+    
+    // 按照原始代码逻辑：遍历全局原子索引iat，通过查表获取(it,ia)
+    for (int iat = 0; iat < this->nat; iat++) {
+        int it = ucell.iat2it[iat];  // 查表获取原子类型
+        int ia = ucell.iat2ia[iat];  // 查表获取该类型内的原子索引
+        
+        tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
+        tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]);
+        tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][2]);
+        iat2it_host[iat] = it;
     }
-
-    // Call the sincos operator
-    hamilt::cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_CPU> sincos_op;
-    sincos_op(this->ctx,
-              this->nat,
-              rho_basis->npw,
-              ucell.ntype,
-              gcar_flat.data(),
-              tau_flat.data(),
-              iat2it_array.data(),
-              vloc_factors.data(),
-              aux_fptype.data(),
-              force_flat.data());
-
-    // Copy back the results with scaling
+    
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
+        gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
+        gcar_flat[ig * 3 + 1] = static_cast<FPTYPE>(rho_basis->gcar[ig][1]);
+        gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
+    }
+    
+    // 重新计算vloc_factors考虑所有原子类型
+    std::vector<FPTYPE> vloc_per_type_host(ucell.ntype * rho_basis->npw);
+    for (int it = 0; it < ucell.ntype; it++) {
+        for (int ig = 0; ig < rho_basis->npw; ig++) {
+            vloc_per_type_host[it * rho_basis->npw + ig] = static_cast<FPTYPE>(vloc(it, rho_basis->ig2igg[ig]));
+        }
+    }
+    
+    // 转换aux到FPTYPE类型
+    std::vector<std::complex<FPTYPE>> aux_fptype(rho_basis->npw);
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
+        aux_fptype[ig] = static_cast<std::complex<FPTYPE>>(aux[ig]);
+    }
+    
+    // 设备端内存和指针设置（根据设备类型分支）
+    FPTYPE* d_gcar = gcar_flat.data();
+    FPTYPE* d_tau = tau_flat.data();
+    int* d_iat2it = iat2it_host.data();
+    FPTYPE* d_vloc_per_type = vloc_per_type_host.data();
+    std::complex<FPTYPE>* d_aux = aux_fptype.data();
+    FPTYPE* d_force = nullptr;
+    std::vector<FPTYPE> force_host(this->nat * 3);
+    
+    if (this->device == base_device::GpuDevice)
+    {
+        d_gcar = nullptr;
+        d_tau = nullptr;
+        d_iat2it = nullptr;
+        d_vloc_per_type = nullptr;
+        d_aux = nullptr;
+        
+        resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
+        resmem_var_op()(this->ctx, d_tau, this->nat * 3);
+        resmem_int_op()(this->ctx, d_iat2it, this->nat);
+        resmem_var_op()(this->ctx, d_vloc_per_type, ucell.ntype * rho_basis->npw);
+        resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
+        resmem_var_op()(this->ctx, d_force, this->nat * 3);
+        
+        // 数据传输到设备
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
+        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, d_iat2it, iat2it_host.data(), this->nat);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_vloc_per_type, vloc_per_type_host.data(), ucell.ntype * rho_basis->npw);
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
+        
+        // 初始化force为0
+        base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_force, 0.0, this->nat * 3);
+    }
+    else
+    {
+        d_force = force_host.data();
+        // 对于CPU，直接初始化为0
+        std::fill(force_host.begin(), force_host.end(), static_cast<FPTYPE>(0.0));
+    }
+    
+    // 计算缩放因子
     const FPTYPE scale_factor = static_cast<FPTYPE>(ucell.tpiba * ucell.omega);
-    copy_back_loc_force_data<FPTYPE>(force_flat.data(), this->nat, scale_factor, forcelc);
+    
+    // 调用op进行sincos计算
+    hamilt::cal_force_loc_sincos_op<FPTYPE, Device>()(
+        this->ctx,
+        this->nat,
+        rho_basis->npw,
+        ucell.ntype,
+        d_gcar,
+        d_tau,
+        d_iat2it,
+        d_vloc_per_type,
+        d_aux,
+        scale_factor,
+        d_force
+    );
+    
+    // 根据设备类型处理结果
+    if (this->device == base_device::GpuDevice)
+    {
+        // 结果传回CPU
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force_host.data(), d_force, this->nat * 3);
+        
+        // 清理设备内存
+        delmem_var_op()(this->ctx, d_gcar);
+        delmem_var_op()(this->ctx, d_tau);
+        delmem_int_op()(this->ctx, d_iat2it);
+        delmem_var_op()(this->ctx, d_vloc_per_type);
+        delmem_complex_op()(this->ctx, d_aux);
+        delmem_var_op()(this->ctx, d_force);
+    }
+    
+    // 将结果写入forcelc矩阵
+    for (int iat = 0; iat < this->nat; iat++) {
+        forcelc(iat, 0) = static_cast<double>(force_host[iat * 3 + 0]);
+        forcelc(iat, 1) = static_cast<double>(force_host[iat * 3 + 1]);
+        forcelc(iat, 2) = static_cast<double>(force_host[iat * 3 + 2]);
+    }
 
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
@@ -879,48 +762,233 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         aux[rho_basis->ig_gge0] = std::complex<double>(0.0, 0.0);
     }
 
-    // Prepare data for the parallel operator
-    std::vector<FPTYPE> gcar_flat, tau_flat, it_facts, zv_values, latvec_flat, G_flat;
-    std::vector<int> iat2it_array, atom_na;
-    prepare_ew_parallel_data<FPTYPE>(ucell, rho_basis, aux, alpha, fact,
-                                     gcar_flat, tau_flat, iat2it_array, it_facts,
-                                     atom_na, zv_values, latvec_flat, G_flat);
-
-    // Prepare force array for the operator
-    std::vector<FPTYPE> force_flat(this->nat * 3, 0.0);
-
-    // Convert aux to FPTYPE complex array
+    // =============== 第一步：G空间sincos计算（在OpenMP区域外）===============
+    
+    // 预计算每个原子的it_fact和相关数据：按照全局原子索引iat顺序
+    std::vector<FPTYPE> it_facts_host(this->nat);
+    std::vector<FPTYPE> tau_flat(this->nat * 3);
+    std::vector<int> iat2it_host(this->nat);
+    
+    // 按照原始代码逻辑：遍历全局原子索引iat，通过查表获取(it,ia)
+    for (int iat = 0; iat < this->nat; iat++) {
+        int it = ucell.iat2it[iat];  // 查表获取原子类型
+        int ia = ucell.iat2ia[iat];  // 查表获取该类型内的原子索引
+        
+        double zv;
+        if (PARAM.inp.use_paw)
+        {
+#ifdef USE_PAW
+            zv = GlobalC::paw_cell.get_val(it);
+#endif
+        }
+        else
+        {
+            zv = ucell.atoms[it].ncpp.zv;
+        }
+        
+        it_facts_host[iat] = static_cast<FPTYPE>(zv * ModuleBase::e2 * ucell.tpiba * 
+                                                ModuleBase::TWO_PI / ucell.omega * fact);
+        
+        tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
+        tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]); 
+        tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][2]);
+        iat2it_host[iat] = it;
+    }
+    
+    // 准备设备端数据
+    std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
+        gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
+        gcar_flat[ig * 3 + 1] = static_cast<FPTYPE>(rho_basis->gcar[ig][1]);
+        gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
+    }
+    
+    // 转换aux到FPTYPE类型
     std::vector<std::complex<FPTYPE>> aux_fptype(rho_basis->npw);
-    for (int ig = 0; ig < rho_basis->npw; ig++)
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
+        aux_fptype[ig] = static_cast<std::complex<FPTYPE>>(aux[ig]);
+    }
+    
+    // 设备端内存和指针设置（根据设备类型分支）
+    FPTYPE* d_gcar = gcar_flat.data();
+    FPTYPE* d_tau = tau_flat.data();
+    int* d_iat2it = iat2it_host.data();
+    FPTYPE* d_it_facts = it_facts_host.data();
+    std::complex<FPTYPE>* d_aux = aux_fptype.data();
+    FPTYPE* d_force_g = nullptr;
+    std::vector<FPTYPE> force_g_host(this->nat * 3);
+    
+    if (this->device == base_device::GpuDevice)
     {
-        aux_fptype[ig] = std::complex<FPTYPE>(static_cast<FPTYPE>(aux[ig].real()),
-                                              static_cast<FPTYPE>(aux[ig].imag()));
+        d_gcar = nullptr;
+        d_tau = nullptr;
+        d_iat2it = nullptr;
+        d_it_facts = nullptr;
+        d_aux = nullptr;
+        
+        resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
+        resmem_var_op()(this->ctx, d_tau, this->nat * 3);
+        resmem_int_op()(this->ctx, d_iat2it, this->nat);
+        resmem_var_op()(this->ctx, d_it_facts, this->nat);
+        resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
+        resmem_var_op()(this->ctx, d_force_g, this->nat * 3);
+        
+        // 数据传输
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
+        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, d_iat2it, iat2it_host.data(), this->nat);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_it_facts, it_facts_host.data(), this->nat);
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
+        
+        // 初始化force为0
+        base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_force_g, 0.0, this->nat * 3);
+    }
+    else
+    {
+        d_force_g = force_g_host.data();
+        // 对于CPU，直接初始化为0
+        std::fill(force_g_host.begin(), force_g_host.end(), static_cast<FPTYPE>(0.0));
+    }
+    
+    // 调用op处理G空间sincos计算（在OpenMP区域外，无冲突）
+    hamilt::cal_force_ew_sincos_op<FPTYPE, Device>()(
+        this->ctx,
+        this->nat,
+        rho_basis->npw,
+        rho_basis->ig_gge0,  // G=0项索引，op内部会自动跳过
+        d_gcar,
+        d_tau,
+        d_iat2it,
+        d_it_facts,
+        d_aux,
+        d_force_g
+    );
+    
+    // 根据设备类型处理结果
+    if (this->device == base_device::GpuDevice)
+    {
+        // 将G空间结果传回CPU
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force_g_host.data(), d_force_g, this->nat * 3);
+        
+        // 清理设备内存
+        delmem_var_op()(this->ctx, d_gcar);
+        delmem_var_op()(this->ctx, d_tau);
+        delmem_int_op()(this->ctx, d_iat2it);
+        delmem_var_op()(this->ctx, d_it_facts);
+        delmem_complex_op()(this->ctx, d_aux);
+        delmem_var_op()(this->ctx, d_force_g);
+    }
+    
+    // 累加到forceion
+    for (int iat = 0; iat < this->nat; iat++) {
+        forceion(iat, 0) += static_cast<double>(force_g_host[iat * 3 + 0]);
+        forceion(iat, 1) += static_cast<double>(force_g_host[iat * 3 + 1]); 
+        forceion(iat, 2) += static_cast<double>(force_g_host[iat * 3 + 2]);
     }
 
-    // Call the parallel operator
-    hamilt::cal_force_ew_parallel_op<FPTYPE, base_device::DEVICE_CPU> parallel_op;
-    parallel_op(this->ctx,
-                this->nat,
-                rho_basis->npw,
-                ucell.ntype,
-                rho_basis->ig_gge0,
-                gcar_flat.data(),
-                tau_flat.data(),
-                iat2it_array.data(),
-                it_facts.data(),
-                atom_na.data(),
-                zv_values.data(),
-                aux_fptype.data(),
-                static_cast<FPTYPE>(alpha),
-                static_cast<FPTYPE>(fact),
-                static_cast<FPTYPE>(ucell.lat0),
-                latvec_flat.data(),
-                G_flat.data(),
-                PARAM.inp.use_paw,
-                force_flat.data());
+    // =============== 第二步：实空间计算（保留原OpenMP结构）===============
 
-    // Copy back the results
-    copy_back_ew_force_data<FPTYPE>(force_flat.data(), this->nat, forceion);
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        int num_threads = omp_get_num_threads();
+        int thread_id = omp_get_thread_num();
+#else
+    int num_threads = 1;
+    int thread_id = 0;
+#endif
+
+        /* Here is task distribution for multi-thread,
+            0. atom will be iterated both in main nat loop and the loop in `if (rho_basis->ig_gge0 >= 0)`.
+                To avoid syncing, we must calculate work range of each thread by our self
+            1. Calculate the iat range [iat_beg, iat_end) by each thread
+                a. when it is single thread stage, [iat_beg, iat_end) will be [0, nat)
+            2. each thread iterate atoms form `iat_beg` to `iat_end-1`
+        */
+        int iat_beg, iat_end;
+        int it_beg, ia_beg;
+        ModuleBase::TASK_DIST_1D(num_threads, thread_id, this->nat, iat_beg, iat_end);
+        iat_end = iat_beg + iat_end;
+        ucell.iat2iait(iat_beg, &ia_beg, &it_beg);
+
+        // 只保留实空间相互作用计算（means that the processor contains G=0 term）
+        if (rho_basis->ig_gge0 >= 0)
+        {
+            double rmax = 5.0 / (sqrt(alpha) * ucell.lat0);
+            int nrm = 0;
+
+            // output of rgen: the number of vectors in the sphere
+            const int mxr = 200;
+            // the maximum number of R vectors included in r
+            ModuleBase::Vector3<double>* r = new ModuleBase::Vector3<double>[mxr];
+            double* r2 = new double[mxr];
+            ModuleBase::GlobalFunc::ZEROS(r2, mxr);
+            int* irr = new int[mxr];
+            ModuleBase::GlobalFunc::ZEROS(irr, mxr);
+            // the square modulus of R_j-tau_s-tau_s'
+
+            int iat1 = iat_beg;
+            int T1 = it_beg;
+            int I1 = ia_beg;
+            const double sqa = sqrt(alpha);
+            const double sq8a_2pi = sqrt(8.0 * alpha / ModuleBase::TWO_PI);
+
+            // iterating atoms.
+            // do not need to sync threads because task range of each thread is isolated
+            while (iat1 < iat_end)
+            {
+                int iat2 = 0; // mohan fix bug 2011-06-07
+                int I2 = 0;
+                int T2 = 0;
+                while (iat2 < this->nat)
+                {
+                    if (iat1 != iat2 && ucell.atoms[T2].na != 0 && ucell.atoms[T1].na != 0)
+                    {
+                        ModuleBase::Vector3<double> d_tau
+                            = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
+                        H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
+
+                        for (int n = 0; n < nrm; n++)
+                        {
+                            const double rr = sqrt(r2[n]) * ucell.lat0;
+
+                            double factor;
+                            if (PARAM.inp.use_paw)
+                            {
+#ifdef USE_PAW
+                                factor = GlobalC::paw_cell.get_val(T1) * GlobalC::paw_cell.get_val(T2) * ModuleBase::e2
+                                         / (rr * rr)
+                                         * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
+                                         * ucell.lat0;
+#endif
+                            }
+                            else
+                            {
+                                factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
+                                         * ModuleBase::e2 / (rr * rr)
+                                         * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
+                                         * ucell.lat0;
+                            }
+
+                            forceion(iat1, 0) -= factor * r[n].x;
+                            forceion(iat1, 1) -= factor * r[n].y;
+                            forceion(iat1, 2) -= factor * r[n].z;
+                        }
+                    }
+                    ++iat2;
+                    ucell.step_iait(&I2, &T2);
+                } // atom b
+                ++iat1;
+                ucell.step_iait(&I1, &T1);
+            } // atom a
+
+            delete[] r;
+            delete[] r2;
+            delete[] irr;
+        }
+#ifdef _OPENMP
+    }
+#endif
 
     Parallel_Reduce::reduce_pool(forceion.c, forceion.nr * forceion.nc);
 
