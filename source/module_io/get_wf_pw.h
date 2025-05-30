@@ -28,7 +28,6 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                const int nxyz,
                UnitCell* ucell,
                const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
                const Device* ctx,
                const Parallel_Grid& pgrid,
@@ -120,10 +119,20 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr_norm.data(), ik);
 
                 // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0;
-                for (int ik_tmp = 0; ik_tmp < nkstot / nspin; ++ik_tmp)
+                double wg_sum_k = 0.0;
+                if (nspin == 1)
                 {
-                    wg_sum_k += kv.wk[ik_tmp];
+                    wg_sum_k = 2.0;
+                }
+                else if (nspin == 2)
+                {
+                    wg_sum_k = 1.0;
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
+                                             "Real space wavefunction output currently do not support noncollinear "
+                                             "polarized calculation (nspin = 4)!");
                 }
 
                 double w1 = static_cast<double>(wg_sum_k / ucell->omega);
@@ -177,10 +186,20 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfc_re_im.data(), ik);
 
                 // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0;
-                for (int ik_tmp = 0; ik_tmp < nkstot / nspin; ++ik_tmp)
+                double wg_sum_k = 0.0;
+                if (nspin == 1)
                 {
-                    wg_sum_k += kv.wk[ik_tmp];
+                    wg_sum_k = 2.0;
+                }
+                else if (nspin == 2)
+                {
+                    wg_sum_k = 1.0;
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
+                                             "Real space wavefunction output currently do not support noncollinear "
+                                             "polarized calculation (nspin = 4)!");
                 }
 
                 double w1 = static_cast<double>(wg_sum_k / ucell->omega);

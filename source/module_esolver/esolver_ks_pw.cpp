@@ -728,9 +728,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->pw_rhod->ny,
                               this->pw_rhod->nz,
                               this->pw_rhod->nxyz,
-                              this->kv.get_nks(),
-                              this->kv.isk,
-                              this->kv.wk,
                               this->chr.ngmc,
                               &ucell,
                               this->psi,
@@ -739,7 +736,11 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->ctx,
                               this->Pgrid,
                               PARAM.globalv.global_out_dir,
-                              PARAM.inp.if_separate_k);
+                              PARAM.inp.if_separate_k,
+                              this->kv,
+                              GlobalV::KPAR,
+                              GlobalV::MY_POOL,
+                              &this->chr);
     }
 
     // tmp 2025-05-17, mohan note
@@ -970,7 +971,6 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                             this->pw_rhod->nxyz,
                             &ucell,
                             this->psi,
-                            this->pw_rhod,
                             this->pw_wfc,
                             this->ctx,
                             this->Pgrid,
