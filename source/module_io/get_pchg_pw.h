@@ -170,6 +170,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     }
                 }
 
+#ifdef __MPI
                 // Reduce the charge density across all pools if kpar > 1
                 if (kpar > 1 && chg != nullptr)
                 {
@@ -178,6 +179,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                         chg->reduce_diff_pools(rho_band[is].data());
                     }
                 }
+#endif
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
                 std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
@@ -210,10 +212,10 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
                     ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell);
                 }
-            }
-        }
-    }
-}
+            } // else if_separate_k is false
+        } // end of ib loop over nbands
+    } // end of ip loop over kpar
+} // get_pchg_pw
 } // namespace ModuleIO
 
 #endif // GET_PCHG_PW_H
