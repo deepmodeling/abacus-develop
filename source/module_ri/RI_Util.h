@@ -6,6 +6,8 @@
 #ifndef RI_UTIL_H
 #define RI_UTIL_H
 
+#include "module_hamilt_general/module_xc/exx_info.h"
+
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>
 
@@ -56,6 +58,11 @@ namespace RI_Util
                 m_new(ir, ic) = RI::Global_Func::convert<Tdata>(m_old[ir * nc + ic]);
         return m_new;
     }
+
+	std::map<std::string,double> get_ccp_parameter(
+		const Exx_Info::Exx_Info_RI &info,
+		const double volumn,
+		const int nkstot);
 }
 
 #include "RI_Util.hpp"
