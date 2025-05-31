@@ -26,9 +26,9 @@
 #include <string>
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, 
+void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 						  const UnitCell &ucell,
-						  const K_Vectors &kv_in, 
+						  const K_Vectors &kv_in,
 						  const LCAO_Orbitals& orb)
 {
 	ModuleBase::TITLE("Exx_LRI","init");
@@ -130,7 +130,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);	
+	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
@@ -237,7 +237,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
-	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");	
+	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
 }
 
 template<typename Tdata>
@@ -283,11 +283,6 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 	ModuleBase::TITLE("Exx_LRI","cal_exx_force");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
 
-    if (!this->exx_lri.flag_finish.D)
-    {
-        ModuleBase::WARNING_QUIT("Force_Stress_LCAO", "Cannot calculate EXX force when the first PBE loop is not converged.");
-    }
-
 	this->force_exx.create(nat, Ndim);
 	for(int is=0; is<PARAM.inp.nspin; ++is)
 	{
@@ -328,6 +323,7 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
+/*
 template<typename Tdata>
 std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
 {
@@ -341,5 +337,6 @@ std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
 	}
 	return abfs_nchis;
 }
+*/
 
 #endif
