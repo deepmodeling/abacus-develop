@@ -52,6 +52,61 @@ void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
 }
 
 template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_ions");
+    if(!this->flag_finish.init)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_ions(ucell, write_cv);
+
+    this->flag_finish.ions = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+                                               const UnitCell& ucell,
+                                               const Parallel_Orbitals& pv,
+                                               const ModuleSymmetry::Symmetry_rotation* p_symrot)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_elec");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_elec(Ds, ucell, pv, p_symrot);
+
+    this->flag_finish.elec = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+    if(!this->flag_finish.elec)
+        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_force(nat);
+
+    this->flag_finish.force = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+    if(!this->flag_finish.elec)
+        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_stress(omega, lat0);
+
+    this->flag_finish.stress = true;
+}
+
+template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
@@ -102,10 +157,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             }
         }
 
-        if(!this->flag_finish.init)
-            { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-        this->exx_ptr->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
-        this->flag_finish.ions = true;
+        this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
     }
 
     if (Exx_Abfs::Jle::generate_matrix)
@@ -124,11 +176,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
         else
             {this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
-        if(GlobalC::exx_info.info_global.separate_loop) {
-            this->mix_DMk_2D.set_mixing(nullptr);
-        } else {
-            this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
-        }
+
+        if(GlobalC::exx_info.info_global.separate_loop)
+            { this->mix_DMk_2D.set_mixing(nullptr); }
+        else
+            { this->mix_DMk_2D.set_mixing(chgmix.get_mixing()); }
         // for exx two_level scf
         this->two_level_step = 0;
     }
@@ -151,24 +203,19 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             const bool flag_restart = (iter == 1) ? true : false;
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {
-                if(!this->flag_finish.init || !this->flag_finish.ions)
-                    { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-
                 if (this->exx_spacegroup_symmetry)
                     { this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), *dm_in.get_paraV_pointer()), flag_restart); }
                 else
                     { this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); }
-                const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
+                const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
                     Ds = PARAM.globalv.gamma_only_local
                         ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin)
                         : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin, this->exx_spacegroup_symmetry);
 
                 if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
-                    { this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); }
+                    { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); }
                 else
-                    { this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); }
-
-                this->flag_finish.elec = true;
+                    { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); }
             };
 
             if(istep > 0 && flag_restart)
@@ -335,9 +382,6 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         }
         else
         {
-            if(!this->flag_finish.init || !this->flag_finish.ions)
-                { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-
             this->etot_last_outer_loop = etot;
             // update exx and redo scf
             if (this->two_level_step == 0)
@@ -361,16 +405,11 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin, this->exx_spacegroup_symmetry);
 
             if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
-            {
-                this->exx_ptr->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symrot_);
-            }
+                { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symrot_); }
             else
-            {
-                this->exx_ptr->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());    // restore DM but not Hexx
-            }
+                { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer()); }    // restore DM but not Hexx
             iter = 0;
             this->two_level_step++;
-            this->flag_finish.elec = true;
 
             timeval t_end;       gettimeofday(&t_end, nullptr);
             std::cout << "and rerun SCF\t"
@@ -382,34 +421,6 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     }   // if(GlobalC::exx_info.info_global.separate_loop)
     restart_reset();
     return true;
-}
-
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
-{
-    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
-    if(!this->flag_finish.init || !this->flag_finish.ions)
-        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-    if(!this->flag_finish.elec)
-        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-
-    this->exx_ptr->cal_exx_force(nat);
-
-    this->flag_finish.force = true;
-}
-
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
-{
-    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
-    if(!this->flag_finish.init || !this->flag_finish.ions)
-        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-    if(!this->flag_finish.elec)
-        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-
-    this->exx_ptr->cal_exx_stress(omega, lat0);
-
-    this->flag_finish.stress = true;
 }
 
 #endif

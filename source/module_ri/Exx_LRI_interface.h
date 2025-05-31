@@ -31,8 +31,9 @@ template<typename T, typename Tdata>
 class Exx_LRI_Interface
 {
 public:
+    using TA = int;
     using TC = std::array<int, 3>;
-    using TAC = std::pair<int, TC>;
+    using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
     /// @param exx_ptr
@@ -43,17 +44,32 @@ public:
     void write_Hexxs_cereal(const std::string& file_name) const;
     void read_Hexxs_cereal(const std::string& file_name);
 
-    std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
 
     // Processes in ESolver_KS_LCAO
-    /// @brief Exx_LRI::init()
+    /// @brief in init: Exx_LRI::init()
     void init(const MPI_Comm &mpi_comm,
               const UnitCell &ucell,
               const K_Vectors &kv,
               const LCAO_Orbitals& orb);
+
+    /// @brief: in cal_exx_ions: Exx_LRI::cal_exx_ions()
+    void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
+
+    /// @brief: in cal_exx_elec: Exx_LRI::cal_exx_elec()
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+                      const UnitCell& ucell,
+                      const Parallel_Orbitals& pv,
+                      const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
+
+    /// @brief: in cal_exx_force: Exx_LRI::cal_exx_force()
+    void cal_exx_force(const int& nat);
+
+    /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
+    void cal_exx_stress(const double& omega, const double& lat0);
 
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
@@ -94,12 +110,6 @@ public:
                             const int& istep,
                             const double& etot,
                             const double& scf_ene_thr);
-
-    /// @brief: in cal_exx_force: Exx_LRI::cal_exx_force()
-    void cal_exx_force(const int& nat);
-
-    /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
-    void cal_exx_stress(const double& omega, const double& lat0);
 
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
