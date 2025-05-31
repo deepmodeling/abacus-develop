@@ -390,38 +390,32 @@ void ESolver_OF::print_info(const bool conv_esolver)
 {
     if (this->iter_ == 0)
     {
-        std::cout << "============================== Running OFDFT "
+        std::cout << " ============================= Running OFDFT "
                      "=============================="
                   << std::endl;
-        std::cout << "Iter        Etot(Ha)          Mu(Ha)      Theta      "
-                     "PotNorm     deltaE(Ha)"
+        std::cout << " ITER       ETOT/eV           EDIFF/eV        EFERMI/eV    POTNORM   TIME/s"
                   << std::endl;
-        // cout << "======================================== Running OFDFT
-        // ========================================" << endl; cout << "Iter
-        // Etot(Ha)          Theta       PotNorm        min/max(den)
-        // min/max(dE/dPhi)" << endl;
     }
-    // ============ used to compare with PROFESS3.0 ================
-    // double minDen = this->chr.rho[0][0];
-    // double maxDen = this->chr.rho[0][0];
-    // double minPot = this->pdEdphi_[0][0];
-    // double maxPot = this->pdEdphi_[0][0];
-    // for (int i = 0; i < this->pw_rho->nrxx; ++i)
-    // {
-    //     if (this->chr.rho[0][i] < minDen) minDen =
-    //     this->chr.rho[0][i]; if (this->chr.rho[0][i] > maxDen)
-    //     maxDen = this->chr.rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
-    //     minPot = this->pdEdphi_[0][i]; if (this->pdEdphi_[0][i] > maxPot)
-    //     maxPot = this->pdEdphi_[0][i];
-    // }
-    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific << std::setprecision(12)
-              << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3) << this->pelec->eferm.get_efval(0) / 2.
-              << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_ << std::setw(12)
-              << (this->energy_current_ - this->energy_last_) / 2. << std::endl;
-    // ============ used to compare with PROFESS3.0 ================
-    // << setw(10) << minDen << "/ " << setw(12) << maxDen
-    // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
-    // =============================================================
+
+    std::map<std::string, std::string> prefix_map = {
+        {"cg1", "CG"},
+        {"cg2", "CG"},
+        {"tn", "TN"}
+    };
+    std::string iteration = prefix_map[PARAM.inp.of_method] + std::to_string(this->iter_);
+#ifdef __MPI
+    double duration = (double)(MPI_Wtime() - this->iter_time);
+#else
+    double duration
+        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - this->iter_time)).count()
+          / static_cast<double>(1e6);
+#endif
+    std::cout << " " << std::setw(8) << iteration
+              << std::setw(18) << std::scientific << std::setprecision(8) << this->energy_current_ * ModuleBase::Ry_to_eV
+              << std::setw(18) << (this->energy_current_ - this->energy_last_) * ModuleBase::Ry_to_eV
+              << std::setw(13) << std::setprecision(4) << this->pelec->eferm.get_efval(0) * ModuleBase::Ry_to_eV
+              << std::setw(13) << std::setprecision(4) << this->normdLdphi_
+              << std::setw(6) << std::fixed << std::setprecision(2) << duration << std::endl;
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
@@ -533,5 +527,12 @@ void ESolver_OF::print_info(const bool conv_esolver)
                    /*formats=*/{"%20s", "%20.12f", "%20.12f"}, 0);
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
+
+    // reset the iter_time for the next iteration
+#ifdef __MPI
+    this->iter_time = MPI_Wtime();
+#else
+    this->iter_time = std::chrono::system_clock::now();
+#endif
 }
 } // namespace ModuleESolver

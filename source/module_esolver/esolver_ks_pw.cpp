@@ -645,14 +645,24 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     //----------------------------------------------------------
-	if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-	{
-		ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-				PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
-				GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-				PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
-				this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
-	}
+    if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+    {
+        ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                               GlobalV::MY_POOL,
+                               GlobalV::MY_RANK,
+                               PARAM.inp.nbands,
+                               PARAM.inp.nspin,
+                               PARAM.globalv.npol,
+                               GlobalV::RANK_IN_POOL,
+                               GlobalV::NPROC_IN_POOL,
+                               PARAM.inp.out_wfc_pw,
+                               PARAM.inp.ecutwfc,
+                               PARAM.globalv.global_out_dir,
+                               this->psi[0],
+                               this->kv,
+                               this->pw_wfc,
+                               GlobalV::ofs_running);
+    }
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -718,11 +728,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->pw_rhod->ny,
                               this->pw_rhod->nz,
                               this->pw_rhod->nxyz,
-                              this->kv.get_nks(),
-                              this->kv.isk,
-                              this->kv.wk,
-                              this->pw_big->bz,
-                              this->pw_big->nbz,
                               this->chr.ngmc,
                               &ucell,
                               this->psi,
@@ -731,16 +736,29 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->ctx,
                               this->Pgrid,
                               PARAM.globalv.global_out_dir,
-                              PARAM.inp.if_separate_k);
+                              PARAM.inp.if_separate_k,
+                              this->kv,
+                              GlobalV::KPAR,
+                              GlobalV::MY_POOL,
+                              &this->chr);
     }
 
-
-	// tmp 2025-05-17, mohan note
-	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-			PARAM.inp.nbands, PARAM.inp.nspin, PARAM.globalv.npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			PARAM.inp.out_wfc_pw, PARAM.inp.ecutwfc, PARAM.globalv.global_out_dir,
-			this->psi[0], this->kv, this->pw_wfc, GlobalV::ofs_running);
+    // tmp 2025-05-17, mohan note
+    ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                           GlobalV::MY_POOL,
+                           GlobalV::MY_RANK,
+                           PARAM.inp.nbands,
+                           PARAM.inp.nspin,
+                           PARAM.globalv.npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           PARAM.inp.out_wfc_pw,
+                           PARAM.inp.ecutwfc,
+                           PARAM.globalv.global_out_dir,
+                           this->psi[0],
+                           this->kv,
+                           this->pw_wfc,
+                           GlobalV::ofs_running);
 
     //------------------------------------------------------------------
     //! 5) calculate Wannier functions in pw basis
@@ -931,7 +949,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
 
     //----------------------------------------------------------
-    //! The write_psi_r_1 interface will be removed in the very 
+    //! The write_psi_r_1 interface will be removed in the very
     //! near future. Don't use it!
     //----------------------------------------------------------
     // if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
@@ -951,19 +969,15 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                             this->pw_rhod->ny,
                             this->pw_rhod->nz,
                             this->pw_rhod->nxyz,
-                            this->kv.get_nks(),
-                            this->kv.isk,
-                            this->kv.wk,
-                            this->pw_big->bz,
-                            this->pw_big->nbz,
-                            this->chr.ngmc,
                             &ucell,
                             this->psi,
-                            this->pw_rhod,
                             this->pw_wfc,
                             this->ctx,
                             this->Pgrid,
-                            PARAM.globalv.global_out_dir);
+                            PARAM.globalv.global_out_dir,
+                            this->kv,
+                            GlobalV::KPAR,
+                            GlobalV::MY_POOL);
     }
 
     //----------------------------------------------------------
