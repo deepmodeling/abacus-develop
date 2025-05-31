@@ -36,8 +36,10 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    /// @param exx_ptr
-    Exx_LRI_Interface(std::shared_ptr<Exx_LRI<Tdata>> exx_ptr) : exx_ptr(exx_ptr) {}
+    Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info)
+    {
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
+    }
     Exx_LRI_Interface() = delete;
 
     /// read and write Hexxs using cereal
@@ -115,8 +117,9 @@ public:
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
 
-private:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
+
+private:
     Mix_DMk_2D mix_DMk_2D;
 
     bool exx_spacegroup_symmetry = false;

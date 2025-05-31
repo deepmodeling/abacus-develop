@@ -323,6 +323,7 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
+/*
 template<typename Tdata>
 std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
 {
@@ -336,5 +337,6 @@ std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
 	}
 	return abfs_nchis;
 }
+*/
 
 #endif
