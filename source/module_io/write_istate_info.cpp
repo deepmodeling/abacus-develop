@@ -89,7 +89,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                             << " Cartesian=" << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y
                             << " " << kv.kvec_c[ik].z << " (" << ngk_tot[ik] << " plane wave)" << std::endl;
 
-                    ofs_eig << std::setprecision(12);
+                    ofs_eig << std::setprecision(16);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
                     for (int ib = 0; ib < ekb.nc; ib++)
                     {
