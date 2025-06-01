@@ -77,7 +77,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
             if (GlobalV::MY_POOL == ip && ip_flag)
             {
                 std::ofstream ofs_eig(filename.c_str(), std::ios::app);
-                ofs_eig << std::setprecision(5);
+                ofs_eig << std::setprecision(8);
                 ofs_eig << std::setiosflags(std::ios::showpoint);
 
                 const int start_ik = nks_np * is;
@@ -89,12 +89,12 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                             << " Cartesian=" << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y
                             << " " << kv.kvec_c[ik].z << " (" << ngk_tot[ik] << " plane wave)" << std::endl;
 
-                    ofs_eig << std::setprecision(6);
+                    ofs_eig << std::setprecision(12);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
                     for (int ib = 0; ib < ekb.nc; ib++)
                     {
-                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << std::setw(15) << wg(ik, ib) << std::endl;
+                        ofs_eig << " " << ib + 1 << " " << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << " " << wg(ik, ib) << std::endl;
                     }
                     ofs_eig << std::endl;
                 }
