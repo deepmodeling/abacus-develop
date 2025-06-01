@@ -26,8 +26,6 @@ void Gint_vl::init_hr_gint_()
 
 void Gint_vl::cal_hr_gint_()
 {
-// be careful!!
-// each thread will have a copy of hr_gint_, this may cause a lot of memory usage
 #pragma omp parallel
     {
         PhiOperator phi_op;
