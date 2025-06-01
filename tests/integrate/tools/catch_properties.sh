@@ -247,8 +247,8 @@ fi
 # echo $has_band
 #-------------------------------
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
-	bandref=refBANDS_1.dat
-	bandcal=OUT.autotest/BANDS_1.dat
+	bandref=eigs1.txt.ref
+	bandcal=OUT.autotest/eigs1.txt
 	python3 $COMPARE_SCRIPT $bandref $bandcal 8
 	echo "CompareBand_pass $?" >>$1
 fi

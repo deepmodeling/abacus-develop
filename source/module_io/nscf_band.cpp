@@ -21,6 +21,19 @@ void ModuleIO::nscf_band(
     ModuleBase::TITLE("ModuleIO","nscf_band");
     ModuleBase::timer::tick("ModuleIO", "nscf_band");
 
+	GlobalV::ofs_running << "\n";
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " | Print out the eigenvalues.                 " 
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+		"<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	GlobalV::ofs_running << "\n";
+
     // number of k points without spin; 
     // nspin = 1,2, nkstot = nkstot_np * nspin; 
     // nspin = 4, nkstot = nkstot_np
@@ -33,6 +46,7 @@ void ModuleIO::nscf_band(
         std::ofstream ofs(out_band_dir.c_str());//make the file clear!!
         ofs.close();
     }
+
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<double> klength;
     klength.resize(nkstot_np);
@@ -48,12 +62,12 @@ void ModuleIO::nscf_band(
             klength[ik] = klength[ik-1];
             klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
         }
-        /* first find if present kpoint in present pool */
+        //! first find if present kpoint in present pool
         if ( GlobalV::MY_POOL == kv.para_k.whichpool[ik] )
         {
-            /* then get the local kpoint index, which starts definitly from 0 */
+            //! then get the local kpoint index, which starts definitly from 0
             const int ik_now = ik - kv.para_k.startk_pool[GlobalV::MY_POOL];
-            /* if present kpoint corresponds the spin of the present one */
+            //! if present kpoint corresponds the spin of the present one
             assert( kv.isk[ik_now+is*nks_np] == is );
             if ( GlobalV::RANK_IN_POOL == 0)
             {

@@ -51,7 +51,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 
     // file name to store eigenvalues
     std::string filename = PARAM.globalv.global_out_dir + "eig.txt";
-    GlobalV::ofs_running << " The eigenvalues are in the file: " << filename << std::endl;
+    GlobalV::ofs_running << " The eigenvalues and occupations are in file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
