@@ -34,10 +34,11 @@ class GintInfo
         const UnitCell& ucell, Grid_Driver& gd);
 
     // getter functions
-    std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; };
-    std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
+    const std::vector<std::shared_ptr<BigGrid>>& get_biggrids() { return biggrids_; };
+    const std::vector<int>& get_trace_lo() const{ return trace_lo_; };
+    int get_lgd() const { return lgd_; };
     int get_nat() const { return ucell_->nat; };        // return the number of atoms in the unitcell
-    double get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); };
+    int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); };
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); };
 
     //=========================================
@@ -49,6 +50,9 @@ class GintInfo
     private:
     // initialize the atoms
     void init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi);
+
+    // initialize trace_lo_ and lgd_
+    void init_trace_lo_(const UnitCell& ucell, const int nspin);
 
     // initialize the ijr_info
     void init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd);
@@ -84,6 +88,12 @@ class GintInfo
 
     // format for storing atomic pair information in hcontainer, used for initializing hcontainer
     std::vector<int> ijr_info_;
+
+    // map the global index of atomic orbitals to local index
+    std::vector<int> trace_lo_;
+    
+    // total num of atomic orbitals on this proc
+    int lgd_;
 
     #ifdef __CUDA
     public:

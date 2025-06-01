@@ -1,21 +1,22 @@
 #include "source_base/ylm.h"
 #include "source_base/array_pool.h"
 #include "gint_atom.h"
+#include "module_cell/unitcell.h"
 #include "gint_helper.h"
 
 namespace ModuleGint
 {
 GintAtom::GintAtom(
     const Atom* atom,
-    int ia,
-    int iat,
+    int it, int ia, int iat,
     Vec3i biggrid_idx,
     Vec3i unitcell_idx,
     Vec3d tau_in_biggrid,
-    const Numerical_Orbital* orb)
-: atom_(atom), ia_(ia), iat_(iat), biggrid_idx_(biggrid_idx),
+    const Numerical_Orbital* orb,
+    const UnitCell* ucell)
+: atom_(atom), it_(it), ia_(ia), iat_(iat), biggrid_idx_(biggrid_idx),
   unitcell_idx_(unitcell_idx), tau_in_biggrid_(tau_in_biggrid),
-  orb_(orb)
+  orb_(orb), ucell_(ucell)
 {
     p_psi_uniform_.resize(atom_->nw);
     p_dpsi_uniform_.resize(atom_->nw);

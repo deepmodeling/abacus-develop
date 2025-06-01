@@ -19,4 +19,6 @@ namespace ModuleGint
         std::vector<HContainer<T>*> dm,
         std::vector<std::shared_ptr<HContainer<T>>> dm_gint);
 
+    template<typename T>
+    void wfc_2d_to_gint(const T* wfc_2d, const Parallel_Orbitals& pv, T* wfc_grid, std::shared_ptr<const GintInfo> gint_info);
 }

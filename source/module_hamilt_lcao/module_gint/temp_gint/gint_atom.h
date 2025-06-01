@@ -13,17 +13,18 @@ class GintAtom
         // constructor
         GintAtom(
             const Atom* atom,
-            int ia,
-            int iat,
+            int it, int ia, int iat,
             Vec3i biggrid_idx,
             Vec3i unitcell_idx,
             Vec3d tau_in_biggrid,
-            const Numerical_Orbital* orb);
+            const Numerical_Orbital* orb,
+            const UnitCell* ucell);
 
         // getter functions
         const Atom* get_atom() const { return atom_; };
         int get_ia() const { return ia_; };
         int get_iat() const { return iat_; };
+        int get_start_iw() const { return ucell_->itiaiw2iwt(it_, ia_, 0); };  // get the start index of global atomic orbitals
         const Vec3i& get_bgrid_idx() const { return biggrid_idx_; };
         const Vec3i& get_unitcell_idx() const { return unitcell_idx_; };
         const Vec3i& get_R() const { return unitcell_idx_; };
@@ -88,13 +89,16 @@ class GintAtom
     private:
         // the atom object
         const Atom* atom_;
-
-        // the global index of the atom
-        int iat_;
+        
+        // the global index of the atom type
+        int it_;
 
         // the global index of the atom among the same type of atoms
         int ia_;
 
+        // the global index of the atom
+        int iat_;
+        
         // the index of big grid which contains this atom
         Vec3i biggrid_idx_;
 
@@ -107,6 +111,8 @@ class GintAtom
 
         // the numerical orbitals of this atom
         const Numerical_Orbital* orb_;
+
+        const UnitCell* ucell_;
         
         std::vector<const double*> p_psi_uniform_;
         std::vector<const double*> p_dpsi_uniform_;

@@ -3,6 +3,11 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_parameter/parameter.h"
 
+#ifdef __MPI
+#include "module_base/blacs_connector.h"
+#include <mpi.h>
+#endif
+
 namespace ModuleGint
 {
 
@@ -191,6 +196,110 @@ void transfer_dm_2d_to_gint(
     }
 }
 
+int globalIndex(int localindex, int nblk, int nprocs, int myproc)
+{
+    const int iblock = localindex / nblk;
+    const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
+    return gIndex;
+}
+
+int localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+{
+    myproc = int((globalindex % (nblk * nprocs)) / nblk);
+    return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;
+}
+
+template <typename T>
+void wfc_2d_to_gint(const T* wfc_2d,
+                    const Parallel_Orbitals& pv,
+                    T* wfc_gint,
+                    std::shared_ptr<const GintInfo> gint_info)
+{
+    ModuleBase::TITLE("Module_gint", "wfc_2d_to_gint");
+    ModuleBase::timer::tick("Module_gint", "wfc_2d_to_gint");
+
+    // dimension related
+    const int nlocal = pv.desc_wfc[2];
+    const int nbands = pv.desc_wfc[3];
+
+#ifdef __MPI
+    const std::vector<int>& trace_lo = gint_info->get_trace_lo();
+
+    // MPI and memory related
+    const int mem_stride = 1;
+    int mpi_info = 0;
+
+    // get the rank of the current process
+    int rank = 0;
+    MPI_Comm_rank(pv.comm(), &rank);
+
+    // calculate the maximum number of nlocal over all processes in pv.comm() range
+    long buf_size;
+    mpi_info = MPI_Reduce(&pv.nloc_wfc, &buf_size, 1, MPI_LONG, MPI_MAX, 0, pv.comm());
+    mpi_info = MPI_Bcast(&buf_size, 1, MPI_LONG, 0, pv.comm()); // get and then broadcast
+    std::vector<T> wfc_block(buf_size);
+
+    // this quantity seems to have the value returned by function numroc_ in ScaLAPACK?
+    int naroc[2];
+
+    // for BLACS broadcast
+    char scope = 'A';
+    char top = ' ';
+
+    // loop over all processors
+    for (int iprow = 0; iprow < pv.dim0; ++iprow)
+    {
+        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
+        {
+            if (iprow == pv.coord[0] && ipcol == pv.coord[1])
+            {
+                BlasConnector::copy(pv.nloc_wfc, wfc_2d, mem_stride, wfc_block.data(), mem_stride);
+                naroc[0] = pv.nrow;
+                naroc[1] = pv.ncol_bands;
+                Cxgebs2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2);
+                Cxgebs2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, wfc_block.data(), buf_size);
+            }
+            else
+            {
+                Cxgebr2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2, iprow, ipcol);
+                Cxgebr2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, wfc_block.data(), buf_size, iprow, ipcol);
+            }
+
+            // then use it to set the wfc_grid.
+            const int nb = pv.nb;
+            const int dim0 = pv.dim0;
+            const int dim1 = pv.dim1;
+            for (int j = 0; j < naroc[1]; ++j)
+            {
+                int igcol = globalIndex(j, nb, dim1, ipcol);
+                if (igcol >= PARAM.inp.nbands)
+                {
+                    continue;
+                }
+                for (int i = 0; i < naroc[0]; ++i)
+                {
+                    int igrow = globalIndex(i, nb, dim0, iprow);
+                    int mu_local = trace_lo[igrow];
+                    if (wfc_gint && mu_local >= 0)
+                    {
+                        wfc_gint[igcol * nlocal + mu_local] = wfc_block[j * naroc[0] + i];
+                    }
+                }
+            }
+            // this operation will let all processors have the same wfc_grid
+        }
+    }
+#else
+    for (int i = 0; i < nbands; ++i)
+    {
+        for (int j = 0; j < nlocal; ++j)
+        {
+            wfc_k_grid[i * nlocal + j] = psi[0](i, j);
+        }
+    }
+#endif
+    ModuleBase::timer::tick("Module_gint", "wfc_2d_to_gint");
+}
 
 template void transfer_hr_gint_to_hR(
     std::shared_ptr<const HContainer<double>> hr_gint,
@@ -206,4 +315,14 @@ template void transfer_dm_2d_to_gint(
     std::shared_ptr<const GintInfo> gint_info,
     std::vector<HContainer<std::complex<double>>*> dm,
     std::vector<std::shared_ptr<HContainer<std::complex<double>>>> dm_gint);
+template void wfc_2d_to_gint(
+    const double* wfc_2d,
+    const Parallel_Orbitals& pv,
+    double* wfc_grid,
+    std::shared_ptr<const GintInfo> gint_info);
+template void wfc_2d_to_gint(
+    const std::complex<double>* wfc_2d,
+    const Parallel_Orbitals& pv,
+    std::complex<double>* wfc_grid,
+    std::shared_ptr<const GintInfo> gint_info);
 }

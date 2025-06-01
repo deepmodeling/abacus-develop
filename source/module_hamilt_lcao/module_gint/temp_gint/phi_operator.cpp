@@ -18,14 +18,13 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     // init is_atom_on_mgrid_ and atoms_relative_coords_
     const int atoms_num = biggrid_->get_atoms_num();
     atoms_relative_coords_.resize(atoms_num);
-    is_atom_on_mgrid_.resize(atoms_num);
+    is_atom_on_mgrid_.resize(biggrid_->get_mgrids_num() * atoms_num);
     for(int i = 0; i < atoms_num; ++i)
     {
         biggrid_->set_atom_relative_coords(biggrid_->get_atom(i), atoms_relative_coords_[i]);
-        is_atom_on_mgrid_[i].resize(rows_);
         for(int j = 0; j < rows_; ++j)
         {
-            is_atom_on_mgrid_[i][j] = atoms_relative_coords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
+            is_atom_on_mgrid_[i * rows_ + j] = atoms_relative_coords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
         }
     }
 
@@ -131,6 +130,86 @@ void PhiOperator::phi_dot_dphi_r(
     svl[0](2, 2) += szz * 2;
 }
 
+void PhiOperator::cal_env_gamma(
+    const double* phi,
+    const double* wfc,
+    const vector<int>& trace_lo,
+    double* rho) const
+{
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
+    {
+        const auto atom = biggrid_->get_atom(i);
+        const int iw_start = atom->get_start_iw();
+        const int start_idx = atoms_startidx_[i];
+        for(int j = 0; j < biggrid_->get_mgrids_num(); ++j)
+        {
+            if(is_atom_on_mgrid(i, j))
+            {   
+                double tmp = 0.0;
+                int iw_lo = trace_lo[iw_start];
+                for(int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
+                {
+                    tmp += phi[j * cols_ + start_idx + iw] * wfc[iw_lo];
+                }
+                rho[meshgrids_local_idx_[j]] += tmp;
+            }
+        }
+    }
+}
+
+void PhiOperator::cal_env_k(
+    const double* phi,
+    const std::complex<double>* wfc,
+    const vector<int>& trace_lo,
+    const int ik,
+    const int nspin,
+    const int npol,
+    const int lgd,
+    const std::vector<Vec3d>& kvec_c,
+    const std::vector<Vec3d>& kvec_d,
+    double* rho) const
+{
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
+    {
+        const auto atom = biggrid_->get_atom(i);
+        const int iw_start = atom->get_start_iw();
+        const Vec3d R(atom->get_unitcell_idx());
+        const double arg = (kvec_d[ik] * R) * ModuleBase::TWO_PI;
+        const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
+        const int start_idx = atoms_startidx_[i];
+        for(int j = 0; j < biggrid_->get_mgrids_num(); ++j)
+        {
+            if(is_atom_on_mgrid(i, j))
+            {   
+                std::complex<double> tmp{0.0, 0.0};
+                int phi_start_idx = j * cols_ + start_idx;
+
+                int iw_lo = 0;
+                if (nspin == 4) // is it a simple add of 2 spins?
+                {
+                    for (int is = 0; is < 2; ++is)
+                    {
+                        iw_lo = trace_lo[iw_start] / npol + lgd / npol * is;
+                        for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
+                        {
+                            tmp += std::complex<double>(phi[iw], 0.0) * wfc[iw_lo] * kphase;
+                        }
+                    }
+                }
+                else
+                {
+                    iw_lo = trace_lo[iw_start];
+                    for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
+                    {
+                        tmp += std::complex<double>(phi[iw], 0.0) * wfc[iw_lo] * kphase;
+                    }
+                }
+                rho[meshgrids_local_idx_[j]] += tmp.real();
+            }
+        }
+    }
+}
+
 
 //===============================
 // private methods
@@ -150,7 +229,7 @@ void PhiOperator::init_atom_pair_start_end_idx_()
             int end_idx = -1;
             for(int mgrid_idx = 0; mgrid_idx < mgrids_num; ++mgrid_idx)
             {
-                if(is_atom_on_mgrid_[i][mgrid_idx] && is_atom_on_mgrid_[j][mgrid_idx])
+                if(is_atom_on_mgrid(i, mgrid_idx) && is_atom_on_mgrid(j, mgrid_idx))
                 {
                     start_idx = mgrid_idx;
                     break;
@@ -158,7 +237,7 @@ void PhiOperator::init_atom_pair_start_end_idx_()
             }
             for(int mgrid_idx = mgrids_num - 1; mgrid_idx >= 0; --mgrid_idx)
             {
-                if(is_atom_on_mgrid_[i][mgrid_idx] && is_atom_on_mgrid_[j][mgrid_idx])
+                if(is_atom_on_mgrid(i, mgrid_idx) && is_atom_on_mgrid(j, mgrid_idx))
                 {
                     end_idx = mgrid_idx;
                     break;
