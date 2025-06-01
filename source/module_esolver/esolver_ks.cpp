@@ -554,7 +554,7 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 3) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
-        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
+//        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
     }
 }
 
@@ -597,11 +597,10 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
         GlobalV::ofs_running << "\n\n";
     }
 
-    // 2) write information
+    // 2) write eigenvalue information
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
 
-
-    // 3) print out band information
+    // 3) write band information
     if (PARAM.inp.out_band[0])
     {
         const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
