@@ -816,7 +816,7 @@ void ReadInput::item_system()
             {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
-                    "Single precision is not supported for lcao basis,\nPlease use double precision for lcao basis.\n");
+                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
             }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
