@@ -42,7 +42,6 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
         ModuleBase::WARNING_QUIT("ModuleIO::write_istate_info", "Eigenvalues are too large!");
     }
 
-
     std::vector<int> ngk_tot = kv.ngk;
 
 #ifdef __MPI
@@ -73,7 +72,9 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 #ifdef __MPI
             MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
             bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0);
+
             if (GlobalV::MY_POOL == ip && ip_flag)
             {
                 std::ofstream ofs_eig(filename.c_str(), std::ios::app);
