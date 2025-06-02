@@ -10,11 +10,12 @@
 
 template <typename T>
 void ModuleIO::write_hsk(
-        const string &global_out_dir,
+        const std::string &global_out_dir,
         const int nspin,
         const int nks, 
         const int nkstot,
-		const vector<int> &ik2iktot,
+		const std::vector<int> &ik2iktot,
+        const std::vector<int> &isk,
 		hamilt::Hamilt<T>* p_hamilt,
 	    const Parallel_Orbitals &pv,
         const bool gamma_only,
@@ -51,6 +52,15 @@ void ModuleIO::write_hsk(
 				h_fn,
 				pv,
 				GlobalV::DRANK);
+
+        // mohan note 2025-06-02
+        // for overlap matrix, the two spin channels yield the same matrix
+        // so we only need to print matrix from one spin channel.
+		const int current_spin = isk[ik];
+		if(current_spin == 1)
+		{
+			continue;
+		}
 
 
 		std::string s_fn = ModuleIO::filename_output(global_out_dir,

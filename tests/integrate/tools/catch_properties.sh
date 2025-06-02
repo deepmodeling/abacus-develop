@@ -261,10 +261,10 @@ fi
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
                 href=data-0-H.ref
-                hcal=OUT.autotest/data-0-H
+                hcal=OUT.autotest/hks1_nao.txt
                 sref=data-0-S.ref
-                scal=OUT.autotest/data-0-S
-        else
+                scal=OUT.autotest/sks1_nao.txt
+        else # multiple k-points
                 href=data-1-H.ref
                 hcal=OUT.autotest/data-1-H
                 sref=data-1-S.ref

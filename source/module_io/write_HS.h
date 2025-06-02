@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 //#include "module_base/global_function.h"
 //#include "module_base/global_variable.h"
 #include "module_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
@@ -16,11 +14,12 @@ namespace ModuleIO
 {
 	template<typename T>
 		void write_hsk(
-				const string &global_out_dir,
+				const std::string &global_out_dir,
 				const int nspin,
 				const int nks, 
 				const int nkstot, 
-				const vector<int> &ik2iktot,
+				const std::vector<int> &ik2iktot,
+				const std::vector<int> &isk,
 				hamilt::Hamilt<T>* p_hamilt,
 				const Parallel_Orbitals &pv,
 				const bool gamma_only,

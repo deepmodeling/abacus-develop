@@ -137,6 +137,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 					this->kv.get_nks(), 
 					this->kv.get_nkstot(), 
 					this->kv.ik2iktot, 
+                    this->kv.isk,
 					this->p_hamilt, 
 					this->pv, 
 					PARAM.globalv.gamma_only_local,
