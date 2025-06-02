@@ -265,10 +265,10 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
                 sref=sks1_nao.txt.ref
                 scal=OUT.autotest/sks1_nao.txt
         else # multiple k-points
-                href=data-1-H.ref
-                hcal=OUT.autotest/data-1-H
-                sref=data-1-S.ref
-                scal=OUT.autotest/data-1-S
+                href=hks1k2_nao.txt.ref
+                hcal=OUT.autotest/hks1k2_nao.txt
+                sref=sks1k2_nao.txt.ref
+                scal=OUT.autotest/sks1k2_nao.txt
         fi
 
         python3 $COMPARE_SCRIPT $href $hcal 6
