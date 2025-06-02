@@ -9,6 +9,7 @@
 #include "module_cell/klist.h"
 #include "module_elecstate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
+#include "module_io/filename.h" // use filename_output function
 #include <type_traits>
 
 namespace ModuleIO
@@ -173,11 +174,14 @@ namespace ModuleIO
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
             if (GlobalC::exx_info.info_global.cal_exx)
             {
-                for (int n = 0; n < naos; ++n) {
-                    for (int m = 0; m < naos; ++m) {
-                        vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
-}
-}
+				for (int n = 0; n < naos; ++n) 
+				{
+					for (int m = 0; m < naos; ++m) 
+					{
+						vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha 
+							* exx_lip.get_exx_matrix()[ik][m][n];
+					}
+				}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));
@@ -189,8 +193,24 @@ namespace ModuleIO
                 container::BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
             }
 #endif
+        
             /// add-up and write
-            ModuleIO::save_mat(-1, vxc_tot_k_mo.data(), nbands, false, PARAM.inp.out_ndigits, true, false, "Vxc", "k-" + std::to_string(ik), p2d_serial, drank, false);
+            // mohan add 2025-06-02
+            const int istep = -1;
+            const int out_label = 1; // 1 means .txt while 2 means .dat
+            const bool out_app_flag = 0;
+            const bool gamma_only = PARAM.globalv.gamma_only_local;
+
+            std::string vxc_file = ModuleIO::filename_output(
+                PARAM.globalv.global_out_dir,
+                "vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
+                out_label,out_app_flag,gamma_only,istep);
+             
+            ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands, 
+		    false, PARAM.inp.out_ndigits, true, 
+		    out_app_flag, vxc_file, 
+		    p2d_serial, drank, false);
+
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }
         //===== test total xc energy =======
@@ -245,6 +265,7 @@ namespace ModuleIO
                     }
                 }
             };
+
         if (GlobalV::MY_RANK == 0)
         {
             write_orb_energy(e_orb_tot, "");

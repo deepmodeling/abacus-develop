@@ -282,8 +282,8 @@ fi
 #--------------------------------
 if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-			xcref=k-0-Vxc.ref
-			xccal=OUT.autotest/k-0-Vxc
+			xcref=vxcs1_nao.txt.ref
+			xccal=OUT.autotest/vxcs1_nao.txt
 	else
 			xcref=k-1-Vxc.ref
 			xccal=OUT.autotest/k-1-Vxc

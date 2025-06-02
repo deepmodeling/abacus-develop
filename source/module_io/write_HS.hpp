@@ -48,7 +48,6 @@ void ModuleIO::write_hsk(
 				PARAM.inp.out_mat_hs[1],
 				1,
 				out_app_flag,
-				"H",
 				h_fn,
 				pv,
 				GlobalV::DRANK);
@@ -67,8 +66,7 @@ void ModuleIO::write_hsk(
 				PARAM.inp.out_mat_hs[1],
 				1,
 				out_app_flag,
-				"S",
-				"data-" + std::to_string(ik),
+			    s_fn,	
 				pv,
 				GlobalV::DRANK);
 	} // end ik
@@ -84,33 +82,16 @@ void ModuleIO::save_mat(const int istep,
     const int precision,
     const bool tri,
     const bool app,
-    const std::string label,
-    const std::string& file_name,
+    const std::string& filename,
     const Parallel_2D& pv,
     const int drank,
     const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension of " + label + " : ", dim);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension: ", dim);
 
-	std::stringstream ss;
-	if (bit) 
-	{
-		ss << PARAM.globalv.global_out_dir << file_name + "-" + label + "-bit";
-	} 
-	else
-	{
-		if (app || istep < 0) 
-		{
-			ss << PARAM.globalv.global_out_dir << file_name + "-" + label;
-		} 
-		else 
-		{
-			ss << PARAM.globalv.global_out_dir << istep << "_" << file_name + "-" + label;
-		}
-	}
-
+    // print out .dat file
 	if (bit)
 	{
 #ifdef __MPI
@@ -118,7 +99,7 @@ void ModuleIO::save_mat(const int istep,
 
         if (drank == 0)
         {
-            g = fopen(ss.str().c_str(), "wb");
+            g = fopen(filename.c_str(), "wb");
             fwrite(&dim, sizeof(int), 1, g);
         }
 
@@ -152,7 +133,10 @@ void ModuleIO::save_mat(const int istep,
                 }
             }
 
-            if (reduce) Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			if (reduce) 
+			{
+				Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			}
 
             if (drank == 0)
             {
@@ -171,7 +155,7 @@ void ModuleIO::save_mat(const int istep,
 			fclose(g);
 		}
 #else
-        FILE* g = fopen(ss.str().c_str(), "wb");
+        FILE* g = fopen(filename.c_str(), "wb");
 
         fwrite(&dim, sizeof(int), 1, g);
 
@@ -184,20 +168,21 @@ void ModuleIO::save_mat(const int istep,
         }
         fclose(g);
 #endif
-    } // end bit
-    else
+    } // end .dat file
+    else // .txt file
     {
         std::ofstream g;
         g << std::setprecision(precision);
 #ifdef __MPI
         if (drank == 0)
         {
-            if (app && istep > 0) {
-                g.open(ss.str().c_str(), std::ofstream::app);
-            } 
+			if (app && istep > 0) 
+			{
+				g.open(filename.c_str(), std::ofstream::app);
+			} 
 			else 
 			{
-				g.open(ss.str().c_str());
+				g.open(filename.c_str());
 			}
 			g << dim;
 		}
@@ -255,11 +240,11 @@ void ModuleIO::save_mat(const int istep,
 #else
 		if (app)
 		{
-			std::ofstream g(ss.str().c_str(), std::ofstream::app);
+			std::ofstream g(filename.c_str(), std::ofstream::app);
 		}
 		else
 		{
-			std::ofstream g(ss.str().c_str());
+			std::ofstream g(filename.c_str());
 		}
 
         g << dim;

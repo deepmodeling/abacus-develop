@@ -33,7 +33,6 @@ namespace ModuleIO
     /// @param[in] bit : true for binary, false for decimal
     /// @param[in] tri : true for upper triangle, false for full matrix
     /// @param[in] app : true for append, false for overwrite
-    /// @param[in] label : the symbol of the matrix, like "H", "S"
     /// @param[in] file_name : the name of the output file
     /// @param[in] pv : the 2d-block parallelization information
     /// @param[in] drank : the rank of the current process
@@ -45,7 +44,6 @@ namespace ModuleIO
         const int precision,
         const bool tri,
         const bool app,
-        const std::string label,
         const std::string& file_name,
         const Parallel_2D& pv,
         const int drank,

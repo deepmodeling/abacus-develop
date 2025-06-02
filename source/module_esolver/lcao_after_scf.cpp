@@ -343,15 +343,23 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         for (int ik = 0; ik < this->kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
-            ModuleIO::save_mat(0,
+
+            const int out_label = 1; // 1: .txt, 2: .dat
+
+			std::string t_fn = ModuleIO::filename_output(PARAM.globalv.global_out_dir,
+					"tk","nao",ik,this->kv.ik2iktot,
+					PARAM.inp.nspin,this->kv.get_nkstot(),
+					out_label,PARAM.inp.out_app_flag,
+                    PARAM.globalv.gamma_only_local,istep);
+
+            ModuleIO::save_mat(istep,
                                hsk.get_hk(),
                                PARAM.globalv.nlocal,
-                               false,
+                               false, // bit
                                PARAM.inp.out_mat_tk[1],
-                               1,
+                               1, // true for upper triangle matrix
                                PARAM.inp.out_app_flag,
-                               "T",
-                               "data-" + std::to_string(ik),
+                               t_fn, 
                                this->pv,
                                GlobalV::DRANK);
         }
