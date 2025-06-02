@@ -1780,6 +1780,7 @@ These variables are used to control the output of properties.
     - nspin = 4: `hks12k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks12k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
 - **Default**: False 8
 - **Unit**: Ry
+- **NOTE**: In the 3.10-LTS version, the file names are `data-0-H.ref` and `data-0-S.ref`, etc.
 
 ### out_mat_hs2
 
