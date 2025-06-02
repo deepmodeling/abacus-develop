@@ -1780,7 +1780,7 @@ These variables are used to control the output of properties.
     - nspin = 4: `hks12k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks12k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
 - **Default**: False 8
 - **Unit**: Ry
-- **NOTE**: In the 3.10-LTS version, the file names are `data-0-H.ref` and `data-0-S.ref`, etc.
+- **NOTE**: In the 3.10-LTS version, the file names are `data-0-H` and `data-0-S`, etc.
 
 ### out_mat_hs2
 
@@ -1788,7 +1788,8 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ (in Ry) and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
 - **Default**: False
-
+- **Unit**: Ry
+- **NOTE**: In the 3.10-LTS version, the file names are `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr`, etc.
 
 ### out_mat_tk
 

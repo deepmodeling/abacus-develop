@@ -23,7 +23,7 @@ namespace ModuleIO
 			const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
 			const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr,
 #endif
-			const std::string& SR_filename = "sr_nao.csr",
+			const std::string& SR_filename = "srs1_nao.csr",
 			const std::string& HR_filename_up = "hrs1_nao.csr",
 			const std::string HR_filename_down = "hrs2_nao.csr",
 			const bool& binary = false,
@@ -60,14 +60,14 @@ namespace ModuleIO
 			const Grid_Driver& grid,
 			const TwoCenterBundle& two_center_bundle,
 			const LCAO_Orbitals& orb,
-			const std::string& TR_filename = "tr_nao.csr",
+			const std::string& TR_filename = "trs1_nao.csr",
 			const bool& binary = false,
 			const double& sparse_threshold = 1e-10);
 
 	void output_SR(Parallel_Orbitals& pv,
 			const Grid_Driver& grid,
 			hamilt::Hamilt<std::complex<double>>* p_ham,
-			const std::string& SR_filename = "sr_nao.csr",
+			const std::string& SR_filename = "srs1_nao.csr",
 			const bool& binary = false,
 			const double& sparse_threshold = 1e-10);
 } // namespace ModuleIO
