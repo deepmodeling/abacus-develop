@@ -164,8 +164,12 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
 #endif
 
-
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+#ifdef __MPI
+    this->iter_time = MPI_Wtime();
+#else
+    this->iter_time = std::chrono::system_clock::now();
+#endif
 
     while (true)
     {

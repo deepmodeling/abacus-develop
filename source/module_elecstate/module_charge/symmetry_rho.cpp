@@ -97,7 +97,7 @@ void Symmetry_rho::psymm(double* rho_part,
         rhotot.resize(rho_basis->nxyz);
         ModuleBase::GlobalFunc::ZEROS(rhotot.data(), rho_basis->nxyz);
     }
-    Pgrid.reduce(rhotot.data(), rho_part);
+    Pgrid.reduce(rhotot.data(), rho_part, false);
 
     // (2)
     if (GlobalV::MY_RANK == 0)
