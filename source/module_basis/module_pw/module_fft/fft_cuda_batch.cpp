@@ -16,22 +16,29 @@ void FFT_CUDA_BATCH<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in)
 template <>
 void FFT_CUDA_BATCH<float>::setupFFT()
 {
-    int rank = 3;
-    int embed[3] = {this->nx, this->ny, this->nz};
-    cufftPlanMany(&c_handle, rank,embed, 
-                    embed, 1, 0, 
-                    embed, 1, 0,
-                    CUFFT_C2C,this->batch);
+    int rank = 3;                  
+    int n[3] = {this->nx, this->ny, this->nz};     
+    const int size = this->nx* this->ny *this->nz; 
+    cufftPlanMany(&c_handle, rank, n,
+                  n, 1, size, 
+                  n, 1, size,
+                  CUFFT_Z2Z, this->batch);      
     resmem_cd_op()(this->c_auxr_3d, this->nx * this->ny * this->nz * this->batch);
 }
 template <>
 void FFT_CUDA_BATCH<double>::setupFFT()
 {
-    int embed[3] = {this->nx, this->ny, this->nz};
-    int rank = 3;
-    cufftPlanMany(&c_handle, rank,embed, 
-                    embed, 1, 0, embed, 1, 0,CUFFT_Z2Z,this->batch);
-    resmem_zd_op()(this->z_auxr_3d, this->nx * this->ny * this->nz * this->batch);
+    std::cout<<"the nx ,ny,nz,batch is: "
+             <<this->nx<<" "<<this->ny<<" "<<this->nz<<" "<<this->batch<<std::endl;
+    int rank = 3;                
+    int n[3] = {this->nx, this->ny, this->nz};       
+    const int size = this->nx* this->ny *this->nz; 
+    cufftPlanMany(&z_handle, rank, n,
+                  n, 1, size, 
+                  n, 1, size, 
+                  CUFFT_Z2Z, this->batch);       
+    cudaMalloc(&z_auxr_3d, this->nx * this->ny * this->nz * this->batch * sizeof(std::complex<double>));
+    // resmem_zd_op()(this->z_auxr_3d, this->nx * this->ny * this->nz * this->batch);
 }
 template <>
 void FFT_CUDA_BATCH<float>::cleanFFT()

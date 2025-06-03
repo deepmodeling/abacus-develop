@@ -12,7 +12,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
+#include "module_basis/module_pw/module_fft/test.cuh"
 int main(int argc, char** argv)
 {
     /*
@@ -23,10 +23,7 @@ int main(int argc, char** argv)
        std::cout << "FFT Bundle Example" << std::endl;
 
     // Example usage of make_unique
-    ModulePW::FFT_Bundle fft_bundle;
-    fft_bundle.setfft("gpu", "double");
-    fft_bundle.initfft(256, 256, 256, 64, 64, 1, 1, 1, false, false, false);
-    fft_bundle.setupFFT();
+    ModulePW::test();
     // Note: The following lines are commented out as they require specific FFT implementations
     // Uncomment and implement the FFT operations as needed
     
