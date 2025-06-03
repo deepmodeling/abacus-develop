@@ -23,6 +23,14 @@ struct set_3d_fft_box_op {
         const int* box_index,
         const std::complex<FPTYPE>* in,
         std::complex<FPTYPE>* out);
+        
+    void operator() (
+        const int npwk,
+        const int nxyz,
+        const int* box_index,
+        const std::complex<FPTYPE>* in,
+        FPTYPE* out,
+        const int batch);
 };
 
 template <typename FPTYPE, typename Device>
@@ -104,6 +112,13 @@ struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
+    
+    void operator() (const int npwk,
+                        const int nxyz,
+                        const int* box_index,
+                        const std::complex<FPTYPE>* in,
+                        std::complex<FPTYPE>* out,
+                        const int batch);
 };
 
 template <typename FPTYPE>

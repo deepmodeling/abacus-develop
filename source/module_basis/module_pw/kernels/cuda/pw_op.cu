@@ -24,6 +24,34 @@ __global__ void set_3d_fft_box(
 }
 
 template<class FPTYPE>
+__global__ void set_3d_fft_box_batch(
+    const int total_elements,
+    const int npwk,
+    const int nxyz,
+    const int* box_index,
+    const thrust::complex<FPTYPE>* in,
+    thrust::complex<FPTYPE>* out)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= total_elements) return;
+    const int batch_idx = idx / npwk;
+    const int element_idx = idx % npwk;
+
+    const thrust::complex<FPTYPE>* batch_in = in + batch_idx * npwk;
+    thrust::complex<FPTYPE>* batch_out = out + batch_idx * nxyz;
+    
+    const int box_idx = box_index[element_idx];  
+    
+    const thrust::complex<FPTYPE> input_val = batch_in[element_idx];
+    batch_out[box_idx] = input_val;
+    // if(idx < npwk)
+    // {
+    //     int xx = box_index[idx];
+    //     out[xx] = in[idx];
+    // }
+}
+
+template<class FPTYPE>
 __global__ void set_recip_to_real_output(
     const int nrxx,
     const bool add,
@@ -140,6 +168,28 @@ void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int np
 
     cudaCheckOnDebug();
 }
+
+template <typename FPTYPE>
+void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
+                                                                    const int nxyz,
+                                                                    const int* box_index,
+                                                                    const std::complex<FPTYPE>* in,
+                                                                    std::complex<FPTYPE>* out,
+                                                                    const int batch)
+{
+    const int total_elements = batch * npwk;
+    const int grid_size = (total_elements + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    set_3d_fft_box_batch<FPTYPE><<<grid_size, THREADS_PER_BLOCK>>>(
+        total_elements,
+        npwk,
+        nxyz,
+        box_index,
+        reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
+        reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+
+    cudaCheckOnDebug();
+}
+
 
 template <typename FPTYPE>
 void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int nrxx,
