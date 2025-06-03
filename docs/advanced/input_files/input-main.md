@@ -1773,8 +1773,27 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+  - For gamma only case:
+    - nspin = 1: `hks1_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix;
+    - nspin = 2: `hks1_nao.txt` and `hks2_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix. Note that the code will not output `sks2_nao.txt` because it is the same as `sks1_nao.txt`;
+    - nspin = 4: `hks12_nao.txt` for the Hamiltonian matrix and `sks12_nao.txt` for the overlap matrix.
+  - For multi-k points case:
+    - nspin = 1: `hks1k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
+    - nspin = 2: `hks1k1_nao.txt` and `hks2k1_nao.txt` for the two spin channels of the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point. Note that the code will not output `sks2k1_nao.txt` because it is the same as `sks1k1_nao.txt`, ...;
+    - nspin = 4: `hks12k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks12k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
 - **Default**: False 8
+- **Unit**: Ry
+- **NOTE**: In the 3.10-LTS version, the file names are `data-0-H` and `data-0-S`, etc.
+
+### out_mat_hs2
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ (in Ry) and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Default**: False
+- **Unit**: Ry
+- **NOTE**: In the 3.10-LTS version, the file names are `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr`, etc.
 
 ### out_mat_tk
 
@@ -1788,13 +1807,6 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: Whether to print the matrix representation of the position matrix (in Bohr) into a file named `data-rR-tr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
-- **Default**: False
-
-### out_mat_hs2
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ (in Ry) and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
 - **Default**: False
 
 ### out_mat_t
@@ -1822,7 +1834,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital (NAO) and NAO-in-PW basis
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin is the same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
 The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out.dat`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out.dat`and `OUT.${suffix}/vxc_exx_out.dat`, respectively. All the `vxc*_out.dat` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
 - **Default**: False
 

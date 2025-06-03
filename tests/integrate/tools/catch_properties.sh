@@ -260,15 +260,15 @@ fi
 #--------------------------------
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-                href=data-0-H.ref
-                hcal=OUT.autotest/data-0-H
-                sref=data-0-S.ref
-                scal=OUT.autotest/data-0-S
-        else
-                href=data-1-H.ref
-                hcal=OUT.autotest/data-1-H
-                sref=data-1-S.ref
-                scal=OUT.autotest/data-1-S
+                href=hks1_nao.txt.ref
+                hcal=OUT.autotest/hks1_nao.txt
+                sref=sks1_nao.txt.ref
+                scal=OUT.autotest/sks1_nao.txt
+        else # multiple k-points
+                href=hks1k2_nao.txt.ref
+                hcal=OUT.autotest/hks1k2_nao.txt
+                sref=sks1k2_nao.txt.ref
+                scal=OUT.autotest/sks1k2_nao.txt
         fi
 
         python3 $COMPARE_SCRIPT $href $hcal 6
@@ -282,8 +282,8 @@ fi
 #--------------------------------
 if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-			xcref=k-0-Vxc.ref
-			xccal=OUT.autotest/k-0-Vxc
+			xcref=vxcs1_nao.txt.ref
+			xccal=OUT.autotest/vxcs1_nao.txt
 	else
 			xcref=k-1-Vxc.ref
 			xccal=OUT.autotest/k-1-Vxc
@@ -333,9 +333,9 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    #python3 $COMPARE_SCRIPT data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
+    #python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
     #echo "CompareHR_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 
@@ -353,7 +353,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 $COMPARE_SCRIPT data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT trs1_nao.csr.ref OUT.autotest/trs1_nao.csr 8
     echo "ComparerTR_pass $?" >>$1
 fi
 

@@ -127,6 +127,11 @@ void ModuleIO::save_HSR_sparse(const int& istep,
         ssh[1] << PARAM.globalv.global_out_dir << HR_filename_down;
         sss << PARAM.globalv.global_out_dir << SR_filename;
     }
+
+    GlobalV::ofs_running << " The output filename is " << ssh[0].str() << std::endl;
+    GlobalV::ofs_running << " The output filename is " << ssh[1].str() << std::endl;
+    GlobalV::ofs_running << " The output filename is " << sss.str() << std::endl;
+
     std::ofstream g1[2];
     std::ofstream g2;
 
