@@ -108,24 +108,24 @@ void ModuleIO::output_dSR(const int& istep,
     const bool& binary,
     const double& sparse_thr)
 {
-ModuleBase::TITLE("ModuleIO", "output_dSR");
-ModuleBase::timer::tick("ModuleIO", "output_dSR");
+	ModuleBase::TITLE("ModuleIO", "output_dSR");
+	ModuleBase::timer::tick("ModuleIO", "output_dSR");
 
+	sparse_format::cal_dS(ucell,
+			pv,
+			HS_Arrays,
+			grid,
+			two_center_bundle,
+			orb,
+			sparse_thr);
 
-sparse_format::cal_dS(ucell,
-            pv,
-            HS_Arrays,
-            grid,
-            two_center_bundle,
-            orb,
-            sparse_thr);
-// mohan update 2024-04-01
-ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "S");
+	// mohan update 2024-04-01
+	ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s");
 
-sparse_format::destroy_dH_R_sparse(HS_Arrays);
+	sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
-ModuleBase::timer::tick("ModuleIO", "output_dSR");
-return;
+	ModuleBase::timer::tick("ModuleIO", "output_dSR");
+	return;
 }
 
 void ModuleIO::output_dHR(const int& istep,

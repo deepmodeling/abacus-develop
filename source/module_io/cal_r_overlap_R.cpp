@@ -274,7 +274,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     int output_R_number = 0;
 
     std::stringstream tem1;
-    tem1 << PARAM.globalv.global_out_dir << "temp-data-rR-sparse.dat";
+    tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
@@ -451,12 +451,12 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         std::stringstream ssr;
         if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
-            ssr << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-rR-sparse.csr";
+            ssr << PARAM.globalv.global_matrix_dir
+                << "rrg" << step << ".csr";
         }
         else
         {
-            ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
+            ssr << PARAM.globalv.global_out_dir << "rr.csr";
         }
 
         if (binary) // .dat
@@ -524,12 +524,12 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     std::stringstream ssr;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
-        ssr << PARAM.globalv.global_matrix_dir << step << "_"
-            << "data-rR-sparse.csr";
+        ssr << PARAM.globalv.global_matrix_dir
+            << "rrg" << step << ".csr";
     }
     else
     {
-        ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
+        ssr << PARAM.globalv.global_out_dir << "rr.csr";
     }
 
     if (GlobalV::DRANK == 0)

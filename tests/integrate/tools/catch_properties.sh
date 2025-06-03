@@ -344,7 +344,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
+    python3 $COMPARE_SCRIPT rr.csr.ref OUT.autotest/rr.csr 8
     echo "ComparerR_pass $?" >>$1
 fi
 
@@ -362,11 +362,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 $COMPARE_SCRIPT data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrxs1.csr.ref OUT.autotest/dhrxs1.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrys1.csr.ref OUT.autotest/dhrys1.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrzs1.csr.ref OUT.autotest/dhrzs1.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
