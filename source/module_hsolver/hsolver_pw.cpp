@@ -182,14 +182,15 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
-        if (skip_charge)
-        {
-            GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
-                                 << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
-                                 << " threshold=" << this->diag_thr << std::endl;
-            DiagoIterAssist<T, Device>::avg_iter = 0.0;
+            if (skip_charge)
+            {
+                GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
+                                     << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
+                                     << " threshold=" << this->diag_thr << std::endl;
+                DiagoIterAssist<T, Device>::avg_iter = 0.0;
+            }
+            /// calculate the contribution of Psi for charge density rho
         }
-        /// calculate the contribution of Psi for charge density rho
     }
     
     count++;
