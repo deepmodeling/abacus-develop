@@ -191,7 +191,6 @@ struct cal_force_ew_sincos_op
     /// @param ig_gge0 - index of G=0 vector (-1 if not present)
     /// @param gcar - G-vector Cartesian coordinates [npw * 3]
     /// @param tau - atomic positions [nat * 3]
-    /// @param iat2it - atom to type mapping [nat]
     /// @param it_facts - precomputed it_fact for each atom [nat]
     /// @param aux - structure factor related array [npw]
     ///
@@ -203,7 +202,6 @@ struct cal_force_ew_sincos_op
                     const int& ig_gge0,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* it_facts,
                     const std::complex<FPTYPE>* aux,
                     FPTYPE* force);
@@ -332,7 +330,6 @@ struct cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& ig_gge0,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* it_facts,
                     const std::complex<FPTYPE>* aux,
                     FPTYPE* force);

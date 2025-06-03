@@ -683,7 +683,6 @@ __global__ void cal_force_ew_sincos_kernel(
     const int ig_gge0,
     const FPTYPE* gcar,
     const FPTYPE* tau,
-    const int* iat2it,
     const FPTYPE* it_facts,
     const thrust::complex<FPTYPE>* aux,
     FPTYPE* force)
@@ -721,8 +720,8 @@ __global__ void cal_force_ew_sincos_kernel(
         FPTYPE sinp, cosp;
         sincos(phase, &sinp, &cosp);
         
-        // Calculate Ewald sum contribution
-        const FPTYPE factor = it_fact * (cosp * aux[ig].imag() + sinp * aux[ig].real());
+        // Calculate Ewald sum contribution (fixed sign error)
+        const FPTYPE factor = it_fact * (-cosp * aux[ig].imag() + sinp * aux[ig].real());
         
         // Accumulate force contributions
         local_force_x += gcar[ig * 3 + 0] * factor;
@@ -775,7 +774,6 @@ void cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const int& ig_gge0,
     const FPTYPE* gcar,
     const FPTYPE* tau,
-    const int* iat2it,
     const FPTYPE* it_facts,
     const std::complex<FPTYPE>* aux,
     FPTYPE* force)
@@ -790,7 +788,7 @@ void cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     
     hipLaunchKernelGGL(cal_force_ew_sincos_kernel<FPTYPE>,
                        grid, block, 0, 0,
-                       nat, npw, ig_gge0, gcar, tau, iat2it, it_facts,
+                       nat, npw, ig_gge0, gcar, tau, it_facts,
                        reinterpret_cast<const thrust::complex<FPTYPE>*>(aux), force);
     
     hipCheckOnDebug();
