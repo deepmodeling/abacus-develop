@@ -537,7 +537,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     
     // 准备原子相关数据：按照全局原子索引iat顺序
     std::vector<FPTYPE> tau_flat(this->nat * 3);
-    std::vector<int> iat2it_host(this->nat);
     std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
     
     // 按照原始代码逻辑：遍历全局原子索引iat，通过查表获取(it,ia)
@@ -548,7 +547,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
         tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]);
         tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][2]);
-        iat2it_host[iat] = it;
     }
     
     for (int ig = 0; ig < rho_basis->npw; ig++) {
@@ -559,9 +557,10 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     
     // 重新计算vloc_factors考虑所有原子类型
     std::vector<FPTYPE> vloc_per_type_host(ucell.ntype * rho_basis->npw);
-    for (int it = 0; it < ucell.ntype; it++) {
+    for (int iat = 0; iat < this->nat; iat++) {
+        int it = ucell.iat2it[iat];
         for (int ig = 0; ig < rho_basis->npw; ig++) {
-            vloc_per_type_host[it * rho_basis->npw + ig] = static_cast<FPTYPE>(vloc(it, rho_basis->ig2igg[ig]));
+            vloc_per_type_host[iat * rho_basis->npw + ig] = static_cast<FPTYPE>(vloc(it, rho_basis->ig2igg[ig]));
         }
     }
     
@@ -574,7 +573,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // 设备端内存和指针设置（根据设备类型分支）
     FPTYPE* d_gcar = gcar_flat.data();
     FPTYPE* d_tau = tau_flat.data();
-    int* d_iat2it = iat2it_host.data();
     FPTYPE* d_vloc_per_type = vloc_per_type_host.data();
     std::complex<FPTYPE>* d_aux = aux_fptype.data();
     FPTYPE* d_force = nullptr;
@@ -584,13 +582,11 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     {
         d_gcar = nullptr;
         d_tau = nullptr;
-        d_iat2it = nullptr;
         d_vloc_per_type = nullptr;
         d_aux = nullptr;
         
         resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
         resmem_var_op()(this->ctx, d_tau, this->nat * 3);
-        resmem_int_op()(this->ctx, d_iat2it, this->nat);
         resmem_var_op()(this->ctx, d_vloc_per_type, ucell.ntype * rho_basis->npw);
         resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
         resmem_var_op()(this->ctx, d_force, this->nat * 3);
@@ -598,7 +594,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         // 数据传输到设备
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
-        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, d_iat2it, iat2it_host.data(), this->nat);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_vloc_per_type, vloc_per_type_host.data(), ucell.ntype * rho_basis->npw);
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
         
@@ -623,7 +618,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         ucell.ntype,
         d_gcar,
         d_tau,
-        d_iat2it,
         d_vloc_per_type,
         d_aux,
         scale_factor,
@@ -639,7 +633,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         // 清理设备内存
         delmem_var_op()(this->ctx, d_gcar);
         delmem_var_op()(this->ctx, d_tau);
-        delmem_int_op()(this->ctx, d_iat2it);
         delmem_var_op()(this->ctx, d_vloc_per_type);
         delmem_complex_op()(this->ctx, d_aux);
         delmem_var_op()(this->ctx, d_force);
@@ -652,7 +645,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         forcelc(iat, 2) = static_cast<double>(force_host[iat * 3 + 2]);
     }
 
-    // this->print(GlobalV::ofs_running, "local forces", forcelc);
+    // this->print(GlobalV: :ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;
     ModuleBase::timer::tick("Forces", "cal_force_loc");
