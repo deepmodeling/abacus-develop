@@ -626,7 +626,6 @@ __global__ void cal_force_loc_sincos_kernel(
     const int ntype,
     const FPTYPE* gcar,
     const FPTYPE* tau,
-    const int* iat2it,
     const FPTYPE* vloc_per_type,
     const thrust::complex<FPTYPE>* aux,
     const FPTYPE scale_factor,
@@ -641,7 +640,6 @@ __global__ void cal_force_loc_sincos_kernel(
     if (iat >= nat) return;
     
     // Load atom information to registers
-    const int it = iat2it[iat];
     const FPTYPE tau_x = tau[iat * 3 + 0];
     const FPTYPE tau_y = tau[iat * 3 + 1];
     const FPTYPE tau_z = tau[iat * 3 + 2];
@@ -663,7 +661,7 @@ __global__ void cal_force_loc_sincos_kernel(
         sincos(phase, &sinp, &cosp);
         
         // Calculate force factor
-        const FPTYPE vloc_factor = vloc_per_type[it * npw + ig];
+        const FPTYPE vloc_factor = vloc_per_type[iat * npw + ig];
         const FPTYPE factor = vloc_factor * (cosp * aux[ig].imag() + sinp * aux[ig].real());
         
         // Accumulate force contributions
@@ -747,7 +745,6 @@ void cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     const int& ntype,
     const FPTYPE* gcar,
     const FPTYPE* tau,
-    const int* iat2it,
     const FPTYPE* vloc_per_type,
     const std::complex<FPTYPE>* aux,
     const FPTYPE& scale_factor,
@@ -763,7 +760,7 @@ void cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     
     hipLaunchKernelGGL(cal_force_loc_sincos_kernel<FPTYPE>,
                        grid, block, 0, 0,
-                       nat, npw, ntype, gcar, tau, iat2it, vloc_per_type,
+                       nat, npw, ntype, gcar, tau, vloc_per_type,
                        reinterpret_cast<const thrust::complex<FPTYPE>*>(aux),
                        scale_factor, force);
     

@@ -161,8 +161,7 @@ struct cal_force_loc_sincos_op
     /// @param ntype - number of atom types
     /// @param gcar - G-vector Cartesian coordinates [npw * 3]
     /// @param tau - atomic positions [nat * 3]
-    /// @param iat2it - atom to type mapping [nat]
-    /// @param vloc_per_type - precomputed vloc factors per type [ntype * npw]
+    /// @param vloc_per_type - precomputed vloc factors per atom [nat * npw]
     /// @param aux - charge density in G-space [npw]
     /// @param scale_factor - tpiba * omega
     ///
@@ -174,7 +173,6 @@ struct cal_force_loc_sincos_op
                     const int& ntype,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* vloc_per_type,
                     const std::complex<FPTYPE>* aux,
                     const FPTYPE& scale_factor,
@@ -319,7 +317,6 @@ struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& ntype,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* vloc_per_type,
                     const std::complex<FPTYPE>* aux,
                     const FPTYPE& scale_factor,

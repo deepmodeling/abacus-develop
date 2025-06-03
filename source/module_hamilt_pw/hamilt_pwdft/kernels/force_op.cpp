@@ -438,7 +438,6 @@ struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& ntype,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* vloc_per_type,
                     const std::complex<FPTYPE>* aux,
                     const FPTYPE& scale_factor,
@@ -451,7 +450,6 @@ struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_CPU>
 #endif
         for (int iat = 0; iat < nat; ++iat)
         {
-            const int it = iat2it[iat];
             const FPTYPE tau_x = tau[iat * 3 + 0];
             const FPTYPE tau_y = tau[iat * 3 + 1];
             const FPTYPE tau_z = tau[iat * 3 + 2];
@@ -466,7 +464,7 @@ struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_CPU>
                 FPTYPE sinp, cosp;
                 ModuleBase::libm::sincos(phase, &sinp, &cosp);
                 
-                const FPTYPE vloc_factor = vloc_per_type[it * npw + ig];
+                const FPTYPE vloc_factor = vloc_per_type[iat * npw + ig];
                 const FPTYPE factor = vloc_factor * (cosp * aux[ig].imag() + sinp * aux[ig].real()) * scale_factor;
                 
                 local_force[0] += gcar[ig * 3 + 0] * factor;
