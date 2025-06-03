@@ -489,7 +489,6 @@ struct cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& ig_gge0,
                     const FPTYPE* gcar,
                     const FPTYPE* tau,
-                    const int* iat2it,
                     const FPTYPE* it_facts,
                     const std::complex<FPTYPE>* aux,
                     FPTYPE* force)
@@ -519,7 +518,7 @@ struct cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_CPU>
                 FPTYPE sinp, cosp;
                 ModuleBase::libm::sincos(phase, &sinp, &cosp);
                 
-                const FPTYPE factor = it_fact * (cosp * aux[ig].imag() + sinp * aux[ig].real());
+                const FPTYPE factor = it_fact * (-cosp * aux[ig].imag() + sinp * aux[ig].real());
                 
                 local_force[0] += gcar[ig * 3 + 0] * factor;
                 local_force[1] += gcar[ig * 3 + 1] * factor;

@@ -532,17 +532,17 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-    // =============== GPU/CPU异构优化：使用sincos op替换原循环 ===============
+    // sincos op for G space
     
     
-    // 准备原子相关数据：按照全局原子索引iat顺序
+    // data preparation
     std::vector<FPTYPE> tau_flat(this->nat * 3);
     std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
     
-    // 按照原始代码逻辑：遍历全局原子索引iat，通过查表获取(it,ia)
+    
     for (int iat = 0; iat < this->nat; iat++) {
-        int it = ucell.iat2it[iat];  // 查表获取原子类型
-        int ia = ucell.iat2ia[iat];  // 查表获取该类型内的原子索引
+        int it = ucell.iat2it[iat];  
+        int ia = ucell.iat2ia[iat];  
         
         tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
         tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]);
@@ -555,7 +555,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
     }
     
-    // 重新计算vloc_factors考虑所有原子类型
+    // calculate vloc_factors for all atom types
     std::vector<FPTYPE> vloc_per_type_host(ucell.ntype * rho_basis->npw);
     for (int iat = 0; iat < this->nat; iat++) {
         int it = ucell.iat2it[iat];
@@ -564,13 +564,11 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         }
     }
     
-    // 转换aux到FPTYPE类型
     std::vector<std::complex<FPTYPE>> aux_fptype(rho_basis->npw);
     for (int ig = 0; ig < rho_basis->npw; ig++) {
         aux_fptype[ig] = static_cast<std::complex<FPTYPE>>(aux[ig]);
     }
     
-    // 设备端内存和指针设置（根据设备类型分支）
     FPTYPE* d_gcar = gcar_flat.data();
     FPTYPE* d_tau = tau_flat.data();
     FPTYPE* d_vloc_per_type = vloc_per_type_host.data();
@@ -591,26 +589,22 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
         resmem_var_op()(this->ctx, d_force, this->nat * 3);
         
-        // 数据传输到设备
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_vloc_per_type, vloc_per_type_host.data(), ucell.ntype * rho_basis->npw);
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
         
-        // 初始化force为0
         base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_force, 0.0, this->nat * 3);
     }
     else
     {
         d_force = force_host.data();
-        // 对于CPU，直接初始化为0
         std::fill(force_host.begin(), force_host.end(), static_cast<FPTYPE>(0.0));
     }
     
-    // 计算缩放因子
     const FPTYPE scale_factor = static_cast<FPTYPE>(ucell.tpiba * ucell.omega);
     
-    // 调用op进行sincos计算
+    // call op for sincos calculation
     hamilt::cal_force_loc_sincos_op<FPTYPE, Device>()(
         this->ctx,
         this->nat,
@@ -624,13 +618,10 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         d_force
     );
     
-    // 根据设备类型处理结果
     if (this->device == base_device::GpuDevice)
     {
-        // 结果传回CPU
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force_host.data(), d_force, this->nat * 3);
         
-        // 清理设备内存
         delmem_var_op()(this->ctx, d_gcar);
         delmem_var_op()(this->ctx, d_tau);
         delmem_var_op()(this->ctx, d_vloc_per_type);
@@ -638,7 +629,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         delmem_var_op()(this->ctx, d_force);
     }
     
-    // 将结果写入forcelc矩阵
     for (int iat = 0; iat < this->nat; iat++) {
         forcelc(iat, 0) = static_cast<double>(force_host[iat * 3 + 0]);
         forcelc(iat, 1) = static_cast<double>(force_host[iat * 3 + 1]);
@@ -755,17 +745,15 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         aux[rho_basis->ig_gge0] = std::complex<double>(0.0, 0.0);
     }
 
-    // =============== 第一步：G空间sincos计算（在OpenMP区域外）===============
+    // sincos op for cal_force_ew
     
-    // 预计算每个原子的it_fact和相关数据：按照全局原子索引iat顺序
     std::vector<FPTYPE> it_facts_host(this->nat);
     std::vector<FPTYPE> tau_flat(this->nat * 3);
-    std::vector<int> iat2it_host(this->nat);
     
-    // 按照原始代码逻辑：遍历全局原子索引iat，通过查表获取(it,ia)
+    // iterate over by lookup table
     for (int iat = 0; iat < this->nat; iat++) {
-        int it = ucell.iat2it[iat];  // 查表获取原子类型
-        int ia = ucell.iat2ia[iat];  // 查表获取该类型内的原子索引
+        int it = ucell.iat2it[iat];  
+        int ia = ucell.iat2ia[iat];  
         
         double zv;
         if (PARAM.inp.use_paw)
@@ -785,10 +773,8 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
         tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]); 
         tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][2]);
-        iat2it_host[iat] = it;
     }
     
-    // 准备设备端数据
     std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
     for (int ig = 0; ig < rho_basis->npw; ig++) {
         gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
@@ -796,16 +782,13 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
     }
     
-    // 转换aux到FPTYPE类型
     std::vector<std::complex<FPTYPE>> aux_fptype(rho_basis->npw);
     for (int ig = 0; ig < rho_basis->npw; ig++) {
         aux_fptype[ig] = static_cast<std::complex<FPTYPE>>(aux[ig]);
     }
     
-    // 设备端内存和指针设置（根据设备类型分支）
     FPTYPE* d_gcar = gcar_flat.data();
     FPTYPE* d_tau = tau_flat.data();
-    int* d_iat2it = iat2it_host.data();
     FPTYPE* d_it_facts = it_facts_host.data();
     std::complex<FPTYPE>* d_aux = aux_fptype.data();
     FPTYPE* d_force_g = nullptr;
@@ -815,72 +798,66 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     {
         d_gcar = nullptr;
         d_tau = nullptr;
-        d_iat2it = nullptr;
         d_it_facts = nullptr;
         d_aux = nullptr;
         
         resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
         resmem_var_op()(this->ctx, d_tau, this->nat * 3);
-        resmem_int_op()(this->ctx, d_iat2it, this->nat);
         resmem_var_op()(this->ctx, d_it_facts, this->nat);
         resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
         resmem_var_op()(this->ctx, d_force_g, this->nat * 3);
         
-        // 数据传输
+        
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
-        syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, d_iat2it, iat2it_host.data(), this->nat);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_it_facts, it_facts_host.data(), this->nat);
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
         
-        // 初始化force为0
+     
         base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_force_g, 0.0, this->nat * 3);
     }
     else
     {
         d_force_g = force_g_host.data();
-        // 对于CPU，直接初始化为0
         std::fill(force_g_host.begin(), force_g_host.end(), static_cast<FPTYPE>(0.0));
     }
     
-    // 调用op处理G空间sincos计算（在OpenMP区域外，无冲突）
+    // call op for sincos calculation
     hamilt::cal_force_ew_sincos_op<FPTYPE, Device>()(
         this->ctx,
         this->nat,
         rho_basis->npw,
-        rho_basis->ig_gge0,  // G=0项索引，op内部会自动跳过
+        rho_basis->ig_gge0,  
         d_gcar,
         d_tau,
-        d_iat2it,
         d_it_facts,
         d_aux,
         d_force_g
     );
     
-    // 根据设备类型处理结果
+   
     if (this->device == base_device::GpuDevice)
     {
-        // 将G空间结果传回CPU
+        
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force_g_host.data(), d_force_g, this->nat * 3);
         
-        // 清理设备内存
+        
         delmem_var_op()(this->ctx, d_gcar);
         delmem_var_op()(this->ctx, d_tau);
-        delmem_int_op()(this->ctx, d_iat2it);
         delmem_var_op()(this->ctx, d_it_facts);
         delmem_complex_op()(this->ctx, d_aux);
         delmem_var_op()(this->ctx, d_force_g);
     }
     
-    // 累加到forceion
+
     for (int iat = 0; iat < this->nat; iat++) {
         forceion(iat, 0) += static_cast<double>(force_g_host[iat * 3 + 0]);
         forceion(iat, 1) += static_cast<double>(force_g_host[iat * 3 + 1]); 
         forceion(iat, 2) += static_cast<double>(force_g_host[iat * 3 + 2]);
     }
 
-    // =============== 第二步：实空间计算（保留原OpenMP结构）===============
-
+   
+// calculate real space force
 #ifdef _OPENMP
 #pragma omp parallel
     {
@@ -904,7 +881,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         iat_end = iat_beg + iat_end;
         ucell.iat2iait(iat_beg, &ia_beg, &it_beg);
 
-        // 只保留实空间相互作用计算（means that the processor contains G=0 term）
+        
         if (rho_basis->ig_gge0 >= 0)
         {
             double rmax = 5.0 / (sqrt(alpha) * ucell.lat0);
