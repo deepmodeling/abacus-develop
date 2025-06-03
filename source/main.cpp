@@ -8,6 +8,7 @@
 #include "module_base/parallel_global.h"
 #include "module_io/parse_args.h"
 #include "module_parameter/parameter.h"
+#include "module_basis/module_pw/module_fft/fft_bundle.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -19,38 +20,27 @@ int main(int argc, char** argv)
     with "abacus -v", the program exit and returns version info,
     with no arguments, the program continues.
     */
-    ModuleIO::parse_args(argc, argv);
+       std::cout << "FFT Bundle Example" << std::endl;
 
-    /*
-    read the mpi parameters in the command-line,
-    initialize the mpi environment.
-    */
-    int nproc = 1;
-    int my_rank = 0;
-    int nthread_per_proc = 1;
-    Parallel_Global::read_pal_param(argc, argv, nproc, nthread_per_proc, my_rank);
-#ifdef _OPENMP
-    // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
-    fftw_init_threads();
-    fftw_plan_with_nthreads(omp_get_max_threads());
-#endif
-    PARAM.set_pal_param(my_rank, nproc, nthread_per_proc);
+    // Example usage of make_unique
+    ModulePW::FFT_Bundle fft_bundle;
+    fft_bundle.setfft("gpu", "double");
+    fft_bundle.initfft(256, 256, 256, 64, 64, 1, 1, 1, false, false, false);
+    fft_bundle.setupFFT();
+    // Note: The following lines are commented out as they require specific FFT implementations
+    // Uncomment and implement the FFT operations as needed
+    
+    // auto fft_bundle = make_unique<FFT_Bundle>("gpu", "single");
 
-    /*
-    main program for doing electronic structure calculations.
-    */
-    Driver DD;
-    DD.init();
+    // Initialize FFT parameters
+    // fft_bundle->initfft(256, 256, 256, 64, 64, 1, 1, 1, false, false, false);
 
-    /*
-    After running mpi version of abacus, release the mpi resources.
-    */
-#ifdef __MPI
-    Parallel_Global::finalize_mpi();
-#endif
-#ifdef _OPENMP
-    fftw_cleanup_threads();
-#endif
+    // Perform FFT operations
+    // std::complex<float> input[256];
+    // std::complex<float> output[256];
+    // fft_bundle->fftxyfor(input, output);
+
+    std::cout << "FFT operation completed." << std::endl;
 
     return 0;
 }

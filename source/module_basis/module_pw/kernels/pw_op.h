@@ -83,6 +83,16 @@ struct set_real_to_recip_output_op {
         const int* box_index,
         const std::complex<FPTYPE>* in,
         FPTYPE* out);
+    
+    void operator() (
+        const int npw_k,
+        const int nxyz,
+        const bool add,
+        const FPTYPE factor,
+        const int* box_index,
+        const std::complex<FPTYPE>* in,
+        std::complex<FPTYPE>* out,
+        const int batch);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -129,6 +139,14 @@ struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* box_index,
                     const std::complex<FPTYPE>* in,
                     FPTYPE* out);
+    void operator()(const int npw_k,
+                    const int nxyz,
+                    const bool add,
+                    const FPTYPE factor,
+                    const int* box_index,
+                    const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int batch);
 };
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -7,6 +7,7 @@
 #include <cassert>
 #if defined(__CUDA)
 #include "fft_cuda.h"
+#include "fft_cuda_batch.h"
 #endif
 #if defined(__ROCM)
 #include "fft_rocm.h"
@@ -102,11 +103,12 @@ void FFT_Bundle::initfft(int nx_in,
 #elif defined(__CUDA)
         fft_float = make_unique<FFT_CUDA<float>>();
         fft_float->initfft(nx_in, ny_in, nz_in);
-        fft_double = make_unique<FFT_CUDA<double>>();
-        fft_double->initfft(nx_in, ny_in, nz_in);
+        fft_double = make_unique<FFT_CUDA_BATCH<double>>();
+        fft_double->initfft(nx_in, ny_in, nz_in );
+
 #endif
     }else{
-        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
+        // ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
 }
 

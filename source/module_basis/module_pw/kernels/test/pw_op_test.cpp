@@ -165,4 +165,38 @@ TEST_F(TestModulePWPWMultiDevice, set_real_to_recip_output_op_gpu)
     delete_memory_complex_gpu_op()(d_in_3);
 }
 
+TEST_F(TestModulePWPWMultiDevice, set_real_to_recip_output_op_gpu_batch)
+{
+    std::vector<std::complex<double>> res_batch = out_3_init;
+    std::vector<std::complex<double>> in_batch = in_3;
+    std::vector<std::complex<double>> out_batch = out_3;
+    std::cout<<"the size of res_batch is "<<out_3.size()<<std::endl;
+    res_batch.insert(res_batch.end(), out_3_init.begin(), out_3_init.end()); // Duplicate for batch
+    out_batch.insert(out_batch.end(), out_3.begin(), out_3.end()); // Duplicate for batch
+    in_batch.insert(in_batch.end(), in_3.begin(), in_3.end()); // Duplicate for batch
+   
+    int * d_box_index = NULL;
+    std::complex<double>* d_res = NULL, * d_in_3 = NULL;
+    resize_memory_int_gpu_op()(d_box_index, box_index.size());
+    resize_memory_complex_gpu_op()(d_res, res_batch.size());
+    resize_memory_complex_gpu_op()(d_in_3, in_batch.size());
+    synchronize_memory_int_h2d_op()(d_box_index, box_index.data(), box_index.size());
+    synchronize_memory_complex_h2d_op()(d_res, res_batch.data(), res_batch.size());
+    synchronize_memory_complex_h2d_op()(d_in_3, in_batch.data(), in_batch.size());
+
+    set_real_to_recip_output_gpu_op()(this->npwk, this->nxyz, true, this->factor, d_box_index, d_in_3, d_res,2);
+
+    synchronize_memory_complex_d2h_op()(res_batch.data(), d_res, res_batch.size());
+    for (int ii = 0; ii < out_batch.size(); ii++) {
+        std::cout<<"the ii is "<<ii<<std::endl;
+        EXPECT_LT(fabs(res_batch[ii] - out_batch[ii]), 5e-6);
+    }
+    // for (int ii = 0; ii < out_3.size()*2; ii++) {
+    //     EXPECT_LT(fabs(res[ii] - out_3[ii]), 5e-6);
+    // }
+    delete_memory_int_gpu_op()(d_box_index);
+    delete_memory_complex_gpu_op()(d_res);
+    delete_memory_complex_gpu_op()(d_in_3);
+}
+
 #endif // __UT_USE_CUDA || __UT_USE_ROCM
