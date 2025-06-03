@@ -171,6 +171,33 @@ TEST_F(TestModulePWPWMultiDevice, set_recip_to_real_output_op_gpu)
     delete_memory_complex_gpu_op()(d_in_2);
 }
 
+TEST_F(TestModulePWPWMultiDevice, set_recip_to_real_output_op_gpu_batch)
+{
+    std::vector<std::complex<double>> res_batch(out_2.size(), std::complex<double>{0, 0});
+    std::vector<std::complex<double>> in_batch = in_2;
+    std::vector<std::complex<double>> out_batch = out_2;
+
+    res_batch.insert(res_batch.end(), res_batch.begin(), res_batch.end()); // Duplicate for batch
+    in_batch.insert(in_batch.end(), in_2.begin(), in_2.end()); // Duplicate for batch
+    out_batch.insert(out_batch.end(), out_2.begin(), out_2.end()); // Duplicate for batch
+
+    std::complex<double>* d_res = NULL, * d_in_2 = NULL;
+    resize_memory_complex_gpu_op()(d_res, res_batch.size());
+    resize_memory_complex_gpu_op()(d_in_2, in_batch.size());
+    synchronize_memory_complex_h2d_op()(d_res, res_batch.data(), res_batch.size());
+    synchronize_memory_complex_h2d_op()(d_in_2, in_batch.data(), in_batch.size());
+
+    set_recip_to_real_output_gpu_op()(this->nxyz, this->add, this->factor, d_in_2, d_res ,2);
+
+    synchronize_memory_complex_d2h_op()(res_batch.data(), d_res, res_batch.size());
+
+    for (int ii = 0; ii < this->nxyz *2; ii++) {
+        EXPECT_LT(fabs(res_batch[ii] - out_batch[ii]), 1e-12);
+    }
+    delete_memory_complex_gpu_op()(d_res);
+    delete_memory_complex_gpu_op()(d_in_2);
+}
+
 TEST_F(TestModulePWPWMultiDevice, set_real_to_recip_output_op_gpu)
 {
     std::vector<std::complex<double>> res = out_3_init;

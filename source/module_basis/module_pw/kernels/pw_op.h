@@ -135,6 +135,13 @@ struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
                     FPTYPE* out);
+    
+    void operator()(const int nrxx,
+                    const bool add,
+                    const FPTYPE factor,
+                    const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out,
+                    const int batch);
 };
 
 template <typename FPTYPE>
