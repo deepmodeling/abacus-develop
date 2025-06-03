@@ -285,8 +285,8 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 			xcref=vxcs1_nao.txt.ref
 			xccal=OUT.autotest/vxcs1_nao.txt
 	else
-			xcref=k-1-Vxc.ref
-			xccal=OUT.autotest/k-1-Vxc
+			xcref=vxcs1k2_nao.txt.ref
+			xccal=OUT.autotest/vxcs1k2_nao.txt
 	fi
 	oeref=vxc_out.ref
 	oecal=OUT.autotest/vxc_out.dat

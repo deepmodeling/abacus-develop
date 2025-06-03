@@ -433,20 +433,21 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshx[2];
     std::stringstream sshy[2];
     std::stringstream sshz[2];
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
-        sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
-        sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
-        sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
-        sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
-        sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
-    } else {
+	if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) 
+	{
+		sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
+		sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
+		sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
+		sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
+		sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
+		sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
+			<< "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
+	} else {
         sshx[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
         sshx[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
         sshy[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";

@@ -36,52 +36,66 @@ namespace ModuleIO
         char transb = 'N';
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
+        container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, 
+        alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 
         std::vector<T> cVc(nbands * nbands, 0.0);
         transa = ((std::is_same<T, double>::value || std::is_same<T, float>::value) ? 'T' : 'C');
-        container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbands);
+        container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, 
+        alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
+
     template <typename FPTYPE>
-    std::vector<std::complex<FPTYPE>> psi_Hpsi(std::complex<FPTYPE>* const psi, std::complex<FPTYPE>* const hpsi, const int nbasis, const int nbands)
+    std::vector<std::complex<FPTYPE>> psi_Hpsi(std::complex<FPTYPE>* const psi, 
+    std::complex<FPTYPE>* const hpsi, const int nbasis, const int nbands)
     {
         using T = std::complex<FPTYPE>;
         std::vector<T> cVc(nbands * nbands, (T)0.0);
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm('C', 'N', nbands, nbands, nbasis, alpha, psi, nbasis, hpsi, nbasis, beta, cVc.data(), nbands);
+        container::BlasConnector::gemm('C', 'N', nbands, nbands, nbasis, alpha, 
+        psi, nbasis, hpsi, nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
+
     template <typename FPTYPE>
-    std::vector<FPTYPE> orbital_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo)
+    std::vector<FPTYPE> orbital_energy(const int ik, const int nbands, 
+    const std::vector<std::complex<FPTYPE>>& mat_mo)
     {
 #ifdef __DEBUG
         assert(nbands >= 0);
 #endif
         std::vector<FPTYPE> e(nbands, 0.0);
-        for (int i = 0; i < nbands; ++i) {
-            e[i] = get_real(mat_mo[i * nbands + i]);
-}
+		for (int i = 0; i < nbands; ++i) 
+		{
+			e[i] = get_real(mat_mo[i * nbands + i]);
+		}
         return e;
     }
+
     template <typename FPTYPE>
-    FPTYPE all_band_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
+    FPTYPE all_band_energy(const int ik, const int nbands, 
+    const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < nbands; ++i) {
-            e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
-}
-        return e;
+		for (int i = 0; i < nbands; ++i) 
+		{
+			e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
+		}
+		return e;
     }
+
     template <typename FPTYPE>
-    FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, const ModuleBase::matrix& wg)
+    FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, 
+    const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < orbital_energy.size(); ++i) {
-            e += orbital_energy[i] * (FPTYPE)wg(ik, i);
-}
-        return e;
+		for (int i = 0; i < orbital_energy.size(); ++i) 
+		{
+			e += orbital_energy[i] * (FPTYPE)wg(ik, i);
+		}
+		return e;
     }
 
     /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
