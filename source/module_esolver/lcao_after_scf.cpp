@@ -142,7 +142,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 					this->pv, 
 					PARAM.globalv.gamma_only_local,
 					PARAM.inp.out_app_flag,
-					istep);
+					istep,
+					GlobalV::ofs_running);
 		}
 	}
 

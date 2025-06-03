@@ -24,7 +24,8 @@ namespace ModuleIO
 				const Parallel_Orbitals &pv,
 				const bool gamma_only,
 				const bool out_app_flag,
-				const int istep);	
+				const int istep,
+				std::ofstream &ofs_running);	
 
     /// @brief save a square matrix, such as H(k) and S(k)
     /// @param[in] istep : the step of the calculation

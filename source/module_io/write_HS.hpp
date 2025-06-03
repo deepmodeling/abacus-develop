@@ -20,8 +20,22 @@ void ModuleIO::write_hsk(
 	    const Parallel_Orbitals &pv,
         const bool gamma_only,
         const bool out_app_flag,
-        const int istep)	
+        const int istep,
+        std::ofstream &ofs_running)	
 {
+
+	ofs_running << "\n WRITE H(k) OR S(k) BEGINS" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " | Write Hamiltonian matrix H(k) or overlap matrix S(k) in numerical  |" << std::endl; 
+	ofs_running << " | atomic orbitals at each k-point.                                   |" << std::endl; 
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
 	for (int ik = 0; ik < nks; ++ik)
 	{
 	    p_hamilt->updateHk(ik);
@@ -39,8 +53,6 @@ void ModuleIO::write_hsk(
 		std::string h_fn = ModuleIO::filename_output(global_out_dir,
 				"hk","nao",ik,ik2iktot,nspin,nkstot,
 				out_label,out_app_flag,gamma_only,istep);
-
-		std::cout << "the filename is " << h_fn << std::endl;
 
 		ModuleIO::save_mat(istep,
 				h_mat.p,
@@ -62,12 +74,11 @@ void ModuleIO::write_hsk(
 			continue;
 		}
 
-
 		std::string s_fn = ModuleIO::filename_output(global_out_dir,
 				"sk","nao",ik,ik2iktot,nspin,nkstot,
 				out_label,out_app_flag,gamma_only,istep);
 
-		std::cout << "the filename is " << s_fn << std::endl;
+		ofs_running << " The output filename is " << s_fn << std::endl;
 
 		ModuleIO::save_mat(istep,
 				s_mat.p,
@@ -99,7 +110,6 @@ void ModuleIO::save_mat(const int istep,
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension: ", dim);
 
     // print out .dat file
 	if (bit)

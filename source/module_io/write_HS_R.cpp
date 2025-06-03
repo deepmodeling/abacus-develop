@@ -28,9 +28,23 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
                           const std::string& HR_filename_up,
                           const std::string HR_filename_down,
                           const bool& binary,
-                          const double& sparse_thr) {
+                          const double& sparse_thr) 
+{
+
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
+
+	GlobalV::ofs_running << "\n WRITE H(R) OR S(R) BEGINS" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " | Write Hamiltonian matrix H(R) or overlap matrix S(R) in numerical  |" << std::endl; 
+	GlobalV::ofs_running << " | atomic orbitals, where R is the Bravis lattice vector.             |" << std::endl; 
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
 
