@@ -182,14 +182,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
-            if (skip_charge)
-            {
-                GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
-                                    << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                    << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
-                DiagoIterAssist<T, Device>::avg_iter = 0.0;
-            }
+        if (skip_charge)
+        {
+            GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
+                                 << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
+                                 << " threshold=" << this->diag_thr << std::endl;
+            DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
+        /// calculate the contribution of Psi for charge density rho
     }
     
     count++;
@@ -197,10 +197,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
-        // pes->ekb.c,
         out_eigenvalues,
         eigenvalues.data(),
-        // pes->ekb.nr * pes->ekb.nc
         this->wfc_basis->nks * psi.get_nbands());
 
     auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
@@ -211,6 +209,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  _pes_pw->f_en,
                                  _pes_pw->nelec_spin,
                                  _pes_pw->skip_weights);
+
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
     if (skip_charge)
     {
@@ -218,16 +217,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         {
             reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->cal_becsum(psi);
         }
-        ModuleBase::timer::tick("HSolverPW", "solve");
-        return;
     }
     else
     {
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
-
-        ModuleBase::timer::tick("HSolverPW", "solve");
-        return;
     }
+
+	ModuleBase::timer::tick("HSolverPW", "solve");
+	return;
 }
 
 template <typename T, typename Device>

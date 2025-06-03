@@ -247,8 +247,8 @@ fi
 # echo $has_band
 #-------------------------------
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
-	bandref=refBANDS_1.dat
-	bandcal=OUT.autotest/BANDS_1.dat
+	bandref=eigs1.txt.ref
+	bandcal=OUT.autotest/eigs1.txt
 	python3 $COMPARE_SCRIPT $bandref $bandcal 8
 	echo "CompareBand_pass $?" >>$1
 fi
@@ -376,10 +376,10 @@ fi
 #---------------------------------------
 if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
        ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 $COMPARE_SCRIPT SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
-    echo "SPIN1_CHG.cube_pass $?" >>$1
-    python3 $COMPARE_SCRIPT SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
-    echo "SPIN1_TAU.cube_pass $?" >>$1
+    python3 $COMPARE_SCRIPT chgs1.cube.ref OUT.autotest/chgs1.cube 8
+    echo "chgs1.cube_pass $?" >>$1
+    python3 $COMPARE_SCRIPT taus1.cube.ref OUT.autotest/taus1.cube 8
+    echo "taus1.cube_pass $?" >>$1
 fi
 
 #---------------------------------------

@@ -196,7 +196,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
-    - [deepks\_bandgap\_range](#deepks_bandgap_range)
+    - [deepks\_band\_range](#deepks_band_range)
     - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
@@ -260,10 +260,11 @@
     - [block\_down](#block_down)
     - [block\_up](#block_up)
     - [block\_height](#block_height)
-  - [Exact Exchange](#exact-exchange)
+  - [Exact Exchange (Common)](#exact-exchange-common)
     - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
     - [exx\_hse\_omega](#exx_hse_omega)
     - [exx\_separate\_loop](#exx_separate_loop)
+  - [Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
     - [exx\_lambda](#exx_lambda)
@@ -287,6 +288,9 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
+  - [Exact Exchange (PW)](#exact-exchange-pw)
+    - [exxace](#exxace)
+    - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
   - [Molecular Dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -600,7 +604,7 @@ These variables are used to control general system parameters.
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
   
-  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `set_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
+  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `get_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
 ### init_chg
@@ -609,8 +613,8 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
-  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
-  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `istate.info`.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -743,7 +747,7 @@ These variables are used to control parameters related to input files.
 ### read_file_dir
 
 - **Type**: String
-- **Description**: Indicates the location of files, such as electron density (`SPIN1_CHG.cube`), required as a starting point.
+- **Description**: Location of files, such as the electron density (`chgs1.cube`), required as a starting point.
   - Example: './' implies the files to be read are located in the working directory.
 - **Default**: OUT.$suffix
 
@@ -1615,13 +1619,14 @@ These variables are used to control the output of properties.
 - **Description**: 
   The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: SPIN1_CHG.cube;
-    - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
-    - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
-  - 2: On top of 1, also output the initial charge density. The files are named as:
-    - nspin = 1: SPIN1_CHG_INI.cube
-    - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
-    - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
+    - nspin = 1: `chgs1.cube`;
+    - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
+    - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
+  Note that by using the Meta-GGA functional, additional files containing the kinetic energy density will be output with the following names:
+    - nspin = 1: `taus1.cube`;
+    - nspin = 2: `taus1.cube`, and `taus2.cube`;
+    - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
+  - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
   - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
     
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
@@ -1629,10 +1634,11 @@ These variables are used to control the output of properties.
   ---
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
-  If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
+  In EXX(exact exchange) calculations, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 
-  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
 
 ### out_pot
 
@@ -1651,6 +1657,7 @@ These variables are used to control the output of properties.
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
 ### out_dm
 
@@ -1664,6 +1671,7 @@ These variables are used to control the output of properties.
     - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
     - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dm1
 
@@ -1673,6 +1681,7 @@ These variables are used to control the output of properties.
   - nspin = 1: `dmrs1_nao.csr`;
   - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
 
 ### out_wfc_pw
 
@@ -1685,6 +1694,7 @@ These variables are used to control the output of properties.
   - 2: (binary format)
     - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
 - **Default**: 0
+- **NOTE**: In the 3.10-LTS version, the file names are OUT.${suffix}/WAVEFUNC${K}.dat, etc. 
 
 ### out_wfc_lcao
 
@@ -1702,7 +1712,8 @@ These variables are used to control the output of properties.
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
   Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: Flase
+- **Default**: False
+- **NOTE**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 
 ### out_dos
 
@@ -1727,7 +1738,10 @@ These variables are used to control the output of properties.
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
-- **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Description**: Whether to output the eigenvalues of Hamiltonian matrix (in eV), optionally output precision can be set by a second parameter, default is 8. The output file names are:
+    - nspin = 1 or 4: `eigs1.txt`;
+    - nspin = 2: `eigs1.txt` and `eigs2.txt`;
+    - For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
 ### out_proj_band
@@ -1934,7 +1948,7 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 ### if_separate_k
 
 - **Type**: Boolean
-- **Availability**: Only for LCAO, used only when `calculation = get_pchg` and `gamma_only` is turned off.
+- **Availability**: For both PW and LCAO. When `basis_type = pw`, used if `out_pchg` is set. When `basis_type = lcao`, used only when `calculation = get_pchg` and `gamma_only` is turned off.
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. **Warning**: Enabling symmetry may produce incorrect results due to incorrect k-point weights. Therefore, when calculating partial charge densities, it is strongly recommended to set `symmetry = -1`.
 - **Default**: false
 
@@ -2162,20 +2176,19 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
   - 0: Don't include bandgap label
-  - 1: Include HOMO and LOMO for bandgap label
-  - 2: Include multiple bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
-  - 3: Include target bandgap label (see [deepks\_bandgap\_range](#deepks_bandgap_range) for more details)
-  - 4: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between (HOMO, HOMO + 1)
+  - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
+  - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
+  - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
 - **Default**: 0
 
-### deepks_bandgap_range
+### deepks_band_range
 
 - **Type**: Int*2
-- **Availability**: numerical atomic orbital basis, `deepks_scf` is true, and `deepks_bandgap` is 2 or 3
-- **Description**: 
-  - `deepks_bandgap` is 2: Bandgap labels are energies between (LUMO + deepks_bandgap_range[0], HOMO), (LUMO + deepks_bandgap_range[0] + 1, HOMO), ..., (LUMO + deepks_bandgap_range[1], HOMO) except (HOMO, HOMO)
-  - `deepks_bandgap` is 3: Bandgap label is the energy between (LUMO + deepks_bandgap_range[0], LUMO + deepks_bandgap_range[1])
-- **Default**: 0 0
+- **Availability**: numerical atomic orbital basis, `deepks_scf` is true, and `deepks_bandgap` is 1 or 2
+- **Description**: The first value should not be larger than the second one and the meaning differs in different cases below
+  - `deepks_bandgap` is 1: Bandgap label is the energy between `LUMO + deepks_band_range[0]` and `LUMO + deepks_band_range[1]`. If not set, it will calculate energy between HOMO and LUMO states.
+  - `deepks_bandgap` is 2: Bandgap labels are energies between HOMO and all states in range [`LUMO + deepks_band_range[0]`, `LUMO + deepks_band_range[1]`] (Thus there are `deepks_band_range[1] - deepks_band_range[0] + 1` bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (`deepks_band_range[1] - deepks_band_range[0]` bandgaps in this case). *NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.*
+- **Default**: -1 0
 
 ### deepks_v_delta
 
@@ -2672,11 +2685,14 @@ These variables are relevant to gate field (compensating charge) [Detailed intro
 
 [back to top](#full-list-of-input-keywords)
 
-## Exact Exchange
+## Exact Exchange (Common)
 
-These variables are relevant when using hybrid functionals.
+These variables are relevant when using hybrid functionals. Currently ABACUS supports hybrid functionals when *[basis_type](#basis_type)==lcao/lcao_in_pw*. 
+Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under active development.
 
-**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
+The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw*. For basis specific parameters, see the sections *[Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)* and *[Exact Exchange (PW)](#exact-exchange-pw)*.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*. 
 
 ### exx_hybrid_alpha
 
@@ -2699,6 +2715,10 @@ These variables are relevant when using hybrid functionals.
   - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
   - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
 - **Default**: True
+
+## Exact Exchange (LCAO/LCAO in PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 
 ### exx_hybrid_step
 
@@ -2860,6 +2880,23 @@ These variables are relevant when using hybrid functionals.
 - **Default**: false
 
 [back to top](#full-list-of-input-keywords)
+
+## Exact Exchange (PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==pw*. Note that hybrid functionals in *[basis_type](#basis_type)==pw* is under active development, and currently limited to *[nspin](#nspin) == 1 or 2* and *[symmetry](#symmetry)==-1
+
+### exxace
+- **Type**: Boolean
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==True*. 
+- **Description**: Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
+  - True: Use the ACE method to calculate the Fock exchange operator.
+  - False: Use the traditional method to calculate the Fock exchange operator.
+- **Default**: True
+
+### exx_gamma_extrapolation
+- **Type**: Boolean
+- **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See [https://doi.org/10.1103/PhysRevB.79.205114](https://doi.org/10.1103/PhysRevB.79.205114) for details. Should be set to true most of the time.
+- **Default**: True
 
 ## Molecular dynamics
 

@@ -5,7 +5,6 @@
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
-#include "module_io/write_istate_info.h"
 
 #include <iostream>
 

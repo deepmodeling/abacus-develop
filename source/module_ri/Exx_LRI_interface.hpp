@@ -10,10 +10,13 @@
 #include "module_base/parallel_common.h"
 #include "module_base/formatter.h"
 
-#include <sys/time.h>
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
 #include "module_elecstate/elecstate_lcao.h"
+
+#include <sys/time.h>
+#include <stdexcept>
+#include <string>
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
@@ -21,7 +24,7 @@ void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_nam
     ModuleBase::TITLE("Exx_LRI", "write_Hexxs_cereal");
     ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
     std::ofstream ofs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
-	cereal::BinaryOutputArchive oar(ofs);
+    cereal::BinaryOutputArchive oar(ofs);
     oar(this->exx_ptr->Hexxs);
     ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
 }
@@ -32,14 +35,81 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
     ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
     ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
     std::ifstream ifs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
-	cereal::BinaryInputArchive iar(ifs);
-	iar(this->exx_ptr->Hexxs);
+    cereal::BinaryInputArchive iar(ifs);
+    iar(this->exx_ptr->Hexxs);
     ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
+                                       const UnitCell &ucell,
+                                       const K_Vectors &kv,
+                                       const LCAO_Orbitals& orb)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","init");
+    this->exx_ptr->init(mpi_comm, ucell, kv, orb);
+    this->flag_finish.init = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_ions");
+    if(!this->flag_finish.init)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_ions(ucell, write_cv);
+
+    this->flag_finish.ions = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+                                               const UnitCell& ucell,
+                                               const Parallel_Orbitals& pv,
+                                               const ModuleSymmetry::Symmetry_rotation* p_symrot)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_elec");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_elec(Ds, ucell, pv, p_symrot);
+
+    this->flag_finish.elec = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+    if(!this->flag_finish.elec)
+        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_force(nat);
+
+    this->flag_finish.force = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+    if(!this->flag_finish.elec)
+        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+
+    this->exx_ptr->cal_exx_stress(omega, lat0);
+
+    this->flag_finish.stress = true;
 }
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
 {
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     // initialize the rotation matrix in AO representation
     this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->exx_spacegroup_symmetry)
@@ -53,12 +123,13 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, co
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep, 
-                                                const K_Vectors& kv, 
-                                                const Charge_Mixing& chgmix, 
-                                                const UnitCell& ucell, 
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
+                                                const K_Vectors& kv,
+                                                const Charge_Mixing& chgmix,
+                                                const UnitCell& ucell,
                                                 const LCAO_Orbitals& orb)
 {
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
     {
@@ -79,49 +150,51 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
                 XC_Functional::set_xc_type("scan");
             }
             // added by jghan, 2024-07-07
-            else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER" 
+            else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER"
                 || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
             {
                 XC_Functional::set_xc_type("pbe");
             }
         }
-        this->exx_ptr->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
+
+        this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
     }
 
-		if (Exx_Abfs::Jle::generate_matrix)
-		{
-			//program should be stopped after this judgement
-			Exx_Opt_Orb exx_opt_orb;
-			exx_opt_orb.generate_matrix(kv, ucell,orb);
-			ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-			return;
-		}
-		
-		// set initial parameter for mix_DMk_2D
-		if(GlobalC::exx_info.info_global.cal_exx)
-        {
-            if (this->exx_spacegroup_symmetry)
-                {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
-            else
-                {this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
-			if(GlobalC::exx_info.info_global.separate_loop) {
-                this->mix_DMk_2D.set_mixing(nullptr);
-			} else {
-				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
-            }
-            // for exx two_level scf
-            this->two_level_step = 0;
-        }
+    if (Exx_Abfs::Jle::generate_matrix)
+    {
+        //program should be stopped after this judgement
+        Exx_Opt_Orb exx_opt_orb;
+        exx_opt_orb.generate_matrix(kv, ucell,orb);
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+        return;
+    }
+
+    // set initial parameter for mix_DMk_2D
+    if(GlobalC::exx_info.info_global.cal_exx)
+    {
+        if (this->exx_spacegroup_symmetry)
+            {this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        else
+            {this->mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
+
+        if(GlobalC::exx_info.info_global.separate_loop)
+            { this->mix_DMk_2D.set_mixing(nullptr); }
+        else
+            { this->mix_DMk_2D.set_mixing(chgmix.get_mixing()); }
+        // for exx two_level scf
+        this->two_level_step = 0;
+    }
 #endif // __MPI
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep, 
-                                                   const UnitCell& ucell,  
-                                                   const elecstate::DensityMatrix<T, double>& dm, 
-                                                   const K_Vectors& kv, 
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
+                                                   const UnitCell& ucell,
+                                                   const elecstate::DensityMatrix<T, double>& dm,
+                                                   const K_Vectors& kv,
                                                    const int& iter)
 {
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_eachiterinit");
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop 
@@ -134,61 +207,48 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                 && iter == 1)
            )  // the first iter in separate loop case
         {
-            std::cout << " UPDATE EXX" << std::endl;
-
             const bool flag_restart = (iter == 1) ? true : false;
 
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {
-				if (this->exx_spacegroup_symmetry) 
-				{ 
-					this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), 
-							*dm_in.get_paraV_pointer()), 
-							flag_restart); 
-				}
-                else 
-				{ 
-					this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); 
-				}
-
-				const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-					Ds = PARAM.globalv.gamma_only_local
-					? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
-							*this->exx_ptr->p_kv, 
-							this->mix_DMk_2D.get_DMk_gamma_out(), 
-							*dm_in.get_paraV_pointer(), 
+                if (this->exx_spacegroup_symmetry)
+                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), *dm_in.get_paraV_pointer()), flag_restart); }
+                else
+                    { this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); }
+                const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+                    Ds = PARAM.globalv.gamma_only_local
+                        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(
+							ucell,
+							*this->exx_ptr->p_kv,
+							this->mix_DMk_2D.get_DMk_gamma_out(),
+							*dm_in.get_paraV_pointer(),
 							PARAM.inp.nspin)
-					: RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
-							*this->exx_ptr->p_kv, 
-							this->mix_DMk_2D.get_DMk_k_out(), 
-							*dm_in.get_paraV_pointer(), 
-							PARAM.inp.nspin, 
+                        : RI_2D_Comm::split_m2D_ktoR<Tdata>(
+							ucell,
+							*this->exx_ptr->p_kv,
+							this->mix_DMk_2D.get_DMk_k_out(),
+							*dm_in.get_paraV_pointer(),
+							PARAM.inp.nspin,
 							this->exx_spacegroup_symmetry);
 
-                if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) 
-                { 
-                    this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); 
-                }
-                else 
-                { 
-                    this->exx_ptr->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); 
-                }
+                if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
+                    { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); }
+                else
+                    { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); }
             };
-			if(istep > 0 && flag_restart) 
-			{
-				cal(*dm_last_step);
-			} 
-			else 
-			{
-				cal(dm);
-			}
-		}
+
+            if(istep > 0 && flag_restart)
+                { cal(*dm_last_step); }
+            else
+                { cal(dm); }
+        }
     }
 }
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const  int iter)
 {
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_hamilt2density");
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
@@ -217,16 +277,17 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv, 
+void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
                                                   const UnitCell& ucell,
-                                                  hamilt::Hamilt<T>& hamilt, 
-                                                  elecstate::ElecState& elec, 
+                                                  hamilt::Hamilt<T>& hamilt,
+                                                  elecstate::ElecState& elec,
                                                   Charge_Mixing& chgmix,
-                                                  const double& scf_ene_thr, 
-                                                  int& iter, 
-                                                  const int istep, 
+                                                  const double& scf_ene_thr,
+                                                  int& iter,
+                                                  const int istep,
                                                   bool& conv_esolver)
 {
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
         && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
@@ -294,124 +355,91 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     const double& etot,
     const double& scf_ene_thr)
 {   // only called if (GlobalC::exx_info.info_global.cal_exx)
+    ModuleBase::TITLE("Exx_LRI_Interface","exx_after_converge");
     auto restart_reset = [this]()
-        { // avoid calling restart related procedure in the subsequent ion steps
-            GlobalC::restart.info_load.restart_exx = true;
-            this->exx_ptr->Eexx = 0;
-        };
-        
-        // no separate_loop case
-        if (!GlobalC::exx_info.info_global.separate_loop)
+    { // avoid calling restart related procedure in the subsequent ion steps
+        GlobalC::restart.info_load.restart_exx = true;
+        this->exx_ptr->Eexx = 0;
+    };
+
+    // no separate_loop case
+    if (!GlobalC::exx_info.info_global.separate_loop)
+    {
+        GlobalC::exx_info.info_global.hybrid_step = 1;
+
+        // in no_separate_loop case, scf loop only did twice
+        // in first scf loop, exx updated once in beginning,
+        // in second scf loop, exx updated every iter
+
+        if (this->two_level_step || istep > 0)
         {
-            GlobalC::exx_info.info_global.hybrid_step = 1;
-
-            // in no_separate_loop case, scf loop only did twice
-            // in first scf loop, exx updated once in beginning,
-            // in second scf loop, exx updated every iter
-
-            if (this->two_level_step || istep > 0)
-            {
-                restart_reset();
-                return true;
-            }
-            else
-            {
-                // update exx and redo scf
-                XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                iter = 0;
-                std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
-                this->two_level_step++;
-                return false;
-            }
+            restart_reset();
+            return true;
         }
         else
-        { // has separate_loop case
-            const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
-			if (two_level_step) 
-			{ 
-				std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); 
-			}
-            // exx converged or get max exx steps
-            if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop
-                || (ediff < scf_ene_thr && this->two_level_step != 0))   //energy convergence of outer loop
-            {
-                restart_reset();
-                return true;
-            }
+        {
+            // update exx and redo scf
+            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+            iter = 0;
+            std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
+            this->two_level_step++;
+            return false;
+        }
+    }
+    else
+    { // has separate_loop case
+        const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
+        if (two_level_step)
+            { std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); }
+        // exx converged or get max exx steps
+        if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
+            || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop
+            || (ediff < scf_ene_thr && this->two_level_step != 0))   //energy convergence of outer loop
+        {
+            restart_reset();
+            return true;
+        }
+        else
+        {
+            this->etot_last_outer_loop = etot;
+            // update exx and redo scf
+            if (this->two_level_step == 0)
+                { XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); }
+
+            std::cout << " Updating EXX " << std::flush;
+            timeval t_start;       gettimeofday(&t_start, nullptr);
+
+            // if init_wfc == "file", DM is calculated in the 1st iter of the 1st two-level step, so we mix it here
+            const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
+
+            if (this->exx_spacegroup_symmetry)
+                {this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart);}
             else
-            {
-                this->etot_last_outer_loop = etot;
-                // update exx and redo scf
-                if (this->two_level_step == 0)
-                {
-                    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                }
+                {this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);}
 
-                std::cout << " Updating EXX " << std::flush;
-                timeval t_start;       gettimeofday(&t_start, nullptr);
-
-                // if init_wfc == "file", DM is calculated in the 1st iter of the 1st two-level step, so we mix it here
-                const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
-
-                if (this->exx_spacegroup_symmetry)
-                    {this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart);}
-                else
-                    {this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);}
-
-                // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
-                const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>
-                    Ds = std::is_same<T, double>::value //gamma_only_local
-                    ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
-                    : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin, this->exx_spacegroup_symmetry);
-
-                // check the rotation of Ds
-                // this->symrot_.test_HR_rotation(ucell.symm, ucell.atoms, ucell.st, 'D', Ds[0]);
-
-                // check the rotation of H(R) before adding exx
-                // this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, this->symrot_.get_Rs_from_adjacent_list(ucell, GlobalC::GridD, *lm.ParaV));
-                // this->symrot_.test_HR_rotation(ucell.symm, ucell.atoms, ucell.st, 'H', *(dynamic_cast<hamilt::HamiltLCAO<T, double>*>(&hamilt)->getHR()));
-                // exit(0);
+            // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
+            const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>
+                Ds = std::is_same<T, double>::value //gamma_only_local
+                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
+                : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin, this->exx_spacegroup_symmetry);
 
             if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
-            {
-                this->exx_ptr->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symrot_);
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_irreducible");   // test
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored", 1e-10);   // test
-            }
+                { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symrot_); }
             else
-            {
-                this->exx_ptr->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());    // restore DM but not Hexx
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restore-DM-only");   // test
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_ref");   // test
-            }
-                // ========================  test   ========================
-                // if (this->two_level_step)exit(0);
-                // check the rotation of S(R)
-                // this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, this->symrot_.get_Rs_from_adjacent_list(ucell, GlobalC::GridD, *lm.ParaV));
-                // this->symrot_.test_HR_rotation(ucell.symm, ucell.atoms, ucell.st, 'H', *(dynamic_cast<hamilt::HamiltLCAO<T, double>*>(&hamilt)->getSR()));
+                { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer()); }    // restore DM but not Hexx
+            iter = 0;
+            this->two_level_step++;
 
-                // check the rotation of D(R): no atom pair?
-                // symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, symrot_.get_Rs_from_adjacent_list(ucell, GlobalC::GridD, *this->DM->get_paraV_pointer()));
-                // symrot_.test_HR_rotation(ucell.symm, ucell.atoms, ucell.st, 'D', *(this->DM->get_DMR_pointer(0)));
-
-                // check the rotation of Hexx
-                // this->symrot_.test_HR_rotation(ucell.symm, ucell.atoms, ucell.st, 'H', this->exx_ptr->Hexxs[0]);
-                // exit(0);// break after test
-                // ========================  test   ========================
-                iter = 0;
-                this->two_level_step++;
-
-                timeval t_end;       gettimeofday(&t_end, nullptr);
-                std::cout << "and rerun SCF\t"
-                    << std::defaultfloat
-                    << std::setprecision(3) << std::setiosflags(std::ios::scientific)
-                    << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0 
-                    << std::defaultfloat << " (s)" << std::endl;
+            timeval t_end;       gettimeofday(&t_end, nullptr);
+            std::cout << "and rerun SCF\t"
+                << std::setprecision(3) << std::setiosflags(std::ios::scientific)
+                << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0
+                << std::defaultfloat << " (s)" << std::endl;
             return false;
-            }
         }
+    }   // if(GlobalC::exx_info.info_global.separate_loop)
     restart_reset();
     return true;
 }
+
 #endif

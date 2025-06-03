@@ -323,7 +323,7 @@ void trilinear_interpolate(const std::vector<std::vector<int>>& points,
 #ifdef __MPI
     if (GlobalV::MY_POOL == 0 && GlobalV::MY_BNDGROUP == 0)
     {
-        pgrid.reduce(data_full.data(), data.data());
+        pgrid.reduce(data_full.data(), data.data(), false);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 #else

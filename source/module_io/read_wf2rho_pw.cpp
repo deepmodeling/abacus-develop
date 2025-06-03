@@ -65,7 +65,7 @@ void ModuleIO::read_wf2rho_pw(
     ModuleBase::matrix wg_tmp(nkstot, nbands);
     if (my_rank == 0)
     {
-        std::string filename = readin_dir + "istate.info";
+        std::string filename = readin_dir + "eig.txt";
         std::ifstream ifs(filename);
 
 		if(!ifs)
@@ -79,33 +79,19 @@ void ModuleIO::read_wf2rho_pw(
             ofs_running << " Find file containing weights of wave function: " << filename << std::endl;
         }
 
-        std::string useless;
-        if (nspin == 2)
-        {
-            const int nkstot_np = nkstot / 2;
-            for (int iktot_np = 0; iktot_np < nkstot_np; ++iktot_np)
-            {
-                ifs >> useless;
-                getline(ifs, useless);
-                for (int ib = 0; ib < nbands; ++ib)
-                {
-                    ifs >> useless >> useless >> wg_tmp(iktot_np, ib) >> useless >> wg_tmp(iktot_np + nkstot_np, ib);
-                }
-            }
-        }
-        else
-        {
-            for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
-            {
-                ifs >> useless;
-                getline(ifs, useless);
-                for (int ib = 0; ib < nbands; ++ib)
-                {
-                    ifs >> useless >> useless >> wg_tmp(ik_tot, ib);
-                }
-            }
-        }
-    }
+		std::string useless;
+		getline(ifs, useless);
+		getline(ifs, useless);
+		for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
+		{
+			ifs >> useless;
+			getline(ifs, useless);
+			for (int ib = 0; ib < nbands; ++ib)
+			{
+				ifs >> useless >> useless >> wg_tmp(ik_tot, ib);
+			}
+		}
+	}
 
 #ifdef __MPI
     MPI_Bcast(wg_tmp.c, nkstot * nbands, MPI_DOUBLE, 0, MPI_COMM_WORLD);
