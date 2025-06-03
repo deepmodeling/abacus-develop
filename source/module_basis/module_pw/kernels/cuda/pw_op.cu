@@ -94,24 +94,15 @@ __global__ void set_real_to_recip_output_batch(
     if(idx >= total_elements) return;
     const int batch_idx = idx / npwk;
     const int element_idx = idx % npwk;
-    const thrust::complex<FPTYPE>* batch_in = in + batch_idx * npwk;
+    const thrust::complex<FPTYPE>* batch_in = in + batch_idx * nxyz;
     thrust::complex<FPTYPE>* batch_out = out + batch_idx * npwk;
     
-    // 获取box_index映射的值
-    const int box_idx = box_index[element_idx];  // 注意：box_index是每个元素级别的，不是批次级别
+    const int box_idx = box_index[element_idx];  
     
-    // 原始计算逻辑
-    const FPTYPE scale_factor = static_cast<FPTYPE>(1.0) / nxyz;
+    const FPTYPE scale_factor = factor / nxyz;
     const thrust::complex<FPTYPE> input_val = batch_in[box_idx];
-    
-    if(add) {
-        // out[idx] += factor / nxyz * in[box_index[idx]];
-        batch_out[element_idx] += static_cast<FPTYPE>(factor) * scale_factor * input_val;
-    }
-    else {
-        // out[idx] = in[box_index[idx]] / nxyz;
-        batch_out[element_idx] = scale_factor * input_val;
-    }
+    batch_out[element_idx] = add ? (batch_out[element_idx] + scale_factor * input_val) 
+                                 : (scale_factor * input_val);
 }
 
 template<class FPTYPE>
