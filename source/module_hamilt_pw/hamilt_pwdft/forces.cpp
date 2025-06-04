@@ -556,7 +556,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     }
     
     // calculate vloc_factors for all atom types
-    std::vector<FPTYPE> vloc_per_type_host(ucell.ntype * rho_basis->npw);
+    std::vector<FPTYPE> vloc_per_type_host(this->nat * rho_basis->npw);
     for (int iat = 0; iat < this->nat; iat++) {
         int it = ucell.iat2it[iat];
         for (int ig = 0; ig < rho_basis->npw; ig++) {
@@ -585,13 +585,13 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         
         resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
         resmem_var_op()(this->ctx, d_tau, this->nat * 3);
-        resmem_var_op()(this->ctx, d_vloc_per_type, ucell.ntype * rho_basis->npw);
+        resmem_var_op()(this->ctx, d_vloc_per_type, this->nat * rho_basis->npw);
         resmem_complex_op()(this->ctx, d_aux, rho_basis->npw);
         resmem_var_op()(this->ctx, d_force, this->nat * 3);
         
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), this->nat * 3);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_vloc_per_type, vloc_per_type_host.data(), ucell.ntype * rho_basis->npw);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_vloc_per_type, vloc_per_type_host.data(), this->nat * rho_basis->npw);
         syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, d_aux, aux_fptype.data(), rho_basis->npw);
         
         base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_force, 0.0, this->nat * 3);
@@ -609,7 +609,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         this->ctx,
         this->nat,
         rho_basis->npw,
-        ucell.ntype,
+        this->nat,
         d_gcar,
         d_tau,
         d_vloc_per_type,
