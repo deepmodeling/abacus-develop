@@ -1,5 +1,4 @@
 #include "esolver_ks_lcao.h"
-#include "module_io/write_HS.h"         // write H and S matrices
 #include "module_rdmft/rdmft.h"         // RDMFT codes
 
 #include "module_base/formatter.h"
@@ -10,7 +9,6 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
-#include "module_io/io_dmk.h"
 #include "module_io/io_npz.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
@@ -22,7 +20,6 @@
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 #include "module_io/cal_pLpR.h"
 #include "module_parameter/parameter.h"
 #include "module_base/global_function.h"

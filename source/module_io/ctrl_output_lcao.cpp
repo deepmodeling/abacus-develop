@@ -3,26 +3,36 @@
 
 #include <complex>
 
-#include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
-#include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
 #include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
+#include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 
+#include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
+#include "module_io/io_dmk.h" // use ModuleIO::write_dmk()
+#include "module_io/write_HS.h" // use ModuleIO::write_hsk()
+#include "module_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 
 namespace ModuleIO
 {
 
 template <typename TK, typename TR>
 void ctrl_output_lcao(const UnitCell& ucell, 
+		const K_Vectors& kv,
 		const elecstate::ElecStateLCAO<TK>* pelec, 
 		const Parallel_Orbitals& pv,
+		const psi::Psi<TK>* psi,
+		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
 
     const bool out_app_flag = PARAM.inp.out_app_flag;
+    const bool gamma_only = PARAM.globalv.gamma_only_local;
+    const int nspin = PARAM.inp.nspin;
+
 	//------------------------------------------------------------------
-	//! 1) write density matrix DM(R) for sparse matrix in LCAO basis
+	//! 1) write density matrix DM(R)
 	//------------------------------------------------------------------
     if(PARAM.inp.out_dm1)
 	{
@@ -31,115 +41,85 @@ void ctrl_output_lcao(const UnitCell& ucell,
 				ucell.get_iat2iwt(), ucell.nat, istep);
 	}
 
-/*
 	//------------------------------------------------------------------
-	//! 2) write density matrix DM(k) in LCAO basis
+	//! 2) write density matrix DM(k)
 	//------------------------------------------------------------------
 	if (PARAM.inp.out_dm)
 	{
-		std::vector<double> efermis(PARAM.inp.nspin == 2 ? 2 : 1);
+		std::vector<double> efermis(nspin == 2 ? 2 : 1);
 		for (int ispin = 0; ispin < efermis.size(); ispin++)
 		{
-			efermis[ispin] = this->pelec->eferm.get_efval(ispin);
+			efermis[ispin] = pelec->eferm.get_efval(ispin);
 		}
 		const int precision = 3;
-		ModuleIO::write_dmk(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector(),
-				precision,
-				efermis,
-				&(ucell),
-				this->pv);
+		ModuleIO::write_dmk(pelec->get_DM()->get_DMK_vector(),
+				precision, efermis, &(ucell), pv);
 	}
 
-#ifdef __EXX
     //------------------------------------------------------------------
-    //! 3) write Hexx matrix in LCAO basis
-    // (see `out_chg` in docs/advanced/input_files/input-main.md)
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_chg[0])
-    {
-        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.calculation != "nscf") // Peize Lin add if 2022.11.14
-        {
-			const std::string file_name_exx = PARAM.globalv.global_out_dir 
-				+ "HexxR" + std::to_string(GlobalV::MY_RANK);
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exd->get_Hexxs());
-            }
-            else
-            {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exc->get_Hexxs());
-            }
-        }
-    }
-#endif
-
-    //------------------------------------------------------------------
-    // 4) write H(k) and S(k) in NAO basis set 
+    // 3) write H(k) and S(k)
     //------------------------------------------------------------------
 	if (PARAM.inp.out_mat_hs[0])
 	{
-		if (this->psi != nullptr)
-		{
-			ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
-					PARAM.inp.nspin,
-					this->kv.get_nks(), 
-					this->kv.get_nkstot(), 
-					this->kv.ik2iktot, 
-                    this->kv.isk,
-					this->p_hamilt, 
-					this->pv, 
-					PARAM.globalv.gamma_only_local,
-					PARAM.inp.out_app_flag,
-					istep,
-					GlobalV::ofs_running);
-		}
+		ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
+				nspin,
+				kv.get_nks(), 
+				kv.get_nkstot(), 
+				kv.ik2iktot, 
+				kv.isk,
+				p_hamilt, 
+				pv, 
+				gamma_only,
+				out_app_flag,
+				istep,
+				GlobalV::ofs_running);
 	}
 
     //------------------------------------------------------------------
-    // 5) write electronic wavefunctions in LCAO basis
+    // 4) write electronic wavefunctions
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
     {
 		ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
-				PARAM.inp.out_app_flag,
-				this->psi[0],
-				this->pelec->ekb,
-				this->pelec->wg,
-				this->kv.kvec_c,
-				this->kv.ik2iktot,
-				this->kv.get_nkstot(),
-				this->pv,
-				PARAM.inp.nspin,
+				out_app_flag,
+				psi[0],
+				pelec->ekb,
+				pelec->wg,
+				kv.kvec_c,
+				kv.ik2iktot,
+				kv.get_nkstot(),
+				pv,
+				nspin,
 				istep);
 	}
 
+/*
     //------------------------------------------------------------------
-    //! 6) write DeePKS information in LCAO basis
+    //! 5) write DeePKS information in LCAO basis
     //------------------------------------------------------------------
-#ifdef __DEEPKS
-    if (this->psi != nullptr)
+    if (psi != nullptr)
     {
-        hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+#ifdef __DEEPKS
+        hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
         std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
-        deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                                           this->kv.get_nks(),
+        deepks_interface.out_deepks_labels(pelec->f_en.etot,
+                                           kv.get_nks(),
                                            ucell.nat,
                                            PARAM.globalv.nlocal,
-                                           this->pelec->ekb,
-                                           this->kv.kvec_d,
+                                           pelec->ekb,
+                                           kv.kvec_d,
                                            ucell,
                                            orb_,
                                            this->gd,
-                                           &(this->pv),
-                                           *(this->psi),
-                                           dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                           &pv,
+                                           *psi,
+                                           pelec->get_DM(),
                                            p_ham_deepks,
                                            GlobalV::MY_RANK);
-    }
 #endif
-
+    }
 
     //------------------------------------------------------------------
     // 7) write HR in npz format in LCAO basis
@@ -161,7 +141,9 @@ void ctrl_output_lcao(const UnitCell& ucell,
             ModuleIO::output_mat_npz(ucell, zipname, *(p_ham_lcao->getHR()));
         }
     }
+*/
 
+/*
     //------------------------------------------------------------------
     // 8) write density matrix in the 'npz' format in LCAO basis
     //------------------------------------------------------------------
@@ -178,7 +160,9 @@ void ctrl_output_lcao(const UnitCell& ucell,
             ModuleIO::output_mat_npz(ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
     }
+*/
 
+/*
     //------------------------------------------------------------------
     //! 9) Print out <phi_i|O|phi_j>, where O is H, S, dH, dS, T, r 
     //------------------------------------------------------------------
@@ -188,7 +172,7 @@ void ctrl_output_lcao(const UnitCell& ucell,
 			PARAM.inp.out_mat_t,
 			PARAM.inp.out_mat_r,
 			istep,
-			this->pelec->pot->get_effective_v(),
+			pelec->pot->get_effective_v(),
 			this->pv,
 			this->GK,
 			two_center_bundle_,
@@ -241,8 +225,8 @@ void ctrl_output_lcao(const UnitCell& ucell,
 			std::string t_fn = ModuleIO::filename_output(PARAM.globalv.global_out_dir,
 					"tk","nao",ik,this->kv.ik2iktot,
 					PARAM.inp.nspin,this->kv.get_nkstot(),
-					out_label,PARAM.inp.out_app_flag,
-                    PARAM.globalv.gamma_only_local,istep);
+					out_label,out_app_flag,
+                    gamma_only,istep);
 
             ModuleIO::save_mat(istep,
                                hsk.get_hk(),
@@ -281,6 +265,30 @@ void ctrl_output_lcao(const UnitCell& ucell,
                                 PARAM.inp.out_mat_l[1],
                                 GlobalV::MY_RANK);
     }
+
+#ifdef __EXX
+    //------------------------------------------------------------------
+    //! 3) write Hexx matrix in LCAO basis
+    // (see `out_chg` in docs/advanced/input_files/input-main.md)
+    //------------------------------------------------------------------
+    if (PARAM.inp.out_chg[0])
+    {
+        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.calculation != "nscf") // Peize Lin add if 2022.11.14
+        {
+            const std::string file_name_exx = PARAM.globalv.global_out_dir
+                + "HexxR" + std::to_string(GlobalV::MY_RANK);
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exd->get_Hexxs());
+            }
+            else
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exc->get_Hexxs());
+            }
+        }
+    }
+#endif
+
 
     //------------------------------------------------------------------
     //! 13) Print out atomic magnetization in LCAO basis
@@ -376,10 +384,10 @@ void ctrl_output_lcao(const UnitCell& ucell,
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,
                                        ucell,
-                                       this->kv,
+                                       kv,
                                        orb_);
-        rpa_lri_double.init(MPI_COMM_WORLD, this->kv, orb_.cutoffs());
-        rpa_lri_double.out_for_RPA(ucell, this->pv, *(this->psi), this->pelec);
+        rpa_lri_double.init(MPI_COMM_WORLD, kv, orb_.cutoffs());
+        rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
     }
 #endif
 
@@ -416,19 +424,31 @@ void ctrl_output_lcao(const UnitCell& ucell,
 
 }
 
-template void ModuleIO::ctrl_output_lcao<double, double>(const UnitCell& ucell, 
-			const elecstate::ElecStateLCAO<double>* pelec, 
-			const Parallel_Orbitals& pv,
-			const int istep);
 
+// For gamma only
+template void ModuleIO::ctrl_output_lcao<double, double>(const UnitCell& ucell, 
+		const K_Vectors& kv,
+		const elecstate::ElecStateLCAO<double>* pelec, 
+		const Parallel_Orbitals& pv,
+		const psi::Psi<double>* psi,
+		hamilt::HamiltLCAO<double, double>* p_hamilt,
+		const int istep);
+
+// For multiple k-points
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(const UnitCell& ucell, 
-			const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
-			const Parallel_Orbitals& pv,
-			const int istep);
+		const K_Vectors& kv,
+		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		const Parallel_Orbitals& pv,
+		const psi::Psi<std::complex<double>>* psi,
+		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
+		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(const UnitCell& ucell, 
-			const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
-			const Parallel_Orbitals& pv,
-			const int istep);
+		const K_Vectors& kv,
+		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		const Parallel_Orbitals& pv,
+		const psi::Psi<std::complex<double>>* psi,
+		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
+		const int istep);
 
 #endif
