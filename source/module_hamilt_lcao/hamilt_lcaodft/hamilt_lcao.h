@@ -29,7 +29,7 @@ namespace hamilt
 // gamma_only fix-gamma-matrix + S-gamma, 
 // multi-k fix-Real + S-Real
 template <typename TK, typename TR>
-class HamiltLCAO : public Hamilt<TK, base_device::DEVICE_CPU>
+class HamiltLCAO : public Hamilt<TK>
 {
   public:
 

@@ -128,8 +128,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 6) Print out <phi_i|O|phi_j>, where O is H, S, dH, dS, T, r 
     //------------------------------------------------------------------
-    hamilt::Hamilt<TK, base_device::DEVICE_CPU>* p_ham_tk = 
-    static_cast<hamilt::Hamilt<TK, base_device::DEVICE_CPU>*>(p_hamilt);
+    hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
 	ModuleIO::output_mat_sparse(PARAM.inp.out_mat_hs2,
 			PARAM.inp.out_mat_dh,

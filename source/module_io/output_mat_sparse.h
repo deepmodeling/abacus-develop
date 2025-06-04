@@ -10,7 +10,7 @@
 namespace ModuleIO
 {
 /// @brief the output interface to write the sparse matrix of H, S, T, and r
-template <typename T, typename Device = base_device::DEVICE_CPU>
+template <typename T> 
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
                        const bool& out_mat_ds,
@@ -25,7 +25,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        UnitCell& ucell,
                        const Grid_Driver& grid, // mohan add 2024-04-06
                        const K_Vectors& kv,
-                       hamilt::Hamilt<T, Device>* p_ham);
+                       hamilt::Hamilt<T>* p_ham);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H
