@@ -21,7 +21,6 @@
 #include "module_io/to_qo.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
-#include "module_io/write_dmr.h" 
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_io/cal_pLpR.h"
@@ -55,6 +54,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 
+// 2025-06-04
 #include "module_io/ctrl_output_lcao.h"
 #include <iostream>
 
@@ -77,7 +77,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //------------------------------------------------------------------
     if(istep % PARAM.inp.out_interval == 0)
     {
-        //ModuleIO::ctrl_output_lcao();
+        ModuleIO::ctrl_output_lcao<TK, TR>();
     }
 
     //------------------------------------------------------------------

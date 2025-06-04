@@ -1,27 +1,40 @@
-#include "ctrl_output_lcao.h"
+#ifndef CTRL_OUTPUT_LCAO_H 
+#define CTRL_OUTPUT_LCAO_H 
 
-namespace Module_IO
+#include <complex>
+
+#include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
+
+namespace ModuleIO
 {
 
 template <typename TK, typename TR>
 void ctrl_output_lcao()
 {
-/*
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
+
+/*
+    const bool out_app_flag = PARAM.inp.out_app_flag;
+
+	const auto* estate = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec);
+	if(!estate)
+	{
+		WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
+	}
 
 	//------------------------------------------------------------------
 	//! 1) write density matrix DM(R) for sparse matrix in LCAO basis
 	//------------------------------------------------------------------
-	ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
-			this->pv,
-			PARAM.inp.out_dm1,
-			false,
-			PARAM.inp.out_app_flag,
-			ucell.get_iat2iwt(),
-			&ucell.nat,
-			istep);
+    if(PARAM.inp.out_dm1)
+	{
+		const auto& dmr_vector = estate->get_DM()->get_DMR_vector();
+		ModuleIO::write_dmr(dmr_vector, pv,	out_app_flag,
+				ucell.get_iat2iwt(), ucell.nat, istep);
+	}
+*/
 
+/*
 	//------------------------------------------------------------------
 	//! 2) write density matrix DM(k) in LCAO basis
 	//------------------------------------------------------------------
@@ -399,14 +412,15 @@ void ctrl_output_lcao()
 
         double etot_rdmft = this->rdmft_solver.run(dedocc, dedwfc);
     }
+*/
 
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
-*/
-}//end function
+}
 
 }
 
-template void Module_IO::ctrl_output_lcao<double,double>();
-template void Module_IO::ctrl_output_lcao<std::complex<double>,double>();
-template void Module_IO::ctrl_output_lcao<std::complex<double>,std::complex<double>>();
+template void ModuleIO::ctrl_output_lcao<double, double>();
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>();
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>();
 
+#endif
