@@ -537,6 +537,7 @@ OBJS_IO=input_conv.o\
     write_wfc_r.o\
     output_log.o\
     output_mat_sparse.o\
+    ctrl_output_lcao.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
