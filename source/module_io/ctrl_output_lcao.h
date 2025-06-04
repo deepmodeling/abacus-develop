@@ -8,16 +8,22 @@
 #include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "module_psi/psi.h" // use Psi<TK>
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "module_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
+#include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k
 
 namespace ModuleIO
 {
 	template <typename TK, typename TR>
-		void ctrl_output_lcao(const UnitCell& ucell, 
+		void ctrl_output_lcao(UnitCell& ucell, 
 				const K_Vectors& kv,
 				const elecstate::ElecStateLCAO<TK>* pelec, 
 				const Parallel_Orbitals& pv,
+				const Grid_Driver& gd,
 				const psi::Psi<TK>* psi,
 				hamilt::HamiltLCAO<TK, TR>* p_hamilt,
+				TwoCenterBundle &two_center_bundle,
+				Gint_k &gk,
+				LCAO_Orbitals &orb,
 				const int istep);
 }
 #endif

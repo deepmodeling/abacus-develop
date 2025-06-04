@@ -155,7 +155,6 @@
     - [out\_mat\_xc2](#out_mat_xc2)
     - [out\_mat\_l](#out_mat_l)
     - [out\_eband\_terms](#out_eband_terms)
-    - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
     - [dm\_to\_rho](#dm_to_rho)
     - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
@@ -1861,13 +1860,6 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to print the band energy terms separately in the file `OUT.${suffix}/${term}_out.dat`. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
-- **Default**: False
-
-### out_hr_npz/out_dm_npz (Under Development Feature)
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations.
 - **Default**: False
 
 ### dm_to_rho (Under Development Feature)

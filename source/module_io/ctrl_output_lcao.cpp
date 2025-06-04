@@ -6,22 +6,28 @@
 #include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
 #include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "module_hamilt_general/hamilt.h" // use Hamilt<T>  
 
 #include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
 #include "module_io/io_dmk.h" // use ModuleIO::write_dmk()
 #include "module_io/write_HS.h" // use ModuleIO::write_hsk()
 #include "module_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
+#include "module_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 
 
 namespace ModuleIO
 {
 
 template <typename TK, typename TR>
-void ctrl_output_lcao(const UnitCell& ucell, 
+void ctrl_output_lcao(UnitCell& ucell, 
 		const K_Vectors& kv,
 		const elecstate::ElecStateLCAO<TK>* pelec, 
 		const Parallel_Orbitals& pv,
+		const Grid_Driver& gd,
 		const psi::Psi<TK>* psi,
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
+		TwoCenterBundle &two_center_bundle,
+		Gint_k &gk,
+		LCAO_Orbitals &orb,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
@@ -30,6 +36,7 @@ void ctrl_output_lcao(const UnitCell& ucell,
     const bool out_app_flag = PARAM.inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int nspin = PARAM.inp.nspin;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
 	//------------------------------------------------------------------
 	//! 1) write density matrix DM(R)
@@ -61,7 +68,7 @@ void ctrl_output_lcao(const UnitCell& ucell,
     //------------------------------------------------------------------
 	if (PARAM.inp.out_mat_hs[0])
 	{
-		ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
+		ModuleIO::write_hsk(global_out_dir,
 				nspin,
 				kv.get_nks(), 
 				kv.get_nkstot(), 
@@ -93,79 +100,37 @@ void ctrl_output_lcao(const UnitCell& ucell,
 				istep);
 	}
 
-/*
     //------------------------------------------------------------------
     //! 5) write DeePKS information in LCAO basis
     //------------------------------------------------------------------
-    if (psi != nullptr)
-    {
 #ifdef __DEEPKS
-        hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
-        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
-        LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+    // need control parameter
+	hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+	std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
+	LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
-        deepks_interface.out_deepks_labels(pelec->f_en.etot,
-                                           kv.get_nks(),
-                                           ucell.nat,
-                                           PARAM.globalv.nlocal,
-                                           pelec->ekb,
-                                           kv.kvec_d,
-                                           ucell,
-                                           orb_,
-                                           this->gd,
-                                           &pv,
-                                           *psi,
-                                           pelec->get_DM(),
-                                           p_ham_deepks,
-                                           GlobalV::MY_RANK);
+	deepks_interface.out_deepks_labels(pelec->f_en.etot,
+			kv.get_nks(),
+			ucell.nat,
+			PARAM.globalv.nlocal,
+			pelec->ekb,
+			kv.kvec_d,
+			ucell,
+			orb_,
+			gd,
+			&pv,
+			*psi,
+			pelec->get_DM(),
+			p_ham_deepks,
+			GlobalV::MY_RANK);
 #endif
-    }
 
     //------------------------------------------------------------------
-    // 7) write HR in npz format in LCAO basis
+    //! 6) Print out <phi_i|O|phi_j>, where O is H, S, dH, dS, T, r 
     //------------------------------------------------------------------
-    if (PARAM.inp.out_hr_npz)
-    {
-        this->p_hamilt->updateHk(0); // first k point, up spin
-        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
-            = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
-        std::string zipname = "output_HR0.npz";
-        ModuleIO::output_mat_npz(ucell, zipname, *(p_ham_lcao->getHR()));
+    hamilt::Hamilt<TK, base_device::DEVICE_CPU>* p_ham_tk = 
+    static_cast<hamilt::Hamilt<TK, base_device::DEVICE_CPU>*>(p_hamilt);
 
-        if (PARAM.inp.nspin == 2)
-        {
-            this->p_hamilt->updateHk(this->kv.get_nks() / 2); // the other half of k points, down spin
-            hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
-                = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
-            zipname = "output_HR1.npz";
-            ModuleIO::output_mat_npz(ucell, zipname, *(p_ham_lcao->getHR()));
-        }
-    }
-*/
-
-/*
-    //------------------------------------------------------------------
-    // 8) write density matrix in the 'npz' format in LCAO basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_dm_npz)
-    {
-        const elecstate::DensityMatrix<TK, double>* dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        std::string zipname = "output_DM0.npz";
-        ModuleIO::output_mat_npz(ucell, zipname, *(dm->get_DMR_pointer(1)));
-
-        if (PARAM.inp.nspin == 2)
-        {
-            zipname = "output_DM1.npz";
-            ModuleIO::output_mat_npz(ucell, zipname, *(dm->get_DMR_pointer(2)));
-        }
-    }
-*/
-
-/*
-    //------------------------------------------------------------------
-    //! 9) Print out <phi_i|O|phi_j>, where O is H, S, dH, dS, T, r 
-    //------------------------------------------------------------------
 	ModuleIO::output_mat_sparse(PARAM.inp.out_mat_hs2,
 			PARAM.inp.out_mat_dh,
 			PARAM.inp.out_mat_ds,
@@ -173,15 +138,17 @@ void ctrl_output_lcao(const UnitCell& ucell,
 			PARAM.inp.out_mat_r,
 			istep,
 			pelec->pot->get_effective_v(),
-			this->pv,
-			this->GK,
-			two_center_bundle_,
-			orb_,
+			pv,
+			gk,
+			two_center_bundle,
+			orb,
 			ucell,
-			this->gd,
-			this->kv,
-			this->p_hamilt);
+			gd,
+			kv,
+			p_ham_tk);
 
+
+/*
     //------------------------------------------------------------------
 	//! 10) Perform Mulliken charge analysis in LCAO basis
     //------------------------------------------------------------------
@@ -426,29 +393,41 @@ void ctrl_output_lcao(const UnitCell& ucell,
 
 
 // For gamma only
-template void ModuleIO::ctrl_output_lcao<double, double>(const UnitCell& ucell, 
+template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell, 
 		const K_Vectors& kv,
 		const elecstate::ElecStateLCAO<double>* pelec, 
 		const Parallel_Orbitals& pv,
+		const Grid_Driver& gd,
 		const psi::Psi<double>* psi,
 		hamilt::HamiltLCAO<double, double>* p_hamilt,
+		TwoCenterBundle &two_center_bundle,
+		Gint_k &gk,
+		LCAO_Orbitals &orb,
 		const int istep);
 
 // For multiple k-points
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(const UnitCell& ucell, 
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell& ucell, 
 		const K_Vectors& kv,
 		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
 		const Parallel_Orbitals& pv,
+		const Grid_Driver& gd,
 		const psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
+		TwoCenterBundle &two_center_bundle,
+		Gint_k &gk,
+		LCAO_Orbitals &orb,
 		const int istep);
 
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(const UnitCell& ucell, 
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
 		const K_Vectors& kv,
 		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
 		const Parallel_Orbitals& pv,
+		const Grid_Driver& gd,
 		const psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
+		TwoCenterBundle &two_center_bundle,
+		Gint_k &gk,
+		LCAO_Orbitals &orb,
 		const int istep);
 
 #endif

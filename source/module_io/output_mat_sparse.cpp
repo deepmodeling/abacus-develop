@@ -21,7 +21,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-                       hamilt::Hamilt<double>* p_ham)
+                       hamilt::Hamilt<double, base_device::DEVICE_CPU>* p_ham)
 {
 }
 
@@ -40,7 +40,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-                       hamilt::Hamilt<std::complex<double>>* p_ham)
+                       hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* p_ham)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 

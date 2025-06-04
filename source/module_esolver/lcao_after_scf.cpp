@@ -13,7 +13,6 @@
 #include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_log.h"
-#include "module_io/output_mat_sparse.h"
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
 #include "module_io/to_qo.h"
