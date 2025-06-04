@@ -678,20 +678,12 @@ struct Input_para
      * the xcpnet_exch_placeholder should be 19. (MGGA_X_M06L, id = 203)
      * 
      * Likewise, the correlation part can be found in corresponding files.
+     * 
+     * PBE functional is used as the default functional for XCPNet.
      */
-    std::vector<double> xcpnet_exch_placeholder = {
-      203, 
-      0.398775600000,  0.25482190000,   0.3923994,  -2.103655000, -6.3021470000, 
-     10.976150000000, 30.97273000000, -23.1848900, -56.734800000, 21.6036400000, 
-     34.218140000000, -9.04976200000,   0.6012244,   0.004748822, -0.008635108, 
-     -0.000009308062,  0.00004482811,   0.0000000}; // src/mgga_x_m06l.c
-    std::vector<double> xcpnet_corr_placeholder = {
-      233,
-      6.000000e-02,  3.100000e-03,  5.150880e-03,  3.049660e-03,  5.349466e-01,  
-      5.396620e-01, -3.161217e+01,  5.149592e+01, -2.919613e+01,  6.042374e-01,  
-      1.776783e+02, -2.513252e+02,  7.635173e+01, -1.255699e+01,  4.650534e-01,  
-      1.617589e-01,  1.833657e-01,  4.692100e-04, -4.990573e-03,  0.000000e+00,  
-      3.957626e-01, -5.614546e-01,  1.403963e-02,  9.831442e-04, -3.577176e-03,
-      0.000000e+00,  1.000000e-10}; // src/mgga_c_m06l.c
+    // src/gga_x_pbe.c
+    std::vector<double> xcpnet_exch_placeholder = {101, 0.00000, 0.21951}; 
+    // src/gga_c_pbe.c
+    std::vector<double> xcpnet_corr_placeholder = {130, 0.06672, 0.03109, 1.00000}; 
 };
 #endif
