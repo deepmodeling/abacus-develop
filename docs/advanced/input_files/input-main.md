@@ -65,6 +65,8 @@
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
+    - [xc\_exch\_ext\_param](#xc_exch_ext_param)
+    - [xc\_corr\_ext\_param](#xc_corr_ext_param)
     - [pseudo\_rcut](#pseudo_rcut)
     - [pseudo\_mesh](#pseudo_mesh)
     - [nspin](#nspin)
@@ -1060,6 +1062,18 @@ calculations.
 - **Description**: Specifies temperature when using temperature-dependent XC functionals (KSDT and so on).
 - **Default**: 0.0
 - **Unit**: Ry
+
+### xc_exch_ext_param
+
+- **Type**: Integer Real ...
+- **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional.
+- **Default**: 101 0.00000 0.21951
+
+### xc_corr_ext_param
+
+- **Type**: Integer Real ...
+- **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional.
+- **Default**: 130 0.06672 0.03109 1.00000
 
 ### pseudo_rcut
 

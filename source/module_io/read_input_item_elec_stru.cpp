@@ -256,22 +256,22 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
-        Input_Item item("xcpnet_exch_placeholder");
+        Input_Item item("xc_exch_ext_param");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.xcpnet_exch_placeholder.resize(item.get_size());
+            para.input.xc_exch_ext_param.resize(item.get_size());
             std::transform(item.str_values.begin(), item.str_values.end(),
-                           para.input.xcpnet_exch_placeholder.begin(),
+                           para.input.xc_exch_ext_param.begin(),
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             // at least one value should be set
-            if (para.input.xcpnet_exch_placeholder.empty())
+            if (para.input.xc_exch_ext_param.empty())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xcpnet_exch_placeholder should not be empty.");
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext_param should not be empty.");
             }
             // the first value is actually an integer, not a double
-            const double libxc_id_dbl = para.input.xcpnet_exch_placeholder[0];
+            const double libxc_id_dbl = para.input.xc_exch_ext_param[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", 
@@ -284,28 +284,28 @@ void ReadInput::item_elec_stru()
                     "The first parameter (libxc id) should be a positive integer");
             }
         };
-        sync_doublevec(input.xcpnet_exch_placeholder,
-                       para.input.xcpnet_exch_placeholder.size(),
+        sync_doublevec(input.xc_exch_ext_param,
+                       para.input.xc_exch_ext_param.size(),
                        0.0);
         this->add_item(item);
     }
     {
-        Input_Item item("xcpnet_corr_placeholder");
+        Input_Item item("xc_corr_ext_param");
         item.annotation = "placeholder for xcpnet exchange functional";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.xcpnet_corr_placeholder.resize(item.get_size());
+            para.input.xc_corr_ext_param.resize(item.get_size());
             std::transform(item.str_values.begin(), item.str_values.end(),
-                           para.input.xcpnet_corr_placeholder.begin(),
+                           para.input.xc_corr_ext_param.begin(),
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             // at least one value should be set
-            if (para.input.xcpnet_corr_placeholder.empty())
+            if (para.input.xc_corr_ext_param.empty())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xcpnet_corr_placeholder should not be empty.");
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext_param should not be empty.");
             }
             // the first value is actually an integer, not a double
-            const double libxc_id_dbl = para.input.xcpnet_corr_placeholder[0];
+            const double libxc_id_dbl = para.input.xc_corr_ext_param[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", 
@@ -318,8 +318,8 @@ void ReadInput::item_elec_stru()
                     "The first parameter (libxc id) should be a positive integer");
             }
         };
-        sync_doublevec(input.xcpnet_corr_placeholder,
-                       para.input.xcpnet_corr_placeholder.size(),
+        sync_doublevec(input.xc_corr_ext_param,
+                       para.input.xc_corr_ext_param.size(),
                        0.0);
         this->add_item(item);
     }

@@ -25,13 +25,13 @@ void XC_Functional_Libxc::gcxc_libxc(
         /* xc_polarized = */ XC_UNPOLARIZED,
         /* external_xc_func_ext_params = */
         std::map<int, std::vector<double>>({
-            {PARAM.inp.xcpnet_exch_placeholder[0], std::vector<double>(
-             PARAM.inp.xcpnet_exch_placeholder.begin()+1,
-             PARAM.inp.xcpnet_exch_placeholder.end()
+            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
+             PARAM.inp.xc_exch_ext_param.begin()+1,
+             PARAM.inp.xc_exch_ext_param.end()
             )},
-            {PARAM.inp.xcpnet_corr_placeholder[0], std::vector<double>(
-             PARAM.inp.xcpnet_corr_placeholder.begin()+1,
-             PARAM.inp.xcpnet_corr_placeholder.end()
+            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
+             PARAM.inp.xc_corr_ext_param.begin()+1,
+             PARAM.inp.xc_corr_ext_param.end()
             )}
         }));
     for(xc_func_type &func : funcs)
@@ -63,13 +63,13 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
         /* xc_polarized = */ XC_POLARIZED,
         /* external_xc_func_ext_params = */
         std::map<int, std::vector<double>>({
-            {PARAM.inp.xcpnet_exch_placeholder[0], std::vector<double>(
-                PARAM.inp.xcpnet_exch_placeholder.begin()+1,
-                PARAM.inp.xcpnet_exch_placeholder.end()
+            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
+                PARAM.inp.xc_exch_ext_param.begin()+1,
+                PARAM.inp.xc_exch_ext_param.end()
             )},
-            {PARAM.inp.xcpnet_corr_placeholder[0], std::vector<double>(
-                PARAM.inp.xcpnet_corr_placeholder.begin()+1,
-                PARAM.inp.xcpnet_corr_placeholder.end()
+            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
+                PARAM.inp.xc_corr_ext_param.begin()+1,
+                PARAM.inp.xc_corr_ext_param.end()
             )}
         }));
 
