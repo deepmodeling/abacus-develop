@@ -75,9 +75,15 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //------------------------------------------------------------------
     //! 2) output of lcao every few ionic steps 
     //------------------------------------------------------------------
+	const auto* estate = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec);
+	if(!estate)
+	{
+		ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
+	}
+
     if(istep % PARAM.inp.out_interval == 0)
     {
-        ModuleIO::ctrl_output_lcao<TK, TR>();
+        //ModuleIO::ctrl_output_lcao<TK, TR>(ucell, this->pelec, this->pv, istep);
     }
 
     //------------------------------------------------------------------

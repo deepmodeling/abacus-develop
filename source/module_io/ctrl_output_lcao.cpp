@@ -4,35 +4,32 @@
 #include <complex>
 
 #include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
+#include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
+#include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
+
 
 namespace ModuleIO
 {
 
 template <typename TK, typename TR>
-void ctrl_output_lcao()
+void ctrl_output_lcao(const UnitCell& ucell, 
+		const elecstate::ElecStateLCAO<TK>* pelec, 
+		const Parallel_Orbitals& pv,
+		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
 
-/*
     const bool out_app_flag = PARAM.inp.out_app_flag;
-
-	const auto* estate = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec);
-	if(!estate)
-	{
-		WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
-	}
-
 	//------------------------------------------------------------------
 	//! 1) write density matrix DM(R) for sparse matrix in LCAO basis
 	//------------------------------------------------------------------
     if(PARAM.inp.out_dm1)
 	{
-		const auto& dmr_vector = estate->get_DM()->get_DMR_vector();
+		const auto& dmr_vector = pelec->get_DM()->get_DMR_vector();
 		ModuleIO::write_dmr(dmr_vector, pv,	out_app_flag,
 				ucell.get_iat2iwt(), ucell.nat, istep);
 	}
-*/
 
 /*
 	//------------------------------------------------------------------
@@ -419,8 +416,19 @@ void ctrl_output_lcao()
 
 }
 
-template void ModuleIO::ctrl_output_lcao<double, double>();
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>();
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>();
+template void ModuleIO::ctrl_output_lcao<double, double>(const UnitCell& ucell, 
+			const elecstate::ElecStateLCAO<double>* pelec, 
+			const Parallel_Orbitals& pv,
+			const int istep);
+
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(const UnitCell& ucell, 
+			const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+			const Parallel_Orbitals& pv,
+			const int istep);
+
+template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(const UnitCell& ucell, 
+			const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+			const Parallel_Orbitals& pv,
+			const int istep);
 
 #endif
