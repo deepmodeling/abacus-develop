@@ -26,7 +26,7 @@ If DeePKS feature is required for [DeePKS-kit](https://github.com/deepmodeling/d
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
-cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+cmake -B build -DENABLE_ML4DFT=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
 > CMake will try to download Libnpy if it cannot be found locally.
@@ -208,6 +208,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 ##-------------------  OPTIONAL LIBS  ---------------------------------
 ## To use DEEPKS: set ENABLE_DEEPKS = ON, and set LIBTORCH_DIR and LIBNPY_DIR
 ## To use MLKEDF: set ENABLE_MLKEDF = ON, and set LIBTORCH_DIR and LIBNPY_DIR
+
 ## To use LIBXC:  set LIBXC_DIR which contains include and lib/libxc.a (>5.1.7)
 ## To use DeePMD: set DeePMD_DIR LIBTORCH_DIR and TensorFlow_DIR
 ## To use LibRI:  set LIBRI_DIR and LIBCOMM_DIR
