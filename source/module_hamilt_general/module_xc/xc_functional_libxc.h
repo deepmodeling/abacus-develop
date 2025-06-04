@@ -181,13 +181,6 @@ namespace XC_Functional_Libxc
         double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
         double &v3xcup, double &v3xcdw);
 
-//-------------------
-//  xc_functional_libxc_xcid.cpp
-//-------------------
-
-    extern std::string get_xcname_from_xcid(const int id);
-    extern int get_xcid_from_xcname(const std::string& name);
-
 } // namespace XC_Functional_Libxc
 
 #endif // USE_LIBXC
