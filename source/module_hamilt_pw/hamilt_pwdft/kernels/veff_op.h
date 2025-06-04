@@ -63,6 +63,12 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU>
                     std::complex<FPTYPE>* out,
                     std::complex<FPTYPE>* out1,
                     const FPTYPE** in);
+
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    const int& size,
+                    std::complex<FPTYPE>* out,
+                    const FPTYPE* in,
+                    const int batch);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

@@ -104,6 +104,32 @@ TEST_F(TestModuleHamiltVeff, veff_pw_op_gpu)
     delete_memory_complex_op()(d_res);
 }
 
+TEST_F(TestModuleHamiltVeff, veff_pw_op_gpu_batch)
+{
+    std::vector<std::complex<double>> res_batch = out;
+    std::vector<double> in_batch = in;
+    std::vector<std::complex<double>> out_batch = expected_out;
+    res_batch.insert(res_batch.end(), res_batch.begin(), res_batch.end());
+    in_batch.insert(in_batch.end(), in_batch.begin(), in_batch.end());
+    out_batch.insert(out_batch.end(), out_batch.begin(), out_batch.end());
+
+    double* d_in = NULL;
+    std::complex<double>* d_res = NULL;
+    resize_memory_double_op()(d_in, in_batch.size());
+    resize_memory_complex_op()(d_res, out_batch.size());
+    syncmem_double_h2d_op()(d_in, in_batch.data(), in_batch.size());
+    syncmem_complex_h2d_op()(d_res, res_batch.data(), res_batch.size());
+
+    veff_gpu_op()(gpu_ctx, this->size, d_res, d_in,2);
+
+    syncmem_complex_d2h_op()(res_batch.data(), d_res, res_batch.size());
+    for (int ii = 0; ii < res_batch.size(); ii++) {
+        EXPECT_LT(fabs(res_batch[ii] - out_batch[ii]), 6e-5);
+    }
+    delete_memory_double_op()(d_in);
+    delete_memory_complex_op()(d_res);
+}
+
 TEST_F(TestModuleHamiltVeff, veff_pw_spin_op_gpu)
 {
     std::vector<std::complex<double>> out1_spin(out_spin.size(), std::complex<double>(0, 0));
