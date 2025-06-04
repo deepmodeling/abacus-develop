@@ -57,6 +57,32 @@ __global__ void veff_pw(
 }
 
 template <typename FPTYPE>
+__global__ void veff_pw(
+    const int total_size,
+    const int size,
+    thrust::complex<FPTYPE>* out,
+    thrust::complex<FPTYPE>* out1,
+    const FPTYPE* in)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= total_size) {return;}
+    const int batch_idx = idx / size;
+    const int size_idx = idx % size;
+
+    thrust::complex<FPTYPE>* batch_out = out + batch_idx * size;
+    thrust::complex<FPTYPE>* batch_out1 = out1 + batch_idx * size;
+
+    thrust::complex<FPTYPE> sup =
+        batch_out[size_idx] * (in[0 * size + size_idx] + in[3 * size + size_idx])
+            + out1[size_idx] * (in[1 * size + size_idx] - thrust::complex<FPTYPE>(0.0, 1.0) * in[2 * size + size_idx]);
+    thrust::complex<FPTYPE> sdown =
+        out1[size_idx] * (in[0 * size + size_idx] - in[3 * size + size_idx])
+            + batch_out[size_idx] * (in[1 * size + size_idx] + thrust::complex<FPTYPE>(0.0, 1.0) * in[2 * size + size_idx]);
+    batch_out[size_idx] = sup;
+    batch_out1[size_idx] = sdown;
+}
+
+template <typename FPTYPE>
 void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
                                                              const int& size,
                                                              std::complex<FPTYPE>* out,
@@ -98,6 +124,26 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
 {
     const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     veff_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
+        size, // control params
+        reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
+        reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
+        in[0]); // array of data
+
+    cudaCheckOnDebug();
+}
+
+template <typename FPTYPE>
+void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                             const int& size,
+                                                             std::complex<FPTYPE>* out,
+                                                             std::complex<FPTYPE>* out1,
+                                                             const FPTYPE** in,
+                                                             const int batch)
+{
+    const int total_size = size * batch;
+    const int block = (total_size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    veff_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
+        total_size,
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
