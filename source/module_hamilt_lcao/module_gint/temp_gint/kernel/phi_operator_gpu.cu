@@ -38,14 +38,6 @@ PhiOperatorGpu::~PhiOperatorGpu()
 void PhiOperatorGpu::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
 {
     bgrid_batch_ = bgrid_batch;
-    // The set_size here is to determine how many bytes to transfer in the subsequent copy_host_to_device
-    atoms_num_info_.set_size(bgrid_batch->get_batch_size());
-    bgrids_phi_len_.set_size(bgrid_batch->get_batch_size());
-    bgrids_phi_start_.set_size(bgrid_batch->get_batch_size());
-    atoms_iat_.set_size(bgrid_batch->get_atoms_num());
-    atoms_bgrids_rcoords_.set_size(bgrid_batch->get_atoms_num());
-    atoms_phi_start_.set_size(bgrid_batch->get_atoms_num());
-    mgrids_local_idx_batch_.set_size(bgrid_batch->get_batch_size() * mgrids_num_);
     auto atoms_num_info_h = atoms_num_info_.get_host_ptr();
     auto bgrids_phi_len_h = bgrids_phi_len_.get_host_ptr();
     auto bgrids_phi_start_h = bgrids_phi_start_.get_host_ptr();
@@ -84,13 +76,13 @@ void PhiOperatorGpu::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_batch)
         i++;
     }
 
-    atoms_num_info_.copy_host_to_device_async();
-    bgrids_phi_len_.copy_host_to_device_async();
-    bgrids_phi_start_.copy_host_to_device_async();
-    atoms_iat_.copy_host_to_device_async();
-    atoms_bgrids_rcoords_.copy_host_to_device_async();
-    atoms_phi_start_.copy_host_to_device_async();
-    mgrids_local_idx_batch_.copy_host_to_device_async();
+    atoms_num_info_.copy_host_to_device_async(bgrid_batch->get_batch_size());
+    bgrids_phi_len_.copy_host_to_device_async(bgrid_batch->get_batch_size());
+    bgrids_phi_start_.copy_host_to_device_async(bgrid_batch->get_batch_size());
+    atoms_iat_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
+    atoms_bgrids_rcoords_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
+    atoms_phi_start_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
+    mgrids_local_idx_batch_.copy_host_to_device_async(bgrid_batch->get_batch_size() * mgrids_num_);
     checkCuda(cudaEventRecord(event_, stream_));
 }
 

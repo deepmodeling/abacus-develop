@@ -16,14 +16,12 @@ class CudaMemWrapper
       this->device_ptr_ = other.device_ptr_;
       this->host_ptr_ = other.host_ptr_;
       this->size_ = other.size_;
-      this->capacity_ = other.capacity_;
       this->malloc_host_ = other.malloc_host_;
       this->stream_ = other.stream_;
 
       other.device_ptr_ = nullptr;
       other.host_ptr_ = nullptr;
       other.size_ = 0;
-      other.capacity_ = 0;
       other.malloc_host_ = false;
       other.stream_ = 0;
     };
@@ -35,39 +33,36 @@ class CudaMemWrapper
         this->device_ptr_ = other.device_ptr_;
         this->host_ptr_ = other.host_ptr_;
         this->size_ = other.size_;
-        this->capacity_ = other.capacity_;
         this->malloc_host_ = other.malloc_host_;
         this->stream_ = other.stream_;
 
         other.device_ptr_ = nullptr;
         other.host_ptr_ = nullptr;
         other.size_ = 0;
-        other.capacity_ = 0;
         other.malloc_host_ = false;
         other.stream_ = 0;
       }
       return *this;
     };
 
-    CudaMemWrapper(int capacity,
+    CudaMemWrapper(int size,
                    cudaStream_t stream = 0,
                    bool malloc_host = true)
     {
-      capacity_ = capacity;
-      size_ = capacity;
+      size_ = size;
       malloc_host_ = malloc_host;
       stream_ = stream;
 
       if (malloc_host)
       { 
-        checkCuda(cudaMallocHost((void**)&host_ptr_, capacity * sizeof(T)));
-        memset(host_ptr_, 0, capacity * sizeof(T));
+        checkCuda(cudaMallocHost((void**)&host_ptr_, size_* sizeof(T)));
+        memset(host_ptr_, 0, size_ * sizeof(T));
       }
       else
       { host_ptr_ = nullptr; }
 
-      checkCuda(cudaMalloc((void**)&device_ptr_, capacity * sizeof(T)));
-      checkCuda(cudaMemset(device_ptr_, 0, capacity_ * sizeof(T)));
+      checkCuda(cudaMalloc((void**)&device_ptr_, size_ * sizeof(T)));
+      checkCuda(cudaMemset(device_ptr_, 0, size_ * sizeof(T)));
     };
     
     ~CudaMemWrapper()
@@ -165,25 +160,12 @@ class CudaMemWrapper
     T* get_host_ptr() { return host_ptr_; };
     const T* get_device_ptr() const { return device_ptr_; };
     const T* get_host_ptr() const { return host_ptr_; };
-
-    // Only supports setting size to a value less than or equal to capacity
-    void set_size(int new_size)
-    {
-      if (new_size > capacity_)
-      {
-        ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "New size exceeds capacity, cannot resize.");
-      }
-      size_ = new_size;
-    };
-
     int get_size() const { return size_; };
-    int get_capacity() const { return capacity_; };
 
   private:
     T* device_ptr_ = nullptr;
     T* host_ptr_ = nullptr;
     int size_ = 0;
-    int capacity_ = 0;
     bool malloc_host_ = false;
     cudaStream_t stream_ = 0;
 };
