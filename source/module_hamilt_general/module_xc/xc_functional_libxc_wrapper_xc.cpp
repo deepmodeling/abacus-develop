@@ -1,6 +1,7 @@
 #ifdef USE_LIBXC
 
 #include "xc_functional_libxc.h"
+#include "module_parameter/parameter.h"
 
 void XC_Functional_Libxc::xc_spin_libxc(
         const std::vector<int> &func_id,
@@ -10,7 +11,20 @@ void XC_Functional_Libxc::xc_spin_libxc(
     const std::vector<double> rho_ud = {rhoup, rhodw};
     exc = vxcup = vxcdw = 0.0;
 
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_POLARIZED,
+        /* external_xc_func_ext_params = */
+        std::map<int, std::vector<double>>({
+            {PARAM.inp.xcpnet_exch_placeholder[0], std::vector<double>(
+                PARAM.inp.xcpnet_exch_placeholder.begin()+1,
+                PARAM.inp.xcpnet_exch_placeholder.end()
+            )},
+            {PARAM.inp.xcpnet_corr_placeholder[0], std::vector<double>(
+                PARAM.inp.xcpnet_corr_placeholder.begin()+1,
+                PARAM.inp.xcpnet_corr_placeholder.end()
+            )}
+        }));
 
     for(xc_func_type &func : funcs)
     {

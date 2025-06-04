@@ -657,5 +657,41 @@ struct Input_para
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+
+    // ==============   #Parameters (23.XCPNet) =====================
+    /*
+     * the following two sets of parameters are for the XC parameterization.
+     * The first element should be the LibXC id, to assign the analytical
+     * form of the eXchange and Correlation part of the functional.
+     * 
+     * Starting from the second parameter, the parameters are the coefficients
+     * of the functional. For example the M06-L functional, one should refer
+     * to the source file (source code of LibXC)
+     * 
+     * src/mgga_x_m06l.c
+     * 
+     * the implementation can be found in the file
+     * 
+     * src/maple2c/mgga_exc/mgga_x_m06l.c.
+     * 
+     * There are 18 parameters for the exchange part, so the whole length of
+     * the xcpnet_exch_placeholder should be 19. (MGGA_X_M06L, id = 203)
+     * 
+     * Likewise, the correlation part can be found in corresponding files.
+     */
+    std::vector<double> xcpnet_exch_placeholder = {
+      203, 
+      0.398775600000,  0.25482190000,   0.3923994,  -2.103655000, -6.3021470000, 
+     10.976150000000, 30.97273000000, -23.1848900, -56.734800000, 21.6036400000, 
+     34.218140000000, -9.04976200000,   0.6012244,   0.004748822, -0.008635108, 
+     -0.000009308062,  0.00004482811,   0.0000000}; // src/mgga_x_m06l.c
+    std::vector<double> xcpnet_corr_placeholder = {
+      233,
+      6.000000e-02,  3.100000e-03,  5.150880e-03,  3.049660e-03,  5.349466e-01,  
+      5.396620e-01, -3.161217e+01,  5.149592e+01, -2.919613e+01,  6.042374e-01,  
+      1.776783e+02, -2.513252e+02,  7.635173e+01, -1.255699e+01,  4.650534e-01,  
+      1.617589e-01,  1.833657e-01,  4.692100e-04, -4.990573e-03,  0.000000e+00,  
+      3.957626e-01, -5.614546e-01,  1.403963e-02,  9.831442e-04, -3.577176e-03,
+      0.000000e+00,  1.000000e-10}; // src/mgga_c_m06l.c
 };
 #endif
