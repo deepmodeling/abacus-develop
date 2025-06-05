@@ -401,7 +401,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
 }
 
-}
+} // End ModuleIO
 
 
 // For gamma only
