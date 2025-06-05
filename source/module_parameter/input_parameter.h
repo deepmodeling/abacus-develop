@@ -682,8 +682,10 @@ struct Input_para
      * PBE functional is used as the default functional for XCPNet.
      */
     // src/gga_x_pbe.c
-    std::vector<double> xc_exch_ext_param = {101, 0.00000, 0.21951}; 
+    std::vector<double> xc_exch_ext_param = {
+        101, 0.8040, 0.2195149727645171}; 
     // src/gga_c_pbe.c
-    std::vector<double> xc_corr_ext_param = {130, 0.06672, 0.03109, 1.00000}; 
+    std::vector<double> xc_corr_ext_param = {
+        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
 };
 #endif
