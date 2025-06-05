@@ -206,8 +206,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 
 ##-------------------  OPTIONAL LIBS  ---------------------------------
-## To use DEEPKS: set ENABLE_DEEPKS = ON, and set LIBTORCH_DIR and LIBNPY_DIR
-## To use MLKEDF: set ENABLE_MLKEDF = ON, and set LIBTORCH_DIR and LIBNPY_DIR
+## To use ML4DFT: set ENABLE_ML4DFT = ON, and set LIBTORCH_DIR and LIBNPY_DIR
 
 ## To use LIBXC:  set LIBXC_DIR which contains include and lib/libxc.a (>5.1.7)
 ## To use DeePMD: set DeePMD_DIR LIBTORCH_DIR and TensorFlow_DIR
@@ -217,8 +216,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 # LIBTORCH_DIR  = /usr/local
 # LIBNPY_DIR    = /usr/local
-ENABLE_DEEPKS   = OFF
-ENABLE_MLKEDF   = OFF
+ENABLE_ML4DFT   = OFF
 
 # LIBXC_DIR    		= /public/soft/libxc
 
@@ -293,25 +291,16 @@ make LIBXC_DIR=/pulic/soft/libxc
 
 directly.
 
-### Add DeePKS Support
+### Add ML-ALGO Support
 
-To compile ABACUS with DEEPKS, you need to set `ENABLE_DEEPKS = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
+To compile ABACUS with machine learning algorithms, you need to set `ENABLE_ML4DFT = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
 
 ```makefile
-make ENABLE_DEEPKS=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+make ENABLE_ML4DFT=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 ```
 
 directly.
 
-### Add ML-KEDF Support
-
-To compile ABACUS with ML-KEDF, you need to set `ENABLE_MLKEDF = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
-
-```makefile
-make ENABLE_MLKEDF=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
-```
-
-directly.
 
 ### Add DeePMD-kit Support
 
