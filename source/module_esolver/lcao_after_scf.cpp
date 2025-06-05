@@ -126,51 +126,26 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 #endif
 
     //------------------------------------------------------------------
-    // 5) write Hamiltonian and Overlap matrix in LCAO basis
+    // 5) write H(k) and S(k) in NAO basis set 
     //------------------------------------------------------------------
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        if (PARAM.inp.out_mat_hs[0])
-        {
-            this->p_hamilt->updateHk(ik);
-        }
-        bool bit = false; // LiuXh, 2017-03-21
-        // if set bit = true, there would be error in soc-multi-core
-        // calculation, noted by zhengdy-soc
-        if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
-        {
-            hamilt::MatrixBlock<TK> h_mat;
-            hamilt::MatrixBlock<TK> s_mat;
-
-            this->p_hamilt->matrix(h_mat, s_mat);
-
-            if (PARAM.inp.out_mat_hs[0])
-            {
-                ModuleIO::save_mat(istep,
-                                   h_mat.p,
-                                   PARAM.globalv.nlocal,
-                                   bit,
-                                   PARAM.inp.out_mat_hs[1],
-                                   1,
-                                   PARAM.inp.out_app_flag,
-                                   "H",
-                                   "data-" + std::to_string(ik),
-                                   this->pv,
-                                   GlobalV::DRANK);
-                ModuleIO::save_mat(istep,
-                                   s_mat.p,
-                                   PARAM.globalv.nlocal,
-                                   bit,
-                                   PARAM.inp.out_mat_hs[1],
-                                   1,
-                                   PARAM.inp.out_app_flag,
-                                   "S",
-                                   "data-" + std::to_string(ik),
-                                   this->pv,
-                                   GlobalV::DRANK);
-            }
-        }
-    }
+	if (PARAM.inp.out_mat_hs[0])
+	{
+		if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
+		{
+			ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
+					PARAM.inp.nspin,
+					this->kv.get_nks(), 
+					this->kv.get_nkstot(), 
+					this->kv.ik2iktot, 
+                    this->kv.isk,
+					this->p_hamilt, 
+					this->pv, 
+					PARAM.globalv.gamma_only_local,
+					PARAM.inp.out_app_flag,
+					istep,
+					GlobalV::ofs_running);
+		}
+	}
 
     //------------------------------------------------------------------
     // 6) write electronic wavefunctions in LCAO basis
@@ -182,9 +157,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 				this->psi[0],
 				this->pelec->ekb,
 				this->pelec->wg,
-				this->pelec->klist->kvec_c,
-				this->pelec->klist->ik2iktot,
-				this->pelec->klist->get_nkstot(),
+				this->kv.kvec_c,
+				this->kv.ik2iktot,
+				this->kv.get_nkstot(),
 				this->pv,
 				PARAM.inp.nspin,
 				istep);
@@ -201,11 +176,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
         deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                                           this->pelec->klist->get_nks(),
+                                           this->kv.get_nks(),
                                            ucell.nat,
                                            PARAM.globalv.nlocal,
                                            this->pelec->ekb,
-                                           this->pelec->klist->kvec_d,
+                                           this->kv.kvec_d,
                                            ucell,
                                            orb_,
                                            this->gd,
@@ -370,15 +345,23 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         for (int ik = 0; ik < this->kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
-            ModuleIO::save_mat(0,
+
+            const int out_label = 1; // 1: .txt, 2: .dat
+
+			std::string t_fn = ModuleIO::filename_output(PARAM.globalv.global_out_dir,
+					"tk","nao",ik,this->kv.ik2iktot,
+					PARAM.inp.nspin,this->kv.get_nkstot(),
+					out_label,PARAM.inp.out_app_flag,
+                    PARAM.globalv.gamma_only_local,istep);
+
+            ModuleIO::save_mat(istep,
                                hsk.get_hk(),
                                PARAM.globalv.nlocal,
-                               false,
+                               false, // bit
                                PARAM.inp.out_mat_tk[1],
-                               1,
+                               1, // true for upper triangle matrix
                                PARAM.inp.out_app_flag,
-                               "T",
-                               "data-" + std::to_string(ik),
+                               t_fn, 
                                this->pv,
                                GlobalV::DRANK);
         }
