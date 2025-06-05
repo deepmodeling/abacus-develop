@@ -217,8 +217,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             ,
             istep,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
+            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
 #endif
         );
     }
@@ -362,7 +362,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pv,
                       this->GG,
                       PARAM.inp.out_wfc_pw,
-                      PARAM.inp.out_wfc_r,
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,
@@ -384,7 +383,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pv,
                       this->GK,
                       PARAM.inp.out_wfc_pw,
-                      PARAM.inp.out_wfc_r,
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,

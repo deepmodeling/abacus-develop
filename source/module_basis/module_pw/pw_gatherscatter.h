@@ -98,8 +98,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
-    
+    // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
 #ifdef _OPENMP
@@ -183,7 +182,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 		}
     }
 #endif
-    //ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+    // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
     return;
 }
 

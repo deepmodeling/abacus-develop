@@ -28,9 +28,23 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
                           const std::string& HR_filename_up,
                           const std::string HR_filename_down,
                           const bool& binary,
-                          const double& sparse_thr) {
+                          const double& sparse_thr) 
+{
+
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
+
+	GlobalV::ofs_running << "\n WRITE H(R) OR S(R) BEGINS" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " | Write Hamiltonian matrix H(R) or overlap matrix S(R) in numerical  |" << std::endl; 
+	GlobalV::ofs_running << " | atomic orbitals, where R is the Bravis lattice vector.             |" << std::endl; 
+	GlobalV::ofs_running << " |                                            "
+		"                        |" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
 
@@ -94,24 +108,24 @@ void ModuleIO::output_dSR(const int& istep,
     const bool& binary,
     const double& sparse_thr)
 {
-ModuleBase::TITLE("ModuleIO", "output_dSR");
-ModuleBase::timer::tick("ModuleIO", "output_dSR");
+	ModuleBase::TITLE("ModuleIO", "output_dSR");
+	ModuleBase::timer::tick("ModuleIO", "output_dSR");
 
+	sparse_format::cal_dS(ucell,
+			pv,
+			HS_Arrays,
+			grid,
+			two_center_bundle,
+			orb,
+			sparse_thr);
 
-sparse_format::cal_dS(ucell,
-            pv,
-            HS_Arrays,
-            grid,
-            two_center_bundle,
-            orb,
-            sparse_thr);
-// mohan update 2024-04-01
-ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "S");
+	// mohan update 2024-04-01
+	ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s");
 
-sparse_format::destroy_dH_R_sparse(HS_Arrays);
+	sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
-ModuleBase::timer::tick("ModuleIO", "output_dSR");
-return;
+	ModuleBase::timer::tick("ModuleIO", "output_dSR");
+	return;
 }
 
 void ModuleIO::output_dHR(const int& istep,
@@ -134,28 +148,34 @@ void ModuleIO::output_dHR(const int& istep,
 
     const int nspin = PARAM.inp.nspin;
 
-    if (nspin == 1 || nspin == 4) {
-        // mohan add 2024-04-01
-        const int cspin = 0;
+    if (nspin == 1 || nspin == 4) 
+	{
+		// mohan add 2024-04-01
+		const int cspin = 0;
 
-        sparse_format::cal_dH(ucell,
-                              pv,
-                              HS_Arrays,
-                              grid,
-                              two_center_bundle,
-                              orb,
-                              cspin,
-                              sparse_thr,
-                              gint_k);
-    } else if (nspin == 2) {
-        for (int cspin = 0; cspin < 2; cspin++) {
+		sparse_format::cal_dH(ucell,
+				pv,
+				HS_Arrays,
+				grid,
+				two_center_bundle,
+				orb,
+				cspin,
+				sparse_thr,
+				gint_k);
+	} 
+	else if (nspin == 2) 
+	{
+		for (int cspin = 0; cspin < 2; cspin++) 
+		{
             // note: some MPI process will not have grids when MPI cores are too
             // many, v_eff in these processes are empty
             const double* vr_eff1
                 = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
 
-            if (!PARAM.globalv.gamma_only_local) {
-                if (PARAM.inp.vl_in_h) {
+			if (!PARAM.globalv.gamma_only_local) 
+			{
+				if (PARAM.inp.vl_in_h) 
+				{
                     Gint_inout inout(vr_eff1,
                                      cspin,
                                      Gint_Tools::job_type::dvlocal);
@@ -251,9 +271,12 @@ void ModuleIO::output_TR(const int istep,
     ModuleBase::timer::tick("ModuleIO", "output_TR");
 
     std::stringstream sst;
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sst << PARAM.globalv.global_matrix_dir << istep << "_" << TR_filename;
-    } else {
+	if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) 
+	{
+		sst << PARAM.globalv.global_matrix_dir << istep << "_" << TR_filename;
+	} 
+	else 
+	{
         sst << PARAM.globalv.global_out_dir << TR_filename;
     }
 

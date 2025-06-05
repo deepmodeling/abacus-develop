@@ -8,7 +8,7 @@ for i in 6 3 2;do
         continue
     fi
     echo "TEST DIAGO PEXSI in parallel, nprocs=$i"
-    mpirun -np $i ./HSolver_LCAO_PEXSI
+    mpirun -np $i ./MODULE_HSOLVER_LCAO_PEXSI
     if [[ $? != 0 ]];then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\
 			"execute UT with $i cores error."

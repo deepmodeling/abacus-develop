@@ -49,7 +49,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
             }
-            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : std::stoi(item.str_values[0]);
             para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -76,12 +76,6 @@ void ReadInput::item_output()
         Input_Item item("out_wfc_pw");
         item.annotation = "output wave functions";
         read_sync_int(input.out_wfc_pw);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_wfc_r");
-        item.annotation = "output wave functions in realspace";
-        read_sync_bool(input.out_wfc_r);
         this->add_item(item);
     }
     {

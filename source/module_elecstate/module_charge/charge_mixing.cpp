@@ -160,12 +160,6 @@ void Charge_Mixing::init_mixing()
         }
     }
 
-    // initailize nhat_mdata
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw) { this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
-}
-#endif
-
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
 
     return;
@@ -186,10 +180,6 @@ void Charge_Mixing::mix_reset()
     {
         this->tau_mdata.reset();
     }
-    // reset for paw
-#ifdef USE_PAW
-    this->nhat_mdata.reset();
-#endif
 }
 
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold)

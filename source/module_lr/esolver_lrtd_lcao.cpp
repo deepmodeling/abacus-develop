@@ -257,7 +257,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->gint_->reset_DMRGint(1);
 
     // move pw basis
-    delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    if (this->pw_rho_flag)
+    {
+        this->pw_rho_flag = true;
+        delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    }
     this->pw_rho = ks_sol.pw_rho;
     ks_sol.pw_rho = nullptr;
     //init potential and calculate kernels using ground state charge
@@ -268,10 +272,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     {
         // if the same kernel is calculated in the esolver_ks, move it
         std::string dft_functional = LR_Util::tolower(input.dft_functional);
-        if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_lri_double);
-        } else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_lri_complex);
+        if (ks_sol.exd && std::is_same<T, double>::value && xc_kernel == dft_functional) {
+            this->move_exx_lri(ks_sol.exd->exx_ptr);
+        } else if (ks_sol.exc && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
+            this->move_exx_lri(ks_sol.exc->exx_ptr);
         } else    // construct C, V from scratch
         {
             // set ccp_type according to the xc_kernel

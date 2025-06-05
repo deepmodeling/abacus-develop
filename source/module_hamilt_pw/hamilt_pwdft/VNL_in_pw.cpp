@@ -22,9 +22,6 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
-    if (PARAM.inp.use_paw) {
-        return;
-}
     delete[] indv_ijkb0;
 }
 
@@ -79,10 +76,6 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                               const ModulePW::PW_Basis_K* wfc_basis,
                               const bool allocate_vkb)
 {
-    if (PARAM.inp.use_paw) 
-    {
-        return;
-    }
     const int ntype = ucell.ntype;
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
     ModuleBase::timer::tick("ppcell_vnl", "init");
@@ -297,12 +290,10 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
                                 const int& ik, 
                                 std::complex<FPTYPE>* vkb_in) const
 {
-    if (PARAM.inp.use_paw) {
-        return;
-}
-    if (PARAM.inp.test_pp) {
+    if (PARAM.inp.test_pp) 
+    {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
-}
+    }
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
@@ -428,9 +419,6 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
-    if (PARAM.inp.use_paw) {
-        return;
-}
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
 
@@ -1265,9 +1253,6 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                          const ModulePW::PW_Basis* rho_basis,
                                          UnitCell& cell)
 {
-    if (PARAM.inp.use_paw) {
-        return;
-}
     ModuleBase::TITLE("pseudopot_cell_vnl", "cal_effective_D");
 
     /*

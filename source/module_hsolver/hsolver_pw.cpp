@@ -19,197 +19,8 @@
 #include <algorithm>
 #include <vector>
 
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-// #include "module_base/parallel_global.h" // for MPI
-// #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#endif
 namespace hsolver
 {
-
-#ifdef USE_PAW
-template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_in_kloop(const int ik, const double tpiba)
-{
-    if (this->use_paw)
-    {
-        const int npw = this->wfc_basis->npwk[ik];
-        ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
-        for (int ig = 0; ig < npw; ig++)
-        {
-            _gk[ig] = this->wfc_basis->getgpluskcar(ik, ig);
-        }
-
-        std::vector<double> kpt(3, 0);
-        kpt[0] = this->wfc_basis->kvec_c[ik].x;
-        kpt[1] = this->wfc_basis->kvec_c[ik].y;
-        kpt[2] = this->wfc_basis->kvec_c[ik].z;
-
-        double** kpg;
-        double** gcar;
-        kpg = new double*[npw];
-        gcar = new double*[npw];
-        for (int ipw = 0; ipw < npw; ipw++)
-        {
-            kpg[ipw] = new double[3];
-            kpg[ipw][0] = _gk[ipw].x;
-            kpg[ipw][1] = _gk[ipw].y;
-            kpg[ipw][2] = _gk[ipw].z;
-
-            gcar[ipw] = new double[3];
-            gcar[ipw][0] = this->wfc_basis->getgcar(ik, ipw).x;
-            gcar[ipw][1] = this->wfc_basis->getgcar(ik, ipw).y;
-            gcar[ipw][2] = this->wfc_basis->getgcar(ik, ipw).z;
-        }
-
-        GlobalC::paw_cell.set_paw_k(npw,
-                                    wfc_basis->npwk_max,
-                                    kpt.data(),
-                                    this->wfc_basis->get_ig2ix(ik).data(),
-                                    this->wfc_basis->get_ig2iy(ik).data(),
-                                    this->wfc_basis->get_ig2iz(ik).data(),
-                                    (const double**)kpg,
-                                    tpiba,
-                                    (const double**)gcar);
-
-        std::vector<double>().swap(kpt);
-        for (int ipw = 0; ipw < npw; ipw++)
-        {
-            delete[] kpg[ipw];
-            delete[] gcar[ipw];
-        }
-        delete[] kpg;
-        delete[] gcar;
-
-        GlobalC::paw_cell.get_vkb();
-
-        GlobalC::paw_cell.set_currentk(ik);
-    }
-}
-
-template <typename T, typename Device>
-void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
-{
-    if (this->use_paw)
-    {
-        GlobalC::paw_cell.set_currentk(ik);
-    }
-}
-
-template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
-                                                elecstate::ElecState* pes,
-                                                const double tpiba,
-                                                const int nat)
-{
-    if (this->use_paw)
-    {
-        if (typeid(Real) != typeid(double))
-        {
-            ModuleBase::WARNING_QUIT("HSolverPW::solve", "PAW is only supported for double precision!");
-        }
-
-        GlobalC::paw_cell.reset_rhoij();
-        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
-        {
-            const int npw = this->wfc_basis->npwk[ik];
-            ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
-            for (int ig = 0; ig < npw; ig++)
-            {
-                _gk[ig] = this->wfc_basis->getgpluskcar(ik, ig);
-            }
-
-            std::vector<double> kpt(3, 0);
-            kpt[0] = this->wfc_basis->kvec_c[ik].x;
-            kpt[1] = this->wfc_basis->kvec_c[ik].y;
-            kpt[2] = this->wfc_basis->kvec_c[ik].z;
-
-            double** kpg;
-            double** gcar;
-            kpg = new double*[npw];
-            gcar = new double*[npw];
-            for (int ipw = 0; ipw < npw; ipw++)
-            {
-                kpg[ipw] = new double[3];
-                kpg[ipw][0] = _gk[ipw].x;
-                kpg[ipw][1] = _gk[ipw].y;
-                kpg[ipw][2] = _gk[ipw].z;
-
-                gcar[ipw] = new double[3];
-                gcar[ipw][0] = this->wfc_basis->getgcar(ik, ipw).x;
-                gcar[ipw][1] = this->wfc_basis->getgcar(ik, ipw).y;
-                gcar[ipw][2] = this->wfc_basis->getgcar(ik, ipw).z;
-            }
-
-            GlobalC::paw_cell.set_paw_k(npw,
-                                        wfc_basis->npwk_max,
-                                        kpt.data(),
-                                        this->wfc_basis->get_ig2ix(ik).data(),
-                                        this->wfc_basis->get_ig2iy(ik).data(),
-                                        this->wfc_basis->get_ig2iz(ik).data(),
-                                        (const double**)kpg,
-                                        tpiba,
-                                        (const double**)gcar);
-
-            std::vector<double>().swap(kpt);
-            for (int ipw = 0; ipw < npw; ipw++)
-            {
-                delete[] kpg[ipw];
-                delete[] gcar[ipw];
-            }
-            delete[] kpg;
-            delete[] gcar;
-
-            GlobalC::paw_cell.get_vkb();
-
-            psi.fix_k(ik);
-            GlobalC::paw_cell.set_currentk(ik);
-            int nbands = psi.get_nbands();
-            for (int ib = 0; ib < nbands; ib++)
-            {
-                GlobalC::paw_cell.accumulate_rhoij(reinterpret_cast<std::complex<double>*>(psi.get_pointer(ib)),
-                                                   pes->wg(ik, ib));
-            }
-        }
-
-        std::vector<std::vector<double>> rhoijp;
-        std::vector<std::vector<int>> rhoijselect;
-        std::vector<int> nrhoijsel;
-
-#ifdef __MPI
-        if (this->rank_in_pool == 0)
-        {
-            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
-
-            for (int iat = 0; iat < nat; iat++)
-            {
-                GlobalC::paw_cell.set_rhoij(iat,
-                                            nrhoijsel[iat],
-                                            rhoijselect[iat].size(),
-                                            rhoijselect[iat].data(),
-                                            rhoijp[iat].data());
-            }
-        }
-#else
-        GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
-
-        for (int iat = 0; iat < nat; iat++)
-        {
-            GlobalC::paw_cell.set_rhoij(iat,
-                                        nrhoijsel[iat],
-                                        rhoijselect[iat].size(),
-                                        rhoijselect[iat].data(),
-                                        rhoijp[iat].data());
-        }
-
-#endif
-        double* nhatgr;
-        GlobalC::paw_cell.get_nhat(pes->charge->nhat, nhatgr);
-    }
-}
-
-#endif
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -282,59 +93,113 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
-    /// Loop over k points for solve Hamiltonian to charge density
-    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
-    {
-        /// update H(k) for each k point
-        pHamilt->updateHk(ik);
-
-#ifdef USE_PAW
-        this->paw_func_in_kloop(ik, tpiba);
-#endif
-
-        /// update psi pointer for each k point
-        psi.fix_k(ik);
-
-        // template add precondition calculating here
-        update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
-
-        // use smooth threshold for all iter methods
-        if (PARAM.inp.diago_smooth_ethr == true)
-        {
-            this->cal_smooth_ethr(pes->klist->wk[ik],
-                                  &pes->wg(ik, 0),
-                                  DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                  ethr_band);
-        }
-
-#ifdef USE_PAW
-        this->call_paw_cell_set_currentk(ik);
-#endif
-
-        /// solve eigenvector and eigenvalue for H(k)
-        this->hamiltSolvePsiK(pHamilt,
-                              psi,
-                              precondition,
-                              eigenvalues.data() + ik * psi.get_nbands(),
-                              this->wfc_basis->nks);
-
-        if (skip_charge)
-        {
-            GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
-                                 << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                 << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
-            DiagoIterAssist<T, Device>::avg_iter = 0.0;
-        }
-        /// calculate the contribution of Psi for charge density rho
+    // Initialize k-point continuity if enabled
+    static int count = 0;
+    if (use_k_continuity) {
+        build_k_neighbors();
     }
+
+    // Loop over k points for solve Hamiltonian to charge density
+    if (use_k_continuity) {
+        // K-point continuity case
+        for (int i = 0; i < this->wfc_basis->nks; ++i)
+        {
+            const int ik = k_order[i];
+            
+            // update H(k) for each k point
+            pHamilt->updateHk(ik);
+
+#ifdef USE_PAW
+            this->paw_func_in_kloop(ik, tpiba);
+#endif
+
+            // update psi pointer for each k point
+            psi.fix_k(ik);
+
+            // If using k-point continuity and not first k-point, propagate from parent
+            if (ik > 0 && count == 0 && k_parent.find(ik) != k_parent.end()) {
+                propagate_psi(psi, k_parent[ik], ik);
+            }
+
+            // template add precondition calculating here
+            update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
+
+            // use smooth threshold for all iter methods
+            if (PARAM.inp.diago_smooth_ethr == true)
+            {
+                this->cal_smooth_ethr(pes->klist->wk[ik],
+                                    &pes->wg(ik, 0),
+                                    DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                    ethr_band);
+            }
+
+#ifdef USE_PAW
+            this->call_paw_cell_set_currentk(ik);
+#endif
+
+            // solve eigenvector and eigenvalue for H(k)
+            this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+
+            if (skip_charge)
+            {
+                GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
+                                    << " is: " << DiagoIterAssist<T, Device>::avg_iter
+                                    << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
+                DiagoIterAssist<T, Device>::avg_iter = 0.0;
+            }
+        }
+    }
+    else {
+        // Original code without k-point continuity
+        for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+        {
+            // update H(k) for each k point
+            pHamilt->updateHk(ik);
+
+#ifdef USE_PAW
+            this->paw_func_in_kloop(ik, tpiba);
+#endif
+
+            // update psi pointer for each k point
+            psi.fix_k(ik);
+
+            // template add precondition calculating here
+            update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
+
+            // use smooth threshold for all iter methods
+            if (PARAM.inp.diago_smooth_ethr == true)
+            {
+                this->cal_smooth_ethr(pes->klist->wk[ik],
+                                    &pes->wg(ik, 0),
+                                    DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                    ethr_band);
+            }
+
+#ifdef USE_PAW
+            this->call_paw_cell_set_currentk(ik);
+#endif
+
+            // solve eigenvector and eigenvalue for H(k)
+            this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+
+            if (skip_charge)
+            {
+                GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
+                                     << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
+                                     << " threshold=" << this->diag_thr << std::endl;
+                DiagoIterAssist<T, Device>::avg_iter = 0.0;
+            }
+            /// calculate the contribution of Psi for charge density rho
+        }
+    }
+    
+    count++;
     // END Loop over k points
 
     // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
-        // pes->ekb.c,
         out_eigenvalues,
         eigenvalues.data(),
-        // pes->ekb.nr * pes->ekb.nc
         this->wfc_basis->nks * psi.get_nbands());
 
     auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
@@ -345,6 +210,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  _pes_pw->f_en,
                                  _pes_pw->nelec_spin,
                                  _pes_pw->skip_weights);
+
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
     if (skip_charge)
     {
@@ -352,20 +218,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         {
             reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->cal_becsum(psi);
         }
-        ModuleBase::timer::tick("HSolverPW", "solve");
-        return;
     }
     else
     {
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
-
-#ifdef USE_PAW
-        this->paw_func_after_kloop(psi, pes, tpiba, nat);
-#endif
-
-        ModuleBase::timer::tick("HSolverPW", "solve");
-        return;
     }
+
+	ModuleBase::timer::tick("HSolverPW", "solve");
+	return;
 }
 
 template <typename T, typename Device>
@@ -659,6 +519,101 @@ void HSolverPW<T, Device>::output_iterInfo()
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::build_k_neighbors() {
+    const int nk = this->wfc_basis->nks;
+    kvecs_c.resize(nk);
+    k_order.clear();
+    k_order.reserve(nk);
+    
+    // Store k-points and corresponding indices
+    struct KPoint {
+        ModuleBase::Vector3<double> kvec;
+        int index;
+        double norm;
+        
+        KPoint(const ModuleBase::Vector3<double>& v, int i) : 
+            kvec(v), index(i), norm(v.norm()) {}
+    };
+    
+    // Build k-point list
+    std::vector<KPoint> klist;
+    for (int ik = 0; ik < nk; ++ik) {
+        kvecs_c[ik] = this->wfc_basis->kvec_c[ik];
+        klist.push_back(KPoint(kvecs_c[ik], ik));
+    }
+    
+    // Sort k-points by distance from origin
+    std::sort(klist.begin(), klist.end(),
+        [](const KPoint& a, const KPoint& b) {
+            return a.norm < b.norm;
+        });
+    
+    // Build parent-child relationships
+    k_order.push_back(klist[0].index);
+    
+    // Find nearest processed k-point as parent for each k-point
+    for (int i = 1; i < nk; ++i) {
+        int current_k = klist[i].index;
+        double min_dist = 1e10;
+        int parent = -1;
+        
+        // find the nearest k-point as parent
+        for (int j = 0; j < k_order.size(); ++j) {
+            int processed_k = k_order[j];
+            double dist = (kvecs_c[current_k] - kvecs_c[processed_k]).norm2();
+            if (dist < min_dist) {
+                min_dist = dist;
+                parent = processed_k;
+            }
+        }
+        
+        k_parent[current_k] = parent;
+        k_order.push_back(current_k);
+    }
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik) {
+    const int nbands = psi.get_nbands();
+    const int npwk = this->wfc_basis->npwk[to_ik];
+    
+    // Get k-point difference
+    ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
+    
+    // Allocate porter locally
+    T* porter = nullptr;
+    resmem_complex_op()(porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
+    
+    // Process each band
+    for (int ib = 0; ib < nbands; ib++)
+    {
+        // Fix current k-point and band
+        // psi.fix_k(from_ik);
+        
+        // FFT to real space
+        // this->wfc_basis->recip_to_real(this->ctx, psi.get_pointer(ib), porter, from_ik);
+        this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
+        
+        // Apply phase factor
+        //     // TODO: Check how to get the r vector
+        //     ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
+        //     double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
+        //     psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
+        // }
+        
+        // Fix k-point for target
+        // psi.fix_k(to_ik);
+        
+        // FFT back to reciprocal space
+        // this->wfc_basis->real_to_recip(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
+        this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);
+    }
+
+    // Clean up porter
+    delmem_complex_op()(porter);
 }
 
 template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;

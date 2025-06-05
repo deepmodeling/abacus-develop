@@ -9,9 +9,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
 #include "module_parameter/parameter.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
 
 void K_Vectors::cal_ik_global()
 {
@@ -168,10 +165,6 @@ void K_Vectors::set(const UnitCell& ucell,
 
     // std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
 
-#ifdef USE_PAW
-    GlobalC::paw_cell.set_isk(nks, isk.data());
-#endif
-
     return;
 }
 
@@ -184,12 +177,6 @@ void K_Vectors::renew(const int& kpoint_number)
     wk.resize(kpoint_number);
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);
-
-    /*ModuleBase::Memory::record("KV::kvec_c",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::kvec_d",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::wk",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::isk",sizeof(int) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::ngk",sizeof(int) * kpoint_number*3);*/
 
     return;
 }

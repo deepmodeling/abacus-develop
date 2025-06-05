@@ -157,8 +157,8 @@ fi
 # echo $out_dm1
 #-------------------------------
 if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
-	dm1ref=refdata-DMR-sparse_SPIN0.csr
-	dm1cal=OUT.autotest/data-DMR-sparse_SPIN0.csr
+	dm1ref=dmrs1_nao.csr.ref
+	dm1cal=OUT.autotest/dmrs1_nao.csr
 	python3 $COMPARE_SCRIPT $dm1ref $dm1cal 8
 	echo "CompareDM1_pass $?" >>$1
 fi
@@ -167,8 +167,8 @@ fi
 # echo $out_pot1
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
-	pot1ref=refSPIN1_POT.cube
-	pot1cal=OUT.autotest/SPIN1_POT.cube
+	pot1ref=pots1.cube.ref
+	pot1cal=OUT.autotest/pots1.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
@@ -177,8 +177,8 @@ fi
 #echo $out_pot2
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
-	pot1ref=refElecStaticPot.cube
-	pot1cal=OUT.autotest/ElecStaticPot.cube
+	pot1ref=pot_es.cube.ref
+	pot1cal=OUT.autotest/pot_es.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
 fi
@@ -247,8 +247,8 @@ fi
 # echo $has_band
 #-------------------------------
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
-	bandref=refBANDS_1.dat
-	bandcal=OUT.autotest/BANDS_1.dat
+	bandref=eigs1.txt.ref
+	bandcal=OUT.autotest/eigs1.txt
 	python3 $COMPARE_SCRIPT $bandref $bandcal 8
 	echo "CompareBand_pass $?" >>$1
 fi
@@ -260,15 +260,15 @@ fi
 #--------------------------------
 if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-                href=data-0-H.ref
-                hcal=OUT.autotest/data-0-H
-                sref=data-0-S.ref
-                scal=OUT.autotest/data-0-S
-        else
-                href=data-1-H.ref
-                hcal=OUT.autotest/data-1-H
-                sref=data-1-S.ref
-                scal=OUT.autotest/data-1-S
+                href=hks1_nao.txt.ref
+                hcal=OUT.autotest/hks1_nao.txt
+                sref=sks1_nao.txt.ref
+                scal=OUT.autotest/sks1_nao.txt
+        else # multiple k-points
+                href=hks1k2_nao.txt.ref
+                hcal=OUT.autotest/hks1k2_nao.txt
+                sref=sks1k2_nao.txt.ref
+                scal=OUT.autotest/sks1k2_nao.txt
         fi
 
         python3 $COMPARE_SCRIPT $href $hcal 6
@@ -282,11 +282,11 @@ fi
 #--------------------------------
 if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-			xcref=k-0-Vxc.ref
-			xccal=OUT.autotest/k-0-Vxc
+			xcref=vxcs1_nao.txt.ref
+			xccal=OUT.autotest/vxcs1_nao.txt
 	else
-			xcref=k-1-Vxc.ref
-			xccal=OUT.autotest/k-1-Vxc
+			xcref=vxcs1k2_nao.txt.ref
+			xccal=OUT.autotest/vxcs1k2_nao.txt
 	fi
 	oeref=vxc_out.ref
 	oecal=OUT.autotest/vxc_out.dat
@@ -333,9 +333,9 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    #python3 $COMPARE_SCRIPT data-HR-sparse_SPIN0.csr.ref OUT.autotest/data-HR-sparse_SPIN0.csr 8
+    #python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
     #echo "CompareHR_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-SR-sparse_SPIN0.csr.ref OUT.autotest/data-SR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 
@@ -344,7 +344,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT data-rR-sparse.csr.ref OUT.autotest/data-rR-sparse.csr 8
+    python3 $COMPARE_SCRIPT rr.csr.ref OUT.autotest/rr.csr 8
     echo "ComparerR_pass $?" >>$1
 fi
 
@@ -353,7 +353,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 $COMPARE_SCRIPT data-TR-sparse_SPIN0.csr.ref OUT.autotest/data-TR-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT trs1_nao.csr.ref OUT.autotest/trs1_nao.csr 8
     echo "ComparerTR_pass $?" >>$1
 fi
 
@@ -362,11 +362,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 $COMPARE_SCRIPT data-dHRx-sparse_SPIN0.csr.ref OUT.autotest/data-dHRx-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrxs1.csr.ref OUT.autotest/dhrxs1.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-dHRy-sparse_SPIN0.csr.ref OUT.autotest/data-dHRy-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrys1.csr.ref OUT.autotest/dhrys1.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT data-dHRz-sparse_SPIN0.csr.ref OUT.autotest/data-dHRz-sparse_SPIN0.csr 8
+    python3 $COMPARE_SCRIPT dhrzs1.csr.ref OUT.autotest/dhrzs1.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
@@ -376,10 +376,10 @@ fi
 #---------------------------------------
 if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
        ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 $COMPARE_SCRIPT SPIN1_CHG.cube.ref OUT.autotest/SPIN1_CHG.cube 8
-    echo "SPIN1_CHG.cube_pass $?" >>$1
-    python3 $COMPARE_SCRIPT SPIN1_TAU.cube.ref OUT.autotest/SPIN1_TAU.cube 8
-    echo "SPIN1_TAU.cube_pass $?" >>$1
+    python3 $COMPARE_SCRIPT chgs1.cube.ref OUT.autotest/chgs1.cube 8
+    echo "chgs1.cube_pass $?" >>$1
+    python3 $COMPARE_SCRIPT taus1.cube.ref OUT.autotest/taus1.cube 8
+    echo "taus1.cube_pass $?" >>$1
 fi
 
 #---------------------------------------
@@ -421,8 +421,8 @@ fi
 # echo "$has_wfc_pw" ## test out_wfc_pw > 0
 #--------------------------------------------
 if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
-	if [[ ! -f OUT.autotest/WAVEFUNC1.txt ]];then
-		echo "Can't find file OUT.autotest/WAVEFUNC1.txt"
+	if [[ ! -f OUT.autotest/wfs1k1_pw.txt ]];then
+		echo "Can't find file OUT.autotest/wfs1k1_pw.txt"
 		exit 1
 	fi
 	awk 'BEGIN {max=0;read=0;band=1}
@@ -437,7 +437,7 @@ if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
 					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
 				}
 			} 
-	}' OUT.autotest/WAVEFUNC1.txt >> $1
+	}' OUT.autotest/wfs1k1_pw.txt >> $1
 fi
 
 
@@ -479,8 +479,8 @@ fi
 # density matrix information 
 #--------------------------------------------
 if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
-      dmfile=OUT.autotest/SPIN1_DM
-	  dmref=SPIN1_DM.ref
+      dmfile=OUT.autotest/dms1_nao.txt
+	  dmref=dms1_nao.txt.ref
       if test -z "$dmfile"; then
               echo "Can't find DM files"
               exit 1
@@ -499,43 +499,35 @@ if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
 fi
 
 #--------------------------------------------
-# obtain wave functions for each electronic
-# state 
+# Process .cube files for:
+# 1. get_wf/get_pchg calculation tag (LCAO)
+# 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
-if [ $calculation == "get_wf" ]; then
-	nfile=0
-	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-    #echo "The cube files are $cubefiles"
-	if test -z "$cubefiles"; then
-		echo "Can't find $cubefiles files"
-		exit 1
-	else
-		for cube in $cubefiles;
-		do
-			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
-			echo "$cube $total_chg" >>$1
-		done
-	fi
+need_process_cube=false
+# Check if this is a LCAO calculation with get_wf/get_pchg
+if [ $calculation == "get_wf" ] || [ $calculation == "get_pchg" ]; then
+    need_process_cube=true
 fi
-
-
-#--------------------------------------------
-# obtian electron charge density for each 
-# electronic state
-#--------------------------------------------
-if [ $calculation == "get_pchg" ]; then
-	nfile=0
-	cubefiles=`ls OUT.autotest/ | grep -E '.cube$'`
-	if test -z "$cubefiles"; then
-		echo "Can't find cube files"
-		exit 1
-	else
-		for cube in $cubefiles;
-		do
-			total_chg=`$SUM_CUBE_EXE OUT.autotest/$cube`
-			echo "$cube $total_chg" >>$1
-		done
-	fi
+# Check if this is a PW calculation with out_wfc_norm/out_wfc_re_im
+out_wfc_norm=$(get_input_key_value "out_wfc_norm" "INPUT")
+out_wfc_re_im=$(get_input_key_value "out_wfc_re_im" "INPUT")
+out_pchg=$(get_input_key_value "out_pchg" "INPUT")
+if [ -n "$out_wfc_norm" ] || [ -n "$out_wfc_re_im" ] || [ -n "$out_pchg" ]; then
+    need_process_cube=true
+fi
+# Process .cube files if needed
+if [ "$need_process_cube" = true ]; then
+    cubefiles=$(ls OUT.autotest/ | grep -E '.cube$')
+    
+    if [ -z "$cubefiles" ]; then
+        echo "Error: No .cube files found in OUT.autotest/"
+        exit 1
+    else
+        for cube in $cubefiles; do
+            total_chg=$($SUM_CUBE_EXE OUT.autotest/$cube)
+            echo "$cube $total_chg" >> $1
+        done
+    fi
 fi
 
 #--------------------------------------------

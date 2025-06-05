@@ -1,7 +1,7 @@
 # Full List of INPUT Keywords
 
 - [Full List of INPUT Keywords](#full-list-of-input-keywords)
-  - [System variables](#system-variables)
+  - [System Variables](#system-variables)
     - [suffix](#suffix)
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
@@ -22,7 +22,7 @@
     - [device](#device)
     - [precision](#precision)
     - [nb2d](#nb2d)
-  - [Variables related to input files](#variables-related-to-input-files)
+  - [Input Files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
     - [pseudo\_dir](#pseudo_dir)
@@ -30,7 +30,7 @@
     - [read\_file\_dir](#read_file_dir)
     - [restart\_load](#restart_load)
     - [wannier\_card](#wannier_card)
-  - [Plane wave related variables](#plane-wave-related-variables)
+  - [Plane Wave](#plane-wave-related-variables)
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
     - [nx, ny, nz](#nx-ny-nz)
@@ -38,6 +38,7 @@
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [diago\_smooth\_ethr](#diago_smooth_ethr)
+    - [use\_k\_continuity](#use_k_continuity)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [diag\_subspace](#diag_subspace)
@@ -45,7 +46,7 @@
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
-  - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
+  - [NAO-related Variables](#numerical-atomic-orbitals-related-variables)
     - [lmaxmax](#lmaxmax)
     - [lcao\_ecut](#lcao_ecut)
     - [lcao\_dk](#lcao_dk)
@@ -55,7 +56,7 @@
     - [bx, by, bz](#bx-by-bz)
     - [elpa\_num\_thread](#elpa_num_thread)
     - [num\_stream](#num_stream)
-  - [Electronic structure](#electronic-structure)
+  - [Electronic Structure](#electronic-structure)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
     - [nbands](#nbands)
@@ -96,7 +97,7 @@
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
     - [soc\_lambda](#soc_lambda)
-  - [Electronic structure (SDFT)](#electronic-structure-sdft)
+  - [Stochastic DFT](#electronic-structure-sdft)
     - [method\_sto](#method_sto)
     - [nbands\_sto](#nbands_sto)
     - [nche\_sto](#nche_sto)
@@ -106,7 +107,7 @@
     - [initsto\_ecut](#initsto_ecut)
     - [initsto\_freq](#initsto_freq)
     - [npart\_sto](#npart_sto)
-  - [Geometry relaxation](#geometry-relaxation)
+  - [Geometry Relaxation](#geometry-relaxation)
     - [relax\_method](#relax_method)
     - [relax\_new](#relax_new)
     - [relax\_scale\_force](#relax_scale_force)
@@ -128,15 +129,13 @@
     - [fixed\_ibrav](#fixed_ibrav)
     - [fixed\_atoms](#fixed_atoms)
     - [cell\_factor](#cell_factor)
-  - [Variables related to output information](#variables-related-to-output-information)
-    - [out\_mul](#out_mul)
+  - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dm)
     - [out\_dm1](#out_dm1)
     - [out\_wfc\_pw](#out_wfc_pw)
-    - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
     - [out\_ldos](#out_ldos)
@@ -159,6 +158,7 @@
     - [out\_eband\_terms](#out_eband_terms)
     - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
     - [dm\_to\_rho](#dm_to_rho)
+    - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
@@ -169,7 +169,7 @@
     - [out\_pchg](#out_pchg)
     - [if\_separate\_k](#if_separate_k)
     - [out\_elf](#out_elf)
-  - [Density of states](#density-of-states)
+  - [Density of States](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
     - [dos\_scale](#dos_scale)
@@ -196,6 +196,7 @@
     - [bessel\_descriptor\_smooth](#bessel_descriptor_smooth)
     - [bessel\_descriptor\_sigma](#bessel_descriptor_sigma)
     - [deepks\_bandgap](#deepks_bandgap)
+    - [deepks\_band\_range](#deepks_band_range)
     - [deepks\_v\_delta](#deepks_v_delta)
     - [deepks\_out\_unittest](#deepks_out_unittest)
   - [OFDFT: orbital free density functional theory](#ofdft-orbital-free-density-functional-theory)
@@ -215,7 +216,7 @@
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
     - [of\_full\_pw\_dim](#of_full_pw_dim)
-  - [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft)
+  - [ML-baed Orbital-Free DFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft)
     - [of\_ml\_gene\_data](#of_ml_gene_data)
     - [of\_ml\_device](#of_ml_device)
     - [of\_ml\_feg](#of_ml_feg)
@@ -245,24 +246,25 @@
     - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
     - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
     - [of\_ml\_local\_test](#of_ml_local_test)
-  - [Electric field and dipole correction](#electric-field-and-dipole-correction)
+  - [Electric Field and Dipole Correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
     - [efield\_dir](#efield_dir)
     - [efield\_pos\_max](#efield_pos_max)
     - [efield\_pos\_dec](#efield_pos_dec)
     - [efield\_amp](#efield_amp)
-  - [Gate field (compensating charge)](#gate-field-compensating-charge)
+  - [Compensating Charge)](#gate-field-compensating-charge)
     - [gate\_flag](#gate_flag)
     - [zgate](#zgate)
     - [block](#block)
     - [block\_down](#block_down)
     - [block\_up](#block_up)
     - [block\_height](#block_height)
-  - [Exact Exchange](#exact-exchange)
+  - [Exact Exchange (Common)](#exact-exchange-common)
     - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
     - [exx\_hse\_omega](#exx_hse_omega)
     - [exx\_separate\_loop](#exx_separate_loop)
+  - [Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
     - [exx\_lambda](#exx_lambda)
@@ -286,7 +288,10 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
-  - [Molecular dynamics](#molecular-dynamics)
+  - [Exact Exchange (PW)](#exact-exchange-pw)
+    - [exxace](#exxace)
+    - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
+  - [Molecular Dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
     - [md\_dt](#md_dt)
@@ -326,7 +331,7 @@
     - [md\_nraise](#md_nraise)
     - [cal\_syns](#cal_syns)
     - [dmax](#dmax)
-  - [DFT+*U* correction](#dftu-correction)
+  - [DFT+*U*](#dftu-correction)
     - [dft\_plus\_u](#dft_plus_u)
     - [orbital\_corr](#orbital_corr)
     - [hubbard\_u](#hubbard_u)
@@ -335,7 +340,7 @@
     - [uramping](#uramping)
     - [omc](#omc)
     - [onsite\_radius](#onsite_radius)
-  - [vdW correction](#vdw-correction)
+  - [vdW Correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
     - [vdw\_s6](#vdw_s6)
     - [vdw\_s8](#vdw_s8)
@@ -353,7 +358,7 @@
     - [vdw\_cutoff\_period](#vdw_cutoff_period)
     - [vdw\_cn\_thr](#vdw_cn_thr)
     - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
-  - [Berry phase and wannier90 interface](#berry-phase-and-wannier90-interface)
+  - [Berry Phase and Wannier90 Interface](#berry-phase-and-wannier90-interface)
     - [berry\_phase](#berry_phase)
     - [gdir](#gdir)
     - [towannier90](#towannier90)
@@ -365,7 +370,7 @@
     - [out\_wannier\_eig](#out_wannier_eig)
     - [out\_wannier\_unk](#out_wannier_unk)
     - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
-  - [TDDFT: time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+  - [rt-TDDFT: Real-time time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
     - [td\_propagator](#td_propagator)
@@ -403,7 +408,7 @@
     - [init\_vecpot\_file](#init_vecpot_file)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
-  - [Variables useful for debugging](#variables-useful-for-debugging)
+  - [Debug](#variables-useful-for-debugging)
     - [t\_in\_h](#t_in_h)
     - [vl\_in\_h](#vl_in_h)
     - [vnl\_in\_h](#vnl_in_h)
@@ -412,7 +417,7 @@
     - [test\_force](#test_force)
     - [test\_stress](#test_stress)
     - [test\_skip\_ewald](#test_skip_ewald)
-  - [Electronic conductivities](#electronic-conductivities)
+  - [Electronic Conductivities](#electronic-conductivities)
     - [cal\_cond](#cal_cond)
     - [cond\_che\_thr](#cond_che_thr)
     - [cond\_dw](#cond_dw)
@@ -422,13 +427,13 @@
     - [cond\_smear](#cond_smear)
     - [cond\_fwhm](#cond_fwhm)
     - [cond\_nonlocal](#cond_nonlocal)
-  - [Implicit solvation model](#implicit-solvation-model)
+  - [Implicit Solvation Model](#implicit-solvation-model)
     - [imp\_sol](#imp_sol)
     - [eb\_k](#eb_k)
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
-  - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
+  - [Quasiatomic Orbital Analysis](#quasiatomic-orbital-qo-analysis)
     - [qo\_switch](#qo_switch)
     - [qo\_basis](#qo_basis)
     - [qo\_strategy](#qo_strategy)
@@ -458,7 +463,7 @@
     - [pexsi\_mu\_guard](#pexsi_mu_guard)
     - [pexsi\_elec\_thr](#pexsi_elec_thr)
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
-  - [Linear Response TDDFT](#linear-response-tddft)
+  - [Linear-Response TDDFT](#linear-response-tddft)
     - [xc\_kernel](#xc_kernel)
     - [lr\_init\_xc\_kernel](#lr_init_xc_kernel)
     - [lr\_solver](#lr_solver)
@@ -528,9 +533,9 @@ These variables are used to control general system parameters.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**:
   - 0:
-    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only](#gamma_only)==True*;
-    - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
-    - If *[efield_flag](#efield_flag)==1*
+    - if [calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S or [gamma_only](#gamma_only)==True;
+    - If ([dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb or [rpa](#rpa)==True). 
+    - If [efield_flag](#efield_flag)==1
   - 1: else
 
 ### symmetry_prec
@@ -594,12 +599,12 @@ These variables are used to control general system parameters.
 
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
-  - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
+  - file: from binary files `wf*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
   
-  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `set_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
+  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `get_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
 ### init_chg
@@ -608,8 +613,8 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
-  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
-  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `WAVEFUNC*.dat` while occupations are read in from file `istate.info`.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -654,8 +659,8 @@ These variables are used to control general system parameters.
 - **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary, and the number of K points nk_i = max(1, int(|b_i|/KSPACING_i)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file.
 If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c direction are all set to it; and one can also set 3 values to set the kspacing value for a/b/c direction separately (such as: `kspacing 0.5 0.6 0.7`).
 
-  Note: if gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
+- **Note**: If gamma_only is set to be true, kspacing is invalid.
 
 ### min_dist_coef
 
@@ -742,7 +747,7 @@ These variables are used to control parameters related to input files.
 ### read_file_dir
 
 - **Type**: String
-- **Description**: Indicates the location of files, such as electron density (`SPIN1_CHG.cube`), required as a starting point.
+- **Description**: Location of files, such as the electron density (`chgs1.cube`), required as a starting point.
   - Example: './' implies the files to be read are located in the working directory.
 - **Default**: OUT.$suffix
 
@@ -787,9 +792,8 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho.
-
-    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
+- **Note**: You must specify all three dimensions for this setting to be used.
 
 ### ndx, ndy, ndz
 
@@ -797,7 +801,6 @@ These variables are used to control the plane wave related parameters.
 - **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the dense part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc.
 
     Note: You must specify all three dimensions for this setting to be used.
-
     Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, ndx,ndy,ndz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
@@ -818,6 +821,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: bool
 - **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
+- **Default**: false
+
+### use_k_continuity
+
+- **Type**: Boolean
+- **Availability**: Used only for plane wave basis set.
+- **Description**: Whether to use k-point continuity for initializing wave functions. When enabled, this strategy exploits the similarity between wavefunctions at neighboring k-points by propagating the wavefunction from a previously initialized k-point to a new k-point, significantly reducing the computational cost of the initial guess.
+
+  **Important constraints:**
+  - Must be used together with `diago_smooth_ethr = 1` for optimal performance
+
+  This feature is particularly useful for calculations with dense k-point sampling where the computational cost of wavefunction initialization becomes significant.
 - **Default**: false
 
 ### pw_diag_nmax
@@ -1583,17 +1598,10 @@ These variables are used to control the geometry relaxation.
 
 These variables are used to control the output of properties.
 
-### out_mul
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
-- **Default**: False
-
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
+- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
 - **Default**: [scf_nmax](#scf_nmax)
 
 ### out_chg
@@ -1602,13 +1610,14 @@ These variables are used to control the output of properties.
 - **Description**: 
   The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: SPIN1_CHG.cube;
-    - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
-    - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
-  - 2: On top of 1, also output the initial charge density. The files are named as:
-    - nspin = 1: SPIN1_CHG_INI.cube
-    - nspin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
-    - nspin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
+    - nspin = 1: `chgs1.cube`;
+    - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
+    - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
+  Note that by using the Meta-GGA functional, additional files containing the kinetic energy density will be output with the following names:
+    - nspin = 1: `taus1.cube`;
+    - nspin = 2: `taus1.cube`, and `taus2.cube`;
+    - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
+  - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
   - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
     
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
@@ -1616,66 +1625,67 @@ These variables are used to control the output of properties.
   ---
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
-  If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
+  In EXX(exact exchange) calculations, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 
-  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
 
 ### out_pot
 
 - **Type**: Integer
 - **Description**:
   - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: SPIN1_POT.cube;
-    - nspin = 2: SPIN1_POT.cube, and SPIN2_POT.cube;
-    - nspin = 4: SPIN1_POT.cube, SPIN2_POT.cube, SPIN3_POT.cube, and SPIN4_POT.cube.
-  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
-
+    - nspin = 1: `pots1.cube`;
+    - nspin = 2: `pots1.cube` and `pots2.cube`;
+    - nspin = 4: `pots1.cube`, `pots2.cube`, `pots3.cube`, and `pots4.cube` 
+  - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/pot_es.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the **total local potential** of the initial charge density. The files are named as:
-    - nspin = 1: SPIN1_POT_INI.cube;
-    - nspin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
-    - nspin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
+    - nspin = 1: `pots1_ini.cube`; 
+    - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`; 
+    - nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
 ### out_dm
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: SPIN1_DM;
-    - nspin = 2: SPIN1_DM, and SPIN2_DM.
+    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - SPIN\*_K\*_DM, where \* stands for index of spin and kpoints;
+    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
+    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dm1
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (multi-k points)
-- **Description**: Whether to output the density matrix of localized orbitals into files in the folder `OUT.${suffix}`. The density matrices are written in the format of sparse matrices, as mentioned in [out_mat_hs2](#out_mat_hs2). The files are named as:
-  - nspin = 1: data-DMR-sparse_SPIN0.csr;
-  - nspin = 2: data-DMR-sparse_SPIN0.csr, and data-DMR-sparse_SPIN1.csr.
+- **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optinal 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
+  - nspin = 1: `dmrs1_nao.csr`;
+  - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
+- **Note**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
 
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
-- **Description**:
-  - 1: Output the coefficients of wave functions into text files named `OUT.${suffix}/WAVEFUNC${K}.txt`, where ${K} is the index of k points.
-  - 2: results are stored in binary files named `OUT.${suffix}/WAVEFUNC${K}.dat`.
+- **Availability**: Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in [calculation](#calculation) with NAO basis)
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k}{k-point index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
+  - 0: no output
+  - 1: (txt format)
+    - non-gamma-only: `wfs1k1_pw.txt` or `wfs1k2_pw.txt`, ...;
+  - 2: (binary format)
+    - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
 - **Default**: 0
-
-### out_wfc_r
-
-- **Type**: Boolean
-- **Availability**: Plane wave basis or get_wf calculation in numerical atomic orbital basis
-- **Description**: Whether to output real-space wave functions into `OUT.suffix/wfc_realspace/wfc_realspace_${K}_${B}`, where `${K}` is the index of k points, `${B}` is the index of bands.
-- **Default**: False
+- **Note**: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc. 
 
 ### out_wfc_lcao
 
@@ -1693,7 +1703,8 @@ These variables are used to control the output of properties.
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
   Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: Flase
+- **Default**: False
+- **Note**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 
 ### out_dos
 
@@ -1718,7 +1729,10 @@ These variables are used to control the output of properties.
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
-- **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Description**: Whether to output the eigenvalues of Hamiltonian matrix (in eV), optionally output precision can be set by a second parameter, default is 8. The output file names are:
+    - nspin = 1 or 4: `eigs1.txt`;
+    - nspin = 2: `eigs1.txt` and `eigs2.txt`;
+    - For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
 ### out_proj_band
@@ -1763,65 +1777,90 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+  - For gamma only case:
+    - nspin = 1: `hks1_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix;
+    - nspin = 2: `hks1_nao.txt` and `hks2_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix. Note that the code will not output `sks2_nao.txt` because it is the same as `sks1_nao.txt`;
+    - nspin = 4: `hks12_nao.txt` for the Hamiltonian matrix and `sks12_nao.txt` for the overlap matrix.
+  - For multi-k points case:
+    - nspin = 1: `hks1k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
+    - nspin = 2: `hks1k1_nao.txt` and `hks2k1_nao.txt` for the two spin channels of the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point. Note that the code will not output `sks2k1_nao.txt` because it is the same as `sks1k1_nao.txt`, ...;
+    - nspin = 4: `hks12k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks12k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
 - **Default**: False 8
-
-### out_mat_tk
-
-- **Type**: Boolean \[Integer\](optional)
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the kinetic matrices (in Ry) for each k point into `OUT.${suffix}/data-i-T`, where i is the index of k points (see `OUT.${suffix}/kpoints`). One may optionally provide a second parameter to specify the precision. 
-- **Default**: False \[8\]
-
-### out_mat_r
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print the matrix representation of the position matrix (in Bohr) into a file named `data-rR-tr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
-- **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.
 
 ### out_mat_hs2
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ (in Ry) and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
+
+### out_mat_tk
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into `OUT.${suffix}/tks1ki_nao.txt`, where i is the index of k points. One may optionally provide a second parameter to specify the precision. 
+- **Default**: False \[8\]
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr and data-TR-sparse_SPIN0.csr, etc.
+
+### out_mat_r
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print the matrix representation of the position matrix into a file named `rr.csr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Default**: False
+- **Unit**: Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-rR-sparse.csr. 
 
 ### out_mat_t
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$ (in Ry). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr. 
 
 ### out_mat_dh
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix (in Ry/Bohr). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
+- **Unit**: Ry/Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
 
 ### out_mat_ds
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Overlap matrix (in Ry/Bohr). The format will be the same as the Overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `data-dSRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `dsrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
 - **Default**: False
+- **Unit**: Ry/Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
 
 ### out_mat_xc
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital (NAO) and NAO-in-PW basis
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
-The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out.dat`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out.dat`and `OUT.${suffix}/vxc_exx_out.dat`, respectively. All the `vxc*_out.dat` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
+- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation (the code is still under development). (Note that currently DeePKS term is not included.) The files are named `vxcs1k$i_nao.txt`, where `$i` corresponds to the k point index. The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out.dat`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out.dat`and `OUT.${suffix}/vxc_exx_out.dat`, respectively. All the `vxc*_out.dat` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is k-$k-Vxc and so on.
 
 ### out_mat_xc2
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital (NAO) basis
-- **Description**: Whether to print the exchange-correlation matrices in **numerical orbital representation** (unit: Ry): $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format (the same format as [out_mat_hs2](../elec_properties/hs_matrix.md#out_mat_hs2)) in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
+- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
 
 ### out_mat_l
 
@@ -1837,18 +1876,25 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Description**: Whether to print the band energy terms separately in the file `OUT.${suffix}/${term}_out.dat`. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
 - **Default**: False
 
-### out_hr_npz/out_dm_npz
+### out_hr_npz/out_dm_npz (Under Development Feature)
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
+- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations.
 - **Default**: False
 
-### dm_to_rho
+### dm_to_rho (Under Development Feature)
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
+- **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations.
+- **Default**: False
+
+### out_mul
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: False
 
 ### out_app_flag
@@ -1911,21 +1957,21 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 ### out_wfc_norm
 
 - **Type**: String
-- **Availability**: For LCAO, used when `calculation = get_wf`.
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, used when `calculation = get_wf`.
 - **Description**: Specifies the bands to calculate the real-space wave function modulus (norm, or known as the envelope function) $|\psi(r)|$. The syntax and band selection rules are identical to [`out_pchg`](#out_pchg), but the output is the norm of the wave function.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
-- **Availability**: For LCAO, used when `calculation = get_wf`.
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, used when `calculation = get_wf`.
 - **Description**: Specifies the bands to calculate the real and imaginary parts of the wave function $\text{Re}(\psi(r))$ and $\text{Im}(\psi(r))$. The syntax and band selection rules are identical to [`out_pchg`](#out_pchg), but the output contains both the real and imaginary components of the wave function.
 - **Default**: none
 
 ### if_separate_k
 
 - **Type**: Boolean
-- **Availability**: Only for LCAO, used only when `calculation = get_pchg` and `gamma_only` is turned off.
+- **Availability**: For both PW and LCAO. When `basis_type = pw`, used if `out_pchg` is set. When `basis_type = lcao`, used only when `calculation = get_pchg` and `gamma_only` is turned off.
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. **Warning**: Enabling symmetry may produce incorrect results due to incorrect k-point weights. Therefore, when calculating partial charge densities, it is strongly recommended to set `symmetry = -1`.
 - **Default**: false
 
@@ -2149,10 +2195,23 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### deepks_bandgap
 
-- **Type**: Boolean
+- **Type**: Int
 - **Availability**: numerical atomic orbital basis and `deepks_scf` is true
 - **Description**: include bandgap label for DeePKS training
-- **Default**: False
+  - 0: Don't include bandgap label
+  - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
+  - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
+  - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
+- **Default**: 0
+
+### deepks_band_range
+
+- **Type**: Int*2
+- **Availability**: numerical atomic orbital basis, `deepks_scf` is true, and `deepks_bandgap` is 1 or 2
+- **Description**: The first value should not be larger than the second one and the meaning differs in different cases below
+  - `deepks_bandgap` is 1: Bandgap label is the energy between `LUMO + deepks_band_range[0]` and `LUMO + deepks_band_range[1]`. If not set, it will calculate energy between HOMO and LUMO states.
+  - `deepks_bandgap` is 2: Bandgap labels are energies between HOMO and all states in range [`LUMO + deepks_band_range[0]`, `LUMO + deepks_band_range[1]`] (Thus there are `deepks_band_range[1] - deepks_band_range[0] + 1` bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (`deepks_band_range[1] - deepks_band_range[0]` bandgaps in this case). *NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.*
+- **Default**: -1 0
 
 ### deepks_v_delta
 
@@ -2649,11 +2708,14 @@ These variables are relevant to gate field (compensating charge) [Detailed intro
 
 [back to top](#full-list-of-input-keywords)
 
-## Exact Exchange
+## Exact Exchange (Common)
 
-These variables are relevant when using hybrid functionals.
+These variables are relevant when using hybrid functionals. Currently ABACUS supports hybrid functionals when *[basis_type](#basis_type)==lcao/lcao_in_pw*. 
+Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under active development.
 
-**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
+The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw*. For basis specific parameters, see the sections *[Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)* and *[Exact Exchange (PW)](#exact-exchange-pw)*.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*. 
 
 ### exx_hybrid_alpha
 
@@ -2676,6 +2738,10 @@ These variables are relevant when using hybrid functionals.
   - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
   - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
 - **Default**: True
+
+## Exact Exchange (LCAO/LCAO in PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 
 ### exx_hybrid_step
 
@@ -2837,6 +2903,23 @@ These variables are relevant when using hybrid functionals.
 - **Default**: false
 
 [back to top](#full-list-of-input-keywords)
+
+## Exact Exchange (PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==pw*. Note that hybrid functionals in *[basis_type](#basis_type)==pw* is under active development, and currently limited to *[nspin](#nspin) == 1 or 2* and *[symmetry](#symmetry)==-1
+
+### exxace
+- **Type**: Boolean
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==True*. 
+- **Description**: Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
+  - True: Use the ACE method to calculate the Fock exchange operator.
+  - False: Use the traditional method to calculate the Fock exchange operator.
+- **Default**: True
+
+### exx_gamma_extrapolation
+- **Type**: Boolean
+- **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See [https://doi.org/10.1103/PhysRevB.79.205114](https://doi.org/10.1103/PhysRevB.79.205114) for details. Should be set to true most of the time.
+- **Default**: True
 
 ## Molecular dynamics
 
@@ -4074,17 +4157,17 @@ These variables are used to control the usage of implicit solvation model. This 
 
 [back to top](#full-list-of-input-keywords)
 
-## Quasiatomic Orbital (QO) analysis
+## Quasiatomic Orbital (QO) analysis (Under Development Feature)
 
 These variables are used to control the usage of QO analysis. QO further compress information from LCAO: usually PW basis has dimension in million, LCAO basis has dimension below thousand, and QO basis has dimension below hundred.
 
-### qo_switch
+### qo_switch (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: whether to let ABACUS output QO analysis required files
 - **Default**: 0
 
-### qo_basis
+### qo_basis (Under Development Feature)
 
 - **Type**: String
 - **Description**: specify the type of atomic basis
@@ -4096,7 +4179,7 @@ These variables are used to control the usage of QO analysis. QO further compres
   *Developer notes: for ABACUS-lcao calculation, it is the most recommend to use `szv` instead of `pswfc` which is originally put forward in work of QO implementation on PW basis. The information loss always happens if `pswfc` or `hydrogen` orbitals are not well tuned, although making kpoints sampling more dense will mitigate this problem, but orbital-adjust parameters are needed to test system-by-system in this case.*
 - **Default**: `szv`
 
-### qo_strategy
+### qo_strategy (Under Development Feature)
 
 - **Type**: String \[String...\](optional)
 - **Description**: specify the strategy to generate radial orbitals for each atom type. If one parameter is given, will apply to all atom types. If more than one parameters are given but fewer than number of atom type, those unspecified atom type will use default value.
@@ -4116,7 +4199,7 @@ These variables are used to control the usage of QO analysis. QO further compres
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
 - **Default**: for `hydrogen`: `energy-valence`, for `pswfc` and `szv`: `all`
 
-### qo_screening_coeff
+### qo_screening_coeff (Under Development Feature)
 
 - **Type**: Real \[Real...\](optional)
 - **Description**: rescale the shape of radial orbitals, available for both `qo_basis hydrogen` and `qo_basis pswfc`. cases but has different meaning.
@@ -4129,7 +4212,7 @@ These variables are used to control the usage of QO analysis. QO further compres
 - **Default**: 0.1
 - **Unit**: Bohr^-1
 
-### qo_thr
+### qo_thr (Under Development Feature)
 
 - **Type**: Real
 - **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
@@ -4283,14 +4366,14 @@ These variables are used to control the usage of PEXSI (Pole Expansion and Selec
 
 These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 
-### xc_kernel
+### xc_kernel (Under Development Feature)
 
 - **Type**: String
 - **Description**: The exchange-correlation kernel used in the calculation. 
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
 
-### lr_init_xc_kernel
+### lr_init_xc_kernel (Under Development Feature)
 
 - **Type**: String
 - **Description**: The method to initalize the xc kernel. 
@@ -4299,7 +4382,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
   - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
 - **Default**: "default"
 
-### lr_solver
+### lr_solver (Under Development Feature)
 
 - **Type**: String
 - **Description**: The method to solve the Casida equation $AX=\Omega X$ in LR-TDDFT under Tamm-Dancoff approximation (TDA), where $A_{ai,bj}=(\epsilon_a-\epsilon_i)\delta_{ij}\delta_{ab}+(ai|f_{Hxc}|bj)+\alpha_{EX}(ab|ij)$ is the particle-hole excitation matrix and $X$ is the transition amplitude.
@@ -4310,57 +4393,57 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
    output by setting `out_wfc_lr` to true.
 - **Default**: dav
 
-### lr_thr
+### lr_thr (Under Development Feature)
 
 - **Type**: Real
 - **Description**: The convergence threshold of iterative diagonalization solver fo LR-TDDFT. It is a pure-math number with the same as [pw_diag_thr](#pw_diag_thr), but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
 - **Default**: 1e-2
 
-### nocc
+### nocc (Under Development Feature)
 
 - **Type**: Integer
 - **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation. 
   - Note: If the value is illegal ( > [nelec](#nelec)\/2 or <= 0), it will be autoset to [nelec](#nelec)\/2.
 - **Default**: [nband](#nband)
 
-### nvirt
+### nvirt (Under Development Feature)
 
 - **Type**: Integer
 - **Description**: The number of virtual orbitals (staring from LUMO) used in the LR-TDDFT calculation.
 - **Default**: 1
 
-### lr_nstates
+### lr_nstates (Under Development Feature)
 
 - **Type**: Integer
 - **Description**:  The number of 2-particle states to be solved
 - **Default**: 0
 
-### lr_unrestricted
+### lr_unrestricted (Under Development Feature)
 - **Type**: Boolean
 - **Description**: Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
   - True:  Always use unrestricted LR-TDDFT. 
   - False: Use unrestricted LR-TDDFT only when the system is open-shell.
 - **Default**: False
 
-### abs_wavelen_range
+### abs_wavelen_range (Under Development Feature)
 
 - **Type**: Real Real
 - **Description**: The range of the wavelength for the absorption spectrum calculation.
 - **Default**: 0.0 0.0
 
-### out_wfc_lr
+### out_wfc_lr (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation.
 The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Excitation_Amplitude_${processor_rank}.dat`.
 - **Default**: False
 
-### abs_broadening
+### abs_broadening (Under Development Feature)
 - **Type**: Real
 - **Description**: The broadening factor $\eta$ for the absorption spectrum calculation.
 - **Default**: 0.01
 
-### ri_hartree_benchmark
+### ri_hartree_benchmark (Under Development Feature)
 - **Type**: String
 - **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). Now it only supports molecular systems running with a single processor, and a large enough supercell should be used to make LRI C, V tensors contain only the R=(0 0 0) cell. 
   - `aims`: The `OUT.${suffix}`directory should contain the FHI-aims output files: RI-LVL tensors`Cs_data_0.txt` and `coulomb_mat_0.txt`, and KS eigenstates from FHI-aims: `band_out`and `KS_eigenvectors.out`. The Casida equation will be constructed under FHI-aims' KS eigenpairs.
@@ -4371,7 +4454,7 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
   - `none`: Construct the Hartree term by Poisson equation and grid integration as usual.
 - **Default**: none
 
-### aims_nbasis
+### aims_nbasis (Under Development Feature)
 - **Type**: A number(ntype) of Integers
 - **Availability**: `ri_hartree_benchmark` = `aims`
 - **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
@@ -4382,13 +4465,13 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 ab-initio methods and the xc-functional parameters used in RDMFT.
 The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 
-### rdmft
+### rdmft (Under Development Feature)
 
 - **Type**: Boolean
 - **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
 - **Default**: false
 
-### rdmft_power_alpha
+### rdmft_power_alpha (Under Development Feature)
 
 - **Type**: Real
 - **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha

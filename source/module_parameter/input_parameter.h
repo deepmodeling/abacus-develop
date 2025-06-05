@@ -72,7 +72,6 @@ struct Input_para
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
-    bool use_paw = false;              ///< whether to use PAW in pw calculation
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
     double nelec_delta = 0.0;          ///< change in the number of total electrons
@@ -89,6 +88,7 @@ struct Input_para
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
+    bool use_k_continuity = false;   ///< whether to use k-point continuity for initializing wave functions
 
     std::string smearing_method = "gauss"; ///< "gauss",
                                            ///< "mp","methfessel-paxton"
@@ -265,7 +265,8 @@ struct Input_para
                                        ///< descriptors for training, wenfei 2022-1-12
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
-    bool deepks_bandgap = false;       ///< for bandgap label. QO added 2021-12-15
+    int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
+    std::vector<int> deepks_band_range = {-1, 0}; ///< the range of bands to calculate bandgap
     int deepks_v_delta = 0;            ///< for v_delta label. xuan added
     bool deepks_equiv = false;         ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false;  ///< if set to true, prints intermediate quantities that shall
@@ -362,7 +363,6 @@ struct Input_para
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
-    bool out_wfc_r = false;               ///< 0: no; 1: yes
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909

@@ -203,11 +203,11 @@ void PW_Basis_K::setuptransform()
     this->getstartgr();
     this->setupIndGk();
     this->fft_bundle.clear();
+    std::string fft_device = this->device;
 #if defined(__DSP)
-    this->fft_bundle.setfft("dsp", this->precision);
-#else
-    this->fft_bundle.setfft(this->device, this->precision);
+    fft_device = "dsp";
 #endif
+    this->fft_bundle.setfft(fft_device, this->precision);
     if (this->xprime)
     {
         this->fft_bundle.initfft(this->nx,

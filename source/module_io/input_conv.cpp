@@ -419,9 +419,9 @@ void Input_Conv::Convert()
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
-        if (PARAM.inp.nspin != 1)
+        if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
         {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1");
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
 
         if (PARAM.inp.device != "cpu")

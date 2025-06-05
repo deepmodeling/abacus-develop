@@ -204,14 +204,59 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         }
 
         // Bandgap Part
-        if (PARAM.inp.deepks_bandgap)
+        if (PARAM.inp.deepks_bandgap > 0)
         {
-            const int nocc = (PARAM.inp.nelec + 1) / 2;
-            ModuleBase::matrix o_tot(nks, 1);
+            // Get the number of the occupied bands
+            // Notice that the index of band starts from 0, so actually (nocc - 1) is the index of HOMO state
+            int nocc = (PARAM.inp.nelec + 1) / 2;
+            if (PARAM.inp.deepks_bandgap == 3)
+            {
+                int natom_H = 0;
+                for (int it = 0; it < ucell.ntype; it++)
+                {
+                    if (ucell.atoms[it].label == "H")
+                    {
+                        natom_H = ucell.atoms[it].na;
+                        break;
+                    }
+                }
+                nocc = (PARAM.inp.nelec - natom_H) / 2;
+            }
+
+            // Get the number of bandgap to be recorded
+            int range = 1;                     // normally use only one gap
+            if (PARAM.inp.deepks_bandgap == 2) // for bandgap label 2, use multi bandgap
+            {
+                range = PARAM.inp.deepks_band_range[1] - PARAM.inp.deepks_band_range[0] + 1;
+                // For cases where HOMO(nocc - 1) is included in the range
+                if ((PARAM.inp.deepks_band_range[0] <= -1) && (PARAM.inp.deepks_band_range[1] >= -1))
+                {
+                    range -= 1;
+                }
+            }
+
+            // Calculate the bandgap for each k point
+            ModuleBase::matrix o_tot(nks, range);
             for (int iks = 0; iks < nks; ++iks)
             {
-                // record band gap for each k point (including spin)
-                o_tot(iks, 0) = ekb(iks, nocc) - ekb(iks, nocc - 1);
+                int ib = 0;
+                if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 3)
+                {
+                    o_tot(iks, ib) = ekb(iks, nocc + PARAM.inp.deepks_band_range[1])
+                                     - ekb(iks, nocc + PARAM.inp.deepks_band_range[0]);
+                }
+                else if (PARAM.inp.deepks_bandgap == 2)
+                {
+                    for (int ir = PARAM.inp.deepks_band_range[0]; ir <= PARAM.inp.deepks_band_range[1]; ++ir)
+                    {
+                        if (ir != -1)
+                        {
+                            o_tot(iks, ib) = ekb(iks, nocc + ir) - ekb(iks, nocc - 1);
+                            ib++;
+                        }
+                    }
+                    assert(ib == range); // ensure that we have filled all the bandgap values
+                }
             }
 
             const std::string file_otot
@@ -223,55 +268,89 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 if (PARAM.inp.deepks_scf)
                 {
-                    ModuleBase::matrix wg_hl;
-                    std::vector<TH> dm_bandgap;
+                    std::vector<ModuleBase::matrix> wg_hl_range(range);
+                    for (int ir = 0; ir < range; ++ir)
+                    {
+                        wg_hl_range[ir].create(nks, PARAM.inp.nbands);
+                        wg_hl_range[ir].zero_out();
+                    }
 
                     // Calculate O_delta
-                    wg_hl.create(nks, PARAM.inp.nbands);
-                    dm_bandgap.resize(nks);
-                    wg_hl.zero_out();
                     for (int iks = 0; iks < nks; ++iks)
                     {
-                        wg_hl(iks, nocc - 1) = -1.0;
-                        wg_hl(iks, nocc) = 1.0;
+                        int ib = 0;
+                        if (PARAM.inp.deepks_bandgap == 1 || PARAM.inp.deepks_bandgap == 3)
+                        {
+                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[0]) = -1.0;
+                            wg_hl_range[ib](iks, nocc + PARAM.inp.deepks_band_range[1]) = 1.0;
+                        }
+                        else if (PARAM.inp.deepks_bandgap == 2)
+                        {
+                            for (int ir = PARAM.inp.deepks_band_range[0]; ir <= PARAM.inp.deepks_band_range[1]; ++ir)
+                            {
+                                if (ir != -1)
+                                {
+                                    wg_hl_range[ib](iks, nocc - 1) = -1.0;
+                                    wg_hl_range[ib](iks, nocc + ir) = 1.0;
+                                    ib++;
+                                }
+                            }
+                        }
                     }
-                    elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap);
 
-                    ModuleBase::matrix o_delta(nks, 1);
-
-                    // calculate and save orbital_precalc: [nks,NAt,NDscrpt]
+                    ModuleBase::matrix o_delta(nks, range);
                     torch::Tensor orbital_precalc;
-                    DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
-                                                               lmaxd,
-                                                               inlmax,
-                                                               nat,
-                                                               nks,
-                                                               inl2l,
-                                                               kvec_d,
-                                                               phialpha,
-                                                               gevdm,
-                                                               inl_index,
-                                                               ucell,
-                                                               orb,
-                                                               *ParaV,
-                                                               GridD,
-                                                               orbital_precalc);
-                    DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks, nspin);
+                    for (int ir = 0; ir < range; ++ir)
+                    {
+                        std::vector<TH> dm_bandgap(nks);
+                        elecstate::cal_dm(ParaV, wg_hl_range[ir], psi, dm_bandgap);
 
+                        torch::Tensor orbital_precalc_temp;
+                        ModuleBase::matrix o_delta_temp(nks, 1);
+                        DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
+                                                                   lmaxd,
+                                                                   inlmax,
+                                                                   nat,
+                                                                   nks,
+                                                                   inl2l,
+                                                                   kvec_d,
+                                                                   phialpha,
+                                                                   gevdm,
+                                                                   inl_index,
+                                                                   ucell,
+                                                                   orb,
+                                                                   *ParaV,
+                                                                   GridD,
+                                                                   orbital_precalc_temp);
+                        if (ir == 0)
+                        {
+                            orbital_precalc = orbital_precalc_temp;
+                        }
+                        else
+                        {
+                            orbital_precalc = torch::cat({orbital_precalc, orbital_precalc_temp}, 0);
+                        }
+
+                        DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta_temp, *ParaV, nks, nspin);
+                        for (int iks = 0; iks < nks; ++iks)
+                        {
+                            o_delta(iks, ir) = o_delta_temp(iks, 0);
+                        }
+                    }
                     // save obase and orbital_precalc
                     const std::string file_orbpre = PARAM.globalv.global_out_dir + "deepks_orbpre.npy";
                     LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, rank);
 
                     const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
                     LCAO_deepks_io::save_matrix2npy(file_obase, o_tot - o_delta, rank); // Unit: Hartree
-                }                                                                       // end deepks_scf == 1
-                else                                                                    // deepks_scf == 0
+                }
+                else // deepks_scf == 0
                 {
                     const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
                     LCAO_deepks_io::save_matrix2npy(file_obase, o_tot, rank); // no scf, o_tot=o_base
                 }                                                             // end deepks_scf == 0
             }                                                                 // end deepks_out_labels == 1
-        }                                                                     // end bandgap label
+        }
 
         // not add deepks_out_labels = 2 for HR yet
         // H(R) matrix part, for HR, base will not be calculated since they are HContainer objects
