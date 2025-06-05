@@ -45,7 +45,7 @@ class CudaMemWrapper
       return *this;
     };
 
-    CudaMemWrapper(int size,
+    CudaMemWrapper(size_t size,
                    cudaStream_t stream = 0,
                    bool malloc_host = true)
     {
@@ -70,7 +70,7 @@ class CudaMemWrapper
       free();
     };
 
-    void copy_host_to_device_sync(int size)
+    void copy_host_to_device_sync(size_t size)
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to device."); } 
@@ -82,7 +82,7 @@ class CudaMemWrapper
       copy_host_to_device_sync(size_);
     };
 
-    void copy_host_to_device_async(int size)
+    void copy_host_to_device_async(size_t size)
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to device."); } 
@@ -94,7 +94,7 @@ class CudaMemWrapper
       copy_host_to_device_async(size_);
     };
 
-    void copy_device_to_host_sync(int size)
+    void copy_device_to_host_sync(size_t size)
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to host."); } 
@@ -106,7 +106,7 @@ class CudaMemWrapper
       copy_device_to_host_sync(size_);
     };
 
-    void copy_device_to_host_async(int size)
+    void copy_device_to_host_async(size_t size)
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot copy to host."); } 
@@ -118,7 +118,7 @@ class CudaMemWrapper
       copy_device_to_host_async(size_);
     };
     
-    void memset_device_sync(const int size, const int value = 0)
+    void memset_device_sync(const size_t size, const int value = 0)
     {
       checkCuda(cudaMemset(device_ptr_, value, size * sizeof(T)));
     };
@@ -128,7 +128,7 @@ class CudaMemWrapper
       memset_device_sync(size_, value);
     };
 
-    void memset_device_async(const int size, const int value = 0)
+    void memset_device_async(const size_t size, const int value = 0)
     {
       checkCuda(cudaMemsetAsync(device_ptr_, value, size * sizeof(T), stream_));
     };
@@ -138,7 +138,7 @@ class CudaMemWrapper
       memset_device_async(size_, value);
     };
 
-    void memset_host(const int size, const int value = 0)
+    void memset_host(const size_t size, const int value = 0)
     {
       if (host_ptr_ == nullptr)
         { ModuleBase::WARNING_QUIT("cuda_mem_wrapper", "Host pointer is null, cannot memset host."); } 
@@ -160,12 +160,12 @@ class CudaMemWrapper
     T* get_host_ptr() { return host_ptr_; };
     const T* get_device_ptr() const { return device_ptr_; };
     const T* get_host_ptr() const { return host_ptr_; };
-    int get_size() const { return size_; };
+    size_t get_size() const { return size_; };
 
   private:
     T* device_ptr_ = nullptr;
     T* host_ptr_ = nullptr;
-    int size_ = 0;
+    size_t size_ = 0;
     bool malloc_host_ = false;
     cudaStream_t stream_ = 0;
 };
