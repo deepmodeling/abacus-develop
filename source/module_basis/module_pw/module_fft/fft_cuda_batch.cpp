@@ -28,8 +28,6 @@ void FFT_CUDA_BATCH<float>::setupFFT()
 template <>
 void FFT_CUDA_BATCH<double>::setupFFT()
 {
-    std::cout<<"the nx ,ny,nz,batch is: "
-             <<this->nx<<" "<<this->ny<<" "<<this->nz<<" "<<this->batch<<std::endl;
     int rank = 3;                
     int n[3] = {this->nx, this->ny, this->nz};       
     const int size = this->nx* this->ny *this->nz; 

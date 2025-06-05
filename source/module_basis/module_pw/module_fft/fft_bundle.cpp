@@ -45,7 +45,7 @@ void FFT_Bundle::initfft(int nx_in,
                          bool xprime_in,
                          bool mpifft_in)
 {
-    assert(this->device == "cpu" || this->device == "gpu" || this->device == "dsp");
+    assert(this->device == "cpu" || this->device == "gpu" || this->device == "dsp" || this->device == "gpu_batch");
     assert(this->precision == "single" || this->precision == "double" || this->precision == "mixing");
 
     if (this->precision == "single" || this->precision == "mixing")
@@ -101,11 +101,25 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_ROCM<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #elif defined(__CUDA)
+        std::cout<<"here is the set of the gpu"<<std::endl;
         fft_float = make_unique<FFT_CUDA<float>>();
+        fft_float->initfft(nx_in, ny_in, nz_in);
+        fft_double = make_unique<FFT_CUDA<double>>();
+        fft_double->initfft(nx_in, ny_in, nz_in );
+#endif
+    }else if (device == "gpu_batch")
+    {
+#if defined(__ROCM)
+        fft_float = make_unique<FFT_ROCM<float>>();
+        fft_float->initfft(nx_in, ny_in, nz_in);
+        fft_double = make_unique<FFT_ROCM<double>>();
+        fft_double->initfft(nx_in, ny_in, nz_in);
+#elif defined(__CUDA)   
+        std::cout<<"here is the set of the batch gpu"<<std::endl;
+        fft_float = make_unique<FFT_CUDA_BATCH<float>>();
         fft_float->initfft(nx_in, ny_in, nz_in);
         fft_double = make_unique<FFT_CUDA_BATCH<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in );
-
 #endif
     }else{
         // ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
@@ -238,6 +252,7 @@ template <>
 void FFT_Bundle::fft3D_forward(std::complex<double>* in,
                                std::complex<double>* out) const
 {
+    std::cout<<"FFT_Bundle::fft3D_forward<double> in FFT_bundle"<<std::endl;
     fft_double->fft3D_forward(in, out);
 }
 

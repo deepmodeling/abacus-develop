@@ -41,7 +41,6 @@ __global__ void set_3d_fft_box_batch(
     thrust::complex<FPTYPE>* batch_out = out + batch_idx * nxyz;
     
     const int box_idx = box_index[element_idx];  
-    printf("the batch_idx is %d, the element_idx is %d, the box_idx is %d\n", batch_idx, element_idx, box_idx);
     const thrust::complex<FPTYPE> input_val = batch_in[element_idx];
     batch_out[box_idx] = input_val;
 }

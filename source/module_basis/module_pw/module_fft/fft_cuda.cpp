@@ -74,10 +74,12 @@ void FFT_CUDA<float>::fft3D_forward(std::complex<float>* in, std::complex<float>
 template <>
 void FFT_CUDA<double>::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
 {
+    std::cout<<"FFT_CUDA<double>::fft3D_forward"<<std::endl;
     CHECK_CUFFT(cufftExecZ2Z(this->z_handle,
                              reinterpret_cast<cufftDoubleComplex*>(in),
                              reinterpret_cast<cufftDoubleComplex*>(out),
                              CUFFT_FORWARD));
+    cudaCheckOnDebug();
 }
 template <>
 void FFT_CUDA<float>::fft3D_backward(std::complex<float>* in, std::complex<float>* out) const
