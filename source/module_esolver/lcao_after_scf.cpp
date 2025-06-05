@@ -32,6 +32,34 @@
 #include "module_io/ctrl_output_lcao.h"
 #include <iostream>
 
+#include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
+#include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao()
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "module_hamilt_general/hamilt.h" // use Hamilt<T>
+
+#include "module_io/write_dmr.h" // use ModuleIO::write_dmr()
+#include "module_io/io_dmk.h" // use ModuleIO::write_dmk()
+#include "module_io/write_HS.h" // use ModuleIO::write_hsk()
+#include "module_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao()
+#include "module_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse()
+#include "module_io/output_mulliken.h" // use cal_mag()
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "module_io/cal_pLpR.h" // use AngularMomentumCalculator()
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
+#include "module_io/berryphase.h" // use berryphase
+#include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
+#include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
+#ifdef __EXX
+//#include "module_io/restart_exx_csr.h"
+#include "module_ri/RPA_LRI.h" // use RPA code
+#endif
+#include "module_rdmft/rdmft.h" // use RDMFT codes
+#include "module_io/to_qo.h" // use toQO
+
+
+
+
+
 namespace ModuleESolver
 {
 
@@ -50,6 +78,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     //! 2) output of lcao every few ionic steps 
     //------------------------------------------------------------------
 	const auto* estate = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec);
+    const auto* hamilt_lcao = dynamic_cast<const hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+
 	if(!estate)
 	{
 		ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
@@ -57,14 +87,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     if(istep % PARAM.inp.out_interval == 0)
     {
-/*
         ModuleIO::ctrl_output_lcao<TK, TR>(ucell, 
 				this->kv,
-				this->pelec, 
+				estate, 
 				this->pv, 
 				this->gd,
 				this->psi,
-				this->p_hamilt,
+				hamilt_lcao,
 				this->two_center_bundle_,
 				this->GK,
 				this->orb_,
@@ -82,7 +111,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 				this->exc,
 #endif
 				istep);
-*/
     }
 
     //------------------------------------------------------------------

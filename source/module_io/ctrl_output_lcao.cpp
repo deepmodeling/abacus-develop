@@ -45,11 +45,11 @@ void ctrl_output_lcao(UnitCell& ucell,
 		const Structure_Factor& sf, // for Wannier90
         rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<T>& ld,
+		LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<T, double>& exd,
-		Exx_LRI_Interface<T, std::complex<double>>& exc,
+		Exx_LRI_Interface<TK, double>& exd,
+		Exx_LRI_Interface<TK, std::complex<double>>& exc,
 #endif
 		const int istep)
 {
@@ -421,9 +421,12 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
+#ifdef __DEEPKS
+		LCAO_Deepks<TK>& ld,
+#endif
 #ifdef __EXX
-		Exx_LRI_Interface<T, double>& exd,
-		Exx_LRI_Interface<T, std::complex<double>>& exc,
+		Exx_LRI_Interface<TK, double>& exd,
+		Exx_LRI_Interface<TK, std::complex<double>>& exc,
 #endif
 		const int istep);
 
@@ -445,11 +448,11 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<T>& ld,
+		LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<T, double>& exd,
-		Exx_LRI_Interface<T, std::complex<double>>& exc,
+		Exx_LRI_Interface<TK, double>& exd,
+		Exx_LRI_Interface<TK, std::complex<double>>& exc,
 #endif
 		const int istep);
 
@@ -470,11 +473,11 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<T>& ld,
+		LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<T, double>& exd,
-		Exx_LRI_Interface<T, std::complex<double>>& exc,
+		Exx_LRI_Interface<TK, double>& exd,
+		Exx_LRI_Interface<TK, std::complex<double>>& exc,
 #endif
 		const int istep);
 
