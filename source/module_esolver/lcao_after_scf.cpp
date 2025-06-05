@@ -5,7 +5,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
@@ -15,7 +14,6 @@
 #include "module_io/output_log.h"
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
-#include "module_io/to_qo.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_elecstat_pot.h"
@@ -30,7 +28,6 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
 
 #include <memory>
 #ifdef __EXX

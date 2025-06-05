@@ -1,6 +1,3 @@
-#ifndef CTRL_OUTPUT_LCAO_H 
-#define CTRL_OUTPUT_LCAO_H 
-
 #include <complex>
 
 #include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
@@ -13,17 +10,22 @@
 #include "module_io/write_HS.h" // use ModuleIO::write_hsk()
 #include "module_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 #include "module_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 
+#include "module_io/output_mulliken.h" // use cal_mag()
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "module_io/cal_pLpR.h" // use AngularMomentumCalculator()
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
+#include "module_io/to_qo.h" // use toQO
 
 namespace ModuleIO
 {
 
 template <typename TK, typename TR>
 void ctrl_output_lcao(UnitCell& ucell, 
-		const K_Vectors& kv,
-		const elecstate::ElecStateLCAO<TK>* pelec, 
-		const Parallel_Orbitals& pv,
-		const Grid_Driver& gd,
-		const psi::Psi<TK>* psi,
+		K_Vectors& kv,
+		elecstate::ElecStateLCAO<TK>* pelec, 
+		Parallel_Orbitals& pv,
+		Grid_Driver& gd,
+		psi::Psi<TK>* psi,
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
@@ -39,7 +41,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
 	//------------------------------------------------------------------
-	//! 1) write density matrix DM(R)
+	//! 1) Output density matrix DM(R)
 	//------------------------------------------------------------------
     if(PARAM.inp.out_dm1)
 	{
@@ -49,7 +51,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
 	//------------------------------------------------------------------
-	//! 2) write density matrix DM(k)
+	//! 2) Output density matrix DM(k)
 	//------------------------------------------------------------------
 	if (PARAM.inp.out_dm)
 	{
@@ -64,7 +66,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    // 3) write H(k) and S(k)
+    // 3) Output H(k) and S(k) matrices for each k-point
     //------------------------------------------------------------------
 	if (PARAM.inp.out_mat_hs[0])
 	{
@@ -83,7 +85,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    // 4) write electronic wavefunctions
+    // 4) Output electronic wavefunctions Psi(k)
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
     {
@@ -101,7 +103,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    //! 5) write DeePKS information in LCAO basis
+    //! 5) Output DeePKS information
     //------------------------------------------------------------------
 #ifdef __DEEPKS
     // need control parameter
@@ -126,7 +128,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 6) Print out <phi_i|O|phi_j>, where O is H, S, dH, dS, T, r 
+    //! 6) Output <phi_i|O|phi_j> matrices, where O can be chosen as
+    //!    H, S, dH, dS, T, r. The format is CSR format. 
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
@@ -146,27 +149,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 			kv,
 			p_ham_tk);
 
-
-/*
     //------------------------------------------------------------------
-	//! 10) Perform Mulliken charge analysis in LCAO basis
-    //------------------------------------------------------------------
-	if (PARAM.inp.out_mul)
-	{
-		ModuleIO::cal_mag(&(this->pv),
-				this->p_hamilt,
-				this->kv,
-				this->pelec,
-				this->two_center_bundle_,
-				this->orb_,
-				ucell,
-				this->gd,
-				istep,
-				true);
-	}
-
-    //------------------------------------------------------------------
-    //! 11) Print out kinetic matrix in LCAO basis
+    //! 7) Output kinetic matrix
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_tk[0])
     {
@@ -174,23 +158,23 @@ void ctrl_output_lcao(UnitCell& ucell,
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
             = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
-                                                                    this->kv.kvec_d,
+                                                                    kv.kvec_d,
                                                                     &hR,
                                                                     &ucell,
-                                                                    orb_.cutoffs(),
-                                                                    &this->gd,
-                                                                    two_center_bundle_.kinetic_orb.get());
+                                                                    orb.cutoffs(),
+                                                                    &gd,
+                                                                    two_center_bundle.kinetic_orb.get());
 
-        const int nspin_k = (PARAM.inp.nspin == 2 ? 2 : 1);
-        for (int ik = 0; ik < this->kv.get_nks() / nspin_k; ++ik)
+        const int nspin_k = (nspin == 2 ? 2 : 1);
+        for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
         {
             ekinetic->init(ik);
 
             const int out_label = 1; // 1: .txt, 2: .dat
 
-			std::string t_fn = ModuleIO::filename_output(PARAM.globalv.global_out_dir,
-					"tk","nao",ik,this->kv.ik2iktot,
-					PARAM.inp.nspin,this->kv.get_nkstot(),
+			std::string t_fn = ModuleIO::filename_output(global_out_dir,
+					"tk","nao",ik,kv.ik2iktot,
+					PARAM.inp.nspin,kv.get_nkstot(),
 					out_label,out_app_flag,
                     gamma_only,istep);
 
@@ -202,7 +186,7 @@ void ctrl_output_lcao(UnitCell& ucell,
                                1, // true for upper triangle matrix
                                PARAM.inp.out_app_flag,
                                t_fn, 
-                               this->pv,
+                               pv,
                                GlobalV::DRANK);
         }
 
@@ -210,7 +194,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 12) calculate expectation of angular momentum operator in LCAO basis
+    //! 8) Output expectation of angular momentum operator
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_l[0])
     {
@@ -226,15 +210,113 @@ void ctrl_output_lcao(UnitCell& ucell,
             GlobalV::MY_RANK
         );
         mylcalculator.calculate(PARAM.inp.suffix,
-                                PARAM.globalv.global_out_dir,
+                                global_out_dir,
                                 ucell,
                                 PARAM.inp.out_mat_l[1],
                                 GlobalV::MY_RANK);
     }
 
-#ifdef __EXX
     //------------------------------------------------------------------
-    //! 3) write Hexx matrix in LCAO basis
+    //! 9) Output Mulliken charge
+    //------------------------------------------------------------------
+    if (PARAM.inp.out_mul)
+    {
+        ModuleIO::cal_mag(&pv,
+                p_hamilt,
+                kv,
+                pelec,
+                two_center_bundle,
+                orb,
+                ucell,
+                gd,
+                istep,
+                true);
+    }
+
+    //------------------------------------------------------------------
+    //! 10) Output atomic magnetization by using 'spin_constraint'
+    //------------------------------------------------------------------
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(istep);
+        sc.print_Mi(GlobalV::ofs_running);
+        sc.print_Mag_Force(GlobalV::ofs_running);
+    }
+
+/*
+    //------------------------------------------------------------------
+    //! 11) Output Berry phase
+    //------------------------------------------------------------------
+    if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
+        berryphase bp(&pv);
+        bp.lcao_init(ucell, gd, kv, GridT, orb_);
+        // additional step before calling macroscopic_polarization
+        bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
+    }
+
+    //------------------------------------------------------------------
+    //! 12) Output quasi orbitals 
+    //------------------------------------------------------------------
+    if (PARAM.inp.qo_switch)
+    {
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
+        tqo.initialize(global_out_dir,
+                       PARAM.inp.pseudo_dir,
+                       PARAM.inp.orbital_dir,
+                       &ucell,
+                       kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK,
+                       GlobalV::NPROC);
+        tqo.calculate();
+    }
+
+    //------------------------------------------------------------------
+    //! 13) Wannier90 interface in LCAO basis
+    // added by jingan in 2018.11.7
+    //------------------------------------------------------------------
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
+		if (PARAM.inp.wannier_method == 1)
+		{
+			toWannier90_LCAO_IN_PW wan(PARAM.inp.out_wannier_mmn,
+					PARAM.inp.out_wannier_amn,
+					PARAM.inp.out_wannier_unk,
+					PARAM.inp.out_wannier_eig,
+					PARAM.inp.out_wannier_wvfn_formatted,
+					PARAM.inp.nnkpfile,
+					PARAM.inp.wannier_spin);
+			wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
+			wan.calculate(ucell,pelec->ekb,pw_wfc,pw_big,
+					sf,kv,psi,&pv);
+		}
+		else if (PARAM.inp.wannier_method == 2)
+		{
+			toWannier90_LCAO wan(PARAM.inp.out_wannier_mmn,
+					PARAM.inp.out_wannier_amn,
+					PARAM.inp.out_wannier_unk,
+					PARAM.inp.out_wannier_eig,
+					PARAM.inp.out_wannier_wvfn_formatted,
+					PARAM.inp.nnkpfile,
+					PARAM.inp.wannier_spin,
+					orb);
+
+			wan.calculate(ucell, gd, pelec->ekb, kv, *psi, &pv);
+		}
+		std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
+	}
+*/
+
+/*
+#ifdef __EXX
+
+    //------------------------------------------------------------------
+    //! Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (PARAM.inp.out_chg[0])
@@ -253,94 +335,7 @@ void ctrl_output_lcao(UnitCell& ucell,
             }
         }
     }
-#endif
 
-
-    //------------------------------------------------------------------
-    //! 13) Print out atomic magnetization in LCAO basis
-    //! only when 'spin_constraint' is on.
-    //------------------------------------------------------------------
-    if (PARAM.inp.sc_mag_switch)
-    {
-        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-        sc.cal_mi_lcao(istep);
-        sc.print_Mi(GlobalV::ofs_running);
-        sc.print_Mag_Force(GlobalV::ofs_running);
-    }
-
-    //------------------------------------------------------------------
-    //! 14) Berry phase calculations in LCAO basis, added by jingan
-    //------------------------------------------------------------------
-    if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
-    {
-        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
-        berryphase bp(&(this->pv));
-        bp.lcao_init(ucell, this->gd, this->kv, this->GridT, orb_);
-        // additional step before calling macroscopic_polarization
-        bp.Macroscopic_polarization(ucell, this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
-        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
-    }
-
-    //------------------------------------------------------------------
-    //! 15) Calculate quasi-orbitals in LCAO basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.qo_switch)
-    {
-        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
-        tqo.initialize(PARAM.globalv.global_out_dir,
-                       PARAM.inp.pseudo_dir,
-                       PARAM.inp.orbital_dir,
-                       &ucell,
-                       this->kv.kvec_d,
-                       GlobalV::ofs_running,
-                       GlobalV::MY_RANK,
-                       GlobalV::NPROC);
-        tqo.calculate();
-    }
-
-    //------------------------------------------------------------------
-    //! 16) wannier90 interface in LCAO basis
-    // added by jingan in 2018.11.7
-    //------------------------------------------------------------------
-    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
-    {
-        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
-		if (PARAM.inp.wannier_method == 1)
-		{
-			toWannier90_LCAO_IN_PW wan(PARAM.inp.out_wannier_mmn,
-					PARAM.inp.out_wannier_amn,
-					PARAM.inp.out_wannier_unk,
-					PARAM.inp.out_wannier_eig,
-					PARAM.inp.out_wannier_wvfn_formatted,
-					PARAM.inp.nnkpfile,
-					PARAM.inp.wannier_spin);
-			wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
-			wan.calculate(ucell,
-					this->pelec->ekb,
-					this->pw_wfc,
-					this->pw_big,
-					this->sf,
-					this->kv,
-					this->psi,
-					&(this->pv));
-		}
-		else if (PARAM.inp.wannier_method == 2)
-		{
-			toWannier90_LCAO wan(PARAM.inp.out_wannier_mmn,
-					PARAM.inp.out_wannier_amn,
-					PARAM.inp.out_wannier_unk,
-					PARAM.inp.out_wannier_eig,
-					PARAM.inp.out_wannier_wvfn_formatted,
-					PARAM.inp.nnkpfile,
-					PARAM.inp.wannier_spin,
-					orb_);
-
-			wan.calculate(ucell, this->gd, this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
-		}
-		std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
-	}
-
-#ifdef __EXX
     //------------------------------------------------------------------
     // 17) Write RPA information in LCAO basis
     //------------------------------------------------------------------
@@ -356,7 +351,9 @@ void ctrl_output_lcao(UnitCell& ucell,
         rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
     }
 #endif
+*/
 
+/*
     //------------------------------------------------------------------
     //! 18) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
@@ -385,6 +382,24 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 */
 
+    //------------------------------------------------------------------
+    //! Output quasi orbitals
+    //------------------------------------------------------------------
+    if (PARAM.inp.qo_switch)
+    {
+        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
+        tqo.initialize(global_out_dir,
+                       PARAM.inp.pseudo_dir,
+                       PARAM.inp.orbital_dir,
+                       &ucell,
+                       kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK,
+                       GlobalV::NPROC);
+        tqo.calculate();
+    }
+
+
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
 }
 
@@ -393,11 +408,11 @@ void ctrl_output_lcao(UnitCell& ucell,
 
 // For gamma only
 template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell, 
-		const K_Vectors& kv,
-		const elecstate::ElecStateLCAO<double>* pelec, 
-		const Parallel_Orbitals& pv,
-		const Grid_Driver& gd,
-		const psi::Psi<double>* psi,
+		K_Vectors& kv,
+		elecstate::ElecStateLCAO<double>* pelec, 
+		Parallel_Orbitals& pv,
+		Grid_Driver& gd,
+		psi::Psi<double>* psi,
 		hamilt::HamiltLCAO<double, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
@@ -406,11 +421,11 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 
 // For multiple k-points
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell& ucell, 
-		const K_Vectors& kv,
-		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
-		const Parallel_Orbitals& pv,
-		const Grid_Driver& gd,
-		const psi::Psi<std::complex<double>>* psi,
+		K_Vectors& kv,
+		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		Parallel_Orbitals& pv,
+		Grid_Driver& gd,
+		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
@@ -418,15 +433,14 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
-		const K_Vectors& kv,
-		const elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
-		const Parallel_Orbitals& pv,
-		const Grid_Driver& gd,
-		const psi::Psi<std::complex<double>>* psi,
+		K_Vectors& kv,
+		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
+		Parallel_Orbitals& pv,
+		Grid_Driver& gd,
+		psi::Psi<std::complex<double>>* psi,
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
 		LCAO_Orbitals &orb,
 		const int istep);
 
-#endif

@@ -13,13 +13,14 @@
 
 namespace ModuleIO
 {
+    // in principle, we need to add const for all of the variables, mohan note 2025-06-05
 	template <typename TK, typename TR>
 		void ctrl_output_lcao(UnitCell& ucell, 
-				const K_Vectors& kv,
-				const elecstate::ElecStateLCAO<TK>* pelec, 
-				const Parallel_Orbitals& pv,
-				const Grid_Driver& gd,
-				const psi::Psi<TK>* psi,
+				K_Vectors& kv,
+				elecstate::ElecStateLCAO<TK>* pelec, 
+				Parallel_Orbitals& pv,
+				Grid_Driver& gd,
+				psi::Psi<TK>* psi,
 				hamilt::HamiltLCAO<TK, TR>* p_hamilt,
 				TwoCenterBundle &two_center_bundle,
 				Gint_k &gk,
