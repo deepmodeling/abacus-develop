@@ -38,6 +38,7 @@
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [diago\_smooth\_ethr](#diago_smooth_ethr)
+    - [use\_k\_continuity](#use_k_continuity)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [diag\_subspace](#diag_subspace)
@@ -819,6 +820,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: bool
 - **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
+- **Default**: false
+
+### use_k_continuity
+
+- **Type**: Boolean
+- **Availability**: Used only for plane wave basis set.
+- **Description**: Whether to use k-point continuity for initializing wave functions. When enabled, this strategy exploits the similarity between wavefunctions at neighboring k-points by propagating the wavefunction from a previously initialized k-point to a new k-point, significantly reducing the computational cost of the initial guess.
+
+  **Important constraints:**
+  - Must be used together with `diago_smooth_ethr = 1` for optimal performance
+
+  This feature is particularly useful for calculations with dense k-point sampling where the computational cost of wavefunction initialization becomes significant.
 - **Default**: false
 
 ### pw_diag_nmax
@@ -1867,6 +1880,13 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations.
+- **Default**: False
+
+### out_mul
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: False
 
 ### out_mul

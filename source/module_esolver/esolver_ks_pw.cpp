@@ -534,7 +534,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace);
+                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                     PARAM.inp.use_k_continuity);
 
         hsolver_pw_obj.solve(this->p_hamilt,
                              this->kspw_psi[0],
