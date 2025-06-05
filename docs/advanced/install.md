@@ -16,24 +16,9 @@ If Libxc is not installed in standard path (i.e. installed with a custom prefix 
 cmake -B build -DLibxc_DIR=~/libxc
 ```
 
-## Build with DeePKS
+## Build with ML-ALGO
 
-If DeePKS feature is required for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
-
-- C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
-- CMake >= 3.18
-- [LibTorch](https://pytorch.org/) with cxx11 ABI supporting CPU
-- [Libnpy](https://github.com/llohse/libnpy/)
-
-```bash
-cmake -B build -DENABLE_ML4DFT=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
-```
-
-> CMake will try to download Libnpy if it cannot be found locally.
-
-## Build with ML-KEDF
-
-If machine learning based kinetic energy density functional (ML-KEDF) is required for OFDFT calculation, the following prerequisites and steps are needed:
+If machine learning algorithms is required for DFT calculation, the following prerequisites and steps are needed:
 
 - C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
 - CMake >= 3.18
@@ -41,7 +26,7 @@ If machine learning based kinetic energy density functional (ML-KEDF) is require
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
-cmake -B build -DENABLE_MLKEDF=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+cmake -B build -DENABLE_ML4DFT=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
 > CMake will try to download Libnpy if it cannot be found locally.
