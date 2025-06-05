@@ -13,6 +13,9 @@
 #include "module_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
 #include "module_rdmft/rdmft.h" // use RDMFT codes
+#ifdef __EXX
+#include "module_ri/Exx_LRI_interface.h" // use EXX codes
+#endif
 
 namespace ModuleIO
 {
@@ -34,6 +37,13 @@ namespace ModuleIO
 				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 				const Structure_Factor& sf, // for Wannier90
 				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
+#ifdef __DEEPKS
+				LCAO_Deepks<T>& ld,
+#endif
+#ifdef __EXX
+				Exx_LRI_Interface<T, double>& exd,
+				Exx_LRI_Interface<T, std::complex<double>>& exc,
+#endif
 				const int istep);
 }
 #endif

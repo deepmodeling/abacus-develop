@@ -44,6 +44,13 @@ void ctrl_output_lcao(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
         rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
+#ifdef __DEEPKS
+		LCAO_Deepks<T>& ld,
+#endif
+#ifdef __EXX
+		Exx_LRI_Interface<T, double>& exd,
+		Exx_LRI_Interface<T, std::complex<double>>& exc,
+#endif
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
@@ -121,7 +128,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
 #ifdef __DEEPKS
     // need control parameter
-	hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(p_hamilt);
+	hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = p_hamilt;
 	std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
 	LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
@@ -336,7 +343,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     if (PARAM.inp.rpa)
     {
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+        rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
                                        MPI_COMM_WORLD,
                                        ucell,
                                        kv,
@@ -414,6 +421,10 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
+#ifdef __EXX
+		Exx_LRI_Interface<T, double>& exd,
+		Exx_LRI_Interface<T, std::complex<double>>& exc,
+#endif
 		const int istep);
 
 // For multiple k-points
@@ -433,6 +444,13 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
+#ifdef __DEEPKS
+		LCAO_Deepks<T>& ld,
+#endif
+#ifdef __EXX
+		Exx_LRI_Interface<T, double>& exd,
+		Exx_LRI_Interface<T, std::complex<double>>& exc,
+#endif
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
@@ -451,5 +469,12 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
+#ifdef __DEEPKS
+		LCAO_Deepks<T>& ld,
+#endif
+#ifdef __EXX
+		Exx_LRI_Interface<T, double>& exd,
+		Exx_LRI_Interface<T, std::complex<double>>& exc,
+#endif
 		const int istep);
 
