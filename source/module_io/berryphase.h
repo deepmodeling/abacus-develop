@@ -4,7 +4,7 @@
 #ifdef __LCAO
 #include "unk_overlap_lcao.h"
 #endif
-#include "module_basis/module_pw/pw_basis.h"
+//#include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_psi/psi.h"

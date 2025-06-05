@@ -14,6 +14,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
 #include "module_io/cal_pLpR.h" // use AngularMomentumCalculator()
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
+#include "module_io/berryphase.h" // use berryphase
 #include "module_io/to_qo.h" // use toQO
 
 namespace ModuleIO
@@ -30,6 +31,9 @@ void ctrl_output_lcao(UnitCell& ucell,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
 		LCAO_Orbitals &orb,
+		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
+		const ModulePW::PW_Basis* pw_rho, // for berryphase
+		Grid_Technique &gt, // for berryphase
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
@@ -244,7 +248,6 @@ void ctrl_output_lcao(UnitCell& ucell,
         sc.print_Mag_Force(GlobalV::ofs_running);
     }
 
-/*
     //------------------------------------------------------------------
     //! 11) Output Berry phase
     //------------------------------------------------------------------
@@ -252,12 +255,13 @@ void ctrl_output_lcao(UnitCell& ucell,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&pv);
-        bp.lcao_init(ucell, gd, kv, GridT, orb_);
+        bp.lcao_init(ucell, gd, kv, gt, orb);
         // additional step before calling macroscopic_polarization
         bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 
+/*
     //------------------------------------------------------------------
     //! 12) Output quasi orbitals 
     //------------------------------------------------------------------
@@ -417,6 +421,9 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
 		LCAO_Orbitals &orb,
+		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
+		const ModulePW::PW_Basis* pw_rho, // for berryphase
+		Grid_Technique &gt, // for berryphase
 		const int istep);
 
 // For multiple k-points
@@ -430,6 +437,9 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
 		LCAO_Orbitals &orb,
+		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
+		const ModulePW::PW_Basis* pw_rho, // for berryphase
+		Grid_Technique &gt, // for berryphase
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
@@ -442,5 +452,8 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		TwoCenterBundle &two_center_bundle,
 		Gint_k &gk,
 		LCAO_Orbitals &orb,
+		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
+		const ModulePW::PW_Basis* pw_rho, // for berryphase
+		Grid_Technique &gt, // for berryphase
 		const int istep);
 

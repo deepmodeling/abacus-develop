@@ -10,6 +10,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "module_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k
+#include "module_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 
 namespace ModuleIO
 {
@@ -25,6 +26,9 @@ namespace ModuleIO
 				TwoCenterBundle &two_center_bundle,
 				Gint_k &gk,
 				LCAO_Orbitals &orb,
+				const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
+				const ModulePW::PW_Basis* pw_rho, // for berryphase
+				Grid_Technique &gt, // for berryphase
 				const int istep);
 }
 #endif
