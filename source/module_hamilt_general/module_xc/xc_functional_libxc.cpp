@@ -70,8 +70,8 @@ int xc_func_type_classifier(const std::string& xc_func,
 							})
 {
 	// the libxc standard functional pattern is like:
-	// "(XC_)?(LDA|GGA|MGGA|HYB_GGA|HYB_MGGA|HYB_LDA)_(X|C|XC|K)_(.*)"
-	std::regex pattern(R"((XC_)?(LDA|GGA|MGGA|HYB_GGA|HYB_MGGA|HYB_LDA)_(X|C|XC|K)_(.*))");
+	// "(XC_)?(LDA|GGA|MGGA|HYB_GGA|HYB_MGGA|HYB_LDA)_(X|C|XC|K)(_(.*))?"
+	std::regex pattern(R"((XC_)?(LDA|GGA|MGGA|HYB_GGA|HYB_MGGA|HYB_LDA)_(X|C|XC|K)(_(.*))?)");
 	std::smatch match;
 	if (std::regex_match(xc_func, match, pattern)) {
 		std::string type = match[2].str();
