@@ -1066,16 +1066,16 @@ calculations.
 ### xc_exch_ext_param
 
 - **Type**: Integer Real ...
-- **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional.
-- **Default**: 101 0.00000 0.21951
-- **Note**: Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_exch_ext_param` to `101 0.00000 0.21951`.
+- **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to [LibXC](https://libxc.gitlab.io/functionals/). For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: [gga_x_pbe.c](https://gitlab.com/libxc/libxc/-/blob/7.0.0/src/gga_x_pbe.c).
+- **Default**: 101 0.8040 0.2195149727645171
+- **Note**: Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_exch_ext_param` to `101 0.8040 0.2195149727645171`.
 
 ### xc_corr_ext_param
 
 - **Type**: Integer Real ...
-- **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional.
-- **Default**: 130 0.06672 0.03109 1.00000
-- **Note**: Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_corr_ext_param` to `130 0.06672 0.03109 1.00000`.
+- **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are extended parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to [LibXC](https://libxc.gitlab.io/functionals/). For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: [gga_c_pbe.c](https://gitlab.com/libxc/libxc/-/blob/7.0.0/src/gga_c_pbe.c).
+- **Default**: 130 0.06672455060314922 0.031090690869654895034 1.0
+- **Note**: Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_corr_ext_param` to `130 0.06672455060314922 0.031090690869654895034 1.0`.
 
 ### pseudo_rcut
 
