@@ -257,16 +257,16 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
+    // 1) write down etot and eigenvalues (for MDFT) information
+    ESolver_FP::after_all_runners(ucell);
 
+    // 2) release memory
     if (this->method_sto == 2)
     {
         stowf.clean_chiallorder(); // release lots of memories
     }
+
+    // 3) write down DOS
     if (PARAM.inp.out_dos)
     {
         if(!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
@@ -292,7 +292,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
         sto_dos.caldos(PARAM.inp.dos_sigma, PARAM.inp.dos_edelta_ev, PARAM.inp.npart_sto);
     }
 
-    // sKG cost memory, and it should be placed at the end of the program
+    // 4) sKG cost memory, and it should be placed at the end of the program
     if (PARAM.inp.cal_cond)
     {
         Sto_EleCond<Real, Device> sto_elecond(&ucell,
@@ -315,15 +315,6 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 }
 
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::others(UnitCell& ucell, const int istep)
-{
-    ModuleBase::TITLE("ESolver_SDFT_PW", "others");
-
-    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
-
-    return;
-}
 
 // template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>;

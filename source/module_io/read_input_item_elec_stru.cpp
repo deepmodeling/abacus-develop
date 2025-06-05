@@ -314,6 +314,26 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use k-point continuity for initializing wave functions";
+        read_sync_bool(input.use_k_continuity);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
+            }
+            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
+            }
+            if (para.input.use_k_continuity && para.input.nspin == 2) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
+            }
+            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("pw_diag_ndim");
         item.annotation = "dimension of workspace for Davidson diagonalization";
         read_sync_int(input.pw_diag_ndim);

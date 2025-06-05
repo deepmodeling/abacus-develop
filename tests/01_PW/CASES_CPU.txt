@@ -99,6 +99,9 @@
 109_PW_PBE0
 111_PW_get_pchg
 112_PW_get_wf
+113_PW_get_pchg_kpar
+114_PW_get_pchg_sepk
+115_PW_get_wf_kpar
 201_PW_UPF201_Ce_f
 202_PW_ONCV_Libxc
 203_PW_OK

@@ -127,6 +127,11 @@ void ModuleIO::save_HSR_sparse(const int& istep,
         ssh[1] << PARAM.globalv.global_out_dir << HR_filename_down;
         sss << PARAM.globalv.global_out_dir << SR_filename;
     }
+
+    GlobalV::ofs_running << " The output filename is " << ssh[0].str() << std::endl;
+    GlobalV::ofs_running << " The output filename is " << ssh[1].str() << std::endl;
+    GlobalV::ofs_running << " The output filename is " << sss.str() << std::endl;
+
     std::ofstream g1[2];
     std::ofstream g2;
 
@@ -428,26 +433,27 @@ void ModuleIO::save_dH_sparse(const int& istep,
     std::stringstream sshx[2];
     std::stringstream sshy[2];
     std::stringstream sshz[2];
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) {
-        sshx[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
-        sshx[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
-        sshy[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
-        sshy[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
-        sshz[0] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
-        sshz[1] << PARAM.globalv.global_matrix_dir << step << "_"
-                << "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
-    } else {
-        sshx[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN0.csr";
-        sshx[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rx-sparse_SPIN1.csr";
-        sshy[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Ry-sparse_SPIN0.csr";
-        sshy[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Ry-sparse_SPIN1.csr";
-        sshz[0] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rz-sparse_SPIN0.csr";
-        sshz[1] << PARAM.globalv.global_out_dir << "data-d"<<fileflag<<"Rz-sparse_SPIN1.csr";
+	if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) 
+	{
+		sshx[0] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rxs1g" << step << ".csr";
+		sshx[1] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rxs2g" << step << ".csr";
+		sshy[0] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rys1g" << step << ".csr";
+		sshy[1] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rys2g" << step << ".csr";
+		sshz[0] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rzs1g" << step << ".csr";
+		sshz[1] << PARAM.globalv.global_matrix_dir
+			<< "d"<<fileflag<<"rzs2g" << step << ".csr";
+	} else {
+        sshx[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs1.csr";
+        sshx[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs2.csr";
+        sshy[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys1.csr";
+        sshy[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys2.csr";
+        sshz[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs1.csr";
+        sshz[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs2.csr";
     }
     std::ofstream g1x[2];
     std::ofstream g1y[2];

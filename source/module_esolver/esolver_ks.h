@@ -1,12 +1,6 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#ifdef __MPI
-#include <mpi.h>
-#else
-#include <chrono>
-#endif
-
 #include <cstring>
 //#include <fstream>
 
@@ -78,13 +72,6 @@ class ESolver_KS : public ESolver_FP
 
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
-
-    //! the start time of scf iteration
-#ifdef __MPI
-    double iter_time;
-#else
-    std::chrono::system_clock::time_point iter_time;
-#endif
 
     std::string basisname;      //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0; //! number of electrons

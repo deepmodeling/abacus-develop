@@ -9,6 +9,7 @@
 #include "module_cell/klist.h"
 #include "module_elecstate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
+#include "module_io/filename.h" // use filename_output function
 #include <type_traits>
 
 namespace ModuleIO
@@ -35,52 +36,66 @@ namespace ModuleIO
         char transb = 'N';
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
+        container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, 
+        alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 
         std::vector<T> cVc(nbands * nbands, 0.0);
         transa = ((std::is_same<T, double>::value || std::is_same<T, float>::value) ? 'T' : 'C');
-        container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbands);
+        container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, 
+        alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
+
     template <typename FPTYPE>
-    std::vector<std::complex<FPTYPE>> psi_Hpsi(std::complex<FPTYPE>* const psi, std::complex<FPTYPE>* const hpsi, const int nbasis, const int nbands)
+    std::vector<std::complex<FPTYPE>> psi_Hpsi(std::complex<FPTYPE>* const psi, 
+    std::complex<FPTYPE>* const hpsi, const int nbasis, const int nbands)
     {
         using T = std::complex<FPTYPE>;
         std::vector<T> cVc(nbands * nbands, (T)0.0);
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm('C', 'N', nbands, nbands, nbasis, alpha, psi, nbasis, hpsi, nbasis, beta, cVc.data(), nbands);
+        container::BlasConnector::gemm('C', 'N', nbands, nbands, nbasis, alpha, 
+        psi, nbasis, hpsi, nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
+
     template <typename FPTYPE>
-    std::vector<FPTYPE> orbital_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo)
+    std::vector<FPTYPE> orbital_energy(const int ik, const int nbands, 
+    const std::vector<std::complex<FPTYPE>>& mat_mo)
     {
 #ifdef __DEBUG
         assert(nbands >= 0);
 #endif
         std::vector<FPTYPE> e(nbands, 0.0);
-        for (int i = 0; i < nbands; ++i) {
-            e[i] = get_real(mat_mo[i * nbands + i]);
-}
+		for (int i = 0; i < nbands; ++i) 
+		{
+			e[i] = get_real(mat_mo[i * nbands + i]);
+		}
         return e;
     }
+
     template <typename FPTYPE>
-    FPTYPE all_band_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
+    FPTYPE all_band_energy(const int ik, const int nbands, 
+    const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < nbands; ++i) {
-            e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
-}
-        return e;
+		for (int i = 0; i < nbands; ++i) 
+		{
+			e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
+		}
+		return e;
     }
+
     template <typename FPTYPE>
-    FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, const ModuleBase::matrix& wg)
+    FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, 
+    const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < orbital_energy.size(); ++i) {
-            e += orbital_energy[i] * (FPTYPE)wg(ik, i);
-}
-        return e;
+		for (int i = 0; i < orbital_energy.size(); ++i) 
+		{
+			e += orbital_energy[i] * (FPTYPE)wg(ik, i);
+		}
+		return e;
     }
 
     /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
@@ -173,11 +188,14 @@ namespace ModuleIO
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
             if (GlobalC::exx_info.info_global.cal_exx)
             {
-                for (int n = 0; n < naos; ++n) {
-                    for (int m = 0; m < naos; ++m) {
-                        vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
-}
-}
+				for (int n = 0; n < naos; ++n) 
+				{
+					for (int m = 0; m < naos; ++m) 
+					{
+						vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha 
+							* exx_lip.get_exx_matrix()[ik][m][n];
+					}
+				}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));
@@ -189,8 +207,24 @@ namespace ModuleIO
                 container::BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
             }
 #endif
+        
             /// add-up and write
-            ModuleIO::save_mat(-1, vxc_tot_k_mo.data(), nbands, false, PARAM.inp.out_ndigits, true, false, "Vxc", "k-" + std::to_string(ik), p2d_serial, drank, false);
+            // mohan add 2025-06-02
+            const int istep = -1;
+            const int out_label = 1; // 1 means .txt while 2 means .dat
+            const bool out_app_flag = 0;
+            const bool gamma_only = PARAM.globalv.gamma_only_local;
+
+            std::string vxc_file = ModuleIO::filename_output(
+                PARAM.globalv.global_out_dir,
+                "vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
+                out_label,out_app_flag,gamma_only,istep);
+             
+            ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands, 
+		    false, PARAM.inp.out_ndigits, true, 
+		    out_app_flag, vxc_file, 
+		    p2d_serial, drank, false);
+
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }
         //===== test total xc energy =======
@@ -245,6 +279,7 @@ namespace ModuleIO
                     }
                 }
             };
+
         if (GlobalV::MY_RANK == 0)
         {
             write_orb_energy(e_orb_tot, "");

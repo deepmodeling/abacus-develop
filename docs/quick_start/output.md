@@ -24,20 +24,10 @@ For a complete list of input parameters, please consult this [instruction](../ad
 
 This file contains the information of all generated k-points, as well as the list of k-points actually used for calculations after considering symmetry.
 
-## *istate.info*
+## *eig.txt*
 
-This file includes the energy levels computed for all k-points. From left to right, the columns represent: energy level index, eigenenergy, and occupancy number.
-
-Below is an example `istate.info`:
-
-```
-BAND               Energy(ev)               Occupation                Kpoint = 1                        (0 0 0)
-      1                 -5.33892                  0.03125
-      2                  6.68535                0.0312006
-      3                  6.68535                0.0312006
-      4                  6.68535                0.0312006
-      5                  9.41058                        0
-```
+This file includes the energy levels and occupations computed for all k-points. 
+Note: In 3.10-LTS version, the file is named 'istate.info'
 
 ## *STRU.cif*
 
