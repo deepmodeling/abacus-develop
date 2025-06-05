@@ -11,6 +11,7 @@
 #include "module_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k
 #include "module_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
 
 namespace ModuleIO
 {
@@ -29,6 +30,8 @@ namespace ModuleIO
 				const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 				const ModulePW::PW_Basis* pw_rho, // for berryphase
 				Grid_Technique &gt, // for berryphase
+				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
+				const Structure_Factor& sf, // for Wannier90
 				const int istep);
 }
 #endif

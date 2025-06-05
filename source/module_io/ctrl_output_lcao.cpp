@@ -15,6 +15,8 @@
 #include "module_io/cal_pLpR.h" // use AngularMomentumCalculator()
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
 #include "module_io/berryphase.h" // use berryphase
+#include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
+#include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
 #include "module_io/to_qo.h" // use toQO
 
 namespace ModuleIO
@@ -34,6 +36,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
 		Grid_Technique &gt, // for berryphase
+		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
+		const Structure_Factor& sf, // for Wannier90
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
@@ -161,13 +165,13 @@ void ctrl_output_lcao(UnitCell& ucell,
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
-            = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
-                                                                    kv.kvec_d,
-                                                                    &hR,
-                                                                    &ucell,
-                                                                    orb.cutoffs(),
-                                                                    &gd,
-                                                                    two_center_bundle.kinetic_orb.get());
+			= new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(&hsk,
+					kv.kvec_d,
+					&hR,
+					&ucell,
+					orb.cutoffs(),
+					&gd,
+					two_center_bundle.kinetic_orb.get());
 
         const int nspin_k = (nspin == 2 ? 2 : 1);
         for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
@@ -261,26 +265,8 @@ void ctrl_output_lcao(UnitCell& ucell,
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 
-/*
     //------------------------------------------------------------------
-    //! 12) Output quasi orbitals 
-    //------------------------------------------------------------------
-    if (PARAM.inp.qo_switch)
-    {
-        toQO tqo(PARAM.inp.qo_basis, PARAM.inp.qo_strategy, PARAM.inp.qo_thr, PARAM.inp.qo_screening_coeff);
-        tqo.initialize(global_out_dir,
-                       PARAM.inp.pseudo_dir,
-                       PARAM.inp.orbital_dir,
-                       &ucell,
-                       kv.kvec_d,
-                       GlobalV::ofs_running,
-                       GlobalV::MY_RANK,
-                       GlobalV::NPROC);
-        tqo.calculate();
-    }
-
-    //------------------------------------------------------------------
-    //! 13) Wannier90 interface in LCAO basis
+    //! 12) Wannier90 interface in LCAO basis
     // added by jingan in 2018.11.7
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
@@ -314,34 +300,32 @@ void ctrl_output_lcao(UnitCell& ucell,
 		}
 		std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
 	}
-*/
 
-/*
+
 #ifdef __EXX
-
     //------------------------------------------------------------------
-    //! Output Hexx matrix in LCAO basis
+    //! 13) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (PARAM.inp.out_chg[0])
     {
         if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
-            const std::string file_name_exx = PARAM.globalv.global_out_dir
+            const std::string file_name_exx = global_out_dir
                 + "HexxR" + std::to_string(GlobalV::MY_RANK);
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exd->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exd->get_Hexxs());
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, this->exc->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exc->get_Hexxs());
             }
         }
     }
 
     //------------------------------------------------------------------
-    // 17) Write RPA information in LCAO basis
+    //! 14) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.rpa)
     {
@@ -355,7 +339,6 @@ void ctrl_output_lcao(UnitCell& ucell,
         rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
     }
 #endif
-*/
 
 /*
     //------------------------------------------------------------------
@@ -424,6 +407,8 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
 		Grid_Technique &gt, // for berryphase
+		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
+		const Structure_Factor& sf, // for Wannier90
 		const int istep);
 
 // For multiple k-points
@@ -440,6 +425,8 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
 		Grid_Technique &gt, // for berryphase
+		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
+		const Structure_Factor& sf, // for Wannier90
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
@@ -455,5 +442,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const ModulePW::PW_Basis_K* pw_wfc, // for berryphase
 		const ModulePW::PW_Basis* pw_rho, // for berryphase
 		Grid_Technique &gt, // for berryphase
+		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
+		const Structure_Factor& sf, // for Wannier90
 		const int istep);
 
