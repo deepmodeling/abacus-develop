@@ -103,7 +103,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
                           {{"writable_Vws", true}});
 
     this->cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs);
-    if (this->info_ewald.use_ewald) {
+    if (this->info.use_ewald) {
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_sr;
         if (this->info.hybrid_beta) {
             Vs_sr = this->sr_cv.cal_Vs(ucell, list_As_Vs.first,
@@ -116,7 +116,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
         }
         this->evq.init_ions(ucell, period_Vs);
 
-        double chi = this->evq.get_singular_chi(ucell, this->info_ewald.fq_type, 2.0);
+        double chi = this->evq.get_singular_chi(ucell, this->info.fq_type, 2.0);
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full
             = this->evq.cal_Vs(ucell, chi, Vs);
         Vs_full = LRI_CV_Tools::mul2(
@@ -137,7 +137,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
                                {{"writable_dVws", true}});
         this->cv.dVws = LRI_CV_Tools::get_dCVws(ucell, dVs);
 
-        if (this->info_ewald.use_ewald) {
+        if (this->info.use_ewald) {
             std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
                 dVs_sr;
             if (this->info.hybrid_beta) {

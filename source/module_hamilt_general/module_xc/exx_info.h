@@ -10,7 +10,6 @@ struct Exx_Info
     struct Exx_Info_Global
     {
         bool cal_exx = false;
-        bool use_ewald = false;
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
         double hybrid_alpha = 0.25;
@@ -37,17 +36,6 @@ struct Exx_Info
     };
     Exx_Info_Lip info_lip;
 
-    struct Exx_Info_Ewald
-    {
-        Singular_Value::Fq_type fq_type;
-        const bool& use_ewald;
-
-        Exx_Info_Ewald(const Exx_Info::Exx_Info_Global& info_global) : use_ewald(info_global.use_ewald)
-        {
-        }
-    };
-    Exx_Info_Ewald info_ewald;
-
     struct Exx_Info_RI
     {
         const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
@@ -57,6 +45,8 @@ struct Exx_Info
 
         bool real_number = false;
         int Rcut_type = 1;
+        Singular_Value::Fq_type fq_type;
+        const bool& use_ewald;
 
         double pca_threshold = 0;
         std::vector<std::string> files_abfs;
@@ -83,7 +73,7 @@ struct Exx_Info
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global), info_ewald(this->info_global), info_ri(this->info_global)
+    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
     {
     }
 };

@@ -81,11 +81,11 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
     //  because some members like two_level_step are used outside if(cal_exx)
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(GlobalC::exx_info.info_ri, GlobalC::exx_info.info_ewald);
+        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(GlobalC::exx_info.info_ri);
     }
     else
     {
-        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(GlobalC::exx_info.info_ri,  GlobalC::exx_info.info_ewald);
+        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(GlobalC::exx_info.info_ri);
     }
 #endif
 }

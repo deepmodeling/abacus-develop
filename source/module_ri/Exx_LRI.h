@@ -49,7 +49,7 @@ private:
 	using TatomR = std::array<double,Ndim>;		// tmp
 
 public:
-	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in, const Exx_Info::Exx_Info_Ewald& info_ewald_in) :info(info_in), info_ewald(info_ewald_in), evq(info, info_ewald) {}
+	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in), evq(info) {}
 	Exx_LRI operator=(const Exx_LRI&) = delete;
 	Exx_LRI operator=(Exx_LRI&&);
 
@@ -79,7 +79,6 @@ public:
 
   private:
     const Exx_Info::Exx_Info_RI& info;
-    const Exx_Info::Exx_Info_Ewald& info_ewald;
     MPI_Comm mpi_comm;
     const K_Vectors* p_kv = nullptr;
     ORB_gaunt_table MGT;

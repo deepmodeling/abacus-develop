@@ -44,8 +44,8 @@ class Ewald_Vq
     using TAK = std::pair<TA, TK>;
 
   public:
-    Ewald_Vq(const Exx_Info::Exx_Info_RI& info_in, const Exx_Info::Exx_Info_Ewald& info_ewald_in)
-        : info(info_in), info_ewald(info_ewald_in)
+    Ewald_Vq(const Exx_Info::Exx_Info_RI& info_in)
+        : info(info_in)
     {
     }
 
@@ -81,7 +81,6 @@ class Ewald_Vq
 
   private:
     const Exx_Info::Exx_Info_RI& info;
-    const Exx_Info::Exx_Info_Ewald& info_ewald;
     LRI_CV<Tdata> cv;
     Gaussian_Abfs gaussian_abfs;
     const K_Vectors* p_kv;
