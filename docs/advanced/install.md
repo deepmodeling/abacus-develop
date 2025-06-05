@@ -26,7 +26,7 @@ If machine learning algorithms is required for DFT calculation, the following pr
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
-cmake -B build -DENABLE_ML4DFT=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+cmake -B build -DENABLE_MLALGO=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
 > CMake will try to download Libnpy if it cannot be found locally.
@@ -191,7 +191,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 
 ##-------------------  OPTIONAL LIBS  ---------------------------------
-## To use ML4DFT: set ENABLE_ML4DFT = ON, and set LIBTORCH_DIR and LIBNPY_DIR
+## To use ML4DFT: set ENABLE_MLALGO = ON, and set LIBTORCH_DIR and LIBNPY_DIR
 
 ## To use LIBXC:  set LIBXC_DIR which contains include and lib/libxc.a (>5.1.7)
 ## To use DeePMD: set DeePMD_DIR LIBTORCH_DIR and TensorFlow_DIR
@@ -201,7 +201,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 # LIBTORCH_DIR  = /usr/local
 # LIBNPY_DIR    = /usr/local
-ENABLE_ML4DFT   = OFF
+ENABLE_MLALGO   = OFF
 
 # LIBXC_DIR    		= /public/soft/libxc
 
@@ -278,10 +278,10 @@ directly.
 
 ### Add ML-ALGO Support
 
-To compile ABACUS with machine learning algorithms, you need to set `ENABLE_ML4DFT = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
+To compile ABACUS with machine learning algorithms, you need to set `ENABLE_MLALGO = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
 
 ```makefile
-make ENABLE_ML4DFT=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+make ENABLE_MLALGO=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 ```
 
 directly.

@@ -1,4 +1,4 @@
-if(ENABLE_ML4DFT)
+if(ENABLE_MLALGO)
   list(APPEND objects
       LCAO_deepks.cpp
       deepks_force.cpp
