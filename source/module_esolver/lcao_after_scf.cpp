@@ -1,5 +1,4 @@
 #include "esolver_ks_lcao.h"
-#include "module_rdmft/rdmft.h"         // RDMFT codes
 
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
@@ -10,8 +9,6 @@
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
 #include "module_io/output_sk.h"
-#include "module_io/to_wannier90_lcao.h"
-#include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
@@ -22,15 +19,7 @@
 #include "module_io/print_info.h"
 
 #include <memory>
-#ifdef __EXX
-#include "module_io/restart_exx_csr.h"
-#include "module_ri/RPA_LRI.h"
-#endif
 
-#ifdef __DEEPKS
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
-#endif
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 

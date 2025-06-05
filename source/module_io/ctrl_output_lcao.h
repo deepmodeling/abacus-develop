@@ -12,6 +12,7 @@
 #include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k
 #include "module_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
+#include "module_rdmft/rdmft.h" // use RDMFT codes
 
 namespace ModuleIO
 {
@@ -32,6 +33,7 @@ namespace ModuleIO
 				Grid_Technique &gt, // for berryphase
 				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 				const Structure_Factor& sf, // for Wannier90
+				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 				const int istep);
 }
 #endif

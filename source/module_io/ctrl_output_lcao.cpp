@@ -17,6 +17,11 @@
 #include "module_io/berryphase.h" // use berryphase
 #include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
 #include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
+#ifdef __EXX
+//#include "module_io/restart_exx_csr.h" 
+#include "module_ri/RPA_LRI.h" // use RPA code
+#endif
+#include "module_rdmft/rdmft.h" // use RDMFT codes
 #include "module_io/to_qo.h" // use toQO
 
 namespace ModuleIO
@@ -38,6 +43,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
+        rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
@@ -340,34 +346,32 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 #endif
 
-/*
     //------------------------------------------------------------------
     //! 18) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
     if (PARAM.inp.rdmft == true)
     {
-        ModuleBase::matrix occ_num(this->pelec->wg);
+        ModuleBase::matrix occ_num(pelec->wg);
         for (int ik = 0; ik < occ_num.nr; ++ik)
         {
             for (int inb = 0; inb < occ_num.nc; ++inb)
             {
-                occ_num(ik, inb) /= this->kv.wk[ik];
+                occ_num(ik, inb) /= kv.wk[ik];
             }
         }
-        this->rdmft_solver.update_elec(ucell, occ_num, *(this->psi));
+        rdmft_solver.update_elec(ucell, occ_num, *psi);
 
         //! initialize the gradients of Etotal with respect to occupation numbers and wfc,
         //! and set all elements to 0.
         //! dedocc = d E/d Occ_Num
-        ModuleBase::matrix dedocc(this->pelec->wg.nr, this->pelec->wg.nc, true);
+        ModuleBase::matrix dedocc(pelec->wg.nr, pelec->wg.nc, true);
 
         //! dedwfc = d E/d wfc
-        psi::Psi<TK> dedwfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis(), this->kv.ngk, true);
+        psi::Psi<TK> dedwfc(psi->get_nk(), psi->get_nbands(), psi->get_nbasis(), kv.ngk, true);
         dedwfc.zero_out();
 
-        double etot_rdmft = this->rdmft_solver.run(dedocc, dedwfc);
+        double etot_rdmft = rdmft_solver.run(dedocc, dedwfc);
     }
-*/
 
     //------------------------------------------------------------------
     //! Output quasi orbitals
@@ -409,6 +413,7 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
+		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
 		const int istep);
 
 // For multiple k-points
@@ -427,6 +432,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
+		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
@@ -444,5 +450,6 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
+		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
 		const int istep);
 
