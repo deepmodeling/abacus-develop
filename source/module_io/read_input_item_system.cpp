@@ -812,7 +812,6 @@ void ReadInput::item_system()
                 const std::string warningstr = nofound_str(avail_list, "precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
