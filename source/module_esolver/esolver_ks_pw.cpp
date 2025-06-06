@@ -30,7 +30,6 @@
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_dos_pw.h"
-#include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
@@ -535,7 +534,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace);
+                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                     PARAM.inp.use_k_continuity);
 
         hsolver_pw_obj.solve(this->p_hamilt,
                              this->kspw_psi[0],

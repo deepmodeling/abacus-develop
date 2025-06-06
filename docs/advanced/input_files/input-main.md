@@ -38,6 +38,7 @@
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [diago\_smooth\_ethr](#diago_smooth_ethr)
+    - [use\_k\_continuity](#use_k_continuity)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [diag\_subspace](#diag_subspace)
@@ -129,7 +130,6 @@
     - [fixed\_atoms](#fixed_atoms)
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
-    - [out\_mul](#out_mul)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -158,6 +158,7 @@
     - [out\_eband\_terms](#out_eband_terms)
     - [out\_hr\_npz/out\_dm\_npz](#out_hr_npzout_dm_npz)
     - [dm\_to\_rho](#dm_to_rho)
+    - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
@@ -259,10 +260,11 @@
     - [block\_down](#block_down)
     - [block\_up](#block_up)
     - [block\_height](#block_height)
-  - [Exact Exchange](#exact-exchange)
+  - [Exact Exchange (Common)](#exact-exchange-common)
     - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
     - [exx\_hse\_omega](#exx_hse_omega)
     - [exx\_separate\_loop](#exx_separate_loop)
+  - [Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
     - [exx\_lambda](#exx_lambda)
@@ -286,6 +288,9 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
+  - [Exact Exchange (PW)](#exact-exchange-pw)
+    - [exxace](#exxace)
+    - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
   - [Molecular Dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -609,7 +614,7 @@ These variables are used to control general system parameters.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms.
   - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file chgs1.cube. However, if you do `nspin=2` calculation, you also need the density file chgs2.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
-  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `istate.info`.
+  - wfc: the density will be calculated by wavefunctions and occupations. Wavefunctions are read in from binary files `wf*.dat` (see [out_wfc_pw](#out_wfc_pw)) while occupations are read in from file `eig.txt`.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
 
@@ -654,8 +659,8 @@ These variables are used to control general system parameters.
 - **Description**: Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary, and the number of K points nk_i = max(1, int(|b_i|/KSPACING_i)+1), where b_i is the reciprocal lattice vector. The default value 0.0 means that ABACUS will read the applied KPT file.
 If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c direction are all set to it; and one can also set 3 values to set the kspacing value for a/b/c direction separately (such as: `kspacing 0.5 0.6 0.7`).
 
-  Note: if gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
+- **Note**: If gamma_only is set to be true, kspacing is invalid.
 
 ### min_dist_coef
 
@@ -787,9 +792,8 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho.
-
-    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
+- **Note**: You must specify all three dimensions for this setting to be used.
 
 ### ndx, ndy, ndz
 
@@ -797,7 +801,6 @@ These variables are used to control the plane wave related parameters.
 - **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the dense part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc.
 
     Note: You must specify all three dimensions for this setting to be used.
-
     Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, ndx,ndy,ndz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
@@ -818,6 +821,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: bool
 - **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
+- **Default**: false
+
+### use_k_continuity
+
+- **Type**: Boolean
+- **Availability**: Used only for plane wave basis set.
+- **Description**: Whether to use k-point continuity for initializing wave functions. When enabled, this strategy exploits the similarity between wavefunctions at neighboring k-points by propagating the wavefunction from a previously initialized k-point to a new k-point, significantly reducing the computational cost of the initial guess.
+
+  **Important constraints:**
+  - Must be used together with `diago_smooth_ethr = 1` for optimal performance
+
+  This feature is particularly useful for calculations with dense k-point sampling where the computational cost of wavefunction initialization becomes significant.
 - **Default**: false
 
 ### pw_diag_nmax
@@ -1583,13 +1598,6 @@ These variables are used to control the geometry relaxation.
 
 These variables are used to control the output of properties.
 
-### out_mul
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
-- **Default**: False
-
 ### out_freq_elec
 
 - **Type**: Integer
@@ -1621,7 +1629,7 @@ These variables are used to control the output of properties.
 
   In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
-- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
 
 ### out_pot
 
@@ -1640,7 +1648,7 @@ These variables are used to control the output of properties.
 
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0
-- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
 ### out_dm
 
@@ -1654,7 +1662,7 @@ These variables are used to control the output of properties.
     - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
     - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
-- **NOTE**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dm1
 
@@ -1664,7 +1672,7 @@ These variables are used to control the output of properties.
   - nspin = 1: `dmrs1_nao.csr`;
   - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
-- **NOTE**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
+- **Note**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
 
 ### out_wfc_pw
 
@@ -1677,7 +1685,7 @@ These variables are used to control the output of properties.
   - 2: (binary format)
     - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
 - **Default**: 0
-- **NOTE**: In the 3.10-LTS version, the file names are OUT.${suffix}/WAVEFUNC${K}.dat, etc. 
+- **Note**: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc. 
 
 ### out_wfc_lcao
 
@@ -1696,7 +1704,7 @@ These variables are used to control the output of properties.
 
   Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
-- **NOTE**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
+- **Note**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 
 ### out_dos
 
@@ -1721,7 +1729,10 @@ These variables are used to control the output of properties.
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
-- **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
+- **Description**: Whether to output the eigenvalues of Hamiltonian matrix (in eV), optionally output precision can be set by a second parameter, default is 8. The output file names are:
+    - nspin = 1 or 4: `eigs1.txt`;
+    - nspin = 2: `eigs1.txt` and `eigs2.txt`;
+    - For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
 ### out_proj_band
@@ -1766,65 +1777,90 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+  - For gamma only case:
+    - nspin = 1: `hks1_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix;
+    - nspin = 2: `hks1_nao.txt` and `hks2_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix. Note that the code will not output `sks2_nao.txt` because it is the same as `sks1_nao.txt`;
+    - nspin = 4: `hks12_nao.txt` for the Hamiltonian matrix and `sks12_nao.txt` for the overlap matrix.
+  - For multi-k points case:
+    - nspin = 1: `hks1k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
+    - nspin = 2: `hks1k1_nao.txt` and `hks2k1_nao.txt` for the two spin channels of the Hamiltonian matrix at the 1st k-point, and `sks1k1_nao.txt` for the overlap matrix for the 1st k-point. Note that the code will not output `sks2k1_nao.txt` because it is the same as `sks1k1_nao.txt`, ...;
+    - nspin = 4: `hks12k1_nao.txt` for the Hamiltonian matrix at the 1st k-point, and `sks12k1_nao.txt` for the overlap matrix for the 1st k-point, ...;
 - **Default**: False 8
-
-### out_mat_tk
-
-- **Type**: Boolean \[Integer\](optional)
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the kinetic matrices (in Ry) for each k point into `OUT.${suffix}/data-i-T`, where i is the index of k points (see `OUT.${suffix}/kpoints`). One may optionally provide a second parameter to specify the precision. 
-- **Default**: False \[8\]
-
-### out_mat_r
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print the matrix representation of the position matrix (in Bohr) into a file named `data-rR-tr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
-- **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.
 
 ### out_mat_hs2
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ (in Ry) and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
+- **Description**: Whether to print files containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs2).
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
+
+### out_mat_tk
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into `OUT.${suffix}/tks1ki_nao.txt`, where i is the index of k points. One may optionally provide a second parameter to specify the precision. 
+- **Default**: False \[8\]
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr and data-TR-sparse_SPIN0.csr, etc.
+
+### out_mat_r
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
+- **Description**: Whether to print the matrix representation of the position matrix into a file named `rr.csr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Default**: False
+- **Unit**: Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-rR-sparse.csr. 
 
 ### out_mat_t
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: For LCAO calculations, if out_mat_t is set to 1, ABACUS will generate files containing the kinetic energy matrix $T(R)$ (in Ry). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-TR-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr. 
 
 ### out_mat_dh
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix (in Ry/Bohr). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
+- **Unit**: Ry/Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
 
 ### out_mat_ds
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Overlap matrix (in Ry/Bohr). The format will be the same as the Overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `data-dSRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `dsrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_S`.
 - **Default**: False
+- **Unit**: Ry/Bohr
+- **Note**: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
 
 ### out_mat_xc
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital (NAO) and NAO-in-PW basis
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
-The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out.dat`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out.dat`and `OUT.${suffix}/vxc_exx_out.dat`, respectively. All the `vxc*_out.dat` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
+- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation (the code is still under development). (Note that currently DeePKS term is not included.) The files are named `vxcs1k$i_nao.txt`, where `$i` corresponds to the k point index. The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out.dat`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out.dat`and `OUT.${suffix}/vxc_exx_out.dat`, respectively. All the `vxc*_out.dat` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is k-$k-Vxc and so on.
 
 ### out_mat_xc2
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital (NAO) basis
-- **Description**: Whether to print the exchange-correlation matrices in **numerical orbital representation** (unit: Ry): $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format (the same format as [out_mat_hs2](../elec_properties/hs_matrix.md#out_mat_hs2)) in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
+- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: $\braket{\phi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\phi_j}(\mathbf{R})$ in CSR format in the directory `OUT.${suffix}`. (Note that currently DeePKS term is not included. ) The files are named `Vxc_R_spin$s`.
 - **Default**: False
+- **Unit**: Ry
+- **Note**: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
 
 ### out_mat_l
 
@@ -1852,6 +1888,13 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations.
+- **Default**: False
+
+### out_mul
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: False
 
 ### out_app_flag
@@ -2665,11 +2708,14 @@ These variables are relevant to gate field (compensating charge) [Detailed intro
 
 [back to top](#full-list-of-input-keywords)
 
-## Exact Exchange
+## Exact Exchange (Common)
 
-These variables are relevant when using hybrid functionals.
+These variables are relevant when using hybrid functionals. Currently ABACUS supports hybrid functionals when *[basis_type](#basis_type)==lcao/lcao_in_pw*. 
+Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under active development.
 
-**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*, and *[basis_type](#basis_type)==lcao/lcao_in_pw*
+The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw*. For basis specific parameters, see the sections *[Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)* and *[Exact Exchange (PW)](#exact-exchange-pw)*.
+
+**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*. 
 
 ### exx_hybrid_alpha
 
@@ -2692,6 +2738,10 @@ These variables are relevant when using hybrid functionals.
   - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
   - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
 - **Default**: True
+
+## Exact Exchange (LCAO/LCAO in PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 
 ### exx_hybrid_step
 
@@ -2853,6 +2903,23 @@ These variables are relevant when using hybrid functionals.
 - **Default**: false
 
 [back to top](#full-list-of-input-keywords)
+
+## Exact Exchange (PW)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==pw*. Note that hybrid functionals in *[basis_type](#basis_type)==pw* is under active development, and currently limited to *[nspin](#nspin) == 1 or 2* and *[symmetry](#symmetry)==-1
+
+### exxace
+- **Type**: Boolean
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==True*. 
+- **Description**: Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
+  - True: Use the ACE method to calculate the Fock exchange operator.
+  - False: Use the traditional method to calculate the Fock exchange operator.
+- **Default**: True
+
+### exx_gamma_extrapolation
+- **Type**: Boolean
+- **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See [https://doi.org/10.1103/PhysRevB.79.205114](https://doi.org/10.1103/PhysRevB.79.205114) for details. Should be set to true most of the time.
+- **Default**: True
 
 ## Molecular dynamics
 

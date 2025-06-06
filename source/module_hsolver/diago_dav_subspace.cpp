@@ -6,6 +6,7 @@
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_base/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/bpcg_kernel_op.h"
 #include "module_base/kernels/dsp/dsp_connector.h"
 
 #include "module_hsolver/diag_hs_para.h"
@@ -293,26 +294,28 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
 
-    std::vector<Real> e_temp_cpu(nbase, 0);
+    // Eigenvalues operation section
+    std::vector<Real> e_temp_cpu(this->notconv, 0);
     Real* e_temp_hd = e_temp_cpu.data();
-    if(this->device == base_device::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         e_temp_hd = nullptr;
         resmem_real_op()(e_temp_hd, nbase);
     }
-    for (int m = 0; m < notconv; m++)
+
+    for (int m = 0; m < this->notconv; m++)
     {
-        e_temp_cpu.assign(nbase, (-1.0 * (*eigenvalue_iter)[m]));
-        if (this->device == base_device::GpuDevice)
-        {
-            syncmem_var_h2d_op()(e_temp_hd, e_temp_cpu.data(), nbase);
-        }
-        ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
-                                                      vcc + m * this->nbase_x,
-                                                      vcc + m * this->nbase_x,
-                                                      e_temp_hd);
+        e_temp_cpu[m] = -(*eigenvalue_iter)[m];
     }
-    if(this->device == base_device::GpuDevice)
+
+    if (this->device == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(e_temp_hd, e_temp_cpu.data(), this->notconv);
+    }
+    
+    apply_eigenvalues_op<T, Device>()(nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
+
+    if (this->device == base_device::GpuDevice)
     {
         delmem_real_op()(e_temp_hd);
     }
@@ -336,48 +339,58 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
          psi_iter + nbase * this->dim,
          this->dim);
 
-    // "precondition!!!"
-    std::vector<Real> pre(this->dim, 0.0);
-    for (int m = 0; m < notconv; m++)
-    {
-        for (size_t i = 0; i < this->dim; i++)
-        {
-            // pre[i] = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
-            double x = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
-            pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
-        }
+    // Precondition section
 #if defined(__CUDA) || defined(__ROCM)
-        if (this->device == base_device::GpuDevice)
-        {
-            syncmem_var_h2d_op()(this->d_precondition, pre.data(), this->dim);
-            ModuleBase::vector_div_vector_op<T, Device>()(this->dim,
-                                                          psi_iter + (nbase + m) * this->dim,
-                                                          psi_iter + (nbase + m) * this->dim,
-                                                          this->d_precondition);
-        }
-        else
+    if (this->device == base_device::GpuDevice)
+    {
+        Real* eigenvalues_gpu = nullptr;
+        resmem_real_op()(eigenvalues_gpu, notconv);
+        syncmem_var_h2d_op()(eigenvalues_gpu, (*eigenvalue_iter).data(), notconv);
+        
+        precondition_op<T, Device>()(this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    d_precondition,
+                                    eigenvalues_gpu);
+        delmem_real_op()(eigenvalues_gpu);
+    }
+    else
 #endif
-        {
-            ModuleBase::vector_div_vector_op<T, Device>()(this->dim,
-                                                          psi_iter + (nbase + m) * this->dim,
-                                                          psi_iter + (nbase + m) * this->dim,
-                                                          pre.data());
-        }
+    {
+        precondition_op<T, Device>()(this->dim,
+                                    psi_iter,
+                                    nbase,
+                                    notconv,
+                                    this->precondition.data(),
+                                    (*eigenvalue_iter).data());
     }
 
-    // "normalize!!!" in order to improve numerical stability of subspace diagonalization
-    for (size_t i = 0; i < notconv; i++)
+    // Normalize section
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
     {
-        Real psi_norm = ModuleBase::dot_real_op<T, Device>()(this->dim,
-                                                           psi_iter + (nbase + i) * this->dim,
-                                                           psi_iter + (nbase + i) * this->dim,
-                                                           true);
-        assert(psi_norm > 0.0);
-        psi_norm = sqrt(psi_norm);
-        ModuleBase::vector_mul_real_op<T, Device>()(this->dim,
-                                                       psi_iter + (nbase + i) * this->dim,
-                                                       psi_iter + (nbase + i) * this->dim,
-                                                       Real(1.0 / psi_norm));
+        Real* psi_norm = nullptr;
+        resmem_real_op()(psi_norm, notconv);
+        using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+        setmem_real_op()(psi_norm, 0.0, notconv);
+        
+        normalize_op<T, Device>()(this->dim,
+                                psi_iter,
+                                nbase,
+                                notconv,
+                                psi_norm);
+        delmem_real_op()(psi_norm);
+    }
+    else
+#endif
+    {
+        Real* psi_norm = nullptr;
+        normalize_op<T, Device>()(this->dim,
+                                psi_iter,
+                                nbase,
+                                notconv,
+                                psi_norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]

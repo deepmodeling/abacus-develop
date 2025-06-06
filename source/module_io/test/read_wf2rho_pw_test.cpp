@@ -186,14 +186,30 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     wg.fill_out(1.0);
     if (GlobalV::MY_RANK == 0)
     {
-        std::ofstream ofs("istate.info");
+        // mohan update 2025-06-02
+        std::ofstream ofs("eig.txt");
+        ofs << " Electronic state energy (eV) and occupations" << std::endl;
+        ofs << " Spin number " << nspin << std::endl;
+        ofs << std::setprecision(8);
+        ofs << std::setiosflags(std::ios::showpoint);
+
+        const int is = 0; // nspin is 1
         for (int ik = 0; ik < nkstot; ++ik)
-        {
-            ofs << "BAND               Energy(ev)               Occupation                Kpoint" << std::endl;
-            for (int ib = 0; ib < nbands; ++ib)
-            {
-                ofs << "  " << ib + 1 << "                  0.0000000                " << 1.0 << std::endl;
-            }
+		{
+			ofs << " spin=" << is+1 << " k-point="
+				<< ik + 1 << "/" << nkstot
+				<< " Cartesian=" << kv->kvec_c[ik].x << " " << kv->kvec_c[ik].y
+				<< " " << kv->kvec_c[ik].z << " (" << kv->ngk[ik] << " plane wave)" << std::endl;
+
+            ofs << std::setprecision(16);
+            ofs << std::setiosflags(std::ios::showpoint);
+
+            double ekb = -1.23456; // energy
+            for (int ib = 0; ib < nbands; ib++)
+			{
+                ofs << " " << ib + 1 << " " << ekb  << " " << wg(ik,ib) << std::endl;
+			}
+
             ofs << std::endl;
         }
         ofs.close();
@@ -313,7 +329,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     if (GlobalV::MY_RANK == 0)
     {
         remove("running_log0.txt");
-        remove("istate.info");
+        remove("eig.txt");
         remove("wfs1k1_pw.dat");
         remove("wfs1k2_pw.dat");
         if (GlobalV::KPAR == 2)

@@ -98,6 +98,21 @@ template <typename T, typename Device> struct vector_mul_vector_op {
   void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
 };
 
+// vector operator: result[i] = vector[i] / constant
+template <typename T, typename Device> struct vector_div_constant_op {
+  using Real = typename GetTypeReal<T>::type;
+  /// @brief result[i] = vector[i] / constant
+  ///
+  /// Input Parameters
+  /// \param dim : array size
+  /// \param vector : input array 
+  /// \param constant : input constant
+  ///
+  /// Output Parameters
+  /// \param result : output array
+  void operator()(const int& dim, T* result, const T* vector, const Real constant);
+};
+
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename T, typename Device> struct vector_div_vector_op {
   using Real = typename GetTypeReal<T>::type;
@@ -284,6 +299,48 @@ template <typename T, typename Device> struct matrixCopy {
   void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB);
 };
 
+template <typename T, typename Device>
+struct apply_eigenvalues_op {
+    using Real = typename GetTypeReal<T>::type;
+
+    void operator()(const Device *d, const int &nbase, const int &nbase_x, const int &notconv,
+                    T *result, const T *vectors, const Real *eigenvalues);
+};
+
+template <typename T, typename Device>
+struct precondition_op {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const Device* d,
+                   const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   const Real* precondition,  
+                   const Real* eigenvalues);
+};
+
+template <typename T, typename Device>
+struct normalize_op {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const Device* d,
+                   const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   Real* psi_norm = nullptr);
+};
+
+template <typename T>
+struct normalize_op<T, base_device::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const base_device::DEVICE_GPU* d,
+                   const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   Real* psi_norm);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
@@ -304,6 +361,12 @@ struct vector_mul_real_op<T, base_device::DEVICE_GPU>
 template <typename T> struct vector_mul_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
   void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
+};
+
+// vector operator: result[i] = vector[i] / constant
+template <typename T> struct vector_div_constant_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int& dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
@@ -333,6 +396,26 @@ template <typename T> struct matrixCopy<T, base_device::DEVICE_GPU> {
 
 void createGpuBlasHandle();
 void destoryBLAShandle();
+
+// vector operator: result[i] = -lambda[i] * vector[i]
+template <typename T> struct apply_eigenvalues_op<T, base_device::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+
+    void operator()(const base_device::DEVICE_GPU *d, const int &nbase, const int &nbase_x, const int &notconv,
+                    T *result, const T *vectors, const Real *eigenvalues);
+};
+
+template <typename T>
+struct precondition_op<T, base_device::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const base_device::DEVICE_GPU* d,
+                   const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   const Real* precondition,
+                   const Real* eigenvalues);
+};
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hsolver

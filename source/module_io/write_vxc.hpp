@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_psi/psi.h"
 #include "module_io/write_HS.h"
+#include "module_io/filename.h" // use filename_output function
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -285,16 +286,28 @@ void write_Vxc(const int nspin,
         }
         const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
         e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo, p2d));
+
         // write
-        ModuleIO::save_mat(-1,
+
+		// mohan add 2025-06-02
+		const int istep = -1;
+		const int out_label = 1; // 1 means .txt while 2 means .dat
+		const bool out_app_flag = 0;
+        const bool gamma_only = PARAM.globalv.gamma_only_local;
+
+		std::string vxc_file = ModuleIO::filename_output(
+				PARAM.globalv.global_out_dir,
+				"vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
+				out_label,out_app_flag,gamma_only,istep);
+
+        ModuleIO::save_mat(istep,
                            vxc_tot_k_mo.data(),
                            nbands,
                            false /*binary*/,
                            PARAM.inp.out_ndigits,
                            true /*triangle*/,
-                           false /*append*/,
-                           "Vxc",
-                           "k-" + std::to_string(ik),
+                           out_app_flag /*append*/,
+                           vxc_file, 
                            p2d,
                            drank);
         // ======test=======

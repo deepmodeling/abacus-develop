@@ -27,8 +27,6 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_istate_info.h"
-#include "module_io/write_proj_band_lcao.h"
 #include "module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan

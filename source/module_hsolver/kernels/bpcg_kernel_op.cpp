@@ -2,6 +2,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/kernels/math_kernel_op.h"
 #include "module_base/parallel_reduce.h"
+#include <vector>
 namespace hsolver
 {
 
@@ -106,8 +107,93 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
     }
 };
 
+template <typename T>
+struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
+    {
+        for (int m = 0; m < notconv; m++)
+        {
+            for (int idx = 0; idx < nbase; idx++)
+            {
+                result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+            }
+        }
+    }
+};
+
+template <typename T>
+struct precondition_op<T, base_device::DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   const Real* precondition,
+                   const Real* eigenvalues)
+    {
+        std::vector<Real> pre(dim, 0.0);
+        for (int m = 0; m < notconv; m++)
+        {
+            for (size_t i = 0; i < dim; i++)
+            {
+                Real x = std::abs(precondition[i] - eigenvalues[m]);
+                pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+            }
+            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU>()(
+                                                             dim,
+                                                             psi_iter + (nbase + m) * dim,
+                                                             psi_iter + (nbase + m) * dim,
+                                                             pre.data());
+        }
+    }
+};
+
+template <typename T>
+struct normalize_op<T, base_device::DEVICE_CPU> {
+    void operator()(const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   typename GetTypeReal<T>::type* psi_norm)
+    {
+        using Real = typename GetTypeReal<T>::type;
+        for (int m = 0; m < notconv; m++)
+        {
+            // Calculate norm using dot_real_op
+            Real psi_m_norm = ModuleBase::dot_real_op<T, base_device::DEVICE_CPU>()(
+                                                                dim,
+                                                                psi_iter + (nbase + m) * dim,
+                                                                psi_iter + (nbase + m) * dim,
+                                                                true);
+            assert(psi_m_norm > 0.0);
+            psi_m_norm = sqrt(psi_m_norm);
+
+            // Normalize using vector_div_constant_op
+            ModuleBase::vector_div_constant_op<T, base_device::DEVICE_CPU>()(
+                                                              dim,
+                                                              psi_iter + (nbase + m) * dim,
+                                                              psi_iter + (nbase + m) * dim,
+                                                              psi_m_norm);
+            if (psi_norm) {
+                psi_norm[m] = psi_m_norm;
+            }
+        }
+    }
+};
+
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_CPU>;
+template struct precondition_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct precondition_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct precondition_op<double, base_device::DEVICE_CPU>;
+template struct normalize_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct normalize_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct normalize_op<double, base_device::DEVICE_CPU>;
 } // namespace hsolver

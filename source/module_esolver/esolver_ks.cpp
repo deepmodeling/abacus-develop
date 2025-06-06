@@ -554,66 +554,33 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 3) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
-        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
+//        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
     }
 }
 
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
 {
+    // 1) write Etot information
     ESolver_FP::after_all_runners(ucell);
 
-    // 1) write information
-    if (PARAM.inp.out_dos != 0 || PARAM.inp.out_band[0] != 0 || PARAM.inp.out_proj_band != 0)
-    {
-        GlobalV::ofs_running << "\n\n";
-        GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                                ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Post-processing of data:                   "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " | DOS (density of states) and bands will be "
-                                "output here.             |"
-                             << std::endl;
-        GlobalV::ofs_running << " | If atomic orbitals are used, Mulliken "
-                                "charge analysis can be done. |"
-                             << std::endl;
-        GlobalV::ofs_running << " | Also the .bxsf file containing fermi "
-                                "surface information can be    |"
-                             << std::endl;
-        GlobalV::ofs_running << " | done here.                                 "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " |                                            "
-                                "                        |"
-                             << std::endl;
-        GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                                "<<<<<<<<<<<<<<<<<<<<<<<<<"
-                             << std::endl;
-        GlobalV::ofs_running << "\n\n";
-    }
-
-    // 2) write information
+    // 2) write eigenvalue information
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
 
-
-    // 3) print out band information
+    // 3) write band information
     if (PARAM.inp.out_band[0])
     {
         const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "BANDS_" << is + 1 << ".dat";
-            GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
+            ss2 << PARAM.globalv.global_out_dir << "eigs" << is + 1 << ".txt";
+            GlobalV::ofs_running << "\n Eigenvalues for plot are saved in file: " << ss2.str() << std::endl;
+            const double eshift = 0.0;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
                                 PARAM.inp.nbands,
-                                0.0,
+                                eshift,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,
                                 this->kv);
