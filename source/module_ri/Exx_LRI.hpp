@@ -59,6 +59,41 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->lcaos, this->abfs, this->abfs_ccp,
 		this->info.kmesh_times, this->info.ccp_rmesh_times );
 
+	this->cv.set_orbitals(ucell,
+						  orb,
+                          this->lcaos,
+                          this->abfs,
+                          this->abfs_ccp,
+                          this->info.kmesh_times,
+                          this->MGT,
+                          true,
+                          true);
+
+    if (this->info_ewald.use_ewald) {
+        if (this->info.hybrid_beta) {
+            this->abfs_ccp_sr = Conv_Coulomb_Pot_K::cal_orbs_ccp(
+                this->abfs,
+                Conv_Coulomb_Pot_K::Ccp_Type::Erfc,
+                {{"hse_omega", this->info.hse_omega}},
+                this->info.ccp_rmesh_times);
+            this->sr_cv.set_orbitals(ucell, orb,
+                                     this->lcaos,
+                                     this->abfs,
+                                     this->abfs_ccp_sr,
+                                     this->info.kmesh_times,
+                                     this->MGT,
+                                     false,
+                                     false);
+        }
+        this->evq.init(ucell, orb,
+                       this->mpi_comm,
+                       this->p_kv,
+                       this->lcaos,
+                       this->abfs,
+                       get_ccp_parameter(),
+                       this->MGT);
+    }
+
     ModuleBase::timer::tick("Exx_LRI", "init");
 }
 
