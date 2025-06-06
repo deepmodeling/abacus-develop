@@ -275,7 +275,7 @@ vdw_cutoff_period   3 3 3 #periods of periodic structure
 
 #Parameters (14.exx)
 exx_hybrid_alpha               default #
-exx_hybrid_beta                   default #
+exx_hybrid_beta                default #
 exx_hse_omega                  default #
 exx_separate_loop              1 #0 or 1
 exx_use_ewald                  0 
