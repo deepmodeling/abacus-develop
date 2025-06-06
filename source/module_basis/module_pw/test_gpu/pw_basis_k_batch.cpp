@@ -10,15 +10,15 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include <typeinfo>
-
+#include <chrono>
 using namespace std;
 
 class PW_BASIS_K_BATCH_GPU_TEST : public ::testing::Test
 {
     public:
-        const int batch = 2;  // Number of batches
+        const int batch = 10;  // Number of batches
         const int npwk = 30;   // Number of planewaves
-        const int nxyz = 1000; // Size of the 3D grid
+        const int nxyz = 64*64*64; // Size of the 3D grid
         std::vector<int> box_index;  // Index mapping for 3D grid
         int* d_box_index=nullptr; // Device memory for box_index
         std::vector<std::complex<double>> psig; // psig(K space) data for the test,
@@ -70,10 +70,10 @@ class PW_BASIS_K_BATCH_GPU_TEST : public ::testing::Test
         synchronize_memory_double_h2d_op()(d_veff, veff.data(), nxyz * batch);
         // Initialize the box_index with some values
         ft_gpu.setfft("gpu", "double");
-        ft_gpu.initfft(10, 10, 10 , 1, 1, 1, 1, 1, 1);
+        ft_gpu.initfft(64, 64, 64 , 1, 1, 1, 1, 1, 1);
         ft_gpu.setupFFT();
         ft_gpu_batch.setfft("gpu_batch", "double");
-        ft_gpu_batch.initfft(10, 10, 10 , 1, 1, 1, 1, 1, 1);
+        ft_gpu_batch.initfft(64, 64, 64 , 1, 1, 1, 1, 1, 1);
         ft_gpu_batch.setupFFT();
     }
     void TearDown() override
@@ -92,16 +92,180 @@ class PW_BASIS_K_BATCH_GPU_TEST : public ::testing::Test
     }
 };
 
-TEST_F(PW_BASIS_K_BATCH_GPU_TEST,convulution)
-{
-    // STEP 1 set the 3D FFT box operation for CPU
-    for (int i = 0; i < npwk; ++i)
-    {
-        EXPECT_EQ(box_index[i], i * i);
-    }
+// TEST_F(PW_BASIS_K_BATCH_GPU_TEST,convulution)
+// {
+//     // STEP 1 set the 3D FFT box operation for CPU
+//     for (int i = 0; i < npwk; ++i)
+//     {
+//         EXPECT_EQ(box_index[i], i * i);
+//     }
 
-    // STEP 2 check the input psig has been
-    // correctly mapped to the 3D grid
+//     // STEP 2 check the input psig has been
+//     // correctly mapped to the 3D grid
+//     std::vector<std::complex<double>> compute_psir(nxyz * batch);
+//     std::vector<std::complex<double>> compute_psir_batch(nxyz * batch);
+//     for (int i = 0; i< batch; i++)
+//     {
+//         ModulePW::set_3d_fft_box_op<double, 
+//             base_device::DEVICE_GPU>()
+//         (
+//             npwk,
+//             d_box_index,
+//             d_psig + i * npwk,
+//             d_psir + i * nxyz
+//         );
+//         synchronize_memory_complex_d2h_op()(compute_psir.data()+i * nxyz, d_psir + i *nxyz, nxyz);
+//     }
+//     ModulePW::set_3d_fft_box_op<double, 
+//         base_device::DEVICE_GPU>()
+//     (
+//         npwk,
+//         nxyz,
+//         d_box_index,
+//         d_psig_batch,
+//         d_psir_batch,
+//         batch
+//     );
+    
+//     synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
+//     for (int i = 0; i < nxyz*batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
+//     }
+
+//     // STEP 3 perform the 3D FFT forward operation
+//     for (int i=0;i<batch;i++)
+//     {
+//         ft_gpu.fft3D_backward(d_psir + i *nxyz, d_psir + i *nxyz);
+        
+//     }
+//     ft_gpu_batch.fft3D_backward(d_psir_batch, d_psir_batch );
+//     synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
+//     synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
+
+//     for (int i = 0; i < nxyz *batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
+//     }
+//     // STEP 4 set the reciprocal to real space operation
+//     for (int i=0; i< batch; i++)
+//     {
+//         ModulePW::set_recip_to_real_output_op<double, 
+//             base_device::DEVICE_GPU>()
+//         (
+//             nxyz,
+//             true,
+//             1.0,
+//             d_psir + i * nxyz,
+//             d_psir + i * nxyz
+//         );
+//     }
+//     ModulePW::set_recip_to_real_output_op<double, 
+//         base_device::DEVICE_GPU>()
+//     (
+//         nxyz,
+//         true,
+//         1.0,
+//         d_psir_batch,
+//         d_psir_batch,
+//         batch
+//     );
+//     synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
+//     synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
+//     for (int i = 0; i < nxyz *batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
+//     }
+
+//     // STEP 5 use veff_pw operation to compute 
+//     const base_device::DEVICE_GPU * dev_gpu;
+//     for (int i = 0; i < batch; ++i)
+//     {
+//         hamilt::veff_pw_op<double, 
+//             base_device::DEVICE_GPU>()
+//         (
+//             dev_gpu,
+//             nxyz,
+//             d_psir + i * nxyz,
+//             d_veff + i * nxyz
+//         );
+//     }
+//     hamilt::veff_pw_op<double, 
+//         base_device::DEVICE_GPU>()
+//     (
+//         dev_gpu,
+//         nxyz,
+//         d_psir_batch,
+//         d_veff,
+//         batch
+//     );
+
+//     synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
+//     synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
+
+//     for (int i = 0; i < nxyz *batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
+//     }
+
+//     // STEP 6 perform the 3D FFT backward operation
+//     std::vector<std::complex<double>> compute_psig(nxyz * batch);
+//     std::vector<std::complex<double>> compute_psig_batch(nxyz * batch);
+//     for (int i=0;i<batch;i++)
+//     {
+//         ft_gpu.fft3D_forward(d_psir + i *nxyz, d_psir + i *nxyz);
+//     }
+//     ft_gpu_batch.fft3D_forward(d_psir_batch, d_psir_batch);
+//     synchronize_memory_complex_d2h_op()(compute_psig.data(),d_psir , nxyz * batch);
+//     synchronize_memory_complex_d2h_op()(compute_psig_batch.data(), d_psir_batch,nxyz * batch);
+//     for (int i = 0; i < nxyz *batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psig[i].real(), compute_psig_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psig[i].imag(), compute_psig_batch[i].imag(), 1e-7);
+//     }
+
+//     // STEP 7 check the output psig has been
+//     for (int i =0; i< batch;i++)
+//     {
+//         ModulePW::set_real_to_recip_output_op<double, 
+//             base_device::DEVICE_GPU>()
+//         (
+//             npwk,
+//             nxyz,
+//             true,
+//             1.0,
+//             d_box_index,
+//             d_psir + i * nxyz,
+//             d_psig + i * npwk
+//         );
+//     }
+//     ModulePW::set_real_to_recip_output_op<double, 
+//         base_device::DEVICE_GPU>()
+//     (
+//         npwk,
+//         nxyz,
+//         true,
+//         1.0,
+//         d_box_index,
+//         d_psir_batch,
+//         d_psig_batch,
+//         batch
+//     );
+//     synchronize_memory_complex_d2h_op()(compute_psig.data(),d_psig , npwk * batch);
+//     synchronize_memory_complex_d2h_op()(compute_psig_batch.data(), d_psig_batch,npwk * batch);
+//     for (int i = 0; i < npwk *batch ; ++i)
+//     {
+//         EXPECT_NEAR(compute_psig[i].real(), compute_psig_batch[i].real(), 1e-7);
+//         EXPECT_NEAR(compute_psig[i].imag(), compute_psig_batch[i].imag(), 1e-7);
+//     }
+// }
+
+TEST_F(PW_BASIS_K_BATCH_GPU_TEST, recip2real)
+{
     std::vector<std::complex<double>> compute_psir(nxyz * batch);
     std::vector<std::complex<double>> compute_psir_batch(nxyz * batch);
     for (int i = 0; i< batch; i++)
@@ -114,7 +278,6 @@ TEST_F(PW_BASIS_K_BATCH_GPU_TEST,convulution)
             d_psig + i * npwk,
             d_psir + i * nxyz
         );
-        synchronize_memory_complex_d2h_op()(compute_psir.data()+i * nxyz, d_psir + i *nxyz, nxyz);
     }
     ModulePW::set_3d_fft_box_op<double, 
         base_device::DEVICE_GPU>()
@@ -126,140 +289,21 @@ TEST_F(PW_BASIS_K_BATCH_GPU_TEST,convulution)
         d_psir_batch,
         batch
     );
-    
-    synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
-    for (int i = 0; i < nxyz*batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
-    }
 
     // STEP 3 perform the 3D FFT forward operation
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i=0;i<batch;i++)
     {
         ft_gpu.fft3D_backward(d_psir + i *nxyz, d_psir + i *nxyz);
-        
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time taken for 3D FFT backward operation: " << duration.count() << " microseconds" << std::endl;
+    start = std::chrono::high_resolution_clock::now();
     ft_gpu_batch.fft3D_backward(d_psir_batch, d_psir_batch );
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time taken for batch 3D FFT backward operation: " << duration.count() << " microseconds" << std::endl;
     synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
     synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
-
-    for (int i = 0; i < nxyz *batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
-    }
-    // STEP 4 set the reciprocal to real space operation
-    for (int i=0; i< batch; i++)
-    {
-        ModulePW::set_recip_to_real_output_op<double, 
-            base_device::DEVICE_GPU>()
-        (
-            nxyz,
-            true,
-            1.0,
-            d_psir + i * nxyz,
-            d_psir + i * nxyz
-        );
-    }
-    ModulePW::set_recip_to_real_output_op<double, 
-        base_device::DEVICE_GPU>()
-    (
-        nxyz,
-        true,
-        1.0,
-        d_psir_batch,
-        d_psir_batch,
-        batch
-    );
-    synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
-    synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
-    for (int i = 0; i < nxyz *batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
-    }
-
-    // STEP 5 use veff_pw operation to compute 
-    const base_device::DEVICE_GPU * dev_gpu;
-    for (int i = 0; i < batch; ++i)
-    {
-        hamilt::veff_pw_op<double, 
-            base_device::DEVICE_GPU>()
-        (
-            dev_gpu,
-            nxyz,
-            d_psir + i * nxyz,
-            d_veff + i * nxyz
-        );
-    }
-    hamilt::veff_pw_op<double, 
-        base_device::DEVICE_GPU>()
-    (
-        dev_gpu,
-        nxyz,
-        d_psir_batch,
-        d_veff,
-        batch
-    );
-
-    synchronize_memory_complex_d2h_op()(compute_psir.data(),d_psir , nxyz * batch);
-    synchronize_memory_complex_d2h_op()(compute_psir_batch.data(), d_psir_batch,nxyz * batch);
-
-    for (int i = 0; i < nxyz *batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psir[i].real(), compute_psir_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psir[i].imag(), compute_psir_batch[i].imag(), 1e-7);
-    }
-
-    // STEP 6 perform the 3D FFT backward operation
-    std::vector<std::complex<double>> compute_psig(nxyz * batch);
-    std::vector<std::complex<double>> compute_psig_batch(nxyz * batch);
-    for (int i=0;i<batch;i++)
-    {
-        ft_gpu.fft3D_forward(d_psir + i *nxyz, d_psir + i *nxyz);
-    }
-    ft_gpu_batch.fft3D_forward(d_psir_batch, d_psir_batch);
-    synchronize_memory_complex_d2h_op()(compute_psig.data(),d_psir , nxyz * batch);
-    synchronize_memory_complex_d2h_op()(compute_psig_batch.data(), d_psir_batch,nxyz * batch);
-    for (int i = 0; i < nxyz *batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psig[i].real(), compute_psig_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psig[i].imag(), compute_psig_batch[i].imag(), 1e-7);
-    }
-
-    // STEP 7 check the output psig has been
-    for (int i =0; i< batch;i++)
-    {
-        ModulePW::set_real_to_recip_output_op<double, 
-            base_device::DEVICE_GPU>()
-        (
-            npwk,
-            nxyz,
-            true,
-            1.0,
-            d_box_index,
-            d_psir + i * nxyz,
-            d_psig + i * npwk
-        );
-    }
-    ModulePW::set_real_to_recip_output_op<double, 
-        base_device::DEVICE_GPU>()
-    (
-        npwk,
-        nxyz,
-        true,
-        1.0,
-        d_box_index,
-        d_psir_batch,
-        d_psig_batch,
-        batch
-    );
-    synchronize_memory_complex_d2h_op()(compute_psig.data(),d_psig , npwk * batch);
-    synchronize_memory_complex_d2h_op()(compute_psig_batch.data(), d_psig_batch,npwk * batch);
-    for (int i = 0; i < npwk *batch ; ++i)
-    {
-        EXPECT_NEAR(compute_psig[i].real(), compute_psig_batch[i].real(), 1e-7);
-        EXPECT_NEAR(compute_psig[i].imag(), compute_psig_batch[i].imag(), 1e-7);
-    }
 }

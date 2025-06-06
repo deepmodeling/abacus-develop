@@ -196,41 +196,41 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<
+using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>,
                                     TypePair<double, base_device::DEVICE_GPU> >;
 
 TYPED_TEST_CASE(PW_BASIS_K_GPU_TEST, MixedTypes);
 
-// TYPED_TEST(PW_BASIS_K_GPU_TEST, Mixing)
-// {
-//     using T = typename TestFixture::T;
-//     using Device = typename TestFixture::Device;
-//     ModulePW::PW_Basis_K pwtest;
-//     pwtest.set_device("gpu");
-//     pwtest.set_precision("mixing");
-//     pwtest.fft_bundle.setfft("gpu", "mixing");
-//     this->init(pwtest);
-//     int startiz = pwtest.startz_current;
-//     const int nx = pwtest.nx;
-//     const int ny = pwtest.ny;
-//     const int nz = pwtest.nz;
-//     const int nplane = pwtest.nplane;
-//     const int npwk = pwtest.npwk[0];
-//     for (int ixy = 0; ixy < nx * ny; ++ixy)
-//     {
-//         const int offset = ixy * nz + startiz;
-//         const int startz = ixy * nplane;
-//         for (int iz = 0; iz < nplane; ++iz)
-//         {
-//             EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz].real(), 1e-4);
-//         }
-//     }
-//     for (int ig = 0; ig < npwk; ++ig)
-//     {
-//         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
-//         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
-//     }
-// }
+TYPED_TEST(PW_BASIS_K_GPU_TEST, Mixing)
+{
+    using T = typename TestFixture::T;
+    using Device = typename TestFixture::Device;
+    ModulePW::PW_Basis_K pwtest;
+    pwtest.set_device("gpu");
+    pwtest.set_precision("mixing");
+    pwtest.fft_bundle.setfft("gpu", "mixing");
+    this->init(pwtest);
+    int startiz = pwtest.startz_current;
+    const int nx = pwtest.nx;
+    const int ny = pwtest.ny;
+    const int nz = pwtest.nz;
+    const int nplane = pwtest.nplane;
+    const int npwk = pwtest.npwk[0];
+    for (int ixy = 0; ixy < nx * ny; ++ixy)
+    {
+        const int offset = ixy * nz + startiz;
+        const int startz = ixy * nplane;
+        for (int iz = 0; iz < nplane; ++iz)
+        {
+            EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz].real(), 1e-4);
+        }
+    }
+    for (int ig = 0; ig < npwk; ++ig)
+    {
+        EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
+        EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
+    }
+}
 
 TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble)
 {
@@ -284,20 +284,20 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, convulution)
     ModulePW::PW_Basis_K pwtest;
     pwtest.set_device("gpu");
     pwtest.set_precision("mixing");
-    // if (typeid(T) == typeid(float))
-    // {
-    //     pwtest.fft_bundle.setfft("gpu", "single");
-    // }
-    // if (typeid(T) == typeid(double))
-    // {
+    if (typeid(T) == typeid(float))
+    {
+        pwtest.fft_bundle.setfft("gpu", "single");
+    }
+    if (typeid(T) == typeid(double))
+    {
     std::cout << "Using double precision" << std::endl;
         pwtest.fft_bundle.setfft("gpu", "double");
-    // }
-    // else
-    // {
-    //     cout << "Error: Unsupported type" << endl;
-    //     return;
-    // }
+    }
+    else
+    {
+        cout << "Error: Unsupported type" << endl;
+        return;
+    }
     this->init(pwtest);
     int startiz = pwtest.startz_current;
     const int nx = pwtest.nx;

@@ -185,11 +185,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         int npm = m;
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // denghui replace 2022-10-20
-        #ifdef __DSP
-            ModuleBase::gemm_op_mt<T, Device>()
-        #else
             gemm_op()
-        #endif
             (
             transa,
             transb,
@@ -264,11 +260,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             int npm = nbands;
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // denghui replace 2022-10-20
-            #ifdef __DSP
-            ModuleBase::gemm_op_mt<T, Device>()
-            #else
             gemm_op()
-            #endif
             (
                 transa,
                 transb,

@@ -491,14 +491,13 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    std::cout << "real2recip_gpu: npw_k = " << npw_k << ", nxyz = " << this->nxyz << std::endl;
     set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
                                                                    this->ig2ixyz_k + startig,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-                                                                   out,1);
+                                                                   out);
     ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
 }
 template <typename FPTYPE>
@@ -520,18 +519,16 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
     set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
-                                                         nxyz,
                                                          this->ig2ixyz_k + startig,
                                                          in,
-                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-                                                         1);
+                                                         this->fft_bundle.get_auxr_3d_data<FPTYPE>());
     this->fft_bundle.fft3D_backward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(), this->fft_bundle.get_auxr_3d_data<FPTYPE>());
 
     set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>()(this->nrxx,
                                                                    add,
                                                                    factor,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-                                                                   out,1);
+                                                                   out);
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }

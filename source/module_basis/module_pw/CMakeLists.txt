@@ -7,7 +7,6 @@ if (USE_CUDA)
   list (APPEND FFT_SRC
     module_fft/fft_cuda.cpp
     module_fft/fft_cuda_batch.cpp
-    module_fft/test.cu
   )
 endif()
 if (USE_ROCM)

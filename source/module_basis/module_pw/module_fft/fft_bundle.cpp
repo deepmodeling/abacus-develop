@@ -101,7 +101,6 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_ROCM<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #elif defined(__CUDA)
-        std::cout<<"here is the set of the gpu"<<std::endl;
         fft_float = make_unique<FFT_CUDA<float>>();
         fft_float->initfft(nx_in, ny_in, nz_in);
         fft_double = make_unique<FFT_CUDA<double>>();
@@ -115,14 +114,13 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_ROCM<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #elif defined(__CUDA)   
-        std::cout<<"here is the set of the batch gpu"<<std::endl;
         fft_float = make_unique<FFT_CUDA_BATCH<float>>();
         fft_float->initfft(nx_in, ny_in, nz_in);
         fft_double = make_unique<FFT_CUDA_BATCH<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in );
 #endif
     }else{
-        // ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
+        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
 }
 
