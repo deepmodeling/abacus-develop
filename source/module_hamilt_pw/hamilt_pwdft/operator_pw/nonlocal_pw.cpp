@@ -185,7 +185,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         int npm = m;
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // denghui replace 2022-10-20
-            gemm_op()(
+        gemm_op()(
             transa,
             transb,
             this->npw,
