@@ -38,11 +38,11 @@ namespace ModuleIO
 				const Structure_Factor& sf, // for Wannier90
 				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-				LCAO_Deepks<T>& ld,
+				LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX
-				Exx_LRI_Interface<T, double>& exd,
-				Exx_LRI_Interface<T, std::complex<double>>& exc,
+				Exx_LRI_Interface<TK, double>& exd,
+				Exx_LRI_Interface<TK, std::complex<double>>& exc,
 #endif
 				const int istep);
 }

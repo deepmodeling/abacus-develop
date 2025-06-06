@@ -19,6 +19,7 @@
 #include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
 #ifdef __EXX
 //#include "module_io/restart_exx_csr.h" 
+#include "module_ri/Exx_LRI_interface.h"
 #include "module_ri/RPA_LRI.h" // use RPA code
 #endif
 #include "module_rdmft/rdmft.h" // use RDMFT codes
@@ -422,11 +423,11 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<TK>& ld,
+		LCAO_Deepks<double>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+		Exx_LRI_Interface<double, double>& exd,
+		Exx_LRI_Interface<double, std::complex<double>>& exc,
 #endif
 		const int istep);
 
@@ -448,11 +449,11 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<TK>& ld,
+		LCAO_Deepks<std::complex<double>>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+		Exx_LRI_Interface<std::complex<double>, double>& exd,
+		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
 #endif
 		const int istep);
 
@@ -473,11 +474,11 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
 #ifdef __DEEPKS
-		LCAO_Deepks<TK>& ld,
+		LCAO_Deepks<std::complex<double>>& ld,
 #endif
 #ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+		Exx_LRI_Interface<std::complex<double>, double>& exd,
+		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
 #endif
 		const int istep);
 
