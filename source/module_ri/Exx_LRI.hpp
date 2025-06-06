@@ -54,12 +54,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	for( size_t T=0; T!=this->abfs.size(); ++T )
 		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
-	this->cv.set_orbitals(
-		ucell,
-		orb,
-		this->lcaos, this->abfs, this->abfs_ccp,
-		this->info.kmesh_times, this->info.ccp_rmesh_times );
-
 	this->cv.set_orbitals(ucell,
 						  orb,
                           this->lcaos,
@@ -179,8 +173,8 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
             }
             // const double chi = 1.0 / this->lambda;
             // dVs = this->evq.cal_dVs(chi, dVs);
-            dVs = this->info.hybrid_beta ? LRI_CV_Tools::minus(dVs_full, dVs_sr)
-                                      : dVs_full;
+            dVs = this->info.hybrid_beta ? LRI_CV_Tools::minus(dVs, dVs_sr)
+                                      : dVs;
         }
 
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
