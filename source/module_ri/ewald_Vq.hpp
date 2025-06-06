@@ -42,12 +42,11 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->nks0 = this->p_kv->get_nkstot_full() / this->nspin0;
     this->kvec_c.resize(this->nks0);
 
-    this->parameter = parameter;
     this->g_lcaos = this->init_gauss(lcaos_in);
     this->g_abfs = this->init_gauss(abfs_in);
     this->g_abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->g_abfs,
                                                         this->info.ccp_type,
-                                                        this->parameter,
+                                                        parameter,
                                                         this->info.ccp_rmesh_times);
     this->multipole = Exx_Abfs::Construct_Orbs::get_multipole(abfs_in);
     this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(lcaos_in);

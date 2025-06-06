@@ -144,7 +144,7 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
 		else if( id == XC_HYB_GGA_XC_HSE06 ) // HSE06 hybrid functional
 		{
 			add_func( XC_HYB_GGA_XC_HSE06 );
-			double parameter_hse[3] = { std::stod(PARAM.inp.exx_hybrid_alpha),
+			double parameter_hse[3] = { std::stod(PARAM.inp.exx_hybrid_beta),
 				std::stod(PARAM.inp.exx_hse_omega),
 				std::stod(PARAM.inp.exx_hse_omega)};
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);

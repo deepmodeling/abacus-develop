@@ -38,7 +38,7 @@ class XCTest_HSE : public XCTest
         void SetUp()
         {
             XC_Functional::set_xc_type("HSE");
-            XC_Functional::set_hybrid_alpha(0.5, 0.0);
+            XC_Functional::set_hybrid_param(0.0, 0.5);
         }
 };
 
@@ -53,7 +53,7 @@ class XCTest_SCAN0 : public XCTest
         void SetUp()
         {
             XC_Functional::set_xc_type("SCAN0");
-            XC_Functional::set_hybrid_alpha(0.5, 0.0);
+            XC_Functional::set_hybrid_param(0.5, 0.0);
         }
 };
 

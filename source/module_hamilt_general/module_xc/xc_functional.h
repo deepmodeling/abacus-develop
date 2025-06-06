@@ -71,10 +71,14 @@ class XC_Functional
     static void set_xc_type(const std::string xc_func_in);
 
     // For hybrid functional
-    static void set_hybrid_alpha(const double alpha_in, const double beta_in);
+    static void set_hybrid_param(const double alpha_in, const double beta_in);
     static double get_hybrid_alpha()
     {
         return hybrid_alpha;
+    };
+	static double get_hybrid_beta()
+    {
+        return hybrid_beta;
     };
     static bool get_ked_flag()
     {

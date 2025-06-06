@@ -33,11 +33,6 @@ void sparse_format::cal_HR_exx(const UnitCell& ucell,
     ModuleBase::TITLE("sparse_format", "cal_HR_exx");
     ModuleBase::timer::tick("sparse_format", "cal_HR_exx");
 
-	const Tdata frac = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
-
     std::map<int, std::array<double, 3>> atoms_pos;
     for (int iat = 0; iat < ucell.nat; ++iat) {
         atoms_pos[iat] = RI_Util::Vector3_to_array3(
@@ -114,7 +109,7 @@ void sparse_format::cal_HR_exx(const UnitCell& ucell,
                                           .HR_sparse[current_spin][R][iwt0];
                                 double& HR_sparse = HR_sparse_ptr[iwt1];
                                 HR_sparse += RI::Global_Func::convert<double>(
-                                    frac * Hexx(iw0, iw1));
+                                    Hexx(iw0, iw1));
                                 if (std::abs(HR_sparse) <= sparse_threshold) 
                                 {
                                     HR_sparse_ptr.erase(iwt1);
@@ -129,7 +124,7 @@ void sparse_format::cal_HR_exx(const UnitCell& ucell,
                                     = HR_sparse_ptr[iwt1];
                                 
                                 HR_sparse += RI::Global_Func::convert<
-                                    std::complex<double>>(frac * Hexx(iw0, iw1));
+                                    std::complex<double>>(Hexx(iw0, iw1));
                                 
                                 if (std::abs(HR_sparse) <= sparse_threshold) 
                                 {

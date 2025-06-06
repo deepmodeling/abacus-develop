@@ -281,16 +281,11 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
-        const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
         // add H(R) normally
         if (GlobalC::exx_info.info_ri.real_number)
         {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
-                coeff,
                 *this->Hexxd,
                 *this->hR->get_paraV(),
                 PARAM.globalv.npol,
@@ -301,7 +296,6 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
-                coeff,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
                 PARAM.globalv.npol,
@@ -345,16 +339,11 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             }
         }
         // cal H(k) from H(R) normally
-		const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
         if (GlobalC::exx_info.info_ri.real_number) {
             RI_2D_Comm::add_Hexx(
                 ucell,
                 this->kv,
                 ik,
-                coeff,
                 *this->Hexxd,
                 *this->hR->get_paraV(),
                 this->hsk->get_hk());
@@ -363,7 +352,6 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 ucell,
                 this->kv,
                 ik,
-                coeff,
                 *this->Hexxc,
                 *this->hR->get_paraV(),
                 this->hsk->get_hk());

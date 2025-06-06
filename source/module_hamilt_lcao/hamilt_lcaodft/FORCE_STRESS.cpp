@@ -373,21 +373,17 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix stress_exx;
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
         if (isforce)
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 exd.cal_exx_force(ucell.nat);
-                force_exx = coeff * exd.get_force();
+                force_exx = exd.get_force();
             }
             else
             {
                 exc.cal_exx_force(ucell.nat);
-                force_exx = coeff * exc.get_force();
+                force_exx = exc.get_force();
             }
         }
         if (isstress)
@@ -395,12 +391,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 exd.cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = coeff * exd.get_stress();
+                stress_exx = exd.get_stress();
             }
             else
             {
                 exc.cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = coeff * exc.get_stress();
+                stress_exx = exc.get_stress();
             }
         }
     }

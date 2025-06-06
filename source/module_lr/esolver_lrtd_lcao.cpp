@@ -509,7 +509,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                               this->eig_ks,
 #ifdef __EXX
                               this->exx_lri,
-                              this->exx_info.info_global.hybrid_alpha,
 #endif
                               this->gint_,
                               this->pot,
@@ -540,7 +539,6 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                                 this->eig_ks,
 #ifdef __EXX
                                 this->exx_lri,
-                                this->exx_info.info_global.hybrid_alpha,
 #endif
                                 this->gint_,
                                 this->pot[is],

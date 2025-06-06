@@ -306,9 +306,24 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                 sigma_ab_loc += density_recip2 * pot_local * (kqg_alpha * kqg_beta * pot_stress_local - delta_ab) ;
 
                             }
-
-                            // 0.5 in the following line is caused by 2x in the pot
-                            sigma(alpha, beta) -= GlobalC::exx_info.info_global.hybrid_alpha
+                            double coeff;
+                            if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+                            {
+                                coeff = std::stod(PARAM.inp.exx_hybrid_beta);
+                            }
+                            else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Hf)
+                            {
+                                coeff = std::stod(PARAM.inp.exx_hybrid_alpha);
+                            }
+                            else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erf)
+                            {
+                                const double hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
+                                const double hybrid_beta = std::stod(PARAM.inp.exx_hybrid_beta);
+                                if (std::abs(hybrid_alpha + hybrid_beta) > 1e-10)
+                                    ModuleBase::WARNING_QUIT("HSolverLIP", "For Erf kernal, exx_hybrid_alpha = - exx_hybrid_beta");
+                                coeff = hybrid_alpha;
+                            }
+                            sigma(alpha, beta) -= coeff
                                                   * 0.25 * sigma_ab_loc
                                                   * wg(ik, nband) * wg(iq, mband) / nqs / p_kv->wk[ik];
                         }

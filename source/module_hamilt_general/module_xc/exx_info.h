@@ -12,7 +12,7 @@ struct Exx_Info
         bool cal_exx = false;
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
-        double hybrid_alpha = 0.25;
+        double hybrid_alpha = 0.0;
         double hybrid_beta = 0.0;
         double hse_omega = 0.11;
         double mixing_beta_for_loop1 = 1.0;
@@ -46,7 +46,7 @@ struct Exx_Info
         bool real_number = false;
         int Rcut_type = 1;
         Singular_Value::Fq_type fq_type;
-        const bool& use_ewald;
+        bool use_ewald - false;
 
         double pca_threshold = 0;
         std::vector<std::string> files_abfs;

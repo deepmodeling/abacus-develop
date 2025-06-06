@@ -519,9 +519,9 @@ struct Input_para
     //  exx
     //  Peize Lin add 2018-06-20
     // ==========================================================
-    std::string exx_hybrid_alpha = "default";   ///< fraction of Fock exchange in hybrid functionals
-    std::string exx_hse_omega = "default";                ///< range-separation parameter in HSE/CAM/LR functional
-    std::string exx_hybrid_beta = "default";                ///< range-separation parameter in CAM/LR functional
+    std::string exx_hybrid_alpha = "default";   ///< range-separation parameter in hybrid functionals
+    std::string exx_hse_omega = "default";                ///< screen parameter in hybrid functionals
+    std::string exx_hybrid_beta = "default";                ///< range-separation parameter in hybrid functionals
     bool exx_use_ewald = false;              ///< if 1, Ewald method is used for HF or CAM/LR hybrid functions 
     int exx_spencer_type = 0;              ///< set Spencer scheme type
     int exx_fq_type = 1;                        /// auxiliary-function fq used in correction to V(q) at q->0

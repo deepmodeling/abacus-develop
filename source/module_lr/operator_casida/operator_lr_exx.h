@@ -30,11 +30,10 @@ namespace LR
             const Parallel_2D& pX_in,
             const Parallel_2D& pc_in,
             const Parallel_Orbitals& pmat_in,
-            const double& alpha = 1.0,
             const std::vector<int>& aims_nbasis = {})
             : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin),
             psi_ks(psi_ks_in), DM_trans(DM_trans_in), exx_lri(exx_lri_in), kv(kv_in),
-            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in), alpha(alpha),
+            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in),
             aims_nbasis(aims_nbasis)
         {
             ModuleBase::TITLE("OperatorLREXX", "OperatorLREXX");
@@ -73,7 +72,6 @@ namespace LR
         const int nocc = 1;
         const int nvirt = 1;
         const int nk = 1;  ///< number of k-points
-        const double alpha = 1.0;   //(allow non-ref constant)
         const bool cal_dm_trans = false;
         const bool tdm_sym = false; ///< whether transition density matrix is symmetric
         const K_Vectors& kv;

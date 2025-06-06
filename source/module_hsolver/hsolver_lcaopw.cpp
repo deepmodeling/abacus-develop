@@ -45,6 +45,23 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
 #ifdef __EXX
         auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
         auto add_exx_to_subspace_hamilt = [&ik, &exx_lip](T* hcc, const int naos) -> void {
+            double coeff;
+            if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+            {
+                coeff = std::stod(PARAM.inp.exx_hybrid_beta);
+            }
+            else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Hf)
+            {
+                coeff = std::stod(PARAM.inp.exx_hybrid_alpha);
+            }
+            else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erf)
+            {
+                const double hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
+                const double hybrid_beta = std::stod(PARAM.inp.exx_hybrid_beta);
+                if (std::abs(hybrid_alpha + hybrid_beta) > 1e-10)
+                    ModuleBase::WARNING_QUIT("HSolverLIP", "For Erf kernal, exx_hybrid_alpha = - exx_hybrid_beta");
+                coeff = hybrid_alpha;
+            }
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 for (int n = 0; n < naos; ++n)
@@ -52,7 +69,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                     for (int m = 0; m < naos; ++m)
                     {
                         hcc[n * naos + m]
-                            += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
+                            += (T)coeff * exx_lip.get_exx_matrix()[ik][m][n];
                     }
                 }
             }

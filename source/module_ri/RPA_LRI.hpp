@@ -107,6 +107,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
+    GlobalC::exx_info.info_global.hybrid_beta = 0;
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
 
     exx_lri_rpa.init(mpi_comm_in, ucell, kv, orb);

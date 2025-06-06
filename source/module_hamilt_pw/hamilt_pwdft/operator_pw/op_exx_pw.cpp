@@ -282,8 +282,24 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
         } // end of iq
         T* h_psi_nk = tmhpsi + n_iband * nbasis;
-        Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        Real coeff;
+        if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
+        {
+            coeff = std::stod(PARAM.inp.exx_hybrid_beta);
+        }
+        else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Hf)
+        {
+            coeff = std::stod(PARAM.inp.exx_hybrid_alpha);
+        }
+        else if(GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erf)
+        {
+            const double hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
+            const double hybrid_beta = std::stod(PARAM.inp.exx_hybrid_beta);
+            if (std::abs(hybrid_alpha + hybrid_beta) > 1e-10)
+                ModuleBase::WARNING_QUIT("HSolverLIP", "For Erf kernal, exx_hybrid_alpha = - exx_hybrid_beta");
+            coeff = hybrid_alpha;
+        }
+        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, coeff);
         setmem_complex_op()(h_psi_real, 0, rhopw->nrxx);
         
     }

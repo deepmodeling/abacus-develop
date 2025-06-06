@@ -101,7 +101,6 @@ class Ewald_Vq
     const int nspin0 = std::map<int, int>{{1, 1}, {2, 2}, {4, 1}}.at(PARAM.inp.nspin);
     int nks0;
     std::vector<TA> atoms_vec;
-    std::map<std::string, double> parameter;
 
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> g_lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> g_abfs;

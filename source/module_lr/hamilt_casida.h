@@ -30,7 +30,6 @@ namespace LR
                const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
                std::weak_ptr<Exx_LRI<T>> exx_lri_in,
-               const double& exx_alpha,
 #endif
                TGint* gint_in,
                std::weak_ptr<PotHxcLR> pot_in,
@@ -109,7 +108,6 @@ namespace LR
                 // std::cout << "exx_alpha=" << exx_alpha << std::endl; // the default value of exx_alpha is 0.25 when dft_functional is pbe or hse
                 hamilt::Operator<T>* lr_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell_in, psi_ks_in,
                     this->DM_trans, exx_lri_in, kv_in, pX_in[0], pc_in, pmat_in,
-                    xc_kernel == "hf" ? 1.0 : exx_alpha, //alpha
                     aims_nbasis);
                 this->ops->add(lr_exx);
             }

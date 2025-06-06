@@ -255,10 +255,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
-        const double coeff = (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Cam
-                              || GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Ccp)
-                                 ? 1.0
-                                 : GlobalC::exx_info.info_global.hybrid_alpha;
         // add exx
         // Peize Lin add 2016-12-03
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
@@ -273,7 +269,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
                 }
             }
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
-            this->exx_ptr->Eexx /= coeff;
         }
         elec.set_exx(this->get_Eexx());
     }

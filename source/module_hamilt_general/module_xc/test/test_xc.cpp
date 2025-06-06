@@ -830,7 +830,7 @@ class XCTest_PBE0 : public XCTest
         void SetUp()
         {
             XC_Functional::set_xc_type("PBE0");
-            XC_Functional::set_hybrid_alpha(0.5, 0.0);
+            XC_Functional::set_hybrid_param(0.5, 0.0);
             std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
             std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
 

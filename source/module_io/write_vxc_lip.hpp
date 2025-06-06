@@ -192,8 +192,7 @@ namespace ModuleIO
 				{
 					for (int m = 0; m < naos; ++m) 
 					{
-						vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha 
-							* exx_lip.get_exx_matrix()[ik][m][n];
+						vexx_k_ao[n * naos + m] += exx_lip.get_exx_matrix()[ik][m][n];
 					}
 				}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
@@ -202,7 +201,7 @@ namespace ModuleIO
                 // ======test=======    
                 // std::cout << "exx_energy from matrix:" << all_band_energy(ik, nbands, vexx_k_mo, wg) << std::endl;
                 // std::cout << "exx_energy from orbitals: " << all_band_energy(ik, e_orb_exx.at(ik), wg) << std::endl;
-                // std::cout << "exx_energy from exx_lip: " << GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_energy() << std::endl;
+                // std::cout << "exx_energy from exx_lip: " << exx_lip.get_exx_energy() << std::endl;
                 // ======test=======
                 container::BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
             }
@@ -251,7 +250,7 @@ namespace ModuleIO
 //                 exx_by_orb += all_band_energy(ik, e_orb_exx[ik], wg);
 //             exx_by_orb /= 2;
 //             std::cout << "exx all-bands energy by orbital =" << exx_by_orb << std::endl;
-//             FPTYPE exx_from_lip = GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_energy();
+//             FPTYPE exx_from_lip = exx_lip.get_exx_energy();
 //             std::cout << "exx all-bands energy from exx_lip =" << exx_from_lip << std::endl;
 //         }
 // #endif

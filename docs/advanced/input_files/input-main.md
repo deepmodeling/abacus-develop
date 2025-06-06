@@ -2729,21 +2729,20 @@ Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under ac
 |lrc_wpbe|1|-1|0.3|
 |lrc_wpbeh|1|-0.8|0.2|
 |pbe0|0.25|0|0|
-|hse([exx_use_ewald](#exx_use_ewald)=0)|0.25|0|0.11|
-|hse([exx_use_ewald](#exx_use_ewald)=1)|0.0|0.25|0.11|
+|hse|0.0|0.25|0.11|
 |scan0|0.25|0|0|
 |cam_pbeh|0.2|0.8|0.7|
 
 ### exx_hybrid_alpha
 
 - **Type**: Real
-- **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
+- **Description**: fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
 - **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_hybrid_beta
 
 - **Type**: Real
-- **Description**: another fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
+- **Description**: fraction of Fock exchange in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
 - **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_hse_omega

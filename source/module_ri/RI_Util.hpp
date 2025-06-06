@@ -64,14 +64,14 @@ get_Born_von_Karmen_cells( const std::array<Tcell,Ndim> &Born_von_Karman_period 
 
 inline std::map<std::string, double> get_ccp_parameter(const Exx_Info::Exx_Info_RI& info,
                                                        const UnitCell& ucell,
-                                                       const K_Vectors* p_kv)
+                                                       const K_Vectors* p_kv,
+                                                       const int nspin0)
 {
     double hf_Rcut;
     switch (info.Rcut_type)
     {
     case 0: {
         // 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
-        const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
         hf_Rcut = std::pow(0.75 * p_kv->get_nkstot_full() / nspin0 * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
         break;
     }
@@ -92,15 +92,12 @@ inline std::map<std::string, double> get_ccp_parameter(const Exx_Info::Exx_Info_
     switch (info.ccp_type)
     {
     case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
-        return {};
+        return {{"hybrid_alpha", info.hybrid_alpha}};
     case Conv_Coulomb_Pot_K::Ccp_Type::Hf: {
-        return {{"Rcut_type", info.Rcut_type}, {"hf_Rcut", hf_Rcut}};
+        return {{"Rcut_type", info.Rcut_type}, {"hf_Rcut", hf_Rcut},{"hybrid_alpha", info.hybrid_alpha}};
     }
     case Conv_Coulomb_Pot_K::Ccp_Type::Erfc:
-        return {{"hse_omega", info.hse_omega}};
-    case Conv_Coulomb_Pot_K::Ccp_Type::Erf: {
-        return {{"hse_omega", info.hse_omega}, {"Rcut_type", 0}, {"hf_Rcut", hf_Rcut}};
-    }
+        return {{"hse_omega", info.hse_omega},{"hybrid_beta", info.hybrid_beta}};
     case Conv_Coulomb_Pot_K::Ccp_Type::Cam: { // Rcut_type = 1 is not supported (jiyy)
         return {{"hse_omega", info.hse_omega},
                 {"hybrid_alpha", info.hybrid_alpha},

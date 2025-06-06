@@ -47,7 +47,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
-	const std::map<std::string,double> ccp_parameter = RI_Util::get_ccp_parameter(this->info, ucell, this->p_kv);
+    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+	const std::map<std::string,double> ccp_parameter = RI_Util::get_ccp_parameter(this->info, ucell, this->p_kv, nspin0);
 	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, ccp_parameter, this->info.ccp_rmesh_times);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -69,12 +70,12 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                           true,
                           true);
 
-    if (this->info_ewald.use_ewald) {
+    if (this->info.use_ewald) {
         if (this->info.hybrid_beta) {
             this->abfs_ccp_sr = Conv_Coulomb_Pot_K::cal_orbs_ccp(
                 this->abfs,
                 Conv_Coulomb_Pot_K::Ccp_Type::Erfc,
-                {{"hse_omega", this->info.hse_omega}},
+                {{"hse_omega", this->info.hse_omega},{"hybrid_beta", info.hybrid_beta}},
                 this->info.ccp_rmesh_times);
             this->sr_cv.set_orbitals(ucell, orb,
                                      this->lcaos,
@@ -90,7 +91,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                        this->p_kv,
                        this->lcaos,
                        this->abfs,
-                       get_ccp_parameter(),
+                       ccp_parameter,
                        this->MGT);
     }
 
@@ -144,9 +145,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
             Vs_sr = this->sr_cv.cal_Vs(ucell, list_As_Vs.first,
                                        list_As_Vs.second[0],
                                        {{"writable_Vws", true}});
-            Vs_sr = LRI_CV_Tools::mul2(
-                RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta),
-                Vs_sr);
             this->sr_cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_sr);
         }
         this->evq.init_ions(ucell, period_Vs);
@@ -154,9 +152,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
         double chi = this->evq.get_singular_chi(ucell, this->info.fq_type, 2.0);
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full
             = this->evq.cal_Vs(ucell, chi, Vs);
-        Vs_full = LRI_CV_Tools::mul2(
-            RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha),
-            Vs_full);
         Vs = this->info.hybrid_beta ? LRI_CV_Tools::minus(Vs_full, Vs_sr)
                                  : Vs_full;
     }
@@ -180,17 +175,10 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell, const bool write_cv)
                                              list_As_Vs.first,
                                              list_As_Vs.second[0],
                                              {{"writable_dVws", true}});
-                dVs_sr = LRI_CV_Tools::mul2(
-                    RI::Global_Func::convert<Tdata>(-this->info.hybrid_beta),
-                    dVs_sr);
                 this->sr_cv.dVws = LRI_CV_Tools::get_dCVws(ucell, dVs_sr);
             }
             // const double chi = 1.0 / this->lambda;
             // dVs = this->evq.cal_dVs(chi, dVs);
-            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
-                dVs_full = LRI_CV_Tools::mul2(
-                    RI::Global_Func::convert<Tdata>(this->info.hybrid_alpha),
-                    dVs);
             dVs = this->info.hybrid_beta ? LRI_CV_Tools::minus(dVs_full, dVs_sr)
                                       : dVs_full;
         }

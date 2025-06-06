@@ -138,7 +138,6 @@ void RI_2D_Comm::add_Hexx(
     const UnitCell &ucell,
 	const K_Vectors &kv,
 	const int ik,
-	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
     const Parallel_Orbitals& pv,
     TK* hk)
@@ -158,8 +157,7 @@ void RI_2D_Comm::add_Hexx(
 			{
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
-				const std::complex<double> frac = alpha
-					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
+				const std::complex<double> frac = std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{
@@ -247,7 +245,6 @@ int RI_2D_Comm::get_iwt(const UnitCell& ucell,
 template<typename Tdata, typename TR>
 void RI_2D_Comm::add_HexxR(
     const int current_spin,
-    const double alpha,
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
     const Parallel_Orbitals& pv,
     const int npol,
@@ -275,7 +272,7 @@ void RI_2D_Comm::add_HexxR(
                 hamilt::BaseMatrix<TR>* HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
                 auto row_indexes = pv.get_indexes_row(iat0);
                 auto col_indexes = pv.get_indexes_col(iat1);
-                const RI::Tensor<Tdata>& HexxR = (Tdata)alpha * Hs_tmpB.second;
+                const RI::Tensor<Tdata>& HexxR = Hs_tmpB.second;
                 for (int lw0_b = 0;lw0_b < row_indexes.size();lw0_b += npol)    // block
                 {
                     const int& gw0 = row_indexes[lw0_b] / npol;

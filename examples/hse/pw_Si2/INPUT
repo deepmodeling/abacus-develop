@@ -26,7 +26,7 @@ pseudo_rcut            10
 # out_wfc_pw 1
 # out_chg 1
 
-exx_hybrid_alpha        0.25
+exx_hybrid_beta        0.25
 
 cal_stress 1
 # cal_force 1

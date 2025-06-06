@@ -64,7 +64,8 @@ namespace RI_Util
 	std::map<std::string,double> get_ccp_parameter(
 		const Exx_Info::Exx_Info_RI &info,
 		const UnitCell &ucell,
-		const K_Vectors *p_kv);
+		const K_Vectors *p_kv,
+		const int nspin0);
 }
 
 #include "RI_Util.hpp"

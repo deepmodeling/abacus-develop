@@ -47,14 +47,12 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
         const UnitCell& ucell,
         const K_Vectors& kv,
         const int ik,
-        const double alpha,
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
         TK* hk);
 
 template <typename Tdata, typename TR>
 extern void add_HexxR(const int current_spin,
-                      const double alpha,
                       const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
                       const Parallel_Orbitals& pv,
                       const int npol,

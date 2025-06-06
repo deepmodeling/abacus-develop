@@ -157,8 +157,8 @@ const double sparse_thr=1e-10)
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             GlobalC::exx_info.info_ri.real_number ?
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, *Hexxd, *pv, ucell.get_npol(), vxcs_R_ao[is], &cell_nearest) :
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, *Hexxc, *pv, ucell.get_npol(), vxcs_R_ao[is], &cell_nearest);
+                RI_2D_Comm::add_HexxR(is, *Hexxd, *pv, ucell.get_npol(), vxcs_R_ao[is], &cell_nearest) :
+                RI_2D_Comm::add_HexxR(is, *Hexxc, *pv, ucell.get_npol(), vxcs_R_ao[is], &cell_nearest);
         }
 #endif
     }

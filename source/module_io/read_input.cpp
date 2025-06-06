@@ -390,7 +390,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
         {
             ofs << "\n#Parameters (14.vdW Correction)" << std::endl;
         }
-        else if (p_item->label == "exx_hybrid_alpha")
+        else if (p_item->label == "exx_hybrid_alpha" || p_item->label == "exx_hybrid_beta" )
         {
             ofs << "\n#Parameters (15.exx)" << std::endl;
         }
