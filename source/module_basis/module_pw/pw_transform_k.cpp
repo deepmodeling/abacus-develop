@@ -518,6 +518,7 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
+    
     set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
                                                          this->ig2ixyz_k + startig,
                                                          in,

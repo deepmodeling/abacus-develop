@@ -813,6 +813,7 @@ void ReadInput::item_system()
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             // cpu single precision is not supported while float_fftw lib is not available
+            
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
 #ifndef __ENABLE_FLOAT_FFTW

@@ -196,7 +196,7 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>,
+using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
                                     TypePair<double, base_device::DEVICE_GPU> >;
 
 TYPED_TEST_CASE(PW_BASIS_K_GPU_TEST, MixedTypes);
@@ -239,20 +239,19 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble)
     ModulePW::PW_Basis_K pwtest;
     pwtest.set_device("gpu");
     pwtest.set_precision("mixing");
-    // if (typeid(T) == typeid(float))
-    // {
-    //     pwtest.fft_bundle.setfft("gpu", "single");
-    // }
-    // if (typeid(T) == typeid(double))
-    // {
-    std::cout << "Using double precision" << std::endl;
+    if (typeid(T) == typeid(float))
+    {
+        pwtest.fft_bundle.setfft("gpu", "single");
+    }
+    else if (typeid(T) == typeid(double))
+    {
         pwtest.fft_bundle.setfft("gpu", "double");
-    // }
-    // else
-    // {
-    //     cout << "Error: Unsupported type" << endl;
-    //     return;
-    // }
+    }
+    else
+    {
+        cout << "Error: Unsupported type" << endl;
+        return;
+    }
     this->init(pwtest);
     int startiz = pwtest.startz_current;
     const int nx = pwtest.nx;
@@ -288,9 +287,8 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, convulution)
     {
         pwtest.fft_bundle.setfft("gpu", "single");
     }
-    if (typeid(T) == typeid(double))
+    else if (typeid(T) == typeid(double))
     {
-    std::cout << "Using double precision" << std::endl;
         pwtest.fft_bundle.setfft("gpu", "double");
     }
     else
