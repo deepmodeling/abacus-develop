@@ -1889,13 +1889,6 @@ These variables are used to control the output of properties.
 - **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: False
 
-### out_mul
-
-- **Type**: Boolean
-- **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
-- **Default**: False
-
 ### out_app_flag
 
 - **Type**: Boolean
@@ -1913,7 +1906,7 @@ These variables are used to control the output of properties.
 ### out_interval
 
 - **Type**: Integer
-- **Description**: Control the interval for printing charge density, local potential, electrostatic potential, Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $\psi(k)$ matrices during molecular dynamics calculations. Check input parameters [out_chg](#out_chg), [out_pot](#out_pot), [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
+- **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
 - **Default**: 1
 
 ### out_element_info
