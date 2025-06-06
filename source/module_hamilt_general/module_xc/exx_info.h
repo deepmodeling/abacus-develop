@@ -46,7 +46,7 @@ struct Exx_Info
         bool real_number = false;
         int Rcut_type = 1;
         Singular_Value::Fq_type fq_type;
-        bool use_ewald - false;
+        bool use_ewald = false;
 
         double pca_threshold = 0;
         std::vector<std::string> files_abfs;
