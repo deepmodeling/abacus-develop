@@ -49,8 +49,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 				this->ld,
 #endif
 #ifdef __EXX
-				this->exd,
-				this->exc,
+				*this->exd,
+				*this->exc,
 #endif
 				istep);
     }

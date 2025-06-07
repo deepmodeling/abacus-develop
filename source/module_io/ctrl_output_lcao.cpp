@@ -17,9 +17,12 @@
 #include "module_io/berryphase.h" // use berryphase
 #include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
 #include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
+#endif
 #ifdef __EXX
-//#include "module_io/restart_exx_csr.h" 
-#include "module_ri/Exx_LRI_interface.h"
+#include "module_ri/Exx_LRI_interface.h" // use EXX codes
 #include "module_ri/RPA_LRI.h" // use RPA code
 #endif
 #include "module_rdmft/rdmft.h" // use RDMFT codes
@@ -140,7 +143,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 			pelec->ekb,
 			kv.kvec_d,
 			ucell,
-			orb_,
+			orb,
 			gd,
 			&pv,
 			*psi,
@@ -329,11 +332,11 @@ void ctrl_output_lcao(UnitCell& ucell,
                 + "HexxR" + std::to_string(GlobalV::MY_RANK);
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exd->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exd.get_Hexxs());
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exc->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exc.get_Hexxs());
             }
         }
     }
@@ -348,8 +351,8 @@ void ctrl_output_lcao(UnitCell& ucell,
                                        MPI_COMM_WORLD,
                                        ucell,
                                        kv,
-                                       orb_);
-        rpa_lri_double.init(MPI_COMM_WORLD, kv, orb_.cutoffs());
+                                       orb);
+        rpa_lri_double.init(MPI_COMM_WORLD, kv, orb.cutoffs());
         rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
     }
 #endif
