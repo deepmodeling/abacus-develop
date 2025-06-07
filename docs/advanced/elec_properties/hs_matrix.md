@@ -47,10 +47,10 @@ The CSR format stores a sparse m × n matrix M in row form using three (one-dime
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_interval](../input_files/input-main.md#out_interval) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 
-## get_S
-We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_S`.
+## get_s
+We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_s`.
 
-A file named `SR.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in the working directory, which contains the overlap matrix.
 
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
 These numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), and magnetic quantum number $m$. 
@@ -60,9 +60,9 @@ When `nspin` is set to 4, the dimension of the overlap matrix is (2 $\times$ nlo
 ## examples
 We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/matrix_hs) of outputting the matrices. There are four examples:
 
-- out_hs2_multik : writing H(R) and S(R) for multi-k calculation
-- out_hs_gammaonly : writing H(k) and S(k) for gamma-only calculation
-- out_hs_multik : writing H(k) and S(k) for multi-k calculation
-- out_s_multik : running get_S for multi-k calculation
+- out_hs_gammaonly: writing H(k) and S(k) for gamma-only calculation
+- out_hs_multik: writing H(k) and S(k) for multi-k calculation
+- out_hs2_multik: writing H(R) and S(R) for multi-k calculation
+- out_s_multik: running calculation=get_s to obtain overlap matrix for multi-k calculation
 
 Reference output files are provided in each directory.

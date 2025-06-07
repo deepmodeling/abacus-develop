@@ -10,7 +10,7 @@ void ReadInput::item_output()
         Input_Item item("out_stru");
         item.annotation = "output the structure files after each ion step";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
+            const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
             if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
                 para.input.out_stru = false;

@@ -198,9 +198,9 @@ fi
 # Overlap matrix
 # echo $get_s
 #-------------------------------
-if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
-	sref=refSR.csr
-	scal=OUT.autotest/SR.csr
+if ! test -z "$get_s"  && [  $get_s == "get_s" ]; then
+	sref=sr_nao.csr.ref
+	scal=OUT.autotest/sr_nao.csr
 	python3 $COMPARE_SCRIPT $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi

@@ -190,11 +190,11 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao")
     {
-        if (PARAM.inp.calculation == "get_S")
+        if (PARAM.inp.calculation == "get_s")
         {
             if (PARAM.globalv.gamma_only_local)
             {
-                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
+                ModuleBase::WARNING_QUIT("ESolver", "get_s is not implemented for gamma_only");
             }
             else
             {
