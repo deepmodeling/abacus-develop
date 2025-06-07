@@ -1,0 +1,45 @@
+name: Version Check
+on:
+  release:
+    types: [published]
+
+jobs:
+  validate_version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch complete git history for version comparison
+
+      # Extract last two tags for version comparison
+      - name: Get version history
+        id: versions
+        run: |
+          # Get previous tag (skip current tag)
+          PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))
+          # Current tag being published (extracted from GITHUB_REF)
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          echo "prev_tag=${PREV_TAG}" >> $GITHUB_OUTPUT
+          echo "current_tag=${CURRENT_TAG}" >> $GITHUB_OUTPUT
+
+      # Validate version.h matches the release tag
+      - name: Assert version increment
+        run: |
+          CODE_VERSION=$(grep -oP '#define\s+VERSION\s+"\K\d+(\.\d+){2,3}' source/version.h)
+
+          if [[ -z "$CODE_VERSION" ]]; then
+            echo "::error::Failed to extract version from source/version.h"
+            exit 1
+          fi
+
+          # Verify that the version in version.h matches the tag
+          if [[ "${{ steps.versions.outputs.current_tag }}" != "v${CODE_VERSION}" ]]; then
+            echo "::error::Version mismatch: tag=${{ steps.versions.outputs.current_tag }} ≠ code=${CODE_VERSION}"
+            exit 1
+          fi
+
+          # Ensure the version has been incremented
+          if [[ "${{ steps.versions.outputs.prev_tag}}" == "${{ steps.versions.outputs.current_tag }}" ]]; then
+            echo "::error::Version unchanged: ${{ steps.versions.outputs.current_tag }}"
+            exit 1
+          fi
