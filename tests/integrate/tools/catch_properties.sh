@@ -138,7 +138,7 @@ fi
 # echo $total_charge
 #-------------------------------
 if ! test -z "$has_dos"  && [  $has_dos == 1 ]; then
-	total_dos=`cat OUT.autotest/DOS1_smear.dat | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/dos1_smear.txt | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
 

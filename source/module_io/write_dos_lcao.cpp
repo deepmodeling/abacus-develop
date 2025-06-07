@@ -45,9 +45,9 @@ void write_dos_lcao(
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
+        ss << PARAM.globalv.global_out_dir << "dos" << is + 1 << ".txt";
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
+        ss1 << PARAM.globalv.global_out_dir << "dos" << is + 1 << "_smear.txt";
 
 		ModuleIO::cal_dos(is,
 				ss.str(),
