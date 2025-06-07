@@ -1,8 +1,8 @@
 # Extracting Hamiltonian and Overlap Matrices
 
-In ABACUS, we provide the option to write the Hamiltonian and Overlap matrices to files after SCF calculation.
+In ABACUS, we provide the option to write the Hamiltonian and Overlap matrices to files after SCF calculations.
 
-For periodic systems, there are two ways to represent the matrices, the first is to write the entire square matrices for each k point, namely $H(k)$ and $S(k)$; the second is the R space representation, $H(R)$ and $S(R)$, where R is the lattice vector. The two representations are connected by Fourier transform: 
+For periodic systems, there are two ways to construct the matrices, the first is to write the entire square matrices for each $k$ point in the Brillouin zone, namely $H(k)$ and $S(k)$; the second one is the real space representation, $H(R)$ and $S(R)$, where R is the Bravis lattice vector. The two representations are connected by Fourier transform:
 
 - $H(k)=\sum_R H(R)e^{-ikR}$
 
@@ -12,18 +12,9 @@ and
 
 ## out_mat_hs
 
-Users can set the keyword [out_mat_hs](../input_files/input-main.md#out_mat_hs) to true for outputting the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. It is available for both gamma_only and multi-k calculations. 
+Users can set the keyword [out_mat_hs](../input_files/input-main.md#out_mat_hs) to true to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. It is available for both gamma_only and multi-k calculations. 
 
-The files are named `data-$k-H` and `data-$k-S`, where `$k` is a composite index consisting of the k point index as well as the spin index. The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
-
-For nspin = 1 and nspin = 4 calculations, there will be only one spin component, so `$k` runs from 0 up to `$nkpoints-1`. For nspin = 2, `$k` runs from `2*$nkpoints-1`. In the latter case, the files are arranged into blocks of up and down spins. For example, if there are 3 k points, then we have the following correspondence:
-
-  - data-0-H : 1st k point, spin up
-  - data-1-H : 2nd k point, spin up
-  - data-2-H : 3rd k point, spin up
-  - data-3-H : 1st k point, spin down
-  - data-4-H : 2nd k point, spin down
-  - data-5-H : 3rd k point, spin down
+The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basis, and the corresponding sequence of the numerical atomic orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
@@ -33,11 +24,9 @@ The rest of the file contains the upper triangular part of the specified matrice
 
 ## out_mat_hs2
 
-The output of R-space matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
+The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
 
 For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `hrs1_nao.csr` and `sr_nao.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `hrs1_nao.csr` and `hrs2_nao.csr` and `sr_nao.csr` are created, where the first two files correspodn to $H(R)$ for spin up and spin down, respectively.
-
-As for molecular dynamics calculations, the format is controlled by [out_interval](../input_files/input-main.md#out_interval) and [out_app_flag](../input_files/input-main.md#out_app_flag) in the same manner as the position matrix as detailed in [out_mat_r](../input_files/input-main.md#out_mat_r).
 
 Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
 
@@ -55,6 +44,8 @@ The CSR format stores a sparse m × n matrix M in row form using three (one-dime
 
   - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
   - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
+
+For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_interval](../input_files/input-main.md#out_interval) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 
 ## get_S
 We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_S`.
