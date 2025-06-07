@@ -58,8 +58,8 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
     // write HR_serial to ofs
     const double sparse_threshold = 1e-10;
     const int precision = 8;
-    hamilt::Output_HContainer<double> out_dm(dm_serial, ofs, sparse_threshold, precision);
-    out_dm.write();
+    hamilt::Output_HContainer<double> out_dmr(dm_serial, ofs, sparse_threshold, precision);
+    out_dmr.write();
     ofs.close();
 }
 

@@ -297,7 +297,7 @@ void ReadInput::item_elec_stru()
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(input.pw_diag_thr);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_S" && para.input.basis_type == "pw")
+            if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
             {
                 if (para.input.pw_diag_thr > 1.0e-3)
                 {

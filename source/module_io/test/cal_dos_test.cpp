@@ -28,7 +28,7 @@ protected:
 
 TEST_F(DosTest,Dos)
 {
-	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	//is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
 	DosPrepare dosp = DosPrepare(0,"DOS1.dat","DOS1_smear.dat",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
@@ -36,7 +36,6 @@ TEST_F(DosTest,Dos)
 	EXPECT_EQ(dosp.is,0);
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
-			dosp.fa1,
 			dosp.de_ev,
 			dosp.emax_ev,
 			dosp.emin_ev,
@@ -76,7 +75,7 @@ TEST_F(DosTest,Dos)
 
 TEST_F(DosTest,DosW1)
 {
-	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	//is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
 	DosPrepare dosp = DosPrepare(0,"DOS1.dat","DOS1_smear.dat",-0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
@@ -86,7 +85,6 @@ TEST_F(DosTest,DosW1)
 	GlobalV::ofs_warning.open("warning1.log");
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
-			dosp.fa1,
 			dosp.de_ev,
 			dosp.emax_ev,
 			dosp.emin_ev,
@@ -118,7 +116,7 @@ TEST_F(DosTest,DosW1)
 
 TEST_F(DosTest,DosW2)
 {
-    //is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+    //is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
 	DosPrepare dosp = DosPrepare(0,"DOS1.dat","DOS1_smear.dat",0.005,-6,18,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
@@ -127,7 +125,6 @@ TEST_F(DosTest,DosW2)
 	GlobalV::ofs_warning.open("warning2.log");
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
-			dosp.fa1,
 			dosp.de_ev,
 			dosp.emax_ev,
 			dosp.emin_ev,

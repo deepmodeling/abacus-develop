@@ -59,23 +59,24 @@ void Driver::driver_run()
     Json::gen_stru_wrapper(&ucell);
 #endif
 
-    const std::string cal_type = PARAM.inp.calculation;
+    const std::string cal = PARAM.inp.calculation;
 
     //! 4: different types of calculations
-    if (cal_type == "md")
+    if (cal == "md")
     {
         Run_MD::md_line(ucell, p_esolver, PARAM);
     }
-    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax" || cal_type == "nscf")
+    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver, ucell);
     }
-    else if (cal_type == "get_S")
+    else if (cal == "get_s")
     {
         p_esolver->runner(ucell, 0);
     }
-    else
+    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || 
+             cal == "test_memory" || cal == "test_neighbour")
     {
         //! supported "other" functions:
         //! get_pchg(LCAO),
@@ -84,6 +85,10 @@ void Driver::driver_run()
         //! gen_bessel(PW), et al.
         const int istep = 0;
         p_esolver->others(ucell, istep);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Driver::driver_run","cannot recognize the 'calculation' command");
     }
 
     //! 5: clean up esolver

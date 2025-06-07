@@ -1,11 +1,11 @@
 INPUT_PARAMETERS
 suffix 			autotest
 pseudo_dir 		../../PP_ORB
-orbital_dir 		../../PP_ORB
+orbital_dir 	../../PP_ORB
 #ecutwfc 		100 
-smearing_method  fixed
+smearing_method fixed
 ecutwfc 		10
 scf_thr 		1e-6 
 basis_type 		lcao
-calculation 		get_S 
-out_mat_ds  1
+calculation     get_s
+out_mat_ds      1
