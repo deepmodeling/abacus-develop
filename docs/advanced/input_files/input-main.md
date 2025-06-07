@@ -1710,7 +1710,9 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
   - 0: no output
-  - 1: output the density of states (DOS)
+  - 1: output the density of states (DOS) 
+    - nspin=1 or 4: `dos1.txt` and `dos1_smear.txt` with the latter one with smearing effect 
+    - nspin=2: `dos1.txt` and `dos2.txt` for two spin channles. In addition, `dos1_smear.txt` and `dos2_smear.txt` for data with the smearing effect.
   - 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
   - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen 
 - **Default**: 0
