@@ -68,7 +68,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	//------------------------------------------------------------------
 	//! 1) Output density matrix DM(R)
 	//------------------------------------------------------------------
-    if(PARAM.inp.out_dm1)
+    if(PARAM.inp.out_dmr)
 	{
 		const auto& dmr_vector = pelec->get_DM()->get_DMR_vector();
 		ModuleIO::write_dmr(dmr_vector, pv,	out_app_flag,
@@ -78,7 +78,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	//------------------------------------------------------------------
 	//! 2) Output density matrix DM(k)
 	//------------------------------------------------------------------
-	if (PARAM.inp.out_dm)
+	if (PARAM.inp.out_dmk)
 	{
 		std::vector<double> efermis(nspin == 2 ? 2 : 1);
 		for (int ispin = 0; ispin < efermis.size(); ispin++)

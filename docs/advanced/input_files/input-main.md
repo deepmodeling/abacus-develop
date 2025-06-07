@@ -133,8 +133,8 @@
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
-    - [out\_dm](#out_dm)
-    - [out\_dm1](#out_dm1)
+    - [out\_dm](#out_dmk)
+    - [out\_dm1](#out_dmr)
     - [out\_wfc\_pw](#out_wfc_pw)
     - [out\_wfc\_lcao](#out_wfc_lcao)
     - [out\_dos](#out_dos)
@@ -1649,7 +1649,7 @@ These variables are used to control the output of properties.
 - **Default**: 0
 - **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
-### out_dm
+### out_dmk
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
@@ -1661,9 +1661,9 @@ These variables are used to control the output of properties.
     - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
     - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
-- **Note**: In the 3.10-LTS version, the file names are SPIN1_DM and SPIN2_DM, etc.
+- **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
-### out_dm1
+### out_dmr
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (multi-k points)
@@ -1671,7 +1671,7 @@ These variables are used to control the output of properties.
   - nspin = 1: `dmrs1_nao.csr`;
   - nspin = 2: `dmrs1_nao.csr` and `dmrs2_nao.csr` for the two spin channels.
 - **Default**: False
-- **Note**: In the 3.10-LTS version, the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
+- **Note**: In the 3.10-LTS version, the parameter is named `out_dm1`, and the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.
 
 ### out_wfc_pw
 
