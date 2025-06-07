@@ -5,6 +5,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "module_hamilt_general/hamilt.h" // use Hamilt<T>  
 
+// functions
+#include "module_io/write_dos_lcao.h" // use ModuleIO::write_dos_lcao() 
 #include "module_io/write_dmr.h" // use ModuleIO::write_dmr() 
 #include "module_io/io_dmk.h" // use ModuleIO::write_dmk()
 #include "module_io/write_HS.h" // use ModuleIO::write_hsk()
@@ -64,6 +66,28 @@ void ctrl_output_lcao(UnitCell& ucell,
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int nspin = PARAM.inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
+
+	//------------------------------------------------------------------
+    // print out density of states (DOS)
+	//------------------------------------------------------------------
+    if (PARAM.inp.out_dos)
+    {
+        ModuleIO::write_dos_lcao(psi,
+                p_hamilt,
+                pv,
+                ucell,
+                kv,
+                PARAM.inp.nbands,
+                pelec->eferm,
+                pelec->ekb,
+                pelec->wg,
+                PARAM.inp.dos_edelta_ev,
+                PARAM.inp.dos_scale,
+                PARAM.inp.dos_sigma,
+                out_app_flag,
+                istep,
+                GlobalV::ofs_running);
+    }
 
 	//------------------------------------------------------------------
 	//! 1) Output density matrix DM(R)
