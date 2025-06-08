@@ -13,7 +13,7 @@ scf_thr                         1.0e-7  // about iteration
 scf_nmax			100
 #Parameters (File)
 gamma_only			1
-out_dm                         1
+out_dmk                         1
 
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
