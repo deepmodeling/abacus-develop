@@ -535,7 +535,7 @@ struct Input_para
     std::string exx_real_number = "default";          ///< exx calculated in real or complex
     double exx_pca_threshold = 0.0001;          ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;            ///< threshold to screen C matrix in exx
-    double exx_v_threshold = 0.1;               ///< threshold to screen C matrix in exx
+    double exx_v_threshold = 0.1;               ///< threshold to screen V matrix in exx
     double exx_dm_threshold = 0.0001;           ///< threshold to screen density matrix in exx
     double exx_schwarz_threshold = 0;           ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_cauchy_threshold = 1e-07;        ///< threshold to screen exx using Cauchy-Schwartz inequality
