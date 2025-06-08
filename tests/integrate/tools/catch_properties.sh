@@ -96,7 +96,7 @@ fi
 # total energy information
 #----------------------------
 if [ $calculation != "get_wf" ]\
-&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_s" ]\
 && [ $is_lr == 0 ]; then
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
     #echo "etot = $etot"
