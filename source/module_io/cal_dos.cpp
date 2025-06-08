@@ -224,10 +224,16 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
         }
 
+        // mohan add 2025-06-08
+        const double dos_thr = 1.0e-12; 
         double sum2 = 0.0;
 
         for (int i = 0; i < dos.size(); i++)
         {
+            if(dos_smear[i]<dos_thr)
+            {
+                 dos_smear[i]=0.0;
+            }
             sum2 += dos_smear[i] * de_ev;
 
             ofs_dos << std::setw(15) << ene[i] 
