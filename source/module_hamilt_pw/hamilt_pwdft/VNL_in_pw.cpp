@@ -271,7 +271,13 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_sh_op()(s_tab, this->tab.getSize());
             resmem_ch_op()(c_vkb, nkb * npwx);
         }
+        #ifdef __DSP
+        base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()
+        (this->z_vkb, this->vkb.size, "Nonlocal<PW>::ps");
+        memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
+        #else
         this->z_vkb = this->vkb.c;
+        #endif
         this->d_tab = this->tab.ptr;
         // There's no need to delete double precision pointers while in a CPU environment.
     }

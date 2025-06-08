@@ -65,46 +65,31 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
 
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const Parallel_2D& paraV,
-               const bool out_csr,
-               const bool out_npz,
                const bool append,
                const int* iat2iwt,
-               const int* nat,
+               const int nat,
                const int istep)
 {
-    if (!out_csr && !out_npz)
-    {
-        ModuleBase::WARNING("write_dmr", "the output type of DMR should be npz or csr.");
-        return;
-    }
-
     for (int ispin = 0; ispin < dmr.size(); ispin++)
-    {
-        if (out_csr)
-        {
-            int nbasis = dmr[ispin]->get_nbasis();
-            // gather the parallel matrix to serial matrix
+	{
+		const int nbasis = dmr[ispin]->get_nbasis();
+		// gather the parallel matrix to serial matrix
 #ifdef __MPI
-            Parallel_Orbitals serialV;
-            serialV.init(nbasis, nbasis, nbasis, paraV.comm());
-            serialV.set_serial(nbasis, nbasis);
-            serialV.set_atomic_trace(iat2iwt, *nat, nbasis);
-            hamilt::HContainer<double> dm_serial(&serialV);
-            hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
+		Parallel_Orbitals serialV;
+		serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+		serialV.set_serial(nbasis, nbasis);
+		serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+		hamilt::HContainer<double> dm_serial(&serialV);
+		hamilt::gatherParallels(*dmr[ispin], &dm_serial, 0);
 #else
-            hamilt::HContainer<double> dm_serial(*dmr[ispin]);
+		hamilt::HContainer<double> dm_serial(*dmr[ispin]);
 #endif
-            if (GlobalV::MY_RANK == 0)
-            {
-                std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(1, ispin, append, istep);
-                write_dmr_csr(fname, &dm_serial, istep);
-            }
-        }
-
-        if (out_npz)
-        {
-        }
-    }
+		if (GlobalV::MY_RANK == 0)
+		{
+			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(1, ispin, append, istep);
+			write_dmr_csr(fname, &dm_serial, istep);
+		}
+	}
 }
 
 } // namespace ModuleIO

@@ -812,7 +812,12 @@ void ReadInput::item_system()
                 const std::string warningstr = nofound_str(avail_list, "precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-
+            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
+            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {

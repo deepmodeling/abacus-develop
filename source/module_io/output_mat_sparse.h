@@ -10,7 +10,7 @@
 namespace ModuleIO
 {
 /// @brief the output interface to write the sparse matrix of H, S, T, and r
-template <typename T>
+template <typename T> 
 void output_mat_sparse(const bool& out_mat_hsR,
                        const bool& out_mat_dh,
                        const bool& out_mat_ds,

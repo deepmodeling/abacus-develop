@@ -21,23 +21,23 @@
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
 {
-    ModuleBase::TITLE("Exx_LRI", "write_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
+    ModuleBase::TITLE("Exx_LRI_Interface", "write_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
     std::ofstream ofs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
     cereal::BinaryOutputArchive oar(ofs);
     oar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
 }
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name)
 {
-    ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+    ModuleBase::TITLE("Exx_LRI_Interface", "read_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
     std::ifstream ifs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
     cereal::BinaryInputArchive iar(ifs);
     iar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
 }
 
 template<typename T, typename Tdata>
@@ -70,8 +70,11 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_elec(const std::vector<std::map<TA, st
                                                const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_elec");
-    if(!this->flag_finish.init || !this->flag_finish.ions)
-        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+	if(!this->flag_finish.init || !this->flag_finish.ions)
+	{ 
+		throw std::runtime_error("Exx init unfinished when "
+        +std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+	}
 
     this->exx_ptr->cal_exx_elec(Ds, ucell, pv, p_symrot);
 
@@ -82,10 +85,15 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
-    if(!this->flag_finish.init || !this->flag_finish.ions)
-        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-    if(!this->flag_finish.elec)
-        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+	if(!this->flag_finish.init || !this->flag_finish.ions)
+	{ 
+		throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+	}
+	if(!this->flag_finish.elec)
+	{ 
+		throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)
+        +" line "+std::to_string(__LINE__)); 
+	}
 
     this->exx_ptr->cal_exx_force(nat);
 
@@ -96,10 +104,16 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
-    if(!this->flag_finish.init || !this->flag_finish.ions)
-        { throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
-    if(!this->flag_finish.elec)
-        { throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); }
+	if(!this->flag_finish.init || !this->flag_finish.ions)
+	{ 
+		throw std::runtime_error("Exx init unfinished when "
+				+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+	}
+	if(!this->flag_finish.elec)
+	{ 
+		throw std::runtime_error("Exx Hamiltonian unfinished when "
+				+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+	}
 
     this->exx_ptr->cal_exx_stress(omega, lat0);
 
@@ -107,7 +121,8 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const doub
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, 
+		const UnitCell& ucell, const Parallel_2D& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     // initialize the rotation matrix in AO representation
