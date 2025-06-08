@@ -69,7 +69,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
             this->abfs_ccp_sr = Conv_Coulomb_Pot_K::cal_orbs_ccp(
                 this->abfs,
                 Conv_Coulomb_Pot_K::Ccp_Type::Erfc,
-                {{"hse_omega", this->info.hse_omega},{"hybrid_beta", info.hybrid_beta}},
+                {{"hse_omega", this->info.hse_omega},{"hybrid_beta", -this->info.hybrid_beta}},
                 this->info.ccp_rmesh_times);
             this->sr_cv.set_orbitals(ucell, orb,
                                      this->lcaos,

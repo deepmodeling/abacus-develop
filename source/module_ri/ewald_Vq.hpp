@@ -713,7 +713,7 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
                         for (size_t n1 = 0; n1 != this->g_abfs[it1][l1].size(); ++n1)
                         {
                             const double pB = this->multipole[it1][l1][n1];
-                            Tin_convert pp = RI::Global_Func::convert<Tin_convert>(pA * pB);
+                            Tin_convert frac = RI::Global_Func::convert<Tin_convert>(pA * pB * this->info.hybrid_alpha);
                             for (size_t m0 = 0; m0 != 2 * l0 + 1; ++m0)
                             {
                                 const size_t index0 = this->index_abfs[it0][l0][n0][m0];
@@ -729,7 +729,7 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq(const UnitCell& ucell,
                                                            Vq_dVq_gauss[list_A0_pair_k[i0]][list_A1_pair_k[i1]],
                                                            lm0,
                                                            lm1,
-                                                           pp);
+                                                           frac);
                                 }
                             }
                         }
