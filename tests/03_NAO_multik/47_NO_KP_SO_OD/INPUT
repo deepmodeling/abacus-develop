@@ -24,7 +24,7 @@ cal_stress        1
 #Parameters (LCAO)
 basis_type        lcao
 ks_solver         scalapack_gvx
-out_dm            0
+out_dmk           0
 pw_diag_thr       0.00001
 
 mixing_type       pulay
