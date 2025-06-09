@@ -1,6 +1,6 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 
 #include "deepks_orbital.h"
 #include "module_base/parallel_reduce.h"

@@ -1,5 +1,5 @@
 remove_definitions(-D__LCAO)
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__DMLALGO)
 
 AddTest(
     TARGET Hamilt_Kernels_UTs

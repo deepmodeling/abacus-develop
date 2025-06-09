@@ -1,4 +1,4 @@
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 
 #include "deepks_fpre.h"
 

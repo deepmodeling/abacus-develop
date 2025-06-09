@@ -499,7 +499,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  add_compile_definitions(__DEEPKS)
+  add_compile_definitions(__DMLALGO)
 endif()
 
 if(ENABLE_MLALGO)

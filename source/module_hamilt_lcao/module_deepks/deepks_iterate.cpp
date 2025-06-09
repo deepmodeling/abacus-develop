@@ -1,6 +1,6 @@
 #include <functional>
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 #include "deepks_iterate.h"
 
 void DeePKS_domain::iterate_ad1(const UnitCell& ucell,
