@@ -11,7 +11,7 @@
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
 
 // for DeePKS
-#ifdef __DMLALGO
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
@@ -98,6 +98,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     bool have_force = false;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral
     void set_matrix_grid(Record_adj& ra);
@@ -106,6 +107,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     //---------------------------------------------------------------------
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
     LCAO_Deepks<TK> ld;
 #endif
 >>>>>>> b2aa0ec2b (update __DMLALGO)

@@ -11,8 +11,8 @@
 namespace hamilt
 {
 
-#ifndef __DMLALGOTEMPLATE
-#define __DMLALGOTEMPLATE
+#ifndef __MLALGOTEMPLATE
+#define __MLALGOTEMPLATE
 
 /// The DeePKS class template inherits from class T
 /// it is used to calculate the Deep Potential Kohn-Sham correction from DeePKS method
@@ -42,7 +42,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  elecstate::DensityMatrix<TK, double>* DM_in);
 =======
                                  elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __DMLALGO
+#ifdef __MLALGO
                                  ,
                                  LCAO_Deepks<TK>* ld_in
 #endif
@@ -55,7 +55,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * this function is used for update hR and H_V_delta
      */
     virtual void contributeHR() override;
-#ifdef __DMLALGO
+#ifdef __MLALGO
     /**
      * @brief contribute the DeePKS correction for each k-point to ld.H_V_delta or ld.H_V_delta_k
      * this function is not used for update hK, but for DeePKS module
@@ -79,7 +79,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const TwoCenterIntegrator* intor_orb_alpha_ = nullptr;
     const LCAO_Orbitals* ptr_orb_ = nullptr;
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms

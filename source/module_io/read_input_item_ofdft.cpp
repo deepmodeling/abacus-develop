@@ -10,6 +10,87 @@ void ReadInput::item_ofdft()
     {
         Input_Item item("of_kinetic");
         item.annotation = "kinetic energy functional, such as tf, vw, wt";
+<<<<<<< HEAD
+=======
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+#ifndef __MLALGO
+            if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ML KEDF is not supported.");
+            }
+#endif
+            if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt"
+                && para.input.of_kinetic != "lkt" && para.input.of_kinetic != "tf+" 
+                && para.input.of_kinetic != "ml" && para.input.of_kinetic != "mpn" && para.input.of_kinetic != "cpn5")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, lkt, ml, mpn, or cpn5");
+            }
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            // Set the default parameters for MPN or CPN5 KEDF
+            if (para.input.of_kinetic == "mpn")
+            {
+                para.input.of_kinetic = "ml";
+
+                para.input.of_ml_feg = 3;
+                para.input.of_ml_nkernel = 1;
+                para.input.of_ml_kernel = {1};
+                para.input.of_ml_kernel_scaling = {1.0};
+                para.input.of_ml_yukawa_alpha = {1.0};
+                para.input.of_ml_gamma = false;
+                para.input.of_ml_p = false;
+                para.input.of_ml_q = false;
+                para.input.of_ml_tanhp = true;
+                para.input.of_ml_tanhq = false;
+                para.input.of_ml_chi_p = 0.2;
+                para.input.of_ml_chi_q = 0.1;
+                para.input.of_ml_gammanl = {0};
+                para.input.of_ml_pnl = {0};
+                para.input.of_ml_qnl = {0};
+                para.input.of_ml_xi = {0};
+                para.input.of_ml_tanhxi = {1};
+                para.input.of_ml_tanhxi_nl = {1};
+                para.input.of_ml_tanh_pnl = {0};
+                para.input.of_ml_tanh_qnl = {0};
+                para.input.of_ml_tanhp_nl = {1};
+                para.input.of_ml_tanhq_nl = {0};
+                para.input.of_ml_chi_xi = {1.0};
+                para.input.of_ml_chi_pnl = {0.2};
+                para.input.of_ml_chi_qnl = {0.1};
+            }
+
+            if (para.input.of_kinetic == "cpn5")
+            {
+                para.input.of_kinetic = "ml";
+
+                para.input.of_ml_feg = 3;
+                para.input.of_ml_nkernel = 5;
+                para.input.of_ml_kernel = {1, 1, 1, 1, 1};
+                para.input.of_ml_kernel_scaling = {2.0, 1.5, 1.0, 0.75, 0.5};
+                para.input.of_ml_yukawa_alpha = {1.0, 1.0, 1.0, 1.0, 1.0};
+                para.input.of_ml_gamma = false;
+                para.input.of_ml_p = false;
+                para.input.of_ml_q = false;
+                para.input.of_ml_tanhp = true;
+                para.input.of_ml_tanhq = false;
+                para.input.of_ml_chi_p = 0.2;
+                para.input.of_ml_chi_q = 0.1;
+                para.input.of_ml_gammanl = {0, 0, 0, 0, 0};
+                para.input.of_ml_pnl = {0, 0, 0, 0, 0};
+                para.input.of_ml_qnl = {0, 0, 0, 0, 0};
+                para.input.of_ml_xi = {0, 0, 0, 0, 0};
+                para.input.of_ml_tanhxi = {1, 1, 1, 1, 1};
+                para.input.of_ml_tanhxi_nl = {1, 1, 1, 1, 1};
+                para.input.of_ml_tanh_pnl = {0, 0, 0, 0, 0};
+                para.input.of_ml_tanh_qnl = {0, 0, 0, 0, 0};
+                para.input.of_ml_tanhp_nl = {1, 1, 1, 1, 1};
+                para.input.of_ml_tanhq_nl = {0, 0, 0, 0, 0};
+                para.input.of_ml_chi_xi = {0.6, 0.8, 1.0, 1.5, 3.0};
+                para.input.of_ml_chi_pnl = {0.2, 0.2, 0.2, 0.2, 0.2};
+                para.input.of_ml_chi_qnl = {0.1, 0.1, 0.1, 0.1, 0.1};
+            }
+        };
+>>>>>>> 844346792 (update __MLALGO)
         read_sync_string(input.of_kinetic);
         this->add_item(item);
     }

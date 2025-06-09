@@ -8,7 +8,7 @@
 // One subroutine is contained in the file:
 // 1. cal_e_delta_band : calculates e_delta_bands
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 
 #include "deepks_vdelta.h"
 #include "module_base/global_function.h"

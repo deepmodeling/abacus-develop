@@ -174,9 +174,13 @@ void build_ST_new(ForceStressArrays& fsr,
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv, const int& nks, const LCAO_Orbitals& orb);
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
 template <typename T>
 void DeePKS_init(const UnitCell& ucell,
                  Parallel_Orbitals& pv,

@@ -1,6 +1,6 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 
 #include "deepks_force.h"
 #include "module_base/constants.h"

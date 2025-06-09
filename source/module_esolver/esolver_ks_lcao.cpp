@@ -48,7 +48,7 @@
 #include "module_ri/RPA_LRI.h"
 #endif
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
@@ -226,7 +226,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 11) initialize deepks
 =======
     // 12) initialize deepks
-#ifdef __DMLALGO
+#ifdef __MLALGO
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
 >>>>>>> b2aa0ec2b (update __DMLALGO)
     if (PARAM.inp.deepks_scf)
@@ -331,8 +331,12 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->pw_rho,
                        this->solvent,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
                        this->ld,
 #endif
 >>>>>>> b2aa0ec2b (update __DMLALGO)
@@ -692,7 +696,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         GlobalC::dftu.cal_slater_UJ(ucell, this->pelec->charge->rho, this->pw_rho->nrxx);
     }
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
     GlobalC::ld.set_hr_cal(true);
 
@@ -858,8 +862,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 #ifdef __DEEPKS
 =======
     // 2) for deepks, calculate delta_e
+<<<<<<< HEAD
 #ifdef __DMLALGO
 >>>>>>> b2aa0ec2b (update __DMLALGO)
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
     if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<TK>>& dm

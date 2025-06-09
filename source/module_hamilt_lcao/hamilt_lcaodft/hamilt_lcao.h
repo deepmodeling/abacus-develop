@@ -16,7 +16,7 @@
 <<<<<<< HEAD
 =======
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
@@ -49,8 +49,12 @@ class HamiltLCAO : public Hamilt<TK>
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
                ,
                LCAO_Deepks<TK>* ld_in
 #endif
@@ -113,7 +117,7 @@ class HamiltLCAO : public Hamilt<TK>
 <<<<<<< HEAD
 =======
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
     /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
     HContainer<TR>*& get_V_delta_R()
     {
@@ -150,8 +154,12 @@ class HamiltLCAO : public Hamilt<TK>
     HContainer<TR>* sR = nullptr;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
     HContainer<TR>* V_delta_R = nullptr;
 #endif
 

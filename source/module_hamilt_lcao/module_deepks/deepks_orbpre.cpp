@@ -1,4 +1,4 @@
-#ifdef __DMLALGO
+#ifdef __MLALGO
 
 /// cal_orbital_precalc : orbital_precalc is used for training with orbital label,
 ///                       which equals gvdm * orbital_pdm,

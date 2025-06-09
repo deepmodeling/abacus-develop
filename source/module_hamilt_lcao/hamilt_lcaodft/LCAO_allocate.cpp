@@ -7,6 +7,7 @@
 namespace LCAO_domain
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv,const int& nks, const LCAO_Orbitals& orb) {
     ModuleBase::TITLE("LCAO_domain", "divide_HS_in_frag");
@@ -17,6 +18,9 @@ void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbit
     // wenfei 2021-12-19
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
 // It seems it is only related to DeePKS, so maybe we should move it to DeeKS_domain
 template <typename T>
 void DeePKS_init(const UnitCell& ucell,

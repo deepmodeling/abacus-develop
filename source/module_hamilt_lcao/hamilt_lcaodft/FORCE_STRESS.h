@@ -50,8 +50,12 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
                         LCAO_Deepks<T>& ld,
 #endif
 >>>>>>> b2aa0ec2b (update __DMLALGO)
@@ -100,7 +104,7 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& stvnl_dphi,
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
-#if __DMLALGO
+#if __MLALGO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
 #endif

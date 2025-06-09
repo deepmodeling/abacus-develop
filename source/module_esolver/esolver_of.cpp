@@ -159,6 +159,21 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
+<<<<<<< HEAD
+=======
+#ifdef __MLALGO
+    // for ML KEDF test
+    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
+#endif
+
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+#ifdef __MPI
+    this->iter_time = MPI_Wtime();
+#else
+    this->iter_time = std::chrono::system_clock::now();
+#endif
+
+>>>>>>> 844346792 (update __MLALGO)
     while (true)
     {
         // once we get a new rho and phi, update potential
@@ -491,7 +506,60 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
     }
 
     // 2) call after_scf() of ESolver_FP
+<<<<<<< HEAD
     ESolver_FP::after_scf(ucell, istep);
+=======
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+
+
+    // should not be here? mohan note 2025-03-03
+    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+    {
+        this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
+    }
+
+#ifdef __MLALGO
+    //------------------------------------------------------------------
+    // Check the positivity of Pauli energy
+    //------------------------------------------------------------------
+    if (this->of_kinetic_ == "ml")
+    {
+        this->tf_->get_energy(this->chr.rho);
+
+        std::cout << "ML Term = " << this->ml_->ml_energy 
+                  << " Ry, TF Term = " << this->tf_->tf_energy 
+                  << " Ry." << std::endl;
+
+        if (this->ml_->ml_energy >= this->tf_->tf_energy)
+        {
+            std::cout << "WARNING: ML >= TF" << std::endl;
+        }
+    }
+
+    //------------------------------------------------------------------
+    // Generate data if needed
+    //------------------------------------------------------------------
+    if (PARAM.inp.of_ml_gene_data)
+    {
+        this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
+        this->kinetic_potential(this->chr.rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+        
+        const double* vr_eff = this->pelec->pot->get_effective_v(0);
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+        {
+            this->pdEdphi_[0][ir] = vr_eff[ir];
+        }
+        this->pelec->eferm.set_efval(0, this->cal_mu(this->pphi_[0], this->pdEdphi_[0], this->nelec_[0]));
+        // === temporary ===
+        // assert(GlobalV::of_kinetic == "wt" || GlobalV::of_kinetic == "ml");
+        // =================
+        std::cout << "Generating Training data..." << std::endl;
+        std::cout << "mu = " << this->pelec->eferm.get_efval(0) << std::endl;
+        this->ml_->generateTrainData(this->chr.rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
+    }
+#endif
+>>>>>>> 844346792 (update __MLALGO)
 
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 }

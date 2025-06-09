@@ -19,11 +19,15 @@ void ReadInput::item_deepks()
         read_sync_bool(input.deepks_scf);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         #ifndef __DEEPKS
             if (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_labels || 
                 PARAM.inp.deepks_bandgap || PARAM.inp.deepks_v_delta)
 =======
 #ifndef __DMLALGO
+=======
+#ifndef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
             if (para.input.deepks_scf || para.input.deepks_out_labels || para.input.deepks_bandgap
                 || para.input.deepks_v_delta)
 >>>>>>> b2aa0ec2b (update __DMLALGO)

@@ -1,7 +1,7 @@
 #ifndef LCAO_DEEPKS_H
 #define LCAO_DEEPKS_H
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 
 #include "deepks_force.h"
 #include "deepks_hmat.h"

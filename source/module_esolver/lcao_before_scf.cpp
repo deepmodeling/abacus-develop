@@ -20,8 +20,12 @@
 #ifdef __DEEPKS
 =======
 #include "module_elecstate/elecstate_tools.h"
+<<<<<<< HEAD
 #ifdef __DMLALGO
 >>>>>>> b2aa0ec2b (update __DMLALGO)
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -200,8 +204,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             orb_,
             DM
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
             ,
             &this->ld
 #endif
@@ -223,7 +231,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
     // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
 >>>>>>> b2aa0ec2b (update __DMLALGO)
     // since it depends on ionic positions
@@ -328,7 +336,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // two cases are considered:
 =======
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
     // initialize DMR of DeePKS
     this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
 #endif

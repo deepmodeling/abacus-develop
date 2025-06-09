@@ -17,7 +17,7 @@
 #include <map>
 #include <unordered_map>
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
@@ -281,7 +281,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               ModuleBase::matrix& stvnl_dphi,
                                               ModuleBase::matrix& svnl_dbeta,
                                               ModuleBase::matrix& svl_dphi,
-#ifdef __DMLALGO
+#ifdef __MLALGO
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
 #endif
@@ -342,7 +342,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                    isstress,
                                    reset_dm_to_gint /*reset dm to gint*/);
 
-#ifdef __DMLALGO
+#ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
@@ -380,7 +380,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
-#ifdef __DMLALGO
+#ifdef __MLALGO
         Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
 #endif
     }
@@ -390,15 +390,19 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
-#ifdef __DMLALGO
+#ifdef __MLALGO
         Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
 #endif
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     ModuleBase::timer::tick("Force_LCAO", "ftable");
 =======
 #ifdef __DMLALGO
+=======
+#ifdef __MLALGO
+>>>>>>> 844346792 (update __MLALGO)
     if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
     {
         DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);

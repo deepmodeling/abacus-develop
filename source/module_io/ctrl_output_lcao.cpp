@@ -19,7 +19,7 @@
 #include "module_io/berryphase.h" // use berryphase
 #include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
 #include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
-#ifdef __DMLALGO
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
@@ -50,7 +50,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
         rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
-#ifdef __DMLALGO
+#ifdef __MLALGO
 		LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX
@@ -154,7 +154,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 5) Output DeePKS information
     //------------------------------------------------------------------
-#ifdef __DMLALGO
+#ifdef __MLALGO
     // need control parameter
 	hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = p_hamilt;
 	std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
@@ -449,7 +449,7 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
-#ifdef __DMLALGO
+#ifdef __MLALGO
 		LCAO_Deepks<double>& ld,
 #endif
 #ifdef __EXX
@@ -475,7 +475,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
-#ifdef __DMLALGO
+#ifdef __MLALGO
 		LCAO_Deepks<std::complex<double>>& ld,
 #endif
 #ifdef __EXX
@@ -500,7 +500,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
-#ifdef __DMLALGO
+#ifdef __MLALGO
 		LCAO_Deepks<std::complex<double>>& ld,
 #endif
 #ifdef __EXX

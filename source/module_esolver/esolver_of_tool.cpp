@@ -463,6 +463,16 @@ void ESolver_OF::print_info()
             titles.push_back("LKT KEDF");
             energies_Ry.push_back(this->lkt_->lkt_energy);
         }
+<<<<<<< HEAD
+=======
+#ifdef __MLALGO
+        if (this->of_kinetic_ == "ml")
+        {
+            titles.push_back("MPN KEDF");
+            energies_Ry.push_back(this->ml_->ml_energy);
+        }
+#endif
+>>>>>>> 844346792 (update __MLALGO)
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
