@@ -1,7 +1,7 @@
 #ifndef ML_DATA_H
 #define ML_DATA_H
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
 
 #include <vector>
 #include "kedf_wt.h"

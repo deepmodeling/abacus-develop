@@ -36,7 +36,7 @@
 
 #include <iostream>
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
 #include "module_hamilt_pw/hamilt_ofdft/ml_data.h"
 #endif
 
@@ -995,7 +995,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                      this->pelec->wg);
     }
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
     //----------------------------------------------------------
     //! 7) generate training data for ML-KEDF
     //----------------------------------------------------------

@@ -499,7 +499,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  add_compile_definitions(__DMLALGO)
+  # add_compile_definitions(__MLALGO)
 endif()
 
 if(ENABLE_MLALGO)
@@ -518,7 +518,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  add_compile_definitions(__MLKEDF)
+  add_compile_definitions(__MLALGO)
 endif()
 
 # Torch uses outdated components to detect CUDA arch, causing failure on
