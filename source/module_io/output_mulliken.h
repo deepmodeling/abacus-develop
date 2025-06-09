@@ -136,18 +136,18 @@ void cal_mag(Parallel_Orbitals* pv,
         if(PARAM.inp.nspin == 2)
         {
             auto sc_lambda
-                = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
-                                                                          kv.kvec_d,
-                                                                          dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
-                                                                          ucell,
-                                                                          &gd,
-                                                                          two_center_bundle.overlap_orb_onsite.get(),
-                                                                          orb.cutoffs());
-            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
-            moments = sc_lambda->cal_moment(dmr, constrain);
-            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
-            delete sc_lambda;
-            //const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
+				= new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
+						kv.kvec_d,
+						dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
+						ucell,
+						&gd,
+						two_center_bundle.overlap_orb_onsite.get(),
+						orb.cutoffs());
+			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
+			moments = sc_lambda->cal_moment(dmr, constrain);
+			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
+			delete sc_lambda;
+			//const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
             //const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
             //FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
             for(int iat=0;iat<ucell.nat;iat++)

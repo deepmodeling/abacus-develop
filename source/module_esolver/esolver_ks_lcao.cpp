@@ -1,6 +1,5 @@
 #include "esolver_ks_lcao.h"
 
-#include "module_io/write_dos_lcao.h"       // write DOS and PDOS
 #include "module_io/write_proj_band_lcao.h" // projcted band structure
 
 #include "module_base/formatter.h"
@@ -385,12 +384,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 }
 
-//------------------------------------------------------------------------------
-//! the 8th function of ESolver_KS_LCAO: after_all_runners
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
-
-
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 {
@@ -401,28 +394,10 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // 4) write projected band structure
+    // 1) write projected band structure
     if (PARAM.inp.out_proj_band)
     {
         ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
-    }
-
-    // 5) print out density of states (DOS)
-    if (PARAM.inp.out_dos)
-	{
-		ModuleIO::write_dos_lcao(this->psi,
-				this->p_hamilt,
-				this->pv,
-				ucell,
-				*(this->pelec->klist),
-				PARAM.inp.nbands,
-				this->pelec->eferm,
-				this->pelec->ekb,
-				this->pelec->wg,
-				PARAM.inp.dos_edelta_ev,
-				PARAM.inp.dos_scale,
-				PARAM.inp.dos_sigma,
-                GlobalV::ofs_running);
     }
 
     // out ldos

@@ -96,7 +96,7 @@ fi
 # total energy information
 #----------------------------
 if [ $calculation != "get_wf" ]\
-&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_s" ]\
 && [ $is_lr == 0 ]; then
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
     #echo "etot = $etot"
@@ -138,7 +138,7 @@ fi
 # echo $total_charge
 #-------------------------------
 if ! test -z "$has_dos"  && [  $has_dos == 1 ]; then
-	total_dos=`cat OUT.autotest/DOS1_smear.dat | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/doss1*.txt | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
 
@@ -198,9 +198,9 @@ fi
 # Overlap matrix
 # echo $get_s
 #-------------------------------
-if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
-	sref=refSR.csr
-	scal=OUT.autotest/SR.csr
+if ! test -z "$get_s"  && [  $get_s == "get_s" ]; then
+	sref=sr_nao.csr.ref
+	scal=OUT.autotest/sr_nao.csr
 	python3 $COMPARE_SCRIPT $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi

@@ -370,8 +370,8 @@ struct Input_para
     bool out_mul = false;                 ///< qifeng add 2019-9-10
     bool out_proj_band = false;           ///< projected band structure calculation jiyy add 2022-05-11
     std::string out_level = "ie";         ///< control the output information.
-    bool out_dm = false;                  ///< output density matrix. (gamma point)
-    bool out_dm1 = false;                 ///< output density matrix. (multi-k points)
+    bool out_dmk = false;                 ///< output density matrix DM(k)
+    bool out_dmr = false;                 ///< output density matrix DM(R)
     bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
@@ -384,10 +384,6 @@ struct Input_para
                                   ///< KS-orbital representation.
     bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
     bool out_eband_terms = false; ///< output the band energy terms separately
-    bool out_hr_npz = false;      ///< output exchange-correlation matrix in
-                                  ///< KS-orbital representation.
-    bool out_dm_npz = false;
-
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
