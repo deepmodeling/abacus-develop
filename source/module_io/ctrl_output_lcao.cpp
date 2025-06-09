@@ -173,7 +173,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 			*psi,
 			pelec->get_DM(),
 			p_ham_deepks,
-			GlobalV::MY_RANK);
+			GlobalV::MY_RANK,
+            GlobalV::ofs_running);
 #endif
 
     //------------------------------------------------------------------

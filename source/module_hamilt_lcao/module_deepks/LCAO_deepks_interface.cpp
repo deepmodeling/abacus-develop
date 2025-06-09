@@ -28,7 +28,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       const psi::Psi<TK>& psi,
                                                       const elecstate::DensityMatrix<TK, double>* dm,
                                                       hamilt::HamiltLCAO<TK, TR>* p_ham,
-                                                      const int rank)
+                                                      const int rank,
+                                                      std::ostream& ofs_running)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
@@ -535,10 +536,16 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     if (PARAM.inp.deepks_scf)
     {
         DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, nspin, ParaV, e_delta_band);
-        std::cout << "E_delta_band = " << std::setprecision(8) << e_delta_band << " Ry"
-                  << " = " << std::setprecision(8) << e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
-        std::cout << "E_delta_NN = " << std::setprecision(8) << E_delta << " Ry"
-                  << " = " << std::setprecision(8) << E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (rank == 0)
+        {
+            ofs_running << " DeePKS Energy Correction" << std::endl;
+            ofs_running << " -----------------------------------------------" << std::endl;
+            ofs_running << "  E_delta_band = " << std::setprecision(8) << e_delta_band << " Ry"
+                        << " = " << std::setprecision(8) << e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
+            ofs_running << "  E_delta_NN = " << std::setprecision(8) << E_delta << " Ry"
+                        << " = " << std::setprecision(8) << E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+                        ofs_running << " -----------------------------------------------" << std::endl;
+        }
         if (PARAM.inp.deepks_out_unittest)
         {
             LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
