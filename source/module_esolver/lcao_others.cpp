@@ -15,7 +15,7 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -200,6 +200,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+            ,
+            &this->ld
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
             ,
             istep,
@@ -210,7 +217,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         );
     }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)

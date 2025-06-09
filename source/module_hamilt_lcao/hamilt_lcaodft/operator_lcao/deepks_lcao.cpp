@@ -24,13 +24,27 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const LCAO_Orbitals* ptr_orb,
                                      const int& nks_in,
+<<<<<<< HEAD
                                      elecstate::DensityMatrix<TK, double>* DM_in)
+=======
+                                     elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DMLALGO
+                                     ,
+                                     LCAO_Deepks<TK>* ld_in
+#endif
+                                     )
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), DM(DM_in), ucell(ucell_in), intor_orb_alpha_(intor_orb_alpha),
       ptr_orb_(ptr_orb), nks(nks_in)
 {
     this->cal_type = calculation_type::lcao_deepks;
     this->gd = GridD_in;
+<<<<<<< HEAD
 #ifdef __DEEPKS
+=======
+#ifdef __DMLALGO
+    this->ld = ld_in;
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     this->initialize_HR(GridD_in);
 #endif
 }
@@ -44,7 +58,7 @@ DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
     }
 }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 // initialize_HR()
 template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
@@ -152,7 +166,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
 template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
-#ifdef __DEEPKS
+#ifdef __DMLALGO
     ModuleBase::TITLE("DeePKS", "contributeHR");
     // if DM changed, HR of DeePKS need to refresh.
     // the judgement is based on the status of HR in GlobalC::ld
@@ -182,7 +196,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 #endif
 }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 
 template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::pre_calculate_nlm(

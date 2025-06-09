@@ -5,6 +5,18 @@
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+<<<<<<< HEAD
+=======
+#include "module_hamilt_lcao/module_gint/temp_gint/gint.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
+
+// for DeePKS
+#ifdef __DMLALGO
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
+// for EXX
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
 #include "module_ri/Exx_LRI_interface.h"
 #include "module_ri/Mix_DMk_2D.h"
@@ -85,12 +97,18 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ModuleBase::matrix scs;
     bool have_force = false;
 
+<<<<<<< HEAD
     //--------------common for all calculation, not only scf-------------
     // set matrix and grid integral
     void set_matrix_grid(Record_adj& ra);
 
     void beforesolver(const int istep);
     //---------------------------------------------------------------------
+=======
+#ifdef __DMLALGO
+    LCAO_Deepks<TK> ld;
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 
 #ifdef __EXX
     std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;

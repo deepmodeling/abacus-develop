@@ -13,7 +13,7 @@
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
 #endif
@@ -50,6 +50,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+                                          LCAO_Deepks<T>& ld,
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
                                           Exx_LRI_Interface<T, double>& exd,
                                           Exx_LRI_Interface<T, std::complex<double>>& exc,
@@ -80,7 +86,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix fewalds;
     ModuleBase::matrix fcc;
     ModuleBase::matrix fscc;
-#ifdef __DEEPKS
+#ifdef __DMLALGO
     ModuleBase::matrix fvnl_dalpha; // deepks
 #endif
 
@@ -96,7 +102,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         fewalds.create(nat, 3);
         fcc.create(nat, 3);
         fscc.create(nat, 3);
-#ifdef __DEEPKS
+#ifdef __DMLALGO
         fvnl_dalpha.create(nat, 3); // deepks
 #endif
 
@@ -125,7 +131,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix stvnl_dphi;
     ModuleBase::matrix svnl_dbeta;
     ModuleBase::matrix svl_dphi;
-#ifdef __DEEPKS
+#ifdef __DMLALGO
     ModuleBase::matrix svnl_dalpha; // deepks
 #endif
 
@@ -143,7 +149,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         stvnl_dphi.create(3, 3);
         svnl_dbeta.create(3, 3);
         svl_dphi.create(3, 3);
-#ifdef __DEEPKS
+#ifdef __DMLALGO
         svnl_dalpha.create(3, 3);
 #endif
         // calculate basic terms in Stress, similar method with PW base
@@ -177,7 +183,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                         stvnl_dphi,
                         svnl_dbeta,
                         svl_dphi,
-#ifdef __DEEPKS
+#ifdef __DMLALGO
                         fvnl_dalpha,
                         svnl_dalpha,
 #endif
@@ -457,7 +463,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 {
                     fcs(iat, i) += fsol(iat, i);
                 }
-#ifdef __DEEPKS
+#ifdef __DMLALGO
                 // mohan add 2021-08-04
                 if (PARAM.inp.deepks_scf)
                 {
@@ -495,7 +501,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             this->forceSymmetry(ucell, fcs, symm);
         }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
         // DeePKS force
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
@@ -641,7 +647,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             {
                 ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeltaSpin  FORCE", force_dspin, false);
             }
-#ifdef __DEEPKS
+#ifdef __DMLALGO
             // caoyu add 2021-06-03
             if (PARAM.inp.deepks_scf)
             {
@@ -716,6 +722,15 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     scs(i, j) += stress_exx(i, j);
                 }
 #endif
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+                if (PARAM.inp.deepks_scf)
+                {
+                    scs(i, j) += svnl_dalpha(i, j);
+                }
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
             }
         }
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
@@ -723,8 +738,13 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             symm->symmetrize_mat3(scs, ucell.lat);
         } // end symmetry
 
+<<<<<<< HEAD
 #ifdef __DEEPKS
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
+=======
+#ifdef __DMLALGO
+        if (PARAM.inp.deepks_out_labels == 1)
+>>>>>>> b2aa0ec2b (update __DMLALGO)
         {
             const std::string file_s = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             LCAO_deepks_io::save_npy_s(scs,
@@ -915,7 +935,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               ModuleBase::matrix& stvnl_dphi,
                                               ModuleBase::matrix& svnl_dbeta,
                                               ModuleBase::matrix& svl_dphi,
-#if __DEEPKS
+#if __DMLALGO
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
 #endif
@@ -942,7 +962,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                stvnl_dphi,
                svnl_dbeta,
                svl_dphi,
-#if __DEEPKS
+#if __DMLALGO
                fvnl_dalpha,
                svnl_dalpha,
 #endif
@@ -970,7 +990,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             ModuleBase::matrix& stvnl_dphi,
                                                             ModuleBase::matrix& svnl_dbeta,
                                                             ModuleBase::matrix& svl_dphi,
-#if __DEEPKS
+#if __DMLALGO
                                                             ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
 #endif
@@ -996,7 +1016,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                stvnl_dphi,
                svnl_dbeta,
                svl_dphi,
-#if __DEEPKS
+#if __DMLALGO
                fvnl_dalpha,
                svnl_dalpha,
 #endif

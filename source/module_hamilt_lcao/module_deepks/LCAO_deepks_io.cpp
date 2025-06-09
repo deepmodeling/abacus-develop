@@ -22,7 +22,7 @@
 // 10. save_npy_phialpha : phialpha
 // 11. save_npy_gevdm : grav_evdm , can use phialpha and gevdm to calculate v_delta_precalc
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 
 #include "LCAO_deepks_io.h"
 #include "npy.hpp"

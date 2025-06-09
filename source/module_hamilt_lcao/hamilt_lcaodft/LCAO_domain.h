@@ -173,7 +173,19 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
+<<<<<<< HEAD
 void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv, const int& nks, const LCAO_Orbitals& orb);
+=======
+#ifdef __DMLALGO
+template <typename T>
+void DeePKS_init(const UnitCell& ucell,
+                 Parallel_Orbitals& pv,
+                 const int& nks,
+                 const LCAO_Orbitals& orb,
+                 LCAO_Deepks<T>& ld,
+                 std::ofstream& ofs);
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 
 template <typename T>
 void set_mat2d(const int& global_ir,

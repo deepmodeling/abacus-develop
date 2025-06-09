@@ -13,6 +13,14 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
+<<<<<<< HEAD
+=======
+
+#ifdef __DMLALGO
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
@@ -40,6 +48,13 @@ class HamiltLCAO : public Hamilt<TK>
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+               ,
+               LCAO_Deepks<TK>* ld_in
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
                ,
                const int istep,
@@ -95,6 +110,18 @@ class HamiltLCAO : public Hamilt<TK>
     {
         return this->sR;
     }
+<<<<<<< HEAD
+=======
+
+#ifdef __DMLALGO
+    /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
+    HContainer<TR>*& get_V_delta_R()
+    {
+        return this->V_delta_R;
+    }
+#endif
+
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     /// refresh the status of HR
     void refresh() override;
 
@@ -122,6 +149,14 @@ class HamiltLCAO : public Hamilt<TK>
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
 
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+    HContainer<TR>* V_delta_R = nullptr;
+#endif
+
+    //! Hamiltonian and overlap matrices for a specific k point
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     HS_Matrix_K<TK>* hsk = nullptr;
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;

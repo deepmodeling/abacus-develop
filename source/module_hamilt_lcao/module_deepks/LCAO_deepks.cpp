@@ -17,7 +17,7 @@
 //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
 //       init_gdmx, as well as allocating F_delta
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 
 #include "LCAO_deepks.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

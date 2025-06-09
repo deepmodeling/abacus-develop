@@ -9,7 +9,7 @@
 
 #include <vector>
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "operator_lcao/deepks_lcao.h"
 #endif
@@ -81,6 +81,13 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
                                elecstate::DensityMatrix<TK, double>* DM_in
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+                               ,
+                               LCAO_Deepks<TK>* ld_in
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
                                ,
                                const int istep,
@@ -198,7 +205,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
         }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
         if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
@@ -322,7 +329,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
         }
 
-#ifdef __DEEPKS
+#ifdef __DMLALGO
         if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,

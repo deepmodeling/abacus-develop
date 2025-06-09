@@ -16,7 +16,12 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
+<<<<<<< HEAD
 #ifdef __DEEPKS
+=======
+#include "module_elecstate/elecstate_tools.h"
+#ifdef __DMLALGO
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -194,6 +199,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
+<<<<<<< HEAD
+=======
+#ifdef __DMLALGO
+            ,
+            &this->ld
+#endif
+>>>>>>> b2aa0ec2b (update __DMLALGO)
 #ifdef __EXX
             ,
             istep,
@@ -204,8 +216,16 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         );
     }
 
+<<<<<<< HEAD
 #ifdef __DEEPKS
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
+=======
+
+
+
+#ifdef __DMLALGO
+    // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
     {
@@ -304,7 +324,17 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
+<<<<<<< HEAD
     // two cases are considered:
+=======
+
+#ifdef __DMLALGO
+    // initialize DMR of DeePKS
+    this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+#endif
+
+    // 15) two cases are considered:
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
     if (istep > 0)

@@ -6,6 +6,7 @@
 
 namespace LCAO_domain
 {
+<<<<<<< HEAD
 
 void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv,const int& nks, const LCAO_Orbitals& orb) {
     ModuleBase::TITLE("LCAO_domain", "divide_HS_in_frag");
@@ -14,6 +15,19 @@ void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbit
     // just pass `ParaV` as pointer is enough
 #ifdef __DEEPKS
     // wenfei 2021-12-19
+=======
+#ifdef __DMLALGO
+// It seems it is only related to DeePKS, so maybe we should move it to DeeKS_domain
+template <typename T>
+void DeePKS_init(const UnitCell& ucell,
+                 Parallel_Orbitals& pv,
+                 const int& nks,
+                 const LCAO_Orbitals& orb,
+                 LCAO_Deepks<T>& ld,
+                 std::ofstream& ofs)
+{
+    ModuleBase::TITLE("LCAO_domain", "DeePKS_init");
+>>>>>>> b2aa0ec2b (update __DMLALGO)
     // preparation for DeePKS
 
     if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf) {
