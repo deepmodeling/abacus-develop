@@ -25,7 +25,7 @@ option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 # option(ENABLE_DEEPKS "Enable the DeePKS algorithm" OFF)
 # option(ENABLE_MLKEDF "Enable the Machine-Learning-based KEDF for OFDFT" OFF)
 
-option(ENABLE_MLALGO "Enable the Machine-Learning for OFDFT" OFF)
+option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(USE_ELPA "Enable ELPA for LCAO" ON)
