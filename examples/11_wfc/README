@@ -1,9 +1,3 @@
-/*******************************************************************************/
-/
-/ These are the examples of ABACUS program.
-/
-/*******************************************************************************/
-
 These examples show how to output the wavefunction in G space.
 For PW basis:
 	- set 'out_wfc_pw' to '1'

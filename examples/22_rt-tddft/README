@@ -1,9 +1,3 @@
-/*******************************************************************************/
-/
-/ These are the examples of ABACUS program.
-/
-/*******************************************************************************/
-
 These examples show how to do a real-time tddft calculation.
 One can set 'calculation' to be 'md' and 'esolver_type' to be 'tddft' to do TDDFT calculation.
 

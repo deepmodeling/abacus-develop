@@ -1,10 +1,4 @@
-/*******************************************************************************/
-/
-/ These are the examples of ABACUS program.
-/
-/*******************************************************************************/
-
-These examples show how to use ABACUS to do the basic SCF calculations.
+These examples show how to use ABACUS to do basic SCF calculations.
 
 Note:
 - Three input files are required in the calculation: 
@@ -34,9 +28,3 @@ Note:
 - set 'scf_thr' to define the convergence precision of SCF iteration
 
 - set 'scf_nmax' to define the maximum iteration numbers of the SCF
-
-
-
-
-
-

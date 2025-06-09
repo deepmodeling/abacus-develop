@@ -1,10 +1,4 @@
-/*******************************************************************************/
-/
-/ These are the examples of ABACUS program.
-/
-/*******************************************************************************/
-
-These examples show how to calculate the bands structures.
+These examples show how to calculate the band structures using ABACUS.
 It requires two steps of calculation:
 1. Do the scf calculation and output the information of charge:
    - set 'calculation' to 'scf'
