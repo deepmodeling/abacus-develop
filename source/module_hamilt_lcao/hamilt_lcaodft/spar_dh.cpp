@@ -106,8 +106,27 @@ void sparse_format::cal_dH(const UnitCell& ucell,
     delete[] fsr_dh.DHloc_fixedR_y;
     delete[] fsr_dh.DHloc_fixedR_z;
 
-    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, ucell, grid);
+    if(PARAM.inp.nspin==2)
+    {
+        gint_k.allocate_pvdpR();
+        // note: some MPI process will not have grids when MPI cores are too
+        // many, v_eff in these processes are empty
+        const double* vr_eff1
+            = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
 
+        if (!PARAM.globalv.gamma_only_local) 
+        {
+            if (PARAM.inp.vl_in_h) 
+            {
+                Gint_inout inout(vr_eff1,
+                                    cspin,
+                                    Gint_Tools::job_type::dvlocal);
+                gint_k.cal_gint(&inout);
+            }
+        }
+        gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, ucell, grid);
+        gint_k.destroy_pvdpR();
+    }
     return;
 }
 

@@ -169,22 +169,6 @@ void ModuleIO::output_dHR(const int& istep,
 	{
 		for (int cspin = 0; cspin < 2; cspin++) 
 		{
-            // note: some MPI process will not have grids when MPI cores are too
-            // many, v_eff in these processes are empty
-            const double* vr_eff1
-                = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
-
-			if (!PARAM.globalv.gamma_only_local) 
-			{
-				if (PARAM.inp.vl_in_h) 
-				{
-                    Gint_inout inout(vr_eff1,
-                                     cspin,
-                                     Gint_Tools::job_type::dvlocal);
-                    gint_k.cal_gint(&inout);
-                }
-            }
-
             sparse_format::cal_dH(ucell,
                                   pv,
                                   HS_Arrays,
@@ -200,8 +184,6 @@ void ModuleIO::output_dHR(const int& istep,
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
-
-    gint_k.destroy_pvdpR();
 
     ModuleBase::timer::tick("ModuleIO", "output_dHR");
     return;
