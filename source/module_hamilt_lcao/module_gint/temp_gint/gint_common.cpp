@@ -136,10 +136,15 @@ void transfer_dm_2d_to_gint(
     std::vector<std::shared_ptr<HContainer<T>>> dm_gint)
 {
     // To check whether input parameter dm_2d has been initialized
-#ifdef __DEBUG
-    assert(PARAM.inp.nspin == dm.size()
+    assert(PARAM.inp.nspin == dm_gint.size()
            && "The size of dm should be equal to the number of spins!");
-#endif
+    if(PARAM.inp.nspin != 4)
+    {
+        assert(dm.size() == PARAM.inp.nspin);
+    } else
+    {
+        assert(dm.size() == 1);
+    }
 
     if (PARAM.inp.nspin != 4)
     {
