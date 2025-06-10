@@ -17,6 +17,7 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
+#include "module_io/write_libxc_r.h"
 
 namespace ModuleESolver
 {
@@ -84,7 +85,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 #ifdef __MPI
     this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
-	if (this->classname == "ESolver_OF" || PARAM.inp.of_ml_gene_data == 1)
+    if (this->classname == "ESolver_OF" || PARAM.inp.of_ml_gene_data == 1)
     {
         this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
     }
@@ -253,6 +254,20 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                 this->Pgrid,
                 &(ucell),
                 PARAM.inp.out_elf[1]);
+        }
+
+        // 7) write xc(r)
+        if(PARAM.inp.out_xc_r[0]>=0)
+        {
+            ModuleIO::write_libxc_r(
+                PARAM.inp.out_xc_r[0],
+                XC_Functional::get_func_id(),
+                this->pw_rhod->nrxx, // number of real-space grid
+                ucell.omega, // volume of cell
+                ucell.tpiba,
+                this->chr,
+                *this->pw_big,
+                *this->pw_rhod);
         }
     }
 }
