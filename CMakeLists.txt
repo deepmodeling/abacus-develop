@@ -484,7 +484,8 @@ if(ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_MLALGO)
-  target_link_libraries(${ABACUS_BIN_NAME} deepks)
+  target_link_libraries(${ABACUS_BIN_NAME} deepks) # deepks
+  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf) # mlkedf
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
   if(NOT libnpy_SOURCE_DIR)
@@ -499,25 +500,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  # add_compile_definitions(__MLALGO)
-endif()
-
-if(ENABLE_MLALGO)
-  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf)
-
-  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT libnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      libnpy
-      GIT_REPOSITORY https://github.com/llohse/libnpy.git
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(libnpy)
-  else()
-    include_directories(${libnpy_INCLUDE_DIR})
-  endif()
-  include_directories(${libnpy_SOURCE_DIR}/include)
+  
   add_compile_definitions(__MLALGO)
 endif()
 
