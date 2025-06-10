@@ -18,7 +18,7 @@ cmake -B build -DLibxc_DIR=~/libxc
 
 ## Build with ML-ALGO
 
-If machine learning algorithms is required for DFT calculation, the following prerequisites and steps are needed:
+If machine learning algorithms, including DeePKS and machine learning based kinetic energy density functional (ML-KEDF) for OFDFT, is required for DFT calculation, the following prerequisites and steps are needed:
 
 - C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
 - CMake >= 3.18
