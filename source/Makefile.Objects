@@ -201,6 +201,7 @@ OBJS_CELL=atom_pseudo.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
+        deepks_check.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\

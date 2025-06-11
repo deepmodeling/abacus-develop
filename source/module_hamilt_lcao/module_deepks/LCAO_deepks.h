@@ -4,6 +4,7 @@
 #ifdef __DEEPKS
 
 #include "deepks_basic.h"
+#include "deepks_check.h"
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_fpre.h"

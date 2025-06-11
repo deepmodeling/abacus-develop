@@ -153,37 +153,6 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
     return;
 }
 
-void DeePKS_domain::check_gdmepsl(const torch::Tensor& gdmepsl)
-{
-    std::stringstream ss;
-    std::ofstream ofs;
-
-    ofs << std::setprecision(10);
-
-    // size: [6][inlmax][nm][nm]
-    auto size = gdmepsl.sizes();
-    auto accessor = gdmepsl.accessor<double, 4>();
-    for (int i = 0; i < 6; i++)
-    {
-        ss.str("");
-        ss << "gdmepsl_" << i << ".dat";
-        ofs.open(ss.str().c_str());
-
-        for (int inl = 0; inl < size[1]; inl++)
-        {
-            for (int m1 = 0; m1 < size[2]; m1++)
-            {
-                for (int m2 = 0; m2 < size[3]; m2++)
-                {
-                    ofs << accessor[i][inl][m1][m2] << " ";
-                }
-            }
-            ofs << std::endl;
-        }
-        ofs.close();
-    }
-}
-
 // calculates stress of descriptors from gradient of projected density matrices
 // gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
 void DeePKS_domain::cal_gvepsl(const int nat,
@@ -233,39 +202,6 @@ void DeePKS_domain::cal_gvepsl(const int nat,
 
     ModuleBase::timer::tick("DeePKS_domain", "cal_gvepsl");
     return;
-}
-
-void DeePKS_domain::check_gvepsl(const torch::Tensor& gvepsl, const int rank)
-{
-    std::stringstream ss;
-    std::ofstream ofs;
-
-    if (rank != 0)
-    {
-        return;
-    }
-
-    auto size = gvepsl.sizes();
-    auto accessor = gvepsl.accessor<double, 3>();
-
-    for (int i = 0; i < 6; i++)
-    {
-        ss.str("");
-        ss << "gvepsl_" << i << ".dat";
-        ofs.open(ss.str().c_str());
-
-        ofs << std::setprecision(10);
-
-        for (int ia = 0; ia < size[1]; ia++)
-        {
-            for (int nlm = 0; nlm < size[2]; nlm++)
-            {
-                ofs << accessor[i][ia][nlm] << " ";
-            }
-            ofs << std::endl;
-        }
-        ofs.close();
-    }
 }
 
 template void DeePKS_domain::cal_gdmepsl<double>(const int lmaxd,
