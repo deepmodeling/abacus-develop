@@ -389,7 +389,14 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
                                   fvnl_dalpha,
                                   cal_stress,
                                   svnl_dalpha);
-    DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
+    std::ofstream ofs_f("F_delta.dat");
+    std::ofstream ofs_s("stress_delta.dat");
+    ofs_f << std::setprecision(10);
+    ofs_s << std::setprecision(10);
+    fvnl_dalpha.print(ofs_f);
+    ofs_f.close();
+    svnl_dalpha.print(ofs_s);
+    ofs_s.close();
 
     this->compare_with_ref("F_delta.dat", "F_delta_ref.dat");
     this->compare_with_ref("stress_delta.dat", "stress_delta_ref.dat");

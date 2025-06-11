@@ -263,32 +263,6 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
     return;
 }
 
-// prints forces and stress from DeePKS (LCAO)
-void DeePKS_domain::check_f_delta(const int nat, ModuleBase::matrix& f_delta, ModuleBase::matrix& svnl_dalpha)
-{
-    ModuleBase::TITLE("DeePKS_domain", "check_F_delta");
-
-    std::ofstream ofs("F_delta.dat");
-    ofs << std::setprecision(10);
-
-    for (int iat = 0; iat < nat; iat++)
-    {
-        ofs << f_delta(iat, 0) << " " << f_delta(iat, 1) << " " << f_delta(iat, 2) << std::endl;
-    }
-
-    std::ofstream ofs1("stress_delta.dat");
-    ofs1 << std::setprecision(10);
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
-        for (int jpol = 0; jpol < 3; jpol++)
-        {
-            ofs1 << svnl_dalpha(ipol, jpol) << " ";
-        }
-        ofs1 << std::endl;
-    }
-    return;
-}
-
 template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double>* dmr,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
