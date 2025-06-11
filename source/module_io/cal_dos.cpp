@@ -93,8 +93,7 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 }
 
 bool ModuleIO::cal_dos(const int& is,  // index for spin
-		const std::string& file_dos,   // file address for DOS
-		const std::string& file_smear, // file address for DOS_smearing
+		const std::string& fn,   // file name for DOS
 		const double& de_ev,           // delta energy in ev
 		const double& emax_ev, // maximal energy in eV
 		const double& emin_ev, // minimal energy in ev.
@@ -115,15 +114,16 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     if (GlobalV::MY_RANK == 0)
     {
-        ofs_dos.open(file_dos.c_str());
-        ofs_smear.open(file_smear.c_str());
+        ofs_dos.open(fn.c_str());
     }
 
     std::vector<double> dos;
     std::vector<double> ene;
+    std::vector<double> sum_elec;
     std::vector<double> dos_smear; // dos_smearing
     dos.clear();
     ene.clear();
+    sum_elec.clear();
     dos_smear.clear();
 
 #ifdef __MPI
@@ -154,25 +154,22 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ofs_dos << npoints << " # number of points" << std::endl;
         ofs_dos << "#" << std::setw(14) << "energy" 
                  << std::setw(15) << "elec_states" 
+                 << std::setw(15) << "sum_states" 
+                 << std::setw(15) << "states_smear" 
                  << std::setw(15) << "sum_states" << std::endl;
-
-        ofs_smear << npoints << " # number of points" << std::endl;
-        ofs_smear << "#" << std::setw(14) << "energy" 
-                  << std::setw(15) << "states_smear" 
-                  << std::setw(15) << "sum_states" << std::endl;
     }
 
     std::vector<double> e_mod(npoints, 0.0); 
 
     double sum = 0.0;
-    double e_new = emin_ev;
+    double curr_energy = emin_ev;
     double e_old = 0.0;
 
-    while (e_new < emax_ev)
+    while (curr_energy < emax_ev)
     {
         double nstates = 0.0;
-        e_old = e_new;
-        e_new += de_ev;
+        e_old = curr_energy;
+        curr_energy += de_ev;
 
         // nks is the number of k-points in the 'pool'
         for (int ik = 0; ik < nks; ik++)
@@ -183,9 +180,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
                 // band index
                 for (int ib = 0; ib < nbands; ib++)
                 {
-                    //  compare et and e_old(e_new) in ev unit.
+                    //  compare et and e_old(curr_energy) in ev unit.
                     if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old 
-                     && ekb(ik, ib) * ModuleBase::Ry_to_eV < e_new)
+                     && ekb(ik, ib) * ModuleBase::Ry_to_eV < curr_energy)
                     {
                         nstates += wk[ik] * nkstot; 
                     }
@@ -202,12 +199,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         sum += nstates;
         if (GlobalV::MY_RANK == 0)
         {
-            ofs_dos << std::setw(15) << e_new 
-                    << std::setw(15) << nstates 
-                    << std::setw(15) << sum
-                    << std::endl;
             dos.push_back(nstates);
-            ene.push_back(e_new);
+            ene.push_back(curr_energy);
+            sum_elec.push_back(sum);
         }
     }
 
@@ -230,13 +224,21 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
         }
 
+        // mohan add 2025-06-08
+        const double dos_thr = 1.0e-12; 
         double sum2 = 0.0;
 
         for (int i = 0; i < dos.size(); i++)
         {
+            if(dos_smear[i]<dos_thr)
+            {
+                 dos_smear[i]=0.0;
+            }
             sum2 += dos_smear[i] * de_ev;
 
-            ofs_smear << std::setw(15) << ene[i] 
+            ofs_dos << std::setw(15) << ene[i] 
+                 << std::setw(15) << dos[i]
+                 << std::setw(15) << sum_elec[i]
                  << std::setw(15) << dos_smear[i] 
                  << std::setw(15) << sum2 << std::endl;
         }
@@ -245,7 +247,6 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     if (GlobalV::MY_RANK == 0)
     {
         ofs_dos.close();
-        ofs_smear.close();
     }
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of bands", nbands);

@@ -10,7 +10,6 @@ class DosPrepare
 public:
 	DosPrepare(int is_in, 
 			std::string fa_in, 
-			std::string fa1_in,
 			double de_ev_in, 
 			double emax_ev_in,
 			double emin_ev_in, 
@@ -18,14 +17,13 @@ public:
 			int nks_in, 
 			int nkstot_in, 
 			int nbands_in):
-		is(is_in),fa(fa_in),fa1(fa1_in),
+		is(is_in),fa(fa_in),
 		de_ev(de_ev_in),emax_ev(emax_ev_in),
 		emin_ev(emin_ev_in),bcoeff(bcoeff_in),
 		nks(nks_in),nkstot(nkstot_in),nbands(nbands_in){}
 
 	int is;
 	std::string fa;
-	std::string fa1;
 	double de_ev;
 	double emax_ev;
 	double emin_ev;

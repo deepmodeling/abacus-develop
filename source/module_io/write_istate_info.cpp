@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
+#include "module_base/parallel_comm.h" // use POOL_WORLD
 
 #ifdef __MPI
 #include <mpi.h> // use MPI_Barrier
@@ -14,81 +15,99 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 	ModuleBase::TITLE("ModuleIO","write_istate_info");
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
 
-	std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << "istate.info";
+    const int nspin = PARAM.inp.nspin;
+    const int nks = kv.get_nks();
+	const int nkstot = kv.get_nkstot();
+
+    bool wrong = false;
+
+	for (int ik = 0; ik < nks; ++ik)
+	{
+		for (int ib = 0; ib < ekb.nc; ++ib)
+		{
+			if (std::abs(ekb(ik, ib)) > 1.0e10)
+			{
+				GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1
+					<< " " << ekb(ik, ib) << " Ry" << std::endl;
+				wrong = true;
+			}
+		}
+	}
+
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+#endif
+    if (wrong)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_istate_info", "Eigenvalues are too large!");
+    }
+
+    std::vector<int> ngk_tot = kv.ngk;
+
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
+#endif    
+
+    // file name to store eigenvalues
+    std::string filename = PARAM.globalv.global_out_dir + "eig.txt";
+    GlobalV::ofs_running << " The eigenvalues and occupations are in file: " << filename << std::endl;
+
     if (GlobalV::MY_RANK == 0)
     {
-        std::ofstream ofsi(ss.str().c_str()); // clear istate.info
-        ofsi.close();
+        std::ofstream ofs_eig0(filename.c_str()); // clear eig.txt
+        ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
+        ofs_eig0 << " Spin number " << nspin << std::endl;
+        ofs_eig0.close();
     }
 
-    for (int ip = 0; ip < GlobalV::KPAR; ip++)
+    const int nk_fac = nspin == 2 ? 2 : 1;
+    const int nks_np = nks / nk_fac;
+    const int nkstot_np = nkstot / nk_fac;
+    const int kpar = GlobalV::KPAR;
+
+    for (int is = 0; is < nk_fac; ++is)
     {
+        for (int ip = 0; ip < kpar; ++ip)
+        {
+#ifdef __MPI
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0);
+
+            if (GlobalV::MY_POOL == ip && ip_flag)
+            {
+                std::ofstream ofs_eig(filename.c_str(), std::ios::app);
+                ofs_eig << std::setprecision(8);
+                ofs_eig << std::setiosflags(std::ios::showpoint);
+
+                const int start_ik = nks_np * is;
+                const int end_ik = nks_np * (is + 1);
+                for (int ik = start_ik; ik < end_ik; ++ik)
+                {
+                    ofs_eig << " spin=" << is+1 << " k-point="
+                            << kv.ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
+                            << " Cartesian=" << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y
+                            << " " << kv.kvec_c[ik].z << " (" << ngk_tot[ik] << " plane wave)" << std::endl;
+
+                    ofs_eig << std::setprecision(16);
+                    ofs_eig << std::setiosflags(std::ios::showpoint);
+                    for (int ib = 0; ib < ekb.nc; ib++)
+                    {
+                        ofs_eig << " " << ib + 1 << " " << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << " " << wg(ik, ib) << std::endl;
+                    }
+                    ofs_eig << std::endl;
+                }
+
+                ofs_eig.close();
+            }
+        }
 #ifdef __MPI
         MPI_Barrier(MPI_COMM_WORLD);
-        if (GlobalV::MY_POOL == ip)
-        {
-			if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_BNDGROUP != 0 ) 
-			{ 
-				continue;
-			}
-#endif
-            std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
-            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
-            {
-                for (int ik = 0; ik < kv.get_nks(); ik++)
-                {
-#ifdef __MPI
-                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
-#else
-                    int ik_global = ik + 1;
-#endif
-                    ofsi2 << "BAND" << std::setw(25) << "Energy(ev)" << std::setw(25) << "Occupation"
-                          << std::setw(25) << "Kpoint = " << ik_global
-                          << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
-                          << " " << kv.kvec_d[ik].z << ")" << std::endl;
-                    for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
-                    {
-                        ofsi2.precision(16);
-                        ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
-                              << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)
-                              << std::endl;
-                    }
-                    ofsi2 << std::endl;
-                    ofsi2 << std::endl;
-                }
-            }
-            else
-            {
-                for (int ik = 0; ik < kv.get_nks() / 2; ik++)
-                {
-#ifdef __MPI
-                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
-#else
-                    int ik_global = ik + 1;
-#endif
-                    ofsi2 << "BAND" << std::setw(25) << "Spin up Energy(ev)" << std::setw(25) << "Occupation"
-                          << std::setw(25) << "Spin down Energy(ev)" << std::setw(25) << "Occupation"
-                          << std::setw(25) << "Kpoint = " << ik_global
-                          << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
-                          << " " << kv.kvec_d[ik].z << ")" << std::endl;
-
-                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
-                    {
-                        ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
-                              << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)
-                              << std::setw(25) << ekb((ik + kv.get_nks() / 2), ib) * ModuleBase::Ry_to_eV
-                              << std::setw(25) << wg(ik + kv.get_nks() / 2, ib) << std::endl;
-                    }
-                    ofsi2 << std::endl;
-                    ofsi2 << std::endl;
-                }
-            }
-            ofsi2.close();
-#ifdef __MPI
-        }
 #endif
     }
+
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
 	return;
 }

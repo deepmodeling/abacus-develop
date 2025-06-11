@@ -126,8 +126,8 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
-    std::cout << " The file is saved in " << fn << std::endl;
+    const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
+
     ModuleIO::output_SR(pv, gd, this->p_hamilt, fn);
 
     if (PARAM.inp.out_mat_r)

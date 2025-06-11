@@ -65,6 +65,29 @@ namespace RI_Util
 		return Born_von_Karman_cells;
 	}
 	*/
+
+	inline std::map<std::string,double> get_ccp_parameter(
+		const Exx_Info::Exx_Info_RI &info,
+		const double volumn,
+		const int nkstot)
+	{
+		switch(info.ccp_type)
+		{
+			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
+				return {};
+			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
+			{
+				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
+				const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
+				const double hf_Rcut = std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0);
+				return {{"hf_Rcut", hf_Rcut}};
+			}
+			case Conv_Coulomb_Pot_K::Ccp_Type::Erfc:
+				return {{"hse_omega", info.hse_omega}};
+			default:
+				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
+		}
+	}
 }
 
 #endif

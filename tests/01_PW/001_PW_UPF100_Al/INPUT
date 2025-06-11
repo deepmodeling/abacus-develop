@@ -23,3 +23,5 @@ smearing_sigma	0.002
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7
+diago_smooth_ethr 1
+use_k_continuity 1

@@ -297,7 +297,7 @@ void ReadInput::item_elec_stru()
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(input.pw_diag_thr);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_S" && para.input.basis_type == "pw")
+            if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
             {
                 if (para.input.pw_diag_thr > 1.0e-3)
                 {
@@ -311,6 +311,26 @@ void ReadInput::item_elec_stru()
         Input_Item item("diago_smooth_ethr");
         item.annotation = "smooth ethr for iter methods";
         read_sync_bool(input.diago_smooth_ethr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use k-point continuity for initializing wave functions";
+        read_sync_bool(input.use_k_continuity);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
+            }
+            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
+            }
+            if (para.input.use_k_continuity && para.input.nspin == 2) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
+            }
+            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
+            }
+        };
         this->add_item(item);
     }
     {

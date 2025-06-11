@@ -1,8 +1,8 @@
 # Extracting Density Matrices
 
-ABACUS can output the density matrix by adding the keyword "[out_dm](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-dm)" in INPUT file:
+ABACUS can output the density matrix by adding the keyword "[out_dmk](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-dm)" in INPUT file:
 ```
-out_dm             1
+out_dmk    1
 ```
 After finishing the calculation, the information of the density matrix is stroed in files `OUT.${suffix}/SPIN${spin}_DM`, which looks like:
 ```
