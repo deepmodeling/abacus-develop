@@ -415,7 +415,10 @@ void test_deepks<T>::check_o_delta()
                                   ParaO,
                                   nks,
                                   nspin);
-    DeePKS_domain::check_o_delta(o_delta);
+    std::ofstream ofs("o_delta.dat");
+    ofs << std::setprecision(10);
+    o_delta.print(ofs);
+    ofs.close();
     this->compare_with_ref("o_delta.dat", "o_delta_ref.dat");
 }
 
