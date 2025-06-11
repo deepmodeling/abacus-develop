@@ -337,7 +337,6 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
         pvdpRz_soc_sparseMatrix;
 
-    int lgd = 0;
     double temp_value_double;
     std::complex<double> temp_value_complex;
 

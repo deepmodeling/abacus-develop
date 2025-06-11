@@ -19,6 +19,7 @@ void cal_dH(const UnitCell& ucell,
             const LCAO_Orbitals& orb,
             const int& current_spin,
             const double& sparse_thr,
+            const ModuleBase::matrix& v_eff,
             Gint_k& gint_k);
 
 // calculated the derivative of the overlap matrix: <phi|dphi>

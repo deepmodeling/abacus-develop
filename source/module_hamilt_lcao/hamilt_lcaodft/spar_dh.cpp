@@ -2,6 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 #include <vector>
 
 void sparse_format::cal_dS(const UnitCell& ucell,
@@ -49,7 +50,6 @@ delete[] fsr_dh.DHloc_fixedR_y;
 delete[] fsr_dh.DHloc_fixedR_z;
 return;
 }
-
 void sparse_format::cal_dH(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
@@ -58,6 +58,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
+                           const ModuleBase::matrix& v_eff,
                            Gint_k& gint_k)
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
@@ -108,24 +109,35 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     if(PARAM.inp.nspin==2)
     {
+#ifndef __NEW_GINT
         gint_k.allocate_pvdpR();
         // note: some MPI process will not have grids when MPI cores are too
         // many, v_eff in these processes are empty
         const double* vr_eff1
-            = v_eff.nc * v_eff.nr > 0 ? &(v_eff(cspin, 0)) : nullptr;
+            = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
 
         if (!PARAM.globalv.gamma_only_local) 
         {
             if (PARAM.inp.vl_in_h) 
             {
                 Gint_inout inout(vr_eff1,
-                                    cspin,
-                                    Gint_Tools::job_type::dvlocal);
+                                 current_spin,
+                                 Gint_Tools::job_type::dvlocal);
                 gint_k.cal_gint(&inout);
             }
         }
         gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, ucell, grid);
         gint_k.destroy_pvdpR();
+#else
+        const double* vr_eff1
+            = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
+        if (!PARAM.globalv.gamma_only_local) 
+        {
+            ModuleGint::cal_dvlocal_R_sparseMatrix(
+                PARAM.inp.nspin, PARAM.globalv.npol, current_spin, PARAM.globalv.nlocal,
+                sparse_thr, vr_eff1, pv, ucell, grid, HS_Arrays);
+        }
+#endif
     }
     return;
 }

@@ -47,6 +47,7 @@ if(NEW_GINT)
       temp_gint/gint_fvl_meta.cpp
       temp_gint/gint_env_gamma.cpp
       temp_gint/gint_env_k.cpp
+      temp_gint/gint_dvlocal.cpp
       temp_gint/localcell_info.cpp
       temp_gint/phi_operator.cpp
       temp_gint/set_ddphi.cpp

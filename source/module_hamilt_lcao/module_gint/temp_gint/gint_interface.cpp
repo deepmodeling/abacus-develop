@@ -192,4 +192,23 @@ void cal_gint_fvl_meta(
     ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
 }
 
+void cal_dvlocal_R_sparseMatrix(
+    const int nspin,
+    const int npol,
+    const int current_spin,
+    const int nlocal,
+    const double sparse_thr,
+    const double* vr_eff,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    const Grid_Driver& gdriver,
+    LCAO_HS_Arrays& hs_arrays)
+{
+    Gint_dvlocal gint_dvlocal(vr_eff, nspin, npol);
+    gint_dvlocal.cal_dvlocal();
+    gint_dvlocal.cal_dvlocal_R_sparseMatrix(
+        nspin, current_spin, nlocal, sparse_thr,
+        pv, ucell, gdriver, hs_arrays);
+}
+
 } // namespace ModuleGint

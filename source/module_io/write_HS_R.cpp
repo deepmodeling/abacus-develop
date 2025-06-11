@@ -163,6 +163,7 @@ void ModuleIO::output_dHR(const int& istep,
 				orb,
 				cspin,
 				sparse_thr,
+                v_eff,
 				gint_k);
 	} 
 	else if (nspin == 2) 
@@ -177,6 +178,7 @@ void ModuleIO::output_dHR(const int& istep,
                                   orb,
                                   cspin,
                                   sparse_thr,
+                                  v_eff,
                                   gint_k);
         }
     }
