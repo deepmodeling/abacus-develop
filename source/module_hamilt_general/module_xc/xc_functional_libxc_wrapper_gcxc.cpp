@@ -1,7 +1,6 @@
 #ifdef USE_LIBXC
 
 #include "xc_functional_libxc.h"
-#include "module_parameter/parameter.h"
 
 #include <xc.h>
 #include <array>
