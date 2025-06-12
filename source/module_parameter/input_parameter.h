@@ -654,7 +654,7 @@ struct Input_para
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
 
-    // ====   #Parameters (23.XC extended parameterization) ========
+    // ====   #Parameters (23.XC external parameterization) ========
     /*
      * the following two sets of parameters are for the XC parameterization.
      * The first element should be the LibXC id, to assign the analytical

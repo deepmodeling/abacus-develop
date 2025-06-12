@@ -28,14 +28,14 @@ namespace XC_Functional_Libxc
     extern std::pair<int,std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
     /**
-     * @brief instantiate the XC functional by its ID, and set the extended parameters if provided.
+     * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
      * 
      * @param func_id libxc ID of functional, see https://libxc.gitlab.io/functionals/ for details
      * @param xc_polarized 0: unpolarized, 1: spin-polarized
      * @return std::vector<xc_func_type> 
      * 
      * @note the functionality of this method is extended by supporting the user-defined
-     *       extended parameters of xc. However, there are several functionals' extended 
+     *       external parameters of xc. However, there are several functionals' external 
      *       parameters are pre-defined in the code, which herein we call those are 
      *       "in-built" parameters. If the same functional ID is found in both in-built 
      *       and external parameters, the external parameters will overwrite the in-built ones.

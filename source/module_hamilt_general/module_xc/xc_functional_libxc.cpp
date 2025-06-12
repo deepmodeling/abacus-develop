@@ -201,7 +201,7 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 		funcs.push_back({}); // create placeholder
 		xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
-		// search for extended parameters
+		// search for external parameters
 		const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id);
 		const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
 		// for temporary use, I name their size as n1 and n2
@@ -221,12 +221,12 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 		const double* xc_func_ext_params = 
 			(n2 > 0) ? external_ext_params.data() : 
 			(n1 > 0) ? in_built_ext_params.data() :
-			nullptr; // nullptr if no extended parameters are found
+			nullptr; // nullptr if no external parameters are found
 
-		// if there are no extended parameters, do nothing, otherwise we set
+		// if there are no external parameters, do nothing, otherwise we set
 		if(xc_func_ext_params != nullptr)
 		{
-			// set the extended parameters
+			// set the external parameters
 			xc_func_set_ext_params(&funcs.back(), const_cast<double*>(xc_func_ext_params));
 		}
 	}
