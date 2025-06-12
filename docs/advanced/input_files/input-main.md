@@ -1070,6 +1070,7 @@ calculations.
 - **Note**:
   1. Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_exch_ext` to `101 0.8040 0.2195149727645171`.
   2. For functionals that do not have separate exchange and correlation parts, such as HSE06 whose corresponding LibXC notation is `HYB_GGA_XC_HSE06` and LibXC id is 428, you can set either `xc_exch_ext` or `xc_corr_ext` to `428 0.25 0.11 0.11` (which means 25% Hartree-Fock fraction, 0.11 as range-seperation) and leave the other one unset.
+  3. Presently this feature can only support parameterization on **one** exchange functional.
 
 ### xc_corr_ext
 
@@ -1079,6 +1080,7 @@ calculations.
 - **Note**:
   1. Solely setting this keyword will take no effect on XC functionals. One should also set `dft_functional` to corresponding functional to apply the customized parameterization. For example, if you want to use the PBE functional with customized parameters, you should set `dft_functional` to `GGA_X_PBE+GGA_C_PBE` and `xc_corr_ext` to `130 0.06672455060314922 0.031090690869654895034 1.0`.
   2. For functionals that do not have separate exchange and correlation parts, such as HSE06 whose corresponding LibXC notation is `HYB_GGA_XC_HSE06` and LibXC id is 428, you can set either `xc_exch_ext` or `xc_corr_ext` to `428 0.25 0.11 0.11` (which means 25% Hartree-Fock fraction, 0.11 as range-seperation) and leave the other one unset.
+  3. Presently this feature can only support parameterization on **one** correlation functional.
 
 ### pseudo_rcut
 
