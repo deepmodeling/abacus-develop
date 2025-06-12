@@ -146,6 +146,64 @@ struct cal_force_nl_op
                     const FPTYPE* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
+                                          FPTYPE* force);
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_loc_sincos_op
+{
+    /// @brief Calculate local pseudopotential forces (sincos loop only)
+    ///
+    /// Input Parameters
+    /// @param ctx - which device this function runs on
+    /// @param nat - number of atoms
+    /// @param npw - number of plane waves
+    /// @param ntype - number of atom types
+    /// @param gcar - G-vector Cartesian coordinates [npw * 3]
+    /// @param tau - atomic positions [nat * 3]
+    /// @param vloc_per_type - precomputed vloc factors per atom [nat * npw]
+    /// @param aux - charge density in G-space [npw]
+    /// @param scale_factor - tpiba * omega
+    ///
+    /// Output Parameters
+    /// @param force - output forces [nat * 3]
+    void operator()(const Device* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ntype,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* vloc_per_type,
+                    const std::complex<FPTYPE>* aux,
+                    const FPTYPE& scale_factor,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE, typename Device>
+struct cal_force_ew_sincos_op
+{
+    /// @brief Calculate Ewald forces (sincos loop only)
+    ///
+    /// Input Parameters
+    /// @param ctx - which device this function runs on
+    /// @param nat - number of atoms
+    /// @param npw - number of plane waves
+    /// @param ig_gge0 - index of G=0 vector (-1 if not present)
+    /// @param gcar - G-vector Cartesian coordinates [npw * 3]
+    /// @param tau - atomic positions [nat * 3]
+    /// @param it_facts - precomputed it_fact for each atom [nat]
+    /// @param aux - structure factor related array [npw]
+    ///
+    /// Output Parameters
+    /// @param force - output forces [nat * 3]
+    void operator()(const Device* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* it_facts,
+                    const std::complex<FPTYPE>* aux,
                     FPTYPE* force);
 };
 
@@ -245,6 +303,35 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const FPTYPE* lambda,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE>
+struct cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ntype,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* vloc_per_type,
+                    const std::complex<FPTYPE>* aux,
+                    const FPTYPE& scale_factor,
+                    FPTYPE* force);
+};
+
+template <typename FPTYPE>
+struct cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* it_facts,
+                    const std::complex<FPTYPE>* aux,
                     FPTYPE* force);
 };
 
