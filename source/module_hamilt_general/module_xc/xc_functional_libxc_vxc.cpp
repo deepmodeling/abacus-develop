@@ -37,18 +37,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
-        /* external_xc_func_ext_params = */
-        std::map<int, std::vector<double>>({
-            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_exch_ext_param.begin()+1,
-             PARAM.inp.xc_exch_ext_param.end()
-            )},
-            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_corr_ext_param.begin()+1,
-             PARAM.inp.xc_corr_ext_param.end()
-            )}
-        }));
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
 
     const bool is_gga = [&funcs]()
     {
@@ -207,18 +196,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const int nspin = PARAM.inp.nspin;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
-        /* external_xc_func_ext_params = */
-        std::map<int, std::vector<double>>({
-            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_exch_ext_param.begin()+1,
-             PARAM.inp.xc_exch_ext_param.end()
-            )},
-            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_corr_ext_param.begin()+1,
-             PARAM.inp.xc_corr_ext_param.end()
-            )}
-        }));
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr

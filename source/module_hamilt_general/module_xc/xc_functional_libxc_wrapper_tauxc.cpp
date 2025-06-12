@@ -20,18 +20,7 @@ void XC_Functional_Libxc::tau_xc(
     lapl_rho = grho;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ XC_UNPOLARIZED,
-        /* external_xc_func_ext_params = */
-        std::map<int, std::vector<double>>({
-            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_exch_ext_param.begin()+1,
-             PARAM.inp.xc_exch_ext_param.end()
-            )},
-            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
-             PARAM.inp.xc_corr_ext_param.begin()+1,
-             PARAM.inp.xc_corr_ext_param.end()
-            )}
-        }));
+        /* xc_polarized = */ XC_UNPOLARIZED);
 
     sxc = 0.0; v1xc = 0.0; v2xc = 0.0; v3xc = 0.0;
 
@@ -76,18 +65,7 @@ void XC_Functional_Libxc::tau_xc_spin(
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ XC_POLARIZED,
-        /* external_xc_func_ext_params = */
-        std::map<int, std::vector<double>>({
-            {PARAM.inp.xc_exch_ext_param[0], std::vector<double>(
-                PARAM.inp.xc_exch_ext_param.begin()+1,
-                PARAM.inp.xc_exch_ext_param.end()
-            )},
-            {PARAM.inp.xc_corr_ext_param[0], std::vector<double>(
-                PARAM.inp.xc_corr_ext_param.begin()+1,
-                PARAM.inp.xc_corr_ext_param.end()
-            )}
-        }));
+        /* xc_polarized = */ XC_POLARIZED);
 
     for(xc_func_type &func : funcs)
     {

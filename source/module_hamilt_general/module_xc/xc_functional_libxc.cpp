@@ -146,49 +146,70 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
     return std::make_pair(func_type, func_id);
 }
 
-const std::map<int, std::vector<double>> in_built_xc_func_ext_params = {
-	// finite temperature XC functionals
-	// convert the temperature from Rydberg to Hartree
-	{XC_LDA_XC_KSDT, {PARAM.inp.xc_temperature * 0.5}},
-	{XC_LDA_XC_CORRKSDT, {PARAM.inp.xc_temperature * 0.5}},
-	{XC_LDA_XC_GDSMFB, {PARAM.inp.xc_temperature * 0.5}},
-	// hybrid functionals
+const std::vector<double> in_built_xc_func_ext_params(const int id)
+{
+	const std::map<int, std::vector<double>> mymap = {
+		// finite temperature XC functionals
+		{XC_LDA_XC_KSDT, 	 {PARAM.inp.xc_temperature * 0.5}},
+		{XC_LDA_XC_CORRKSDT, {PARAM.inp.xc_temperature * 0.5}},
+		{XC_LDA_XC_GDSMFB,   {PARAM.inp.xc_temperature * 0.5}},
+		// hybrid functionals
 #ifdef __EXX
-	{XC_HYB_GGA_XC_PBEH, {GlobalC::exx_info.info_global.hybrid_alpha,
-						  GlobalC::exx_info.info_global.hse_omega,
-						  GlobalC::exx_info.info_global.hse_omega}},
-	{XC_HYB_GGA_XC_HSE06, {GlobalC::exx_info.info_global.hybrid_alpha,
-						   GlobalC::exx_info.info_global.hse_omega,
-						   GlobalC::exx_info.info_global.hse_omega}},
-	// short-range of B88_X
-	{XC_GGA_X_ITYH, {PARAM.inp.exx_hse_omega}},
-	// short-range of LYP_C
-	{XC_GGA_C_LYPR, {0.04918, 0.132, 0.2533, 0.349, 
-					 0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega}},
+		{XC_HYB_GGA_XC_PBEH,  {GlobalC::exx_info.info_global.hybrid_alpha,
+							   GlobalC::exx_info.info_global.hse_omega, 
+							   GlobalC::exx_info.info_global.hse_omega}},
+		{XC_HYB_GGA_XC_HSE06, {GlobalC::exx_info.info_global.hybrid_alpha,
+							   GlobalC::exx_info.info_global.hse_omega, 
+							   GlobalC::exx_info.info_global.hse_omega}},
+		// short-range of B88_X
+		{XC_GGA_X_ITYH, {PARAM.inp.exx_hse_omega}},
+		// short-range of LYP_C
+		{XC_GGA_C_LYPR, {0.04918, 0.132, 0.2533, 0.349, 
+						 0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega}},
 #endif
-};
+	};
+	auto it = mymap.find(id);
+	return (it != mymap.end()) ? it->second : std::vector<double>{};
+}
+
+const std::vector<double> external_xc_func_ext_params(const int id)
+{
+	const std::map<int, std::vector<double>> mymap = {
+        {
+			PARAM.inp.xc_exch_ext_param[0], 
+			std::vector<double>(PARAM.inp.xc_exch_ext_param.begin()+1,
+							    PARAM.inp.xc_exch_ext_param.end())
+		},
+        {
+			PARAM.inp.xc_corr_ext_param[0], 
+			std::vector<double>(PARAM.inp.xc_corr_ext_param.begin()+1,
+            				    PARAM.inp.xc_corr_ext_param.end())
+		}
+    };
+	auto it = mymap.find(id);
+	return (it != mymap.end()) ? it->second : std::vector<double>{};
+}
 
 std::vector<xc_func_type> 
 XC_Functional_Libxc::init_func(const std::vector<int> &func_id, 
-							   const int xc_polarized,
-							   const std::map<int, std::vector<double>> &external_xc_func_ext_params)
+							   const int xc_polarized)
 {
 	std::vector<xc_func_type> funcs;
-	for(int id : func_id)
+	for (int id : func_id)
 	{
 		funcs.push_back({}); // create placeholder
 		xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
 		// search for extended parameters, external overwrites in-built if 
 		// the same functional id is found in both maps
-		auto it_in_built = in_built_xc_func_ext_params.find(id);
-		auto it_external = external_xc_func_ext_params.find(id);
+		const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id);
+		const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
 
 		const double* xc_func_ext_params = 
-			(it_external != external_xc_func_ext_params.end()) ?
-			it_external->second.data() : 
-			(it_in_built != in_built_xc_func_ext_params.end()) ?
-			it_in_built->second.data() : nullptr;
+			(!external_ext_params.empty()) ? external_ext_params.data() : 
+			(!in_built_ext_params.empty()) ? in_built_ext_params.data() :
+			nullptr; // nullptr if no extended parameters are found
+
 		// if there are no extended parameters, do nothing
 		if(xc_func_ext_params != nullptr)
 		{
