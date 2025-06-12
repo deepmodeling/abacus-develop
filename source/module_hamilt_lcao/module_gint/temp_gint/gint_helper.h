@@ -5,6 +5,9 @@
 #include "gint_type.h"
 #include "source_base/timer.h"
 
+namespace ModuleGint
+{
+
 template <typename T>
 std::shared_ptr<const T> toConstSharedPtr(std::shared_ptr<T> ptr) {
     return std::static_pointer_cast<const T>(ptr);
@@ -61,3 +64,5 @@ inline int ceil_div(const int a, const int b)
 {
     return a / b + (a % b != 0 && (a ^ b) > 0); 
 };
+
+}
