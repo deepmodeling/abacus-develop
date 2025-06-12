@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 
+/*
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
 {
@@ -34,11 +35,15 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
 {
     ModuleBase::TITLE("Exx_LRI_Interface", "read_Hexxs_cereal");
     ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
-    std::ifstream ifs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
+    const std::string file_name_rank = file_name + "_" + std::to_string(GlobalV::MY_RANK);
+    std::ifstream ifs(file_name_rank, std::ofstream::binary);
+    if(!ifs.is_open())
+        { ModuleBase::WARNING_QUIT("Exx_LRI_Interface", file_name_rank+" not found."); }
     cereal::BinaryInputArchive iar(ifs);
     iar(this->exx_ptr->Hexxs);
     ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
 }
+*/
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
@@ -70,11 +75,11 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_elec(const std::vector<std::map<TA, st
                                                const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_elec");
-	if(!this->flag_finish.init || !this->flag_finish.ions)
-	{ 
-		throw std::runtime_error("Exx init unfinished when "
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+    { 
+        throw std::runtime_error("Exx init unfinished when "
         +std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
-	}
+    }
 
     this->exx_ptr->cal_exx_elec(Ds, ucell, pv, p_symrot);
 
@@ -85,15 +90,15 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_force(const int& nat)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_force");
-	if(!this->flag_finish.init || !this->flag_finish.ions)
-	{ 
-		throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
-	}
-	if(!this->flag_finish.elec)
-	{ 
-		throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+    { 
+        throw std::runtime_error("Exx init unfinished when "+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+    }
+    if(!this->flag_finish.elec)
+    { 
+        throw std::runtime_error("Exx Hamiltonian unfinished when "+std::string(__FILE__)
         +" line "+std::to_string(__LINE__)); 
-	}
+    }
 
     this->exx_ptr->cal_exx_force(nat);
 
@@ -104,16 +109,16 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","cal_exx_stress");
-	if(!this->flag_finish.init || !this->flag_finish.ions)
-	{ 
-		throw std::runtime_error("Exx init unfinished when "
-				+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
-	}
-	if(!this->flag_finish.elec)
-	{ 
-		throw std::runtime_error("Exx Hamiltonian unfinished when "
-				+std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
-	}
+    if(!this->flag_finish.init || !this->flag_finish.ions)
+    { 
+        throw std::runtime_error("Exx init unfinished when "
+                +std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+    }
+    if(!this->flag_finish.elec)
+    { 
+        throw std::runtime_error("Exx Hamiltonian unfinished when "
+                +std::string(__FILE__)+" line "+std::to_string(__LINE__)); 
+    }
 
     this->exx_ptr->cal_exx_stress(omega, lat0);
 
@@ -121,8 +126,10 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const doub
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, 
-		const UnitCell& ucell, const Parallel_2D& pv)
+void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
+    const K_Vectors& kv, 
+    const UnitCell& ucell,
+    const Parallel_2D& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     // initialize the rotation matrix in AO representation
@@ -130,7 +137,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv,
     if (this->exx_spacegroup_symmetry)
     {
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
-        this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+        this->symrot_.find_irreducible_sector(
+            ucell.symm, ucell.atoms, ucell.st,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
         // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
         this->symrot_.cal_Ms(kv, ucell, pv);
@@ -233,18 +241,18 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                 const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
                     Ds = PARAM.globalv.gamma_only_local
                         ? RI_2D_Comm::split_m2D_ktoR<Tdata>(
-							ucell,
-							*this->exx_ptr->p_kv,
-							this->mix_DMk_2D.get_DMk_gamma_out(),
-							*dm_in.get_paraV_pointer(),
-							PARAM.inp.nspin)
+                            ucell,
+                            *this->exx_ptr->p_kv,
+                            this->mix_DMk_2D.get_DMk_gamma_out(),
+                            *dm_in.get_paraV_pointer(),
+                            PARAM.inp.nspin)
                         : RI_2D_Comm::split_m2D_ktoR<Tdata>(
-							ucell,
-							*this->exx_ptr->p_kv,
-							this->mix_DMk_2D.get_DMk_k_out(),
-							*dm_in.get_paraV_pointer(),
-							PARAM.inp.nspin,
-							this->exx_spacegroup_symmetry);
+                            ucell,
+                            *this->exx_ptr->p_kv,
+                            this->mix_DMk_2D.get_DMk_k_out(),
+                            *dm_in.get_paraV_pointer(),
+                            PARAM.inp.nspin,
+                            this->exx_spacegroup_symmetry);
 
                 if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
                     { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); }
@@ -274,11 +282,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
         {
             if (GlobalV::MY_RANK == 0)
             {
-                try { GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx); }
+                try
+                    { GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx); }
                 catch (const std::exception& e)
-                {
-                    std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl;
-                }
+                    { std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl; }
             }
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
             this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
