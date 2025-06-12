@@ -146,6 +146,8 @@ class HContainer
     // Destructor of class HContainer
     ~HContainer();
 
+    HContainer();
+
     /**
      * @brief copy constructor
      * when data_array is not nullptr, new HContainer will be wrapper for data_array
@@ -154,7 +156,9 @@ class HContainer
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
 
     // move constructor
-    HContainer(HContainer<T>&& HR_in);
+    HContainer(HContainer<T>&& HR_in) noexcept;
+    // move assignment
+    HContainer& operator=(HContainer<T>&& HR_in) noexcept;
 
     // simple constructor
     HContainer(int natom);

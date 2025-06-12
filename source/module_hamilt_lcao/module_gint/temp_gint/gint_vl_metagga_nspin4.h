@@ -38,8 +38,8 @@ class Gint_vl_metagga_nspin4 : public Gint
 
     const int nspin_ = 4;
 
-    std::vector<std::shared_ptr<HContainer<double>>> hr_gint_part_;
-    std::shared_ptr<HContainer<std::complex<double>>> hr_gint_full_;
+    std::vector<HContainer<double>> hr_gint_part_;
+    HContainer<std::complex<double>> hr_gint_full_;
 };
 
 }

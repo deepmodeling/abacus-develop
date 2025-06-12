@@ -10,7 +10,7 @@ namespace ModuleGint
 void Gint_fvl_meta_gpu::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     transfer_cpu_to_gpu_();
     cal_fvl_svl_();
     transfer_gpu_to_cpu_();
@@ -32,9 +32,9 @@ void Gint_fvl_meta_gpu::transfer_cpu_to_gpu_()
     vofk_d_vec_.resize(nspin_);
     for (int is = 0; is < nspin_; is++)
     {
-        dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is]->get_nnr(), 0, false);
-        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is]->get_wrapper(), 
-                             dm_gint_vec_[is]->get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
+        dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is].get_nnr(), 0, false);
+        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
+                             dm_gint_vec_[is].get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
         vr_eff_d_vec_[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
         checkCuda(cudaMemcpy(vr_eff_d_vec_[is].get_device_ptr(), vr_eff_[is],
                              gint_info_->get_local_mgrid_num() * sizeof(double), cudaMemcpyHostToDevice));
@@ -132,13 +132,13 @@ void Gint_fvl_meta_gpu::cal_fvl_svl_()
                 phi_op.phi_mul_vldr3(vofk_d_vec_[is].get_device_ptr(), dr3_,
                                      dphi_z.get_device_ptr(), dphi_z_vldr3.get_device_ptr()); 
                 phi_op.phi_mul_dm(phi_vldr3.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(),
-                                  *dm_gint_vec_[is], is_symm, phi_vldr3_dm.get_device_ptr());
+                                  dm_gint_vec_[is], is_symm, phi_vldr3_dm.get_device_ptr());
                 phi_op.phi_mul_dm(dphi_x_vldr3.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(),
-                                  *dm_gint_vec_[is], is_symm, dphi_x_vldr3_dm.get_device_ptr());
+                                  dm_gint_vec_[is], is_symm, dphi_x_vldr3_dm.get_device_ptr());
                 phi_op.phi_mul_dm(dphi_y_vldr3.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(),
-                                  *dm_gint_vec_[is], is_symm, dphi_y_vldr3_dm.get_device_ptr());
+                                  dm_gint_vec_[is], is_symm, dphi_y_vldr3_dm.get_device_ptr());
                 phi_op.phi_mul_dm(dphi_z_vldr3.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(),
-                                  *dm_gint_vec_[is], is_symm, dphi_z_vldr3_dm.get_device_ptr());
+                                  dm_gint_vec_[is], is_symm, dphi_z_vldr3_dm.get_device_ptr());
                 if (isforce_)
                 {
                     phi_op.phi_dot_dphi(phi_vldr3_dm.get_device_ptr(),

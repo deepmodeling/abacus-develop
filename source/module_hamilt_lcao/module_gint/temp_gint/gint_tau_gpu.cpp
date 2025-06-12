@@ -10,7 +10,7 @@ namespace ModuleGint
 void Gint_tau_gpu::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     transfer_cpu_to_gpu_();
     cal_tau_();
     transfer_gpu_to_cpu_();
@@ -31,10 +31,10 @@ void Gint_tau_gpu::transfer_cpu_to_gpu_()
     kin_d_vec_.resize(nspin_);
     for (int is = 0; is < nspin_; is++)
     {
-        dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is]->get_nnr(), 0, false);
+        dm_gint_d_vec_[is] = CudaMemWrapper<double>(dm_gint_vec_[is].get_nnr(), 0, false);
         kin_d_vec_[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
-        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is]->get_wrapper(), 
-            dm_gint_vec_[is]->get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
+        checkCuda(cudaMemcpy(dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is].get_wrapper(), 
+            dm_gint_vec_[is].get_nnr() * sizeof(double), cudaMemcpyHostToDevice));
     }
 }
 
@@ -76,11 +76,11 @@ void Gint_tau_gpu::cal_tau_()
             for(int is = 0; is < nspin_; is++)
             {
                 const bool is_symm = true;
-                phi_op.phi_mul_dm(dphi_x.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), *dm_gint_vec_[is],
+                phi_op.phi_mul_dm(dphi_x.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is],
                                   is_symm, dphi_x_dm.get_device_ptr());
-                phi_op.phi_mul_dm(dphi_y.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), *dm_gint_vec_[is],
+                phi_op.phi_mul_dm(dphi_y.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is],
                                   is_symm, dphi_y_dm.get_device_ptr());
-                phi_op.phi_mul_dm(dphi_z.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), *dm_gint_vec_[is],
+                phi_op.phi_mul_dm(dphi_z.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is],
                                   is_symm, dphi_z_dm.get_device_ptr());
                 phi_op.phi_dot_phi(dphi_x.get_device_ptr(), dphi_x_dm.get_device_ptr(), kin_d_vec_[is].get_device_ptr());
                 phi_op.phi_dot_phi(dphi_y.get_device_ptr(), dphi_y_dm.get_device_ptr(), kin_d_vec_[is].get_device_ptr());

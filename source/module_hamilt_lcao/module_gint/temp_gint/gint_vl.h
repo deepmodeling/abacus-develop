@@ -38,7 +38,7 @@ class Gint_vl : public Gint
     //========================
     double dr3_;
 
-    std::shared_ptr<HContainer<double>> hr_gint_;
+    HContainer<double> hr_gint_;
 };
 
 }

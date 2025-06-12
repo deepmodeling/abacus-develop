@@ -9,7 +9,7 @@ namespace ModuleGint
 void Gint_fvl::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
 }
 
@@ -64,7 +64,7 @@ void Gint_fvl::cal_fvl_svl_()
             for (int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
-                phi_op.phi_mul_dm(phi_vldr3.data(), *dm_gint_vec_[is], false, phi_vldr3_dm.data());
+                phi_op.phi_mul_dm(phi_vldr3.data(), dm_gint_vec_[is], false, phi_vldr3_dm.data());
                 if(isforce_)
                 {
                     phi_op.phi_dot_dphi(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);

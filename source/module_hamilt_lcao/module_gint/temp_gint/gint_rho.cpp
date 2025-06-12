@@ -9,7 +9,7 @@ namespace ModuleGint
 void Gint_rho::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_rho_();
 }
 
@@ -43,7 +43,7 @@ void Gint_rho::cal_rho_()
             phi_op.set_phi(phi.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(phi.data(), *dm_gint_vec_[is], true, phi_dm.data());
+                phi_op.phi_mul_dm(phi.data(), dm_gint_vec_[is], true, phi_dm.data());
                 phi_op.phi_dot_phi(phi.data(), phi_dm.data(), rho_[is]);
             }
         }

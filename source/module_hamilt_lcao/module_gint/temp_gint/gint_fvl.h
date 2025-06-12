@@ -44,7 +44,7 @@ class Gint_fvl : public Gint
     ModuleBase::matrix* svl_;
 
     // intermediate variables
-    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
+    std::vector<HContainer<double>> dm_gint_vec_;
 
     double dr3_;
 };

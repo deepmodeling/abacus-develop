@@ -13,7 +13,7 @@ Gint_env_gamma::Gint_env_gamma(
     :rho_(rho)
 {
     wfc_gint_.resize(nbands * gint_info_->get_lgd());
-    wfc_2d_to_gint(psid, *pv, wfc_gint_.data(), gint_info_);
+    wfc_2d_to_gint(psid, *pv, wfc_gint_.data(), *gint_info_);
 }
 
 void Gint_env_gamma::cal_env_band(const int iband)

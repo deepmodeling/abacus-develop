@@ -35,7 +35,7 @@ public:
     void phi_mul_phi_vldr3(
         const double* phi_d,
         const double* phi_vldr3_d,
-        std::shared_ptr<HContainer<double>> hRGint,
+        HContainer<double>& hRGint,
         double* hr_d) const;
     
     void phi_mul_dm(

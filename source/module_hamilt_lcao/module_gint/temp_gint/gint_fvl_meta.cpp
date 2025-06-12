@@ -9,7 +9,7 @@ namespace ModuleGint
 void Gint_fvl_meta::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
 }
 
@@ -93,10 +93,10 @@ void Gint_fvl_meta::cal_fvl_svl_()
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.data(), dphi_x_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.data(), dphi_y_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.data(), dphi_z_vldr3.data());
-                phi_op.phi_mul_dm(phi_vldr3.data(), *dm_gint_vec_[is], false, phi_vldr3_dm.data());
-                phi_op.phi_mul_dm(dphi_x_vldr3.data(), *dm_gint_vec_[is], false, dphi_x_vldr3_dm.data());
-                phi_op.phi_mul_dm(dphi_y_vldr3.data(), *dm_gint_vec_[is], false, dphi_y_vldr3_dm.data());
-                phi_op.phi_mul_dm(dphi_z_vldr3.data(), *dm_gint_vec_[is], false, dphi_z_vldr3_dm.data());
+                phi_op.phi_mul_dm(phi_vldr3.data(), dm_gint_vec_[is], false, phi_vldr3_dm.data());
+                phi_op.phi_mul_dm(dphi_x_vldr3.data(), dm_gint_vec_[is], false, dphi_x_vldr3_dm.data());
+                phi_op.phi_mul_dm(dphi_y_vldr3.data(), dm_gint_vec_[is], false, dphi_y_vldr3_dm.data());
+                phi_op.phi_mul_dm(dphi_z_vldr3.data(), dm_gint_vec_[is], false, dphi_z_vldr3_dm.data());
                 if(isforce_)
                 {
                     phi_op.phi_dot_dphi(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);

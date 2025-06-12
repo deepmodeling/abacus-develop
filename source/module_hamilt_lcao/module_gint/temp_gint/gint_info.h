@@ -45,7 +45,7 @@ class GintInfo
     // functions about hcontainer
     //=========================================
     template <typename T>
-    std::shared_ptr<HContainer<T>> get_hr(int npol = 1) const;
+    HContainer<T> get_hr(int npol = 1) const;
     
     private:
     // initialize the atoms

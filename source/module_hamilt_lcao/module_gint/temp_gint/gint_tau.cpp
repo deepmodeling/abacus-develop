@@ -9,7 +9,7 @@ namespace ModuleGint
 void Gint_tau::cal_gint()
 {
     init_dm_gint_();
-    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
+    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_tau_();
 }
 
@@ -51,9 +51,9 @@ void Gint_tau::cal_tau_()
             phi_op.set_phi_dphi(nullptr, dphi_x.data(), dphi_y.data(), dphi_z.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(dphi_x.data(), *dm_gint_vec_[is], true, dphi_x_dm.data());
-                phi_op.phi_mul_dm(dphi_y.data(), *dm_gint_vec_[is], true, dphi_y_dm.data());
-                phi_op.phi_mul_dm(dphi_z.data(), *dm_gint_vec_[is], true, dphi_z_dm.data());
+                phi_op.phi_mul_dm(dphi_x.data(), dm_gint_vec_[is], true, dphi_x_dm.data());
+                phi_op.phi_mul_dm(dphi_y.data(), dm_gint_vec_[is], true, dphi_y_dm.data());
+                phi_op.phi_mul_dm(dphi_z.data(), dm_gint_vec_[is], true, dphi_z_dm.data());
                 phi_op.phi_dot_phi(dphi_x.data(), dphi_x_dm.data(), kin_[is]);
                 phi_op.phi_dot_phi(dphi_y.data(), dphi_y_dm.data(), kin_[is]);
                 phi_op.phi_dot_phi(dphi_z.data(), dphi_z_dm.data(), kin_[is]);

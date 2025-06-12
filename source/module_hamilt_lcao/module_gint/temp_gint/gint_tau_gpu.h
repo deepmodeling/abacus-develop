@@ -40,7 +40,7 @@ class Gint_tau_gpu : public Gint
     //========================
     // Intermediate variables
     //========================
-    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
+    std::vector<HContainer<double>> dm_gint_vec_;
 
     std::vector<CudaMemWrapper<double>> dm_gint_d_vec_;
     std::vector<CudaMemWrapper<double>> kin_d_vec_;

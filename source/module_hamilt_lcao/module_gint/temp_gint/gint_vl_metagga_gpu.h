@@ -45,7 +45,7 @@ class Gint_vl_metagga_gpu : public Gint
     //========================
     double dr3_;
 
-    std::shared_ptr<HContainer<double>> hr_gint_;
+    HContainer<double> hr_gint_;
     
     CudaMemWrapper<double> hr_gint_d_;
     CudaMemWrapper<double> vr_eff_d_;

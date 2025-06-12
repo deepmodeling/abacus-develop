@@ -209,7 +209,7 @@ void PhiOperatorGpu::phi_mul_vldr3(
 void PhiOperatorGpu::phi_mul_phi_vldr3(
     const double* phi_d,
     const double* phi_vldr3_d,
-    std::shared_ptr<HContainer<double>> hRGint,
+    HContainer<double>& hRGint,
     double* hr_d) const
 {
     // ap_num means number of atom pairs
@@ -242,7 +242,7 @@ void PhiOperatorGpu::phi_mul_phi_vldr3(
                 if(iat_1 > iat_2)
                 { continue; }
                 
-                int hr_offset = hRGint->find_matrix_offset(iat_1, iat_2, r_1 - r_2);
+                int hr_offset = hRGint.find_matrix_offset(iat_1, iat_2, r_1 - r_2);
                 if (hr_offset == -1)
                 { continue; }
 

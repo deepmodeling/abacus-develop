@@ -45,9 +45,9 @@ void Gint_dvlocal::cal_hr_gint_()
             dphi_z.resize(phi_len);
             phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), *pvdpRx, PhiOperator::Triangular_Matrix::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), *pvdpRy, PhiOperator::Triangular_Matrix::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), *pvdpRz, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), pvdpRx, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), pvdpRy, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), pvdpRz, PhiOperator::Triangular_Matrix::Upper);
         }
     }
 }
@@ -69,9 +69,9 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     double temp_value_double;
 
     Vec3d tau1, dtau;
-    for (int iap = 0; iap < pvdpRx->size_atom_pairs(); iap++)
+    for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
     {
-        const auto& ap = pvdpRx->get_atom_pair(iap);
+        const auto& ap = pvdpRx.get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         const int it1 = ucell.iat2it[iat1];
@@ -85,9 +85,9 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
         {
             const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
             Abfs::Vector3_Order<int> dR(R.x, R.y, R.z);
-            double* p_pvdpRx = pvdpRx->get_atom_pair(iap).get_pointer(ir);
-            double* p_pvdpRy = pvdpRy->get_atom_pair(iap).get_pointer(ir);
-            double* p_pvdpRz = pvdpRz->get_atom_pair(iap).get_pointer(ir);
+            double* p_pvdpRx = pvdpRx.get_atom_pair(iap).get_pointer(ir);
+            double* p_pvdpRy = pvdpRy.get_atom_pair(iap).get_pointer(ir);
+            double* p_pvdpRz = pvdpRz.get_atom_pair(iap).get_pointer(ir);
 
             for (int iw = 0; iw < atom1->nw * npol_; iw++)
             {

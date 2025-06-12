@@ -57,9 +57,9 @@ class Gint_dvlocal : public Gint
 
     // intermediate variables
     double dr3_;
-    std::shared_ptr<HContainer<double>> pvdpRx;
-    std::shared_ptr<HContainer<double>> pvdpRy;
-    std::shared_ptr<HContainer<double>> pvdpRz;
+    HContainer<double> pvdpRx;
+    HContainer<double> pvdpRy;
+    HContainer<double> pvdpRz;
 };
 
 }

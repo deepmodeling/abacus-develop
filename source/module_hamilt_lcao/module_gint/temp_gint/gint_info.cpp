@@ -63,16 +63,16 @@ GintInfo::GintInfo(
 }
 
 template <typename T>
-std::shared_ptr<HContainer<T>> GintInfo::get_hr(int npol) const
+HContainer<T> GintInfo::get_hr(int npol) const
 {
-    auto p_hr = std::make_shared<HContainer<T>>(ucell_->nat);
+    auto hr = HContainer<T>(ucell_->nat);
     if(PARAM.inp.gamma_only)
     {
-        p_hr->fix_gamma();
+        hr.fix_gamma();
     }
-    p_hr->insert_ijrs(&ijr_info_, *ucell_, npol);
-    p_hr->allocate(nullptr, true);
-    return p_hr;
+    hr.insert_ijrs(&ijr_info_, *ucell_, npol);
+    hr.allocate(nullptr, true);
+    return std::move(hr);
 }
 
 void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
@@ -277,6 +277,6 @@ void GintInfo::init_bgrid_batches_(int batch_size)
 }
 #endif
 
-template std::shared_ptr<HContainer<double>> GintInfo::get_hr<double>(int npol) const;
-template std::shared_ptr<HContainer<std::complex<double>>> GintInfo::get_hr<std::complex<double>>(int npol) const;
+template HContainer<double> GintInfo::get_hr<double>(int npol) const;
+template HContainer<std::complex<double>> GintInfo::get_hr<std::complex<double>>(int npol) const;
 }

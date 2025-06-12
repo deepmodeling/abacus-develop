@@ -14,7 +14,7 @@ void Gint_vl_metagga_nspin4_gpu::cal_gint()
     cal_hr_gint_();
     transfer_gpu_to_cpu_();
     compose_hr_gint(hr_gint_part_, hr_gint_full_);
-    transfer_hr_gint_to_hR(toConstSharedPtr(hr_gint_full_), hR_);
+    transfer_hr_gint_to_hR(hr_gint_full_, *hR_);
 }
 
 void Gint_vl_metagga_nspin4_gpu::init_hr_gint_()
@@ -35,7 +35,7 @@ void Gint_vl_metagga_nspin4_gpu::transfer_cpu_to_gpu_()
     hr_gint_part_d_.resize(nspin_);
     for(int i = 0; i < nspin_; i++)
     {
-        hr_gint_part_d_[i] = CudaMemWrapper<double>(hr_gint_part_[i]->get_nnr(), 0, false);
+        hr_gint_part_d_[i] = CudaMemWrapper<double>(hr_gint_part_[i].get_nnr(), 0, false);
         vr_eff_d_[i] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
         vofk_d_[i] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
         checkCuda(cudaMemcpy(vr_eff_d_[i].get_device_ptr(), vr_eff_[i],
@@ -49,8 +49,8 @@ void Gint_vl_metagga_nspin4_gpu::transfer_gpu_to_cpu_()
 {
     for(int i = 0; i < nspin_; i++)
     {
-        checkCuda(cudaMemcpy(hr_gint_part_[i]->get_wrapper(), hr_gint_part_d_[i].get_device_ptr(), 
-                             hr_gint_part_[i]->get_nnr() * sizeof(double), cudaMemcpyDeviceToHost));
+        checkCuda(cudaMemcpy(hr_gint_part_[i].get_wrapper(), hr_gint_part_d_[i].get_device_ptr(), 
+                             hr_gint_part_[i].get_nnr() * sizeof(double), cudaMemcpyDeviceToHost));
     }
 }
 

@@ -40,7 +40,7 @@ class Gint_vl_metagga : public Gint
     //========================
     double dr3_;
 
-    std::shared_ptr<HContainer<double>> hr_gint_;
+    HContainer<double> hr_gint_;
 
 };
 

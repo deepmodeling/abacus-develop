@@ -18,7 +18,7 @@ Gint_env_k::Gint_env_k(
     :kvec_c_(kvec_c), kvec_d_(kvec_d), ik_(ik), nspin_(nspin), npol_(npol), rho_(rho)
 {
     wfc_gint_.resize(nbands * gint_info_->get_lgd());
-    wfc_2d_to_gint(psid, *pv, wfc_gint_.data(), gint_info_);
+    wfc_2d_to_gint(psid, *pv, wfc_gint_.data(), *gint_info_);
 }
 
 void Gint_env_k::cal_env_band(const int iband)

@@ -35,7 +35,7 @@ class Gint_rho : public Gint
     //========================
     // Intermediate variables
     //========================
-    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
+    std::vector<HContainer<double>> dm_gint_vec_;
 };
 
 }

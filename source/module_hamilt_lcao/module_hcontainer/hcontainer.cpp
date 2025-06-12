@@ -16,6 +16,9 @@ HContainer<T>::~HContainer()
     }
 }
 
+template <typename T>
+HContainer<T>::HContainer() {}
+
 // copy constructor
 template <typename T>
 HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
@@ -35,15 +38,36 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
 
 // move constructor
 template <typename T>
-HContainer<T>::HContainer(HContainer<T>&& HR_in)
+HContainer<T>::HContainer(HContainer<T>&& HR_in) noexcept
 {
     this->atom_pairs = std::move(HR_in.atom_pairs);
     this->sparse_ap = std::move(HR_in.sparse_ap);
     this->sparse_ap_index = std::move(HR_in.sparse_ap_index);
+    this->wrapper_pointer = HR_in.wrapper_pointer;
     this->gamma_only = HR_in.gamma_only;
     this->paraV = HR_in.paraV;
     this->current_R = -1;
+    HR_in.wrapper_pointer = nullptr;
     // tmp terms not moved
+}
+
+// move assignment
+template <typename T>
+HContainer<T>& HContainer<T>::operator=(HContainer<T>&& HR_in) noexcept
+{
+    if (this != &HR_in)
+    {
+        this->atom_pairs = std::move(HR_in.atom_pairs);
+        this->sparse_ap = std::move(HR_in.sparse_ap);
+        this->sparse_ap_index = std::move(HR_in.sparse_ap_index);
+        this->wrapper_pointer = HR_in.wrapper_pointer;
+        this->gamma_only = HR_in.gamma_only;
+        this->paraV = HR_in.paraV;
+        this->current_R = -1;
+
+        HR_in.wrapper_pointer = nullptr;
+    }
+    return *this;
 }
 
 // simple constructor

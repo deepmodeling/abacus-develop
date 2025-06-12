@@ -12,7 +12,7 @@ void Gint_vl::cal_gint()
     init_hr_gint_();
     cal_hr_gint_();
     compose_hr_gint(hr_gint_);
-    transfer_hr_gint_to_hR(toConstSharedPtr(hr_gint_), hR_);
+    transfer_hr_gint_to_hR(hr_gint_, *hR_);
 }
 
 //========================
@@ -44,7 +44,7 @@ void Gint_vl::cal_hr_gint_()
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), *hr_gint_, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint_, PhiOperator::Triangular_Matrix::Upper);
         }
     }
 }
