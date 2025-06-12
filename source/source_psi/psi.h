@@ -130,7 +130,7 @@ class Psi
     const Device* get_device() const;
 
     // return psi_bias
-    const int& get_psi_bias() const;
+    const size_t& get_psi_bias() const;
 
     const int& get_current_ngk() const;
 
