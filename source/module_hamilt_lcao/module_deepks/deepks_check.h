@@ -1,7 +1,7 @@
 #ifndef DEEPKS_CHECK_H
 #define DEEPKS_CHECK_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include <string>
 #include <torch/script.h>
