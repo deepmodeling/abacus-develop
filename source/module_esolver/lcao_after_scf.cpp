@@ -45,7 +45,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 				this->pw_big,
 				this->sf,
 				this->rdmft_solver,
-#ifdef __DEEPKS
+#ifdef __MLALGO
 				this->ld,
 #endif
 #ifdef __EXX

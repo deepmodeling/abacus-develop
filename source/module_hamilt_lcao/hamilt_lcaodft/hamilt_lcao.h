@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
@@ -51,7 +51,7 @@ class HamiltLCAO : public Hamilt<TK>
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __DEEPKS
+#ifdef __MLALGO
                ,
                LCAO_Deepks<TK>* ld_in
 #endif
@@ -117,7 +117,7 @@ class HamiltLCAO : public Hamilt<TK>
         return this->sR;
     }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
     HContainer<TR>*& get_V_delta_R()
     {
@@ -155,7 +155,7 @@ class HamiltLCAO : public Hamilt<TK>
     //! Real space overlap matrix S(R), where R is the Bravis lattice vector
     HContainer<TR>* sR = nullptr;
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     HContainer<TR>* V_delta_R = nullptr;
 #endif
 

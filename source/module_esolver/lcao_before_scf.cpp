@@ -16,7 +16,7 @@
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_tools.h"
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -151,7 +151,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
-#ifdef __DEEPKS
+#ifdef __MLALGO
             ,
             &this->ld
 #endif
@@ -168,7 +168,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
@@ -242,7 +242,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // initialize DMR of DeePKS
     this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
 #endif

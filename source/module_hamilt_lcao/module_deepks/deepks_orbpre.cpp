@@ -1,4 +1,4 @@
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 /// cal_orbital_precalc : orbital_precalc is used for training with orbital label,
 ///                       which equals gevdm * orbital_pdm,

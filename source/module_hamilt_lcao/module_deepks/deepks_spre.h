@@ -1,7 +1,7 @@
 #ifndef DEEPKS_SPRE_H
 #define DEEPKS_SPRE_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"

@@ -1,7 +1,7 @@
 #ifndef KEDF_ML_H
 #define KEDF_ML_H
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
 
 #include "ml_data.h"
 

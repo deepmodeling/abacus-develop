@@ -18,7 +18,7 @@ jobs:
           apt update && apt install -y lcov gpg curl jq ca-certificates
       - name: Building
         run: |
-          cmake -B build -DENABLE_COVERAGE=ON -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON
+          cmake -B build -DENABLE_COVERAGE=ON -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON
           cmake --build build -j`nproc`
           cmake --install build
       - name: Testing

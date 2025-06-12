@@ -37,7 +37,7 @@ namespace ModuleIO
 				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 				const Structure_Factor& sf, // for Wannier90
 				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
-#ifdef __DEEPKS
+#ifdef __MLALGO
 				LCAO_Deepks<TK>& ld,
 #endif
 #ifdef __EXX

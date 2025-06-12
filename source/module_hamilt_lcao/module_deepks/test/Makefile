@@ -12,7 +12,7 @@ NP      =  4
 #==========================
 # FFTW package needed 
 #==========================
-HONG_FFTW        = -D__FFTW3 -D__DEEPKS
+HONG_FFTW        = -D__FFTW3 -D__MLALGO
 FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
 FFTW_LIB_DIR     = ${FFTW_DIR}/lib
 FFTW_LIB         = -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}

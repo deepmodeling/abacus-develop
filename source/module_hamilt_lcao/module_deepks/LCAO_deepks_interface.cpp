@@ -1,4 +1,4 @@
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "LCAO_deepks_interface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22

@@ -1,4 +1,4 @@
-#ifdef __MLKEDF
+#ifdef __MLALGO
 
 #include "ml_data.h"
 

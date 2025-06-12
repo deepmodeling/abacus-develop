@@ -104,7 +104,7 @@ if(MKLROOT)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
-  if(NOT ENABLE_DEEPKS)
+  if(NOT ENABLE_MLALGO)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
 
