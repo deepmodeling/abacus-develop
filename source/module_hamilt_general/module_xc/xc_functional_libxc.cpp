@@ -176,14 +176,14 @@ const std::vector<double> external_xc_func_ext_params(const int id)
 {
 	const std::map<int, std::vector<double>> mymap = {
         {
-			PARAM.inp.xc_exch_ext_param[0], 
-			std::vector<double>(PARAM.inp.xc_exch_ext_param.begin()+1,
-							    PARAM.inp.xc_exch_ext_param.end())
+			PARAM.inp.xc_exch_ext[0], 
+			std::vector<double>(PARAM.inp.xc_exch_ext.begin()+1,
+							    PARAM.inp.xc_exch_ext.end())
 		},
         {
-			PARAM.inp.xc_corr_ext_param[0], 
-			std::vector<double>(PARAM.inp.xc_corr_ext_param.begin()+1,
-            				    PARAM.inp.xc_corr_ext_param.end())
+			PARAM.inp.xc_corr_ext[0], 
+			std::vector<double>(PARAM.inp.xc_corr_ext.begin()+1,
+            				    PARAM.inp.xc_corr_ext.end())
 		}
     };
 	auto it = mymap.find(id);

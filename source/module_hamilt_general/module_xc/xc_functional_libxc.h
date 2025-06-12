@@ -39,8 +39,8 @@ namespace XC_Functional_Libxc
      *       parameters are pre-defined in the code, which herein we call those are 
      *       "in-built" parameters. If the same functional ID is found in both in-built 
      *       and external parameters, the external parameters will overwrite the in-built ones.
-     *       The external parameters can be passed here by keywords xc_exch_ext_param and
-     *       xc_corr_ext_param in the input file. The expected format would be an XC ID 
+     *       The external parameters can be passed here by keywords xc_exch_ext and
+     *       xc_corr_ext in the input file. The expected format would be an XC ID 
      *       followed by a list of parameters.
      */
     extern std::vector<xc_func_type> init_func(const std::vector<int> &func_id, 

@@ -671,17 +671,17 @@ struct Input_para
      * src/maple2c/mgga_exc/mgga_x_m06l.c.
      * 
      * There are 18 parameters for the exchange part, so the whole length of
-     * the xc_exch_ext_param should be 19. (MGGA_X_M06L, id = 203)
+     * the xc_exch_ext should be 19. (MGGA_X_M06L, id = 203)
      * 
      * Likewise, the correlation part can be found in corresponding files.
      * 
      * PBE functional is used as the default functional for XCPNet.
      */
     // src/gga_x_pbe.c
-    std::vector<double> xc_exch_ext_param = {
+    std::vector<double> xc_exch_ext = {
         101, 0.8040, 0.2195149727645171}; 
     // src/gga_c_pbe.c
-    std::vector<double> xc_corr_ext_param = {
+    std::vector<double> xc_corr_ext = {
         130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
 };
 #endif
