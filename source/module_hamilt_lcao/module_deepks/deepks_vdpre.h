@@ -1,7 +1,7 @@
 #ifndef DEEPKS_VDPRE_H
 #define DEEPKS_VDPRE_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"

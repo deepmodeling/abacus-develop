@@ -1,5 +1,6 @@
 #ifndef MODULE_IO_WRITE_DMR_H
 #define MODULE_IO_WRITE_DMR_H
+
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
@@ -42,11 +43,9 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
  */
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const Parallel_2D& paraV,
-               const bool out_csr,
-               const bool out_npz,
                const bool append,
                const int* iat2iwt,
-               const int* nat,
+               const int nat,
                const int istep);
 } // namespace ModuleIO
 

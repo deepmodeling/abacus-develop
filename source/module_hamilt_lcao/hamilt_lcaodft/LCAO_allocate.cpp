@@ -6,7 +6,7 @@
 
 namespace LCAO_domain
 {
-#ifdef __DEEPKS
+#ifdef __MLALGO
 // It seems it is only related to DeePKS, so maybe we should move it to DeeKS_domain
 template <typename T>
 void DeePKS_init(const UnitCell& ucell,

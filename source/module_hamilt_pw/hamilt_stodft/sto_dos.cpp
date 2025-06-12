@@ -240,12 +240,15 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
 #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = PARAM.globalv.global_out_dir + "DOS1_smear.dat";
+        std::string dosfile = PARAM.globalv.global_out_dir + "doss1_pw.txt";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
-        ofsdos << std::setw(8) << "## E(eV) " << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
-               << std::setw(20) << "Error(eV^-1)" << std::endl;
+
+		ofsdos << ndos << " # number of points" << std::endl;
+		ofsdos << "#" << std::setw(19) << "energy(eV)"
+			<< std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
+			<< std::setw(20) << "error(eV^-1)" << std::endl;
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
@@ -255,7 +258,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
             }
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
-            ofsdos << std::setw(8) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
+            ofsdos << std::setw(20) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
                    << std::setw(20) << tmperror << std::endl;
         }
         std::cout << std::endl;

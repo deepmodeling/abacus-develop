@@ -1,4 +1,4 @@
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_spre.h"
 

@@ -63,7 +63,7 @@ class Force_LCAO
                 ModuleBase::matrix& stvnl_dphi,
                 ModuleBase::matrix& svnl_dbeta,
                 ModuleBase::matrix& svl_dphi,
-#ifdef __DEEPKS
+#ifdef __MLALGO
                 ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
                 LCAO_Deepks<T>& ld,

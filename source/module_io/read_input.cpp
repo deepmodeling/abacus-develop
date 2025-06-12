@@ -278,7 +278,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!')
             {
-                std::cout << " THE PARAMETER NAME '" << word << "' IS NOT USED!" << std::endl;
+                std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
                 ModuleBase::WARNING_QUIT("Input",
                                          "Bad parameter, please check the "
                                          "input parameters in file INPUT",

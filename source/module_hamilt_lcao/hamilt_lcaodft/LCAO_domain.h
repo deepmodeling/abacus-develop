@@ -174,7 +174,7 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 template <typename T>
 void DeePKS_init(const UnitCell& ucell,
                  Parallel_Orbitals& pv,

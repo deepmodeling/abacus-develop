@@ -16,24 +16,9 @@ If Libxc is not installed in standard path (i.e. installed with a custom prefix 
 cmake -B build -DLibxc_DIR=~/libxc
 ```
 
-## Build with DeePKS
+## Build with ML-ALGO
 
-If DeePKS feature is required for [DeePKS-kit](https://github.com/deepmodeling/deepks-kit), the following prerequisites and steps are needed:
-
-- C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
-- CMake >= 3.18
-- [LibTorch](https://pytorch.org/) with cxx11 ABI supporting CPU
-- [Libnpy](https://github.com/llohse/libnpy/)
-
-```bash
-cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
-```
-
-> CMake will try to download Libnpy if it cannot be found locally.
-
-## Build with ML-KEDF
-
-If machine learning based kinetic energy density functional (ML-KEDF) is required for OFDFT calculation, the following prerequisites and steps are needed:
+If machine learning algorithms, including DeePKS and machine learning based kinetic energy density functional (ML-KEDF) for OFDFT, is required for DFT calculation, the following prerequisites and steps are needed:
 
 - C++ compiler, supporting **C++14** (GCC >= 5 is sufficient)
 - CMake >= 3.18
@@ -41,7 +26,7 @@ If machine learning based kinetic energy density functional (ML-KEDF) is require
 - [Libnpy](https://github.com/llohse/libnpy/)
 
 ```bash
-cmake -B build -DENABLE_MLKEDF=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
+cmake -B build -DENABLE_MLALGO=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlibnpy_INCLUDE_DIR=~/libnpy/include
 ```
 
 > CMake will try to download Libnpy if it cannot be found locally.
@@ -206,8 +191,8 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 
 ##-------------------  OPTIONAL LIBS  ---------------------------------
-## To use DEEPKS: set ENABLE_DEEPKS = ON, and set LIBTORCH_DIR and LIBNPY_DIR
-## To use MLKEDF: set ENABLE_MLKEDF = ON, and set LIBTORCH_DIR and LIBNPY_DIR
+## To use MLALGO: set ENABLE_MLALGO = ON, and set LIBTORCH_DIR and LIBNPY_DIR
+
 ## To use LIBXC:  set LIBXC_DIR which contains include and lib/libxc.a (>5.1.7)
 ## To use DeePMD: set DeePMD_DIR LIBTORCH_DIR and TensorFlow_DIR
 ## To use LibRI:  set LIBRI_DIR and LIBCOMM_DIR
@@ -216,8 +201,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 # LIBTORCH_DIR  = /usr/local
 # LIBNPY_DIR    = /usr/local
-ENABLE_DEEPKS   = OFF
-ENABLE_MLKEDF   = OFF
+ENABLE_MLALGO   = OFF
 
 # LIBXC_DIR    		= /public/soft/libxc
 
@@ -292,25 +276,16 @@ make LIBXC_DIR=/pulic/soft/libxc
 
 directly.
 
-### Add DeePKS Support
+### Add ML-ALGO Support
 
-To compile ABACUS with DEEPKS, you need to set `ENABLE_DEEPKS = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
+To compile ABACUS with machine learning algorithms, you need to set `ENABLE_MLALGO = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
 
 ```makefile
-make ENABLE_DEEPKS=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
+make ENABLE_MLALGO=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 ```
 
 directly.
 
-### Add ML-KEDF Support
-
-To compile ABACUS with ML-KEDF, you need to set `ENABLE_MLKEDF = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
-
-```makefile
-make ENABLE_MLKEDF=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
-```
-
-directly.
 
 ### Add DeePMD-kit Support
 

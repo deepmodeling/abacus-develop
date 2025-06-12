@@ -3,7 +3,7 @@
 
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"

@@ -1,4 +1,4 @@
-if(ENABLE_DEEPKS)
+if(ENABLE_MLALGO)
   list(APPEND objects
       LCAO_deepks.cpp
       deepks_basic.cpp

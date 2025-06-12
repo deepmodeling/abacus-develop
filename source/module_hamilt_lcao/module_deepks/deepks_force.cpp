@@ -1,6 +1,6 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_force.h"
 #include "deepks_iterate.h"

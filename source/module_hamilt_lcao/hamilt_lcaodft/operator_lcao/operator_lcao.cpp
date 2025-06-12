@@ -153,7 +153,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
 
         break;
     }
-#ifdef __DEEPKS
+#ifdef __MLALGO
     case calculation_type::lcao_deepks: {
         // update HR first
         if (!this->hr_done) {

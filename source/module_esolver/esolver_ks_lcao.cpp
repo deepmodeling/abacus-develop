@@ -1,6 +1,5 @@
 #include "esolver_ks_lcao.h"
 
-#include "module_io/write_dos_lcao.h"       // write DOS and PDOS
 #include "module_io/write_proj_band_lcao.h" // projcted band structure
 
 #include "module_base/formatter.h"
@@ -47,7 +46,7 @@
 
 #include <memory>
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
@@ -235,7 +234,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 12) initialize deepks
-#ifdef __DEEPKS
+#ifdef __MLALGO
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
     if (PARAM.inp.deepks_scf)
     {
@@ -343,7 +342,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->kv,
                        this->pw_rho,
                        this->solvent,
-#ifdef __DEEPKS
+#ifdef __MLALGO
                        this->ld,
 #endif
 #ifdef __EXX
@@ -385,12 +384,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 }
 
-//------------------------------------------------------------------------------
-//! the 8th function of ESolver_KS_LCAO: after_all_runners
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
-
-
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 {
@@ -401,28 +394,10 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // 4) write projected band structure
+    // 1) write projected band structure
     if (PARAM.inp.out_proj_band)
     {
         ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
-    }
-
-    // 5) print out density of states (DOS)
-    if (PARAM.inp.out_dos)
-	{
-		ModuleIO::write_dos_lcao(this->psi,
-				this->p_hamilt,
-				this->pv,
-				ucell,
-				*(this->pelec->klist),
-				PARAM.inp.nbands,
-				this->pelec->eferm,
-				this->pelec->ekb,
-				this->pelec->wg,
-				PARAM.inp.dos_edelta_ev,
-				PARAM.inp.dos_scale,
-				PARAM.inp.dos_sigma,
-                GlobalV::ofs_running);
     }
 
     // out ldos
@@ -681,7 +656,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
     ld.set_hr_cal(true);
 
@@ -821,7 +796,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // 2) for deepks, calculate delta_e
-#ifdef __DEEPKS
+#ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<TK>>& dm
