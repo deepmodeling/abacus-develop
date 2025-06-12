@@ -14,6 +14,7 @@
 #include <regex>
 #include <map>
 #include <algorithm>
+#include <cassert>
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
@@ -200,17 +201,29 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 		funcs.push_back({}); // create placeholder
 		xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
-		// search for extended parameters, external overwrites in-built if 
-		// the same functional id is found in both maps
+		// search for extended parameters
 		const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id);
 		const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
+		// for temporary use, I name their size as n1 and n2
+		const int n1 = in_built_ext_params.size();
+		const int n2 = external_ext_params.size();
 
+// #ifdef __DEBUG // will the following assertion cause performance issue?
+		// assert the number of parameters should be either zero or the value from
+		// libxc function xc_func_info_get_n_ext_params, this is to avoid the undefined
+		// behavior of illegal memory access
+		const xc_func_info_type* info = xc_func_get_info(&funcs.back());
+		const int nref = xc_func_info_get_n_ext_params(info);
+		assert ((n1 == 0) || (n1 == nref) || (n2 == 0) || (n2 == nref));
+// #endif
+
+		// external overwrites in-built if the same functional id is found in both maps
 		const double* xc_func_ext_params = 
-			(!external_ext_params.empty()) ? external_ext_params.data() : 
-			(!in_built_ext_params.empty()) ? in_built_ext_params.data() :
+			(n2 > 0) ? external_ext_params.data() : 
+			(n1 > 0) ? in_built_ext_params.data() :
 			nullptr; // nullptr if no extended parameters are found
 
-		// if there are no extended parameters, do nothing
+		// if there are no extended parameters, do nothing, otherwise we set
 		if(xc_func_ext_params != nullptr)
 		{
 			// set the extended parameters
