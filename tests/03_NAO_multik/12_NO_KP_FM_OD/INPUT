@@ -27,3 +27,4 @@ mixing_type		broyden
 mixing_beta		0.4
 mixing_beta_mag 0.4
 
+out_dos         1

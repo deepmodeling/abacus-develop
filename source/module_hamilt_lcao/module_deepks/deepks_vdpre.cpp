@@ -5,7 +5,7 @@
 //  prepare_phialpha : prepare phialpha for outputting npy file
 //  prepare_gevdm : prepare gevdm for outputting npy file
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_vdpre.h"
 

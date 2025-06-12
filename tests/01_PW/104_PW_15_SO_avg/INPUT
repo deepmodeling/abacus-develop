@@ -1,41 +1,39 @@
 INPUT_PARAMETERS
 #Parameters	(General)
-suffix	            autotest
-pseudo_dir	../../PP_ORB
+suffix	         autotest
+pseudo_dir	     ../../PP_ORB
+#nbands          40
+gamma_only       0
 
-#nbands             40
-gamma_only          0
 
+calculation      scf
+symmetry         1
 
-calculation         scf
-symmetry            1
-
-#test_force         1
-relax_nmax               1
-force_thr_ev        0.001
-out_level           ie
-relax_method         cg
+#test_force      1
+relax_nmax       1
+force_thr_ev     0.001
+out_level        ie
+relax_method     cg
 out_chg          1
-#out_band           1
-#init_chg       file
+#out_band        1
+#init_chg        file
 
-smearing_method            gaussian
-smearing_sigma               0.001
+smearing_method  gaussian
+smearing_sigma   0.001
 
-ecutwfc             20
-scf_thr                 1e-9
-scf_nmax               100
+ecutwfc          20
+scf_thr          1e-9
+scf_nmax         100
 
-#cal_stress             1
-#noncolin           1
-#lspinorb            1
+#cal_stress      1
+#noncolin        1
+#lspinorb        1
 
-basis_type          pw
-ks_solver           cg
+basis_type       pw
+ks_solver        cg
 chg_extrap       second-order
-out_dm              0
-pw_diag_thr                0.00001
+pw_diag_thr      0.00001
 
-mixing_type         broyden
-mixing_beta         0.4
-mixing_gg0 1.5
+mixing_type      broyden
+mixing_beta      0.4
+mixing_gg0       1.5

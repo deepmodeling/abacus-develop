@@ -1,6 +1,6 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "LCAO_deepks_io.h"
 #include "module_base/tool_quit.h"

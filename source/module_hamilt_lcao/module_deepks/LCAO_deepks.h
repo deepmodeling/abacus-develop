@@ -1,7 +1,7 @@
 #ifndef LCAO_DEEPKS_H
 #define LCAO_DEEPKS_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_basic.h"
 #include "deepks_descriptor.h"

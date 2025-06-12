@@ -49,7 +49,7 @@ class Force_Stress_LCAO
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
-#ifdef __DEEPKS
+#ifdef __MLALGO
                         LCAO_Deepks<T>& ld,
 #endif
 #ifdef __EXX
@@ -96,7 +96,7 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& stvnl_dphi,
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
-#if __DEEPKS
+#if __MLALGO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
                        LCAO_Deepks<T>& ld,

@@ -159,7 +159,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
     // for ML KEDF test
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
 #endif
@@ -512,7 +512,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
     }
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
     //------------------------------------------------------------------
     // Check the positivity of Pauli energy
     //------------------------------------------------------------------

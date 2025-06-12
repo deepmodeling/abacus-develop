@@ -18,7 +18,7 @@ void ReadInput::item_deepks()
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-#ifndef __DEEPKS
+#ifndef __MLALGO
             if (para.input.deepks_scf || para.input.deepks_out_labels || para.input.deepks_bandgap
                 || para.input.deepks_v_delta)
             {

@@ -21,8 +21,11 @@ option(USE_DSP "Enable DSP" OFF)
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
-option(ENABLE_DEEPKS "Enable the DeePKS algorithm" OFF)
-option(ENABLE_MLKEDF "Enable the Machine-Learning-based KEDF for OFDFT" OFF)
+
+# option(ENABLE_DEEPKS "Enable the DeePKS algorithm" OFF)
+# option(ENABLE_MLKEDF "Enable the Machine-Learning-based KEDF for OFDFT" OFF)
+
+option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(USE_ELPA "Enable ELPA for LCAO" ON)
@@ -115,7 +118,7 @@ endif()
 # Serial version of ABACUS will not use ELPA
 if(NOT ENABLE_MPI)
   set(USE_ELPA OFF)
-  set(ENABLE_DEEPKS OFF)
+  set(ENABLE_MLALGO OFF)
 endif()
 
 # Different exe files of ABACUS
@@ -253,7 +256,7 @@ if(ENABLE_LCAO)
     add_compile_definitions(__NEW_GINT)
   endif()
 else()
-  set(ENABLE_DEEPKS OFF)
+  set(ENABLE_MLALGO OFF)
   set(ENABLE_LIBRI OFF)
 endif()
 
@@ -480,8 +483,9 @@ if(ENABLE_FLOAT_FFTW)
   add_definitions(-D__ENABLE_FLOAT_FFTW)
 endif()
 
-if(ENABLE_DEEPKS)
-  target_link_libraries(${ABACUS_BIN_NAME} deepks)
+if(ENABLE_MLALGO)
+  target_link_libraries(${ABACUS_BIN_NAME} deepks) # deepks
+  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf) # mlkedf
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
   if(NOT libnpy_SOURCE_DIR)
@@ -496,32 +500,14 @@ if(ENABLE_DEEPKS)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  add_compile_definitions(__DEEPKS)
-endif()
-
-if(ENABLE_MLKEDF)
-  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf)
-
-  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
-  if(NOT libnpy_SOURCE_DIR)
-    include(FetchContent)
-    FetchContent_Declare(
-      libnpy
-      GIT_REPOSITORY https://github.com/llohse/libnpy.git
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
-    FetchContent_MakeAvailable(libnpy)
-  else()
-    include_directories(${libnpy_INCLUDE_DIR})
-  endif()
-  include_directories(${libnpy_SOURCE_DIR}/include)
-  add_compile_definitions(__MLKEDF)
+  
+  add_compile_definitions(__MLALGO)
 endif()
 
 # Torch uses outdated components to detect CUDA arch, causing failure on
 # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
 # "major.minor" if required.
-if(ENABLE_DEEPKS OR ENABLE_MLKEDF OR DEFINED Torch_DIR)
+if(ENABLE_MLALGO OR DEFINED Torch_DIR)
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)

@@ -51,7 +51,7 @@ void ReadInput::item_relax()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::string& calculation = para.input.calculation;
             const std::vector<std::string> singlelist
-                = {"scf", "nscf", "get_S", "get_pchg", "get_wf", "test_memory", "test_neighbour", "gen_bessel"};
+                = {"scf", "nscf", "get_s", "get_pchg", "get_wf", "test_memory", "test_neighbour", "gen_bessel"};
             if (std::find(singlelist.begin(), singlelist.end(), calculation) != singlelist.end())
             {
                 if (para.input.relax_nmax != 0)

@@ -22,6 +22,8 @@ void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const bool out_app_flag,
+        const int istep,
         std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
@@ -45,13 +47,18 @@ void write_dos_lcao(
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
-        std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
+
+        ss << PARAM.globalv.global_out_dir << "doss" << is + 1;
+
+		if(istep>=0)
+		{
+            ss << "g" << istep+1;
+		}
+
+        ss << "_nao.txt";
 
 		ModuleIO::cal_dos(is,
 				ss.str(),
-				ss1.str(),
 				dos_edelta_ev,
 				emax,
 				emin,
@@ -111,6 +118,8 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const bool out_app_flag,
+        const int istep,
         std::ofstream &ofs_running);
 
 
@@ -127,6 +136,8 @@ template void write_dos_lcao(
         const double& dos_edelta_ev,
         const double& dos_scale,
         const double& bcoeff,
+        const bool out_app_flag,
+        const int istep,
         std::ofstream &ofs_running);
 
 }

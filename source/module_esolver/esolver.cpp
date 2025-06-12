@@ -190,11 +190,11 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao")
     {
-        if (PARAM.inp.calculation == "get_S")
+        if (PARAM.inp.calculation == "get_s")
         {
             if (PARAM.globalv.gamma_only_local)
             {
-                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
+                ModuleBase::WARNING_QUIT("ESolver", "get_s is not implemented for gamma_only");
             }
             else
             {
@@ -272,20 +272,23 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.
-        // after_all_runners() is for output, it is not needed here.
         std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
-        if (PARAM.globalv.gamma_only_local)
-            p_esolver_lr = new LR::ESolver_LR<double, double>(
-                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-                inp,
-                ucell);
+		if (PARAM.globalv.gamma_only_local)
+		{
+			p_esolver_lr = new LR::ESolver_LR<double, double>(
+					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
+					inp,
+					ucell);
+		}
         else
-            p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-                inp,
-                ucell);
+		{
+			p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
+					inp,
+					ucell);
+		}
         // clean the 1st ESolver_KS and swap the pointer
         ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
         return p_esolver_lr;

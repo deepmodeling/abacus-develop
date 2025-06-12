@@ -1,6 +1,6 @@
 //  prepare_phialpha_r : prepare phialpha_r for outputting npy file
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_vdrpre.h"
 

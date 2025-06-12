@@ -37,16 +37,15 @@ void ModuleIO::write_dos_pw(
     {
         // DOS_ispin contains not smoothed dos
         std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1 << ".dat";
+        ss << PARAM.globalv.global_out_dir << "doss" << is + 1 << "_pw.txt";
 
         std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smear.dat";
+        ss1 << PARAM.globalv.global_out_dir << "doss" << is + 1 << "s_pw.txt";
 
         ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
 
 		ModuleIO::cal_dos(is,
 				ss.str(),
-				ss1.str(),
 				dos_edelta_ev,
 				emax,
 				emin,
