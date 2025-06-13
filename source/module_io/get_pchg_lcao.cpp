@@ -126,7 +126,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
             {
                 // ssc should be inside the inner loop to reset the string stream each time
                 std::stringstream ssc;
-                ssc << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_CHG.cube";
+                ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
@@ -251,7 +251,7 @@ void IState_Charge::begin(Gint_k& gk,
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
                         std::stringstream ssc;
-                        ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                        ssc << global_out_dir << "pchgs" << is + 1 << "k" << ik+1 << "i" << ib + 1 << ".cube";
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,
@@ -310,7 +310,7 @@ void IState_Charge::begin(Gint_k& gk,
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
-                    ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                    ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_vdata_palgrid(pgrid,
