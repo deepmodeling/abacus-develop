@@ -25,7 +25,7 @@ OPENBLAS_LIB_DIR   = /home/qianrui/gnucompile/openblas/lib
 #==========================
 # Compiler information 
 #==========================
-INCLUDES = -I. -Icommands -I../../
+INCLUDES = -I. -Icommands -I../../ -I../../source_main/
 LIBS = -lm -lpthread
 OPTS = -Ofast -march=native -std=c++11 -m64 ${INCLUDES}
 ifeq ($(findstring mpi, $(CXX)), mpi)
