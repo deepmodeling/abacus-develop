@@ -24,8 +24,8 @@ add_subdirectory(module_rdmft)
 add_library(
     driver
     OBJECT
-    driver.cpp
-    driver_run.cpp
+    source_main/driver.cpp
+    source_main/driver_run.cpp
 )
 
 list(APPEND device_srcs

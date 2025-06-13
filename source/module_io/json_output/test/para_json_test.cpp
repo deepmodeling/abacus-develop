@@ -7,7 +7,7 @@
 #include "../readin_info.h"
 #include "module_parameter/parameter.h"
 #include "module_io/para_json.h"
-#include "version.h"
+#include "source_main/version.h"
 #undef private
 /************************************************
  *  unit test of json output module

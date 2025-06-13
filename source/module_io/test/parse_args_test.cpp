@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 #include "module_io/read_input.h"
-#include "version.h"
+#include "source_main/version.h"
 
 bool ModuleIO::ReadInput::check_mode = false;
 

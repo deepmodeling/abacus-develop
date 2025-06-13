@@ -172,7 +172,7 @@ include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${ABACUS_BIN_NAME} source/main.cpp)
+add_executable(${ABACUS_BIN_NAME} source/source_main/main.cpp)
 if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()

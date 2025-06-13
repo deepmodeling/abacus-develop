@@ -1,4 +1,4 @@
-#include "driver.h"
+#include "source_main/driver.h"
 
 #include "module_base/global_file.h"
 #include "module_base/memory.h"
@@ -12,7 +12,7 @@
 #include "module_io/read_input.h"
 #include "module_io/winput.h"
 #include "module_parameter/parameter.h"
-#include "version.h"
+#include "source_main/version.h"
 Driver::Driver()
 {
 }
