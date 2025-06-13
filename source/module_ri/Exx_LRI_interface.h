@@ -42,9 +42,9 @@ public:
     }
     Exx_LRI_Interface() = delete;
 
-    /// read and write Hexxs using cereal
-    void write_Hexxs_cereal(const std::string& file_name) const;
-    void read_Hexxs_cereal(const std::string& file_name);
+    ///// read and write Hexxs using cereal
+    //void write_Hexxs_cereal(const std::string& file_name) const;
+    //void read_Hexxs_cereal(const std::string& file_name);
 
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     double &get_Eexx() const { return this->exx_ptr->Eexx; }

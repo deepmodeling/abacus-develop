@@ -3,7 +3,7 @@
 
 #ifdef __MLALGO
 
-#include "ml_data.h"
+#include "module_io/cal_mlkedf_descriptors.h"
 
 #include <vector>
 #include "module_hamilt_pw/hamilt_ofdft/kedf_wt.h"
@@ -19,7 +19,7 @@ public:
     }
     ~KEDF_ML()
     {
-        delete this->ml_data;
+        delete this->cal_tool;
     }
 
     void set_para(
@@ -92,11 +92,13 @@ public:
     void potTanhpTanhp_nlTerm(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm);
     void potTanhqTanhq_nlTerm(const double * const *prho, ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm);
     // tools
-    void dumpTensor(const torch::Tensor &data, std::string filename);
-    void dumpMatrix(const ModuleBase::matrix &data, std::string filename);
+    void loadVector(std::string filename, std::vector<double> &data);
+    void dumpVector(std::string filename, const std::vector<double> &data);
+    void dumpTensor(std::string filename, const torch::Tensor &data);
+    void dumpMatrix(std::string filename, const ModuleBase::matrix &data);
     void updateInput(const double * const * prho, ModulePW::PW_Basis *pw_rho);
 
-    ML_data *ml_data = nullptr;
+    ModuleIO::Cal_MLKEDF_Descriptors *cal_tool = nullptr;
 
     int nx = 0; // number of grid points
     int nx_tot = 0; // equal to nx (called by NN)

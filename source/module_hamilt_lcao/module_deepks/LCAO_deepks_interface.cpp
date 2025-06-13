@@ -175,8 +175,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 if (PARAM.inp.deepks_out_unittest)
                 {
-                    DeePKS_domain::check_gdmx(gdmx);
-                    DeePKS_domain::check_gvx(gvx, rank);
+                    DeePKS_domain::check_tensor<double>(gdmx, "gdmx.dat", rank);
+                    DeePKS_domain::check_tensor<double>(gvx, "gvx.dat", rank);
                 }
             }
         }
@@ -198,8 +198,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 if (PARAM.inp.deepks_out_unittest)
                 {
-                    DeePKS_domain::check_gdmepsl(gdmepsl);
-                    DeePKS_domain::check_gvepsl(gvepsl, rank);
+                    DeePKS_domain::check_tensor<double>(gdmepsl, "gdmepsl.dat", rank);
+                    DeePKS_domain::check_tensor<double>(gvepsl, "gvepsl.dat", rank);
                 }
             }
         }

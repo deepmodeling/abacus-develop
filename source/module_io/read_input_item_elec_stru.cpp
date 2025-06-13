@@ -256,6 +256,74 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("xc_exch_ext");
+        item.annotation = "placeholder for xcpnet exchange functional";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.xc_exch_ext.resize(item.get_size());
+            std::transform(item.str_values.begin(), item.str_values.end(),
+                           para.input.xc_exch_ext.begin(),
+                           [](const std::string& str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // at least one value should be set
+            if (para.input.xc_exch_ext.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext should not be empty.");
+            }
+            // the first value is actually an integer, not a double
+            const double libxc_id_dbl = para.input.xc_exch_ext[0];
+            if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) can never be a float number");
+            }
+            // the first value is a positive integer
+            if (libxc_id_dbl < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) should be a positive integer");
+            }
+        };
+        sync_doublevec(input.xc_exch_ext,
+                       para.input.xc_exch_ext.size(),
+                       0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_corr_ext");
+        item.annotation = "placeholder for xcpnet exchange functional";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.xc_corr_ext.resize(item.get_size());
+            std::transform(item.str_values.begin(), item.str_values.end(),
+                           para.input.xc_corr_ext.begin(),
+                           [](const std::string& str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // at least one value should be set
+            if (para.input.xc_corr_ext.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext should not be empty.");
+            }
+            // the first value is actually an integer, not a double
+            const double libxc_id_dbl = para.input.xc_corr_ext[0];
+            if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) can never be a float number");
+            }
+            // the first value is a positive integer
+            if (libxc_id_dbl < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) should be a positive integer");
+            }
+        };
+        sync_doublevec(input.xc_corr_ext,
+                       para.input.xc_corr_ext.size(),
+                       0.0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("pseudo_rcut");
         item.annotation = "default #exchange correlation functional";
         read_sync_double(input.pseudo_rcut);

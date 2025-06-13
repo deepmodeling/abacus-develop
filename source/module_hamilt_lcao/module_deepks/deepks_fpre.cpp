@@ -142,53 +142,6 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
     return;
 }
 
-void DeePKS_domain::check_gdmx(const torch::Tensor& gdmx)
-{
-    std::stringstream ss;
-    std::ofstream ofs_x;
-    std::ofstream ofs_y;
-    std::ofstream ofs_z;
-
-    ofs_x << std::setprecision(10);
-    ofs_y << std::setprecision(10);
-    ofs_z << std::setprecision(10);
-
-    // size: [3][natom][inlmax][nm][nm]
-    auto size = gdmx.sizes();
-    auto accessor = gdmx.accessor<double, 5>();
-    for (int ia = 0; ia < size[1]; ia++)
-    {
-        ss.str("");
-        ss << "gdmx_" << ia << ".dat";
-        ofs_x.open(ss.str().c_str());
-        ss.str("");
-        ss << "gdmy_" << ia << ".dat";
-        ofs_y.open(ss.str().c_str());
-        ss.str("");
-        ss << "gdmz_" << ia << ".dat";
-        ofs_z.open(ss.str().c_str());
-
-        for (int inl = 0; inl < size[2]; inl++)
-        {
-            for (int m1 = 0; m1 < size[3]; m1++)
-            {
-                for (int m2 = 0; m2 < size[4]; m2++)
-                {
-                    ofs_x << accessor[0][ia][inl][m1][m2] << " ";
-                    ofs_y << accessor[1][ia][inl][m1][m2] << " ";
-                    ofs_z << accessor[2][ia][inl][m1][m2] << " ";
-                }
-            }
-            ofs_x << std::endl;
-            ofs_y << std::endl;
-            ofs_z << std::endl;
-        }
-        ofs_x.close();
-        ofs_y.close();
-        ofs_z.close();
-    }
-}
-
 // calculates gradient of descriptors from gradient of projected density matrices
 void DeePKS_domain::cal_gvx(const int nat,
                             const int inlmax,
@@ -241,55 +194,6 @@ void DeePKS_domain::cal_gvx(const int nat,
     }
     ModuleBase::timer::tick("DeePKS_domain", "cal_gvx");
     return;
-}
-
-void DeePKS_domain::check_gvx(const torch::Tensor& gvx, const int rank)
-{
-    std::stringstream ss;
-    std::ofstream ofs_x;
-    std::ofstream ofs_y;
-    std::ofstream ofs_z;
-
-    if (rank != 0)
-    {
-        return;
-    }
-
-    auto size = gvx.sizes();
-    auto accessor = gvx.accessor<double, 4>();
-
-    for (int ia = 0; ia < size[0]; ia++)
-    {
-        ss.str("");
-        ss << "gvx_" << ia << ".dat";
-        ofs_x.open(ss.str().c_str());
-        ss.str("");
-        ss << "gvy_" << ia << ".dat";
-        ofs_y.open(ss.str().c_str());
-        ss.str("");
-        ss << "gvz_" << ia << ".dat";
-        ofs_z.open(ss.str().c_str());
-
-        ofs_x << std::setprecision(10);
-        ofs_y << std::setprecision(10);
-        ofs_z << std::setprecision(10);
-
-        for (int ib = 0; ib < size[2]; ib++)
-        {
-            for (int nlm = 0; nlm < size[3]; nlm++)
-            {
-                ofs_x << accessor[ia][0][ib][nlm] << " ";
-                ofs_y << accessor[ia][1][ib][nlm] << " ";
-                ofs_z << accessor[ia][2][ib][nlm] << " ";
-            }
-            ofs_x << std::endl;
-            ofs_y << std::endl;
-            ofs_z << std::endl;
-        }
-        ofs_x.close();
-        ofs_y.close();
-        ofs_z.close();
-    }
 }
 
 template void DeePKS_domain::cal_gdmx<double>(const int lmaxd,

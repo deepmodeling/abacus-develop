@@ -2,6 +2,7 @@
 
 #include "kedf_ml.h"
 
+#include "npy.hpp"
 #include "module_base/parallel_reduce.h"
 #include "module_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -100,7 +101,7 @@ void KEDF_ML::set_para(
     
     if (PARAM.inp.of_kinetic == "ml" || PARAM.inp.of_ml_gene_data == 1)
     {
-        this->ml_data = new ML_data;
+        this->cal_tool = new ModuleIO::Cal_MLKEDF_Descriptors;
 
         this->chi_p = chi_p;
         this->chi_q = chi_q;
@@ -108,7 +109,7 @@ void KEDF_ML::set_para(
         this->chi_pnl = chi_pnl;
         this->chi_qnl = chi_qnl;
 
-        this->ml_data->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
+        this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
                                 chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho);
     }
 }
@@ -186,7 +187,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
  */
 void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF &tf,  ModulePW::PW_Basis *pw_rho, const double *veff)
 {
-    this->ml_data->generateTrainData_WT(prho, wt, tf, pw_rho, veff);
+    // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
     {
         this->updateInput(prho, pw_rho);
@@ -203,9 +204,8 @@ void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF
 
         this->get_potential_(prho, pw_rho, potential);
 
-        std::cout << "dumpdump\n";
-        this->dumpTensor(enhancement, "enhancement.npy");
-        this->dumpMatrix(potential, "potential.npy");
+        this->dumpTensor("enhancement.npy", enhancement);
+        this->dumpMatrix("potential.npy", potential);
     }
 }
 
@@ -222,7 +222,7 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     bool fortran_order = false;
 
     std::vector<double> temp_prho(this->nx);
-    this->ml_data->loadVector("dir_of_input_rho", temp_prho);
+    this->loadVector("dir_of_input_rho", temp_prho);
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
     for (int ir = 0; ir < this->nx; ++ir) prho[0][ir] = temp_prho[ir];
@@ -232,11 +232,9 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
             std::cout << "WARNING: rho = 0" << std::endl;
         }
     };
-    std::cout << "Load rho done" << std::endl;
     // ==============================
 
     this->updateInput(prho, pw_rho);
-    std::cout << "update done" << std::endl;
 
     this->NN_forward(prho, pw_rho, true);
     
@@ -245,16 +243,13 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
     this->gradient_cpu_ptr = gradient_cpu_tensor.data_ptr<double>();
 
-    std::cout << "enhancement done" << std::endl;
-
     torch::Tensor enhancement = this->nn->F.reshape({this->nx});
     ModuleBase::matrix potential(1, this->nx);
 
     this->get_potential_(prho, pw_rho, potential);
-    std::cout << "potential done" << std::endl;
 
-    this->dumpTensor(enhancement, "enhancement-abacus.npy");
-    this->dumpMatrix(potential, "potential-abacus.npy");
+    this->dumpTensor("enhancement-abacus.npy", enhancement);
+    this->dumpMatrix("potential-abacus.npy", potential);
     exit(0);
 }
 
@@ -267,20 +262,20 @@ void KEDF_ML::set_device(std::string device_inpt)
 {
     if (device_inpt == "cpu")
     {
-        std::cout << "---------- Running NN on CPU ----------" << std::endl;
+        std::cout << "------------------- Running NN on CPU -------------------" << std::endl;
         this->device_type = torch::kCPU;
     }
     else if (device_inpt == "gpu")
     {
         if (torch::cuda::cudnn_is_available())
         {
-            std::cout << "---------- Running NN on GPU ----------" << std::endl;
+            std::cout << "------------------- Running NN on GPU -------------------" << std::endl;
             this->device_type = torch::kCUDA;
         }
         else
         {
-            std::cout << "------ Warning: GPU is unaviable ------" << std::endl;
-            std::cout << "---------- Running NN on CPU ----------" << std::endl;
+            std::cout << "--------------- Warning: GPU is unaviable ---------------" << std::endl;
+            std::cout << "------------------- Running NN on CPU -------------------" << std::endl;
             this->device_type = torch::kCPU;
         }
     }
@@ -331,19 +326,32 @@ void KEDF_ML::NN_forward(const double * const * prho, ModulePW::PW_Basis *pw_rho
     }
 }
 
+void KEDF_ML::loadVector(std::string filename, std::vector<double> &data)
+{
+    std::vector<long unsigned int> cshape = {(long unsigned) this->cal_tool->nx};
+    bool fortran_order = false;
+    npy::LoadArrayFromNumpy(filename, cshape, fortran_order, data);
+}
+
+void KEDF_ML::dumpVector(std::string filename, const std::vector<double> &data)
+{
+    const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape
+    npy::SaveArrayAsNumpy(filename, false, 1, cshape, data);
+}
+
 /**
  * @brief Dump the torch::Tensor into .npy file
  * 
  * @param data torch::Tensor
  * @param filename file name
  */
-void KEDF_ML::dumpTensor(const torch::Tensor &data, std::string filename)
+void KEDF_ML::dumpTensor(std::string filename, const torch::Tensor &data)
 {
     std::cout << "Dumping " << filename << std::endl;
     torch::Tensor data_cpu = data.to(this->device_CPU).contiguous();
     std::vector<double> v(data_cpu.data_ptr<double>(), data_cpu.data_ptr<double>() + data_cpu.numel());
     // for (int ir = 0; ir < this->nx; ++ir) assert(v[ir] == data[ir].item<double>());
-    this->ml_data->dumpVector(filename, v);
+    this->dumpVector(filename, v);
 }
 
 /**
@@ -352,12 +360,12 @@ void KEDF_ML::dumpTensor(const torch::Tensor &data, std::string filename)
  * @param data matrix
  * @param filename file name
  */
-void KEDF_ML::dumpMatrix(const ModuleBase::matrix &data, std::string filename)
+void KEDF_ML::dumpMatrix(std::string filename, const ModuleBase::matrix &data)
 {
     std::cout << "Dumping " << filename << std::endl;
     std::vector<double> v(data.c, data.c + this->nx);
     // for (int ir = 0; ir < this->nx; ++ir) assert(v[ir] == data[ir].item<double>());
-    this->ml_data->dumpVector(filename, v);
+    this->dumpVector(filename, v);
 }
 
 /**
@@ -372,57 +380,57 @@ void KEDF_ML::updateInput(const double * const * prho, ModulePW::PW_Basis *pw_rh
     // std::cout << "updata_input" << std::endl;
     if (this->gene_data_label["gamma"][0])
     {   
-        this->ml_data->getGamma(prho, this->gamma);
+        this->cal_tool->getGamma(prho, this->gamma);
     }
     if (this->gene_data_label["p"][0])
     {
-        this->ml_data->getNablaRho(prho, pw_rho, this->nablaRho);
-        this->ml_data->getP(prho, pw_rho, this->nablaRho, this->p);
+        this->cal_tool->getNablaRho(prho, pw_rho, this->nablaRho);
+        this->cal_tool->getP(prho, pw_rho, this->nablaRho, this->p);
     }
     if (this->gene_data_label["q"][0])
     {
-        this->ml_data->getQ(prho, pw_rho, this->q);
+        this->cal_tool->getQ(prho, pw_rho, this->q);
     }
     if (this->gene_data_label["tanhp"][0])
     {
-        this->ml_data->getTanhP(this->p, this->tanhp);
+        this->cal_tool->getTanhP(this->p, this->tanhp);
     }
     if (this->gene_data_label["tanhq"][0])
     {
-        this->ml_data->getTanhQ(this->q, this->tanhq);
+        this->cal_tool->getTanhQ(this->q, this->tanhq);
     }
 
     for (int ik = 0; ik < nkernel; ++ik)
     {
         if (this->gene_data_label["gammanl"][ik]){
-            this->ml_data->getGammanl(ik, this->gamma, pw_rho, this->gammanl[ik]);
+            this->cal_tool->getGammanl(ik, this->gamma, pw_rho, this->gammanl[ik]);
         }
         if (this->gene_data_label["pnl"][ik]){
-            this->ml_data->getPnl(ik, this->p, pw_rho, this->pnl[ik]);
+            this->cal_tool->getPnl(ik, this->p, pw_rho, this->pnl[ik]);
         }
         if (this->gene_data_label["qnl"][ik]){
-            this->ml_data->getQnl(ik, this->q, pw_rho, this->qnl[ik]);
+            this->cal_tool->getQnl(ik, this->q, pw_rho, this->qnl[ik]);
         }
         if (this->gene_data_label["xi"][ik]){
-            this->ml_data->getXi(this->gamma, this->gammanl[ik], this->xi[ik]);
+            this->cal_tool->getXi(this->gamma, this->gammanl[ik], this->xi[ik]);
         }
         if (this->gene_data_label["tanhxi"][ik]){
-            this->ml_data->getTanhXi(ik, this->gamma, this->gammanl[ik], this->tanhxi[ik]);
+            this->cal_tool->getTanhXi(ik, this->gamma, this->gammanl[ik], this->tanhxi[ik]);
         }
         if (this->gene_data_label["tanhxi_nl"][ik]){
-            this->ml_data->getTanhXi_nl(ik, this->tanhxi[ik], pw_rho, this->tanhxi_nl[ik]);
+            this->cal_tool->getTanhXi_nl(ik, this->tanhxi[ik], pw_rho, this->tanhxi_nl[ik]);
         }
         if (this->gene_data_label["tanh_pnl"][ik]){
-            this->ml_data->getTanh_Pnl(ik, this->pnl[ik], this->tanh_pnl[ik]);
+            this->cal_tool->getTanh_Pnl(ik, this->pnl[ik], this->tanh_pnl[ik]);
         }
         if (this->gene_data_label["tanh_qnl"][ik]){
-            this->ml_data->getTanh_Qnl(ik, this->qnl[ik], this->tanh_qnl[ik]);
+            this->cal_tool->getTanh_Qnl(ik, this->qnl[ik], this->tanh_qnl[ik]);
         }
         if (this->gene_data_label["tanhp_nl"][ik]){
-            this->ml_data->getTanhP_nl(ik, this->tanhp, pw_rho, this->tanhp_nl[ik]);
+            this->cal_tool->getTanhP_nl(ik, this->tanhp, pw_rho, this->tanhp_nl[ik]);
         }
         if (this->gene_data_label["tanhq_nl"][ik]){
-            this->ml_data->getTanhQ_nl(ik, this->tanhq, pw_rho, this->tanhq_nl[ik]);
+            this->cal_tool->getTanhQ_nl(ik, this->tanhq, pw_rho, this->tanhq_nl[ik]);
         }
     }
     ModuleBase::timer::tick("KEDF_ML", "updateInput");

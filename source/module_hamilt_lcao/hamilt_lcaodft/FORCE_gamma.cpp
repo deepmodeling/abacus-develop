@@ -272,7 +272,14 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __MLALGO
     if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
     {
-        DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
+        std::ofstream ofs_f("F_delta.dat");
+        std::ofstream ofs_s("stress_delta.dat");
+        ofs_f << std::setprecision(10);
+        ofs_s << std::setprecision(10);
+        fvnl_dalpha.print(ofs_f);
+        ofs_f.close();
+        svnl_dalpha.print(ofs_s);
+        ofs_s.close();
     }
 #endif
 

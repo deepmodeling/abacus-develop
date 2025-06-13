@@ -4,6 +4,7 @@ list(APPEND objects
     cal_test.cpp
     cal_dos.cpp
     cal_ldos.cpp
+    cal_mlkedf_descriptors.cpp
     cif_io.cpp
     write_dos_pw.cpp
     nscf_band.cpp
@@ -27,6 +28,7 @@ list(APPEND objects
     write_elecstat_pot.cpp
     write_elf.cpp
     write_dipole.cpp
+    write_mlkedf_descriptors.cpp
     td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp

@@ -37,7 +37,7 @@
 #include <iostream>
 
 #ifdef __MLALGO
-#include "module_hamilt_pw/hamilt_ofdft/ml_data.h"
+#include "module_io/write_mlkedf_descriptors.h"
 #endif
 
 #include <ATen/kernels/blas.h>
@@ -1003,30 +1003,31 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell);
 
-        ML_data ml_data;
-        ml_data.set_para(this->chr.nrxx,
-                         PARAM.inp.nelec,
-                         PARAM.inp.of_tf_weight,
-                         PARAM.inp.of_vw_weight,
-                         PARAM.inp.of_ml_chi_p,
-                         PARAM.inp.of_ml_chi_q,
-                         PARAM.inp.of_ml_chi_xi,
-                         PARAM.inp.of_ml_chi_pnl,
-                         PARAM.inp.of_ml_chi_qnl,
-                         PARAM.inp.of_ml_nkernel,
-                         PARAM.inp.of_ml_kernel,
-                         PARAM.inp.of_ml_kernel_scaling,
-                         PARAM.inp.of_ml_yukawa_alpha,
-                         PARAM.inp.of_ml_kernel_file,
-                         ucell.omega,
-                         this->pw_rho);
+        ModuleIO::Write_MLKEDF_Descriptors write_mlkedf_desc;
+        write_mlkedf_desc.cal_tool->set_para(this->chr.nrxx,
+                                            PARAM.inp.nelec,
+                                            PARAM.inp.of_tf_weight,
+                                            PARAM.inp.of_vw_weight,
+                                            PARAM.inp.of_ml_chi_p,
+                                            PARAM.inp.of_ml_chi_q,
+                                            PARAM.inp.of_ml_chi_xi,
+                                            PARAM.inp.of_ml_chi_pnl,
+                                            PARAM.inp.of_ml_chi_qnl,
+                                            PARAM.inp.of_ml_nkernel,
+                                            PARAM.inp.of_ml_kernel,
+                                            PARAM.inp.of_ml_kernel_scaling,
+                                            PARAM.inp.of_ml_yukawa_alpha,
+                                            PARAM.inp.of_ml_kernel_file,
+                                            ucell.omega,
+                                            this->pw_rho);
 
-        ml_data.generateTrainData_KS(this->kspw_psi,
-                                     this->pelec,
-                                     this->pw_wfc,
-                                     this->pw_rho,
-                                     ucell,
-                                     this->pelec->pot->get_effective_v(0));
+        write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
+                                                this->kspw_psi,
+                                                this->pelec,
+                                                this->pw_wfc,
+                                                this->pw_rho,
+                                                ucell,
+                                                this->pelec->pot->get_effective_v(0));
     }
 #endif
 }

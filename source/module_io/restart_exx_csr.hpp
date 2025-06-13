@@ -28,12 +28,12 @@ namespace ModuleIO
                     {
                         const std::vector<int>& R = csr.getRCoordinate(iR);
                         TC dR({ R[0], R[1], R[2] });
-						Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>(
-								{ 
-								static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), 
-								static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) 
-								}
-								);
+                        Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>(
+                                { 
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), 
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) 
+                                }
+                                );
                     }
                 }
             }
@@ -49,12 +49,12 @@ namespace ModuleIO
                     const int& npol = ucell.get_npol();
                     const int& i = ijv.first.first * npol;
                     const int& j = ijv.first.second * npol;
-					Hexxs.at(is).at(ucell.iwt2iat[i]).at(
-							{ 
-								ucell.iwt2iat[j], 
-								{ R[0], R[1], R[2] } 
-							}
-							)(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
+                    Hexxs.at(is).at(ucell.iwt2iat[i]).at(
+                            { 
+                                ucell.iwt2iat[j], 
+                                { R[0], R[1], R[2] } 
+                            }
+                            )(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
                 }
             }
         }
@@ -67,6 +67,8 @@ namespace ModuleIO
         ModuleBase::TITLE("ModuleIO", "read_Hexxs_cereal");
         ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
         std::ifstream ifs(file_name, std::ios::binary);
+        if(!ifs.is_open())
+            { ModuleBase::WARNING_QUIT("read_Hexxs_cereal", file_name+" not found."); }
         cereal::BinaryInputArchive iar(ifs);
         iar(Hexxs);
         ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
