@@ -11,9 +11,7 @@ void Gint_fvl_meta_gpu::cal_gint()
 {
     init_dm_gint_();
     transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
-    transfer_cpu_to_gpu_();
     cal_fvl_svl_();
-    transfer_gpu_to_cpu_();
 }
 
 void Gint_fvl_meta_gpu::init_dm_gint_()
@@ -79,6 +77,7 @@ void Gint_fvl_meta_gpu::transfer_gpu_to_cpu_()
 
 void Gint_fvl_meta_gpu::cal_fvl_svl_()
 {
+    transfer_cpu_to_gpu_();
 #pragma omp parallel num_threads(gint_info_->get_streams_num())
     {
         // 20240620 Note that it must be set again here because 
@@ -174,6 +173,7 @@ void Gint_fvl_meta_gpu::cal_fvl_svl_()
        checkCuda(cudaStreamSynchronize(stream));
        checkCuda(cudaStreamDestroy(stream));
     }
+    transfer_gpu_to_cpu_();
 }
 
 } // namespace ModuleGint

@@ -10,9 +10,7 @@ namespace ModuleGint
 void Gint_vl_gpu::cal_gint()
 {
     init_hr_gint_();
-    transfer_cpu_to_gpu_();
     cal_hr_gint_();
-    transfer_gpu_to_cpu_();
     compose_hr_gint(hr_gint_);
     transfer_hr_gint_to_hR(hr_gint_, *hR_);
 }
@@ -38,6 +36,7 @@ void Gint_vl_gpu::transfer_gpu_to_cpu_()
 
 void Gint_vl_gpu::cal_hr_gint_()
 {
+    transfer_cpu_to_gpu_();
 #pragma omp parallel num_threads(gint_info_->get_streams_num())
     {
         // 20240620 Note that it must be set again here because 
@@ -65,6 +64,7 @@ void Gint_vl_gpu::cal_hr_gint_()
         checkCuda(cudaStreamSynchronize(stream));
         checkCuda(cudaStreamDestroy(stream));
     }
+    transfer_gpu_to_cpu_();
 }
 
 }
