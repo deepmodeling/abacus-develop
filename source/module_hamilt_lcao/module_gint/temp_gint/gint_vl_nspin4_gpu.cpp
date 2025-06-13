@@ -76,8 +76,8 @@ void Gint_vl_nspin4_gpu::cal_hr_gint_()
             {
                 phi_op.phi_mul_vldr3(vr_eff_d_[is].get_device_ptr(), dr3_,
                                      phi.get_device_ptr(), phi_vldr3.get_device_ptr());
-                phi_op.phi_mul_phi_vldr3(phi.get_device_ptr(), phi_vldr3.get_device_ptr(),
-                                         hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+                phi_op.phi_mul_phi(phi.get_device_ptr(), phi_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
             }
         }
         checkCuda(cudaStreamSynchronize(stream));

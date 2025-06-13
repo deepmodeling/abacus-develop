@@ -92,14 +92,14 @@ void Gint_vl_metagga_nspin4_gpu::cal_hr_gint_()
                                      dphi_y.get_device_ptr(), dphi_y_vldr3.get_device_ptr());
                 phi_op.phi_mul_vldr3(vofk_d_[is].get_device_ptr(), dr3_,
                                      dphi_z.get_device_ptr(), dphi_z_vldr3.get_device_ptr());
-                phi_op.phi_mul_phi_vldr3(phi.get_device_ptr(), phi_vldr3.get_device_ptr(),
-                                         hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
-                phi_op.phi_mul_phi_vldr3(dphi_x.get_device_ptr(), dphi_x_vldr3.get_device_ptr(),
-                                         hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
-                phi_op.phi_mul_phi_vldr3(dphi_y.get_device_ptr(), dphi_y_vldr3.get_device_ptr(),
-                                         hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
-                phi_op.phi_mul_phi_vldr3(dphi_z.get_device_ptr(), dphi_z_vldr3.get_device_ptr(),
-                                         hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+                phi_op.phi_mul_phi(phi.get_device_ptr(), phi_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+                phi_op.phi_mul_phi(dphi_x.get_device_ptr(), dphi_x_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+                phi_op.phi_mul_phi(dphi_y.get_device_ptr(), dphi_y_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+                phi_op.phi_mul_phi(dphi_z.get_device_ptr(), dphi_z_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
             }
         }
         checkCuda(cudaStreamSynchronize(stream));

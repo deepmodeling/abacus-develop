@@ -32,7 +32,7 @@ public:
         const double* phi_d,
         double* result_d) const;
     
-    void phi_mul_phi_vldr3(
+    void phi_mul_phi(
         const double* phi_d,
         const double* phi_vldr3_d,
         HContainer<double>& hRGint,
