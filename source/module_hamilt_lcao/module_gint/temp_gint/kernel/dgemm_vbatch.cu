@@ -2,8 +2,6 @@
 #include "gemm_nn_vbatch.cuh"
 #include "dgemm_vbatch.h"
 
-// The template parameter settings for the function are based on the MAGMA source code settings.
-// Specifically, they refer to the settings for the "nn" shape in dgemm_vbatched_core.
 void dgemm_nn_vbatch(
     int max_m, int max_n, int max_k,
     const int* m_d, const int* n_d, const int* k_d,
@@ -13,7 +11,6 @@ void dgemm_nn_vbatch(
     int batchCount, cudaStream_t stream,
     const double* alpha)
 {
-
     vbatched_gemm_nn_impl<double, 8, 4, 16, 16, 8, 8, 4, 8, 4>
     (max_m, max_n, m_d, n_d, k_d,
     A_array_d, lda_d,
@@ -23,7 +20,6 @@ void dgemm_nn_vbatch(
 
 }
 
-// the template parameters refer to the settings for the "nt" shape in dgemm_vbatched_core.
 void dgemm_tn_vbatch(
     int max_m, int max_n, int max_k,
     const int* m_d, const int* n_d, const int* k_d,
