@@ -291,7 +291,6 @@ void PhiOperatorGpu::phi_mul_phi(
                     ap_num,
                     stream_,
                     nullptr);
-    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_mul_dm(
@@ -386,7 +385,6 @@ void PhiOperatorGpu::phi_mul_dm(
                     ap_num,
                     stream_,
                     alpha_ptr);
-    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_dot_phi(
