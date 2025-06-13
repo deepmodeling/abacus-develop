@@ -46,7 +46,7 @@
 
 #include <memory>
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
@@ -234,7 +234,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 12) initialize deepks
-#ifdef __DEEPKS
+#ifdef __MLALGO
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
     if (PARAM.inp.deepks_scf)
     {
@@ -342,7 +342,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->kv,
                        this->pw_rho,
                        this->solvent,
-#ifdef __DEEPKS
+#ifdef __MLALGO
                        this->ld,
 #endif
 #ifdef __EXX
@@ -656,7 +656,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
     ld.set_hr_cal(true);
 
@@ -796,7 +796,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // 2) for deepks, calculate delta_e
-#ifdef __DEEPKS
+#ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<TK>>& dm

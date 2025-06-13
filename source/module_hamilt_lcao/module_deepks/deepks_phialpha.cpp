@@ -6,7 +6,7 @@
 // 2. check_phialpha, which prints the results into .dat files
 // for checking
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_phialpha.h"
 

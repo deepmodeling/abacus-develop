@@ -16,7 +16,7 @@
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
 
 // for DeePKS
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
@@ -109,7 +109,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     ModuleBase::matrix scs;
     bool have_force = false;
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     LCAO_Deepks<TK> ld;
 #endif
 

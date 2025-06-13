@@ -1,6 +1,6 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 

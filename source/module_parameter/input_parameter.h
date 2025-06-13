@@ -653,5 +653,35 @@ struct Input_para
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+
+    // ====   #Parameters (23.XC external parameterization) ========
+    /*
+     * the following two sets of parameters are for the XC parameterization.
+     * The first element should be the LibXC id, to assign the analytical
+     * form of the eXchange and Correlation part of the functional.
+     * 
+     * Starting from the second parameter, the parameters are the coefficients
+     * of the functional. For example the M06-L functional, one should refer
+     * to the source file (source code of LibXC)
+     * 
+     * src/mgga_x_m06l.c
+     * 
+     * the implementation can be found in the file
+     * 
+     * src/maple2c/mgga_exc/mgga_x_m06l.c.
+     * 
+     * There are 18 parameters for the exchange part, so the whole length of
+     * the xc_exch_ext should be 19. (MGGA_X_M06L, id = 203)
+     * 
+     * Likewise, the correlation part can be found in corresponding files.
+     * 
+     * PBE functional is used as the default functional for XCPNet.
+     */
+    // src/gga_x_pbe.c
+    std::vector<double> xc_exch_ext = {
+        101, 0.8040, 0.2195149727645171}; 
+    // src/gga_c_pbe.c
+    std::vector<double> xc_corr_ext = {
+        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
 };
 #endif

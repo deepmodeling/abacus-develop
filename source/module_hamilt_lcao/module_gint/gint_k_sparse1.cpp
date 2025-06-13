@@ -351,8 +351,8 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
         const int it2 = ucell.iat2it[iat2];
         const Atom* atom1 = &ucell.atoms[it1];
         const Atom* atom2 = &ucell.atoms[it2];
-        const int start1 = ucell.itia2iat(it1, ucell.iat2ia[iat1], 0);
-        const int start2 = ucell.itia2iat(it2, ucell.iat2ia[iat2], 0);
+        const int start1 = ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0);
+        const int start2 = ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0);
 
         for (int ir = 0; ir < ap.get_R_size(); ir++)
         {

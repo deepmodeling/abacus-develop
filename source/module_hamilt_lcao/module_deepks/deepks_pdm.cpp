@@ -13,7 +13,7 @@
 // 2. cal_pdm, which is used for calculating pdm
 // 3. check_pdm, which prints pdm to descriptor.dat
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_iterate.h"
 #include "deepks_pdm.h"

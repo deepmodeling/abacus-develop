@@ -10,6 +10,6 @@ add_subdirectory(08_EXX)
 add_subdirectory(10_others)
 add_subdirectory(11_PW_GPU)
 
-if(ENABLE_DEEPKS)
+if(ENABLE_MLALGO)
 	add_subdirectory(09_DeePKS)
 endif()

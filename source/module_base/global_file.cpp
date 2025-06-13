@@ -153,6 +153,47 @@ void ModuleBase::Global_File::make_dir_out(
 #endif
     }
 
+    if(PARAM.inp.of_ml_gene_data == 1)
+    {
+        int make_dir_descrip = 0;
+        std::string command1 =  "test -d " + PARAM.globalv.global_mlkedf_descriptor_dir + " || mkdir " + PARAM.globalv.global_mlkedf_descriptor_dir;
+
+        times = 0;
+        while(times<GlobalV::NPROC)
+        {
+            if(rank==times)
+            {
+                if ( system( command1.c_str() ) == 0 )
+                {
+                    std::cout << " MAKE THE MLKEDF DESCRIPTOR DIR    : " << PARAM.globalv.global_mlkedf_descriptor_dir << std::endl;
+                    make_dir_descrip = 1;
+                }
+                else
+                {
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE MLKEDF DESCRIPTOR DIR !!! " << std::endl;
+                    make_dir_descrip = 0;
+                }
+            }
+#ifdef __MPI
+            Parallel_Reduce::reduce_all(make_dir_descrip);
+#endif
+            if(make_dir_descrip > 0)
+            { 
+                break;
+            }
+            ++times;
+        }
+
+#ifdef __MPI
+        if(make_dir_descrip == 0)
+        {
+            std::cout << " CAN NOT MAKE THE MLKEDF DESCRIPTOR DIR......." << std::endl;
+            ModuleBase::QUIT();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+
     // mohan add 2010-09-12
     if(out_alllog)
     {
