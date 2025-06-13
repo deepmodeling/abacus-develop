@@ -25,7 +25,7 @@ GTEST_DIR = /home/qianrui/gnucompile/g_gtest
 # Compiler information 
 #==========================
 HONG = -D__NORMAL
-INCLUDES = -I. -I../../../ -I../../../module_base/module_container
+INCLUDES = -I. -I../../../ -I../../../source_main -I../../../module_base/module_container
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
 OBJ_DIR = obj
