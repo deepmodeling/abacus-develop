@@ -187,18 +187,14 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
         if(XC_Functional::get_ked_flag())
         {
             vofk_eff[is] = this->pot->get_effective_vofk(is);
-            if(is == 3)
-            {
-                ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
-            }
         }
-        else
-        {
-            if(is == 3)
-            {
-                ModuleGint::cal_gint_vl(vr_eff, this->hR);
-            }
-        }
+    }
+    if(XC_Functional::get_ked_flag())
+    {
+        ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
+    } else
+    {
+        ModuleGint::cal_gint_vl(vr_eff, this->hR);
     }
 #endif
 
