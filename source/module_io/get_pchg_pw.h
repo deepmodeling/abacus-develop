@@ -182,7 +182,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 #endif
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
+                // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
                 {
