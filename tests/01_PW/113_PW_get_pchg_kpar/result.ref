@@ -1,10 +1,10 @@
-etotref -211.8032873347874
+etotref -211.8032873347996
 etotperatomref -105.9016436674
-BAND1_SPIN1_CHG.cube 2
-BAND2_SPIN1_CHG.cube 2
-BAND3_SPIN1_CHG.cube 2
-BAND4_SPIN1_CHG.cube 2
+pchgs1i1.cube 2
+pchgs1i2.cube 2
+pchgs1i3.cube 2
+pchgs1i4.cube 2
 pointgroupref T_d
 spacegroupref O_h
 nksibzref 3
-totaltimeref 1.35
+totaltimeref 0.46
