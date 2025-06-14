@@ -1,7 +1,7 @@
 #ifndef DEEPKS_DESCRIPTOR_H
 #define DEEPKS_DESCRIPTOR_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/intarray.h"
 #include "module_base/timer.h"

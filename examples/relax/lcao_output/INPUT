@@ -1,0 +1,39 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix          autotest
+	
+nbands			8
+calculation     cell-relax
+ecutwfc			10
+scf_nmax		20
+
+basis_type		lcao
+relax_nmax      5
+
+cal_stress      1
+stress_thr      1e-6
+cal_force       1
+force_thr_ev    1.0e-3
+
+ks_solver       scalapack_gvx
+mixing_type     broyden
+mixing_beta     0.7
+
+relax_new       0
+
+pseudo_dir      ../../../tests/PP_ORB	
+orbital_dir	    ../../../tests/PP_ORB
+
+nspin           4
+
+out_chg         1
+out_pot         1
+out_dmk         1
+out_dmr         1
+#out_wfc_lcao    1   // OK
+out_dos         1
+out_band        1
+out_stru        1
+out_app_flag    0
+
+out_interval    1

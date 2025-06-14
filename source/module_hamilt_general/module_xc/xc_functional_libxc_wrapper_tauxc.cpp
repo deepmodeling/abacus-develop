@@ -18,7 +18,9 @@ void XC_Functional_Libxc::tau_xc(
     double s, v1, v2, v3;
 	double lapl_rho, vlapl_rho;
     lapl_rho = grho;
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_UNPOLARIZED);
 
     sxc = 0.0; v1xc = 0.0; v2xc = 0.0; v3xc = 0.0;
 
@@ -61,7 +63,9 @@ void XC_Functional_Libxc::tau_xc_spin(
     const std::array<double,3> grho = {gdr1.norm2(), gdr1 * gdr2, gdr2.norm2()};
     const std::array<double,2> tau = {tauup, taudw};
 
-	std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_POLARIZED);
 
     for(xc_func_type &func : funcs)
     {

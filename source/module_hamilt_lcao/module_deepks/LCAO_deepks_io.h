@@ -1,7 +1,7 @@
 #ifndef LCAO_DEEPKS_IO_H
 #define LCAO_DEEPKS_IO_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"

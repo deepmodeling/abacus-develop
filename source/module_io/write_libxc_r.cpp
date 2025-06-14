@@ -105,8 +105,8 @@ void ModuleIO::write_libxc_r(
 		case 4:		v4rho4.resize( nrxx * ((1==nspin)?1:5) );
 		case 3:		v3rho3.resize( nrxx * ((1==nspin)?1:4) );
 		case 2:		v2rho2.resize( nrxx * ((1==nspin)?1:3) );
-		case 1:		vrho  .resize( nrxx * nspin			);
-		case 0:		exc   .resize( nrxx					);
+		case 1:		vrho  .resize( nrxx * nspin            );
+		case 0:		exc   .resize( nrxx                    );
 					break;
 		default:	throw std::domain_error("order ="+std::to_string(order)
 						+" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
@@ -119,13 +119,13 @@ void ModuleIO::write_libxc_r(
 			case 4:		v4rho3sigma .resize( nrxx * ((1==nspin)?1:12) );
 						v4rho2sigma2.resize( nrxx * ((1==nspin)?1:15) );
 						v4rhosigma3 .resize( nrxx * ((1==nspin)?1:20) );
-						v4sigma4	.resize( nrxx * ((1==nspin)?1:15) );
+						v4sigma4    .resize( nrxx * ((1==nspin)?1:15) );
 			case 3:		v3rho2sigma .resize( nrxx * ((1==nspin)?1:9)  );
 						v3rhosigma2 .resize( nrxx * ((1==nspin)?1:12) );
-						v3sigma3	.resize( nrxx * ((1==nspin)?1:10) );
+						v3sigma3    .resize( nrxx * ((1==nspin)?1:10) );
 			case 2:		v2rhosigma  .resize( nrxx * ((1==nspin)?1:6)  );
-						v2sigma2	.resize( nrxx * ((1==nspin)?1:6)  );
-			case 1:		vsigma	  .resize( nrxx * ((1==nspin)?1:3)  );
+						v2sigma2    .resize( nrxx * ((1==nspin)?1:6)  );
+			case 1:		vsigma      .resize( nrxx * ((1==nspin)?1:3)  );
 			case 0:		break;
 			default:	throw std::domain_error("order ="+std::to_string(order)
 							+" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
@@ -152,12 +152,12 @@ void ModuleIO::write_libxc_r(
 			{
 				switch( order )
 				{
-					case 4:		xc_lda_lxc	( &func, nrxx, rho.data(), v4rho4.data() );
-					case 3:		xc_lda_kxc	( &func, nrxx, rho.data(), v3rho3.data() );
-					case 2:		xc_lda_fxc	( &func, nrxx, rho.data(), v2rho2.data() );
+					case 4:		xc_lda_lxc    ( &func, nrxx, rho.data(), v4rho4.data() );
+					case 3:		xc_lda_kxc    ( &func, nrxx, rho.data(), v3rho3.data() );
+					case 2:		xc_lda_fxc    ( &func, nrxx, rho.data(), v2rho2.data() );
 					case 1:		xc_lda_exc_vxc( &func, nrxx, rho.data(), exc.data(), vrho.data() );
 								break;
-					case 0:		xc_lda_exc	( &func, nrxx, rho.data(), exc.data() );
+					case 0:		xc_lda_exc    ( &func, nrxx, rho.data(), exc.data() );
 								break;
 					default:	throw std::domain_error("order ="+std::to_string(order)
 									+" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
@@ -170,12 +170,12 @@ void ModuleIO::write_libxc_r(
 			{
 				switch( order )
 				{
-					case 4:		xc_gga_lxc	( &func, nrxx, rho.data(), sigma.data(), v4rho4.data(), v4rho3sigma.data(), v4rho2sigma2.data(), v4rhosigma3.data(), v4sigma4.data() );
-					case 3:		xc_gga_kxc	( &func, nrxx, rho.data(), sigma.data(), v3rho3.data(), v3rho2sigma.data(), v3rhosigma2.data(), v3sigma3.data() );
-					case 2:		xc_gga_fxc	( &func, nrxx, rho.data(), sigma.data(), v2rho2.data(), v2rhosigma.data(), v2sigma2.data() );
+					case 4:		xc_gga_lxc ( &func, nrxx, rho.data(), sigma.data(), v4rho4.data(), v4rho3sigma.data(), v4rho2sigma2.data(), v4rhosigma3.data(), v4sigma4.data() );
+					case 3:		xc_gga_kxc ( &func, nrxx, rho.data(), sigma.data(), v3rho3.data(), v3rho2sigma.data(), v3rhosigma2.data(), v3sigma3.data() );
+					case 2:		xc_gga_fxc ( &func, nrxx, rho.data(), sigma.data(), v2rho2.data(), v2rhosigma.data(), v2sigma2.data() );
 					case 1:		xc_gga_exc_vxc( &func, nrxx, rho.data(), sigma.data(), exc.data(), vrho.data(), vsigma.data() );
 								break;
-					case 0:		xc_gga_exc	( &func, nrxx, rho.data(), sigma.data(), exc.data() );
+					case 0:		xc_gga_exc ( &func, nrxx, rho.data(), sigma.data(), exc.data() );
 								break;
 					default:	throw std::domain_error("order ="+std::to_string(order)
 									+" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
@@ -223,7 +223,7 @@ void ModuleIO::write_libxc_r(
 				number_spin,
 				pw_rhod.nz);
 		  #else
-		  	if(nspin!=1)
+			if(nspin!=1)
 				{ throw std::invalid_argument("nspin="+std::to_string(nspin)+" is invalid for ModuleIO::write_cube_core without MPI. see "+std:string(__FILE__)+" line "+std::to_string(__LINE__)); }
 			ModuleIO::write_cube_core(
 				ofs,
@@ -262,13 +262,13 @@ void ModuleIO::write_libxc_r(
 			case 4:		write_data( "v4rho3sigma" , v4rho3sigma , (1==nspin)?1:12 );
 						write_data( "v4rho2sigma2", v4rho2sigma2, (1==nspin)?1:15 );
 						write_data( "v4rhosigma3" , v4rhosigma3 , (1==nspin)?1:20 );
-						write_data( "v4sigma4"	, v4sigma4	, (1==nspin)?1:15 );
+						write_data( "v4sigma4"    , v4sigma4    , (1==nspin)?1:15 );
 			case 3:		write_data( "v3rho2sigma" , v3rho2sigma , (1==nspin)?1:9  );
 						write_data( "v3rhosigma2" , v3rhosigma2 , (1==nspin)?1:12 );
-						write_data( "v3sigma3"	, v3sigma3	, (1==nspin)?1:10 );
+						write_data( "v3sigma3"    , v3sigma3    , (1==nspin)?1:10 );
 			case 2:		write_data( "v2rhosigma"  , v2rhosigma  , (1==nspin)?1:6  );
-						write_data( "v2sigma2"	, v2sigma2	, (1==nspin)?1:6  );
-			case 1:		write_data( "vsigma"	  , vsigma	  , (1==nspin)?1:3  );
+						write_data( "v2sigma2"    , v2sigma2    , (1==nspin)?1:6  );
+			case 1:		write_data( "vsigma"      , vsigma      , (1==nspin)?1:3  );
 			case 0:		break;
 			default:	throw std::domain_error("order ="+std::to_string(order)
 							+" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));

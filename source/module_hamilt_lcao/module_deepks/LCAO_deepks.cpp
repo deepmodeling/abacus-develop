@@ -10,7 +10,7 @@
 // 2. subroutines that are related to V_delta:
 //   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "LCAO_deepks.h"
 #include "deepks_iterate.h"

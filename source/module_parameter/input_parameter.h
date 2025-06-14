@@ -88,6 +88,7 @@ struct Input_para
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
+    bool use_k_continuity = false;   ///< whether to use k-point continuity for initializing wave functions
 
     std::string smearing_method = "gauss"; ///< "gauss",
                                            ///< "mp","methfessel-paxton"
@@ -114,7 +115,7 @@ struct Input_para
     double scf_thr = -1.0;     ///< \sum |rhog_out - rhog_in |^2
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
-    bool final_scf = false;    ///< whether to do final scf
+//    bool final_scf = false;    ///< whether to do final scf
     bool scf_os_stop = false;  ///< whether to stop scf when oscillation is detected
     double scf_os_thr = -0.01; ///< drho threshold for oscillation
     int scf_os_ndim = 0;       ///< number of old iterations used for oscillation detection
@@ -370,8 +371,8 @@ struct Input_para
     bool out_mul = false;                 ///< qifeng add 2019-9-10
     bool out_proj_band = false;           ///< projected band structure calculation jiyy add 2022-05-11
     std::string out_level = "ie";         ///< control the output information.
-    bool out_dm = false;                  ///< output density matrix. (gamma point)
-    bool out_dm1 = false;                 ///< output density matrix. (multi-k points)
+    bool out_dmk = false;                 ///< output density matrix DM(k)
+    bool out_dmr = false;                 ///< output density matrix DM(R)
     bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
@@ -384,10 +385,6 @@ struct Input_para
                                   ///< KS-orbital representation.
     bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
     bool out_eband_terms = false; ///< output the band energy terms separately
-    bool out_hr_npz = false;      ///< output exchange-correlation matrix in
-                                  ///< KS-orbital representation.
-    bool out_dm_npz = false;
-
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
@@ -657,5 +654,35 @@ struct Input_para
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+
+    // ====   #Parameters (23.XC external parameterization) ========
+    /*
+     * the following two sets of parameters are for the XC parameterization.
+     * The first element should be the LibXC id, to assign the analytical
+     * form of the eXchange and Correlation part of the functional.
+     * 
+     * Starting from the second parameter, the parameters are the coefficients
+     * of the functional. For example the M06-L functional, one should refer
+     * to the source file (source code of LibXC)
+     * 
+     * src/mgga_x_m06l.c
+     * 
+     * the implementation can be found in the file
+     * 
+     * src/maple2c/mgga_exc/mgga_x_m06l.c.
+     * 
+     * There are 18 parameters for the exchange part, so the whole length of
+     * the xc_exch_ext should be 19. (MGGA_X_M06L, id = 203)
+     * 
+     * Likewise, the correlation part can be found in corresponding files.
+     * 
+     * PBE functional is used as the default functional for XCPNet.
+     */
+    // src/gga_x_pbe.c
+    std::vector<double> xc_exch_ext = {
+        101, 0.8040, 0.2195149727645171}; 
+    // src/gga_c_pbe.c
+    std::vector<double> xc_corr_ext = {
+        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
 };
 #endif

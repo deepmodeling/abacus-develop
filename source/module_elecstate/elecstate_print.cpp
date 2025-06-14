@@ -295,7 +295,7 @@ void print_etot(const Magnetism& magnet,
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");

@@ -48,7 +48,8 @@ void ReadInput::item_exx()
             const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "must 0 <= exx_hybrid_alpha <= 1");
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The Hartree-Fock fraction (exx_hybrid_alpha) can only be in range [0, 1]");
             }
         };
         this->add_item(item);

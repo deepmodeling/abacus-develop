@@ -137,11 +137,9 @@ endif
 
 ifdef LIBNPY_DIR
     CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
-    ifeq ($(ENABLE_DEEPKS), ON)
-        HONG += -D__DEEPKS
-    endif
-    ifeq ($(ENABLE_MLKEDF), ON)
-        HONG += -D__MLKEDF
+    ifeq ($(ENABLE_MLALGO), ON)
+        HONG += -D__MLALGO
+        # HONG += -D__MLALGO
     endif
     INCLUDES += $(CNPY_INCLUDE_DIR)
 endif

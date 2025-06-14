@@ -192,6 +192,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
+    k_vector_utils.o\
     cell_index.o\
     check_atomic_stru.o\
     update_cell.o\
@@ -201,6 +202,7 @@ OBJS_CELL=atom_pseudo.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
+        deepks_check.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\
@@ -538,6 +540,7 @@ OBJS_IO=input_conv.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
+    ctrl_output_lcao.o\
     para_json.o\
     abacusjson.o\
     general_info.o\

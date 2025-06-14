@@ -121,7 +121,7 @@ relax_method                   cg #bfgs; sd; cg; cg_bfgs;
 relax_new                      TRUE #whether to use the new relaxation method
 relax_scale_force              0.5 #controls the size of the first CG step if relax_new is true
 out_level                      ie #ie(for electrons); i(for ions);
-out_dm                         0 #>0 output density matrix
+out_dmk                        0 #>0 output density matrix DM(k)
 deepks_out_labels              0 #>0 compute descriptor for deepks
 deepks_scf                     0 #>0 add V_delta to Hamiltonian
 deepks_bandgap                 0 #>0 for bandgap label
