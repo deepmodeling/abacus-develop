@@ -17,7 +17,10 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
+
+#ifdef USE_LIBXC
 #include "module_io/write_libxc_r.h"
+#endif
 
 namespace ModuleESolver
 {
@@ -256,6 +259,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                 PARAM.inp.out_elf[1]);
         }
 
+#ifdef USE_LIBXC
         // 7) write xc(r)
         if(PARAM.inp.out_xc_r[0]>=0)
         {
@@ -269,6 +273,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                 *this->pw_big,
                 *this->pw_rhod);
         }
+#endif
     }
 }
 

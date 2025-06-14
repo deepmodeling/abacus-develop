@@ -202,10 +202,7 @@ void ModuleIO::write_libxc_r(
 			std::ofstream ofs;
 			if(GlobalV::MY_RANK==0)
 			{
-				const std::string folder_name = PARAM.globalv.global_out_dir + "/xc_r/";
-				const std::string command0 =  "test -d " + folder_name + " || mkdir " + folder_name;
-				system( command0.c_str() );
-				const std::string file_name = folder_name + data_name+"_"+std::to_string(is);
+				const std::string file_name = PARAM.globalv.global_out_dir + "xc_"+data_name+"_s"+std::to_string(is+1)+".cube";
 				ofs.open(file_name);
 
 				ofs.unsetf(std::ostream::fixed);

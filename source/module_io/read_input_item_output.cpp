@@ -553,10 +553,16 @@ void ReadInput::item_output()
             size_t count = item.get_size();
             std::vector<int> out_xc_r(count); // create a placeholder vector
             std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
-            std::cout<<out_xc_r[0]<<"\t"<<out_xc_r[1]<<std::endl;
             // assign non-negative values to para.input.out_xc_r
             std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
-            std::cout<<para.input.out_xc_r[0]<<"\t"<<para.input.out_xc_r[1]<<std::endl;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_xc_r[0] >= 0)
+            {
+#ifndef USE_LIBXC
+                ModuleBase::WARNING_QUIT("ReadInput", "INPUT out_xc_r is only aviailable with Libxc");
+#endif
+            }
         };
         sync_intvec(input.out_xc_r, 2, -1);
         this->add_item(item);
