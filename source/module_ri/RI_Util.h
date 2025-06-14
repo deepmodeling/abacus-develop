@@ -10,9 +10,13 @@
 
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>
+#include <RI/global/Tensor.h>
 
 #include <array>
-#include <RI/global/Tensor.h>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <string>
 
 namespace RI_Util
 {
@@ -59,8 +63,9 @@ namespace RI_Util
         return m_new;
     }
 
-	std::map<std::string,double> get_ccp_parameter(
-		const Exx_Info::Exx_Info_RI &info,
+	std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+	update_coulomb_param(
+		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double volumn,
 		const int nkstot);
 }

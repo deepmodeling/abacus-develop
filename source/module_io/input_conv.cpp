@@ -321,17 +321,42 @@ void Input_Conv::Convert()
                    PARAM.inp.dft_functional.end(),
                    dft_functional_lower.begin(),
                    tolower);
-    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
+    if (dft_functional_lower == "hf"
+     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+     || dft_functional_lower == "scan0"
+     || dft_functional_lower == "muller" || dft_functional_lower == "power")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type
-            = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+            {"alpha", "1"},
+            {"Rcut_type", "spencer"},
+            {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
     }
-    else if (dft_functional_lower == "hse")
+	// use the error function erf(w|r-r'|), exx just has the short-range part
+    else if (dft_functional_lower == "hse"
+          || dft_functional_lower == "cwp22")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type
-            = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+            {"alpha", "1"},
+			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
+            {"Rcut_type", "limits"} }};
+    }
+	// use the error function erf(w|r-r'|), exx just has the long-range part
+    else if ( dft_functional_lower == "wp22" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+            {"alpha", "1"},
+            {"Rcut_type", "spencer"},
+            {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+            {"alpha", "-1"},
+			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
+            {"Rcut_type", "limits"} }};
     }
 #ifdef __EXX
     else if (dft_functional_lower == "opt_orb")
@@ -340,29 +365,8 @@ void Input_Conv::Convert()
         Exx_Abfs::Jle::generate_matrix = true;
     }
 #endif
-    // muller, power, wp22, cwp22 added by jghan, 2024-07-07
-    else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" )
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
-    else if ( dft_functional_lower == "wp22" )
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf; // use the error function erf(w|r-r'|), exx just has the long-range part
-    }
-    else if ( dft_functional_lower == "cwp22" )
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; // use the erfc(w|r-r'|), exx just has the short-range part
-    }
-    else if (dft_functional_lower == "b3lyp")
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type
-            = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
-    else {
+    else
+	{
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
@@ -374,7 +378,6 @@ void Input_Conv::Convert()
         )
     {
         // EXX case, convert all EXX related variables
-        // GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
         XC_Functional::set_hybrid_alpha(std::stod(PARAM.inp.exx_hybrid_alpha));
         GlobalC::exx_info.info_global.hse_omega = PARAM.inp.exx_hse_omega;
@@ -450,8 +453,8 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 2/16 )
     //----------------------------------------------------------
-    //	electrons::nelup = PARAM.inp.nelup;
-    //	electrons::neldw = PARAM.inp.neldw;
+    //    electrons::nelup = PARAM.inp.nelup;
+    //    electrons::neldw = PARAM.inp.neldw;
 
     //----------------------------------------------------------
     // occupation (3/3)
@@ -497,10 +500,10 @@ void Input_Conv::Convert()
     // About LCAO
     //----------------------------------------------------------
     // mohan add 2021-04-16
-    //	ORB.ecutwfc = PARAM.inp.lcao_ecut;
-    //	ORB.dk = PARAM.inp.lcao_dk;
-    //	ORB.dR = PARAM.inp.lcao_dr;
-    //	ORB.Rmax = PARAM.inp.lcao_rmax;
+    //    ORB.ecutwfc = PARAM.inp.lcao_ecut;
+    //    ORB.dk = PARAM.inp.lcao_dk;
+    //    ORB.dR = PARAM.inp.lcao_dr;
+    //    ORB.Rmax = PARAM.inp.lcao_rmax;
 
     // mohan add 2021-02-16
     berryphase::berry_phase_flag = PARAM.inp.berry_phase;

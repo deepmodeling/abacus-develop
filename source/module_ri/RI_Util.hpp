@@ -66,27 +66,26 @@ namespace RI_Util
 	}
 	*/
 
-	inline std::map<std::string,double> get_ccp_parameter(
-		const Exx_Info::Exx_Info_RI &info,
+	inline std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+	update_coulomb_param(
+		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double volumn,
 		const int nkstot)
 	{
-		switch(info.ccp_type)
+		std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
+		for(auto &param_list : coulomb_param_updated)
 		{
-			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
-				return {};
-			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
+			for(auto &param : param_list.second)
 			{
-				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
-				const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
-				const double hf_Rcut = std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0);
-				return {{"hf_Rcut", hf_Rcut}};
+				if(param.at("Rcut_type") == "spencer")
+				{
+					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
+					const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
+					param["Rcut"] = std::to_string(std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0));
+				}
 			}
-			case Conv_Coulomb_Pot_K::Ccp_Type::Erfc:
-				return {{"hse_omega", info.hse_omega}};
-			default:
-				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
 		}
+		return coulomb_param_updated;
 	}
 }
 
