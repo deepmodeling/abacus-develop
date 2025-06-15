@@ -9,6 +9,7 @@
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 
@@ -105,10 +106,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
+#ifndef __NEW_GINT
             gg.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
             Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
             gg.cal_gint(&inout);
+#else
+            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+#endif
 
             // A solution to replace the original implementation of the following code:
             // pelec->charge->save_rho_before_sum_band();
@@ -233,10 +238,15 @@ void IState_Charge::begin(Gint_k& gk,
 
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
+#ifndef __NEW_GINT
                     gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
                     gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
                     Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
                     gk.cal_gint(&inout);
+#else
+                    ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+#endif
+                
 
                     // Using std::vector to replace the original double** rho_save
                     std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
@@ -279,11 +289,14 @@ void IState_Charge::begin(Gint_k& gk,
 
                 DM.init_DMR(GridD_in, ucell_in);
                 DM.cal_DMR();
+#ifndef __NEW_GINT
                 gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
                 Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
                 gk.cal_gint(&inout);
-
+#else
+                ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+#endif
                 // Using std::vector to replace the original double** rho_save
                 std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
 
