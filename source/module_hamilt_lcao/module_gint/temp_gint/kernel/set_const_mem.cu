@@ -1,5 +1,5 @@
 #include "set_const_mem.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "gint_helper.cuh"
 
 __constant__ double ylmcoe_d[100];
 

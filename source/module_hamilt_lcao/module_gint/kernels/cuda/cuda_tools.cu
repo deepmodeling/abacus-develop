@@ -4,26 +4,6 @@
 
 #include "cuda_tools.cuh"
 
-cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line)
-{
-    if (result != cudaSuccess)
-    {
-        fprintf(stderr, "CUDA Runtime Error at %s:%d code=%s \"%s\" \n", file, line, cudaGetErrorString(result), func);
-        exit(EXIT_FAILURE);
-    }
-    return result;
-}
-cudaError_t __checkCudaLastError(const char *file, const int line)
-{
-    cudaError_t result = cudaGetLastError();
-    if (result != cudaSuccess)
-    {
-        fprintf(stderr, "%s(%i) : getLastCudaError():%s\n", file, line, cudaGetErrorString(result));
-        assert(result == cudaSuccess);
-    }
-    return result;
-}
-
 void dump_cuda_array_to_file(const double* cuda_array,
                              int width,
                              int hight,

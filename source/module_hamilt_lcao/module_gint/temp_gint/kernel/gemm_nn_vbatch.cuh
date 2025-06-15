@@ -6,7 +6,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h> // for fprintf and stderr
 
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "gint_helper.cuh"
 #include <functional>
 
 
@@ -395,8 +395,8 @@ void vbatched_gemm_nn_impl(int max_m,
     for (int i = 0; i < batchCount; i += max_batch_count)
     {
         const int ibatch = min(max_batch_count, batchCount - i);
-        dim3 dimGrid(ceildiv(max_n, BLK_M),
-                     ceildiv(max_m, BLK_N),
+        dim3 dimGrid(ceil_div(max_n, BLK_M),
+                     ceil_div(max_m, BLK_N),
                      ibatch);
         const T* alpha_tmp = nullptr;
         if (alpha != nullptr)

@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 
 #include "module_hamilt_lcao/module_gint/temp_gint/batch_biggrid.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "gint_helper.cuh"
 #include "gint_gpu_vars.h"
 #include "cuda_mem_wrapper.h"
 

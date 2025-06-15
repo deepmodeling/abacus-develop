@@ -6,7 +6,7 @@
 #include "module_cell/unitcell.h"
 #include "module_cell/atom_spec.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/biggrid_info.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "gint_helper.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gemm_selector.cuh"
 
 namespace ModuleGint

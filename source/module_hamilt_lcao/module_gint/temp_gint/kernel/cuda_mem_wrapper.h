@@ -1,7 +1,7 @@
 #pragma once
 #include <cuda_runtime.h>
 #include "module_base/tool_quit.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "gint_helper.cuh"
 
 template <typename T>
 class CudaMemWrapper
