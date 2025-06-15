@@ -17,6 +17,7 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_lr/potentials/pot_hxc_lrtd.h"
 #include "module_lr/hamilt_casida.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "module_ri/Exx_LRI.h"
@@ -34,6 +35,9 @@ namespace LR
         ESolver_LR(const Input_para& inp, UnitCell& ucell);
         ~ESolver_LR() {
             delete this->psi_ks;
+#ifdef __NEW_GINT
+            ModuleGint::Gint::set_gint_info(nullptr);
+#endif
         }
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate

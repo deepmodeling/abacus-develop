@@ -397,6 +397,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->gint_->gridt = &this->gt_;
 
     // (3) Periodic condition search for each grid.
+#ifndef __NEW_GINT
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
@@ -451,7 +452,25 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         &ucell,
         &orb);
     this->gint_->initialize_pvpR(ucell, &this->gd, 1); // always use nspin=1 for transition density
-
+#else
+    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb.Phi,
+        ucell,
+        this->gd);
+    ModuleGint::Gint::set_gint_info(gint_info);
+#endif
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")

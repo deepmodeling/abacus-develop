@@ -10,6 +10,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_lr/ao_to_mo_transformer/ao_to_mo.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 inline double conj(double a) { return a; }
 inline std::complex<double> conj(std::complex<double> a) { return std::conj(a); }
@@ -55,7 +56,6 @@ namespace LR
     {
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(real)");
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
-        this->gint->transfer_DM2DtoGrid(this->DM_trans->get_DMR_vector());     // 2d block to grid
 
         // 2. transition electron density
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
@@ -63,8 +63,13 @@ namespace LR
         const int& nrxx = this->pot.lock()->nrxx;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
+#ifndef __NEW_GINT
+        this->gint->transfer_DM2DtoGrid(this->DM_trans->get_DMR_vector());     // 2d block to grid
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
         this->gint->cal_gint(&inout_rho);
+#else
+        ModuleGint::cal_gint_rho(this->DM_trans->get_DMR_vector(), 1, rho_trans);
+#endif
 
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
@@ -72,11 +77,15 @@ namespace LR
         LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
+        this->hR->set_zero();   // clear hR for each bands
+#ifndef __NEW_GINT
         Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);
         this->gint->get_hRGint()->set_zero();
         this->gint->cal_gint(&inout_vlocal);
-        this->hR->set_zero();   // clear hR for each bands
         this->gint->transfer_pvpR(&*this->hR, &ucell);    //grid to 2d block
+#else
+        ModuleGint::cal_gint_vl(vr_hxc.c, &*this->hR);
+#endif
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
     }
 
@@ -96,8 +105,6 @@ namespace LR
                 LR_Util::get_DMR_real_imag_part(*this->DM_trans, DM_trans_real_imag, ucell.nat, type);
                 // if (this->first_print)LR_Util::print_DMR(DM_trans_real_imag, ucell.nat, "DMR(2d, real)");
 
-                this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
-                // LR_Util::print_HR(*this->gint->get_DMRGint()[0], this->ucell.nat, "DMR(grid, real)");
 
                 // 2. transition electron density
                 double** rho_trans;
@@ -105,8 +112,14 @@ namespace LR
 
                 LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
                 ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
+#ifndef __NEW_GINT
+                this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
+                // LR_Util::print_HR(*this->gint->get_DMRGint()[0], this->ucell.nat, "DMR(grid, real)");
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
                 this->gint->cal_gint(&inout_rho);
+#else
+                ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans);
+#endif
                 // print_grid_nonzero(rho_trans[0], nrxx, 10, "rho_trans");
 
                 // 3. v_hxc = f_hxc * rho_trans
@@ -117,13 +130,16 @@ namespace LR
                 LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
                 // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
+                HR_real_imag.set_zero();
+#ifndef __NEW_GINT
                 Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);
                 this->gint->get_hRGint()->set_zero();
                 this->gint->cal_gint(&inout_vlocal);
-
                 // LR_Util::print_HR(*this->gint->get_hRGint(), this->ucell.nat, "VR(grid)");
-                HR_real_imag.set_zero();
                 this->gint->transfer_pvpR(&HR_real_imag, &ucell, &this->gd);
+#else
+                ModuleGint::cal_gint_vl(vr_hxc.c, &HR_real_imag);
+#endif
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
                 LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, ucell.nat, type);
             };

@@ -6,6 +6,7 @@
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_hcontainer.h"
 #include "module_lr/utils/lr_util_print.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 template <typename T>
 elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in, const bool need_R)
@@ -34,14 +35,6 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
     return DM_trans;
 }
 
-template<typename T>
-void LR::LR_Spectrum<T>::cal_gint_rho(double** rho, const int& nrxx)
-{
-    ModuleBase::GlobalFunc::ZEROS(rho[0], nrxx);
-    Gint_inout inout_rho(rho, Gint_Tools::job_type::rho, 1, false);
-    this->gint->cal_gint(&inout_rho);
-}
-
 inline void check_sum_rule(const double& osc_tot)
 {
     if (std::abs(osc_tot - 1.0) > 1e-3) {
@@ -59,12 +52,16 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
     const elecstate::DensityMatrix<double, double>& DM_trans = this->cal_transition_density_matrix(istate);
     for (int is = 0;is < this->nspin_x;++is)
     {
-        this->gint->transfer_DM2DtoGrid({ DM_trans.get_DMR_vector().at(is) });
-
         // 2. transition density
         double** rho_trans;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, this->rho_basis.nrxx);
+#ifndef __NEW_GINT
+        this->gint->transfer_DM2DtoGrid({ DM_trans.get_DMR_vector().at(is) });
         this->cal_gint_rho(rho_trans, this->rho_basis.nrxx);
+#else
+        ModuleBase::GlobalFunc::ZEROS(rho_trans[0], this->rho_basis.nrxx);
+        ModuleGint::cal_gint_rho({ DM_trans.get_DMR_vector().at(is) }, 1, rho_trans);
+#endif
 
         // 3. transition dipole moment
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
@@ -108,14 +105,24 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
 
         // real part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'R');
+#ifndef __NEW_GINT
         this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
         this->cal_gint_rho(rho_trans_real, this->rho_basis.nrxx);
+#else
+        ModuleBase::GlobalFunc::ZEROS(rho_trans_real[0], this->rho_basis.nrxx);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_real);
+#endif
         // LR_Util::print_grid_nonzero(rho_trans_real[0], this->rho_basis.nrxx, 10, "rho_trans");
 
         // imag part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'I');
+#ifndef __NEW_GINT
         this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
         this->cal_gint_rho(rho_trans_imag, this->rho_basis.nrxx);
+#else
+        ModuleBase::GlobalFunc::ZEROS(rho_trans_imag[0], this->rho_basis.nrxx);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_imag);
+#endif
         // LR_Util::print_grid_nonzero(rho_trans_imag[0], this->rho_basis.nrxx, 10, "rho_trans");
 
         // 3. transition dipole moment
