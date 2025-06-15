@@ -320,7 +320,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 		}
 		else
 		{
-			ModuleBase::WARNING(ModuleBase::GlobalFunc::TO_STRING(__FILE__),
+			ModuleBase::WARNING(std::string(__FILE__),
 				"Element "+ModuleBase::GlobalFunc::TO_STRING(T)+" , all training data (lcao[i]*lcao[j]) are all the same. So PCA randomly choose an abf as the result.");
 			psis_new[T].resize( psis[T].size() );
 			for( size_t L=0; L!=psis[T].size(); ++L )

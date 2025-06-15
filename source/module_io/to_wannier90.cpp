@@ -426,8 +426,8 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             }
             else
             {
-                throw std::runtime_error("numkpt_nnkp uninitialized in " + ModuleBase::GlobalFunc::TO_STRING(__FILE__)
-                                         + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                throw std::runtime_error("numkpt_nnkp uninitialized in " + std::string(__FILE__)
+                                         + " line " + std::to_string(__LINE__));
             }
 
             for (int ik = 0; ik < numkpt_nnkp; ik++)

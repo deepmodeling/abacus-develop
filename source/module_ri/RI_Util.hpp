@@ -8,6 +8,7 @@
 
 #include "RI_Util.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/global_function.h"
 
 namespace RI_Util
 {
@@ -81,7 +82,8 @@ namespace RI_Util
 				{
 					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
 					const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
-					param["Rcut"] = std::to_string(std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0));
+					const double Rcut = std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0);
+					param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
 				}
 			}
 		}

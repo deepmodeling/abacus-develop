@@ -138,8 +138,8 @@ namespace hsolver
              &info);
     if (info) {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
 }
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
@@ -198,8 +198,8 @@ namespace hsolver
         return std::make_pair(info, ifail);
     } else {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
 }
 }
     template<typename T>
@@ -269,8 +269,8 @@ namespace hsolver
              &info);
     if (info) {
         throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
 }
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
@@ -334,8 +334,8 @@ namespace hsolver
         return std::make_pair(info, ifail);
     } else {
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
 }
 }
     template<typename T>
@@ -381,7 +381,7 @@ namespace hsolver
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE
-        = ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__) + ".\n";
+        = std::string(__FILE__) + " line " + std::to_string(__LINE__) + ".\n";
     const std::string str_info_FILE = str_info + str_FILE;
 
     if (info == 0)
