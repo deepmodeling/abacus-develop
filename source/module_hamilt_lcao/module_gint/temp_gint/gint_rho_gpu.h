@@ -17,7 +17,7 @@ class Gint_rho_gpu: public Gint
         const std::vector<HContainer<double>*>& dm_vec,
         const int nspin,
         double **rho)
-        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho) {};
+        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho) {}
     
     void cal_gint();
 

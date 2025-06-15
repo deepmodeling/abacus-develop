@@ -22,36 +22,36 @@ class BigGridInfo
             Vec3d biggrid_vec3,
             int nmx, int nmy, int nmz);
         
-        Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; };
-        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; };
-        Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; };
+        Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; }
+        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; }
+        Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; }
 
         // Return the maximum number of big grids that can fit inside a sphere of radius r,
         // along the three lattice vector directions.
         Vec3i max_ext_bgrid_num(double r) const;
 
         // get number of meshgrids along three lattice directions
-        int get_nmx() const { return nmx_; };
-        int get_nmy() const { return nmy_; };
-        int get_nmz() const { return nmz_; };
-        int get_mgrids_num() const { return nmxyz_; };
+        int get_nmx() const { return nmx_; }
+        int get_nmy() const { return nmy_; }
+        int get_nmz() const { return nmz_; }
+        int get_mgrids_num() const { return nmxyz_; }
 
-        const std::vector<Vec3d>& get_mgrids_coord() const { return meshgrid_coords_; };
-        const Vec3d& get_mgrid_coord(int index_1d) const { return meshgrid_coords_[index_1d]; };
+        const std::vector<Vec3d>& get_mgrids_coord() const { return meshgrid_coords_; }
+        const Vec3d& get_mgrid_coord(int index_1d) const { return meshgrid_coords_[index_1d]; }
 
-        std::shared_ptr<const MeshGridInfo> get_mgrid_info() const { return meshgrid_info_; };
+        std::shared_ptr<const MeshGridInfo> get_mgrid_info() const { return meshgrid_info_; }
 
         // get the 3D index of a meshgrid in the big grid from the 1D index
         Vec3i mgrid_idx_1Dto3D(int index_1d) const
         {
             return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
-        };
+        }
 
         // get the 1D index of a meshgrid in the big grid from the 3D index
         int mgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
             return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
-        };
+        }
 
     private:
         // basis vectors of the big grid

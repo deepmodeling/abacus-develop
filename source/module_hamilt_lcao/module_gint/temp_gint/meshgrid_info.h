@@ -35,10 +35,10 @@ class MeshGridInfo
                 meshgrid_GT_ = meshgrid_latvec0_.Inverse();
 
                 meshgrid_volume_ = std::abs(meshgrid_latvec0_.Det());
-            };
-        
-        double get_volume() const { return meshgrid_volume_; };
-        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * meshgrid_latvec0_; };
+            }
+
+        double get_volume() const { return meshgrid_volume_; }
+        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * meshgrid_latvec0_; }
         Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * meshgrid_GT_; }
 
     private:

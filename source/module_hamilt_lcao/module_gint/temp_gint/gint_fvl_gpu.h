@@ -24,7 +24,7 @@ class Gint_fvl_gpu : public Gint
         ModuleBase::matrix* svl)
         : nspin_(nspin), vr_eff_(vr_eff), dm_vec_(dm_vec),
           isforce_(isforce), isstress_(isstress), fvl_(fvl), svl_(svl),
-          dr3_(gint_info_->get_mgrid_volume()) {};
+          dr3_(gint_info_->get_mgrid_volume()) {}
 
     void cal_gint();
 

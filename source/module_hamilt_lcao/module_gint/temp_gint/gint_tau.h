@@ -15,7 +15,7 @@ class Gint_tau : public Gint
         const std::vector<HContainer<double>*>& dm_vec,
         const int nspin,
         double** tau)
-        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {};
+        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {}
     
     void cal_gint();
     

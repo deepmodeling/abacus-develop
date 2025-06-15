@@ -17,7 +17,7 @@ class Gint_vl_metagga_gpu : public Gint
         const double* vr_eff,
         const double* vofk,
         HContainer<double>* hR)
-        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
+        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
     
     void cal_gint();
 

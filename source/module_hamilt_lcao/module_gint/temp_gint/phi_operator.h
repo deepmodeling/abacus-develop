@@ -28,8 +28,8 @@ class PhiOperator
     void set_bgrid(std::shared_ptr<const BigGrid> biggrid);
 
     // getter
-    int get_rows() const {return rows_;};
-    int get_cols() const {return cols_;};
+    int get_rows() const {return rows_;}
+    int get_cols() const {return cols_;}
 
     // get phi of the big grid
     // the dimension of phi is num_mgrids * (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
@@ -121,7 +121,7 @@ class PhiOperator
         int x = std::min(a, b);
         int y = std::abs(a - b);
         return atom_pair_start_end_idx_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
-    };
+    }
 
     bool is_atom_on_mgrid(int atom_idx, int mgrid_idx) const
     {

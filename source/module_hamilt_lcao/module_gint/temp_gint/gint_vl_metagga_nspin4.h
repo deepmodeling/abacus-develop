@@ -16,7 +16,7 @@ class Gint_vl_metagga_nspin4 : public Gint
         std::vector<const double*> vr_eff,
         std::vector<const double*> vofk,
         HContainer<std::complex<double>>* hR)
-        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
+        : vr_eff_(vr_eff), vofk_(vofk), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
     
     void cal_gint();
 

@@ -17,16 +17,16 @@ class LocalCellInfo
             std::shared_ptr<const UnitCellInfo> unitcell_info);
 
         // getter functions
-        int get_startidx_bx() const { return startidx_bx_; };
-        int get_startidx_by() const { return startidx_by_; };
-        int get_startidx_bz() const { return startidx_bz_; };
-        int get_nbx() const { return nbx_; };
-        int get_nby() const { return nby_; };
-        int get_nbz() const { return nbz_; };
-        int get_bgrids_num() const { return nbxyz_; };
-        int get_mgrids_num() const { return nmxyz_; };
-        std::shared_ptr<const UnitCellInfo> get_unitcell_info() const { return unitcell_info_; };
-        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return unitcell_info_->get_bgrid_info(); };
+        int get_startidx_bx() const { return startidx_bx_; }
+        int get_startidx_by() const { return startidx_by_; }
+        int get_startidx_bz() const { return startidx_bz_; }
+        int get_nbx() const { return nbx_; }
+        int get_nby() const { return nby_; }
+        int get_nbz() const { return nbz_; }
+        int get_bgrids_num() const { return nbxyz_; }
+        int get_mgrids_num() const { return nmxyz_; }
+        std::shared_ptr<const UnitCellInfo> get_unitcell_info() const { return unitcell_info_; }
+        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return unitcell_info_->get_bgrid_info(); }
 
         //====================================================================
         // functions related to the big grid
