@@ -246,6 +246,96 @@ __global__ void calc_grad_with_block(
     }
 }
 
+template <typename Real>
+__global__ void apply_eigenvalues_kernel(
+        const thrust::complex<Real>* vectors,
+        thrust::complex<Real>* result,
+        const Real* eigenvalues,
+        const int nbase,
+        const int nbase_x,
+        const int notconv)
+{
+    int m = blockIdx.x;
+    int idx = threadIdx.x + blockIdx.y * blockDim.x;
+    
+    if (m < notconv && idx < nbase) {
+        result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+    }
+}
+
+template <typename Real>
+__global__ void precondition_kernel(
+        thrust::complex<Real>* psi_iter,
+        const Real* precondition,
+        const Real* eigenvalues,
+        const int dim,
+        const int nbase,
+        const int notconv)
+{
+    int m = blockIdx.x;
+    int i = threadIdx.x + blockIdx.y * blockDim.x;
+    
+    if (m < notconv && i < dim) {
+        Real x = abs(precondition[i] - eigenvalues[m]);
+        Real pre = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+        psi_iter[(nbase + m) * dim + i] = psi_iter[(nbase + m) * dim + i] / pre;
+    }
+}
+
+template <typename Real>
+__global__ void normalize_kernel(
+        thrust::complex<Real>* psi_iter,
+        Real* psi_norm,
+        const int dim,
+        const int nbase,
+        const int notconv)
+{
+    int m = blockIdx.x;
+    int tid = threadIdx.x;
+    __shared__ Real sum[thread_per_block];
+    
+    sum[tid] = 0.0;
+    
+    // Calculate the sum for normalization
+    for (int i = tid; i < dim; i += thread_per_block) {
+        auto val = psi_iter[(nbase + m) * dim + i];
+        sum[tid] += (val * thrust::conj(val)).real();
+    }
+    
+    __syncthreads();
+    
+    // Parallel reduction in shared memory
+    for (int s = thread_per_block/2; s > warp_size; s >>= 1) {
+        if (tid < s) {
+            sum[tid] += sum[tid + s];
+        }
+        __syncthreads();
+    }
+    
+    if (tid < warp_size) {
+        sum[tid] += sum[tid + 32]; __syncwarp();
+        sum[tid] += sum[tid + 16]; __syncwarp();
+        sum[tid] += sum[tid + 8]; __syncwarp();
+        sum[tid] += sum[tid + 4]; __syncwarp();
+        sum[tid] += sum[tid + 2]; __syncwarp();
+        sum[tid] += sum[tid + 1]; __syncwarp();
+    }
+    
+    __syncthreads();
+    
+    Real norm = sqrt(sum[0]);
+    
+    // Normalize the vector
+    for (int i = tid; i < dim; i += thread_per_block) {
+        psi_iter[(nbase + m) * dim + i] /= norm;
+    }
+    
+    // Store the norm if needed
+    if (tid == 0 && psi_norm != nullptr) {
+        psi_norm[m] = norm;
+    }
+}
+
 template <typename T>
 void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad_out,
                                                                          T* hgrad_out,
@@ -292,9 +382,75 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
     cudaCheckOnDebug();
 }
 
+template <typename T>
+void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nbase,
+                                                                const int& nbase_x,
+                                                                const int& notconv,
+                                                                T* result,
+                                                                const T* vectors,
+                                                                const Real* eigenvalues)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid_y = (nbase + threads_per_block - 1) / threads_per_block;
+    
+    dim3 grid(notconv, blocks_per_grid_y);
+    
+    auto vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
+    auto res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
+    
+    apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
+        vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
+    
+    cudaCheckOnDebug();
+}
+
+template <typename T>
+void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
+                                                           T* psi_iter,
+                                                           const int& nbase,
+                                                           const int& notconv,
+                                                           const Real* precondition,
+                                                           const Real* eigenvalues)
+{
+    const int threads_per_block = 256;
+    const int blocks_per_grid_y = (dim + threads_per_block - 1) / threads_per_block;
+    
+    dim3 grid(notconv, blocks_per_grid_y);
+    
+    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    
+    precondition_kernel<Real><<<grid, threads_per_block>>>(
+        psi_complex, precondition, eigenvalues, dim, nbase, notconv);
+    
+    cudaCheckOnDebug();
+}
+
+template <typename T>
+void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
+                                                        T* psi_iter,
+                                                        const int& nbase,
+                                                        const int& notconv,
+                                                        Real* psi_norm)
+{
+    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    
+    normalize_kernel<Real><<<notconv, thread_per_block>>>(
+        psi_complex, psi_norm, dim, nbase, notconv);
+    
+    cudaCheckOnDebug();
+}
+
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
-
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_GPU>;
+template struct precondition_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct precondition_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct precondition_op<double, base_device::DEVICE_GPU>;
+template struct normalize_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct normalize_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct normalize_op<double, base_device::DEVICE_GPU>;
 }

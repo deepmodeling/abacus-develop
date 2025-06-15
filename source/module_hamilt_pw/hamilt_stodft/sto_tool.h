@@ -1,7 +1,11 @@
+#ifndef STO_TOOL_H
+#define STO_TOOL_H
 #include "module_cell/klist.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_psi/psi.h"
+
 /**
  * @brief Check if Emin and Emax are converged
  *
@@ -10,16 +14,19 @@
  * @param try_emax trial Emax
  * @param nbands_sto number of stochastic bands
  */
-void check_che(const int& nche_in,
-               const double& try_emin,
-               const double& try_emax,
-               const int& nbands_sto,
-               K_Vectors* p_kv,
-               Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf,
-               hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
+template <typename FPTYPE, typename Device>
+struct check_che_op
+{
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    void operator()(const int& nche_in,
+                    const double& try_emin,
+                    const double& try_emax,
+                    const int& nbands_sto,
+                    K_Vectors* p_kv,
+                    Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
+                    hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
+};
 
-#ifndef PARALLEL_DISTRIBUTION
-#define PARALLEL_DISTRIBUTION
 /**
  * @brief structure to distribute calculation among processors
  *
@@ -49,11 +56,8 @@ struct parallel_distribution
     int start;
     int num_per;
 };
-#endif
 
 #ifdef __MPI
-#ifndef INFO_GATHERV
-#define INFO_GATHERV
 /**
  * @brief gather information from all processors
  *
@@ -85,7 +89,6 @@ struct info_gatherv
     int* displs = nullptr;
 };
 #endif
-#endif
 
 /**
  * @brief convert psi from double to float
@@ -93,7 +96,19 @@ struct info_gatherv
  * @param psi_in input psi of double
  * @param psi_out output psi of float
  */
-void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::complex<float>>& psi_out);
+template <typename FPTYPE_IN, typename FPTYPE_OUT, typename Device>
+struct convert_psi_op
+{
+    using castmem_complex_op
+        = base_device::memory::cast_memory_op<std::complex<FPTYPE_OUT>, std::complex<FPTYPE_IN>, Device, Device>;
+    void operator()(const psi::Psi<std::complex<FPTYPE_IN>, Device>& psi_in,
+                    psi::Psi<std::complex<FPTYPE_OUT>, Device>& psi_out)
+    {
+        psi_in.fix_k(0);
+        psi_out.fix_k(0);
+        castmem_complex_op()(psi_out.get_pointer(), psi_in.get_pointer(), psi_in.size());
+    }
+};
 
 /**
  * @brief gather chi from all processors
@@ -107,9 +122,15 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
  * @return psi::Psi<std::complex<float>> pointer to gathered stochastic wave function
  *
  */
-psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
-                                         psi::Psi<std::complex<float>>& chi_all,
-                                         const int& npwx,
-                                         int* nrecv_sto,
-                                         int* displs_sto,
-                                         const int perbands_sto);
+template <typename FPTYPE, typename Device>
+struct gatherchi_op
+{
+    psi::Psi<std::complex<FPTYPE>, Device>* operator()(psi::Psi<std::complex<FPTYPE>, Device>& chi,
+                                                       psi::Psi<std::complex<FPTYPE>, Device>& chi_all,
+                                                       const int& npwx,
+                                                       int* nrecv_sto,
+                                                       int* displs_sto,
+                                                       const int perbands_sto);
+};
+
+#endif

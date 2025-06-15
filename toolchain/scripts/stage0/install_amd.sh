@@ -27,17 +27,23 @@ case "${with_amd}" in
   __INSTALL__)
     echo "==================== Installing the AMD compiler ======================"
     echo "__INSTALL__ is not supported; please install the AMD compiler manually"
-    exit 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding AMD compiler from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     check_command clang "amd" && CC="$(realpath $(command -v clang))" || exit 1
     check_command clang++ "amd" && CXX="$(realpath $(command -v clang++))" || exit 1
-    if [ "${with_flang}" = "yes" ]; then
+    if [ "${WITH_FLANG}" = "yes" ]; then
         check_command flang "amd" && FC="$(realpath $(command -v flang))" || exit 1
     else
         check_command gfortran "gcc" && FC="gfortran" || exit 1
         add_lib_from_paths GCC_LDFLAGS "libgfortran.*" ${LIB_PATHS}
+    fi
     fi
     F90="${FC}"
     F77="${FC}"
@@ -53,7 +59,7 @@ case "${with_amd}" in
     check_dir "${pkg_install_dir}/include"
     check_command ${pkg_install_dir}/bin/clang "amd" && CC="${pkg_install_dir}/bin/clang" || exit 1
     check_command ${pkg_install_dir}/bin/clang++ "amd" && CXX="${pkg_install_dir}/bin/clang++" || exit 1
-    if [ "${with_flang}" = "yes" ]; then
+    if [ "${WITH_FLANG}" = "yes" ]; then
         check_command ${pkg_install_dir}/bin/flang "amd" && FC="${pkg_install_dir}/bin/flang" || exit 1
     else
         check_command gfortran "gcc" && FC="$(command -v gfortran)" || exit 1
@@ -70,7 +76,7 @@ if [ "${with_amd}" != "__DONTUSE__" ]; then
   echo "CXX is ${CXX}"
   [ $(realpath $(command -v clang++) | grep -e aocc-compiler) ] || echo "Check the AMD C++ compiler path"
   echo "FC  is ${FC}"
-  if [ "${with_flang}" = "yes" ]; then
+  if [ "${WITH_FLANG}" = "yes" ]; then
     [ $(realpath $(command -v flang) | grep -e aocc-compiler) ] || echo "Check the AMD Fortran compiler path"
   else
     [ $(realpath $(command -v gfortran) | grep -e aocc-compiler) ] || echo "Check the GNU Fortran compiler path"

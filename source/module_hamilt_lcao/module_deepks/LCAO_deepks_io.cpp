@@ -1,6 +1,6 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "LCAO_deepks_io.h"
 #include "module_base/tool_quit.h"
@@ -136,7 +136,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
 }
 
 // saves energy in numpy format
-void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, const int rank)
+void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, const int rank, const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_e");
     if (rank != 0)
@@ -146,7 +146,8 @@ void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, cons
 
     // save energy in .npy format
     const long unsigned eshape[] = {1};
-    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e);
+    double e_hartree = e * unit_scale;
+    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e_hartree);
     return;
 }
 
@@ -155,7 +156,8 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
                                 const std::string& h_file,
                                 const int nlocal,
                                 const int nks,
-                                const int rank)
+                                const int rank,
+                                const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_h");
     if (rank != 0)
@@ -173,7 +175,7 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                npy_h.push_back(hamilt[k](i, j));
+                npy_h.push_back(hamilt[k](i, j) * unit_scale);
             }
         }
     }
@@ -186,7 +188,8 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
                                      const ModuleBase::matrix& matrix,
                                      const int rank,
                                      const double& scale,
-                                     const char mode)
+                                     const char mode,
+                                     const double unit_scale)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_matrix2npy");
 
@@ -213,6 +216,12 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         shape[0] = nr;
         shape[1] = nc;
     }
+    else if (mode == 'F') // flat
+    {
+        size = nr * nc;
+        shape.resize(1);
+        shape[0] = size;
+    }
     else
     {
         ModuleBase::WARNING_QUIT("save_matrix2npy", "Invalid mode! Support only 'U', 'L', 'N'.");
@@ -226,7 +235,7 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = i; j < nc; ++j)
             {
-                scaled_data[index] = matrix(i, j) * scale;
+                scaled_data[index] = (matrix(i, j) * scale) * unit_scale;
                 index++;
             }
         }
@@ -238,18 +247,18 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
         {
             for (int j = 0; j <= i; ++j)
             {
-                scaled_data[index] = matrix(i, j) * scale;
+                scaled_data[index] = (matrix(i, j) * scale) * unit_scale;
                 index++;
             }
         }
     }
-    else // normal
+    else // normal or flat
     {
         for (int i = 0; i < nr; ++i)
         {
             for (int j = 0; j < nc; ++j)
             {
-                scaled_data[i * nc + j] = matrix(i, j) * scale;
+                scaled_data[i * nc + j] = (matrix(i, j) * scale) * unit_scale;
             }
         }
     }
@@ -266,6 +275,8 @@ void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::
     {
         return;
     }
+    using T_tensor =
+        typename std::conditional<std::is_same<T, std::complex<double>>::value, c10::complex<double>, T>::type;
     const int dim = tensor.dim();
     std::vector<long unsigned> shape(dim);
     for (int i = 0; i < dim; i++)
@@ -275,17 +286,11 @@ void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::
 
     std::vector<T> data(tensor.numel());
 
-    if constexpr (std::is_same<T, double>::value)
+    T_tensor* data_ptr_tensor = tensor.data_ptr<T_tensor>();
+    T* data_ptr = reinterpret_cast<T*>(data_ptr_tensor);
+    for (size_t i = 0; i < tensor.numel(); ++i)
     {
-        std::memcpy(data.data(), tensor.data_ptr<double>(), tensor.numel() * sizeof(double));
-    }
-    else
-    {
-        auto tensor_data = tensor.data_ptr<c10::complex<double>>();
-        for (size_t i = 0; i < tensor.numel(); ++i)
-        {
-            data[i] = std::complex<double>(tensor_data[i].real(), tensor_data[i].imag());
-        }
+        data[i] = data_ptr[i];
     }
 
     npy::SaveArrayAsNumpy(file_name, false, shape.size(), shape.data(), data);
@@ -305,13 +310,19 @@ template void LCAO_deepks_io::save_npy_h<double>(const std::vector<ModuleBase::m
                                                  const std::string& h_file,
                                                  const int nlocal,
                                                  const int nks,
-                                                 const int rank);
+                                                 const int rank,
+                                                 const double unit_scale);
 
 template void LCAO_deepks_io::save_npy_h<std::complex<double>>(const std::vector<ModuleBase::ComplexMatrix>& hamilt,
                                                                const std::string& h_file,
                                                                const int nlocal,
                                                                const int nks,
-                                                               const int rank);
+                                                               const int rank,
+                                                               const double unit_scale);
+
+template void LCAO_deepks_io::save_tensor2npy<int>(const std::string& file_name,
+                                                   const torch::Tensor& tensor,
+                                                   const int rank);
 
 template void LCAO_deepks_io::save_tensor2npy<double>(const std::string& file_name,
                                                       const torch::Tensor& tensor,

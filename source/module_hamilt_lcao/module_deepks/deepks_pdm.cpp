@@ -13,8 +13,9 @@
 // 2. cal_pdm, which is used for calculating pdm
 // 3. check_pdm, which prints pdm to descriptor.dat
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
+#include "deepks_iterate.h"
 #include "deepks_pdm.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
@@ -85,6 +86,93 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
     }
 }
 
+template <typename TK>
+void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                               const std::vector<std::vector<TK>>& dmk,
+                               const UnitCell& ucell,
+                               const LCAO_Orbitals& orb,
+                               const Parallel_Orbitals& pv,
+                               const Grid_Driver& GridD,
+                               hamilt::HContainer<double>* dmr_deepks)
+{
+    dmr_deepks->set_zero();
+    // save whether the pair with R has been calculated
+    std::vector<std::tuple<int, int, int, int, int>> calculated_pairs(0);
+
+    DeePKS_domain::iterate_ad2(
+        ucell,
+        GridD,
+        orb,
+        false, // no trace_alpha
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt1,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start1,
+            const int nw1_tot,
+            ModuleBase::Vector3<int> dR1,
+            const int ibt2,
+            const ModuleBase::Vector3<double>& tau2,
+            const int start2,
+            const int nw2_tot,
+            ModuleBase::Vector3<int> dR2) 
+        {
+            auto row_indexes = pv.get_indexes_row(ibt1);
+            auto col_indexes = pv.get_indexes_col(ibt2);
+            if (row_indexes.size() * col_indexes.size() == 0)
+            {
+                return; // to next loop
+            }
+
+            hamilt::AtomPair<double> dm_pair = dmr_deepks->get_atom_pair(ibt1, ibt2);
+
+            int dRx = 0;
+            int dRy = 0;
+            int dRz = 0;
+            if (std::is_same<TK, std::complex<double>>::value)
+            {
+                dRx = (dR1 - dR2).x;
+                dRy = (dR1 - dR2).y;
+                dRz = (dR1 - dR2).z;
+            }
+            ModuleBase::Vector3<int> dR(dRx, dRy, dRz);
+
+            // avoid duplicate calculation
+            if (std::find(calculated_pairs.begin(), calculated_pairs.end(),
+                          std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z))
+                != calculated_pairs.end())
+            {
+                return;
+            }
+            calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
+
+            dm_pair.find_R(dR);
+            hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
+            dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
+
+            for (int ik = 0; ik < dmk.size(); ik++)
+            {
+                std::complex<double> kphase = std::complex<double>(1, 0);
+                if (std::is_same<TK, std::complex<double>>::value)
+                {
+                    const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
+                    kphase = std::complex<double>(cos(arg), sin(arg));
+                }
+                TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
+                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                {
+                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
+                }
+                else
+                {
+                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
+                }
+            }
+        }
+    );
+    return;
+}
+
 // this subroutine performs the calculation of projected density matrices
 // pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 template <typename TK>
@@ -93,7 +181,8 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                             const int lmaxd,
                             const std::vector<int>& inl2l,
                             const ModuleBase::IntArray* inl_index,
-                            const elecstate::DensityMatrix<TK, double>* dm,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                            const hamilt::HContainer<double>* dmr,
                             const std::vector<hamilt::HContainer<double>*> phialpha,
                             const UnitCell& ucell,
                             const LCAO_Orbitals& orb,
@@ -145,7 +234,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
         Atom* atom0 = &ucell.atoms[T0];
         const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
         AdjacentAtomInfo adjs;
-        GridD.Find_atom(ucell, atom0->tau[I0], T0, I0, &adjs);
+        GridD.Find_atom(ucell, tau0, T0, I0, &adjs);
 
         // trace alpha orbital
         std::vector<int> trace_alpha_row;
@@ -231,7 +320,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 }
             }
 
-            for (int ad2 = 0; ad2 < adjs.adj_num  + 1; ad2++)
+            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ad2++)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
@@ -272,38 +361,17 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     }
                 }
                 // prepare DM from DMR
-                std::vector<double> dm_array(row_size * col_size, 0.0);
-                const double* dm_current = nullptr;
-                for (int is = 0; is < dm->get_DMR_vector().size(); is++)
+                int dRx = 0, dRy = 0, dRz = 0;
+                if (std::is_same<TK, std::complex<double>>::value)
                 {
-                    int dRx = 0, dRy = 0, dRz = 0;
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
-                    {
-                        dRx = dR2.x - dR1.x;
-                        dRy = dR2.y - dR1.y;
-                        dRz = dR2.z - dR1.z;
-                    }
-                    // dm_R
-                    auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, dRx, dRy, dRz);
-                    if (tmp == nullptr)
-                    {
-                        // in case of no deepks_scf but out_deepks_label, size of DMR would mismatch with
-                        // deepks-orbitals
-                        dm_current = nullptr;
-                        break;
-                    }
-                    dm_current = tmp->get_pointer();
-                    for (int idm = 0; idm < row_size * col_size; idm++)
-                    {
-                        dm_array[idm] += dm_current[idm];
-                    }
+                    dRx = dR1.x - dR2.x;
+                    dRy = dR1.y - dR2.y;
+                    dRz = dR1.z - dR2.z;
                 }
-                if (dm_current == nullptr)
-                {
-                    continue; // skip the long range DM pair more than nonlocal term
-                }
+                ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
-                dm_current = dm_array.data();
+                const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
+
                 // use s_2t and dm_current to get g_1dmt
                 // dgemm_: C = alpha * A * B + beta * C
                 // C = g_1dmt, A = dm_current, B = s_2t
@@ -311,18 +379,18 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
                 dgemm_(&transa,
-                        &transb,
-                        &row_size,
-                        &trace_alpha_size,
-                        &col_size,
-                        &gemm_alpha,
-                        dm_current,
-                        &col_size,
-                        s_2t.data(),
-                        &col_size,
-                        &gemm_beta,
-                        g_1dmt.data(),
-                        &row_size);
+                       &transb,
+                       &row_size,
+                       &trace_alpha_size,
+                       &col_size,
+                       &gemm_alpha,
+                       dm_current,
+                       &col_size,
+                       s_2t.data(),
+                       &col_size,
+                       &gemm_beta,
+                       g_1dmt.data(),
+                       &row_size);
             } // ad2
             if (!PARAM.inp.deepks_equiv)
             {
@@ -340,10 +408,10 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                             for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                             {
                                 accessor[m1][m2] += ddot_(&row_size,
-                                                            g_1dmt.data() + index * row_size,
-                                                            &inc,
-                                                            s_1t.data() + index * row_size,
-                                                            &inc);
+                                                          g_1dmt.data() + index * row_size,
+                                                          &inc,
+                                                          s_1t.data() + index * row_size,
+                                                          &inc);
                                 index++;
                             }
                         }
@@ -366,10 +434,10 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         // ddot_: dot product of two vectors
                         // inc means the increment of the index
                         accessor[iproj * nproj + jproj] += ddot_(&row_size,
-                                                                    g_1dmt.data() + index * row_size,
-                                                                    &inc,
-                                                                    s_1t.data() + index * row_size,
-                                                                    &inc);
+                                                                 g_1dmt.data() + index * row_size,
+                                                                 &inc,
+                                                                 s_1t.data() + index * row_size,
+                                                                 &inc);
                         index++;
                     }
                 }
@@ -390,7 +458,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 
 void DeePKS_domain::check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm)
 {
-    const std::string file_projdm = PARAM.globalv.global_out_dir + "pdm.dat";
+    const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     ofs << std::setprecision(10);
@@ -409,12 +477,29 @@ void DeePKS_domain::check_pdm(const int inlmax, const std::vector<int>& inl2l, c
     }
 }
 
+template void DeePKS_domain::update_dmr<double>(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                const std::vector<std::vector<double>>& dmk,
+                                                const UnitCell& ucell,
+                                                const LCAO_Orbitals& orb,
+                                                const Parallel_Orbitals& pv,
+                                                const Grid_Driver& GridD,
+                                                hamilt::HContainer<double>* dmr_deepks);
+
+template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                              const std::vector<std::vector<std::complex<double>>>& dmk,
+                                                              const UnitCell& ucell,
+                                                              const LCAO_Orbitals& orb,
+                                                              const Parallel_Orbitals& pv,
+                                                              const Grid_Driver& GridD,
+                                                              hamilt::HContainer<double>* dmr_deepks);
+
 template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              const int inlmax,
                                              const int lmaxd,
                                              const std::vector<int>& inl2l,
                                              const ModuleBase::IntArray* inl_index,
-                                             const elecstate::DensityMatrix<double, double>* dm,
+                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                             const hamilt::HContainer<double>* dmr,
                                              const std::vector<hamilt::HContainer<double>*> phialpha,
                                              const UnitCell& ucell,
                                              const LCAO_Orbitals& orb,
@@ -422,18 +507,18 @@ template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              const Parallel_Orbitals& pv,
                                              std::vector<torch::Tensor>& pdm);
 
-template void DeePKS_domain::cal_pdm<std::complex<double>>(
-    bool& init_pdm,
-    const int inlmax,
-    const int lmaxd,
-    const std::vector<int>& inl2l,
-    const ModuleBase::IntArray* inl_index,
-    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-    const std::vector<hamilt::HContainer<double>*> phialpha,
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    const Grid_Driver& GridD,
-    const Parallel_Orbitals& pv,
-    std::vector<torch::Tensor>& pdm);
+template void DeePKS_domain::cal_pdm<std::complex<double>>(bool& init_pdm,
+                                                           const int inlmax,
+                                                           const int lmaxd,
+                                                           const std::vector<int>& inl2l,
+                                                           const ModuleBase::IntArray* inl_index,
+                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                           const hamilt::HContainer<double>* dmr,
+                                                           const std::vector<hamilt::HContainer<double>*> phialpha,
+                                                           const UnitCell& ucell,
+                                                           const LCAO_Orbitals& orb,
+                                                           const Grid_Driver& GridD,
+                                                           const Parallel_Orbitals& pv,
+                                                           std::vector<torch::Tensor>& pdm);
 
 #endif

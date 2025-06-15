@@ -6,8 +6,8 @@
 #include "module_cell/klist.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
+#include "module_elecstate/module_pot/efield.h"
+#include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_print.h"
@@ -48,7 +48,6 @@ bool XC_Functional::ked_flag = false;
 /**
  * - Tested functions:
  *   - ElecState::print_format()
- *   - ElecState::print_eigenvalue()
  */
 
 class ElecStatePrintTest : public ::testing::Test
@@ -87,11 +86,11 @@ class ElecStatePrintTest : public ::testing::Test
         elecstate.wg(0, 1) = 0.2;
         elecstate.wg(1, 0) = 0.3;
         elecstate.wg(1, 1) = 0.4;
-        ucell.magnet.tot_magnetization = 1.1;
-        ucell.magnet.abs_magnetization = 2.2;
-        ucell.magnet.tot_magnetization_nc[0] = 3.3;
-        ucell.magnet.tot_magnetization_nc[1] = 4.4;
-        ucell.magnet.tot_magnetization_nc[2] = 5.5;
+        ucell.magnet.tot_mag = 1.1;
+        ucell.magnet.abs_mag = 2.2;
+        ucell.magnet.tot_mag_nc[0] = 3.3;
+        ucell.magnet.tot_mag_nc[1] = 4.4;
+        ucell.magnet.tot_mag_nc[2] = 5.5;
         PARAM.input.ks_solver = "dav";
         PARAM.sys.log_file = "test.dat";
     }
@@ -113,92 +112,46 @@ TEST_F(ElecStatePrintTest, PrintFormat)
     std::remove("test.dat");
 }
 
-TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
-{
-    PARAM.input.nspin = 2;
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
-    // print eigenvalue
-    elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running);
-    GlobalV::ofs_running.close();
-    ifs.open("test.dat", std::ios::in);
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("STATE ENERGY(eV) AND OCCUPATIONS"));
-    EXPECT_THAT(str, testing::HasSubstr("NSPIN == 2"));
-    EXPECT_THAT(str, testing::HasSubstr("SPIN UP :"));
-    EXPECT_THAT(str, testing::HasSubstr("1/1 kpoint (Cartesian) = 0.10000 0.11000 0.11100 (100 pws)"));
-    EXPECT_THAT(str, testing::HasSubstr("1        13.6057       0.100000"));
-    EXPECT_THAT(str, testing::HasSubstr("2        27.2114       0.200000"));
-    EXPECT_THAT(str, testing::HasSubstr("SPIN DOWN :"));
-    EXPECT_THAT(str, testing::HasSubstr("1/1 kpoint (Cartesian) = 0.20000 0.22000 0.22200 (101 pws)"));
-    EXPECT_THAT(str, testing::HasSubstr("1        40.8171       0.300000"));
-    EXPECT_THAT(str, testing::HasSubstr("2        54.4228       0.400000"));
-    ifs.close();
-    std::remove("test.dat");
-}
-
-TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
-{
-    PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
-    // print eigenvalue
-    elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running);
-    GlobalV::ofs_running.close();
-    ifs.open("test.dat", std::ios::in);
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("STATE ENERGY(eV) AND OCCUPATIONS"));
-    EXPECT_THAT(str, testing::HasSubstr("NSPIN == 4"));
-    EXPECT_THAT(str, testing::HasSubstr("1/2 kpoint (Cartesian) = 0.10000 0.11000 0.11100 (100 pws)"));
-    EXPECT_THAT(str, testing::HasSubstr("1        13.6057       0.100000"));
-    EXPECT_THAT(str, testing::HasSubstr("2        27.2114       0.200000"));
-    EXPECT_THAT(str, testing::HasSubstr("2/2 kpoint (Cartesian) = 0.20000 0.22000 0.22200 (101 pws)"));
-    EXPECT_THAT(str, testing::HasSubstr("1        40.8171       0.300000"));
-    EXPECT_THAT(str, testing::HasSubstr("2        54.4228       0.400000"));
-    ifs.close();
-    std::remove("test.dat");
-}
-
 TEST_F(ElecStatePrintTest, PrintBand)
 {
     PARAM.input.nspin = 1;
     PARAM.input.nbands = 2;
     PARAM.sys.nbands_l = 2;
     GlobalV::MY_RANK = 0;
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
-    // print eigenvalue
-    elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0);
-    GlobalV::ofs_running.close();
+
+    std::ofstream ofs;
+    ofs.open("test.dat", std::ios::out);
+    // print eigenvalues
+    elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0, ofs);
+    ofs.close();
+
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Energy (eV) & Occupations  for spin=1 K-point=1"));
+    EXPECT_THAT(str, testing::HasSubstr("Energy (eV) & Occupations for spin=1 k-point=1"));
     EXPECT_THAT(str, testing::HasSubstr("1        13.6057       0.100000"));
     EXPECT_THAT(str, testing::HasSubstr("2        27.2114       0.200000"));
     ifs.close();
     std::remove("test.dat");
 }
 
-TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
-{
-    elecstate.ekb(0, 0) = 1.0e11;
-    PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
-    GlobalV::ofs_running.close();
-    std::remove("test.dat");
-}
 
 TEST_F(ElecStatePrintTest, PrintBandWarning)
 {
     elecstate.ekb(0, 0) = 1.0e11;
     PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
+
+    std::ofstream ofs;
+    ofs.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0), ::testing::ExitedWithCode(1), "");
+    
+    EXPECT_EXIT(elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0, ofs), 
+      ::testing::ExitedWithCode(1), "");
+
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
-    GlobalV::ofs_running.close();
+
+    ofs.close();
+
     std::remove("test.dat");
 }
 
@@ -268,8 +221,8 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Density error is 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("Error Threshold = 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD2"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD3"));
@@ -310,8 +263,8 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Density error is 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("Error Threshold = 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_Harris"));
     EXPECT_THAT(str, testing::HasSubstr("E_Fermi"));

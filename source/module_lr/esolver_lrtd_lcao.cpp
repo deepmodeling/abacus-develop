@@ -133,18 +133,37 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::reset_dim_spin2()
 {
-    if (nspin != 2) { return; }
-    if (nupdown == 0) { std::cout << "** Assuming the spin-up and spin-down states are degenerate. **" << std::endl; }
-    else
+	if (nspin != 2) 
+	{ 
+		return; 
+	}
+	if (nupdown == 0) 
+	{ 
+		std::cout << " ** Assuming degenerate spin-up and spin-down states  **" << std::endl; 
+	}
+	else
     {
         this->openshell = true;
         nupdown > 0 ? ((nocc[1] -= nupdown) && (nvirt[1] += nupdown)) : ((nocc[0] += nupdown) && (nvirt[0] -= nupdown));
         npairs = { nocc[0] * nvirt[0], nocc[1] * nvirt[1] };
         std::cout << "** Solve the spin-up and spin-down states separately for open-shell system. **" << std::endl;
     }
-    for (int is : {0, 1}) { if (npairs[is] <= 0) { throw std::invalid_argument(std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin") + std::string(is == 0 ? "up" : "down")); } }
-    if (nstates > (npairs[0] + npairs[1]) * nk) { throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nk"); }
-    if (input.lr_unrestricted) { this->openshell = true; }
+	for (int is : {0, 1}) 
+	{ 
+		if (npairs[is] <= 0) 
+		{ 
+			throw std::invalid_argument(std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin") + std::string(is == 0 ? "up" : "down")); 
+		} 
+	}
+
+	if (nstates > (npairs[0] + npairs[1]) * nk) 
+	{ 
+		throw std::invalid_argument("ESolver_LR: nstates > nocc*nvirt*nk"); 
+	}
+	if (input.lr_unrestricted) 
+	{ 
+		this->openshell = true; 
+	}
 }
 
 template <typename T, typename TR>
@@ -157,9 +176,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
 
-    if (this->input.lr_solver == "spectrum") {
-        throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be set to `lr` to skip the KS calculation.");
-}
+	if (this->input.lr_solver == "spectrum") 
+	{
+		throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be `lr` to skip KS calculation.");
+	}
 
     this->gd = std::move(ks_sol.gd);
 
@@ -184,6 +204,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         , this->paraMat_.blacs_ctxt
 #endif
     );
+
     auto move_gs = [&, this]() -> void  // move the ground state info
         {
             this->psi_ks = ks_sol.psi;
@@ -192,7 +213,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             this->eig_ks = std::move(ks_sol.pelec->ekb);
         };
 #ifdef __MPI
-    if (this->nbands == PARAM.inp.nbands) { move_gs(); }
+	if (this->nbands == PARAM.inp.nbands) 
+	{ 
+		move_gs(); 
+	}
     else    // copy the part of ground state info according to paraC_
     {
         this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), 
@@ -220,13 +244,24 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
-    if (std::is_same<T, double>::value) { this->gint_g_ = std::move(ks_sol.GG); }
-    else { this->gint_k_ = std::move(ks_sol.GK); }
+
+	if (std::is_same<T, double>::value) 
+	{ 
+		this->gint_g_ = std::move(ks_sol.GG); 
+	}
+	else 
+	{ 
+		this->gint_k_ = std::move(ks_sol.GK); 
+	}
     this->set_gint();
     this->gint_->reset_DMRGint(1);
 
     // move pw basis
-    delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    if (this->pw_rho_flag)
+    {
+        this->pw_rho_flag = true;
+        delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
+    }
     this->pw_rho = ks_sol.pw_rho;
     ks_sol.pw_rho = nullptr;
     //init potential and calculate kernels using ground state charge
@@ -237,10 +272,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     {
         // if the same kernel is calculated in the esolver_ks, move it
         std::string dft_functional = LR_Util::tolower(input.dft_functional);
-        if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_lri_double);
-        } else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_lri_complex);
+        if (ks_sol.exd && std::is_same<T, double>::value && xc_kernel == dft_functional) {
+            this->move_exx_lri(ks_sol.exd->exx_ptr);
+        } else if (ks_sol.exc && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
+            this->move_exx_lri(ks_sol.exc->exx_ptr);
         } else    // construct C, V from scratch
         {
             // set ccp_type according to the xc_kernel
@@ -352,7 +387,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         orb.get_rcutmax_Phi(),
         ucell.infoNL.get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          this->ucell,
@@ -492,7 +527,7 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
             auto spin_types = std::vector<std::string>({ "singlet", "triplet" });
             for (int is = 0;is < nspin;++is)
             {
-                std::cout << "Calculating " << spin_types[is] << " excitations" << std::endl;
+                std::cout << " Calculating " << spin_types[is] << " excitations" << std::endl;
                 HamiltLR<T> hlr(xc_kernel,
                                 nspin,
                                 this->nbasis,
@@ -694,8 +729,11 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
         ModuleBase::WARNING_QUIT("ESolver_LR", "RI benchmark is only supported when compile with LibRI.");
 #endif
     }
-    else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, this->pelec,
-        /*skip_bands=*/this->nocc_max - this->nocc_in)) {
+	else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, 
+				this->pelec,
+				this->pelec->klist->ik2iktot,
+				this->pelec->klist->get_nkstot(),
+				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }
     this->eig_ks = std::move(this->pelec->ekb);

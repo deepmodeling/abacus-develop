@@ -10,7 +10,7 @@ void ReadInput::item_output()
         Input_Item item("out_stru");
         item.annotation = "output the structure files after each ion step";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
+            const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
             if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
                 para.input.out_stru = false;
@@ -49,13 +49,13 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
             }
-            para.input.out_chg[0] = (item.str_values[0] == "-1")? -1: assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : std::stoi(item.str_values[0]);
             para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-                                     ? 1
-                                     : para.input.out_chg[0];
+                                        ? 1
+                                        : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -76,12 +76,6 @@ void ReadInput::item_output()
         Input_Item item("out_wfc_pw");
         item.annotation = "output wave functions";
         read_sync_int(input.out_wfc_pw);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_wfc_r");
-        item.annotation = "output wave functions in realspace";
-        read_sync_bool(input.out_wfc_r);
         this->add_item(item);
     }
     {
@@ -144,6 +138,27 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_ldos");
+        item.annotation = "output mode of local density of states, second parameter controls the precision";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should have 1 or 2 values");
+            }
+            para.input.out_ldos[0] = std::stoi(item.str_values[0]);
+            para.input.out_ldos[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_ldos[0] < 0 || para.input.out_ldos[0] > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_ldos should be 0, 1, 2 or 3");
+            }
+        };
+        sync_intvec(input.out_ldos, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
         read_sync_bool(input.out_mul);
@@ -191,39 +206,33 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_dm");
-        item.annotation = ">0 output density matrix";
+        Input_Item item("out_dmk");
+        item.annotation = ">0 output density matrix DM(k) for each k-point";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
-                para.input.out_dm = false;
+                para.input.out_dmk = false;
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == false && para.input.out_dm)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_dm with k-point algorithm is not implemented yet.");
-            }
-        };
-        read_sync_bool(input.out_dm);
+        read_sync_bool(input.out_dmk);
         this->add_item(item);
     }
     {
-        Input_Item item("out_dm1");
-        item.annotation = ">0 output density matrix (multi-k points)";
+        Input_Item item("out_dmr");
+        item.annotation = ">0 output density matrix DM(R) with respect to lattice vector R";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
-                para.input.out_dm1 = false;
+                para.input.out_dmr = false;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.out_dm1)
+            if (para.sys.gamma_only_local == true && para.input.out_dmr)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_dm1 is only for multi-k");
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
             }
         };
-        read_sync_bool(input.out_dm1);
+        read_sync_bool(input.out_dmr);
         this->add_item(item);
     }
     {
@@ -281,6 +290,21 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_l");
+        item.annotation = "output the expectation values of angular momentum operators";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
+            }
+            para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_l[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+        };
+        sync_intvec(input.out_mat_l, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_dh");
         item.annotation = "output of derivative of H(R) matrix";
         read_sync_bool(input.out_mat_dh);
@@ -293,47 +317,33 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_ds");
+        item.annotation = "output of derivative of S(R) matrix";
+        read_sync_bool(input.out_mat_ds);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_ds && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_ds is not available for nspin = 4");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_xc");
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         read_sync_bool(input.out_mat_xc);
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_xc2");
+        item.annotation = "output exchange-correlation matrix in NAO representation";
+        read_sync_bool(input.out_mat_xc2);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_eband_terms");
         item.annotation = "output the band energy terms separately";
         read_sync_bool(input.out_eband_terms);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_hr_npz");
-        item.annotation = "output hr(I0,JR) submatrices in npz format";
-        read_sync_bool(input.out_hr_npz);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_hr_npz)
-            {
-#ifndef __USECNPY
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "to write in npz format, please "
-                                         "recompile with -DENABLE_CNPY=1");
-#endif
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_dm_npz");
-        item.annotation = "output dmr(I0,JR) submatrices in npz format";
-        read_sync_bool(input.out_dm_npz);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dm_npz)
-            {
-#ifndef __USECNPY
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "to write in npz format, please "
-                                         "recompile with -DENABLE_CNPY=1");
-#endif
-            }
-        };
         this->add_item(item);
     }
     {
@@ -378,14 +388,13 @@ void ReadInput::item_output()
         item.annotation = "output r(R) matrix";
         read_sync_bool(input.out_mat_r);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
-                    || para.inp.out_mat_dh || para.inp.out_hr_npz
-                    || para.inp.out_dm_npz || para.inp.dm_to_rho)
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t || para.inp.out_mat_dh
+                 || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                            "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
-                                            "available for gamma only calculations");
+                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                         "available for gamma only calculations");
             }
         };
         this->add_item(item);
@@ -462,26 +471,10 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.bands_to_print);
-        };
-        item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if (item.is_read())
-            {
-                item.final_value.str(longstring(item.str_values));
-            }
-        };
-        add_intvec_bcast(input.bands_to_print, para.input.bands_to_print.size(), 0);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_pchg");
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.out_pchg);
-        };
+        item.read_value
+            = [](const Input_Item& item, Parameter& para) { parse_expression(item.str_values, para.input.out_pchg); };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.is_read())
             {
@@ -535,7 +528,9 @@ void ReadInput::item_output()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_elf(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
             // assign non-negative values to para.input.out_elf
             std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
         };

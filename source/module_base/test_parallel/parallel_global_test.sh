@@ -8,6 +8,11 @@ for i in 4;do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./base_ParaGlobal
+    mpirun -np $i ./MODULE_BASE_ParaGlobal
+    if [[ $? -ne 0 ]]; then
+        echo -e "\e[1;33m [  FAILED  ] \e[0m"\
+			"execute UT with $i cores error."
+        exit 1
+    fi
     break    
 done

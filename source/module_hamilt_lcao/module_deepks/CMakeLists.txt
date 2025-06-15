@@ -1,7 +1,8 @@
-if(ENABLE_DEEPKS)
+if(ENABLE_MLALGO)
   list(APPEND objects
       LCAO_deepks.cpp
       deepks_basic.cpp
+      deepks_check.cpp
       deepks_descriptor.cpp
       deepks_force.cpp
       deepks_fpre.cpp
@@ -11,7 +12,7 @@ if(ENABLE_DEEPKS)
       deepks_orbpre.cpp
       deepks_vdelta.cpp
       deepks_vdpre.cpp
-      deepks_hmat.cpp
+      deepks_vdrpre.cpp
       deepks_pdm.cpp
       deepks_phialpha.cpp
       LCAO_deepks_io.cpp

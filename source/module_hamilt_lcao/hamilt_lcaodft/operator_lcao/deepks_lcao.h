@@ -11,8 +11,8 @@
 namespace hamilt
 {
 
-#ifndef __DEEPKSTEMPLATE
-#define __DEEPKSTEMPLATE
+#ifndef __MLALGOTEMPLATE
+#define __MLALGOTEMPLATE
 
 /// The DeePKS class template inherits from class T
 /// it is used to calculate the Deep Potential Kohn-Sham correction from DeePKS method
@@ -39,7 +39,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  const LCAO_Orbitals* ptr_orb,
                                  const int& nks_in,
                                  elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __DEEPKS
+#ifdef __MLALGO
                                  ,
                                  LCAO_Deepks<TK>* ld_in
 #endif
@@ -51,7 +51,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * this function is used for update hR and V_delta_R
      */
     virtual void contributeHR() override;
-#ifdef __DEEPKS
+#ifdef __MLALGO
     /**
      * @brief contribute the DeePKS correction for each k-point to V_delta
      * this function is not used for update hK, but for DeePKS module
@@ -79,7 +79,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const TwoCenterIntegrator* intor_orb_alpha_ = nullptr;
     const LCAO_Orbitals* ptr_orb_ = nullptr;
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
     LCAO_Deepks<TK>* ld = nullptr;
 
@@ -101,8 +101,6 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const double* hr_in, const int& row_size, const int& col_size, TR* data_pointer);
 
-    void pre_calculate_nlm(const int iat0, std::vector<std::unordered_map<int, std::vector<double>>>& nlm_in);
-    std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
     /**
      * @brief initialize V_delta_R, search the nearest neighbor atoms
      * used for calculate the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs

@@ -3,6 +3,10 @@
 
 #include "esolver.h"
 
+#ifndef __MPI
+#include <chrono>
+#endif
+
 //! plane wave basis
 #include "module_basis/module_pw/pw_basis.h"
 
@@ -49,6 +53,8 @@ class ESolver_FP: public ESolver
     //! Initialize of the first-principels energy solver
     virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
+    virtual void after_all_runners(UnitCell& ucell) override;
+
   protected:
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep);
@@ -56,7 +62,7 @@ class ESolver_FP: public ESolver
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
 
-    //! Something to do after hamilt2density function in each iter loop.
+    //! Something to do after hamilt2rho function in each iter loop.
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
 
     //! ------------------------------------------------------------------------------
@@ -93,6 +99,15 @@ class ESolver_FP: public ESolver
 
     //! solvent model
     surchem solvent;
+
+    int pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
+
+    //! the start time of scf iteration
+    #ifdef __MPI
+        double iter_time;
+    #else
+        std::chrono::system_clock::time_point iter_time;
+    #endif
 };
 } // namespace ModuleESolver
 

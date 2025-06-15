@@ -1,11 +1,12 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
+
 #include "fp_energy.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
-#include "potentials/potential_new.h"
+#include "module_pot/potential_new.h"
 
 namespace elecstate
 {
@@ -57,6 +58,10 @@ class ElecState
         return;
     }
     virtual void cal_tau(const psi::Psi<double>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
     {
         return;
     }
@@ -165,8 +170,6 @@ class ElecState
 
     bool skip_weights = false;
 };
-    
-
 
 } // namespace elecstate
 #endif

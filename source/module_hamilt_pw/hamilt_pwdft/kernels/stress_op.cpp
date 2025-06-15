@@ -1,12 +1,14 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 
+#include "module_base/constants.h"
+#include "module_base/libm/libm.h"
 #include "module_base/math_polyint.h"
 #include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 #include "vnl_tools.hpp"
-#include <vector>
+
 #include <iomanip>
-#include "module_base/libm/libm.h"
+#include <vector>
 namespace hamilt
 {
 template <typename FPTYPE>
@@ -567,9 +569,8 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                     const int igl0,
                     const int ngg,
                     const double omega,
-                    int type) {
-    const double FOUR_PI = 4.0 * 3.14159265358979323846;
-    // printf("%d,%d,%lf\n",ngg,mesh,omega);
+                    int type)
+    {
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -601,13 +602,24 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                 }
             }//ir
             Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
-            if(type ==0 ) { drhocg [igl] = FOUR_PI / omega * rhocg1;
-            } else if(type == 1) { drhocg [igl] = FOUR_PI * rhocg1 / omega;
-            } else if(type == 2) { drhocg [igl] = rhocg1;
-            } else if(type == 3) {
-                rhocg1 *= FOUR_PI / omega / 2.0 / gx_arr[igl];
+            if (type == 0)
+            {
+                drhocg[igl] = ModuleBase::FOUR_PI / omega * rhocg1;
+            }
+            else if (type == 1)
+            {
+                drhocg[igl] = ModuleBase::FOUR_PI * rhocg1 / omega;
+            }
+            else if (type == 2)
+            {
+                drhocg[igl] = rhocg1;
+            }
+            else if (type == 3)
+            {
+                rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
                 FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
-                rhocg1 += FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx_arr[igl]*gx_arr[igl] , 2);
+                rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp(-g2a) * (g2a + 1)
+                          / pow(gx_arr[igl] * gx_arr[igl], 2);
                 drhocg [igl] = rhocg1;
             }
         }
@@ -620,17 +632,20 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 
 template <typename FPTYPE>
 struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
-    void operator()(const std::complex<FPTYPE> *psiv,
-                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+    void operator()(const std::complex<FPTYPE>* psiv,
+                    const FPTYPE* gv_x,
+                    const FPTYPE* gv_y,
+                    const FPTYPE* gv_z,
                     const FPTYPE* rhocgigg_vec,
                     FPTYPE* force,
-                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+                    const FPTYPE pos_x,
+                    const FPTYPE pos_y,
+                    const FPTYPE pos_z,
                     const int npw,
-                    const FPTYPE omega, const FPTYPE tpiba) {
-        const double TWO_PI = 2.0 * 3.14159265358979323846;
-        // printf("%d,%d,%lf\n",ngg,mesh,omega);
+                    const FPTYPE omega,
+                    const FPTYPE tpiba)
+    {
 
-        // printf("iminininininin\n\n\n\n");
 #ifdef _OPENMP
 #pragma omp for nowait
 #endif
@@ -638,7 +653,7 @@ struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
         {
             const std::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
 
-            const FPTYPE arg = TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
+            const FPTYPE arg = ModuleBase::TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
             FPTYPE sinp, cosp;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             const std::complex<FPTYPE> expiarg = std::complex<FPTYPE>(sinp, cosp);

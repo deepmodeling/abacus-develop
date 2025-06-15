@@ -6,7 +6,13 @@ The following files are the central output files for ABACUS. After executing the
 
 Different from `INPUT` given by the users, `OUT.suffix/INPUT` contains all parameters in ABACUS.
 
-> **Note:** `OUT.suffix/INPUT` contain the initial default of ABACUS instead of the real parameters used in calculations. This file is stored for reproduction in case the default value is changed during development. If you want to figure out the real parameters used in calculations, you can open `OUT.suffix/runing_scf.log` and research corresponding parameter you are interested.
+> **Note:** `OUT.suffix/INPUT` contains the **actual parameters used in the calculation**, including:
+> 1. **User-specified parameters** (explicitly defined in your input file or command-line arguments, overriding default parameters).
+> 2. **System default parameters** (automatically applied when not explicitly provided by the user).
+
+
+This file ensures calculations can be fully reproduced, even if default values change in future ABACUS versions.
+Also notice that in rare cases, a small number of parameters may be dynamically reset to appropriate values during runtime.
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
@@ -14,24 +20,14 @@ For a complete list of input parameters, please consult this [instruction](../ad
 
 `running_scf.log` contains information on nearly all function calls made during the execution of ABACUS.
 
-## *KPT*
+## *KPT.info*
 
 This file contains the information of all generated k-points, as well as the list of k-points actually used for calculations after considering symmetry.
 
-## *istate.info*
+## *eig.txt*
 
-This file includes the energy levels computed for all k-points. From left to right, the columns represent: energy level index, eigenenergy, and occupancy number.
-
-Below is an example `istate.info`:
-
-```
-BAND               Energy(ev)               Occupation                Kpoint = 1                        (0 0 0)
-      1                 -5.33892                  0.03125
-      2                  6.68535                0.0312006
-      3                  6.68535                0.0312006
-      4                  6.68535                0.0312006
-      5                  9.41058                        0
-```
+This file includes the energy levels and occupations computed for all k-points. 
+Note: In 3.10-LTS version, the file is named 'istate.info'
 
 ## *STRU.cif*
 

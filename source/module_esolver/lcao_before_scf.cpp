@@ -16,7 +16,7 @@
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_tools.h"
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -28,7 +28,6 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/cube_io.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
@@ -53,7 +52,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                    PARAM.globalv.gamma_only_local);
 
     //! 3) use search_radius to search adj atoms
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          ucell,
@@ -152,7 +151,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
-#ifdef __DEEPKS
+#ifdef __MLALGO
             ,
             &this->ld
 #endif
@@ -160,8 +159,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             ,
             istep,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
+            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
 #endif
         );
     }
@@ -169,7 +168,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
@@ -243,63 +242,17 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
+#ifdef __MLALGO
+    // initialize DMR of DeePKS
+    this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+#endif
+
     // 15) two cases are considered:
     // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
     if (istep > 0)
     {
         dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->cal_DMR();
-    }
-
-    if (PARAM.inp.dm_to_rho)
-    {
-        // file name of DM
-        std::string zipname = "output_DM0.npz";
-        elecstate::DensityMatrix<TK, double>* dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-      
-        // read DM from file
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
-
-        // if nspin=2, need extra reading
-        if (PARAM.inp.nspin == 2)
-        {
-            zipname = "output_DM1.npz";
-            ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
-        }
-
-        elecstate::calculate_weights(this->pelec->ekb,
-                                     this->pelec->wg,
-                                     this->pelec->klist,
-                                     this->pelec->eferm,
-                                     this->pelec->f_en,
-                                     this->pelec->nelec_spin,
-                                     this->pelec->skip_weights);
-      
-        this->pelec->psiToRho(*this->psi);
-
-        int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
-
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-
-            // write electron density
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->chr.rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          fn,
-                                          this->pelec->eferm.get_efval(is),
-                                          &(ucell),
-                                          3,
-                                          1);
-        }
-
-        // why we need to return here? mohan add 2025-03-10
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
-        return;
     }
 
     // 16) the electron charge density should be symmetrized,

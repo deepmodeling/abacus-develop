@@ -3,19 +3,19 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2025-0308
+# Last Update in 2025-0504
 # Change default version to openmpi 5
 # allow user to choose openmpi 4 in used scripts
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-if [ "${openmpi_4th}" = "yes" ]; then
+if [ "${OPENMPI_4TH}" = "yes" ]; then
     openmpi_ver="4.1.6"
     openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 else
-    openmpi_ver="5.0.6"
-    openmpi_sha256="bd4183fcbc43477c254799b429df1a6e576c042e74a2d2f8b37d537b2ff98157"
+    openmpi_ver="5.0.7"
+    openmpi_sha256="119f2009936a403334d0df3c0d74d5595a32d99497f9b1d41e90019fee2fc2dd"
 fi
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
@@ -40,7 +40,7 @@ case "${with_openmpi}" in
     pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
     #pkg_install_dir="${HOME}/apps/openmpi/${openmpi_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver:0:3}/${openmpi_pkg}"
+    url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver%.*}/${openmpi_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "openmpi-${openmpi_ver} is already installed, skipping it."
     else
@@ -49,6 +49,9 @@ case "${with_openmpi}" in
       else
         download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
       tar -xjf ${openmpi_pkg}
@@ -66,6 +69,9 @@ case "${with_openmpi}" in
           CFLAGS="${CFLAGS} -fgnu89-inline"
         fi
       fi
+
+    # Notice for RHEL8 refer https://github.com/open-mpi/ompi/issues/13103
+
     # OpenMPI 5.0 only supports PMIx
     # PMI support is required for Slurm, but not for other schedulers
     # default not use
@@ -87,6 +93,10 @@ case "${with_openmpi}" in
       cd ..
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
     fi
+    fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
     check_dir "${pkg_install_dir}/bin"
     check_dir "${pkg_install_dir}/lib"
     check_dir "${pkg_install_dir}/include"
@@ -98,6 +108,7 @@ case "${with_openmpi}" in
     MPIF77="${MPIFC}"
     OPENMPI_CFLAGS="-I'${pkg_install_dir}/include'"
     OPENMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding OpenMPI from system paths ===================="

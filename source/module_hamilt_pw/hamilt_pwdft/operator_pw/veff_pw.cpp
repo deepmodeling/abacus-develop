@@ -12,9 +12,11 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
                                        const int veff_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
-    if (isk_in == nullptr || wfcpw_in == nullptr) {
+    if (isk_in == nullptr || wfcpw_in == nullptr) 
+    {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
     }
+
     this->classname = "Veff";
     this->cal_type = calculation_type::pw_veff;
     this->isk = isk_in;
@@ -45,85 +47,89 @@ void Veff<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "VeffPW");
+    ModuleBase::timer::tick("Operator", "veff_pw");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
-
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
+    const int psi_offset= max_npw * npol;
 #ifdef __DSP
-    wfcpw->fft_bundle.resource_handler(1);
-#endif
-    // T *porter = new T[wfcpw->nmaxgr];
-    for (int ib = 0; ib < nbands; ib += npol)
+    if (npol == 1)
     {
-        if (npol == 1)
+        ModulePW::FFT_Guard guard(wfcpw->fft_bundle);
+        for (int ib = 0; ib < nbands; ib += npol)
         {
-            // wfcpw->recip2real(tmpsi_in, porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
-            // NOTICE: when MPI threads are larger than number of Z grids
+            wfcpw->convolution(this->ctx,
+                               this->ik,
+                               this->veff_col,
+                               tmpsi_in,
+                               this->veff + current_spin * this->veff_col,
+                               tmhpsi,
+                               true);
+            tmhpsi   += psi_offset;
+            tmpsi_in += psi_offset;
+        }
+    }else if (npol == 2)
+    {
+        const Real* current_veff[4]={nullptr};
+        for (int is = 0; is < 4; is++)
+        {
+            current_veff[is] = this->veff + is * this->veff_col;
+        }
+        for (int ib = 0; ib < nbands; ib += npol)
+        {
+            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
+            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+            tmhpsi   += psi_offset;
+            tmpsi_in += psi_offset;
+        }
+    }else{
+        ModuleBase::WARNING_QUIT("VeffPW", "npol should be 1 or 2 or veff_col equal to 0\n");
+    }
+#else
+    if (npol == 1)
+    {
+        for (int ib = 0; ib < nbands; ib += npol)
+        {
+            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            // NOTICE: when MPI threads are larger than the number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
-            if(this->veff_col != 0)
-            {
-                veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-                // const Real* current_veff = &(this->veff[0](current_spin, 0));
-                // for (int ir = 0; ir < this->veff->nc; ++ir)
-                // {
-                //     porter[ir] *= current_veff[ir];
-                // }
-            }
-            // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
-            // wfcpw->convolution(this->ctx,
-            // this->ik,
-            // this->veff_col,
-            // tmpsi_in,
-            // this->veff+current_spin,
-            // tmhpsi,
-            // true);
+            veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
+            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            tmhpsi   += psi_offset;
+            tmpsi_in += psi_offset;
         }
-        else
-        {
-            // T *porter1 = new T[wfcpw->nmaxgr];
-            // fft to real space and doing things.
-            wfcpw->recip_to_real(this->ctx, tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real(this->ctx, tmpsi_in + max_npw, this->porter1, this->ik);
-            if(this->veff_col != 0)
-            {
-                /// denghui added at 20221109
-                const Real* current_veff[4];
-                for(int is = 0; is < 4; is++) {
-                    current_veff[is] = this->veff + is * this->veff_col ; // for CPU device
-                }
-                veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
-                // T sup, sdown;
-                // for (int ir = 0; ir < this->veff_col; ir++) {
-                //     sup = this->porter[ir] * (current_veff[0][ir] + current_veff[3][ir])
-                //         + this->porter1[ir]
-                //                 * (current_veff[1][ir]
-                //                 - T(0.0, 1.0) * current_veff[2][ir]);
-                //     sdown = this->porter1[ir] * (current_veff[0][ir] - current_veff[3][ir])
-                //             + this->porter[ir]
-                //                 * (current_veff[1][ir]
-                //                     + T(0.0, 1.0) * current_veff[2][ir]);
-                //     this->porter[ir] = sup;
-                //     this->porter1[ir] = sdown;
-                // }
-            }
-            // (3) fft back to G space.
-            wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip(this->ctx, this->porter1, tmhpsi + max_npw, this->ik, true);
-        }
-        tmhpsi += max_npw * npol;
-        tmpsi_in += max_npw * npol;
     }
-#ifdef __DSP
-    wfcpw->fft_bundle.resource_handler(0);
+    else if (npol == 2)
+    {
+        const Real* current_veff[4]={nullptr};
+        for (int is = 0; is < 4; is++)
+        {
+            current_veff[is] = this->veff + is * this->veff_col;
+        }
+        for (int ib = 0; ib < nbands; ib += npol)
+        {
+            // FFT to real space and do things.
+            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
+            // FFT back to G space.
+            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+            tmhpsi   += psi_offset;
+            tmpsi_in += psi_offset;
+        }
+    }else{
+        ModuleBase::WARNING_QUIT("VeffPW", "npol should be 1 or 2 or veff_col equal to 0\n");
+    }
 #endif
-    ModuleBase::timer::tick("Operator", "VeffPW");
+    ModuleBase::timer::tick("Operator", "veff_pw");
 }
 
 template<typename T, typename Device>

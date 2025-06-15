@@ -17,41 +17,23 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
+#include "module_cell/k_vector_utils.h"
 
 namespace ModuleESolver
 {
 
 ESolver_FP::ESolver_FP()
 {
-    std::string fft_device = PARAM.inp.device;
-
-    // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(PARAM.inp.basis_type == "lcao")
-    {
-        fft_device = "cpu";
-    }
-
-    pw_rho = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
-    if (PARAM.globalv.double_grid)
-    {
-        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, PARAM.inp.precision);
-    }
-    else
-    {
-        pw_rhod = pw_rho;
-    }
-
-    // temporary, it will be removed
-    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
-    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
-    sf.set(pw_rhod, PARAM.inp.nbspline);
-
 }
 
 ESolver_FP::~ESolver_FP()
 {
-    delete pw_rho;
-    if ( PARAM.globalv.double_grid)
+    if (pw_rho_flag == true)
+    {
+        delete this->pw_rho;
+        this->pw_rho_flag = false;
+    }
+    if (PARAM.globalv.double_grid)
     {
         delete pw_rhod;
     }
@@ -61,12 +43,43 @@ ESolver_FP::~ESolver_FP()
 void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
+    std::string fft_device = PARAM.inp.device;
+    std::string fft_precison = PARAM.inp.precision;
+    // LCAO basis doesn't support GPU acceleration on FFT currently
+    if(PARAM.inp.basis_type == "lcao")
+    {
+        fft_device = "cpu";
+    }
+    if ((PARAM.inp.precision=="single") || (PARAM.inp.precision=="mixing"))
+    {
+        fft_precison = "mixing";
+    }
+    else if (PARAM.inp.precision=="double")
+    {
+        fft_precison = "double";
+    }
+    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
+        if (fft_device == "gpu")
+        {
+            fft_precison = "double";
+        }
+    #endif
+    pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
+    pw_rho_flag = true;
+    if (PARAM.globalv.double_grid)
+    {
+        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
+    }
+    else
+    {
+        pw_rhod = pw_rho;
+    }
+    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
+    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
+    sf.set(pw_rhod, PARAM.inp.nbspline);
 
     //! 1) read pseudopotentials
-    if (!PARAM.inp.use_paw)
-    {
-        elecstate::read_pseudo(GlobalV::ofs_running, ucell);
-    }
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
     //! 2) initialie the plane wave basis for rho
 #ifdef __MPI
@@ -152,20 +165,10 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                double* data = nullptr;
-                if (PARAM.inp.dm_to_rho)
-                {
-                    data = this->chr.rho[is];
-                    this->pw_rhod->real2recip(this->chr.rho[is], this->chr.rhog[is]);
-                }
-                else
-                {
-                    data = this->chr.rho_save[is];
-                    this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                }
-                std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
+                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
                 ModuleIO::write_vdata_palgrid(Pgrid,
-                                              data,
+                                              this->chr.rho_save[is],
                                               is,
                                               PARAM.inp.nspin,
                                               istep,
@@ -174,9 +177,10 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                                               &(ucell),
                                               PARAM.inp.out_chg[1],
                                               1);
+
                 if (XC_Functional::get_ked_flag())
                 {
-                    fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
+                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
                     ModuleIO::write_vdata_palgrid(Pgrid,
                                                   this->chr.kin_r_save[is],
                                                   is,
@@ -194,7 +198,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+                std::string fn =PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
 
                 ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->pelec->pot->get_effective_v(is),
@@ -210,7 +214,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         }
         else if (PARAM.inp.out_pot == 2)
         {
-            std::string fn =PARAM.globalv.global_out_dir + "/ElecStaticPot.cube";
+            std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
             ModuleIO::write_elecstat_pot(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -289,7 +293,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
 
         // reset k-points
-        kv.set_after_vc(PARAM.inp.nspin, ucell.G, ucell.latvec);
+        KVectorUtils::set_after_vc(kv, PARAM.inp.nspin, ucell.G);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
@@ -337,7 +341,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "/chgs" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->chr.rho[is],
                                           is,
@@ -357,7 +361,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ss << PARAM.globalv.global_out_dir << "pots" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->pelec->pot->get_effective_v(is),
                                           is,
@@ -381,19 +385,16 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     {
         if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
         {
-            std::complex<double>** rhog_tot
-                = (PARAM.inp.dm_to_rho) ? this->chr.rhog : this->chr.rhog_save;
-            double** rhor_tot = (PARAM.inp.dm_to_rho) ? this->chr.rho : this->chr.rho_save;
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
+                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
             ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
                                  PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
                                  this->pw_rhod,
                                  PARAM.inp.nspin,
                                  ucell.GT,
-                                 rhog_tot,
+                                 this->chr.rhog_save,
                                  GlobalV::MY_POOL,
                                  GlobalV::RANK_IN_POOL,
                                  GlobalV::NPROC_IN_POOL);
@@ -419,6 +420,14 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
             }
         }
     }
+}
+
+void ESolver_FP::after_all_runners(UnitCell& ucell)
+{
+    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+    GlobalV::ofs_running << std::setprecision(16);
+    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
+    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 }
 
 } // namespace ModuleESolver

@@ -61,6 +61,22 @@ struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
+struct vector_div_constant_op<T, base_device::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& dim, T* result, const T* vector, const Real constant)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector[i] / constant;
+        }
+    }
+};
+
+template <typename T>
 struct vector_div_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
@@ -92,7 +108,7 @@ struct axpy_op<T, base_device::DEVICE_CPU>
 
 
 template <typename T>
-struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
+struct vector_add_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& dim,
@@ -159,6 +175,10 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CP
 template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 
+template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
+template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -167,9 +187,9 @@ template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct axpy_op<double, base_device::DEVICE_CPU>;
 
-template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<double, base_device::DEVICE_CPU>;
+template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;

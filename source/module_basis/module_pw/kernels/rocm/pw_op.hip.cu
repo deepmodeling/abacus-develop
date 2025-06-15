@@ -43,6 +43,24 @@ __global__ void set_recip_to_real_output(
 }
 
 template<class FPTYPE>
+__global__ void set_recip_to_real_output(
+    const int nrxx,
+    const bool add,
+    const FPTYPE factor,
+    const thrust::complex<FPTYPE>* in,
+    FPTYPE* out)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= nrxx) {return;}
+    if(add) {
+        out[idx] += factor * in[idx].real();
+    }
+    else {
+        out[idx] = in[idx].real();
+    }
+}
+
+template<class FPTYPE>
 __global__ void set_real_to_recip_output(
     const int npwk,
     const int nxyz,
@@ -62,9 +80,28 @@ __global__ void set_real_to_recip_output(
     }
 }
 
+template<class FPTYPE>
+__global__ void set_real_to_recip_output(
+    const int npwk,
+    const int nxyz,
+    const bool add,
+    const FPTYPE factor,
+    const int* box_index,
+    const thrust::complex<FPTYPE>* in,
+    FPTYPE* out)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if(idx >= npwk) {return;}
+    if(add) {
+        out[idx] += factor / nxyz * in[box_index[idx]].real();
+    }
+    else {
+        out[idx] = in[box_index[idx]].real() / nxyz;
+    }
+}
+
 template <typename FPTYPE>
-void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                    const int npwk,
+void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
                                                                     const int* box_index,
                                                                     const std::complex<FPTYPE>* in,
                                                                     std::complex<FPTYPE>* out)
@@ -80,8 +117,7 @@ void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_d
 }
 
 template <typename FPTYPE>
-void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int nrxx,
+void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int nrxx,
                                                                               const bool add,
                                                                               const FPTYPE factor,
                                                                               const std::complex<FPTYPE>* in,
@@ -99,8 +135,25 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
 }
 
 template <typename FPTYPE>
-void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
-                                                                              const int npwk,
+void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int nrxx,
+                                                                              const bool add,
+                                                                              const FPTYPE factor,
+                                                                              const std::complex<FPTYPE>* in,
+                                                                              FPTYPE* out)
+{
+    const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_recip_to_real_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
+        nrxx,
+        add,
+        factor,
+        reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
+        reinterpret_cast<FPTYPE*>(out));
+
+    hipCheckOnDebug();
+}
+
+template <typename FPTYPE>
+void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
                                                                               const int nxyz,
                                                                               const bool add,
                                                                               const FPTYPE factor,
@@ -117,6 +170,28 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+
+    hipCheckOnDebug();
+}
+
+template <typename FPTYPE>
+void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int npwk,
+                                                                              const int nxyz,
+                                                                              const bool add,
+                                                                              const FPTYPE factor,
+                                                                              const int* box_index,
+                                                                              const std::complex<FPTYPE>* in,
+                                                                              FPTYPE* out)
+{
+    const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_real_to_recip_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
+        npwk,
+        nxyz,
+        add,
+        factor,
+        box_index,
+        reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
+        reinterpret_cast<FPTYPE*>(out));
 
     hipCheckOnDebug();
 }

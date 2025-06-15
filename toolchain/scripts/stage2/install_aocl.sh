@@ -27,23 +27,29 @@ case "${with_aocl}" in
   __INSTALL__)
     echo "==================== Installing AOCL ===================="
     report_error ${LINENO} "To install AOCL, please contact your system administrator."
-    exit 1
+    if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        exit 1
+    fi
     ;;
   __SYSTEM__)
     echo "==================== Finding AOCL from system paths ===================="
-    check_lib -lblis "AOCL"
-    check_lib -lflame "AOCL"
-    AOCL_LIBS="-lblis -lflame"
-    add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
-    add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
-    add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
-    add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip system check"
+    else
+        check_lib -lblis "AOCL"
+        check_lib -lflame "AOCL"
+        AOCL_LIBS="-lblis -lflame"
+        add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
+        add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
+        add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
+        add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
+    fi
     ;;
   __DONTUSE__) ;;
 
   *)
     echo "==================== Linking AOCL to user paths ===================="
-    pkg_install_dir="$with_openblas"
+    pkg_install_dir="$with_aocl"
     check_dir "${pkg_install_dir}/include"
     check_dir "${pkg_install_dir}/lib"
     AOCL_CFLAGS="-I'${pkg_install_dir}/include'"
@@ -51,8 +57,8 @@ case "${with_aocl}" in
     AOCL_LIBS="-lblis -lflame"
     ;;
 esac
-if [ "$with_openblas" != "__DONTUSE__" ]; then
-  if [ "$with_openblas" != "__SYSTEM__" ]; then
+if [ "$with_aocl" != "__DONTUSE__" ]; then
+  if [ "$with_aocl" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_aocl"
 prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
@@ -70,7 +76,7 @@ export AOCL_ROOT=${pkg_install_dir}
 EOF
     cat "${BUILDDIR}/setup_aocl" >> $SETUPFILE
   fi
-  cat << EOF >> "${BUILDDIR}/setup_aocl"
+cat << EOF >> "${BUILDDIR}/setup_aocl"
 export AOCL_ROOT="${pkg_install_dir}"
 export AOCL_CFLAGS="${AOCL_CFLAGS}"
 export AOCL_LDFLAGS="${AOCL_LDFLAGS}"

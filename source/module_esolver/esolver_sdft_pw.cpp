@@ -132,10 +132,10 @@ void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, con
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
+void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2density");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
+    ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2rho");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -164,7 +164,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
                                                            PARAM.inp.calculation,
                                                            PARAM.inp.basis_type,
                                                            PARAM.inp.ks_solver,
-                                                           PARAM.inp.use_paw,
+                                                           false,
                                                            PARAM.globalv.use_uspp,
                                                            PARAM.inp.nspin,
                                                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
@@ -207,7 +207,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
 #ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2rho");
 }
 
 template <typename T, typename Device>
@@ -257,30 +257,30 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-}
+    // 1) write down etot and eigenvalues (for MDFT) information
+    ESolver_FP::after_all_runners(ucell);
 
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners(UnitCell& ucell)
-{
-
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
-
+    // 2) release memory
     if (this->method_sto == 2)
     {
         stowf.clean_chiallorder(); // release lots of memories
     }
+
+    // 3) write down DOS
     if (PARAM.inp.out_dos)
     {
-        Sto_DOS sto_dos(this->pw_wfc, &this->kv, this->pelec, this->psi, this->p_hamilt, this->stoche, &stowf);
+        if(!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_SDFT_PW", "DOS does not support complex float or GPU yet.");
+        }
+        Sto_DOS<Real, Device> sto_dos(
+            this->pw_wfc,
+            &this->kv,
+            this->pelec,
+            reinterpret_cast<psi::Psi<std::complex<double>>*>(this->psi),
+            reinterpret_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+            this->stoche,
+            reinterpret_cast<Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>*>(&stowf));
         sto_dos.decide_param(PARAM.inp.dos_nche,
                              PARAM.inp.emin_sto,
                              PARAM.inp.emax_sto,
@@ -292,18 +292,18 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_r
         sto_dos.caldos(PARAM.inp.dos_sigma, PARAM.inp.dos_edelta_ev, PARAM.inp.npart_sto);
     }
 
-    // sKG cost memory, and it should be placed at the end of the program
+    // 4) sKG cost memory, and it should be placed at the end of the program
     if (PARAM.inp.cal_cond)
     {
-        Sto_EleCond sto_elecond(&ucell,
-                                &this->kv,
-                                this->pelec,
-                                this->pw_wfc,
-                                this->psi,
-                                &this->ppcell,
-                                this->p_hamilt,
-                                this->stoche,
-                                &stowf);
+        Sto_EleCond<Real, Device> sto_elecond(&ucell,
+                                              &this->kv,
+                                              this->pelec,
+                                              this->pw_wfc,
+                                              this->kspw_psi,
+                                              &this->ppcell,
+                                              this->p_hamilt,
+                                              this->stoche,
+                                              &stowf);
         sto_elecond.decide_nche(PARAM.inp.cond_dt, 1e-8, this->nche_sto, PARAM.inp.emin_sto, PARAM.inp.emax_sto);
         sto_elecond.sKG(PARAM.inp.cond_smear,
                         PARAM.inp.cond_fwhm,
@@ -315,15 +315,6 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_r
     }
 }
 
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::others(UnitCell& ucell, const int istep)
-{
-    ModuleBase::TITLE("ESolver_SDFT_PW", "others");
-
-    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
-
-    return;
-}
 
 // template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>;

@@ -55,14 +55,8 @@ for directory in `ls | grep $module`; do
 	#--------------------------------------------
 	# delete exec files in tools directory (if it exists)
 	#--------------------------------------------
-	sumfile1="$directory/sum_BAND_CHG_H2"
-	sumfile2="$directory/sum_BAND_CHG_H2_cube"
-	sumfile3="$directory/sum_ENV_H2"
-	sumfile4="$directory/sum_ENV_H2_cube"
+	sumfile1="$directory/sum_cube.exe"
 	test -e "$sumfile1" && rm -rf $sumfile1
-	test -e "$sumfile2" && rm -rf $sumfile2
-	test -e "$sumfile3" && rm -rf $sumfile3
-	test -e "$sumfile4" && rm -rf $sumfile4
 
 	#--------------------------------------------
 	# delete KPT file in kspacing test (if it exists)

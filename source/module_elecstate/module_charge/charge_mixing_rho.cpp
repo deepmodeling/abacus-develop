@@ -1,5 +1,4 @@
 #include "charge_mixing.h"
-
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -244,10 +243,9 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             // use rhodpw for double_grid
             // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
-            this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
+            this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_CPU>(chr->rhog[is], chr->rho[is]);
         }
     }
-
     // For kinetic energy density
     if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
@@ -294,19 +292,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
     }
 
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-        double *nhat_out, *nhat_in;
-        nhat_in = chr->nhat_save[0];
-        nhat_out = chr->nhat[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
-
-        this->mixing->mix_data(this->nhat_mdata, nhat_out);
-    }
-#endif
 
     return;
 }
@@ -550,23 +535,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-#ifdef USE_PAW
-    std::vector<double> nhat_r123;
-    if(PARAM.inp.use_paw)
-    {
-        nhat_r123.resize(PARAM.inp.nspin * nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
-        for(int ir = 0 ; ir < nrxx ; ++ir)
-        {
-            for(int is = 0; is < PARAM.inp.nspin; ++is)
-            {
-                nhat_r123[ir+is*nrxx] = chr->nhat[0][ir];
-            }
-        }
-    }        
-#endif
     // --------------------Mixing Body--------------------
     if (PARAM.inp.scf_thr_type == 1)
     {
@@ -609,22 +577,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
             }
         }
     }
-
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw)
-    {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
-        for(int ir = 0 ; ir < nrxx ; ++ir)
-        {
-            for(int is = 0; is < PARAM.inp.nspin; ++is)
-            {
-                chr->nhat_save[is][ir] = nhat_r123[ir+is*nrxx];
-            }
-        }
-    }
-#endif
 
 	if (new_e_iteration) 
 	{

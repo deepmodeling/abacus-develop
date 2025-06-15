@@ -17,19 +17,21 @@
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
-namespace unitcell
-{
-bool read_atom_positions(UnitCell& ucell,
+
+bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos, 
                          std::ofstream &ofs_running, 
                          std::ofstream &ofs_warning)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
+
     std::string& Coordinate  = ucell.Coordinate;
     const int    ntype       = ucell.ntype;
-    if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifpos, "ATOMIC_POSITIONS"))
+
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
         ModuleBase::GlobalFunc::READ_VALUE(ifpos, Coordinate);
+
         if(Coordinate != "Cartesian" 
             && Coordinate != "Direct" 
             && Coordinate != "Cartesian_angstrom"
@@ -70,6 +72,7 @@ bool read_atom_positions(UnitCell& ucell,
             // start magnetization
             //=======================================
             ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.atoms[it].label);
+
             if(ucell.atoms[it].label != ucell.atom_label[it])
             {
                 ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
@@ -77,10 +80,10 @@ bool read_atom_positions(UnitCell& ucell,
                 ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
                 return false;
             }
-            ModuleBase::GlobalFunc::OUT(ofs_running, "atom label",ucell.atoms[it].label);
+            ModuleBase::GlobalFunc::OUT(ofs_running, "atom label", ucell.atoms[it].label);
 
             bool set_element_mag_zero = false;
-            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_magnetization[it] );
+            ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it]);
 
 #ifndef __SYMMETRY
             //===========================================
@@ -105,7 +108,6 @@ bool read_atom_positions(UnitCell& ucell,
                 {
                     ucell.atoms[it].nw = 0;
                     ucell.atoms[it].nwl = 2;
-                    //std::cout << ucell.lmaxmax << std::endl;
                     if ( ucell.lmaxmax != 2 )
                     {
                         ucell.atoms[it].nwl = ucell.lmaxmax;
@@ -178,7 +180,8 @@ bool read_atom_positions(UnitCell& ucell,
                     mv.y = true ;
                     mv.z = true ;
                     ucell.atoms[it].vel[ia].set(0,0,0);
-                    ucell.atoms[it].mag[ia]=ucell.magnet.start_magnetization[it];//if this line is used, default startmag_type would be 2
+                    ucell.atoms[it].mag[ia]=ucell.magnet.start_mag[it];
+                    //if this line is used, default startmag_type would be 2
                     ucell.atoms[it].angle1[ia]=0;
                     ucell.atoms[it].angle2[ia]=0;
                     ucell.atoms[it].m_loc_[ia].set(0,0,0);
@@ -190,12 +193,14 @@ bool read_atom_positions(UnitCell& ucell,
 
                     if( (int)tmpid[0] < 0 )
                     {
-                        std::cout << "read_atom_positions, mismatch in atom number for atom type: " << ucell.atoms[it].label << std::endl;
+                        std::cout << "read_atom_positions, mismatch in atom number for atom type: " 
+                                  << ucell.atoms[it].label << std::endl;
                         exit(1); 
                     }
 
                     bool input_vec_mag=false;
                     bool input_angle_mag=false;
+
                     // read if catch goodbit before "\n" and "#"
                     while ( (tmpid != "\n") && (ifpos.good()) && (tmpid !="#") )
                     {
@@ -237,7 +242,9 @@ bool read_atom_positions(UnitCell& ucell,
                                 ifpos.putback(tmp);
                                 ifpos >> ucell.atoms[it].m_loc_[ia].y>>ucell.atoms[it].m_loc_[ia].z;
                                 ucell.atoms[it].m_loc_[ia].x=tmpamg;
-                                ucell.atoms[it].mag[ia]=sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)+pow(ucell.atoms[it].m_loc_[ia].y,2)+pow(ucell.atoms[it].m_loc_[ia].z,2));
+                                ucell.atoms[it].mag[ia]=sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)
+                                  +pow(ucell.atoms[it].m_loc_[ia].y,2)
+                                  +pow(ucell.atoms[it].m_loc_[ia].z,2));
                                 input_vec_mag=true;
                                 
                             }
@@ -246,8 +253,6 @@ bool read_atom_positions(UnitCell& ucell,
                                 ifpos.putback(tmp);
                                 ucell.atoms[it].mag[ia]=tmpamg;
                             }
-                            
-                            // ucell.atoms[it].mag[ia];
                         }
                         else if ( tmpid == "angle1")
                         {
@@ -315,7 +320,6 @@ bool read_atom_positions(UnitCell& ucell,
                             tmpid = ifpos.get();
                     }
                     std::string mags;
-                    //cout<<"mag"<<ucell.atoms[it].mag[ia]<<"angle1"<<ucell.atoms[it].angle1[ia]<<"angle2"<<ucell.atoms[it].angle2[ia]<<'\n';
 
                     // ----------------------------------------------------------------------------
                     // recalcualte mag and m_loc_ from read in angle1, angle2 and mag or mx, my, mz
@@ -370,7 +374,10 @@ bool read_atom_positions(UnitCell& ucell,
                             {
                                 ss<<" (atom"<<ia+1<<")";
                             }
-                            ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),ucell.atoms[it].m_loc_[ia].x, ucell.atoms[it].m_loc_[ia].y, ucell.atoms[it].m_loc_[ia].z);
+                            ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),
+                              ucell.atoms[it].m_loc_[ia].x, 
+                              ucell.atoms[it].m_loc_[ia].y, 
+                              ucell.atoms[it].m_loc_[ia].z);
                         }
                         ModuleBase::GlobalFunc::ZEROS(ucell.magnet.ux_ ,3);
                     }
@@ -404,8 +411,6 @@ bool read_atom_positions(UnitCell& ucell,
                     else if(Coordinate=="Cartesian")
                     {
                         ucell.atoms[it].tau[ia] = v ;// in unit ucell.lat0
-                        //std::cout << " T=" << it << " I=" << ia << " tau=" << ucell.atoms[it].tau[ia].x << " " << 
-                        //ucell.atoms[it].tau[ia].y << " " << ucell.atoms[it].tau[ia].z << std::endl;
                     }
                     else if(Coordinate=="Cartesian_angstrom")
                     {
@@ -459,11 +464,13 @@ bool read_atom_positions(UnitCell& ucell,
                         double dx=0.0;
                         double dy=0.0;
                         double dz=0.0;
-                        ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, ucell.atoms[it].tau[ia].y, ucell.atoms[it].tau[ia].z,
-                        ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13,
-                        ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23,
-                        ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33,
-                        dx,dy,dz);
+						ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x, 
+								ucell.atoms[it].tau[ia].y, 
+								ucell.atoms[it].tau[ia].z,
+								ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13,
+								ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23,
+								ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33,
+								dx,dy,dz);
                     
                         ucell.atoms[it].taud[ia].x = dx;
                         ucell.atoms[it].taud[ia].y = dy;
@@ -486,9 +493,10 @@ bool read_atom_positions(UnitCell& ucell,
             // reset some useless parameters
             if (set_element_mag_zero)
             {
-                ucell.magnet.start_magnetization[it] = 0.0;
+                ucell.magnet.start_mag[it] = 0.0;
             }
         } // end for ntype
+
         // Start Autoset magnetization
         // defaultly set a finite magnetization if magnetization is not specified
         int autoset_mag = 1;
@@ -514,7 +522,9 @@ bool read_atom_positions(UnitCell& ucell,
                         ucell.atoms[it].m_loc_[ia].x = 1.0;
                         ucell.atoms[it].m_loc_[ia].y = 1.0;
                         ucell.atoms[it].m_loc_[ia].z = 1.0;
-                        ucell.atoms[it].mag[ia] = sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)+pow(ucell.atoms[it].m_loc_[ia].y,2)+pow(ucell.atoms[it].m_loc_[ia].z,2));
+						ucell.atoms[it].mag[ia] = sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)
+								+pow(ucell.atoms[it].m_loc_[ia].y,2)
+								+pow(ucell.atoms[it].m_loc_[ia].z,2));
                         ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0, 1.0, 1.0);
                     }
                 }
@@ -535,10 +545,10 @@ bool read_atom_positions(UnitCell& ucell,
         // End Autoset magnetization
     }   // end scan_begin
 
-//check if any atom can move in MD
+    //check if any atom can move in MD
     if(!ucell.if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
     {
-        ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
+        ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;
     } 
 
@@ -547,7 +557,7 @@ bool read_atom_positions(UnitCell& ucell,
 
     if (ucell.nat == 0)
     {
-        ModuleBase::WARNING("read_atom_positions","no atom in the system!");
+        ModuleBase::WARNING("read_atom_positions","no atoms found in the system!");
         return false;
     }
 
@@ -556,13 +566,9 @@ bool read_atom_positions(UnitCell& ucell,
 
     if (unitcell::check_tau(ucell.atoms, ucell.ntype, ucell.lat0))
     {
-        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
+        unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
         return true;
     }
     return false;
 
 }//end read_atom_positions
-}
-
-
-

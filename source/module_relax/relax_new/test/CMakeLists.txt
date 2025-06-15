@@ -1,6 +1,6 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 
@@ -17,7 +17,8 @@ AddTest(
   SOURCES  relax_test.cpp ../relax.cpp ../line_search.cpp ../../../module_base/tool_quit.cpp ../../../module_base/global_variable.cpp ../../../module_base/global_file.cpp ../../../module_base/memory.cpp ../../../module_base/timer.cpp
     ../../../module_base/matrix3.cpp ../../../module_base/intarray.cpp ../../../module_base/tool_title.cpp
     ../../../module_base/global_function.cpp ../../../module_base/complexmatrix.cpp ../../../module_base/matrix.cpp
-    ../../../module_base/complexarray.cpp ../../../module_base/tool_quit.cpp ../../../module_base/realarray.cpp ../../../module_base/blas_connector.cpp
+    ../../../module_base/complexarray.cpp ../../../module_base/tool_quit.cpp ../../../module_base/realarray.cpp
+    ../../../module_base/blas_connector_base.cpp ../../../module_base/blas_connector_vector.cpp ../../../module_base/blas_connector_matrix.cpp
     ../../../module_cell/update_cell.cpp ../../../module_cell/print_cell.cpp  ../../../module_cell/bcast_cell.cpp ../../../module_io/output.cpp
     LIBS parameter ${math_libs} 
 )

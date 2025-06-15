@@ -11,6 +11,7 @@ list(APPEND objects
     esolver_of_interface.cpp
     esolver_of_tool.cpp
     pw_others.cpp
+    pw_setup.cpp
 )
 if(ENABLE_LCAO)
   list(APPEND objects
@@ -20,6 +21,7 @@ if(ENABLE_LCAO)
       lcao_after_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
+      esolver_dm2rho.cpp
   )
 endif()
 

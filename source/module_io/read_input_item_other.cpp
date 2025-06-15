@@ -529,8 +529,14 @@ void ReadInput::item_others()
     // EXX PW by rhx0820, 2025-03-10
     {
         Input_Item item("exxace");
-        item.annotation = "whether to perform ace calculation in exxpw, default is false";
+        item.annotation = "whether to perform ace calculation in exxpw";
         read_sync_bool(input.exxace);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_gamma_extrapolation");
+        item.annotation = "whether to perform gamma extrapolation in exxpw";
+        read_sync_bool(input.exx_gamma_extrapolation);
         this->add_item(item);
     }
 

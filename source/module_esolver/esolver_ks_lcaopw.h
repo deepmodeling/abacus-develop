@@ -30,7 +30,7 @@ namespace ModuleESolver
         virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
         /// All the other interfaces except this one are the same as ESolver_KS_PW.
-        virtual void hamilt2density_single(UnitCell& ucell,
+        virtual void hamilt2rho_single(UnitCell& ucell,
                                            const int istep,
                                            const int iter,
                                            const double ethr) override;

@@ -58,7 +58,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
   protected:
-    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 

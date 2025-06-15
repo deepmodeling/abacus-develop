@@ -36,25 +36,24 @@ public:
 	std::string precision_double = "double";
 	std::string precision_single = "single";
 	std::string device_flag = "cpu";
+	ModulePW::PW_Basis_K basis_k;
 };
 
 TEST_F(PWBasisKTEST,Constructor)
 {
-	ModulePW::PW_Basis_K basis_k1;
 	ModulePW::PW_Basis_K basis_k2(device_flag, precision_double);
-	EXPECT_EQ(basis_k1.classname,"PW_Basis_K");
 	EXPECT_EQ(basis_k2.classname,"PW_Basis_K");
 	EXPECT_EQ(basis_k2.device,"cpu");
 	EXPECT_EQ(basis_k2.fft_bundle.device,"cpu");
 	EXPECT_EQ(basis_k2.precision,"double");
 	EXPECT_EQ(basis_k2.fft_bundle.precision,"double");
 	ModulePW::PW_Basis_K basis_k3(device_flag, precision_single);
+	EXPECT_EQ(basis_k3.precision,"single");
 	EXPECT_EQ(basis_k3.fft_bundle.precision,"single");
 }
 
 TEST_F(PWBasisKTEST,Initgrids1)
 {
-	ModulePW::PW_Basis_K basis_k;
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,
@@ -80,7 +79,6 @@ TEST_F(PWBasisKTEST,Initgrids1)
 
 TEST_F(PWBasisKTEST,Initgrids2)
 {
-	ModulePW::PW_Basis_K basis_k;
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,
@@ -150,7 +148,7 @@ TEST_F(PWBasisKTEST, Initparameters)
 
 TEST_F(PWBasisKTEST, SetupTransform) 
 {
-	ModulePW::PW_Basis_K basis_k(device_flag, precision_single);
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_double);
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,
@@ -170,7 +168,7 @@ TEST_F(PWBasisKTEST, SetupTransform)
 
 TEST_F(PWBasisKTEST, CollectLocalPW) 
 {
-	ModulePW::PW_Basis_K basis_k(device_flag, precision_single);
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_double);
 	double lat0 = 1.8897261254578281;
 	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
 				0.0,10.0,0.0,

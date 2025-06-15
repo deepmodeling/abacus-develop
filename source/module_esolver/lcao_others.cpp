@@ -15,7 +15,7 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "module_base/formatter.h"
@@ -29,7 +29,6 @@
 
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
-#include "module_io/write_wfc_nao.h"
 
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -67,7 +66,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
         double search_radius = PARAM.inp.search_radius;
-        atom_arrange::search(PARAM.inp.search_pbc,
+        atom_arrange::search(PARAM.globalv.search_pbc,
                              GlobalV::ofs_running,
                              this->gd,
                              ucell,
@@ -86,7 +85,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                                                    ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
-    atom_arrange::search(PARAM.inp.search_pbc,
+    atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
                          ucell,
@@ -175,9 +174,15 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // init wfc from file
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
+					this->pv, 
+					*(this->psi), 
+					this->pelec,
+                    this->pelec->klist->ik2iktot,
+                    this->pelec->klist->get_nkstot(),
+					PARAM.inp.nspin))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
     }
 
@@ -204,7 +209,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
-#ifdef __DEEPKS
+#ifdef __MLALGO
             ,
             &this->ld
 #endif
@@ -212,13 +217,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             ,
             istep,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
+            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
 #endif
         );
     }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
@@ -345,10 +350,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        IState_Envelope wavefunc(this->pelec);
+        Get_wf_lcao get_wf(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -357,7 +362,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pv,
                       this->GG,
                       PARAM.inp.out_wfc_pw,
-                      PARAM.inp.out_wfc_r,
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,
@@ -370,7 +374,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            wavefunc.begin(ucell,
+            get_wf.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -379,7 +383,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pv,
                       this->GK,
                       PARAM.inp.out_wfc_pw,
-                      PARAM.inp.out_wfc_r,
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,

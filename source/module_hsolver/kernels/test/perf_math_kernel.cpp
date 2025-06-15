@@ -20,7 +20,7 @@
  *      - vector_mul_real_op_cpu
  *      - vector_mul_vector_op_cpu
  *      - vector_div_vector_op_cpu
- *      - constantvector_addORsub_constantVector_op_cpu
+ *      - vector_add_vector_op_cpu
  *      - axpy_cpu
  *      - scal_cpu
 
@@ -28,7 +28,7 @@
  *      - vector_mul_real_op_gpu
  *      - vector_mul_vector_op_gpu
  *      - vector_div_vector_op_gpu
- *      - constantvector_addORsub_constantVector_op_gpu
+ *      - vector_add_vector_op_gpu
  *      - axpy_gpu
  *      - scal_gpu
  */
@@ -137,8 +137,8 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     using vector_mul_real_op_cpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using constantvector_addORsub_constantVector_op_cpu
-        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_add_vector_op_cpu
+        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using axpy_op_cpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
     using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
     using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -151,8 +151,8 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     using vector_mul_real_op_gpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using constantvector_addORsub_constantVector_op_gpu
-        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_add_vector_op_gpu
+        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using axpy_op_gpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
     using scal_op_gpu = ModuleBase::scal_op<double, base_device::DEVICE_GPU>;
 
@@ -185,9 +185,9 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)(ben
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_cpu)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)(benchmark::State& state) {
     for (auto _ : state) {
-        constantvector_addORsub_constantVector_op_cpu()(dim_vector, result_zvector, test_zvector_a, dconstant_a ,test_zvector_b, dconstant_b);
+        vector_add_vector_op_cpu()(dim_vector, result_zvector, test_zvector_a, dconstant_a ,test_zvector_b, dconstant_b);
     }
 }
 
@@ -208,7 +208,7 @@ BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)->RangeMul
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 
@@ -254,9 +254,9 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)(ben
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_gpu)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        constantvector_addORsub_constantVector_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a ,test_zvector_b_gpu, dconstant_b);
+        vector_add_vector_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a ,test_zvector_b_gpu, dconstant_b);
     }
 }
 
@@ -279,7 +279,7 @@ BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMul
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 

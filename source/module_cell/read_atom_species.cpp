@@ -13,15 +13,15 @@ bool read_atom_species(std::ifstream& ifa,
                       UnitCell& ucell)
 {
     ModuleBase::TITLE("UnitCell","read_atom_species");
+
     const int ntype = ucell.ntype;
     std::string word;
 
     //==========================================
     // read in information of each type of atom
     //==========================================
-    if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES") )
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ATOMIC_SPECIES") )
     {    
-        ifa.ignore(300, '\n');
         ModuleBase::GlobalFunc::OUT(ofs_running,"ntype",ntype);
         for (int i = 0;i < ntype;i++)
         {
@@ -34,44 +34,44 @@ bool read_atom_species(std::ifstream& ifa,
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
-            if(!PARAM.inp.use_paw)
+            bool end = false;
+            if (ss >> one_string)
             {
-                bool end = false;
-                if (ss >> one_string)
+                if (one_string[0] != '#')
                 {
-                    if (one_string[0] != '#')
-                    {
-                        ucell.pseudo_fn[i] = one_string;
-                    }
-                    else
-                    {
-                        end = true;
-                    }
+                    ucell.pseudo_fn[i] = one_string;
                 }
-
-                if (!end && ss >> one_string && one_string[0] != '#')
+                else
                 {
-                    if (one_string == "auto" || one_string == "upf" || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
-                    {
-                        ucell.pseudo_type[i] = one_string;
-                    }
-                    else if (one_string == "1/r")
-                    {
-                        ucell.atoms[i].coulomb_potential = true;
-                    }
-                    else
-                    {
-                        GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;
-                        ModuleBase::WARNING_QUIT("read_atom_species", "unrecongnized pseudo type.");
-                    }
+                    end = true;
                 }
-
-                // Peize Lin test for bsse 2021.04.07
-                const std::string bsse_label = "empty";
-                ucell.atoms[i].flag_empty_element = 
-                    (search( ucell.atom_label[i].begin(), ucell.atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != ucell.atom_label[i].end())
-                    ? true : false;
             }
+
+            if (!end && ss >> one_string && one_string[0] != '#')
+            {
+                if (one_string == "auto" || one_string == "upf" 
+                    || one_string == "vwr" || one_string == "upf201" || one_string == "blps")
+                {
+                    ucell.pseudo_type[i] = one_string;
+                }
+                else if (one_string == "1/r")
+                {
+                    ucell.atoms[i].coulomb_potential = true;
+                }
+                else
+                {
+                    GlobalV::ofs_warning << "unrecognized pseudopotential type: " 
+                    << one_string << ", check your STRU file." << std::endl;
+                    ModuleBase::WARNING_QUIT("read_atom_species", "unrecognized pseudopotential type.");
+                }
+            }
+
+            // Peize Lin test for bsse 2021.04.07
+            const std::string bsse_label = "empty";
+            ucell.atoms[i].flag_empty_element = 
+                (search( ucell.atom_label[i].begin(), ucell.atom_label[i].end(), 
+                    bsse_label.begin(), bsse_label.end() ) != ucell.atom_label[i].end())
+                ? true : false;
         }
     }
 
@@ -80,7 +80,7 @@ bool read_atom_species(std::ifstream& ifa,
       ||((PARAM.inp.basis_type == "pw")&&(PARAM.inp.init_wfc.substr(0, 3) == "nao"))
       || PARAM.inp.onsite_radius > 0.0)
     {
-        if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "NUMERICAL_ORBITAL") )
         {
             for(int i=0; i<ntype; i++)
             {
@@ -90,7 +90,7 @@ bool read_atom_species(std::ifstream& ifa,
         // caoyu add 2021-03-16
         if(PARAM.globalv.deepks_setorb)
         {
-            if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
+            if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
                 ifa >> ucell.descriptor_file;
             }
         }
@@ -105,7 +105,7 @@ bool read_atom_species(std::ifstream& ifa,
 #ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx || PARAM.inp.rpa )
     {
-        if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL") )
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
         {
             for(int i=0; i<ntype; i++)
             {
@@ -133,12 +133,12 @@ bool read_lattice_constant(std::ifstream& ifa,
     double& lat0_angstrom =lat.lat0_angstrom;
     std::string& latName = lat.latName;
     ModuleBase::Matrix3& latvec = lat.latvec;
-    if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_CONSTANT") )
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_CONSTANT") )
     {
         ModuleBase::GlobalFunc::READ_VALUE(ifa, lat0);
         if(lat0<=0.0)
         {
-            ModuleBase::WARNING_QUIT("read_atom_species","lat0<=0.0");
+            ModuleBase::WARNING_QUIT("read_atom_species","lattice constant <= 0.0");
         }
         lat0_angstrom = lat0 * 0.529177;
         ModuleBase::GlobalFunc::OUT(ofs_running,"lattice constant (Bohr)",lat0);
@@ -153,18 +153,23 @@ bool read_lattice_constant(std::ifstream& ifa,
 
     if(latName=="none")
     {
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa,
+        // check the existence of keyword "LATTICE_PARAMETERS"
+        if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,
                                                "LATTICE_PARAMETERS",
                                                true,
                                                false)) 
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "do not use LATTICE_PARAMETERS without explicit specification of lattice type");
         }
-        if( !ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
+
+        // check the existence of keyword "LATTICE_VECTORS"
+        if( !ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_VECTORS") )
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","Please set LATTICE_VECTORS in STRU file");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "Please set LATTICE_VECTORS in the STRU file");
         }
-        else if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
+        else if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_VECTORS") )
         {
             // Reading lattice vectors. notice
             // here that only one cpu read these
@@ -179,12 +184,13 @@ bool read_lattice_constant(std::ifstream& ifa,
     }//supply lattice vectors
     else
     {
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa,
+        if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,
                                                "LATTICE_VECTORS",
                                                true,
                                                false)) 
         {
-            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","do not use LATTICE_VECTORS along with explicit specification of lattice type");
+            ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant",
+            "do not use LATTICE_VECTORS along with explicit specification of lattice type");
         }
         if(latName=="sc")
         {//simple-cubic, ibrav = 1
@@ -210,7 +216,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = e22; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
             }
@@ -219,7 +225,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         {//trigonal, ibrav = 5
             double t1 = 0.0;
             double t2 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 double cosab=0.0;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
@@ -239,7 +245,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 1.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
             }
@@ -247,7 +253,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="bct")
         {//body-centered tetragonal, ibrav = 7
             double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
                 cba = cba / 2.0;
@@ -261,7 +267,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 1.0; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 = 0.0; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e22;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
@@ -272,7 +278,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             latvec.e11 = 0.5; latvec.e12 = 0.0; latvec.e13 = 0.0;
             latvec.e21 =-0.5; latvec.e22 = 0.0; latvec.e23 = 0.0;
             latvec.e31 = 0.0; latvec.e32 = 0.0; latvec.e33 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> latvec.e12;
                 latvec.e12 = latvec.e12 / 2.0;
@@ -283,7 +289,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="fco")
         {//face-centered orthorhombic, ibrav = 10
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
@@ -296,7 +302,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         else if(latName=="bco")
         {//body-centered orthorhombic, ibrav = 11
             double bba = 0.0; double cba = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cba);
@@ -311,7 +317,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
@@ -327,7 +333,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double bba = 0.0; double cba = 0.0;
             double cosab = 0.0;
             double e21 = 0.0; double e22 = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cosab);
@@ -348,7 +354,7 @@ bool read_lattice_constant(std::ifstream& ifa,
             double cosbc = 0.0; 
             double sinab = 0.0;
             double term = 0.0;
-            if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+            if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "LATTICE_PARAMETERS") )
             {
                 ifa >> bba >> cba >> cosab >> cosac;
                 ModuleBase::GlobalFunc::READ_VALUE(ifa, cosbc);
@@ -363,7 +369,6 @@ bool read_lattice_constant(std::ifstream& ifa,
         }
         else
         { 
-            std::cout << "latname is : " << latName << std::endl;
             ModuleBase::WARNING_QUIT("unitcell::read_lattice_constant","latname not supported!");
         }
     }

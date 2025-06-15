@@ -16,8 +16,10 @@ Operator<T, Device>::~Operator()
     {
         delete this->hpsi;
     }
+
     Operator* last = this->next_op;
     Operator* last_sub = this->next_sub_op;
+
     while (last != nullptr || last_sub != nullptr)
     {
         if (last_sub != nullptr)
@@ -58,7 +60,6 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     T* hpsi_pointer = std::get<2>(input);
     if (this->in_place)
     {
-        // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
         syncmem_op()(hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
         delete this->hpsi;
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
@@ -78,31 +79,35 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
                                         psi_input->get_nbasis(),
                                         true);
 
-        switch (op->get_act_type())
-        {
-        case 2:
-            op->act(psi_wrapper, *this->hpsi, nbands);
-            break;
-        default:
-            op->act(nbands,
-                    psi_input->get_nbasis(),
-                    psi_input->get_npol(),
-                    tmpsi_in,
-                    this->hpsi->get_pointer(),
-                    psi_input->get_current_nbas(),
-                    is_first_node);
-            break;
-        }
+		switch (op->get_act_type())
+		{
+			case 2:
+				op->act(psi_wrapper, *this->hpsi, nbands);
+				break;
+			default:
+				op->act(nbands,
+						psi_input->get_nbasis(),
+						psi_input->get_npol(),
+						tmpsi_in,
+						this->hpsi->get_pointer(),
+						psi_input->get_current_nbas(),
+						is_first_node);
+				break;
+		}
     };
 
     ModuleBase::timer::tick("Operator", "hPsi");
+
     call_act(this, true); // first node
+
     Operator* node((Operator*)this->next_op);
+
     while (node != nullptr)
     {
         call_act(node, false); // other nodes
         node = (Operator*)(node->next_op);
     }
+
     ModuleBase::timer::tick("Operator", "hPsi");
 
     return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->get_npol()), hpsi_pointer);
@@ -156,6 +161,7 @@ void Operator<T, Device>::add(Operator* next)
         last->next_op = next;
     }
 }
+
 
 template <typename T, typename Device>
 T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const

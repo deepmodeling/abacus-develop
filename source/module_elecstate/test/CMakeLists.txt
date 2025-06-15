@@ -4,9 +4,8 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__UT_USE_CUDA)
 remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__ROCM)
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D_OPENMP)
-remove_definitions(-DUSE_PAW)
 
 if (ENABLE_MPI)
 
@@ -75,7 +74,7 @@ AddTest(
 AddTest(
   TARGET potentials_new
   LIBS parameter  ${math_libs} base device planewave_serial
-  SOURCES potential_new_test.cpp ../potentials/potential_new.cpp
+  SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
 )
 
 AddTest(

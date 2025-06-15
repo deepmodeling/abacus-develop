@@ -14,7 +14,7 @@ namespace ModuleIO
         const int nspin, const int nbasis,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
-        ModuleBase::TITLE("Exx_LRI", "read_Hexxs_csr");
+        ModuleBase::TITLE("ModuleIO", "read_Hexxs_csr");
         Hexxs.resize(nspin);
         for (int is = 0;is < nspin;++is)
         {
@@ -28,7 +28,12 @@ namespace ModuleIO
                     {
                         const std::vector<int>& R = csr.getRCoordinate(iR);
                         TC dR({ R[0], R[1], R[2] });
-                        Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
+                        Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>(
+                                { 
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), 
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) 
+                                }
+                                );
                     }
                 }
             }
@@ -44,7 +49,12 @@ namespace ModuleIO
                     const int& npol = ucell.get_npol();
                     const int& i = ijv.first.first * npol;
                     const int& j = ijv.first.second * npol;
-                    Hexxs.at(is).at(ucell.iwt2iat[i]).at({ ucell.iwt2iat[j], { R[0], R[1], R[2] } })(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
+                    Hexxs.at(is).at(ucell.iwt2iat[i]).at(
+                            { 
+                                ucell.iwt2iat[j], 
+                                { R[0], R[1], R[2] } 
+                            }
+                            )(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
                 }
             }
         }
@@ -54,9 +64,11 @@ namespace ModuleIO
     void read_Hexxs_cereal(const std::string& file_name, 
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
-        ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
+        ModuleBase::TITLE("ModuleIO", "read_Hexxs_cereal");
         ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
         std::ifstream ifs(file_name, std::ios::binary);
+        if(!ifs.is_open())
+            { ModuleBase::WARNING_QUIT("read_Hexxs_cereal", file_name+" not found."); }
         cereal::BinaryInputArchive iar(ifs);
         iar(Hexxs);
         ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
@@ -68,7 +80,7 @@ namespace ModuleIO
             const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs,
             const UnitCell& ucell)
     {
-        ModuleBase::TITLE("Exx_LRI_Interface", "calculate_HContainer_sparse_d");
+        ModuleBase::TITLE("ModuleIO", "calculate_HContainer_sparse_d");
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>> target;
         for (auto& a1_a2R_data : Hexxs)
         {
@@ -86,18 +98,20 @@ namespace ModuleIO
                 Abfs::Vector3_Order<int> dR(R[0], R[1], R[2]);
                 for (int i = 0;i < nw1;++i) {
                     for (int j = 0;j < nw2;++j) {
-                        target[dR][start1 + i][start2 + j] = ((std::abs(matrix(i, j)) > sparse_threshold) ? matrix(i, j) : static_cast<Tdata>(0));
+                        target[dR][start1 + i][start2 + j] = 
+                        ((std::abs(matrix(i, j)) > sparse_threshold) ? matrix(i, j) : static_cast<Tdata>(0));
                     }
                 }
             }
         }
         return target;
     }
+
     template<typename Tdata>
     void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
         const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
-        ModuleBase::TITLE("Exx_LRI", "write_Hexxs_csr");
+        ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
         std::set<Abfs::Vector3_Order<int>> all_R_coor;
         double sparse_threshold = 1e-10;
         for (int is = 0;is < Hexxs.size();++is)

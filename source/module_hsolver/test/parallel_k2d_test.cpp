@@ -119,6 +119,7 @@ TEST_P(ParallelK2DTest, DividePools) {
         EXPECT_EQ(k2d.get_p2D_pool()->get_col_size(), 5);
         k2d.set_kpar(10);
         EXPECT_EQ(k2d.get_kpar(), 10);
+        k2d.unset_para_env();
     }
     //delete k2d.Pkpoints;
     //delete k2d.get_p2D_pool();

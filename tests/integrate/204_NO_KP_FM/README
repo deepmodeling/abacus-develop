@@ -1,8 +1,0 @@
-This test for: Fe-nspin2-FM
-*Fe-bcc
-*Kpoints 2*2*2
-*old upf pseudopotential
-*smearing_method gauss
-*ks_solver genelpa
-*nspin 2
-*LCAO

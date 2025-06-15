@@ -10,8 +10,8 @@
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_elecstate/cal_ux.h"
-#include "module_elecstate/potentials/efield.h"
-#include "module_elecstate/potentials/gatefield.h"
+#include "module_elecstate/module_pot/efield.h"
+#include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
@@ -20,9 +20,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 #ifdef USE_LIBXC
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"

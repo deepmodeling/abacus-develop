@@ -182,7 +182,7 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh))
+        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh || param.input.out_mat_ds))
     {
         out_dir = true;
     }
@@ -278,7 +278,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!')
             {
-                std::cout << " THE PARAMETER NAME '" << word << "' IS NOT USED!" << std::endl;
+                std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
                 ModuleBase::WARNING_QUIT("Input",
                                          "Bad parameter, please check the "
                                          "input parameters in file INPUT",

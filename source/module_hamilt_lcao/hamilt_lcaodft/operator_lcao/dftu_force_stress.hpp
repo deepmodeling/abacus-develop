@@ -41,6 +41,21 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         force.zero_out();
     }
+    // calculate atom_index for adjs_all, induced by omp parallel
+    int atom_index = 0;
+    std::vector<int> atom_index_all(this->ucell->nat, -1);
+    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
+    {
+        int T0=0;
+        int I0=0;
+        ucell->iat2iait(iat0, &I0, &T0);
+        if(this->dftu->orbital_corr[T0] == -1)
+        {
+            continue;
+        }
+        atom_index_all[iat0] = atom_index;
+        atom_index++;
+    }
 
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
@@ -62,7 +77,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 			continue;
 		}
         const int tlp1 = 2 * target_L + 1;
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+        AdjacentAtomInfo& adjs = this->adjs_all[atom_index_all[iat0]];
 
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
         nlm_tot.resize(adjs.adj_num + 1);

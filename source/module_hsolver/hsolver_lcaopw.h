@@ -37,16 +37,6 @@ class HSolverLIP
 
   private:
     ModulePW::PW_Basis_K* wfc_basis;
-
-#ifdef USE_PAW
-    void paw_func_in_kloop(const int ik,
-                           const double tpiba);
-
-    void paw_func_after_kloop(psi::Psi<T>& psi, 
-                              elecstate::ElecState* pes,
-                              const double tpiba,
-                              const int nat);
-#endif
 };
 
 } // namespace hsolver

@@ -203,5 +203,6 @@ void GintAtom::set_phi_dphi(
 
 // explicit instantiation
 template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, double* phi) const;
+template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, std::complex<double>* phi) const;
 template void GintAtom::set_phi_dphi(const std::vector<Vec3d>& coords, const int stride, double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const;
 }

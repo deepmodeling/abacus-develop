@@ -2,9 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
-#ifdef USE_PAW
-#include "module_cell/module_paw/paw_cell.h"
-#endif
+
 
 #include "module_base/tool_quit.h"
 
@@ -17,49 +15,16 @@ namespace elecstate
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    if (PARAM.inp.use_paw)
-    {
-        etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield + evdw
-               + esol_el + esol_cav + edftu + edeepks_scf;
-    }
-    else
-    {
-        etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-               + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
-    }
-
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        double ecore = GlobalC::paw_cell.calculate_ecore();
-        double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot += (ecore + epawdc);
-    }
-#endif
+    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot;
 }
 
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    if (PARAM.inp.use_paw)
-    {
-        etot_harris = eband + deband_harris + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield
-                      + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
-    }
-    else
-    {
-        etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                      + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
-    }
-#ifdef USE_PAW
-    if (PARAM.inp.use_paw)
-    {
-        double ecore = GlobalC::paw_cell.calculate_ecore();
-        double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot_harris += (ecore + epawdc);
-    }
-#endif
+    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
+                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot_harris;
 }
 
@@ -96,22 +61,22 @@ void fenergy::print_all() const
     std::cout << " total= " << etot << std::endl;
 }
 
-/// @brief get the reference of fermi of a specific spin
+/// @brief set efermi of a specific spin
 /// @param is SPIN
-/// @return a reference of fermi(is)
-double& efermi::get_ef(const int& is)
+/// @param ef_in fermi(is)
+void efermi::set_efval(const int& is, const double& ef_in)
 {
     if (!two_efermi)
     {
-        return this->ef;
+        this->ef = ef_in;
     }
     else if (is == 0)
     {
-        return this->ef_up;
+        this->ef_up = ef_in;
     }
     else if (is == 1)
     {
-        return this->ef_dw;
+        this->ef_dw = ef_in;
     }
     else
     {

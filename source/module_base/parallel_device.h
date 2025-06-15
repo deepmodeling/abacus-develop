@@ -144,6 +144,35 @@ void reduce_dev(T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nu
 #endif
     return;
 }
+
+template <typename T, typename Device>
+void gatherv_dev(const T* sendbuf,
+                 int sendcount,
+                 T* recvbuf,
+                 const int* recvcounts,
+                 const int* displs,
+                 MPI_Comm& comm,
+                 T* tmp_sspace = nullptr,
+                 T* tmp_rspace = nullptr)
+{
+#ifdef __CUDA_MPI
+    gatherv_data(sendbuf, sendcount, recvbuf, recvcounts, displs, comm);
+#else
+    object_cpu_point<T,Device> o1, o2;
+    int size = 0;
+    MPI_Comm_size(comm, &size);
+    int gather_space = displs[size - 1] + recvcounts[size - 1];
+    T* sendbuf_cpu = o1.get(sendbuf, sendcount, tmp_sspace);
+    T* recvbuf_cpu = o2.get(recvbuf, gather_space, tmp_rspace);
+    o1.sync_d2h(sendbuf_cpu, sendbuf, sendcount);
+    gatherv_data(sendbuf_cpu, sendcount, recvbuf_cpu, recvcounts, displs, comm);
+    o2.sync_h2d(recvbuf, recvbuf_cpu, gather_space);
+    o1.del(sendbuf_cpu);
+    o2.del(recvbuf_cpu);
+#endif
+    return;
+}
+
 }
     
 

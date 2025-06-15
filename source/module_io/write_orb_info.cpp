@@ -9,8 +9,12 @@ void ModuleIO::write_orb_info(const UnitCell* ucell)
     std::stringstream os;
     os << PARAM.globalv.global_out_dir << "Orbital";
     std::ofstream out(os.str().c_str());
-    out << std::setw(5) << "#io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
-        << "z" << std::setw(5) << "sym" << std::endl;
+    out << std::setw(5) << "#io" 
+        << std::setw(8) << "spec" 
+        << std::setw(5) << "l" 
+        << std::setw(5) << "m" 
+        << std::setw(5) << "z" 
+        << std::setw(5) << "sym" << std::endl;
 
     for (int i = 0; i < ucell->nat; i++)
     {

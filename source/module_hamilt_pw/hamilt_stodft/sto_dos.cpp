@@ -4,17 +4,19 @@
 #include "module_base/tool_title.h"
 #include "module_parameter/parameter.h"
 #include "sto_tool.h"
-Sto_DOS::~Sto_DOS()
+template <typename FPTYPE, typename Device>
+Sto_DOS<FPTYPE, Device>::~Sto_DOS()
 {
 }
 
-Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-                 K_Vectors* p_kv_in,
-                 elecstate::ElecState* p_elec_in,
-                 psi::Psi<std::complex<double>>* p_psi_in,
-                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                 StoChe<double>& stoche,
-                 Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
+template <typename FPTYPE, typename Device>
+Sto_DOS<FPTYPE, Device>::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
+                                 K_Vectors* p_kv_in,
+                                 elecstate::ElecState* p_elec_in,
+                                 psi::Psi<std::complex<double>>* p_psi_in,
+                                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+                                 StoChe<FPTYPE, Device>& stoche,
+                                 Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
 {
     this->p_wfcpw = p_wfcpw_in;
     this->p_kv = p_kv_in;
@@ -26,19 +28,28 @@ Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
     this->method_sto = stoche.method_sto;
-    this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
+    this->stofunc.set_E_range((double*)&stoche.emin_sto, (double*)&stoche.emax_sto);
 }
-void Sto_DOS::decide_param(const int& dos_nche,
-                           const double& emin_sto,
-                           const double& emax_sto,
-                           const bool& dos_setemin,
-                           const bool& dos_setemax,
-                           const double& dos_emin_ev,
-                           const double& dos_emax_ev,
-                           const double& dos_scale)
+
+template <typename FPTYPE, typename Device>
+void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
+                                           const double& emin_sto,
+                                           const double& emax_sto,
+                                           const bool& dos_setemin,
+                                           const bool& dos_setemax,
+                                           const double& dos_emin_ev,
+                                           const double& dos_emax_ev,
+                                           const double& dos_scale)
 {
     this->dos_nche = dos_nche;
-    check_che(this->dos_nche, emin_sto, emax_sto, this->nbands_sto, this->p_kv, this->p_stowf, this->p_hamilt_sto);
+    check_che_op<FPTYPE, Device>()(
+        this->dos_nche,
+        emin_sto,
+        emax_sto,
+        this->nbands_sto,
+        this->p_kv,
+        reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device>*>(this->p_stowf),
+        reinterpret_cast<hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
@@ -64,7 +75,8 @@ void Sto_DOS::decide_param(const int& dos_nche,
     }
 }
 
-void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
+template <typename FPTYPE, typename Device>
+void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart)
 {
     ModuleBase::TITLE("Sto_DOS", "caldos");
     ModuleBase::timer::tick("Sto_DOS", "caldos");
@@ -228,12 +240,15 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
 #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = PARAM.globalv.global_out_dir + "DOS1_smearing.dat";
+        std::string dosfile = PARAM.globalv.global_out_dir + "doss1_pw.txt";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
-        ofsdos << std::setw(8) << "## E(eV) " << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
-               << std::setw(20) << "Error(eV^-1)" << std::endl;
+
+		ofsdos << ndos << " # number of points" << std::endl;
+		ofsdos << "#" << std::setw(19) << "energy(eV)"
+			<< std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
+			<< std::setw(20) << "error(eV^-1)" << std::endl;
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
@@ -243,7 +258,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             }
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
-            ofsdos << std::setw(8) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
+            ofsdos << std::setw(20) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de
                    << std::setw(20) << tmperror << std::endl;
         }
         std::cout << std::endl;
@@ -255,3 +270,8 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     ModuleBase::timer::tick("Sto_DOS", "caldos");
     return;
 }
+
+template class Sto_DOS<double, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Sto_DOS<double, base_device::DEVICE_GPU>;
+#endif

@@ -30,6 +30,7 @@ list(APPEND objects
     pw_distributer.cpp
     pw_init.cpp
     pw_transform.cpp
+    pw_transform_gpu.cpp
     pw_transform_k.cpp
     module_fft/fft_bundle.cpp
     module_fft/fft_cpu.cpp
@@ -57,5 +58,6 @@ if(BUILD_TESTING)
     add_subdirectory(test)
     add_subdirectory(test_serial)
     add_subdirectory(kernels/test)
+    add_subdirectory(test_gpu)
   endif()
 endif()

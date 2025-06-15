@@ -1,8 +1,0 @@
-This test for:
-*SDFT
-*Al
-*kpoints 2*2*1
-*complete basis
-*kpar 2
-*bndpar 2
-*cal_dos 1

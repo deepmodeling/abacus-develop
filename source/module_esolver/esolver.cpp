@@ -5,6 +5,7 @@
 #include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
+#include "esolver_dm2rho.h"
 #include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
@@ -95,7 +96,7 @@ std::string determine_type()
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
     }
 
-    GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
+    GlobalV::ofs_running << "\n Energy Solver:" << esolver_type << std::endl;
 
     auto device_info = PARAM.inp.device;
 
@@ -113,8 +114,10 @@ std::string determine_type()
     }
 
     GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
-
+                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl; 
+    /***auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
     return esolver_type;
 }
 
@@ -187,11 +190,11 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao")
     {
-        if (PARAM.inp.calculation == "get_S")
+        if (PARAM.inp.calculation == "get_s")
         {
             if (PARAM.globalv.gamma_only_local)
             {
-                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
+                ModuleBase::WARNING_QUIT("ESolver", "get_s is not implemented for gamma_only");
             }
             else
             {
@@ -204,11 +207,25 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
         else if (PARAM.inp.nspin < 4)
         {
-            return new ESolver_KS_LCAO<std::complex<double>, double>();
+            if (PARAM.inp.dm_to_rho)
+            {
+                return new ESolver_DM2rho<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
+            }
         }
         else
         {
-            return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            if (PARAM.inp.dm_to_rho)
+            {
+                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            }
         }
     }
     else if (esolver_type == "ksdft_lcao_tddft")
@@ -251,23 +268,27 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
         p_esolver->before_all_runners(ucell, inp);
         p_esolver->runner(ucell, 0); // scf-only
+
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.
-        // after_all_runners() is for output, it is not needed here.
-        std::cout << "Setting up the esolver for excited states..." << std::endl;
+        std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
-        if (PARAM.globalv.gamma_only_local)
-            p_esolver_lr = new LR::ESolver_LR<double, double>(
-                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-                inp,
-                ucell);
+		if (PARAM.globalv.gamma_only_local)
+		{
+			p_esolver_lr = new LR::ESolver_LR<double, double>(
+					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
+					inp,
+					ucell);
+		}
         else
-            p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-                inp,
-                ucell);
+		{
+			p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
+					inp,
+					ucell);
+		}
         // clean the 1st ESolver_KS and swap the pointer
         ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
         return p_esolver_lr;

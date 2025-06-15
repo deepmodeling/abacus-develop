@@ -4,6 +4,10 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nband,
 	const double &ef,
@@ -15,13 +19,13 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
 #ifdef __MPI
 
-	int start = 1;
-	int end = PARAM.inp.nbands;
+	const int start = 1;
+	const int end = PARAM.inp.nbands;
 
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)
 	{
-		ofs.open(out_band_dir.c_str());//make the file clear!!
+		ofs.open(out_band_dir.c_str());
 		ofs << std::setprecision(6);
 		ofs.close();	
 	}

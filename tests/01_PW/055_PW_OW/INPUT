@@ -1,0 +1,17 @@
+INPUT_PARAMETERS
+basis_type    pw
+nspin         2
+calculation   scf
+out_wfc_pw    1
+
+nbands        6
+symmetry      1
+
+pseudo_dir    ../../PP_ORB
+suffix        autotest
+
+ecutwfc       20
+scf_thr       1e-9
+scf_nmax      100
+
+pw_seed       1

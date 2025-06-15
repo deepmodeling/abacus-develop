@@ -16,6 +16,8 @@ PW_Basis::PW_Basis()
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
     this->fft_bundle.setfft("cpu",this->precision);
+    this->double_data_ = (this->precision == "double") || (this->precision == "mixing");
+    this->float_data_ = (this->precision == "single")  || (this->precision == "mixing");
 }
 
 PW_Basis:: ~PW_Basis()
@@ -41,6 +43,7 @@ PW_Basis:: ~PW_Basis()
     if (this->device == "gpu")
     {
         delmem_int_op()(this->d_is2fftixy);
+        delmem_int_op()(this->ig2ixyz_gpu);
     }
 #endif
 }
@@ -57,6 +60,7 @@ void PW_Basis::setuptransform()
     this->distribute_g();
     this->getstartgr();
     this->fft_bundle.clear();
+    
     if(this->xprime)    
     {
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);

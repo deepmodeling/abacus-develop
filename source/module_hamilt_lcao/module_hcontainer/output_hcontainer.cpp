@@ -18,6 +18,14 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
                                         int precision)
     : _hcontainer(hcontainer), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
 {
+    if (this->_sparse_threshold == -1)
+    {
+        this->_sparse_threshold = 1e-10;
+    }
+    if (this->_precision == -1)
+    {
+        this->_precision = 8;
+    }
 }
 
 template <typename T>

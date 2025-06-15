@@ -73,8 +73,8 @@ public:
      * get_col_size(iat) : number of columns of Hamiltonian matrix in atom iat
      * get_row_size(iat) : number of rows of Hamiltonian matrix in atom iat
     */
-    int get_col_size()const;
-    int get_row_size()const;
+    int get_col_size()const { return this->ncol; };
+    int get_row_size()const { return this->nrow; };
     int get_col_size(int iat) const;
     int get_row_size(int iat) const;
 

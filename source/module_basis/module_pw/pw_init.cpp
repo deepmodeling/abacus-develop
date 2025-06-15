@@ -6,16 +6,15 @@ namespace ModulePW
 #ifdef __MPI
 void PW_Basis:: initmpi(
     const int poolnproc_in,
-        const int poolrank_in,
-        MPI_Comm pool_world_in
+    const int poolrank_in,
+    MPI_Comm pool_world_in
 )
 {
-    this->poolnproc = poolnproc_in;
-    this->poolrank = poolrank_in;
-    this->pool_world = pool_world_in;
+        this->poolnproc = poolnproc_in;
+        this->poolrank = poolrank_in;
+        this->pool_world = pool_world_in;
 }
 #endif
-
 /// 
 /// Init the grids for FFT
 /// Input: lattice vectors of the cell, Energy cut off for G^2/2

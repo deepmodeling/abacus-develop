@@ -122,9 +122,23 @@ void ReadInput::item_elec_stru()
                 }
                 else if (ks_solver == "cusolver" || ks_solver == "cusolvermp")
                 {
+                    std::string warningstr;
 #ifndef __MPI
                     ModuleBase::WARNING_QUIT("ReadInput", "Cusolver can not be used for series version.");
 #endif
+#ifndef __CUDA
+                    warningstr = "ks_solver is set to " + ks_solver + " but ABACUS is built with CPU only!\n"
+                    + " Please rebuild ABACUS with GPU support or change the ks_solver.";  
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+#endif
+                    if( ks_solver == "cusolvermp")
+                    {
+#ifndef __CUSOLVERMP
+                    warningstr = "ks_solver is set to cusolvermp, but ABACUS is not built with cusolvermp support\n"
+                    " Please rebuild ABACUS with cusolvermp support or change the ks_solver.";
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+#endif              
+                    }
                 }
                 else if (ks_solver == "pexsi")
                 {
@@ -167,28 +181,6 @@ void ReadInput::item_elec_stru()
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("use_paw");
-        item.annotation = "whether to use PAW in pw calculation";
-        read_sync_bool(input.use_paw);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.use_paw)
-            {
-#ifndef USE_PAW
-                ModuleBase::WARNING_QUIT("ReadInput", "to use PAW, compile with USE_PAW");
-#endif
-                if (para.input.basis_type != "pw")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "PAW is for pw basis only");
-                }
-                if (para.input.dft_functional == "default")
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "dft_functional must be set when use_paw is true");
-                }
             }
         };
         this->add_item(item);
@@ -264,6 +256,74 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("xc_exch_ext");
+        item.annotation = "placeholder for xcpnet exchange functional";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.xc_exch_ext.resize(item.get_size());
+            std::transform(item.str_values.begin(), item.str_values.end(),
+                           para.input.xc_exch_ext.begin(),
+                           [](const std::string& str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // at least one value should be set
+            if (para.input.xc_exch_ext.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext should not be empty.");
+            }
+            // the first value is actually an integer, not a double
+            const double libxc_id_dbl = para.input.xc_exch_ext[0];
+            if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) can never be a float number");
+            }
+            // the first value is a positive integer
+            if (libxc_id_dbl < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) should be a positive integer");
+            }
+        };
+        sync_doublevec(input.xc_exch_ext,
+                       para.input.xc_exch_ext.size(),
+                       0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_corr_ext");
+        item.annotation = "placeholder for xcpnet exchange functional";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.xc_corr_ext.resize(item.get_size());
+            std::transform(item.str_values.begin(), item.str_values.end(),
+                           para.input.xc_corr_ext.begin(),
+                           [](const std::string& str) { return std::stod(str); });
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // at least one value should be set
+            if (para.input.xc_corr_ext.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext should not be empty.");
+            }
+            // the first value is actually an integer, not a double
+            const double libxc_id_dbl = para.input.xc_corr_ext[0];
+            if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) can never be a float number");
+            }
+            // the first value is a positive integer
+            if (libxc_id_dbl < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The first parameter (libxc id) should be a positive integer");
+            }
+        };
+        sync_doublevec(input.xc_corr_ext,
+                       para.input.xc_corr_ext.size(),
+                       0.0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("pseudo_rcut");
         item.annotation = "default #exchange correlation functional";
         read_sync_double(input.pseudo_rcut);
@@ -305,7 +365,7 @@ void ReadInput::item_elec_stru()
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         read_sync_double(input.pw_diag_thr);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_S" && para.input.basis_type == "pw")
+            if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
             {
                 if (para.input.pw_diag_thr > 1.0e-3)
                 {
@@ -319,6 +379,26 @@ void ReadInput::item_elec_stru()
         Input_Item item("diago_smooth_ethr");
         item.annotation = "smooth ethr for iter methods";
         read_sync_bool(input.diago_smooth_ethr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use k-point continuity for initializing wave functions";
+        read_sync_bool(input.use_k_continuity);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
+            }
+            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
+            }
+            if (para.input.use_k_continuity && para.input.nspin == 2) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
+            }
+            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -514,7 +594,7 @@ void ReadInput::item_elec_stru()
             {
                 if (para.input.nspin == 4)
                 {
-                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
+                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4 (soc or noncollinear-spin) does not support gamma\n only calculation");
                 }
             }
         };
@@ -696,12 +776,6 @@ void ReadInput::item_elec_stru()
         Input_Item item("search_radius");
         item.annotation = "input search radius (Bohr)";
         read_sync_double(input.search_radius);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("search_pbc");
-        item.annotation = "input periodic boundary condition";
-        read_sync_bool(input.search_pbc);
         this->add_item(item);
     }
     {

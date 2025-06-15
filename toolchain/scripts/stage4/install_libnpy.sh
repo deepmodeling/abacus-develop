@@ -6,7 +6,7 @@
 # Only problem is the installation from github.com
 # Libnpy is under active development, you can check the latest version in github yourself
 
-# Last Update in 2023-1124
+# Last Update in 2025-0504
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -32,7 +32,7 @@ case "$with_libnpy" in
     pkg_install_dir="${INSTALLDIR}/$dirname"
     #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/llohse/libnpy/archive/refs/tags/v${libnpy_ver}.tar.gz"
+    url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
     filename="libnpy-${libnpy_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
@@ -41,16 +41,12 @@ case "$with_libnpy" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version of Libnpy is downloaded in GitHub Release, which will always be out-of-date version <==="
+            echo "===> Notice: This version of Libnpy is downloaded in GitHub Release <==="
             download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
-            # echo "wget $url -O $filename"
-            # if ! wget $url -O $filename; then
-            # report_error "failed to download $url"
-            # recommend_offline_installation $filename $url
-            # fi
-            # # checksum
-            # checksum "$filename" "$libnpy_sha256"
         fi
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+    else
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
@@ -58,6 +54,8 @@ case "$with_libnpy" in
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
+    fi
+    LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
         echo "==================== CANNOT Finding LIBNPY from system paths NOW ===================="

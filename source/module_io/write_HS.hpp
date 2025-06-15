@@ -5,82 +5,94 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-/*
-void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H, const int *rowind_H,
-        const double *nzval_H, const double *nzval_S, bool bit)
+#include "module_io/filename.h" // use filename_output function
+
+
+template <typename T>
+void ModuleIO::write_hsk(
+        const std::string &global_out_dir,
+        const int nspin,
+        const int nks, 
+        const int nkstot,
+		const std::vector<int> &ik2iktot,
+        const std::vector<int> &isk,
+		hamilt::Hamilt<T>* p_hamilt,
+	    const Parallel_Orbitals &pv,
+        const bool gamma_only,
+        const bool out_app_flag,
+        const int istep,
+        std::ofstream &ofs_running)	
 {
-    ModuleBase::TITLE("ModuleIO","save_HS_ccf");
 
-    if(GlobalV::DRANK!=0)return;
+	ofs_running << "\n WRITE H(k) OR S(k) BEGINS" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " | Write Hamiltonian matrix H(k) or overlap matrix S(k) in numerical  |" << std::endl; 
+	ofs_running << " | atomic orbitals at each k-point.                                   |" << std::endl; 
+	ofs_running << " |                                            "
+		"                        |" << std::endl;
+	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
-    std::stringstream ssh;
-    std::stringstream sss;
+	for (int ik = 0; ik < nks; ++ik)
+	{
+	    p_hamilt->updateHk(ik);
+		bool bit = false; // LiuXh, 2017-03-21
+		// if set bit = true, there would be error in soc-multi-core
+		// calculation, noted by zhengdy-soc
 
-    if(bit)
-    {
-        ssh << PARAM.globalv.global_out_dir << "H_bit.ccf";
-        sss << PARAM.globalv.global_out_dir << "S_bit.ccf";
-    }
-    else
-    {
-        // mohan update 2021-02-10
-        ssh << PARAM.globalv.global_out_dir << "H" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
-        sss << PARAM.globalv.global_out_dir << "S" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
-    }
+		hamilt::MatrixBlock<T> h_mat;
+		hamilt::MatrixBlock<T> s_mat;
 
-    if(bit)
-    {
-        FILE *g1 = fopen(ssh.str().c_str(),"wb");
-        FILE *g2 = fopen(sss.str().c_str(),"wb");
+		p_hamilt->matrix(h_mat, s_mat);
 
-        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g1);
-        fwrite(&Hnnz,sizeof(int),1,g1);
-        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g2);
-        fwrite(&Hnnz,sizeof(int),1,g2);
+		const int out_label=1; // 1: .txt, 2: .dat
 
-        fclose(g1);
-        fclose(g2);
-    }
+		std::string h_fn = ModuleIO::filename_output(global_out_dir,
+				"hk","nao",ik,ik2iktot,nspin,nkstot,
+				out_label,out_app_flag,gamma_only,istep);
 
+		ModuleIO::save_mat(istep,
+				h_mat.p,
+				PARAM.globalv.nlocal,
+				bit,
+				PARAM.inp.out_mat_hs[1],
+				1,
+				out_app_flag,
+				h_fn,
+				pv,
+				GlobalV::DRANK);
 
-    if(!bit)
-    {
-        std::ofstream g1(ssh.str().c_str());
-        std::ofstream g2(sss.str().c_str());
+        // mohan note 2025-06-02
+        // for overlap matrix, the two spin channels yield the same matrix
+        // so we only need to print matrix from one spin channel.
+		const int current_spin = isk[ik];
+		if(current_spin == 1)
+		{
+			continue;
+		}
 
-        g1 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
-        g2 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
+		std::string s_fn = ModuleIO::filename_output(global_out_dir,
+				"sk","nao",ik,ik2iktot,nspin,nkstot,
+				out_label,out_app_flag,gamma_only,istep);
 
-        for(int i=0; i<PARAM.globalv.nlocal+1; ++i)
-        {
-            g1 << colptr_H[i] << " ";
-            g2 << colptr_H[i] << " ";
-        }
-        g1 << std::endl;
-        g2 << std::endl;
+		ofs_running << " The output filename is " << s_fn << std::endl;
 
-        for(int i=0; i<Hnnz; ++i)
-        {
-            g1 << rowind_H[i] << " ";
-            g2 << rowind_H[i] << " ";
-        }
-        g1 << std::endl;
-        g2 << std::endl;
-
-        for(int i=0; i<Hnnz; ++i)
-        {
-            g1 << nzval_H[i] << " ";
-            g2 << nzval_S[i] << " ";
-        }
-        g1 << std::endl;
-        g2 << std::endl;
-
-        g1.close();
-        g2.close();
-    }
-    return;
+		ModuleIO::save_mat(istep,
+				s_mat.p,
+				PARAM.globalv.nlocal,
+				bit,
+				PARAM.inp.out_mat_hs[1],
+				1,
+				out_app_flag,
+			    s_fn,	
+				pv,
+				GlobalV::DRANK);
+	} // end ik
 }
-*/
+
 
 // output a square matrix
 template <typename T>
@@ -91,38 +103,28 @@ void ModuleIO::save_mat(const int istep,
     const int precision,
     const bool tri,
     const bool app,
-    const std::string label,
-    const std::string& file_name,
+    const std::string& filename,
     const Parallel_2D& pv,
     const int drank,
     const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension of " + label + " : ", dim);
 
-    std::stringstream ss;
-    if (bit) {ss << PARAM.globalv.global_out_dir << file_name + "-" + label + "-bit";
-    } else
-    {
-        if (app || istep < 0) {
-            ss << PARAM.globalv.global_out_dir << file_name + "-" + label;
-        } else {
-            ss << PARAM.globalv.global_out_dir << istep << "_" << file_name + "-" + label;
-}
-    }
-    if (bit)
-    {
+    // print out .dat file
+	if (bit)
+	{
 #ifdef __MPI
         FILE* g = nullptr;
 
         if (drank == 0)
         {
-            g = fopen(ss.str().c_str(), "wb");
+            g = fopen(filename.c_str(), "wb");
             fwrite(&dim, sizeof(int), 1, g);
         }
 
-        int ir, ic;
+        int ir=0;
+        int ic=0;
         for (int i = 0; i < dim; ++i)
         {
             T* line = new T[tri ? dim - i : dim];
@@ -151,7 +153,10 @@ void ModuleIO::save_mat(const int istep,
                 }
             }
 
-            if (reduce) Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			if (reduce) 
+			{
+				Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			}
 
             if (drank == 0)
             {
@@ -165,11 +170,12 @@ void ModuleIO::save_mat(const int istep,
             MPI_Barrier(DIAG_WORLD);
         }
 
-        if (drank == 0) {
-            fclose(g);
-}
+		if (drank == 0) 
+		{
+			fclose(g);
+		}
 #else
-        FILE* g = fopen(ss.str().c_str(), "wb");
+        FILE* g = fopen(filename.c_str(), "wb");
 
         fwrite(&dim, sizeof(int), 1, g);
 
@@ -182,23 +188,27 @@ void ModuleIO::save_mat(const int istep,
         }
         fclose(g);
 #endif
-    } // end bit
-    else
+    } // end .dat file
+    else // .txt file
     {
         std::ofstream g;
         g << std::setprecision(precision);
 #ifdef __MPI
         if (drank == 0)
         {
-            if (app && istep > 0) {
-                g.open(ss.str().c_str(), std::ofstream::app);
-            } else {
-                g.open(ss.str().c_str());
-}
-            g << dim;
-        }
+			if (app && istep > 0) 
+			{
+				g.open(filename.c_str(), std::ofstream::app);
+			} 
+			else 
+			{
+				g.open(filename.c_str());
+			}
+			g << dim;
+		}
 
-        int ir, ic;
+        int ir=0;
+        int ic=0;
         for (int i = 0; i < dim; i++)
         {
             T* line = new T[tri ? dim - i : dim];
@@ -227,25 +237,35 @@ void ModuleIO::save_mat(const int istep,
                 }
             }
 
-            if (reduce) Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			if (reduce) 
+			{
+				Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+			}
 
             if (drank == 0)
             {
-                for (int j = (tri ? i : 0); j < dim; j++) { g << " " << line[tri ? j - i : j];
-}
-                g << std::endl;
+				for (int j = (tri ? i : 0); j < dim; j++) 
+				{
+					g << " " << line[tri ? j - i : j];
+				}
+				g << std::endl;
             }
             delete[] line;
         }
 
-        if (drank == 0) { // Peize Lin delete ; at 2020.01.31
-            g.close();
-}
+		if (drank == 0) 
+		{ // Peize Lin delete ; at 2020.01.31
+			g.close();
+		}
 #else
-        if (app)
-            std::ofstream g(ss.str().c_str(), std::ofstream::app);
-        else
-            std::ofstream g(ss.str().c_str());
+		if (app)
+		{
+			std::ofstream g(filename.c_str(), std::ofstream::app);
+		}
+		else
+		{
+			std::ofstream g(filename.c_str());
+		}
 
         g << dim;
         g << std::setprecision(precision);

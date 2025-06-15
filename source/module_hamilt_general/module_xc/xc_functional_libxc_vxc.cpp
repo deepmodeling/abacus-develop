@@ -35,7 +35,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
 
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func( func_id, (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED );
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
 
     const bool is_gga = [&funcs]()
     {
@@ -192,7 +194,9 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     //----------------------------------------------------------
 
     const int nspin = PARAM.inp.nspin;
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func( func_id, ( (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED ) );
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr

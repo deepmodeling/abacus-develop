@@ -523,7 +523,11 @@ void SpinConstrain<FPTYPE>::print_Mi(std::ofstream& ofs_running)
     {
         const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+        FmtTable table(/*titles=*/title, 
+                       /*nrows=*/nat, 
+                       /*formats=*/fmts, 
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
         for (int iat = 0; iat < nat; ++iat)
         {
             mag_z[iat] = Mi_[iat].z;
@@ -535,7 +539,11 @@ void SpinConstrain<FPTYPE>::print_Mi(std::ofstream& ofs_running)
     {
         const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+        FmtTable table(/*titles=*/title, 
+                       /*nrows=*/nat, 
+                       /*formats=*/fmts, 
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
         for (int iat = 0; iat < nat; ++iat)
         {
             mag_x[iat] = Mi_[iat].x;
@@ -560,7 +568,11 @@ void SpinConstrain<FPTYPE>::print_Mag_Force(std::ofstream& ofs_running)
     {
         const std::vector<std::string> title = {"Magnetic force (eV/uB)", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+        FmtTable table(/*titles=*/title, 
+                       /*nrows=*/nat, 
+                       /*formats=*/fmts, 
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
         for (int iat = 0; iat < nat; ++iat)
         {
             mag_force_z[iat] = lambda_[iat].z * ModuleBase::Ry_to_eV;
@@ -572,7 +584,11 @@ void SpinConstrain<FPTYPE>::print_Mag_Force(std::ofstream& ofs_running)
     {
         const std::vector<std::string> title = {"Magnetic force (eV/uB)", "", "", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(title, nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+        FmtTable table(/*titles=*/title, 
+                       /*nrows=*/nat, 
+                       /*formats=*/fmts, 
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
         for (int iat = 0; iat < nat; ++iat)
         {
             mag_force_x[iat] = lambda_[iat].x * ModuleBase::Ry_to_eV;

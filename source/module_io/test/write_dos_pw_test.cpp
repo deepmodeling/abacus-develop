@@ -41,8 +41,8 @@ protected:
 
 TEST_F(DosPWTest,Dos1)
 {
-				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",0.005,18,-6,0.07,36,36,8);
+	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
@@ -63,36 +63,50 @@ TEST_F(DosPWTest,Dos1)
 		kv->wk[ik] = dosp.wk[ik];
 	}
 	PARAM.input.nbands = dosp.nbands;
-	ModuleIO::write_dos_pw(dosp.ekb,
+
+    // initialize the Fermi energy
+    elecstate::efermi fermi_energy;
+
+	std::ofstream ofs("write_dos_pw.log");
+    
+    UnitCell ucell;
+
+	ModuleIO::write_dos_pw(
+            ucell, // this should be unitcell, 2025-04-12
+            dosp.ekb,
 			dosp.wg,
 			*kv,
+			PARAM.inp.nbands,
+			fermi_energy,
 			dosp.de_ev,
 			dos_scale,
-			dosp.bcoeff);
+			dosp.bcoeff,
+			ofs);
+    ofs.close();
+    remove("write_dos_pw.log");
+
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("DOS1_smearing.dat");
+		ifs.open("doss1_pw.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("             3200")); // number of electrons is 32
+		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
+        EXPECT_THAT(str, testing::HasSubstr("           -4.6           0.25        0.28125        1.42515       0.159819"));
+        EXPECT_THAT(str, testing::HasSubstr("             18              0             16              0             16"));
 		ifs.close();
-		ifs.open("DOS1");
-		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str1, testing::HasSubstr("4800")); //number of energy points is (18-(-6))/0.005
-		ifs.close();
-		remove("DOS1_smearing.dat");
-		remove("DOS1");
+		remove("doss1_pw.txt");
 #ifdef __MPI
 	}
 #endif
 }
 
+
 TEST_F(DosPWTest,Dos2)
 {
-				//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smearing.dat",0.005,18,-6,0.07,36,36,8);
+    //is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
@@ -113,27 +127,40 @@ TEST_F(DosPWTest,Dos2)
 		kv->wk[ik] = dosp.wk[ik];
 	}
 	PARAM.input.nbands = dosp.nbands;
-	ModuleIO::write_dos_pw(dosp.ekb,
+
+    // initialize the Fermi energy
+    elecstate::efermi fermi_energy;
+
+	std::ofstream ofs("write_dos_pw.log");
+
+    UnitCell ucell;
+
+	ModuleIO::write_dos_pw(
+			ucell,
+			dosp.ekb,
 			dosp.wg,
 			*kv,
+            PARAM.inp.nbands,
+            fermi_energy,
 			dosp.de_ev,
 			dos_scale,
-			dosp.bcoeff);
+			dosp.bcoeff,
+            ofs);
+    ofs.close();
+    remove("write_dos_pw.log");
+
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("DOS1_smearing.dat");
-		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("             3197")); // number of electrons is 32
-		ifs.close();
-		ifs.open("DOS1");
+		ifs.open("doss1_pw.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str1, testing::HasSubstr("4531")); //number of energy points
+		EXPECT_THAT(str1, testing::HasSubstr("4532 # number of points"));
+        EXPECT_THAT(str1, testing::HasSubstr("       -5.38811        0.03125        0.03125"));
+        EXPECT_THAT(str1, testing::HasSubstr("        3.07189         0.1875        5.46875"));
 		ifs.close();
-		remove("DOS1_smearing.dat");
-		remove("DOS1");
+		remove("doss1_pw.txt");
 #ifdef __MPI
 	}
 #endif
@@ -147,6 +174,10 @@ int main(int argc, char **argv)
 	testing::InitGoogleTest(&argc,argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
 	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    
+    // only test the second one
+    // ::testing::GTEST_FLAG(filter) = "DosPWTest.Dos2";
+
 	int result = RUN_ALL_TESTS();
 
 	MPI_Finalize();

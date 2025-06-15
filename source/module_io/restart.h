@@ -7,6 +7,7 @@
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
+
 class Restart
 {
 public:

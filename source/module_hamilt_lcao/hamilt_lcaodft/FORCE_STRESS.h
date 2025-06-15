@@ -11,7 +11,7 @@
 #include "module_io/input_conv.h"
 #include "module_psi/psi.h"
 #ifdef __EXX
-#include "module_ri/Exx_LRI.h"
+#include "module_ri/Exx_LRI_interface.h"
 #endif
 #include "force_stress_arrays.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
@@ -49,12 +49,12 @@ class Force_Stress_LCAO
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
-#ifdef __DEEPKS
+#ifdef __MLALGO
                         LCAO_Deepks<T>& ld,
 #endif
 #ifdef __EXX
-                        Exx_LRI<double>& exx_lri_double,
-                        Exx_LRI<std::complex<double>>& exx_lri_complex,
+                        Exx_LRI_Interface<T, double>& exd,
+                        Exx_LRI_Interface<T, std::complex<double>>& exc,
 #endif
                         ModuleSymmetry::Symmetry* symm);
 
@@ -96,7 +96,7 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& stvnl_dphi,
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
-#if __DEEPKS
+#if __MLALGO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
                        LCAO_Deepks<T>& ld,

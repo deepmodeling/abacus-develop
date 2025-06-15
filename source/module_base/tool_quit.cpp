@@ -62,40 +62,66 @@ void QUIT(int ret)
 void WARNING_QUIT(const std::string &file,const std::string &description)
 {
 	WARNING_QUIT(file, description, 1);
+
+	#ifdef __MPI /* if it is MPI run, finalize first, then exit */
+	std::cout << "Detecting if MPI has been initialized..." << std::endl;
+	int is_initialized;
+    MPI_Initialized(&is_initialized);
+	if (is_initialized) {
+		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
+		MPI_Finalize();
+	}
+	else{
+		std::cout << "MPI has not been initialized. Quit normally." << std::endl;
+	}
+	/* but seems this is the only correct way to terminate the MPI */
+#endif
 }
 
 void WARNING_QUIT(const std::string &file,const std::string &description,int ret)
 {
 #ifdef __NORMAL
 
-	std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-	std::cout << "                         NOTICE                           " << std::endl;
-	std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
+	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
+    std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
+    std::cout << " https://abacus.deepmodeling.com" << std::endl;
+	std::cout << " For any questions, propose issues on the website" << std::endl;
+    std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 
 #else
 		std::cout << " " << std::endl;
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-		std::cout << "                         NOTICE                           " << std::endl;
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
+		std::cout << "                         !NOTICE!                         " << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
 		std::cout << " " << std::endl;
 		std::cout << " " << description << std::endl;
 		std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 		std::cout << " " << std::endl;
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-		std::cout << "                         NOTICE                           " << std::endl;
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
+		std::cout << " https://abacus.deepmodeling.com" << std::endl;
+		std::cout << " For any questions, propose issues on the website" << std::endl;
+		std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
+		std::cout << "                         !NOTICE!                         " << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
 
 
-	GlobalV::ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-	GlobalV::ofs_running << "                         NOTICE                           " << std::endl;
-	GlobalV::ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
+	GlobalV::ofs_running << "                         !NOTICE!                         " << std::endl;
+	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " " << description << std::endl;
 	GlobalV::ofs_running << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 	GlobalV::ofs_running << std::endl;
-	GlobalV::ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	GlobalV::ofs_running << " For detailed manual of ABACUS, please see the website" << std::endl;
+	GlobalV::ofs_running << " https://abacus.deepmodeling.com" << std::endl;
+	GlobalV::ofs_running << " For any questions, propose issues on the website" << std::endl;
+	GlobalV::ofs_running << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
+	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 	GlobalV::ofs_running << "                         NOTICE                           " << std::endl;
-	GlobalV::ofs_running << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 
 	WARNING(file,description);
     GlobalV::ofs_running<<" Check in file : "<<PARAM.globalv.global_out_dir<<"warning.log"<<std::endl;
@@ -128,10 +154,10 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		}
 
 		//print error information
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
 		std::cout << " ERROR! " << description << std::endl;
 		std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
-		std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+		std::cout << " ---------------------------------------------------------" << std::endl;
 		GlobalV::ofs_running << " ERROR! CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
 		GlobalV::ofs_warning << std::endl;
 		GlobalV::ofs_warning << " ERROR! " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;

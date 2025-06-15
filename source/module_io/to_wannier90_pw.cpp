@@ -493,7 +493,7 @@ void toWannier90_PW::unkdotkb(
 
 void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &radial_in_q)
 {
-    // 径向函数傅里叶变换到q空间中
+    // The radial function is Fourier transformed into the q-space.
     radial_in_q.resize(num_wannier);
 
     double *r = new double[mesh_r];
@@ -600,7 +600,7 @@ void toWannier90_PW::produce_trial_in_pw(
 
     ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
 
-    // 保持与Wannier90球谐函数定义一致
+    // Keep it consistent with the definition of spherical harmonic functions in Wannier90 
     std::vector<int> need_inv = {2, 3, 5, 6, 14, 15};
     for (auto index : need_inv)
     {

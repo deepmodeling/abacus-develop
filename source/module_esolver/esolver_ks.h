@@ -1,31 +1,21 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include "esolver_fp.h"
+#include <cstring>
+//#include <fstream>
 
+// for first-principles esolver
+#include "esolver_fp.h"
 // for plane wave basis set 
 #include "module_basis/module_pw/pw_basis_k.h"
-
 // for k-points in Brillouin zone
 #include "module_cell/klist.h"
-
 // for charge mixing
 #include "module_elecstate/module_charge/charge_mixing.h"
-
 // for electronic wave functions
 #include "module_psi/psi.h"
-
 // for Hamiltonian
 #include "module_hamilt_general/hamilt.h"
-
-#ifdef __MPI
-#include <mpi.h>
-#else
-#include <chrono>
-#endif
-
-#include <cstring>
-#include <fstream>
 
 namespace ModuleESolver
 {
@@ -44,21 +34,23 @@ class ESolver_KS : public ESolver_FP
 
     virtual void runner(UnitCell& ucell, const int istep) override;
 
+    virtual void after_all_runners(UnitCell& ucell) override;
+
   protected:
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
-    //! Something to do before hamilt2density function in each iter loop.
+    //! Something to do before hamilt2rho function in each iter loop.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
-    //! Something to do after hamilt2density function in each iter loop.
+    //! Something to do after hamilt2rho function in each iter loop.
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
@@ -80,13 +72,6 @@ class ESolver_KS : public ESolver_FP
 
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
-
-    //! the start time of scf iteration
-#ifdef __MPI
-    double iter_time;
-#else
-    std::chrono::system_clock::time_point iter_time;
-#endif
 
     std::string basisname;      //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0; //! number of electrons

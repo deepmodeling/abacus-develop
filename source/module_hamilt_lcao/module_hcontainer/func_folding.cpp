@@ -15,7 +15,7 @@ template<typename TR>
 void folding_HR(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
-                const int ncol,
+                const int hk_ld,
                 const int hk_type)
 {
 #ifdef _OPENMP
@@ -24,9 +24,18 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
     for (int i = 0; i < hR.size_atom_pairs(); ++i)
     {
         hamilt::AtomPair<TR>& tmp = hR.get_atom_pair(i);
-        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        const int row_size = tmp.get_row_size();
+        const int col_size = tmp.get_col_size();
+        // copy hk to hk_type
+        // hk_tmp is row-major and stored contiguously in memory,
+        // so copy hr to hk_tmp is faster than copy hr to hk
+        std::vector<std::complex<double>> hk_mat_tmp(row_size * col_size, 0);
+
+        // copy hr to hk_tmp
+        for(int ir = 0; ir < tmp.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
+            TR* hr_mat = tmp.get_pointer(ir);
             // cal k_phase
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
@@ -34,9 +43,35 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
             double sinp, cosp;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
+            
+            for(int i = 0; i < row_size * col_size; ++i)
+            {
+                hk_mat_tmp[i] += kphase * hr_mat[i];
+            }
+        }
 
-            tmp.find_R(r_index);
-            tmp.add_to_matrix(hk, ncol, kphase, hk_type);
+        // copy hk_tmp to hk
+        if (hk_type == 0)
+        {
+            std::complex<double>* hk_mat = hk + tmp.get_begin_row() * hk_ld + tmp.get_begin_col();
+            for(int irow = 0; irow < row_size; ++irow)
+            {
+                for(int icol = 0; icol < col_size; ++icol)
+                {
+                    hk_mat[irow * hk_ld + icol] += hk_mat_tmp[irow * col_size + icol];
+                }
+            }
+        }
+        else if(hk_type == 1)
+        {
+            std::complex<double>* hk_mat = hk + tmp.get_begin_col() * hk_ld + tmp.get_begin_row();
+            for(int icol = 0; icol < col_size; ++icol)
+            {
+                for(int irow = 0; irow < row_size; ++irow)
+                {
+                    hk_mat[icol * hk_ld + irow] += hk_mat_tmp[irow * col_size + icol];
+                }
+            }
         }
     }
     /*for (int i = 0; i < hR.size_R_loop(); ++i)
@@ -82,7 +117,7 @@ template void folding_HR<double>(const hamilt::HContainer<double>& hR,
 void folding_HR(const hamilt::HContainer<double>& hR,
                 double* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
-                const int ncol,
+                const int hk_ld,
                 const int hk_type)
 {
 // in ABACUS, this function works with gamma-only case.
@@ -97,7 +132,7 @@ void folding_HR(const hamilt::HContainer<double>& hR,
         double kphase = 1.0;
 
         // Hk = HR 
-        hR.get_atom_pair(i).add_to_matrix(hk, ncol, kphase, hk_type);
+        hR.get_atom_pair(i).add_to_matrix(hk, hk_ld  , kphase, hk_type);
     }
 }
 

@@ -47,26 +47,25 @@ void FFT_Bundle::initfft(int nx_in,
     assert(this->device == "cpu" || this->device == "gpu" || this->device == "dsp");
     assert(this->precision == "single" || this->precision == "double" || this->precision == "mixing");
 
-    if (this->precision == "single")
+    if (this->precision == "single" || this->precision == "mixing")
     {
+        float_flag = true;
+        if (this->precision == "mixing")
+        {
+            double_flag = true;
+        }
 #if not defined(__ENABLE_FLOAT_FFTW)
         if (this->device == "cpu")
         {
-            float_define = false;
+            ModuleBase::WARNING_QUIT("FFT_Bundle", "Please enable float fftw in the cmake to use float fft");
         }
 #endif
-#if defined(__CUDA) || defined(__ROCM)
-        if (this->device == "gpu")
-        {
-            float_flag = float_define;
-        }
-#endif
-        float_flag = float_define;
-        double_flag = true;
     }
-    if (this->precision == "double")
+    else if (this->precision == "double")
     {
         double_flag = true;
+    }else{
+        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the precision to single or double or mixing");
     }
 #if defined(__DSP)
     if (device == "dsp")
@@ -77,24 +76,23 @@ void FFT_Bundle::initfft(int nx_in,
         }
         fft_double = make_unique<FFT_DSP<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
-    }
+    }else
 #endif
     if (device == "cpu")
     {
-        fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
-        fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
         if (float_flag)
         {
+            fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
             fft_float
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
         if (double_flag)
         {
+            fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
             fft_double
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
-    }
-    if (device == "gpu")
+    }else if (device == "gpu")
     {
 #if defined(__ROCM)
         fft_float = make_unique<FFT_ROCM<float>>();
@@ -107,6 +105,8 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_CUDA<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #endif
+    }else{
+        ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
 }
 
@@ -227,30 +227,26 @@ void FFT_Bundle::fftxyc2r(std::complex<double>* in, double* out) const
 }
 
 template <>
-void FFT_Bundle::fft3D_forward(const base_device::DEVICE_GPU* ctx,
-                               std::complex<float>* in,
+void FFT_Bundle::fft3D_forward(std::complex<float>* in,
                                std::complex<float>* out) const
 {
     fft_float->fft3D_forward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_forward(const base_device::DEVICE_GPU* ctx,
-                               std::complex<double>* in,
+void FFT_Bundle::fft3D_forward(std::complex<double>* in,
                                std::complex<double>* out) const
 {
     fft_double->fft3D_forward(in, out);
 }
 
 template <>
-void FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
-                                std::complex<float>* in,
+void FFT_Bundle::fft3D_backward(std::complex<float>* in,
                                 std::complex<float>* out) const
 {
     fft_float->fft3D_backward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
-                                std::complex<double>* in,
+void FFT_Bundle::fft3D_backward(std::complex<double>* in,
                                 std::complex<double>* out) const
 {
     fft_double->fft3D_backward(in, out);

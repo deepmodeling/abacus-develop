@@ -45,7 +45,9 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     ~TDEkinetic();
 
     virtual void contributeHR() override;
+
     virtual void contributeHk(int ik) override;
+
     /// @brief init two center integrals and vector potential for td_ekintic term
     void init_td();
 
@@ -78,22 +80,30 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
      * loop the atom-pairs in HR and calculate the ekinetic matrix
      */
     void calculate_HR();
+
     virtual void set_HR_fixed(void*) override;
 
     TD_Velocity td_velocity;
 
   private:
+
     const UnitCell* ucell = nullptr;
+
     std::vector<double> orb_cutoff_;
     
     HContainer<TR>* SR = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+
+    /// @brief Store real space hamiltonian. TD term should include imaginary part,
+    /// thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
+
     const Grid_Driver* Grid = nullptr;
 
     const K_Vectors* kv;
-    /// @brief correction term iA⋅∇
+
+    /// @brief correction term i A nabla
     void td_ekinetic_scalar(std::complex<double>* Hloc, const TR& Sloc, int nnr);
+
     /// @brief correction term A^2*S
     void td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap);
 
@@ -106,7 +116,9 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     std::vector<AdjacentAtomInfo> adjs_all;
 
     bool hR_tmp_done = false;
+
     bool allocated = false;
+
     bool output_hR_done = false;
 };
 

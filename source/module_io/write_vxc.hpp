@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_psi/psi.h"
 #include "module_io/write_HS.h"
+#include "module_io/filename.h" // use filename_output function
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -29,16 +30,6 @@ struct TGint<std::complex<double>>
 
 namespace ModuleIO
 {
-
-inline void gint_vl(Gint_Gamma& gg, Gint_inout& io)
-{
-    gg.cal_vlocal(&io, false);
-};
-
-inline void gint_vl(Gint_k& gk, Gint_inout& io, ModuleBase::matrix& wg)
-{
-    gk.cal_gint(&io);
-};
 
 inline void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
 {
@@ -134,6 +125,8 @@ std::vector<double> orbital_energy(const int ik, const int nbands, const std::ve
     return e;
 }
 
+#ifndef SET_GINT_POINTER_H
+#define SET_GINT_POINTER_H
 // mohan update 2024-04-01
 template <typename T>
 void set_gint_pointer(Gint_Gamma& gint_gamma, Gint_k& gint_k, typename TGint<T>::type*& gint);
@@ -153,6 +146,7 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
 {
     gint = &gint_k;
 }
+#endif
 
 inline void write_orb_energy(const K_Vectors& kv,
     const int nspin0, const int nbands,
@@ -223,7 +217,7 @@ void write_Vxc(const int nspin,
     // 2. allocate AO-matrix
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
-    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
+    std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(ucell, pv));
     for (int is = 0; is < nspin0; ++is) {
         vxcs_R_ao[is].set_zero();
         if (std::is_same<TK, double>::value) { vxcs_R_ao[is].fix_gamma(); }
@@ -292,16 +286,28 @@ void write_Vxc(const int nspin,
         }
         const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
         e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo, p2d));
+
         // write
-        ModuleIO::save_mat(-1,
+
+		// mohan add 2025-06-02
+		const int istep = -1;
+		const int out_label = 1; // 1 means .txt while 2 means .dat
+		const bool out_app_flag = 0;
+        const bool gamma_only = PARAM.globalv.gamma_only_local;
+
+		std::string vxc_file = ModuleIO::filename_output(
+				PARAM.globalv.global_out_dir,
+				"vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
+				out_label,out_app_flag,gamma_only,istep);
+
+        ModuleIO::save_mat(istep,
                            vxc_tot_k_mo.data(),
                            nbands,
                            false /*binary*/,
                            PARAM.inp.out_ndigits,
                            true /*triangle*/,
-                           false /*append*/,
-                           "Vxc",
-                           "k-" + std::to_string(ik),
+                           out_app_flag /*append*/,
+                           vxc_file, 
                            p2d,
                            drank);
         // ======test=======

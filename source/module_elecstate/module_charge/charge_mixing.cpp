@@ -58,22 +58,24 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     // print into running.log
-    GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
-    GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
-    GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0_min: "<< PARAM.inp.mixing_gg0_min <<std::endl;
+    GlobalV::ofs_running<<"\n ----------- Charge Mixing Parameters ------------"<<std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_type", this->mixing_mode);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta", this->mixing_beta);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0", this->mixing_gg0);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_min", PARAM.inp.mixing_gg0_min);
+
     if (PARAM.inp.nspin==2 || PARAM.inp.nspin==4)
     {
-        GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
-        GlobalV::ofs_running<<"mixing_gg0_mag: "<< PARAM.inp.mixing_gg0_mag <<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta_mag", this->mixing_beta_mag);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_mag", PARAM.inp.mixing_gg0_mag);
     }
     if (PARAM.inp.mixing_angle > 0)
     {
-        GlobalV::ofs_running<<"mixing_angle: "<< PARAM.inp.mixing_angle <<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_angle", PARAM.inp.mixing_angle);
     }
-    GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
-    GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_ndim", this->mixing_ndim);
 
     return;
 }
@@ -158,12 +160,6 @@ void Charge_Mixing::init_mixing()
         }
     }
 
-    // initailize nhat_mdata
-#ifdef USE_PAW
-    if(PARAM.inp.use_paw) { this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
-}
-#endif
-
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
 
     return;
@@ -184,10 +180,6 @@ void Charge_Mixing::mix_reset()
     {
         this->tau_mdata.reset();
     }
-    // reset for paw
-#ifdef USE_PAW
-    this->nhat_mdata.reset();
-#endif
 }
 
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold)

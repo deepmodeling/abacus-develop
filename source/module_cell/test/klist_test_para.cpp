@@ -87,11 +87,6 @@ Fcoef::~Fcoef()
 {
 }
 
-namespace GlobalC
-{
-Parallel_Kpoints Pkpoints;
-UnitCell ucell;
-} // namespace GlobalC
 
 /************************************************
  *  unit test of class K_Vectors
@@ -314,7 +309,8 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+//    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+    KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

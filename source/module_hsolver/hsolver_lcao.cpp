@@ -83,13 +83,11 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
                                      pes->f_en,
                                      pes->nelec_spin,
                                      pes->skip_weights);
-        if (!PARAM.inp.dm_to_rho)
-        {
-            auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
-            elecstate::calEBand(_pes_lcao->ekb,_pes_lcao->wg,_pes_lcao->f_en);
-            elecstate::cal_dm_psi(_pes_lcao->DM->get_paraV_pointer(), _pes_lcao->wg, psi, *(_pes_lcao->DM));
-            _pes_lcao->DM->cal_DMR();
-        }
+
+        auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+        elecstate::calEBand(_pes_lcao->ekb, _pes_lcao->wg, _pes_lcao->f_en);
+        elecstate::cal_dm_psi(_pes_lcao->DM->get_paraV_pointer(), _pes_lcao->wg, psi, *(_pes_lcao->DM));
+        _pes_lcao->DM->cal_DMR();
 
         if (!skip_charge)
         {

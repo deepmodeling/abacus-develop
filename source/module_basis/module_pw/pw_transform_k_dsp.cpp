@@ -8,12 +8,30 @@
 #if defined (__DSP)
 namespace ModulePW
 {
-template <typename FPTYPE>
-void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
-                                std::complex<FPTYPE>* out,
+    template <>
+void PW_Basis_K::real2recip_dsp(const std::complex<float>* in,
+                                std::complex<float>* out,
                                 const int ik,
                                 const bool add,
-                                const FPTYPE factor) const
+                                const float factor) const
+                                {
+
+                                }
+    template <>
+void PW_Basis_K::recip2real_dsp(const std::complex<float>* in,
+                                std::complex<float>* out,
+                                const int ik,
+                                const bool add,
+                                const float factor) const
+                                {
+
+                                }
+template <>
+void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
+                                std::complex<double>* out,
+                                const int ik,
+                                const bool add,
+                                const double factor) const
 {
     const base_device::DEVICE_CPU* ctx;
     const base_device::DEVICE_GPU* gpux;
@@ -27,13 +45,11 @@ void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
 
     // 3d fft
     this->fft_bundle.resource_handler(1);
-    this->fft_bundle.fft3D_forward(gpux, 
-                                   auxr, 
+    this->fft_bundle.fft3D_forward(auxr, 
                                    auxr);
     this->fft_bundle.resource_handler(0);
     // copy the result from the auxr to the out ,while consider the add
-    set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_CPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -41,12 +57,12 @@ void PW_Basis_K::real2recip_dsp(const std::complex<FPTYPE>* in,
                                                                    auxr,
                                                                    out);
 }
-template <typename FPTYPE>
-void PW_Basis_K::recip2real_dsp(const std::complex<FPTYPE>* in,
-                                std::complex<FPTYPE>* out,
+template <>
+void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
+                                std::complex<double>* out,
                                 const int ik,
                                 const bool add,
-                                const FPTYPE factor) const
+                                const double factor) const
 {
     assert(this->gamma_only == false);
     const base_device::DEVICE_CPU* ctx;
@@ -58,10 +74,10 @@ void PW_Basis_K::recip2real_dsp(const std::complex<FPTYPE>* in,
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
     // copy the mapping form the type of stick to the 3dfft
-    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(ctx, npw_k, this->ig2ixyz_k_cpu.data() + startig, in, auxr);
+    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(npw_k, this->ig2ixyz_k_cpu.data() + startig, in, auxr);
     // use 3d fft backward
     this->fft_bundle.resource_handler(1);
-    this->fft_bundle.fft3D_backward(gpux, auxr, auxr);
+    this->fft_bundle.fft3D_backward(auxr, auxr);
     this->fft_bundle.resource_handler(0);
     if (add)
     {
@@ -107,10 +123,10 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     const int npw_k = this->npwk[ik];
 
     // copy the mapping form the type of stick to the 3dfft
-    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(ctx, npw_k, this->ig2ixyz_k_cpu.data() + startig, input, auxr);
+    set_3d_fft_box_op<double, base_device::DEVICE_CPU>()(npw_k, this->ig2ixyz_k_cpu.data() + startig, input, auxr);
 
     // use 3d fft backward
-    this->fft_bundle.fft3D_backward(gpux, auxr, auxr);
+    this->fft_bundle.fft3D_backward(auxr, auxr);
 
     for (int ir = 0; ir < size; ir++)
     {
@@ -118,10 +134,9 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     }
 
     // 3d fft
-    this->fft_bundle.fft3D_forward(gpux, auxr, auxr);
+    this->fft_bundle.fft3D_forward(auxr, auxr);
     // copy the result from the auxr to the out ,while consider the add
-    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(ctx,
-                                                                   npw_k,
+    set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(npw_k,
                                                                    this->nxyz,
                                                                    add,
                                                                    factor,
@@ -131,16 +146,16 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     ModuleBase::timer::tick(this->classname, "convolution");
 }
 
-// template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,
-//                                             std::complex<float>* out,
-//                                             const int ik,
-//                                             const bool add,
-//                                             const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
-// template void PW_Basis_K::recip2real_dsp<float>(const std::complex<float>* in,
-//                                             std::complex<float>* out,
-//                                             const int ik,
-//                                             const bool add,
-//                                             const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,
+                                            std::complex<float>* out,
+                                            const int ik,
+                                            const bool add,
+                                            const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+template void PW_Basis_K::recip2real_dsp<float>(const std::complex<float>* in,
+                                            std::complex<float>* out,
+                                            const int ik,
+                                            const bool add,
+                                            const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
 template void PW_Basis_K::real2recip_dsp<double>(const std::complex<double>* in,
                                                  std::complex<double>* out,

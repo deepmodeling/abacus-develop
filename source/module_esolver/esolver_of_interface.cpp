@@ -65,7 +65,7 @@ void ESolver_OF::init_kedf(const Input_para& inp)
         }
         this->lkt_->set_para(this->dV_, inp.of_lkt_a);
     }
-#ifdef __MLKEDF
+#ifdef __MLALGO
     if (this->of_kinetic_ == "ml")
     {
         if (this->ml_ == nullptr)
@@ -102,7 +102,7 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::mat
     {
         this->lkt_->lkt_potential(prho, this->pw_rho, rpot);
     }
-#ifdef __MLKEDF
+#ifdef __MLALGO
     if (this->of_kinetic_ == "ml")
     {
         this->ml_->ml_potential(prho, this->pw_rho, rpot);
@@ -156,7 +156,7 @@ double ESolver_OF::kinetic_energy()
     {
         kinetic_energy += this->lkt_->lkt_energy;
     }
-#ifdef __MLKEDF
+#ifdef __MLALGO
     if (this->of_kinetic_ == "ml")
     {
         kinetic_energy += this->ml_->ml_energy;
@@ -176,7 +176,7 @@ double ESolver_OF::kinetic_energy()
  * Calculated the kinetic energy density, ONLY SPIN=1 SUPPORTED
  *
  * @param [in] prho charge density
- * @param [in] pphi phi^2 = rho
+ * @param [in] pphi phi = sqrt(rho)
  * @param [out] rtau kinetic energy density
  */
 void ESolver_OF::kinetic_energy_density(double** prho, double** pphi, double** rtau)
@@ -193,7 +193,7 @@ void ESolver_OF::kinetic_energy_density(double** prho, double** pphi, double** r
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
-        this->vw_->tau_vw(prho, this->pw_rho, rtau[0]);
+        this->vw_->tau_vw(pphi, this->pw_rho, rtau[0]);
     }
     if (this->of_kinetic_ == "wt")
     {

@@ -159,13 +159,17 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
     // for ML KEDF test
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
 #endif
 
-
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+#ifdef __MPI
+    this->iter_time = MPI_Wtime();
+#else
+    this->iter_time = std::chrono::system_clock::now();
+#endif
 
     while (true)
     {
@@ -290,7 +294,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        this->pelec->eferm.get_ef(is) = 0.;
+        this->pelec->eferm.set_efval(is, 0);
         this->theta_[is] = 0.;
         ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
         ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
@@ -326,8 +330,7 @@ void ESolver_OF::update_potential(UnitCell& ucell)
         {
             this->pdEdphi_[is][ir] = vr_eff[ir];
         }
-        this->pelec->eferm.get_ef(is) = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
-
+        this->pelec->eferm.set_efval(is, this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]));
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             this->pdLdphi_[is][ir]
@@ -509,7 +512,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
     }
 
-#ifdef __MLKEDF
+#ifdef __MLALGO
     //------------------------------------------------------------------
     // Check the positivity of Pauli energy
     //------------------------------------------------------------------
@@ -540,8 +543,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         {
             this->pdEdphi_[0][ir] = vr_eff[ir];
         }
-        this->pelec->eferm.get_ef(0) = this->cal_mu(this->pphi_[0], this->pdEdphi_[0], this->nelec_[0]);
-
+        this->pelec->eferm.set_efval(0, this->cal_mu(this->pphi_[0], this->pdEdphi_[0], this->nelec_[0]));
         // === temporary ===
         // assert(GlobalV::of_kinetic == "wt" || GlobalV::of_kinetic == "ml");
         // =================
@@ -559,11 +561,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
  */
 void ESolver_OF::after_all_runners(UnitCell& ucell)
 {
-
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
-    GlobalV::ofs_running << std::setprecision(16);
-    GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
-    GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+    ESolver_FP::after_all_runners(ucell);
 }
 
 /**

@@ -195,9 +195,10 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
             }
         }
     }
-    ModuleBase::GlobalFunc::OUT(ofs_in, "Find the coordinate range of the input atom(unit:lat0).");
-    ModuleBase::GlobalFunc::OUT(ofs_in, "min_tau", x_min, y_min, z_min);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "max_tau", x_max, y_max, z_max);
+
+    ofs_in << " RANGE OF ATOMIC COORDINATES (unit: lat0)" << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "smallest coordinates of atoms", x_min, y_min, z_min);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "largest  coordinates of atoms", x_max, y_max, z_max);
 
     this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
 
@@ -220,7 +221,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
     this->box_nx = glayerX + glayerX_minus;
     this->box_ny = glayerY + glayerY_minus;
     this->box_nz = glayerZ + glayerZ_minus;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "number of needed cells", box_nx, box_ny, box_nz);
 
     atoms_in_box.resize(this->box_nx);
     for (int i = 0; i < this->box_nx; i++)

@@ -767,6 +767,9 @@ template class Chebyshev<float>;
 #endif
 #if ((defined __CUDA) || (defined __ROCM))
 template class Chebyshev<double, base_device::DEVICE_GPU>;
+#ifdef __ENABLE_FLOAT_FFTW
+template class Chebyshev<float, base_device::DEVICE_GPU>;
+#endif
 #endif
 
 } // namespace ModuleBase
