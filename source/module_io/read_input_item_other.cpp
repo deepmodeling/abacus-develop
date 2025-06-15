@@ -501,6 +501,12 @@ void ReadInput::item_others()
         item.annotation = "whether to perform rdmft calculation, default is false";
         read_sync_bool(input.rdmft);
         this->add_item(item);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.rdmft && para.input.nspin == 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "rdmft is not available for nspin = 4");
+            }
+        };
     }
     {
         Input_Item item("rdmft_power_alpha");
