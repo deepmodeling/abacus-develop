@@ -101,7 +101,8 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread -w
 #==========================
 # Objects
 #==========================
-VPATH=../../../module_base\
+VPATH=../../../source_main\
+../../../module_base\
 ../../../module_base/module_device\
 ../../../module_base/module_container/ATen/core\
 ../../../module_base/module_container/ATen\
