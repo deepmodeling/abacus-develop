@@ -122,7 +122,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
-        // this->init_gpu_gint_variables(ucell, num_stream);
+        this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
 

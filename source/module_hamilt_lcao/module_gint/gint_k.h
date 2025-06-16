@@ -67,7 +67,7 @@ class Gint_k : public Gint {
             Abfs::Vector3_Order<int>,
             std::map<size_t, std::map<size_t, std::complex<double>>>>&
             pvdpR_soc_sparseMatrix,
-        LCAO_HS_Arrays& HS_arrays,
+        LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
     void cal_dvlocal_R_sparseMatrix(const int& current_spin,
