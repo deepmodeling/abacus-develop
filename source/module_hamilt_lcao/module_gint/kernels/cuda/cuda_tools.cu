@@ -285,7 +285,6 @@ inline T* Cuda_Mem_Wrapper<T>::get_host_pointer(const int stream_id)
     return this->host_pointer + stream_id * this->one_stream_size_aligned;
 }
 template class Cuda_Mem_Wrapper<double>;
-template class Cuda_Mem_Wrapper<double3>;
 template class Cuda_Mem_Wrapper<double*>;
 template class Cuda_Mem_Wrapper<int>;
 template class Cuda_Mem_Wrapper<bool>;
