@@ -35,9 +35,7 @@ class Gint_vl_metagga : public Gint
     // output
     HContainer<double>* hR_;
 
-    //========================
     // Intermediate variables
-    //========================
     double dr3_;
 
     HContainer<double> hr_gint_;

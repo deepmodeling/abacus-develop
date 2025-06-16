@@ -33,9 +33,7 @@ class Gint_vl_nspin4 : public Gint
     // output
     HContainer<std::complex<double>>* hR_;
 
-    //========================
     // Intermediate variables
-    //========================
     const double dr3_;
 
     const int nspin_ = 4;

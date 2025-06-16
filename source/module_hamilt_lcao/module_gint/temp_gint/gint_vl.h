@@ -33,9 +33,7 @@ class Gint_vl : public Gint
     // output
     HContainer<double>* hR_;
 
-    //========================
     // Intermediate variables
-    //========================
     double dr3_;
 
     HContainer<double> hr_gint_;

@@ -31,9 +31,7 @@ class Gint_tau : public Gint
     // output
     double **kin_;
 
-    //========================
     // Intermediate variables
-    //========================
     std::vector<HContainer<double>> dm_gint_vec_;
 };
 

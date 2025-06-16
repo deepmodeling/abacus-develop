@@ -32,9 +32,7 @@ class Gint_rho : public Gint
     // output
     double **rho_;
 
-    //========================
     // Intermediate variables
-    //========================
     std::vector<HContainer<double>> dm_gint_vec_;
 };
 

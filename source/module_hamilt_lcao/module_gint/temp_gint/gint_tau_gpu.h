@@ -37,9 +37,7 @@ class Gint_tau_gpu : public Gint
     // output
     double **kin_;
 
-    //========================
     // Intermediate variables
-    //========================
     std::vector<HContainer<double>> dm_gint_vec_;
 
     std::vector<CudaMemWrapper<double>> dm_gint_d_vec_;
