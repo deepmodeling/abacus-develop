@@ -9,7 +9,7 @@
 #
 
 VERSION = ABACUS
-HEADERS = *.h
+HEADERS = source_main/*.h
 
 VPATH=./src_global:\
 ./source_main:\
