@@ -35,6 +35,16 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
     return DM_trans;
 }
 
+#ifndef __NEW_GINT
+template<typename T>
+void LR::LR_Spectrum<T>::cal_gint_rho(double** rho, const int& nrxx)
+{
+    ModuleBase::GlobalFunc::ZEROS(rho[0], nrxx);
+    Gint_inout inout_rho(rho, Gint_Tools::job_type::rho, 1, false);
+    this->gint->cal_gint(&inout_rho);
+}
+#endif
+
 inline void check_sum_rule(const double& osc_tot)
 {
     if (std::abs(osc_tot - 1.0) > 1e-3) {
