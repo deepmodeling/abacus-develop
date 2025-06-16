@@ -106,7 +106,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
             gg.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
             Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
@@ -238,7 +238,7 @@ void IState_Charge::begin(Gint_k& gk,
 
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
                     gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
                     gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
                     Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
@@ -289,7 +289,7 @@ void IState_Charge::begin(Gint_k& gk,
 
                 DM.init_DMR(GridD_in, ucell_in);
                 DM.cal_DMR();
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
                 gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
                 Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);

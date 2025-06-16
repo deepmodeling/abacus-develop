@@ -60,7 +60,7 @@ void Cal_ldos<T>::cal_ldos_lcao(const elecstate::ElecStateLCAO<T>* pelec,
         }
 
     // calculate ldos
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         ModuleBase::WARNING_QUIT("Cal_ldos::dm2ldos",
                                  "do not support old grid integral, please recompile with __NEW_GINT");
 #else

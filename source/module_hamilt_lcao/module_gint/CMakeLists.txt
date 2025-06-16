@@ -29,7 +29,7 @@ list(APPEND objects
     init_orb.cpp
 )
 
-if(NEW_GINT)
+if(NOT DEFINED OLD_GINT)
   list(APPEND objects
       temp_gint/biggrid_info.cpp
       temp_gint/big_grid.cpp

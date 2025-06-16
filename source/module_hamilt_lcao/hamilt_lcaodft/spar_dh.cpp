@@ -109,7 +109,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     if(PARAM.inp.nspin==2)
     {
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         gint_k.allocate_pvdpR();
         // note: some MPI process will not have grids when MPI cores are too
         // many, v_eff in these processes are empty

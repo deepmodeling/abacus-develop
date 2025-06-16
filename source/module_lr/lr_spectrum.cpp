@@ -35,7 +35,7 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
     return DM_trans;
 }
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
 template<typename T>
 void LR::LR_Spectrum<T>::cal_gint_rho(double** rho, const int& nrxx)
 {
@@ -65,7 +65,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
         // 2. transition density
         double** rho_trans;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, this->rho_basis.nrxx);
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         this->gint->transfer_DM2DtoGrid({ DM_trans.get_DMR_vector().at(is) });
         this->cal_gint_rho(rho_trans, this->rho_basis.nrxx);
 #else
@@ -115,7 +115,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
 
         // real part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'R');
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
         this->cal_gint_rho(rho_trans_real, this->rho_basis.nrxx);
 #else
@@ -126,7 +126,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
 
         // imag part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'I');
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
         this->cal_gint_rho(rho_trans_imag, this->rho_basis.nrxx);
 #else

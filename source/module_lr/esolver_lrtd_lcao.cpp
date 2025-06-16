@@ -397,7 +397,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->gint_->gridt = &this->gt_;
 
     // (3) Periodic condition search for each grid.
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;

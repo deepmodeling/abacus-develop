@@ -35,7 +35,7 @@ namespace LR
         ESolver_LR(const Input_para& inp, UnitCell& ucell);
         ~ESolver_LR() {
             delete this->psi_ks;
-#ifdef __NEW_GINT
+#ifndef __OLD_GINT
             ModuleGint::Gint::set_gint_info(nullptr);
 #endif
         }

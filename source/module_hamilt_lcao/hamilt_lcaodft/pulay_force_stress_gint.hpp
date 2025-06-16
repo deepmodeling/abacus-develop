@@ -20,7 +20,7 @@ namespace PulayForceStress
     {
         const int nspin = PARAM.inp.nspin;
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         if (set_dmr_gint) { gint.transfer_DM2DtoGrid(dm.get_DMR_vector()); }    // 2d block to grid
         for (int is = 0; is < nspin; ++is)
         {

@@ -16,7 +16,7 @@ void ElecStateLCAO<std::complex<double>>::cal_tau(const psi::Psi<std::complex<do
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
     }
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout1);
 #else
@@ -36,7 +36,7 @@ void ElecStateLCAO<double>::cal_tau(const psi::Psi<double>& psi)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
     }
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout1);
 #else

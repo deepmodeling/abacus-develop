@@ -263,7 +263,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
 
             // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
             Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
             this->GK->cal_gint(&inout);
 #else
@@ -282,7 +282,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         vr_eff_rdmft = &v_matrix_local(0, 0);
 
         // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
         this->GK->cal_gint(&inout);
 #else
@@ -306,7 +306,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_XC(is, 0);
 
             // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
             Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
             this->GK->cal_gint(&inout);
 #else
@@ -321,7 +321,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
 
     // get HR for 2D-block parallel format
     // this->GK->transfer_pvpR(this->hR);
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 #endif
 
@@ -365,7 +365,7 @@ void Veff_rdmft<double, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
 
             // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
             Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
             this->GG->cal_gint(&inout);
 #else
@@ -384,7 +384,7 @@ void Veff_rdmft<double, double>::contributeHR()
         vr_eff_rdmft = &v_matrix_local(0, 0);
 
         // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
 
         // because in gamma_only, cal_gint would not set hRGint zero first
@@ -411,7 +411,7 @@ void Veff_rdmft<double, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_XC(is, 0);
 
             // do grid integral calculation to get HR
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
             Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
             this->GG->cal_gint(&inout);
 #else
@@ -424,7 +424,7 @@ void Veff_rdmft<double, double>::contributeHR()
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     // get HR for 2D-block parallel format
     this->GG->transfer_pvpR(this->hR,this->ucell);
 #endif

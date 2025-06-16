@@ -68,7 +68,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     if(XC_Functional::get_ked_flag())
     {
         Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
@@ -113,7 +113,7 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     // if you change the place of the following code,
     // rememeber to delete the #include
     if(XC_Functional::get_ked_flag())
@@ -155,7 +155,7 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     double* vr_eff1 = nullptr;
     double* vofk_eff1 = nullptr;
     for (int is = 0; is < 4; is++)

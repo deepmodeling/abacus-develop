@@ -60,7 +60,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     //! 4) initialize NAO basis set 
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;

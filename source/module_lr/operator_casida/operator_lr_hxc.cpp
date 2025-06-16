@@ -63,7 +63,7 @@ namespace LR
         const int& nrxx = this->pot.lock()->nrxx;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         this->gint->transfer_DM2DtoGrid(this->DM_trans->get_DMR_vector());     // 2d block to grid
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
         this->gint->cal_gint(&inout_rho);
@@ -78,7 +78,7 @@ namespace LR
 
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
         this->hR->set_zero();   // clear hR for each bands
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);
         this->gint->get_hRGint()->set_zero();
         this->gint->cal_gint(&inout_vlocal);
@@ -112,7 +112,7 @@ namespace LR
 
                 LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
                 ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
                 this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
                 // LR_Util::print_HR(*this->gint->get_DMRGint()[0], this->ucell.nat, "DMR(grid, real)");
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
@@ -131,7 +131,7 @@ namespace LR
 
                 // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
                 HR_real_imag.set_zero();
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
                 Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);
                 this->gint->get_hRGint()->set_zero();
                 this->gint->cal_gint(&inout_vlocal);
