@@ -27,7 +27,6 @@ void cal_gint_vl(
     const double* vr_eff,
     HContainer<double>* hR)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -39,7 +38,6 @@ void cal_gint_vl(
         Gint_vl gint_vl(vr_eff, hR);
         gint_vl.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
 // nspin == 4 case
@@ -47,7 +45,6 @@ void cal_gint_vl(
     std::vector<const double*> vr_eff,
     HContainer<std::complex<double>>* hR)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -59,7 +56,6 @@ void cal_gint_vl(
         Gint_vl_nspin4 gint_vl_nspin4(vr_eff, hR);
         gint_vl_nspin4.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
 void cal_gint_vl_metagga(
@@ -67,7 +63,6 @@ void cal_gint_vl_metagga(
     const double* vfork,
     HContainer<double>* hR)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -79,7 +74,6 @@ void cal_gint_vl_metagga(
         Gint_vl_metagga gint_vl_metagga(vr_eff, vfork, hR);
         gint_vl_metagga.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 }
 
 // nspin == 4 case
@@ -88,7 +82,6 @@ void cal_gint_vl_metagga(
     std::vector<const double*> vofk,
     HContainer<std::complex<double>>* hR)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -100,7 +93,6 @@ void cal_gint_vl_metagga(
         Gint_vl_metagga_nspin4 gint_vl_metagga_nspin4(vr_eff, vofk, hR);
         gint_vl_metagga_nspin4.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_vl_metagga");
 }
 
 void cal_gint_rho(
@@ -108,7 +100,6 @@ void cal_gint_rho(
     const int nspin,
     double **rho)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_rho");
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -120,7 +111,6 @@ void cal_gint_rho(
         Gint_rho gint_rho(dm_vec, nspin, rho);
         gint_rho.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_rho");
 }
 
 void cal_gint_tau(        
@@ -128,7 +118,6 @@ void cal_gint_tau(
     const int nspin,
     double** tau)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_tau");
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -140,7 +129,6 @@ void cal_gint_tau(
         Gint_tau gint_tau(dm_vec, nspin, tau);
         gint_tau.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_tau");
 }
 
 void cal_gint_fvl(
@@ -152,7 +140,6 @@ void cal_gint_fvl(
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -164,7 +151,6 @@ void cal_gint_fvl(
         Gint_fvl gint_fvl(nspin, vr_eff, dm_vec, isforce, isstress, fvl, svl);
         gint_fvl.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
 }
 
 void cal_gint_fvl_meta(
@@ -177,7 +163,6 @@ void cal_gint_fvl_meta(
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl)
 {
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
@@ -189,7 +174,6 @@ void cal_gint_fvl_meta(
         Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
         gint_fvl_meta.cal_gint();
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
 }
 
 void cal_dvlocal_R_sparseMatrix(

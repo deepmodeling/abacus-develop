@@ -23,6 +23,8 @@ Gint_env_k::Gint_env_k(
 
 void Gint_env_k::cal_env_band(const int iband)
 {
+    ModuleBase::TITLE("Gint", "cal_gint_env");
+    ModuleBase::timer::tick("Gint", "cal_gint_env");
     ModuleBase::GlobalFunc::ZEROS(rho_, gint_info_->get_local_mgrid_num());
     const std::complex<double>* wfc_gint_band = &wfc_gint_[iband * gint_info_->get_lgd()];
 #pragma omp parallel
@@ -44,6 +46,7 @@ void Gint_env_k::cal_env_band(const int iband)
                              npol_, gint_info_->get_lgd(), kvec_c_, kvec_d_, rho_);
         }
     }
+    ModuleBase::timer::tick("Gint", "cal_gint_env");
 }
 
 

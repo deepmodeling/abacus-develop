@@ -9,10 +9,13 @@ namespace ModuleGint
 
 void Gint_vl_metagga_nspin4_gpu::cal_gint()
 {
+    ModuleBase::TITLE("Gint", "cal_gint_vl");
+    ModuleBase::timer::tick("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
     compose_hr_gint(hr_gint_part_, hr_gint_full_);
     transfer_hr_gint_to_hR(hr_gint_full_, *hR_);
+    ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
 void Gint_vl_metagga_nspin4_gpu::init_hr_gint_()

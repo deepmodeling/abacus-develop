@@ -13,6 +13,8 @@ namespace ModuleGint
 
 void compose_hr_gint(HContainer<double>& hr_gint)
 {
+    ModuleBase::TITLE("Gint", "compose_hr_gint");
+    ModuleBase::timer::tick("Gint", "compose_hr_gint");
     for (int iap = 0; iap < hr_gint.size_atom_pairs(); iap++)
     {
         auto& ap = hr_gint.get_atom_pair(iap);
@@ -42,11 +44,14 @@ void compose_hr_gint(HContainer<double>& hr_gint)
             }
         }
     }
+    ModuleBase::timer::tick("Gint", "compose_hr_gint");
 }
 
 void compose_hr_gint(const std::vector<HContainer<double>>& hr_gint_part,
                      HContainer<std::complex<double>>& hr_gint_full)
 {
+    ModuleBase::TITLE("Gint", "compose_hr_gint");
+    ModuleBase::timer::tick("Gint", "compose_hr_gint");
     for (int iap = 0; iap < hr_gint_full.size_atom_pairs(); iap++)
     {
         auto* ap = &(hr_gint_full.get_atom_pair(iap));
@@ -106,11 +111,14 @@ void compose_hr_gint(const std::vector<HContainer<double>>& hr_gint_part,
             }
         }
     }
+    ModuleBase::timer::tick("Gint", "compose_hr_gint");
 }
 
 template <typename T>
 void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
 {
+    ModuleBase::TITLE("Gint", "transfer_hr_gint_to_hR");
+    ModuleBase::timer::tick("Gint", "transfer_hr_gint_to_hR");
 #ifdef __MPI
     int size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -125,6 +133,7 @@ void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
 #else
     hR.add(hr_gint);
 #endif
+    ModuleBase::timer::tick("Gint", "transfer_hr_gint_to_hR");
 }
 
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
@@ -135,9 +144,10 @@ void transfer_dm_2d_to_gint(
     std::vector<HContainer<T>*> dm,
     std::vector<HContainer<T>>& dm_gint)
 {
-    // To check whether input parameter dm_2d has been initialized
+    ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
+    ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
     assert(PARAM.inp.nspin == dm_gint.size()
-           && "The size of dm should be equal to the number of spins!");
+           && "The size of dm_gint should be equal to the number of spins!");
     if(PARAM.inp.nspin != 4)
     {
         assert(dm.size() == PARAM.inp.nspin);
@@ -199,6 +209,7 @@ void transfer_dm_2d_to_gint(
             }
         }
     }
+    ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
 }
 
 int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -220,8 +231,8 @@ void wfc_2d_to_gint(const T* wfc_2d,
                     T* wfc_gint,
                     const GintInfo& gint_info)
 {
-    ModuleBase::TITLE("Module_gint", "wfc_2d_to_gint");
-    ModuleBase::timer::tick("Module_gint", "wfc_2d_to_gint");
+    ModuleBase::TITLE("Gint", "wfc_2d_to_gint");
+    ModuleBase::timer::tick("Gint", "wfc_2d_to_gint");
 
     // dimension related
     const int nlocal = pv.desc_wfc[2];
@@ -303,7 +314,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
         }
     }
 #endif
-    ModuleBase::timer::tick("Module_gint", "wfc_2d_to_gint");
+    ModuleBase::timer::tick("Gint", "wfc_2d_to_gint");
 }
 
 template void transfer_hr_gint_to_hR(
