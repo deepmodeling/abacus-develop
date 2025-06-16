@@ -120,10 +120,10 @@ ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
 ${OBJS_RDMFT}
 
-OBJS_MAIN=source_main\main.o\
-    source_main\driver.o\
-    source_main\driver_run.o\
-    source_main\parameter.o
+OBJS_MAIN=main.o\
+    driver.o\
+    driver_run.o\
+    parameter.o
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
