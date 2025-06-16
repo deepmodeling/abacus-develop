@@ -64,7 +64,6 @@
 070_PW_CR_fix_c
 071_PW_CR_move
 073_PW_SY
-074_PW_SY_6K
 075_PW_SY_LiRh
 076_PW_elec_add
 077_PW_elec_minus
