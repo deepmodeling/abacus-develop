@@ -124,8 +124,8 @@ ${VERSION}-PW.x : ${FP_OBJS}
 #==========================
 # rules
 #==========================
-${OBJ_DIR}/main.o:../main.cpp
-	${CXX} ${OPTS} -c ${HONG} ../main.cpp -o ${OBJ_DIR}/main.o
+${OBJ_DIR}/main.o:../source_main/main.cpp
+	${CXX} ${OPTS} -c ${HONG} ../source_main/main.cpp -o ${OBJ_DIR}/main.o
 	
 ${OBJ_DIR}/%.o:%.cpp
 	${CXX} ${OPTS} -c ${HONG} $< -o $@
