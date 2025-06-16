@@ -94,7 +94,7 @@ void XC_Functional::gcxc(const double &rho, const double &grho, double &sxc,
                 v2 = v2x + v2c;
                 break;
             default: //SCAN_X,SCAN_C,HSE, and so on
-                throw std::domain_error("functional unfinished in "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                throw std::domain_error("functional unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
         }
         sxc += s;
         v1xc += v1;

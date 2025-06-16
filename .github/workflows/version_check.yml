@@ -25,10 +25,10 @@ jobs:
       # Validate version.h matches the release tag
       - name: Assert version increment
         run: |
-          CODE_VERSION=$(grep -oP '#define\s+VERSION\s+"\K\d+(\.\d+){2,3}' source/version.h)
+          CODE_VERSION=$(grep -oP '#define\s+VERSION\s+"\K\d+(\.\d+){2,3}' source/source_main/version.h)
 
           if [[ -z "$CODE_VERSION" ]]; then
-            echo "::error::Failed to extract version from source/version.h"
+            echo "::error::Failed to extract version from source/source_main/version.h"
             exit 1
           fi
 

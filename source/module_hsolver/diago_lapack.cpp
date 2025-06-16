@@ -112,8 +112,8 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
     // Throw error if it returns info
     if (info)
         throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n"
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
     //lwork = work[0];
     //work.resize(std::max(lwork, 3), 0);
     //iwork.resize(iwork[0], 0);
@@ -205,8 +205,8 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
 
     if (info)
         throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+                                 + std::string(__FILE__) + " line "
+                                 + std::to_string(__LINE__));
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
 
@@ -290,7 +290,7 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE
-        = ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line " + ModuleBase::GlobalFunc::TO_STRING(__LINE__) + ".\n";
+        = std::string(__FILE__) + " line " + std::to_string(__LINE__) + ".\n";
     const std::string str_info_FILE = str_info + str_FILE;
 
     if (info == 0)

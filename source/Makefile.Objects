@@ -9,9 +9,10 @@
 #
 
 VERSION = ABACUS
-HEADERS = *.h
+HEADERS = source_main/*.h
 
 VPATH=./src_global:\
+./source_main:\
 ./module_basis/module_ao:\
 ./module_basis/module_nao:\
 ./module_cell/module_neighbor:\

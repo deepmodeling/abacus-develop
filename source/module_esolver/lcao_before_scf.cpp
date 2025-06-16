@@ -269,7 +269,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 18) update of RDMFT, added by jghan
     if (PARAM.inp.rdmft == true)
     {
-        // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
+        // necessary operation of these parameters have be done with p_esolver->Init() in source/source_main/driver_run.cpp
         rdmft_solver.update_ion(ucell,
                                 *(this->pw_rho),
                                 this->locpp.vloc,
