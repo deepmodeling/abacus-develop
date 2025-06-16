@@ -61,7 +61,7 @@ if(NEW_GINT)
         temp_gint/kernel/phi_operator_gpu.cu
         temp_gint/kernel/phi_operator_kernel.cu
         temp_gint/kernel/set_const_mem.cu
-        temp_gint/batch_biggrid
+        temp_gint/batch_biggrid.cpp
         temp_gint/gint_vl_gpu.cpp
         temp_gint/gint_rho_gpu.cpp
         temp_gint/gint_fvl_gpu.cpp
