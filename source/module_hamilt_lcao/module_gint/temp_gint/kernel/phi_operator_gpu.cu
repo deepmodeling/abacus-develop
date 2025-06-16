@@ -112,6 +112,7 @@ void PhiOperatorGpu::set_phi(double* phi_d) const
         atoms_phi_start_.get_device_ptr(),
         bgrids_phi_len_.get_device_ptr(),
         phi_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_y_d, double* dphi_z_d) const
@@ -143,6 +144,7 @@ void PhiOperatorGpu::set_phi_dphi(double* phi_d, double* dphi_x_d, double* dphi_
         dphi_x_d,
         dphi_y_d,
         dphi_z_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* ddphi_xz_d,
@@ -185,6 +187,7 @@ void PhiOperatorGpu::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, double* d
         ddphi_yy_d,
         ddphi_yz_d,
         ddphi_zz_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_mul_vldr3(
@@ -204,6 +207,7 @@ void PhiOperatorGpu::phi_mul_vldr3(
         bgrids_phi_len_.get_device_ptr(),
         bgrids_phi_start_.get_device_ptr(),
         result_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_mul_phi(
@@ -402,6 +406,7 @@ void PhiOperatorGpu::phi_dot_phi(
         bgrids_phi_len_.get_device_ptr(),
         bgrids_phi_start_.get_device_ptr(),
         rho_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_dot_dphi(
@@ -427,6 +432,7 @@ void PhiOperatorGpu::phi_dot_dphi(
         gint_gpu_vars_->iat2it_d,
         gint_gpu_vars_->atom_nw_d,
         fvl_d);
+    checkCudaLastError();
 }
 
 void PhiOperatorGpu::phi_dot_dphi_r(
@@ -454,6 +460,7 @@ void PhiOperatorGpu::phi_dot_dphi_r(
         gint_gpu_vars_->iat2it_d,
         gint_gpu_vars_->atom_nw_d,
         svl_d);
+    checkCudaLastError();
 }
 
 }
