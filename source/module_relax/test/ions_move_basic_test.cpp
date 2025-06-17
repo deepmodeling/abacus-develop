@@ -3,7 +3,7 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/ions_move_basic.h"
 #include "for_test.h"
 
 /************************************************

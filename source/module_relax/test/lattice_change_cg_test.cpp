@@ -1,8 +1,8 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_relax/relax_old/lattice_change_basic.h"
-#include "module_relax/relax_old/lattice_change_cg.h"
+#include "module_relax/lattice_change_basic.h"
+#include "module_relax/lattice_change_cg.h"
 #undef private
 /************************************************
  *  unit tests of class Lattice_Change_CG

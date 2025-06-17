@@ -36,8 +36,7 @@ public:
      */
     void relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
-                    const double &etot,
-                    ModuleESolver::ESolver* p_esolver);
+                    const double &etot);
 
 private:
     //LineSearch l_search;

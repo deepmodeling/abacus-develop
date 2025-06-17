@@ -4,8 +4,8 @@
 #define private public
 #define protected public
 #include "module_parameter/parameter.h"
-#include "module_relax/relax_old/ions_move_basic.h"
-#include "module_relax/relax_old/ions_move_bfgs.h"
+#include "module_relax/ions_move_basic.h"
+#include "module_relax/ions_move_bfgs.h"
 #undef private
 #undef protected
 /************************************************

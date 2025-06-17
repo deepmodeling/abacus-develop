@@ -17,8 +17,7 @@ class Relax_old
                     ModuleBase::matrix force,
                     ModuleBase::matrix stress,
                     int& force_step,
-                    int& stress_step,
-                    ModuleESolver::ESolver* p_esolver);
+                    int& stress_step);
 
   private:
     Ions_Move_Methods IMM;
@@ -31,8 +30,7 @@ class Relax_old
                   const ModuleBase::matrix& ionic_force,
                   const double& total_energy,
                   UnitCell& ucell,
-                  int& jstep,
-                  ModuleESolver::ESolver* p_esolver);
+                  int& jstep);
     bool do_cellrelax(const int& istep,
                       const int& stress_step,
                       const ModuleBase::matrix& stress,

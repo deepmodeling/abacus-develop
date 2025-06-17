@@ -25,12 +25,12 @@ void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、for
     //l_search.init_line_search();
 }
 
-void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot,ModuleESolver::ESolver* p_esolver)
+void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot)
 
 {
     get_pos(ucell,pos);  
     get_pos_taud(ucell,pos_taud);
-    solver=p_esolver;
+    //solver=p_esolver;
     ucell.ionic_position_updated = true;
     for(int i = 0; i < _force.nr; i++)
     {

@@ -22,8 +22,7 @@ class Ions_Move_Methods
                       const int &force_step,
                       const ModuleBase::matrix &f,
                       const double &etot,
-                      UnitCell &ucell,
-                      ModuleESolver::ESolver* p_esolver);
+                      UnitCell &ucell);
 
     bool get_converged() const
     {

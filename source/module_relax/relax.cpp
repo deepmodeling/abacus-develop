@@ -8,7 +8,7 @@
 #include "module_cell/print_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_relax/relax_old/ions_move_basic.h"
+#include "module_relax/ions_move_basic.h"
 
 #include <cmath>
 

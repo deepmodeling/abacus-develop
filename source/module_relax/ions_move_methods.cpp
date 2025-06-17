@@ -53,8 +53,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const int &force_step,
                                      const ModuleBase::matrix &f,
                                      const double &etot,
-                                     UnitCell &ucell,
-                                     ModuleESolver::ESolver* p_esolver)
+                                     UnitCell &ucell)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
 
@@ -86,7 +85,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     }
     else if(Ions_Move_Basic::relax_method == "lbfgs")
     {
-        lbfgs.relax_step(f,ucell,etot,p_esolver);        
+        lbfgs.relax_step(f,ucell,etot);        
     }
     else
     {

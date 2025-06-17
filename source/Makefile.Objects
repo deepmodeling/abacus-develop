@@ -61,8 +61,6 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
-./module_relax/relax_old:\
-./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
 ./module_io/json_output:\
