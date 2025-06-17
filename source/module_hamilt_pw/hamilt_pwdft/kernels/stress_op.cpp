@@ -775,9 +775,8 @@ struct cal_stress_ewa_sincos_op<FPTYPE, base_device::DEVICE_CPU>
     {
         const FPTYPE TWO_PI = 2.0 * M_PI;
 
-        // Initialize output arrays
-        std::fill(rhostar_real, rhostar_real + npw, static_cast<FPTYPE>(0.0));
-        std::fill(rhostar_imag, rhostar_imag + npw, static_cast<FPTYPE>(0.0));
+        // Note: Arrays are already initialized to zero in the calling function
+        // No need to initialize again here to avoid redundant operations
 
 #ifdef _OPENMP
 #pragma omp parallel for

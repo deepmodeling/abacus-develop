@@ -83,18 +83,69 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     std::vector<FPTYPE> rhostar_real_host(rho_basis->npw);
     std::vector<FPTYPE> rhostar_imag_host(rho_basis->npw);
 
+    // Device pointers for GPU data transfer
+    FPTYPE* d_gcar = nullptr;
+    FPTYPE* d_tau = nullptr;
+    FPTYPE* d_zv_facts = nullptr;
+    FPTYPE* d_rhostar_real = nullptr;
+    FPTYPE* d_rhostar_imag = nullptr;
+
+    // GPU memory management and data transfer
+    if (this->device == base_device::GpuDevice) {
+        // Allocate GPU memory
+        resmem_var_op()(this->ctx, d_gcar, rho_basis->npw * 3);
+        resmem_var_op()(this->ctx, d_tau, ucell.nat * 3);
+        resmem_var_op()(this->ctx, d_zv_facts, ucell.nat);
+        resmem_var_op()(this->ctx, d_rhostar_real, rho_basis->npw);
+        resmem_var_op()(this->ctx, d_rhostar_imag, rho_basis->npw);
+
+        // Data transfer H2D
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gcar, gcar_flat.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_tau, tau_flat.data(), ucell.nat * 3);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_zv_facts, zv_facts_host.data(), ucell.nat);
+
+        // Initialize output arrays to zero on GPU
+        base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_rhostar_real, 0.0, rho_basis->npw);
+        base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, d_rhostar_imag, 0.0, rho_basis->npw);
+    } else {
+        // CPU case: use host pointers directly and initialize arrays to zero
+        d_gcar = gcar_flat.data();
+        d_tau = tau_flat.data();
+        d_zv_facts = zv_facts_host.data();
+        d_rhostar_real = rhostar_real_host.data();
+        d_rhostar_imag = rhostar_imag_host.data();
+
+        // Initialize output arrays to zero for CPU case
+        std::fill(rhostar_real_host.begin(), rhostar_real_host.end(), static_cast<FPTYPE>(0.0));
+        std::fill(rhostar_imag_host.begin(), rhostar_imag_host.end(), static_cast<FPTYPE>(0.0));
+    }
+
     // Call sincos op (outside OpenMP parallel region, op has its own parallelization)
     hamilt::cal_stress_ewa_sincos_op<FPTYPE, Device>()(
         this->ctx,
         ucell.nat,
         rho_basis->npw,
         rho_basis->ig_gge0,
-        gcar_flat.data(),
-        tau_flat.data(),
-        zv_facts_host.data(),
-        rhostar_real_host.data(),
-        rhostar_imag_host.data()
+        d_gcar,
+        d_tau,
+        d_zv_facts,
+        d_rhostar_real,
+        d_rhostar_imag
     );
+
+    // GPU data transfer D2H and memory cleanup
+    if (this->device == base_device::GpuDevice) {
+        // Transfer results back to host
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, rhostar_real_host.data(), d_rhostar_real, rho_basis->npw);
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, rhostar_imag_host.data(), d_rhostar_imag, rho_basis->npw);
+
+        // Free GPU memory
+        delmem_var_op()(this->ctx, d_gcar);
+        delmem_var_op()(this->ctx, d_tau);
+        delmem_var_op()(this->ctx, d_zv_facts);
+        delmem_var_op()(this->ctx, d_rhostar_real);
+        delmem_var_op()(this->ctx, d_rhostar_imag);
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel

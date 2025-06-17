@@ -1136,6 +1136,87 @@ template struct cal_force_npw_op<float, base_device::DEVICE_GPU>;
 template struct cal_multi_dot_op<double, base_device::DEVICE_GPU>;
 template struct cal_multi_dot_op<float, base_device::DEVICE_GPU>;
 
+// CUDA kernel for stress Ewald sincos calculation
+template <typename FPTYPE>
+__global__ void cal_stress_ewa_sincos_kernel(
+    const int nat,
+    const int npw,
+    const int ig_gge0,
+    const FPTYPE* gcar,
+    const FPTYPE* tau,
+    const FPTYPE* zv_facts,
+    FPTYPE* rhostar_real,
+    FPTYPE* rhostar_imag)
+{
+    const FPTYPE TWO_PI = 2.0 * M_PI;
+
+    const int iat = blockIdx.y;
+    const int ig_start = blockIdx.x * blockDim.x + threadIdx.x;
+    const int ig_stride = gridDim.x * blockDim.x;
+
+    if (iat >= nat) return;
+
+    // Load atom information to registers
+    const FPTYPE tau_x = tau[iat * 3 + 0];
+    const FPTYPE tau_y = tau[iat * 3 + 1];
+    const FPTYPE tau_z = tau[iat * 3 + 2];
+    const FPTYPE zv = zv_facts[iat];
+
+    // Grid-stride loop over G-vectors
+    for (int ig = ig_start; ig < npw; ig += ig_stride) {
+        // Skip G=0 term
+        if (ig == ig_gge0) continue;
+
+        // Calculate phase: 2π * (G · τ)
+        const FPTYPE phase = TWO_PI * (gcar[ig * 3 + 0] * tau_x +
+                                       gcar[ig * 3 + 1] * tau_y +
+                                       gcar[ig * 3 + 2] * tau_z);
+
+        // Use CUDA intrinsic for sincos
+        FPTYPE sinp, cosp;
+        sincos(phase, &sinp, &cosp);
+
+        // Atomic add to accumulate structure factor
+        atomicAdd(&rhostar_real[ig], zv * cosp);
+        atomicAdd(&rhostar_imag[ig], zv * sinp);
+    }
+}
+
+// GPU operators
+template <typename FPTYPE>
+void cal_stress_ewa_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& nat,
+    const int& npw,
+    const int& ig_gge0,
+    const FPTYPE* gcar,
+    const FPTYPE* tau,
+    const FPTYPE* zv_facts,
+    FPTYPE* rhostar_real,
+    FPTYPE* rhostar_imag)
+{
+    // Note: Arrays are already initialized to zero in the calling function
+    // No need to initialize again here to avoid redundant operations
+
+    // Calculate optimal grid configuration for GPU load balancing
+    const int threads_per_block = THREADS_PER_BLOCK;
+    const int max_blocks_per_sm = 32; // Configurable per GPU architecture
+    const int max_blocks_x = std::min(max_blocks_per_sm, (npw + threads_per_block - 1) / threads_per_block);
+
+    dim3 grid(max_blocks_x, nat);
+    dim3 block(threads_per_block);
+
+    cal_stress_ewa_sincos_kernel<FPTYPE><<<grid, block>>>(
+        nat, npw, ig_gge0, gcar, tau, zv_facts,
+        rhostar_real, rhostar_imag
+    );
+
+    cudaCheckOnDebug();
+}
+
+template struct cal_stress_ewa_sincos_op<float, base_device::DEVICE_GPU>;
+template struct cal_stress_ewa_sincos_op<double, base_device::DEVICE_GPU>;
+
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_GPU>;
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_GPU>;
 }  // namespace hamilt
