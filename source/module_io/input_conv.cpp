@@ -328,10 +328,12 @@ void Input_Conv::Convert()
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
             {"alpha", "1"},
             {"Rcut_type", "spencer"},
             {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
+        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
     }
 	// use the error function erf(w|r-r'|), exx just has the short-range part
     else if (dft_functional_lower == "hse"
@@ -339,24 +341,28 @@ void Input_Conv::Convert()
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
-        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
             {"alpha", "1"},
 			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
             {"Rcut_type", "limits"} }};
+        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
     }
 	// use the error function erf(w|r-r'|), exx just has the long-range part
     else if ( dft_functional_lower == "wp22" )
     {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
-        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
             {"alpha", "1"},
             {"Rcut_type", "spencer"},
             {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
-        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
             {"alpha", "-1"},
 			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
             {"Rcut_type", "limits"} }};
+        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
     }
 #ifdef __EXX
     else if (dft_functional_lower == "opt_orb")
