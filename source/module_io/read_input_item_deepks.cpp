@@ -14,6 +14,18 @@ void ReadInput::item_deepks()
         this->add_item(item);
     }
     {
+        Input_Item item("deepks_out_freq_elec");
+        item.annotation = ">0 frequency of electronic iteration to output descriptors and labels for deepks.";
+        read_sync_int(input.deepks_out_freq_elec);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_freq_elec < 0)
+            {
+                para.input.deepks_out_freq_elec = 0;
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("deepks_scf");
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);

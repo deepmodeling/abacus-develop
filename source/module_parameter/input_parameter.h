@@ -263,6 +263,8 @@ struct Input_para
     //==========================================================
     int deepks_out_labels = 0;         ///< (need libnpy) prints energy and force labels and
                                        ///< descriptors for training, wenfei 2022-1-12
+    int deepks_out_freq_elec = 0;      ///< (need libnpy) frequency of electronic iteration to output
+                                       ///< descriptors and labels, default is 0, which means no output until convergence
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
     int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
