@@ -260,6 +260,35 @@ struct cal_multi_dot_op{
                     const std::complex<FPTYPE>* psi);
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_stress_ewa_sincos_op
+{
+    /// @brief Calculate Ewald stress sincos computation
+    /// Only computes rhostar, other calculations remain in original function
+    ///
+    /// Input Parameters
+    /// @param ctx - which device this function runs on
+    /// @param nat - total number of atoms
+    /// @param npw - number of plane waves
+    /// @param ig_gge0 - index of G=0 vector (-1 if not present)
+    /// @param gcar - G-vector Cartesian coordinates [npw * 3]
+    /// @param tau - atomic positions [nat * 3]
+    /// @param zv_facts - precomputed zv factors for each atom [nat]
+    ///
+    /// Output Parameters
+    /// @param rhostar_real - real part of structure factor [npw]
+    /// @param rhostar_imag - imaginary part of structure factor [npw]
+    void operator()(const Device* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* zv_facts,
+                    FPTYPE* rhostar_real,
+                    FPTYPE* rhostar_imag);
+};
+
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -432,6 +461,20 @@ struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
                     const FPTYPE* gk2,
                     const FPTYPE* d_kfac,
                     const std::complex<FPTYPE>* psi);
+};
+
+template <typename FPTYPE>
+struct cal_stress_ewa_sincos_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* zv_facts,
+                    FPTYPE* rhostar_real,
+                    FPTYPE* rhostar_imag);
 };
 
 /**

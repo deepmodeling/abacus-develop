@@ -759,6 +759,65 @@ template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
 template struct cal_multi_dot_op<float, base_device::DEVICE_CPU>;
 template struct cal_multi_dot_op<double, base_device::DEVICE_CPU>;
 
+// CPU implementation of Ewald stress sincos operator
+template <typename FPTYPE>
+struct cal_stress_ewa_sincos_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nat,
+                    const int& npw,
+                    const int& ig_gge0,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* zv_facts,
+                    FPTYPE* rhostar_real,
+                    FPTYPE* rhostar_imag)
+    {
+        const FPTYPE TWO_PI = 2.0 * M_PI;
+
+        // Initialize output arrays
+        std::fill(rhostar_real, rhostar_real + npw, static_cast<FPTYPE>(0.0));
+        std::fill(rhostar_imag, rhostar_imag + npw, static_cast<FPTYPE>(0.0));
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (int ig = 0; ig < npw; ig++) {
+            if (ig == ig_gge0) continue; // Skip G=0
+
+            FPTYPE local_rhostar_real = 0.0;
+            FPTYPE local_rhostar_imag = 0.0;
+
+            // Double loop: iat -> ig (as requested)
+            for (int iat = 0; iat < nat; iat++) {
+                const FPTYPE tau_x = tau[iat * 3 + 0];
+                const FPTYPE tau_y = tau[iat * 3 + 1];
+                const FPTYPE tau_z = tau[iat * 3 + 2];
+                const FPTYPE zv = zv_facts[iat];
+
+                // Calculate phase: 2π * (G · τ) - similar to cal_force_ewa phase
+                const FPTYPE phase = TWO_PI * (gcar[ig * 3 + 0] * tau_x +
+                                               gcar[ig * 3 + 1] * tau_y +
+                                               gcar[ig * 3 + 2] * tau_z);
+
+                // Calculate sincos
+                FPTYPE sinp, cosp;
+                ModuleBase::libm::sincos(phase, &sinp, &cosp);
+
+                // Accumulate structure factor
+                local_rhostar_real += zv * cosp;
+                local_rhostar_imag += zv * sinp;
+            }
+
+            // Store results
+            rhostar_real[ig] = local_rhostar_real;
+            rhostar_imag[ig] = local_rhostar_imag;
+        }
+    }
+};
+
+template struct cal_stress_ewa_sincos_op<float, base_device::DEVICE_CPU>;
+template struct cal_stress_ewa_sincos_op<double, base_device::DEVICE_CPU>;
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_CPU>;

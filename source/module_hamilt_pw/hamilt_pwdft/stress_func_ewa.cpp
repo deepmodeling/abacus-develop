@@ -4,6 +4,7 @@
 #include "module_base/tool_threading.h"
 #include "module_base/libm/libm.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "kernels/stress_op.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -56,6 +57,45 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     if (PARAM.globalv.gamma_only_pw && is_pw) fact=2.0;
 //    else fact=1.0;
 
+    // Prepare data for the sincos op
+    std::vector<FPTYPE> zv_facts_host(ucell.nat);
+    std::vector<FPTYPE> tau_flat(ucell.nat * 3);
+
+    for (int iat = 0; iat < ucell.nat; iat++) {
+        int it = ucell.iat2it[iat];
+        int ia = ucell.iat2ia[iat];
+
+        zv_facts_host[iat] = static_cast<FPTYPE>(ucell.atoms[it].ncpp.zv);
+
+        tau_flat[iat * 3 + 0] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][0]);
+        tau_flat[iat * 3 + 1] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][1]);
+        tau_flat[iat * 3 + 2] = static_cast<FPTYPE>(ucell.atoms[it].tau[ia][2]);
+    }
+
+    std::vector<FPTYPE> gcar_flat(rho_basis->npw * 3);
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
+        gcar_flat[ig * 3 + 0] = static_cast<FPTYPE>(rho_basis->gcar[ig][0]);
+        gcar_flat[ig * 3 + 1] = static_cast<FPTYPE>(rho_basis->gcar[ig][1]);
+        gcar_flat[ig * 3 + 2] = static_cast<FPTYPE>(rho_basis->gcar[ig][2]);
+    }
+
+    // Allocate result arrays
+    std::vector<FPTYPE> rhostar_real_host(rho_basis->npw);
+    std::vector<FPTYPE> rhostar_imag_host(rho_basis->npw);
+
+    // Call sincos op (outside OpenMP parallel region, op has its own parallelization)
+    hamilt::cal_stress_ewa_sincos_op<FPTYPE, Device>()(
+        this->ctx,
+        ucell.nat,
+        rho_basis->npw,
+        rho_basis->ig_gge0,
+        gcar_flat.data(),
+        tau_flat.data(),
+        zv_facts_host.data(),
+        rhostar_real_host.data(),
+        rhostar_imag_host.data()
+    );
+
 #ifdef _OPENMP
 #pragma omp parallel
 {
@@ -76,27 +116,21 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 	ig_end = ig + ig_end;
 
     FPTYPE g2,g2a;
-    FPTYPE arg;
-    std::complex<FPTYPE> rhostar;
     FPTYPE sewald;
     for(; ig < ig_end; ig++)
 	{
 		if(ig == ig0)  continue;
 		g2 = rho_basis->gg[ig]* ucell.tpiba2;
 		g2a = g2 /4.0/alpha;
-		rhostar=std::complex<FPTYPE>(0.0,0.0);
-		for(int it=0; it < ucell.ntype; it++)
-		{
-			for(int i=0; i<ucell.atoms[it].na; i++)
-			{
-				arg = (rho_basis->gcar[ig] * ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
-				FPTYPE sinp, cosp;
-                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-				rhostar = rhostar + std::complex<FPTYPE>(ucell.atoms[it].ncpp.zv * cosp,ucell.atoms[it].ncpp.zv * sinp);
-			}
-		}
-		rhostar /= ucell.omega;
-		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * pow(std::abs(rhostar),2);
+
+		// Use precomputed rhostar values
+		FPTYPE rhostar_real = rhostar_real_host[ig] / ucell.omega;
+		FPTYPE rhostar_imag = rhostar_imag_host[ig] / ucell.omega;
+
+		// Calculate |rhostar|² - mathematically equivalent to pow(std::abs(rhostar), 2)
+		FPTYPE rhostar_abs2 = rhostar_real * rhostar_real + rhostar_imag * rhostar_imag;
+
+		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * rhostar_abs2;
 		local_sdewald -= sewald;
 		for(int l=0;l<3;l++)
 		{
