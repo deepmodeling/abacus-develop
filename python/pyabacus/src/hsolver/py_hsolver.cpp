@@ -5,7 +5,7 @@
 #include <pybind11/complex.h>
 #include <pybind11/numpy.h>
 
-#include "module_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_dav_subspace.h"
 #include "module_base/kernels/math_kernel_op.h"
 #include "module_base/module_device/types.h"
 

@@ -77,7 +77,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
+|-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.

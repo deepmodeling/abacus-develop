@@ -12,7 +12,7 @@
 #include "module_cell/cal_atoms_info.h"
 #include "module_elecstate/elecstate_print.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hsolver/hsolver.h"
+#include "source_hsolver/hsolver.h"
 #include "module_io/cube_io.h"
 
 // for NSCF calculations of band structures

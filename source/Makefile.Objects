@@ -30,10 +30,10 @@ VPATH=./src_global:\
 ./module_basis/module_pw:\
 ./module_basis/module_pw/module_fft:\
 ./source_esolver:\
-./module_hsolver:\
-./module_hsolver/kernels:\
-./module_hsolver/genelpa:\
-./module_hsolver/module_pexsi:\
+./source_hsolver:\
+./source_hsolver/kernels:\
+./source_hsolver/genelpa:\
+./source_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/module_pot:\
