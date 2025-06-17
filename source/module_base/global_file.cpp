@@ -194,6 +194,47 @@ void ModuleBase::Global_File::make_dir_out(
 #endif
     }
 
+    if(PARAM.inp.deepks_out_freq_elec > 0)
+    {
+        int make_dir_deepks_elec = 0;
+        std::string command1 =  "test -d " + PARAM.globalv.global_deepks_label_elec_dir + " || mkdir " + PARAM.globalv.global_deepks_label_elec_dir;
+
+        times = 0;
+        while(times<GlobalV::NPROC)
+        {
+            if(rank==times)
+            {
+                if ( system( command1.c_str() ) == 0 )
+                {
+                    std::cout << " MAKE THE DEEPKS LABELS (ELEC) DIR    : " << PARAM.globalv.global_deepks_label_elec_dir << std::endl;
+                    make_dir_deepks_elec = 1;
+                }
+                else
+                {
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE DEEPKS LABELS (ELEC) DIR !!! " << std::endl;
+                    make_dir_deepks_elec = 0;
+                }
+            }
+#ifdef __MPI
+            Parallel_Reduce::reduce_all(make_dir_deepks_elec);
+#endif
+            if(make_dir_deepks_elec > 0)
+            { 
+                break;
+            }
+            ++times;
+        }
+
+#ifdef __MPI
+        if(make_dir_deepks_elec == 0)
+        {
+            std::cout << " CAN NOT MAKE THE DEEPKS LABELS (ELEC) DIR......." << std::endl;
+            ModuleBase::QUIT();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+
     // mohan add 2010-09-12
     if(out_alllog)
     {

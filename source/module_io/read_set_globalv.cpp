@@ -97,6 +97,10 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
     sys.global_mlkedf_descriptor_dir = to_dir(sys.global_mlkedf_descriptor_dir);
 
+    /// get the global directory for DeePKS labels during electronic steps 
+    sys.global_deepks_label_elec_dir = sys.global_out_dir + "DeePKS_Labels_Elec/";
+    sys.global_deepks_label_elec_dir = to_dir(sys.global_deepks_label_elec_dir);
+
     /// get the global readin directory
     sys.global_readin_dir = inp.read_file_dir;
     sys.global_readin_dir = to_dir(sys.global_readin_dir);
