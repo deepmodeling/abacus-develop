@@ -1,7 +1,7 @@
 #ifndef ESOLVER_DM2RHO_H
 #define ESOLVER_DM2RHO_H
 
-#include "module_esolver/esolver_ks_lcao.h"
+#include "source_esolver/esolver_ks_lcao.h"
 
 #include <memory>
 

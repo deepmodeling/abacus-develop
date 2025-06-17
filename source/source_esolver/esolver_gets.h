@@ -3,7 +3,7 @@
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/unitcell.h"
-#include "module_esolver/esolver_ks.h"
+#include "source_esolver/esolver_ks.h"
 
 #include <memory>
 

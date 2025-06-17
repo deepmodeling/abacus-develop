@@ -1,6 +1,6 @@
 #ifndef ESOLVER_KS_LIP_H
 #define ESOLVER_KS_LIP_H
-#include "module_esolver/esolver_ks_pw.h"
+#include "source_esolver/esolver_ks_pw.h"
 #include "module_hsolver/hsolver_lcaopw.h"
 
 #ifdef __EXX

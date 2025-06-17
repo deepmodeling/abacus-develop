@@ -3,7 +3,7 @@
 #include "module_base/global_file.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "module_esolver/esolver.h"
+#include "source_esolver/esolver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cal_test.h"
 #include "module_io/input_conv.h"

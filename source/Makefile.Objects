@@ -29,7 +29,7 @@ VPATH=./src_global:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_basis/module_pw/module_fft:\
-./module_esolver:\
+./source_esolver:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
 ./module_hsolver/genelpa:\
