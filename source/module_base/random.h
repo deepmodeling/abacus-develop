@@ -32,7 +32,7 @@ class Random
 		const int a = std::rand() % 2;
 		if(a==0) return between0and1();
 		else if(a==1) return betweenMinus1and0();
-		else throw(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));	// Peize Lin add to fix warning 2019-05-01
+		else throw(std::string(__FILE__)+" line "+std::to_string(__LINE__));	// Peize Lin add to fix warning 2019-05-01
 	}
 
 	static double between0and1(void)

@@ -464,7 +464,7 @@ void ESolver_OF::print_info(const bool conv_esolver)
             titles.push_back("LKT KEDF");
             energies_Ry.push_back(this->lkt_->lkt_energy);
         }
-#ifdef __MLKEDF
+#ifdef __MLALGO
         if (this->of_kinetic_ == "ml")
         {
             titles.push_back("MPN KEDF");

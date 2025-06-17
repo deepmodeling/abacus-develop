@@ -4,11 +4,28 @@
 #include "module_ri/conv_coulomb_pot_k.h"
 #include "xc_functional.h"
 
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <string>
+
 struct Exx_Info
 {
     struct Exx_Info_Global
     {
         bool cal_exx = false;
+
+        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+		// Fock:
+		//		"alpha":		"0"
+		//		"Rcut_type":	"limits" / "spencer"
+		//		"lambda":		"0.3"
+		//		//"Rcut"
+		// Erfc:
+		//		"alpha":		"0"
+		//		"omega":		"0.11"
+		//		"Rcut_type":	"limits"
+		//		//"Rcut"
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
         double hybrid_alpha = 0.25;
@@ -35,8 +52,7 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
-        const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
-        const double& hse_omega;
+        const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
 
         bool real_number = false;
 
@@ -58,7 +74,7 @@ struct Exx_Info
         int abfs_Lmax = 0; // tmp
 
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega)
+            : coulomb_param(info_global.coulomb_param)
         {
         }
     };

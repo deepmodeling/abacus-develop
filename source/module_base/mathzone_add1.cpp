@@ -194,7 +194,7 @@ double Mathzone_Add1::Uni_RadialF
 
   	if (newr < 0.0)
   	{  
-		throw std::runtime_error("newr should >= 0. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+		throw std::runtime_error("newr should >= 0. "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 
   	}
   	else if ( rmax <= newr	) 

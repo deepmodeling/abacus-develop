@@ -1,7 +1,7 @@
 #ifndef DEEPKS_BASIC_H
 #define DEEPKS_BASIC_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "LCAO_deepks_io.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"

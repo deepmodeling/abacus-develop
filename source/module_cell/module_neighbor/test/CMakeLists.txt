@@ -1,4 +1,4 @@
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 #include "module_/.h"
 remove_definitions(-D__ROCM)

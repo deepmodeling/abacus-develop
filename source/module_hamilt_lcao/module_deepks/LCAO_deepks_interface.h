@@ -1,7 +1,7 @@
 #ifndef LCAO_DEEPKS_INTERFACE_H
 #define LCAO_DEEPKS_INTERFACE_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "LCAO_deepks.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
@@ -44,7 +44,8 @@ class LCAO_Deepks_Interface
                            const psi::Psi<TK>& psid,
                            const elecstate::DensityMatrix<TK, double>* dm,
                            hamilt::HamiltLCAO<TK, TR>* p_ham,
-                           const int rank);
+                           const int rank,
+                           std::ostream& ofs_running);
 
   private:
     std::shared_ptr<LCAO_Deepks<TK>> ld;

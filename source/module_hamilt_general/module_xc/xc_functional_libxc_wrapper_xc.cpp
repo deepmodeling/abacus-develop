@@ -10,7 +10,9 @@ void XC_Functional_Libxc::xc_spin_libxc(
     const std::vector<double> rho_ud = {rhoup, rhodw};
     exc = vxcup = vxcdw = 0.0;
 
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_POLARIZED);
 
     for(xc_func_type &func : funcs)
     {

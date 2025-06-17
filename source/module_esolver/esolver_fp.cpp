@@ -17,6 +17,7 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
+#include "module_cell/k_vector_utils.h"
 
 namespace ModuleESolver
 {
@@ -292,7 +293,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
 
         // reset k-points
-        kv.set_after_vc(PARAM.inp.nspin, ucell.G, ucell.latvec);
+        KVectorUtils::set_after_vc(kv, PARAM.inp.nspin, ucell.G);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 

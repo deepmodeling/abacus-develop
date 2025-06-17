@@ -25,10 +25,26 @@ namespace XC_Functional_Libxc
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
     //        for example, "XC_LDA_X+XC_LDA_C_PZ"
-    extern std::pair<int,std::vector<int>> set_xc_type_libxc(const std::string xc_func_in);
+    extern std::pair<int,std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
-    // converts func_id into corresponding xc_func_type vector
-    extern std::vector<xc_func_type> init_func(const std::vector<int> &func_id, const int xc_polarized);
+    /**
+     * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
+     * 
+     * @param func_id libxc ID of functional, see https://libxc.gitlab.io/functionals/ for details
+     * @param xc_polarized 0: unpolarized, 1: spin-polarized
+     * @return std::vector<xc_func_type> 
+     * 
+     * @note the functionality of this method is extended by supporting the user-defined
+     *       external parameters of xc. However, there are several functionals' external 
+     *       parameters are pre-defined in the code, which herein we call those are 
+     *       "in-built" parameters. If the same functional ID is found in both in-built 
+     *       and external parameters, the external parameters will overwrite the in-built ones.
+     *       The external parameters can be passed here by keywords xc_exch_ext and
+     *       xc_corr_ext in the input file. The expected format would be an XC ID 
+     *       followed by a list of parameters.
+     */
+    extern std::vector<xc_func_type> init_func(const std::vector<int> &func_id, 
+                                               const int xc_polarized);
 
     extern void finish_func(std::vector<xc_func_type> &funcs);
 
@@ -176,6 +192,7 @@ namespace XC_Functional_Libxc
         double tauup, double taudw,
         double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
         double &v3xcup, double &v3xcdw);
+
 } // namespace XC_Functional_Libxc
 
 #endif // USE_LIBXC

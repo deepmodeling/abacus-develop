@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "module_io/read_input.h"
-#include "version.h"
+#include "source_main/version.h"
 
 namespace ModuleIO
 {

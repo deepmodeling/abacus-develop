@@ -88,13 +88,13 @@ template <typename TK, typename TR>
 OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     HContainer<TR>*hR_in,
     const UnitCell& ucell_in,
-	const K_Vectors& kv_in,
-	std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
-	std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
+    const K_Vectors& kv_in,
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
+    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
     Add_Hexx_Type add_hexx_type_in,
     const int istep,
     int* two_level_step_in,
-	const bool restart_in)
+    const bool restart_in)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
     ucell(ucell_in),
     kv(kv_in),
@@ -111,46 +111,74 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
     if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
     {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
-        const std::string file_name_exx = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        bool all_exist = true;
-        for (int is=0;is<PARAM.inp.nspin;++is)
+        auto file_name_list_csr = []() -> std::vector<std::string>
         {
-            std::ifstream ifs(file_name_exx + "_" + std::to_string(is) + ".csr");
-            if (!ifs) { all_exist = false; break; }
-        }
-        if (all_exist)
+            std::vector<std::string> file_name_list;
+            for (int irank=0; irank<PARAM.globalv.nproc; ++irank) {
+                for (int is=0;is<PARAM.inp.nspin;++is) {
+                    file_name_list.push_back( PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(irank) + "_" + std::to_string(is) + ".csr" );
+            } }
+            return file_name_list;
+        };
+        auto file_name_list_cereal = []() -> std::vector<std::string>
         {
+            std::vector<std::string> file_name_list;
+            for (int irank=0; irank<PARAM.globalv.nproc; ++irank)
+                { file_name_list.push_back( "HexxR_" + std::to_string(irank) ); }
+            return file_name_list;
+        };
+        auto check_exist = [](const std::vector<std::string> &file_name_list) -> bool
+        {
+            for (const std::string &file_name : file_name_list)
+            {
+                std::ifstream ifs(file_name);
+                if (!ifs.is_open())
+                    { return false; }
+            }
+            return true;
+        };
+
+        std::cout<<" Attention: The number of MPI processes must be strictly identical between SCF and NSCF when computing exact-exchange."<<std::endl;
+        if (check_exist(file_name_list_csr()))
+        {
+            const std::string file_name_exx_csr = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
             // Read HexxR in CSR format
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                ModuleIO::read_Hexxs_csr(file_name_exx, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
-                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
+                ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                if (this->add_hexx_type == Add_Hexx_Type::R)
+                    { reallocate_hcontainer(*Hexxd, this->hR); }
             }
             else
             {
-                ModuleIO::read_Hexxs_csr(file_name_exx, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
-                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
+                ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                if (this->add_hexx_type == Add_Hexx_Type::R)
+                    { reallocate_hcontainer(*Hexxc, this->hR); }
             }
         }
-        else
+        else if (check_exist(file_name_list_cereal()))
         {
             // Read HexxR in binary format (old version)
-            const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+            const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(PARAM.globalv.myrank);
             std::ifstream ifs(file_name_exx_cereal, std::ios::binary);
             if (!ifs)
-            {
-                ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
-            }
+                { ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >."); }
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
-                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
+                if (this->add_hexx_type == Add_Hexx_Type::R)
+                    { reallocate_hcontainer(*Hexxd, this->hR); }
             }
             else
             {   
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxc);
-                if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
+                if (this->add_hexx_type == Add_Hexx_Type::R)
+                    { reallocate_hcontainer(*Hexxc, this->hR); }
             }
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file in " + PARAM.globalv.global_readin_dir);
         }
         this->use_cell_nearest = false;
     }
@@ -207,7 +235,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
                 // read in Hexx(R)
-                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(PARAM.globalv.myrank);
                 int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
@@ -232,7 +260,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 else
                 {
                     // Read HexxR in binary format (old version)
-                    const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+                    const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
 #ifdef __MPI                    

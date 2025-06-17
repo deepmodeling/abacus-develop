@@ -89,8 +89,13 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     using gemm_op = ModuleBase::gemm_op<T, Device>;
     using nonlocal_op = nonlocal_pw_op<Real, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    #ifdef __DSP
+    using resmem_complex_op = base_device::memory::resize_memory_op_mt<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op_mt<T, Device>;
+    #else
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    #endif
     using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
     T one{1, 0};

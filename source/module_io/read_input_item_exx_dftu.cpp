@@ -11,9 +11,9 @@ void ReadInput::item_exx()
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(input.exx_hybrid_alpha);
-		item.reset_value = [](const Input_Item& item, Parameter& para) 
-		{
-			if (para.input.exx_hybrid_alpha == "default")
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_hybrid_alpha == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
@@ -48,7 +48,8 @@ void ReadInput::item_exx()
             const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "must 0 <= exx_hybrid_alpha <= 1");
+                ModuleBase::WARNING_QUIT("ReadInput", 
+                    "The Hartree-Fock fraction (exx_hybrid_alpha) can only be in range [0, 1]");
             }
         };
         this->add_item(item);
@@ -71,9 +72,9 @@ void ReadInput::item_exx()
         item.annotation = "the maximal electronic iteration number in the "
                           "evaluation of Fock exchange";
         read_sync_int(input.exx_hybrid_step);
-		item.check_value = [](const Input_Item& item, const Parameter& para) 
-		{
-			if (para.input.exx_hybrid_step <= 0)
+        item.check_value = [](const Input_Item& item, const Parameter& para) 
+        {
+            if (para.input.exx_hybrid_step <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_hybrid_step must > 0");
             }

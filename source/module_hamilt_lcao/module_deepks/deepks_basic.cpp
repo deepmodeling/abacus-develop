@@ -2,7 +2,7 @@
 // including loading of model and calculating gradients
 // as well as subroutines that prints the results for checking
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "deepks_basic.h"
 
 #include "module_base/atom_in.h"

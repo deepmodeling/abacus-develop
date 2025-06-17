@@ -97,7 +97,7 @@ void Numerical_Orbital_Lm::set_orbital_info
 				this->psik2[ik] = psi_in[ik];
 			break;
 		default:
-			throw std::domain_error(ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+			throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 	}
 
 	switch(psi_type)
@@ -111,7 +111,7 @@ void Numerical_Orbital_Lm::set_orbital_info
 			}
 			else
 			{
-				throw std::domain_error("flag_sbpool false not finished in Numerical_Orbital_Lm::set_orbital_info_k. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
+				throw std::domain_error("flag_sbpool false not finished in Numerical_Orbital_Lm::set_orbital_info_k. "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
 			}
 			break;
 		default:	break;

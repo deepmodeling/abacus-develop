@@ -1,5 +1,6 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
+
 #include "fp_energy.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/module_charge/charge.h"
@@ -169,8 +170,6 @@ class ElecState
 
     bool skip_weights = false;
 };
-    
-
 
 } // namespace elecstate
 #endif

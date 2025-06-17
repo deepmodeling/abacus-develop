@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Building
         run: |
-          cmake -B build -DENABLE_ASAN=1 -DENABLE_DEEPKS=1 -DENABLE_LIBXC=1
+          cmake -B build -DENABLE_ASAN=1 -DENABLE_MLALGO=1 -DENABLE_LIBXC=1
           cmake --build build -j8
           cmake --install build
       - name: Testing
