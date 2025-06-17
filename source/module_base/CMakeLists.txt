@@ -29,6 +29,7 @@ add_library(
     math_lebedev_laikov.cpp
     math_polyint.cpp
     math_sphbes.cpp
+    math_erf_complex.cpp
     math_ylmreal.cpp
     math_bspline.cpp
     math_chebyshev.cpp

@@ -146,6 +146,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
+    math_erf_complex.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
