@@ -5,7 +5,7 @@
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
 //-----------temporary-------------------------
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

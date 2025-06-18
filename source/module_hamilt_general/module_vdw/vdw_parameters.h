@@ -1,7 +1,7 @@
 #ifndef VDW_PARAMETERS_H
 #define VDW_PARAMETERS_H
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 

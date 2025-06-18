@@ -4,7 +4,7 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "module_io/single_R_io.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 /************************************************
  *  unit test of output_single_R

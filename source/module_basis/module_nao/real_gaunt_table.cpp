@@ -4,7 +4,7 @@
 #include <array>
 #include <cassert>
 
-#include "module_base/constants.h"
+#include "source_base/constants.h"
 
 void RealGauntTable::build(const int lmax)
 {

@@ -9,7 +9,7 @@
 #define protected public
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -389,7 +389,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 // }
 
 #ifdef __MPI
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 #include "mpi.h"
 int main(int argc, char** argv)
 {

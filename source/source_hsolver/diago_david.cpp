@@ -1,11 +1,11 @@
 #include "diago_david.h"
 
-#include "module_base/timer.h"                  // ModuleBase::timer::tick
-#include "module_base/tool_title.h"             // ModuleBase::TITLE
-#include "module_base/module_device/device.h"
+#include "source_base/timer.h"                  // ModuleBase::timer::tick
+#include "source_base/tool_title.h"             // ModuleBase::TITLE
+#include "source_base/module_device/device.h"
 
 #include "source_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
 
 
 using namespace hsolver;

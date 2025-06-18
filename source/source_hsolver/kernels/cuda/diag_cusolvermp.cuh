@@ -6,7 +6,7 @@
 #include <vector>
 #include <cal.h>
 #include <cusolverMp.h>
-#include "module_base/macros.h"
+#include "source_base/macros.h"
 
 template<typename inputT>
 class Diag_CusolverMP_gvd

@@ -1,5 +1,5 @@
-#include "module_base/parallel_2d.h"
-#include "module_base/macros.h"
+#include "source_base/parallel_2d.h"
+#include "source_base/macros.h"
 
 #ifdef __MPI
 #include <mpi.h>

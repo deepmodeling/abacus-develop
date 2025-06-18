@@ -1,8 +1,8 @@
 #include "module_basis/module_nao/two_center_integrator.h"
 
-#include "module_base/vector3.h"
-#include "module_base/ylm.h"
-#include "module_base/array_pool.h"
+#include "source_base/vector3.h"
+#include "source_base/ylm.h"
+#include "source_base/array_pool.h"
 
 TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),

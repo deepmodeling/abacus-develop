@@ -1,6 +1,6 @@
 #include "magnetism.h"
 
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 //#include "module_elecstate/module_charge/charge.h"
 

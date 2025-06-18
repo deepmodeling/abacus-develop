@@ -1,10 +1,10 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include "module_base/complexarray.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/intarray.h"
-#include "module_base/realarray.h"
+#include "source_base/complexarray.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/intarray.h"
+#include "source_base/realarray.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"

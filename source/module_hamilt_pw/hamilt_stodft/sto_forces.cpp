@@ -1,6 +1,6 @@
 #include "sto_forces.h"
 
-#include "module_base/mathzone.h"
+#include "source_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_pot/efield.h"
@@ -11,9 +11,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
 
 // new
-#include "module_base/math_integral.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/math_integral.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 
 template <typename FPTYPE, typename Device>

@@ -5,8 +5,8 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "../binstream.h"
-#include "module_base/global_variable.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/global_variable.h"
+#include "source_base/scalapack_connector.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

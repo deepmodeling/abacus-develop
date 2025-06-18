@@ -2,8 +2,8 @@
 #define ORB_GAUNT_TABLE_H
 
 #include <map>
-#include "module_base/realarray.h"
-#include "module_base/matrix.h"
+#include "source_base/realarray.h"
+#include "source_base/matrix.h"
 
 class ORB_gaunt_table
 {

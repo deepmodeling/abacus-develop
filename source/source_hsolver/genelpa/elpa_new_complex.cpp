@@ -9,10 +9,10 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
 
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
 #include "utils.h"
 
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 
 
 extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;

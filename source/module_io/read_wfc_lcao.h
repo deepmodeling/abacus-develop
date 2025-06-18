@@ -1,14 +1,14 @@
 #ifndef READ_WFC_LCAO_H
 #define READ_WFC_LCAO_H
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 #include <complex>
 #include <string>
 #include <vector>
 
 #ifdef __MPI
-#include "module_base/scalapack_connector.h"
-#include "module_base/parallel_2d.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/parallel_2d.h"
 #endif
 
 /**

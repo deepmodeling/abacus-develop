@@ -1,7 +1,7 @@
 #include "cuda_runtime.h"
 #include "fftw3.h"
-#include "module_base/module_device/device.h"
-#include "module_base/vector3.h"
+#include "source_base/module_device/device.h"
+#include "source_base/vector3.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 

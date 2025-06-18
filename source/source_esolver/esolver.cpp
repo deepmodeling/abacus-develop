@@ -2,7 +2,7 @@
 
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
-#include "module_base/module_device/device.h"
+#include "source_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
@@ -13,7 +13,7 @@
 #include "module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
-#include "module_base/blacs_connector.h"
+#include "source_base/blacs_connector.h"
 }
 #endif
 #include "esolver_dp.h"

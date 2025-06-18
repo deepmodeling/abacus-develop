@@ -6,8 +6,8 @@
 #ifndef MATRIX_ORB21_H
 #define MATRIX_ORB21_H
 
-#include "module_base/element_basis_index.h"
-#include "module_base/vector3.h"
+#include "source_base/element_basis_index.h"
+#include "source_base/vector3.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"

@@ -7,9 +7,9 @@
 #define MIX_DMK_2D_H
 
 #include "Mix_Matrix.h"
-#include "module_base/module_mixing/mixing.h"
-#include "module_base/matrix.h"
-#include "module_base/complexmatrix.h"
+#include "source_base/module_mixing/mixing.h"
+#include "source_base/matrix.h"
+#include "source_base/complexmatrix.h"
 
 #include <vector>
 

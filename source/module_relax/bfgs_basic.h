@@ -1,7 +1,7 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 
 // references
 // 1) Roger Fletcher, Practical Methods of Optimization, John Wiley and

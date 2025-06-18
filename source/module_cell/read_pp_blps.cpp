@@ -1,6 +1,6 @@
 #include "read_pp.h"
-#include "module_base/atom_in.h"
-#include "module_base/element_name.h"
+#include "source_base/atom_in.h"
+#include "source_base/element_name.h"
 
 int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 {

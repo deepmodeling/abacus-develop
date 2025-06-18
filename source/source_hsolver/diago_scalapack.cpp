@@ -11,9 +11,9 @@
 #include <cassert>
 #include <cstring>
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/scalapack_connector.h"
 #include "module_hamilt_general/matrixblock.h"
 
 typedef hamilt::MatrixBlock<double> matd;

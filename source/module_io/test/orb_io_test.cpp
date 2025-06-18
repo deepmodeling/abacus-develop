@@ -5,8 +5,8 @@
 #include <mpi.h>
 #endif
 
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
 
 class OrbIOTest : public testing::Test
 {

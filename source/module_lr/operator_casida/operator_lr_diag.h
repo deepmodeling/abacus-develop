@@ -1,9 +1,9 @@
 #pragma once
 #include "module_lr/utils/lr_util.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "module_hamilt_general/operator.h"
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 namespace LR
 {

@@ -1,13 +1,13 @@
 #include "sto_wf.h"
 
-#include "module_base/memory.h"
+#include "source_base/memory.h"
 #include "module_parameter/parameter.h"
 
 #include <cassert>
 #include <ctime>
 
 //---------Temporary------------------------------------
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 //------------------------------------------------------
 

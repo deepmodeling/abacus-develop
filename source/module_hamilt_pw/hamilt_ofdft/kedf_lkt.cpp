@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include <iostream>
 
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 
 void KEDF_LKT::set_para(double dV, double lkt_a)
 {

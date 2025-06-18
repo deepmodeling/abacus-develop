@@ -2,8 +2,8 @@
 
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 
 //============= MAP OF BFGS ===========================
 // (1) start() -> BFGS_Basic::check_converged()

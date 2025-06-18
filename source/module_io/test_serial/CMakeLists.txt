@@ -28,8 +28,8 @@ AddTest(
   TARGET MODULE_IO_read_input_serial
   LIBS parameter ${math_libs} io_input_serial 
   SOURCES read_input_test.cpp 
-          ../../module_base/test/tool_quit_no_exit.cpp 
-          ../../module_base/module_device/device.cpp
+          ../../source_base/test/tool_quit_no_exit.cpp 
+          ../../source_base/module_device/device.cpp
 )
 
 AddTest(

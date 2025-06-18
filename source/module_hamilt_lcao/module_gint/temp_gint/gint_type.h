@@ -1,8 +1,8 @@
 #pragma once
 
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_base/vector3.h"
-#include "module_base/matrix3.h"
+#include "source_base/vector3.h"
+#include "source_base/matrix3.h"
 
 using Matrix3 = ModuleBase::Matrix3;
 using Vec3d = ModuleBase::Vector3<double>;

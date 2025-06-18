@@ -4,8 +4,8 @@
 #include"diago_mock.h"
 #include "module_psi/psi.h"
 #include"gtest/gtest.h"
-#include "module_base/inverse_matrix.h"
-#include "module_base/lapack_connector.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/lapack_connector.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include"mpi.h"
 

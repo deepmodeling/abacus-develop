@@ -1,8 +1,8 @@
 #include "parallel_orbitals.h"
 
-#include "module_base/blacs_connector.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/global_function.h"
+#include "source_base/blacs_connector.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/global_function.h"
 
 Parallel_Orbitals::Parallel_Orbitals()
 {

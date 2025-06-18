@@ -4,7 +4,7 @@
 #include "module_basis/module_nao/two_center_table.h"
 #include "module_basis/module_nao/real_gaunt_table.h"
 #include "module_basis/module_nao/radial_collection.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 /*!
  * @brief A class to compute two-center integrals

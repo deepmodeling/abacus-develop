@@ -1,7 +1,7 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
 #include "helper_cuda.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 #include <assert.h>
 
@@ -12,8 +12,8 @@ extern "C"
 #include <iostream>
 #include <cstdint>
 #include "helper_cusolver.h"
-#include "module_base/global_function.h"
-#include "module_base/module_device/device.h"
+#include "source_base/global_function.h"
+#include "source_base/module_device/device.h"
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
 {
     MPI_Request req;

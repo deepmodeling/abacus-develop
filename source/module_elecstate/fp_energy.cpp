@@ -1,10 +1,10 @@
 #include "fp_energy.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 
 #include <iomanip>
 #include <iostream>

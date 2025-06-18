@@ -1,6 +1,6 @@
 #ifdef __LCAO
 #include "dftu.h"
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"

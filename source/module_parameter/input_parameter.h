@@ -1,7 +1,7 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
 #include "md_parameter.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 #include <vector>

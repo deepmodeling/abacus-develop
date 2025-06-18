@@ -8,7 +8,7 @@
 
 #include "LRI_CV_Tools.h"
 #include "Inverse_Matrix.h"
-#include "../module_base/mathzone.h"
+#include "../source_base/mathzone.h"
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 
 template<typename Tdata>

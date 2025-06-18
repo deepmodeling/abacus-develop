@@ -1,6 +1,6 @@
 #include <fstream>
 #include "gtest/gtest.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_basis/module_ao/ORB_atomic.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 
