@@ -9,9 +9,56 @@
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_parameter/parameter.h"
 
+#include <unordered_map>
+
 template <typename TK, typename TR>
 LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in) : ld(ld_in)
 {
+}
+
+// Helper function to map file_type to true names
+std::string true_file_type(const std::string& file_type) 
+{
+    static const std::unordered_map<std::string, std::string> file_type_map = {
+        {"etot", "energy"},
+        {"ftot", "force"},
+        {"stot", "stress"},
+        {"otot", "orbital"},
+        {"htot", "hamiltonian"}
+    };
+
+    auto it = file_type_map.find(file_type);
+    return it != file_type_map.end() ? it->second : file_type;
+}
+
+std::string get_filename(const std::string& file_type,
+                         const int& label_type,
+                         const int& iter) 
+{
+    std::ostringstream file_name;
+    if (iter == -1)// called in after scf
+    {
+        file_name << PARAM.globalv.global_out_dir;
+        file_name << "deepks_";
+    }
+    else // called during electronic step
+    {
+        file_name << PARAM.globalv.global_deepks_label_elec_dir;
+    }
+    if (label_type == 2) // for deepks_out_labels == 2
+    {
+        file_name << true_file_type(file_type);
+    }
+    else
+    {
+        file_name << file_type;
+    }
+    if (iter != -1)
+    {
+        file_name << "e" << iter;
+    }
+    file_name << ".npy";
+    return file_name.str();
 }
 
 template <typename TK, typename TR>
@@ -28,6 +75,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       const psi::Psi<TK>& psi,
                                                       const elecstate::DensityMatrix<TK, double>* dm,
                                                       hamilt::HamiltLCAO<TK, TR>* p_ham,
+                                                      const int& iter,
+                                                      const bool& conv_esolver,
                                                       const int rank,
                                                       std::ostream& ofs_running)
 {
@@ -139,13 +188,12 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         }
 
         // Energy Part
-        const std::string file_etot = PARAM.globalv.global_out_dir
-                                      + (PARAM.inp.deepks_out_labels == 1 ? "deepks_etot.npy" : "deepks_energy.npy");
+        const std::string file_etot = get_filename("etot", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_e(etot, file_etot, rank);
 
         if (PARAM.inp.deepks_out_labels == 1)
         {
-            const std::string file_ebase = PARAM.globalv.global_out_dir + "deepks_ebase.npy";
+            const std::string file_ebase = get_filename("ebase", PARAM.inp.deepks_out_labels, iter);
             if (PARAM.inp.deepks_scf)
             {
                 /// ebase :no deepks E_delta including
@@ -170,7 +218,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 torch::Tensor gvx;
                 DeePKS_domain::cal_gvx(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmx, gvx, rank);
-                const std::string file_gradvx = PARAM.globalv.global_out_dir + "deepks_gradvx.npy";
+                const std::string file_gradvx = get_filename("gradvx", PARAM.inp.deepks_out_labels, iter);
                 LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, rank);
 
                 if (PARAM.inp.deepks_out_unittest)
@@ -193,7 +241,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 torch::Tensor gvepsl;
                 DeePKS_domain::cal_gvepsl(ucell.nat, inlmax, des_per_atom, inl2l, gevdm, gdmepsl, gvepsl, rank);
-                const std::string file_gvepsl = PARAM.globalv.global_out_dir + "deepks_gvepsl.npy";
+                const std::string file_gvepsl = get_filename("gvepsl", PARAM.inp.deepks_out_labels, iter);
                 LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, rank);
 
                 if (PARAM.inp.deepks_out_unittest)
@@ -260,9 +308,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 }
             }
 
-            const std::string file_otot
-                = PARAM.globalv.global_out_dir
-                  + (PARAM.inp.deepks_out_labels == 1 ? "deepks_otot.npy" : "deepks_orbital.npy");
+            const std::string file_otot = get_filename("otot", PARAM.inp.deepks_out_labels, iter);
             LCAO_deepks_io::save_matrix2npy(file_otot, o_tot, rank); // Unit: Hartree
 
             if (PARAM.inp.deepks_out_labels == 1) // don't need these when deepks_out_labels == 2
@@ -339,21 +385,21 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         }
                     }
                     // save obase and orbital_precalc
-                    const std::string file_orbpre = PARAM.globalv.global_out_dir + "deepks_orbpre.npy";
+                    const std::string file_orbpre = get_filename("orbpre", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, rank);
 
-                    const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
+                    const std::string file_obase = get_filename("obase", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_matrix2npy(file_obase, o_tot - o_delta, rank); // Unit: Hartree
                 }
                 else // deepks_scf == 0
                 {
-                    const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
+                    const std::string file_obase = get_filename("obase", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_matrix2npy(file_obase, o_tot, rank); // no scf, o_tot=o_base
                 }                                                             // end deepks_scf == 0
             }                                                                 // end deepks_out_labels == 1
         }
 
-        // not add deepks_out_labels = 2 for HR yet
+        // not add deepks_out_labels = 2 and get_filename for HR yet
         // H(R) matrix part, for HR, base will not be calculated since they are HContainer objects
         if (PARAM.inp.deepks_v_delta < 0)
         {
@@ -419,9 +465,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             std::vector<TH> h_tot(nks);
             DeePKS_domain::get_h_tot<TK, TH, TR>(*ParaV, p_ham, h_tot, nlocal, nks, 'H');
 
-            const std::string file_htot
-                = PARAM.globalv.global_out_dir
-                  + (PARAM.inp.deepks_out_labels == 1 ? "deepks_htot.npy" : "deepks_hamiltonian.npy");
+            const std::string file_htot = get_filename("htot", PARAM.inp.deepks_out_labels, iter);
             LCAO_deepks_io::save_npy_h<TK, TH>(h_tot, file_htot, nlocal, nks, rank);
 
             if (PARAM.inp.deepks_out_labels == 1) // don't need these when deepks_out_labels == 2
@@ -438,14 +482,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     DeePKS_domain::collect_h_mat<TK, TH>(*ParaV, *h_delta, v_delta, nlocal, nks);
 
                     // save v_delta and h_base
-                    const std::string file_hbase = PARAM.globalv.global_out_dir + "deepks_hbase.npy";
+                    const std::string file_hbase = get_filename("hbase", PARAM.inp.deepks_out_labels, iter);
                     for (int ik = 0; ik < nks; ik++)
                     {
                         h_base[ik] = h_tot[ik] - v_delta[ik];
                     }
                     LCAO_deepks_io::save_npy_h<TK, TH>(h_base, file_hbase, nlocal, nks, rank);
 
-                    const std::string file_vdelta = PARAM.globalv.global_out_dir + "deepks_vdelta.npy";
+                    const std::string file_vdelta = get_filename("vdelta", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_npy_h<TK, TH>(v_delta, file_vdelta, nlocal, nks, rank);
 
                     if (PARAM.inp.deepks_v_delta == 1) // v_delta_precalc storage method 1
@@ -467,7 +511,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                                GridD,
                                                                v_delta_precalc);
 
-                        const std::string file_vdpre = PARAM.globalv.global_out_dir + "deepks_vdpre.npy";
+                        const std::string file_vdpre = get_filename("vdpre", PARAM.inp.deepks_out_labels, iter);
                         LCAO_deepks_io::save_tensor2npy<TK>(file_vdpre, v_delta_precalc, rank);
                     }
                     else if (PARAM.inp.deepks_v_delta == 2) // v_delta_precalc storage method 2
@@ -485,18 +529,18 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                             *ParaV,
                                                             GridD,
                                                             phialpha_out);
-                        const std::string file_phialpha = PARAM.globalv.global_out_dir + "deepks_phialpha.npy";
+                        const std::string file_phialpha = get_filename("phialpha", PARAM.inp.deepks_out_labels, iter);
                         LCAO_deepks_io::save_tensor2npy<TK>(file_phialpha, phialpha_out, rank);
 
                         torch::Tensor gevdm_out;
                         DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
-                        const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
+                        const std::string file_gevdm = get_filename("gevdm", PARAM.inp.deepks_out_labels, iter);
                         LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
                     }
                 }
                 else // deepks_scf == 0
                 {
-                    const std::string file_hbase = PARAM.globalv.global_out_dir + "deepks_hbase.npy";
+                    const std::string file_hbase = get_filename("hbase", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_npy_h<TK, TH>(h_tot, file_hbase, nlocal, nks, rank);
                 }
             } // end deepks_out_labels == 1
@@ -504,6 +548,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
     } // end deepks_out_labels
 
+    // don't need to output in multiple electronic steps
     if (PARAM.inp.deepks_out_labels == 2)
     {
         // output atom.npy and box.npy

@@ -173,6 +173,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 			*psi,
 			pelec->get_DM(),
 			p_ham_deepks,
+            -1, // -1 when called in after scf
+            true, // no used when after scf
 			GlobalV::MY_RANK,
             GlobalV::ofs_running);
 #endif
