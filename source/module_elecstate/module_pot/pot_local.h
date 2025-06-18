@@ -1,8 +1,8 @@
 #ifndef POTLOCAL_H
 #define POTLOCAL_H
 
-#include "module_base/matrix.h"
 #include "pot_base.h"
+#include "source_base/matrix.h"
 
 namespace elecstate
 {
@@ -25,14 +25,13 @@ class PotLocal : public PotBase
 
     void cal_fixed_v(double* vl_pseudo) override;
 
-    private:
-
+  private:
     /// @brief save the value of vloc at G=0; this is a static member because there is only one vl(0) for all instances
     double* vl_of_0_ = nullptr;
 
     // std::vector<double> vltot;
 
-    const ModuleBase::matrix* vloc_ = nullptr; // local pseduopotentials
+    const ModuleBase::matrix* vloc_ = nullptr;      // local pseduopotentials
     const ModuleBase::ComplexMatrix* sf_ = nullptr; // structure factors
     int ntype_ = 0;
 };

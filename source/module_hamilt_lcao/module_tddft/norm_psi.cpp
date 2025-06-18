@@ -1,8 +1,8 @@
 #include "norm_psi.h"
 
-#include "module_base/lapack_connector.h"
-#include "module_base/module_container/ATen/kernels/blas.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/module_container/ATen/kernels/blas.h"
+#include "source_base/scalapack_connector.h"
 
 #include <complex>
 #include <iostream>
@@ -136,7 +136,7 @@ void norm_psi(const Parallel_Orbitals* pv,
                 }
             }
         } // loop ipcol
-    } // loop iprow
+    }     // loop iprow
 
     BlasConnector::copy(pv->nloc_wfc, psi_k, 1, tmp1, 1);
 
@@ -344,7 +344,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                 }
             }
         } // loop ipcol
-    } // loop iprow
+    }     // loop iprow
 
     // Copy psi_k to tmp1 (using deep copy)
     // tmp1.CopyFrom(psi_k); // Does not work because this will cause tmp1 and psi_k to share the same data

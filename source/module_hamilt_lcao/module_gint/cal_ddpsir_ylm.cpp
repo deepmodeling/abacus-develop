@@ -1,17 +1,23 @@
 #include "gint_tools.h"
-#include "module_base/timer.h"
-#include "module_base/ylm.h"
-namespace Gint_Tools{
+#include "source_base/timer.h"
+#include "source_base/ylm.h"
+namespace Gint_Tools
+{
 void cal_ddpsir_ylm(
-    const Grid_Technique& gt, const int bxyz,
+    const Grid_Technique& gt,
+    const int bxyz,
     const int na_grid,                 // number of atoms on this grid
     const int grid_index,              // 1d index of FFT index (i,j,k)
     const double delta_r,              // delta_r of the uniform FFT grid
     const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    double* const* const ddpsir_ylm_xx, double* const* const ddpsir_ylm_xy, double* const* const ddpsir_ylm_xz,
-    double* const* const ddpsir_ylm_yy, double* const* const ddpsir_ylm_yz, double* const* const ddpsir_ylm_zz)
+    double* const* const ddpsir_ylm_xx,
+    double* const* const ddpsir_ylm_xy,
+    double* const* const ddpsir_ylm_xz,
+    double* const* const ddpsir_ylm_yy,
+    double* const* const ddpsir_ylm_yz,
+    double* const* const ddpsir_ylm_zz)
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     const UnitCell& ucell = *gt.ucell;
@@ -37,13 +43,13 @@ void cal_ddpsir_ylm(
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
 
-        for (int iw=0; iw< atom->nw; ++iw)
+        for (int iw = 0; iw < atom->nw; ++iw)
         {
-            if ( atom->iw2_new[iw] )
+            if (atom->iw2_new[iw])
             {
-                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
-                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
-                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
+                it_psi_uniform[iw] = gt.psi_u[it * gt.nwmax + iw].data();
+                it_dpsi_uniform[iw] = gt.dpsi_u[it * gt.nwmax + iw].data();
+                it_psi_nr_uniform[iw] = gt.psi_u[it * gt.nwmax + iw].size();
             }
         }
 
@@ -66,9 +72,10 @@ void cal_ddpsir_ylm(
             }
             else
             {
-                const double dr[3]
-                    = {// vectors between atom and grid
-                       gt.meshcell_pos[ib][0] + mt[0], gt.meshcell_pos[ib][1] + mt[1], gt.meshcell_pos[ib][2] + mt[2]};
+                const double dr[3] = {// vectors between atom and grid
+                                      gt.meshcell_pos[ib][0] + mt[0],
+                                      gt.meshcell_pos[ib][1] + mt[1],
+                                      gt.meshcell_pos[ib][2] + mt[2]};
                 double distance = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
                 // for some unknown reason, the finite difference between dpsi and ddpsi
@@ -109,12 +116,18 @@ void cal_ddpsir_ylm(
                         dr1[1] = dr[1] + displ[i][1];
                         dr1[2] = dr[2] + displ[i][2];
 
-                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly.get_ptr_2D());
+                        ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl,
+                                                          dr1[0],
+                                                          dr1[1],
+                                                          dr1[2],
+                                                          rly,
+                                                          grly.get_ptr_2D());
 
                         double distance1 = std::sqrt(dr1[0] * dr1[0] + dr1[1] * dr1[1] + dr1[2] * dr1[2]);
-                        if (distance1 < 1e-9) {
+                        if (distance1 < 1e-9)
+                        {
                             distance1 = 1e-9;
-}
+                        }
 
                         const double position = distance1 / delta_r;
 
@@ -139,7 +152,7 @@ void cal_ddpsir_ylm(
                                 auto dpsi_uniform = it_dpsi_uniform[iw];
 
                                 // if ( iq[id] >= philn.nr_uniform-4)
-                                if (iq >= it_psi_nr_uniform[iw]-4)
+                                if (iq >= it_psi_nr_uniform[iw] - 4)
                                 {
                                     tmp = dtmp = 0.0;
                                 }
@@ -206,13 +219,13 @@ void cal_ddpsir_ylm(
                 // the analytical method for evaluating 2nd derivatives
                 // it is not used currently
                 {
-                    // Add it here, but do not run it. If there is a need to run this code 
+                    // Add it here, but do not run it. If there is a need to run this code
                     // in the future, include it in the previous initialization process.
-                    for (int iw=0; iw< atom->nw; ++iw)
+                    for (int iw = 0; iw < atom->nw; ++iw)
                     {
-                        if ( atom->iw2_new[iw] )
+                        if (atom->iw2_new[iw])
                         {
-                            it_d2psi_uniform[iw] = gt.d2psi_u[it*gt.nwmax + iw].data();
+                            it_d2psi_uniform[iw] = gt.d2psi_u[it * gt.nwmax + iw].data();
                         }
                     }
                     // End of code addition section.
@@ -244,7 +257,7 @@ void cal_ddpsir_ylm(
                             auto ddpsi_uniform = it_d2psi_uniform[iw];
 
                             // if ( iq[id] >= philn.nr_uniform-4)
-                            if (iq >= it_psi_nr_uniform[iw]-4)
+                            if (iq >= it_psi_nr_uniform[iw] - 4)
                             {
                                 tmp = dtmp = ddtmp = 0.0;
                             }
@@ -269,7 +282,7 @@ void cal_ddpsir_ylm(
                         const int idx_lm = atom->iw2_ylm[iw];
 
                         const double rl = pow_int(distance, ll);
-                        const double r_lp2 =rl * distance * distance;
+                        const double r_lp2 = rl * distance * distance;
 
                         // d/dr (R_l / r^l)
                         const double tmpdphi = (dtmp - tmp * ll / distance) / rl;
@@ -313,4 +326,4 @@ void cal_ddpsir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     return;
 }
-}
+} // namespace Gint_Tools

@@ -2,8 +2,6 @@
 #define GET_WF_PW_H
 
 #include "cube_io.h"
-#include "module_base/module_device/device.h"
-#include "module_base/tool_quit.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/unitcell.h"
@@ -11,6 +9,8 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
+#include "source_base/module_device/device.h"
+#include "source_base/tool_quit.h"
 
 #include <string>
 #include <vector>

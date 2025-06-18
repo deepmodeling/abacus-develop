@@ -1,9 +1,9 @@
 #include "sltk_grid.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 {
@@ -140,9 +140,7 @@ void Grid::Check_Expand_Condition(const UnitCell& ucell)
     glayerY_minus = extend_d22;
     glayerZ_minus = extend_d33;
     // End, 2016-09-05, LiuXh
-
 }
-
 
 void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
                               const UnitCell& ucell)
@@ -202,22 +200,22 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 
     this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
 
-/*  warning box algorithm   
-    this->box_nx = std::ceil((this->x_max - this->x_min) / box_edge_length) + 1;
-    this->box_ny = std::ceil((this->y_max - this->y_min) / box_edge_length) + 1;
-    this->box_nz = std::ceil((this->z_max - this->z_min) / box_edge_length) + 1;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
+    /*  warning box algorithm
+        this->box_nx = std::ceil((this->x_max - this->x_min) / box_edge_length) + 1;
+        this->box_ny = std::ceil((this->y_max - this->y_min) / box_edge_length) + 1;
+        this->box_nz = std::ceil((this->z_max - this->z_min) / box_edge_length) + 1;
+        ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
 
-    atoms_in_box.resize(this->box_nx);
-    for (int i = 0; i < this->box_nx; i++)
-    {
-        atoms_in_box[i].resize(this->box_ny);
-        for (int j = 0; j < this->box_ny; j++)
+        atoms_in_box.resize(this->box_nx);
+        for (int i = 0; i < this->box_nx; i++)
         {
-            atoms_in_box[i][j].resize(this->box_nz);
+            atoms_in_box[i].resize(this->box_ny);
+            for (int j = 0; j < this->box_ny; j++)
+            {
+                atoms_in_box[i][j].resize(this->box_nz);
+            }
         }
-    }
- */
+     */
     this->box_nx = glayerX + glayerX_minus;
     this->box_ny = glayerY + glayerY_minus;
     this->box_nz = glayerZ + glayerZ_minus;
@@ -247,7 +245,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
                         double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
                         FAtom atom(x, y, z, i, j, ix, iy, iz);
                         int box_i_x, box_i_y, box_i_z;
-                        //this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
+                        // this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
                         box_i_x = ix + glayerX_minus;
                         box_i_y = iy + glayerY_minus;
                         box_i_z = iz + glayerZ_minus;
@@ -257,7 +255,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
             }
         }
     }
-    
+
     this->all_adj_info.resize(ucell.ntype);
     for (int i = 0; i < ucell.ntype; i++)
     {
@@ -269,17 +267,19 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
     ModuleBase::timer::tick("Grid", "constru_adj");
 
-    for  (int i_type = 0; i_type < ucell.ntype; i_type++)
+    for (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
         for (int j_atom = 0; j_atom < ucell.atoms[i_type].na; j_atom++)
         {
 
             FAtom atom(ucell.atoms[i_type].tau[j_atom].x,
-                     ucell.atoms[i_type].tau[j_atom].y,
-                     ucell.atoms[i_type].tau[j_atom].z,
-                     i_type,
-                     j_atom,
-                     0, 0 ,0);
+                       ucell.atoms[i_type].tau[j_atom].y,
+                       ucell.atoms[i_type].tau[j_atom].z,
+                       i_type,
+                       j_atom,
+                       0,
+                       0,
+                       0);
 
             this->Construct_Adjacent_near_box(atom);
         }
@@ -290,9 +290,9 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
 void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
 {
     ModuleBase::timer::tick("Grid", "adj_near_box");
-    int box_i_x=0;
-    int box_i_y=0;
-    int box_i_z=0;
+    int box_i_x = 0;
+    int box_i_y = 0;
+    int box_i_z = 0;
     this->getBox(box_i_x, box_i_y, box_i_z, fatom.x, fatom.y, fatom.z);
 
     for (int box_i_x_adj = 0; box_i_x_adj < glayerX + glayerX_minus; box_i_x_adj++)
@@ -301,7 +301,7 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
         {
             for (int box_i_z_adj = 0; box_i_z_adj < glayerZ + glayerZ_minus; box_i_z_adj++)
             {
-                for (auto &fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
+                for (auto& fatom2: this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
                 {
                     this->Construct_Adjacent_final(fatom, &fatom2);
                 }
@@ -311,15 +311,13 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
     ModuleBase::timer::tick("Grid", "adj_near_box");
 }
 
-void Grid::Construct_Adjacent_final(const FAtom& fatom1,
-                                    FAtom* fatom2)
+void Grid::Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2)
 {
     double delta_x = fatom1.x - fatom2->x;
     double delta_y = fatom1.y - fatom2->y;
     double delta_z = fatom1.z - fatom2->z;
 
     double dr = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
-
 
     // 20241204 zhanghaochong
     // dr == 0 means the same atom

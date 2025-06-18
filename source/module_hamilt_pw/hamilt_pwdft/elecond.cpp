@@ -1,12 +1,12 @@
 #include "elecond.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/parallel_device.h"
 #include "module_elecstate/occupy.h"
 #include "module_io/binstream.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_device.h"
 
 #include <vector>
 
@@ -84,7 +84,11 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     std::vector<double> ct12(nt, 0);
     std::vector<double> ct22(nt, 0);
 
-    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
+    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw,
+                                           this->p_kv->isk.data(),
+                                           this->p_ppcell,
+                                           this->p_ucell,
+                                           nonlocal);
     double decut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
     std::cout << "Recommended dt: " << 0.25 * M_PI / decut << " a.u." << std::endl;
     for (int ik = 0; ik < nk; ++ik)
@@ -156,7 +160,7 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
 
         std::complex<FPTYPE>* pij_c = nullptr;
         std::vector<std::complex<FPTYPE>> pij_h_;
-        if(std::is_same<Device, base_device::DEVICE_CPU>::value)
+        if (std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
             pij_c = pij_d;
         }
@@ -166,7 +170,7 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
             syncmem_complex_d2h_op()(pij_h_.data(), pij_d, nbands * nbands);
             pij_c = pij_h_.data();
         }
-        
+
 #ifdef __MPI
         Parallel_Common::reduce_data(pij_c, nbands * nbands, POOL_WORLD);
 #endif
@@ -219,9 +223,10 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
             for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
             {
                 double ej = enb[jb];
-                if (ej - ei > decut) {
+                if (ej - ei > decut)
+                {
                     continue;
-}
+                }
                 double fj = wg(ik, jb);
                 double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * pij2[ijb];
                 tmct11 += tmct;

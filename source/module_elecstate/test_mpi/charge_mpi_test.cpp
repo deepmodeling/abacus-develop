@@ -1,11 +1,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_base/matrix3.h"
-#include "module_base/parallel_global.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_global.h"
 
 bool XC_Functional::ked_flag = false;
 Charge::Charge()
@@ -19,9 +19,10 @@ Charge::~Charge()
 
 auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
-    for (int i = 0; i < nv; ++i) {
+    for (int i = 0; i < nv; ++i)
+    {
         sum += v[i];
-}
+    }
     return sum;
 };
 /************************************************
@@ -60,15 +61,15 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
     {
         GlobalV::KPAR = 2;
         Parallel_Global::init_pools(GlobalV::NPROC,
-                                      GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
-                                      GlobalV::KPAR,
-                                      GlobalV::NPROC_IN_BNDGROUP,
-                                      GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_BNDGROUP,
-                                      GlobalV::NPROC_IN_POOL,
-                                      GlobalV::RANK_IN_POOL,
-                                      GlobalV::MY_POOL);
+                                    GlobalV::MY_RANK,
+                                    PARAM.input.bndpar,
+                                    GlobalV::KPAR,
+                                    GlobalV::NPROC_IN_BNDGROUP,
+                                    GlobalV::RANK_IN_BPGROUP,
+                                    GlobalV::MY_BNDGROUP,
+                                    GlobalV::NPROC_IN_POOL,
+                                    GlobalV::RANK_IN_POOL,
+                                    GlobalV::MY_POOL);
         ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis();
         rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
         rhopw->initgrids(lat0, latvec, 40);

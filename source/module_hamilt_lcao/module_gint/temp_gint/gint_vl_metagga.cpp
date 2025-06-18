@@ -1,8 +1,9 @@
-#include "module_base/blas_connector.h"
-#include "gint_common.h"
 #include "gint_vl_metagga.h"
-#include "phi_operator.h"
+
+#include "gint_common.h"
 #include "gint_helper.h"
+#include "phi_operator.h"
+#include "source_base/blas_connector.h"
 
 namespace ModuleGint
 {
@@ -40,9 +41,9 @@ void Gint_vl_metagga::cal_hr_gint_()
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (const auto& biggrid: gint_info_->get_biggrids())
         {
-            if(biggrid->get_atoms().size() == 0)
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -69,4 +70,4 @@ void Gint_vl_metagga::cal_hr_gint_()
     }
 }
 
-}
+} // namespace ModuleGint

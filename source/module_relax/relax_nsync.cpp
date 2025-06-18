@@ -1,9 +1,9 @@
 #include "relax_nsync.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_parameter/parameter.h"
 #include "module_cell/update_cell.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 void Relax_old::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.
@@ -42,9 +42,10 @@ bool Relax_old::relax_step(const int& istep,
         return true;
     }
     // choose what to do next
-    if (PARAM.inp.calculation != "cell-relax") {
+    if (PARAM.inp.calculation != "cell-relax")
+    {
         force_step = istep;
-}
+    }
     if (this->if_do_relax(ucell))
     {
         // do relax calculation and generate next structure
@@ -70,7 +71,7 @@ bool Relax_old::relax_step(const int& istep,
             force_step = 1;
             stress_step++;
             ucell.cell_parameter_updated = true;
-            unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
+            unitcell::setup_cell_after_vc(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
         }
         return converged;
@@ -96,9 +97,10 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
             return true;
         }
     }
-    else {
+    else
+    {
         return false;
-}
+    }
 }
 bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
 {
@@ -121,9 +123,10 @@ bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
             return true;
         }
     }
-    else {
+    else
+    {
         return false;
-}
+    }
 }
 bool Relax_old::do_relax(const int& istep,
                          const ModuleBase::matrix& ionic_force,

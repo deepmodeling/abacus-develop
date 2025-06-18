@@ -1,21 +1,21 @@
-#include "module_base/blas_connector.h"
-#include "module_base/constants.h"
-#include "module_base/module_device/memory_op.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/blas_connector.h"
+#include "source_base/constants.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/memory_op.h"
 
-#include <complex>
 #include <benchmark/benchmark.h>
-#include <iostream>
-#include <cmath>
-#include <cstdlib>
 #include <chrono>
+#include <cmath>
+#include <complex>
+#include <cstdlib>
+#include <iostream>
 
 /************************************************
-*  performace test of class math_kernel_op
-***********************************************/
+ *  performace test of class math_kernel_op
+ ***********************************************/
 
 /**
- * Tested function: 
+ * Tested function:
  *      - zdot_real_cpu_op
  *      - vector_mul_real_op_cpu
  *      - vector_mul_vector_op_cpu
@@ -33,9 +33,9 @@
  *      - scal_gpu
  */
 
-class PerfModuleHsolverMathKernel : public benchmark::Fixture {
-    public:
-
+class PerfModuleHsolverMathKernel : public benchmark::Fixture
+{
+  public:
     // DEVICE SYMBOL
     const base_device::DEVICE_CPU* cpu_ctx = {};
 
@@ -50,24 +50,25 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     double dconstant_a = 1.0;
     double dconstant_b = 1.0;
 
-    std::complex<double> zconstant_a = {1.0,1.0};
+    std::complex<double> zconstant_a = {1.0, 1.0};
 
- #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-    const base_device::DEVICE_GPU * gpu_ctx = {};
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
     // from CPU to GPU
-    using synchronize_memory_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     // form GPU to CPU
-    using synchronize_memory_op_gpu
-        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using synchronize_memory_op_gpu = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
     using resize_memory_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using delete_memory_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using resize_memory_op_double = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
     using delete_memory_op_double = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
-    using synchronize_memory_op_double = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op_double
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     using set_memory_op = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using set_memory_op_double = base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>;
@@ -78,9 +79,10 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
 
     double* test_dvector_a_gpu = nullptr;
 
- #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+#endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-    void SetUp(const benchmark::State& state){
+    void SetUp(const benchmark::State& state)
+    {
         dim_vector = state.range(0); // Generate vectors with different diminsions (1,10,100,...,1e6)
 
         // This should be complex vectors
@@ -91,18 +93,21 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         // The following is double vectors
         test_dvector_a = new double[dim_vector + 1];
 
-
-        for (int i=0;i<dim_vector;i++){
+        for (int i = 0; i < dim_vector; i++)
+        {
             // Generate vectors using random
-            test_zvector_a[i] = std::complex<double>{(double)rand()+(double)rand()/(RAND_MAX+1.0),(double)rand()+(double)rand()/(RAND_MAX+1.0)};
-            test_zvector_b[i] = std::complex<double>{(double)rand()+(double)rand()/(RAND_MAX+1.0),(double)rand()+(double)rand()/(RAND_MAX+1.0)};
-            test_dvector_a[i] = (double)rand()+(double)rand()/(RAND_MAX+1.0);
+            test_zvector_a[i] = std::complex<double>{(double)rand() + (double)rand() / (RAND_MAX + 1.0),
+                                                     (double)rand() + (double)rand() / (RAND_MAX + 1.0)};
+            test_zvector_b[i] = std::complex<double>{(double)rand() + (double)rand() / (RAND_MAX + 1.0),
+                                                     (double)rand() + (double)rand() / (RAND_MAX + 1.0)};
+            test_dvector_a[i] = (double)rand() + (double)rand() / (RAND_MAX + 1.0);
         }
 
-        dconstant_a = (double)rand()+(double)rand()/(RAND_MAX+1.0);
-        dconstant_b = (double)rand()+(double)rand()/(RAND_MAX+1.0);
+        dconstant_a = (double)rand() + (double)rand() / (RAND_MAX + 1.0);
+        dconstant_b = (double)rand() + (double)rand() / (RAND_MAX + 1.0);
 
-        zconstant_a = std::complex<double>{(double)rand()+(double)rand()/(RAND_MAX+1.0),(double)rand()+(double)rand()/(RAND_MAX+1.0)};
+        zconstant_a = std::complex<double>{(double)rand() + (double)rand() / (RAND_MAX + 1.0),
+                                           (double)rand() + (double)rand() / (RAND_MAX + 1.0)};
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
         resize_memory_op()(test_zvector_a_gpu, dim_vector);
@@ -116,10 +121,10 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
 
         ModuleBase::createGpuBlasHandle();
 
-
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
     }
-    void TearDown(const benchmark::State& state){
+    void TearDown(const benchmark::State& state)
+    {
         delete[] test_zvector_a;
         delete[] test_zvector_b;
         delete[] result_zvector;
@@ -129,16 +134,14 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
     }
 
-
     // OPs need benchmark
     // CPU operator
     using zdot_real_cpu_op = ModuleBase::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
-    
+
     using vector_mul_real_op_cpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using vector_add_vector_op_cpu
-        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_add_vector_op_cpu = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using axpy_op_cpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
     using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
     using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -151,67 +154,102 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     using vector_mul_real_op_gpu = ModuleBase::vector_mul_real_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using vector_add_vector_op_gpu
-        = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_add_vector_op_gpu = ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using axpy_op_gpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
     using scal_op_gpu = ModuleBase::scal_op<double, base_device::DEVICE_GPU>;
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 };
 
-
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         double result = zdot_real_cpu_op()(dim_vector, test_zvector_a, test_zvector_b, false);
     }
 }
 
-
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_mul_real_op_cpu()(dim_vector, result_zvector, test_zvector_a, dconstant_a);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_mul_vector_op_cpu()(dim_vector, result_zvector, test_zvector_a, test_dvector_a);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_div_vector_op_cpu()(dim_vector, result_zvector, test_zvector_a, test_dvector_a);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
-        vector_add_vector_op_cpu()(dim_vector, result_zvector, test_zvector_a, dconstant_a ,test_zvector_b, dconstant_b);
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
+        vector_add_vector_op_cpu()(dim_vector,
+                                   result_zvector,
+                                   test_zvector_a,
+                                   dconstant_a,
+                                   test_zvector_b,
+                                   dconstant_b);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
-        axpy_op_cpu()(dim_vector, &zconstant_a, test_zvector_a, 1 ,test_zvector_b, 1);
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
+        axpy_op_cpu()(dim_vector, &zconstant_a, test_zvector_a, 1, test_zvector_b, 1);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         scal_op_cpu()(dim_vector, &zconstant_a, test_zvector_a, 1);
     }
 }
 
-
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
@@ -230,60 +268,100 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::
 }
 */
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         double result = zdot_real_gpu_op()(dim_vector, test_zvector_a_gpu, test_zvector_b_gpu, false);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_mul_real_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_mul_vector_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, test_dvector_a_gpu);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         vector_div_vector_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, test_dvector_a_gpu);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
-        vector_add_vector_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a ,test_zvector_b_gpu, dconstant_b);
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
+        vector_add_vector_op_gpu()(dim_vector,
+                                   result_zvector_gpu,
+                                   test_zvector_a_gpu,
+                                   dconstant_a,
+                                   test_zvector_b_gpu,
+                                   dconstant_b);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
-        axpy_op_gpu()(dim_vector, &zconstant_a, test_zvector_a_gpu, 1 ,test_zvector_b_gpu, 1);
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
+        axpy_op_gpu()(dim_vector, &zconstant_a, test_zvector_a_gpu, 1, test_zvector_b_gpu, 1);
     }
 }
 
-BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)(benchmark::State& state) {
-    for (auto _ : state) {
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)(benchmark::State& state)
+{
+    for (auto _: state)
+    {
         scal_op_gpu()(dim_vector, &zconstant_a, test_zvector_a_gpu, 1);
     }
 }
 
 // If you want to use manual timer, you can refer to this.
-// BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
+// BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel,
+// BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_real_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_add_vector_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)
+    ->RangeMultiplier(10)
+    ->Range(1, 10e6)
+    ->Unit(benchmark::kMicrosecond);
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-
-BENCHMARK_MAIN(); 
+BENCHMARK_MAIN();

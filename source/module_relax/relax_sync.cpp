@@ -1,14 +1,13 @@
 #include "relax_sync.h"
 
-
-#include "module_base/matrix3.h"
-#include "module_base/parallel_common.h"
-#include "module_base/tool_title.h"
-#include "module_cell/update_cell.h"
 #include "module_cell/print_cell.h"
+#include "module_cell/update_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_relax/ions_move_basic.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_common.h"
+#include "source_base/tool_title.h"
 
 #include <cmath>
 
@@ -634,10 +633,10 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
         ucell.symm.symmetrize_vec3_nat(move_ion);
     }
 
-    unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_taud(ucell.lat, move_ion, ucell.ntype, ucell.nat, ucell.atoms);
 
     // Print the structure file.
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, GlobalV::ofs_running);
 
     // =================================================================
     // Step 4 : update G,GT and other stuff
@@ -696,7 +695,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // I do not want to change it
     if (if_cell_moves)
     {
-        unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
+        unitcell::setup_cell_after_vc(ucell, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
     }
 }

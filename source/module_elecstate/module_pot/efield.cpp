@@ -1,11 +1,11 @@
 #include "efield.h"
 
-#include "module_parameter/parameter.h"
 #include "gatefield.h"
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
-#include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 namespace elecstate
 {
@@ -56,7 +56,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
     }
 
     double latvec; // latvec along the efield direction
-    double area; // surface area along the efield direction
+    double area;   // surface area along the efield direction
     prepare(cell, latvec, area);
 
     double ion_dipole = 0;
@@ -139,7 +139,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
 //=======================================================
 // calculate dipole density in surface calculations
 //=======================================================
-double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
+double Efield::cal_ion_dipole(const UnitCell& cell, const double& bmod)
 {
     double ion_dipole = 0;
     for (int it = 0; it < cell.ntype; ++it)
@@ -207,7 +207,7 @@ double Efield::cal_induced_dipole(const UnitCell& cell,
 {
     double induced_dipole = 0;
 
-    double *induced_rho = new double[rho_basis->nrxx];
+    double* induced_rho = new double[rho_basis->nrxx];
     solvent.induced_charge(cell, rho_basis, induced_rho);
 
     for (int ir = 0; ir < rho_basis->nrxx; ++ir)
@@ -231,7 +231,7 @@ double Efield::cal_induced_dipole(const UnitCell& cell,
     return induced_dipole;
 }
 
-double Efield::saw_function(const double &a, const double &b, const double &x)
+double Efield::saw_function(const double& a, const double& b, const double& x)
 {
     assert(x >= 0);
     assert(x <= 1);
@@ -252,7 +252,7 @@ double Efield::saw_function(const double &a, const double &b, const double &x)
     }
 }
 
-void Efield::compute_force(const UnitCell &cell, ModuleBase::matrix &fdip)
+void Efield::compute_force(const UnitCell& cell, ModuleBase::matrix& fdip)
 {
     if (PARAM.inp.dip_cor_flag)
     {
@@ -287,7 +287,7 @@ void Efield::compute_force(const UnitCell &cell, ModuleBase::matrix &fdip)
     }
 }
 
-void Efield::prepare(const UnitCell &cell, double &latvec, double &area)
+void Efield::prepare(const UnitCell& cell, double& latvec, double& area)
 {
     if (efield_dir == 0)
     {

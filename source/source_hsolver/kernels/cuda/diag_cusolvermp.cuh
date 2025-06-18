@@ -1,38 +1,31 @@
 #pragma once
 #include "mpi.h"
+#include "source_base/macros.h"
 
+#include <cal.h>
 #include <complex>
+#include <cusolverMp.h>
 #include <fstream>
 #include <vector>
-#include <cal.h>
-#include <cusolverMp.h>
-#include "module_base/macros.h"
 
-template<typename inputT>
+template <typename inputT>
 class Diag_CusolverMP_gvd
 {
   private:
     using outputT = typename GetTypeReal<inputT>::type;
 
   public:
-    Diag_CusolverMP_gvd(const MPI_Comm comm,
-                          const int narows,
-                          const int nacols,
-                          const int* desc);
-
+    Diag_CusolverMP_gvd(const MPI_Comm comm, const int narows, const int nacols, const int* desc);
 
     // 20240530 zhanghaochong
     // Here eigen is the output rather than the input. Don't be confused by inputT.
     // Here inputT is the data type, the data type of EigenVector should be the same as
     // the data type of the input matrix.
-    int generalized_eigenvector(inputT* A,
-                                inputT* B,
-                                outputT* EigenValue,
-                                inputT* EigenVector);
+    int generalized_eigenvector(inputT* A, inputT* B, outputT* EigenValue, inputT* EigenVector);
     ~Diag_CusolverMP_gvd();
     void outputParameters();
-  private:
 
+  private:
     int nFull;
     int cblacs_ctxt;
     int lda;
@@ -66,4 +59,3 @@ class Diag_CusolverMP_gvd
 };
 
 // 实现模板类的成员函数
-

@@ -1,9 +1,9 @@
 #include "parallel_k2d.h"
 
-#include "module_base/parallel_global.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_global.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/timer.h"
 
 template <typename TK>
 void Parallel_K2D<TK>::set_para_env(int nks,
@@ -11,33 +11,24 @@ void Parallel_K2D<TK>::set_para_env(int nks,
                                     const int& nb2d,
                                     const int& nproc,
                                     const int& my_rank,
-                                    const int& nspin) {
+                                    const int& nspin)
+{
     const int kpar = this->get_kpar();
-    Parallel_Global::divide_mpi_groups(nproc,
-                                       kpar,
-                                       my_rank,
-                                       this->NPROC_IN_POOL,
-                                       this->MY_POOL,
-                                       this->RANK_IN_POOL);
+    Parallel_Global::divide_mpi_groups(nproc, kpar, my_rank, this->NPROC_IN_POOL, this->MY_POOL, this->RANK_IN_POOL);
 #ifdef __MPI
-    MPI_Comm_split(MPI_COMM_WORLD,
-                   this->MY_POOL,
-                   this->RANK_IN_POOL,
-                   &this->POOL_WORLD_K2D);
+    MPI_Comm_split(MPI_COMM_WORLD, this->MY_POOL, this->RANK_IN_POOL, &this->POOL_WORLD_K2D);
 #endif
     this->Pkpoints = new Parallel_Kpoints;
     this->P2D_global = new Parallel_2D;
     this->P2D_pool = new Parallel_2D;
-    this->Pkpoints
-        ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
+    this->Pkpoints->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
     this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD);
     this->P2D_pool->init(nw, nw, nb2d, this->POOL_WORLD_K2D);
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
-                                      const std::vector<int>& ik_kpar,
-                                      const int& nw) {
+void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt, const std::vector<int>& ik_kpar, const int& nw)
+{
 #ifdef __MPI
     ModuleBase::timer::tick("Parallel_K2D", "distribute_hsk");
     for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
@@ -45,13 +36,15 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
         pHamilt->updateHk(ik_kpar[ipool]);
         hamilt::MatrixBlock<TK> HK_global, SK_global;
         pHamilt->matrix(HK_global, SK_global);
-        if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]]) {
+        if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]])
+        {
             this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
         }
         int desc_pool[9];
         std::copy(this->P2D_pool->desc, this->P2D_pool->desc + 9, desc_pool);
-        if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]]) {
+        if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]])
+        {
             desc_pool[1] = -1;
         }
         Cpxgemr2d(nw,
@@ -84,16 +77,20 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::unset_para_env() {
-    if (this->Pkpoints != nullptr) {
+void Parallel_K2D<TK>::unset_para_env()
+{
+    if (this->Pkpoints != nullptr)
+    {
         delete this->Pkpoints;
         this->Pkpoints = nullptr;
     }
-    if (this->P2D_global != nullptr) {
+    if (this->P2D_global != nullptr)
+    {
         delete this->P2D_global;
         this->P2D_global = nullptr;
     }
-    if (this->P2D_pool != nullptr) {
+    if (this->P2D_pool != nullptr)
+    {
         delete this->P2D_pool;
         this->P2D_pool = nullptr;
     }
@@ -101,10 +98,11 @@ void Parallel_K2D<TK>::unset_para_env() {
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::set_kpar(int kpar) {
-    if (kpar < 1) {
-        ModuleBase::WARNING_QUIT("Parallel_K2D::set_kpar",
-                                 "kpar must be greater than 0.");
+void Parallel_K2D<TK>::set_kpar(int kpar)
+{
+    if (kpar < 1)
+    {
+        ModuleBase::WARNING_QUIT("Parallel_K2D::set_kpar", "kpar must be greater than 0.");
     }
     this->kpar_ = kpar;
 }

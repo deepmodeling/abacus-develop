@@ -1,33 +1,24 @@
 #include "module_basis/module_nao/numerical_radial.h"
 
+#include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/cubic_spline.h"
+#include "source_base/global_variable.h"
+#include "source_base/math_integral.h"
+#include "source_base/spherical_bessel_transformer.h"
+
 #include <algorithm>
 #include <cstring>
 #include <limits>
 #include <memory>
 #include <numeric>
 
-#include "module_base/constants.h"
-#include "module_base/cubic_spline.h"
-#include "module_base/global_variable.h"
-#include "module_base/math_integral.h"
-#include "module_base/spherical_bessel_transformer.h"
-#include "module_parameter/parameter.h"
-
 using ModuleBase::PI;
 
-NumericalRadial::NumericalRadial(const NumericalRadial& other) :
-    symbol_(other.symbol_),
-    itype_(other.itype_),
-    l_(other.l_),
-    izeta_(other.izeta_),
-    nr_(other.nr_),
-    nk_(other.nk_),
-    ircut_(other.ircut_),
-    ikcut_(other.ikcut_),
-    is_fft_compliant_(other.is_fft_compliant_),
-    pr_(other.pr_),
-    pk_(other.pk_),
-    sbt_(other.sbt_)
+NumericalRadial::NumericalRadial(const NumericalRadial& other)
+    : symbol_(other.symbol_), itype_(other.itype_), l_(other.l_), izeta_(other.izeta_), nr_(other.nr_), nk_(other.nk_),
+      ircut_(other.ircut_), ikcut_(other.ikcut_), is_fft_compliant_(other.is_fft_compliant_), pr_(other.pr_),
+      pk_(other.pk_), sbt_(other.sbt_)
 {
     // deep copy
     if (other.rgrid())
@@ -154,7 +145,9 @@ void NumericalRadial::build(const int l,
     set_icut(for_r_space, !for_r_space);
 }
 
-void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, const int nk_legacy, const double lcao_dk) const
+void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm,
+                                              const int nk_legacy,
+                                              const double lcao_dk) const
 {
 #ifdef __DEBUG
     assert(rgrid_);
@@ -169,9 +162,21 @@ void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
     double* rab = new double[nr_];
     std::fill(rab, rab + nr_, dr);
 
-    orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, std::min(nr_, ircut_+1), rab, rgrid_,
-            Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_legacy, lcao_dk,
-            0.001 /* dr_uniform */, PARAM.inp.out_element_info, true, PARAM.inp.cal_force);
+    orbital_lm.set_orbital_info(symbol_,
+                                itype_,
+                                l_,
+                                izeta_,
+                                std::min(nr_, ircut_ + 1),
+                                rab,
+                                rgrid_,
+                                Numerical_Orbital_Lm::Psi_Type::Psi,
+                                rvalue_,
+                                nk_legacy,
+                                lcao_dk,
+                                0.001 /* dr_uniform */,
+                                PARAM.inp.out_element_info,
+                                true,
+                                PARAM.inp.cal_force);
     delete[] rab;
 }
 
@@ -212,7 +217,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
 
     if (mode == 't')
     { // obtain new values by a transform from the other space
-        // make sure a transform from the other space is available
+      // make sure a transform from the other space is available
 #ifdef __DEBUG
         assert(for_r_space ? (kgrid_ && kvalue_) : (rgrid_ && rvalue_));
 #endif
@@ -230,7 +235,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
     }
     else
     { // obtain new values by interpolation in the current space
-        // make sure an interpolation in the current space is available
+      // make sure an interpolation in the current space is available
 #ifdef __DEBUG
         assert(grid_tbu && value_tbu);
 #endif
@@ -362,7 +367,7 @@ void NumericalRadial::radtab(const char op,
 
     double* rgrid_tab = new double[nr_tab];
     double dr = rmax_tab / (nr_tab - 1);
-    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (&r - rgrid_tab); });
+    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr, &rgrid_tab](double& r) { r = dr * (&r - rgrid_tab); });
 
     bool use_radrfft = is_fft_compliant(nr_tab, rgrid_tab, nk_, kgrid_);
 
@@ -477,7 +482,10 @@ void NumericalRadial::set_icut(const bool for_r_space, const bool for_k_space, c
         assert(rgrid_ && rvalue_);
 #endif
         ircut_ = nr_;
-        while (ircut_ && std::abs(rvalue_[ircut_ - 1]) <= tol) { --ircut_; }
+        while (ircut_ && std::abs(rvalue_[ircut_ - 1]) <= tol)
+        {
+            --ircut_;
+        }
     }
 
     if (for_k_space)
@@ -486,23 +494,24 @@ void NumericalRadial::set_icut(const bool for_r_space, const bool for_k_space, c
         assert(kgrid_ && kvalue_);
 #endif
         ikcut_ = nk_;
-        while (ikcut_ && std::abs(kvalue_[ikcut_ - 1]) <= tol) { --ikcut_; }
+        while (ikcut_ && std::abs(kvalue_[ikcut_ - 1]) <= tol)
+        {
+            --ikcut_;
+        }
     }
 }
 
 bool NumericalRadial::is_uniform(const int n, const double* const x, const double tol)
 {
     double dx = (x[n - 1] - x[0]) / (n - 1);
-    return std::all_of(x, x + n,
-            [&](const double& xi) { return std::abs(x[0] + (&xi - x) * dx - xi) < tol; });
+    return std::all_of(x, x + n, [&](const double& xi) { return std::abs(x[0] + (&xi - x) * dx - xi) < tol; });
 }
 
 bool NumericalRadial::is_fft_compliant(const int nr,
                                        const double* const rgrid,
                                        const int nk,
                                        const double* const kgrid,
-                                       const double tol
-                                       )
+                                       const double tol)
 {
     if (!rgrid || !kgrid || nr != nk || nr < 2)
     {
@@ -512,7 +521,6 @@ bool NumericalRadial::is_fft_compliant(const int nr,
     double dr = rgrid[nr - 1] / (nr - 1);
     double dk = kgrid[nk - 1] / (nk - 1);
 
-    return nr * std::abs(dr * dk - PI / (nr - 1)) < tol
-           && rgrid[0] == 0.0 && is_uniform(nr, rgrid, tol)
+    return nr * std::abs(dr * dk - PI / (nr - 1)) < tol && rgrid[0] == 0.0 && is_uniform(nr, rgrid, tol)
            && kgrid[0] == 0.0 && is_uniform(nk, kgrid, tol);
 }

@@ -1,11 +1,11 @@
 #include "msst.h"
 
-#include "module_cell/update_cell.h"
 #include "md_func.h"
+#include "module_cell/update_cell.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 
 MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
@@ -13,7 +13,7 @@ MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
     msst_vis = mdp.msst_vis / ModuleBase::AU_to_MASS / ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
 
-    assert(ucell.nat>0);
+    assert(ucell.nat > 0);
 
     old_v = new ModuleBase::Vector3<double>[ucell.nat];
     dilation.set(1, 1, 1);
@@ -24,7 +24,7 @@ MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     totmass = 0;
     lag_pos = 0;
     vsum = 0;
-    
+
     for (int i = 0; i < ucell.nat; ++i)
     {
         totmass += allmass[i];
@@ -158,7 +158,6 @@ void MSST::second_half()
     return;
 }
 
-
 void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
@@ -190,7 +189,6 @@ void MSST::write_restart(const std::string& global_out_dir)
 
     return;
 }
-
 
 void MSST::restart(const std::string& global_readin_dir)
 {
@@ -252,14 +250,14 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 {
     int sd = mdp.msst_direction;
 
-    assert(ucell.omega>0.0);
+    assert(ucell.omega > 0.0);
 
     dilation[sd] = volume / ucell.omega;
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
 
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell, ofs);
 
     /// rescale velocity
     for (int i = 0; i < ucell.nat; ++i)
@@ -267,7 +265,6 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
         vel[i][sd] *= dilation[sd];
     }
 }
-
 
 void MSST::propagate_vel()
 {
@@ -307,7 +304,6 @@ void MSST::propagate_vel()
 
     return;
 }
-
 
 void MSST::propagate_voldot()
 {

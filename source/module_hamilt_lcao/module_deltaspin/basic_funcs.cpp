@@ -1,22 +1,23 @@
 #include "basic_funcs.h"
 
+#include "source_base/constants.h"
+#include "source_base/formatter.h"
+
 #include <iostream>
-#include "module_base/formatter.h"
-#include "module_base/constants.h"
 
 double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double max = 0;
     for (const auto& value: array)
     {
-            max = std::max(max, std::abs(value.x));
-            max = std::max(max, std::abs(value.y));
-            max = std::max(max, std::abs(value.z));
+        max = std::max(max, std::abs(value.x));
+        max = std::max(max, std::abs(value.y));
+        max = std::max(max, std::abs(value.z));
     }
     return max;
 }
 
-std::pair<int,int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
+std::pair<int, int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
     double max = 0;
     int i_max = 0;
@@ -42,7 +43,7 @@ T sum_2d(const std::vector<ModuleBase::Vector3<T>>& array)
     ModuleBase::Vector3<T> sum;
     for (const auto& element: array)
     {
-            sum += element;
+        sum += element;
     }
     T final_sum = sum.x + sum.y + sum.z;
     return final_sum;
@@ -85,7 +86,7 @@ void subtract_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
     result.reserve(size);
     for (int i = 0; i < size; i++)
     {
-            result[i] = array_1[i] - array_2[i];
+        result[i] = array_1[i] - array_2[i];
     }
 }
 
@@ -135,15 +136,28 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
     }
 }
 
-void print_2d(const std::string info, const std::vector<ModuleBase::Vector3<double>> &array, const int nspin, const double unit_convert, std::ostream& ofs)
+void print_2d(const std::string info,
+              const std::vector<ModuleBase::Vector3<double>>& array,
+              const int nspin,
+              const double unit_convert,
+              std::ostream& ofs)
 {
     ofs << info << std::endl;
     int iat = 0;
-    for (const auto &row : array)
+    for (const auto& row: array)
     {
         iat += 1;
-        if (nspin == 2) { ofs << FmtCore::format("ATOM %6d %20.10f\n", iat, row.z*unit_convert);
-        } else if (nspin == 4) { ofs << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, row.x*unit_convert, row.y*unit_convert, row.z*unit_convert);
-}
+        if (nspin == 2)
+        {
+            ofs << FmtCore::format("ATOM %6d %20.10f\n", iat, row.z * unit_convert);
+        }
+        else if (nspin == 4)
+        {
+            ofs << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n",
+                                   iat,
+                                   row.x * unit_convert,
+                                   row.y * unit_convert,
+                                   row.z * unit_convert);
+        }
     }
 }

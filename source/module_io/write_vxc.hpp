@@ -1,14 +1,14 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
-#include "module_parameter/parameter.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/module_container/base/third_party/blas.h"
-#include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
-#include "module_psi/psi.h"
-#include "module_io/write_HS.h"
 #include "module_io/filename.h" // use filename_output function
+#include "module_io/write_HS.h"
+#include "module_parameter/parameter.h"
+#include "module_psi/psi.h"
+#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/scalapack_connector.h"
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -43,11 +43,11 @@ inline void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Paralle
 
 template <typename T>
 inline std::vector<T> cVc(T* V,
-    T* c,
-    const int nbasis,
-    const int nbands,
-    const Parallel_Orbitals& pv,
-    const Parallel_2D& p2d)
+                          T* c,
+                          const int nbasis,
+                          const int nbands,
+                          const Parallel_Orbitals& pv,
+                          const Parallel_2D& p2d)
 {
     std::vector<T> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
@@ -56,24 +56,76 @@ inline std::vector<T> cVc(T* V,
     const T beta = (T)0.0;
 #ifdef __MPI
     const int i1 = 1;
-    ScalapackConnector::gemm(transa, transb,
-        nbasis, nbands, nbasis,
-        alpha, V, i1, i1, pv.desc,
-        c, i1, i1, pv.desc_wfc,
-        beta, Vc.data(), i1, i1, pv.desc_wfc);
+    ScalapackConnector::gemm(transa,
+                             transb,
+                             nbasis,
+                             nbands,
+                             nbasis,
+                             alpha,
+                             V,
+                             i1,
+                             i1,
+                             pv.desc,
+                             c,
+                             i1,
+                             i1,
+                             pv.desc_wfc,
+                             beta,
+                             Vc.data(),
+                             i1,
+                             i1,
+                             pv.desc_wfc);
 #else
-    container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
+    container::BlasConnector::gemm(transa,
+                                   transb,
+                                   nbasis,
+                                   nbands,
+                                   nbasis,
+                                   alpha,
+                                   V,
+                                   nbasis,
+                                   c,
+                                   nbasis,
+                                   beta,
+                                   Vc.data(),
+                                   nbasis);
 #endif
     std::vector<T> cVc(p2d.nloc, 0.0);
     transa = (std::is_same<T, double>::value ? 'T' : 'C');
 #ifdef __MPI
-    ScalapackConnector::gemm(transa, transb,
-        nbands, nbands, nbasis,
-        alpha, c, i1, i1, pv.desc_wfc,
-        Vc.data(), i1, i1, pv.desc_wfc,
-        beta, cVc.data(), i1, i1, p2d.desc);
+    ScalapackConnector::gemm(transa,
+                             transb,
+                             nbands,
+                             nbands,
+                             nbasis,
+                             alpha,
+                             c,
+                             i1,
+                             i1,
+                             pv.desc_wfc,
+                             Vc.data(),
+                             i1,
+                             i1,
+                             pv.desc_wfc,
+                             beta,
+                             cVc.data(),
+                             i1,
+                             i1,
+                             p2d.desc);
 #else
-    container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbasis);
+    container::BlasConnector::gemm(transa,
+                                   transb,
+                                   nbands,
+                                   nbands,
+                                   nbasis,
+                                   alpha,
+                                   c,
+                                   nbasis,
+                                   Vc.data(),
+                                   nbasis,
+                                   beta,
+                                   cVc.data(),
+                                   nbasis);
 #endif
     return cVc;
 }
@@ -149,22 +201,25 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
 #endif
 
 inline void write_orb_energy(const K_Vectors& kv,
-    const int nspin0, const int nbands,
-    const std::vector<std::vector<double>>& e_orb,
-    const std::string& term, const std::string& label, const bool app = false)
+                             const int nspin0,
+                             const int nbands,
+                             const std::vector<std::vector<double>>& e_orb,
+                             const std::string& term,
+                             const std::string& label,
+                             const bool app = false)
 {
     assert(e_orb.size() == kv.get_nks());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
     ofs.open(PARAM.globalv.global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
-        app ? std::ios::app : std::ios::out);
+             app ? std::ios::app : std::ios::out);
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);
     for (int ik = 0; ik < nk; ++ik)
     {
         for (int is = 0; is < nspin0; ++is)
         {
-            for (auto e : e_orb[is * nk + ik])
+            for (auto e: e_orb[is * nk + ik])
             { // Hartree and eV
                 ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
             }
@@ -218,9 +273,13 @@ void write_Vxc(const int nspin,
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
     std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(ucell, pv));
-    for (int is = 0; is < nspin0; ++is) {
+    for (int is = 0; is < nspin0; ++is)
+    {
         vxcs_R_ao[is].set_zero();
-        if (std::is_same<TK, double>::value) { vxcs_R_ao[is].fix_gamma(); }
+        if (std::is_same<TK, double>::value)
+        {
+            vxcs_R_ao[is].fix_gamma();
+        }
     }
     // k (size for each k-point)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
@@ -235,18 +294,25 @@ void write_Vxc(const int nspin,
     for (int is = 0; is < nspin0; ++is)
     {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-            &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
+                                                                        &vxc_k_ao,
+                                                                        kv.kvec_d,
+                                                                        potxc,
+                                                                        &vxcs_R_ao[is],
+                                                                        &ucell,
+                                                                        orb_cutoff,
+                                                                        &gd,
+                                                                        nspin);
 
         vxcs_op_ao[is]->contributeHR();
     }
     std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao,
-        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>
+        vexx_op_ao(&vxc_k_ao, &vxcs_R_ao[0], ucell, /*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao,
-        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>
+        vexxonly_op_ao(&vexxonly_k_ao, &vxcs_R_ao[0], ucell, /*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
     hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);
@@ -289,16 +355,23 @@ void write_Vxc(const int nspin,
 
         // write
 
-		// mohan add 2025-06-02
-		const int istep = -1;
-		const int out_label = 1; // 1 means .txt while 2 means .dat
-		const bool out_app_flag = 0;
+        // mohan add 2025-06-02
+        const int istep = -1;
+        const int out_label = 1; // 1 means .txt while 2 means .dat
+        const bool out_app_flag = 0;
         const bool gamma_only = PARAM.globalv.gamma_only_local;
 
-		std::string vxc_file = ModuleIO::filename_output(
-				PARAM.globalv.global_out_dir,
-				"vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
-				out_label,out_app_flag,gamma_only,istep);
+        std::string vxc_file = ModuleIO::filename_output(PARAM.globalv.global_out_dir,
+                                                         "vxc",
+                                                         "nao",
+                                                         ik,
+                                                         kv.ik2iktot,
+                                                         nspin,
+                                                         kv.get_nkstot(),
+                                                         out_label,
+                                                         out_app_flag,
+                                                         gamma_only,
+                                                         istep);
 
         ModuleIO::save_mat(istep,
                            vxc_tot_k_mo.data(),
@@ -307,7 +380,7 @@ void write_Vxc(const int nspin,
                            PARAM.inp.out_ndigits,
                            true /*triangle*/,
                            out_app_flag /*append*/,
-                           vxc_file, 
+                           vxc_file,
                            p2d,
                            drank);
         // ======test=======

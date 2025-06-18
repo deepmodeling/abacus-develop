@@ -1,9 +1,9 @@
 #ifndef OPERATOR_H
 #define OPERATOR_H
 
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
 #include "module_psi/psi.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 
 #include <complex>
 
@@ -73,10 +73,8 @@ class Operator
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
-	// virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
-	virtual void act(const psi::Psi<T, Device>& psi_in, 
-			psi::Psi<T, Device>& psi_out, 
-			const int nbands) const {};
+    // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+    virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out, const int nbands) const {};
 
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };

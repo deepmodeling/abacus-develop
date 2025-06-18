@@ -6,12 +6,12 @@
 // Remove some useless functions and dependencies. Serialized the full code
 // and refactored some function.
 
+#include "source_base/lapack_connector.h"
+#include "source_hsolver/diago_lapack.h"
+
 #include "gtest/gtest.h"
 #include <cstring>
 #include <vector>
-
-#include "source_hsolver/diago_lapack.h"
-#include "module_base/lapack_connector.h"
 
 #define PASSTHRESHOLD 1e-5
 #define DETAILINFO false
@@ -45,17 +45,18 @@ class HamiltTEST : public hamilt::Hamilt<T>
 
 // The serialized version of functions from diago_elpa_utils
 
-template <class T> bool read_hs(std::string fname, T &matrix)
+template <class T>
+bool read_hs(std::string fname, T& matrix)
 {
     int ndim;
     std::ifstream inf(fname);
-    if(! inf.is_open())
+    if (!inf.is_open())
     {
         std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
         return false;
     }
     inf >> ndim;
-    matrix.resize(ndim*ndim);
+    matrix.resize(ndim * ndim);
     for (int i = 0; i < ndim; i++)
     {
         for (int j = i; j < ndim; j++)
@@ -71,11 +72,11 @@ template <class T> bool read_hs(std::string fname, T &matrix)
     return true;
 }
 
-bool read_solution(std::string fname, std::vector<double> &result)
+bool read_solution(std::string fname, std::vector<double>& result)
 {
     int ndim;
     std::ifstream inf(fname);
-    if(! inf.is_open())
+    if (!inf.is_open())
     {
         std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
         return false;
@@ -89,8 +90,8 @@ bool read_solution(std::string fname, std::vector<double> &result)
     return true;
 }
 
-
-template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &nrow, int &ncol, bool row_first)
+template <class T>
+inline void print_matrix(std::ofstream& fp, T* matrix, int& nrow, int& ncol, bool row_first)
 {
     int coef_row = row_first ? ncol : 1;
     int coef_col = row_first ? 1 : nrow;
@@ -104,11 +105,10 @@ template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &n
     }
 }
 
-
 template <class T>
 class DiagoLapackPrepare
 {
-    public:
+  public:
     DiagoLapackPrepare(int nlocal,
                        int nbands,
                        int nb2d,
@@ -116,8 +116,8 @@ class DiagoLapackPrepare
                        std::string hfname,
                        std::string sfname,
                        std::string solutionfname)
-        : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname),
-          sfname(sfname), solutionfname(solutionfname)
+        : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname), sfname(sfname),
+          solutionfname(solutionfname)
     {
         // dh = new hsolver::DiagoLapack<T>;
     }
@@ -149,9 +149,10 @@ class DiagoLapackPrepare
         }
         nlocal = hdim;
         nbands = nlocal / 2;
-        if (readhfile && readsfile) {
+        if (readhfile && readsfile)
+        {
             return true;
-        }  
+        }
         return false;
     }
 
@@ -165,7 +166,8 @@ class DiagoLapackPrepare
 
     void print_hs()
     {
-        if (!PRINT_HS) {
+        if (!PRINT_HS)
+        {
             return;
         }
         std::ofstream fp("hmatrix.dat");
@@ -224,7 +226,8 @@ class DiagoLapackPrepare
                 maxerror = error;
                 iindex = i;
             }
-            if (error > PASSTHRESHOLD) {
+            if (error > PASSTHRESHOLD)
+            {
                 pass = false;
             }
         }
@@ -261,13 +264,22 @@ TEST_P(DiagoLapackGammaOnlyTest, LCAO)
     EXPECT_TRUE(pass) << out_info.str();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    DiagoLapackTest,
-    DiagoLapackGammaOnlyTest,
-    ::testing::Values(
-        DiagoLapackPrepare<double>(0, 0, 1, 0, "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat", "GammaOnly-Si2-Solution.dat"),
-        DiagoLapackPrepare<double>(0, 0, 32, 0, "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat", "GammaOnly-Si64-Solution.dat")));
-
+INSTANTIATE_TEST_SUITE_P(DiagoLapackTest,
+                         DiagoLapackGammaOnlyTest,
+                         ::testing::Values(DiagoLapackPrepare<double>(0,
+                                                                      0,
+                                                                      1,
+                                                                      0,
+                                                                      "H-GammaOnly-Si2.dat",
+                                                                      "S-GammaOnly-Si2.dat",
+                                                                      "GammaOnly-Si2-Solution.dat"),
+                                           DiagoLapackPrepare<double>(0,
+                                                                      0,
+                                                                      32,
+                                                                      0,
+                                                                      "H-GammaOnly-Si64.dat",
+                                                                      "S-GammaOnly-Si64.dat",
+                                                                      "GammaOnly-Si64-Solution.dat")));
 
 class DiagoLapackKPointsTest : public ::testing::TestWithParam<DiagoLapackPrepare<std::complex<double>>>
 {
@@ -284,12 +296,22 @@ TEST_P(DiagoLapackKPointsTest, LCAO)
     EXPECT_TRUE(pass) << out_info.str();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    DiagoLapackTest,
-    DiagoLapackKPointsTest,
-    ::testing::Values(
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 1, 0, "H-KPoints-Si2.dat", "S-KPoints-Si2.dat", "KPoints-Si2-Solution.dat"),
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 32, 0, "H-KPoints-Si64.dat", "S-KPoints-Si64.dat", "KPoints-Si64-Solution.dat")));
+INSTANTIATE_TEST_SUITE_P(DiagoLapackTest,
+                         DiagoLapackKPointsTest,
+                         ::testing::Values(DiagoLapackPrepare<std::complex<double>>(0,
+                                                                                    0,
+                                                                                    1,
+                                                                                    0,
+                                                                                    "H-KPoints-Si2.dat",
+                                                                                    "S-KPoints-Si2.dat",
+                                                                                    "KPoints-Si2-Solution.dat"),
+                                           DiagoLapackPrepare<std::complex<double>>(0,
+                                                                                    0,
+                                                                                    32,
+                                                                                    0,
+                                                                                    "H-KPoints-Si64.dat",
+                                                                                    "S-KPoints-Si64.dat",
+                                                                                    "KPoints-Si64-Solution.dat")));
 
 int main(int argc, char** argv)
 {

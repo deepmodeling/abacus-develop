@@ -1,7 +1,7 @@
-#include "module_base/constants.h"
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -11,8 +11,7 @@ void ReadInput::item_exx()
         Input_Item item("exx_hybrid_alpha");
         item.annotation = "fraction of Fock exchange in hybrid functionals";
         read_sync_string(input.exx_hybrid_alpha);
-        item.reset_value = [](const Input_Item& item, Parameter& para) 
-        {
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_hybrid_alpha == "default")
             {
                 std::string& dft_functional = para.input.dft_functional;
@@ -28,8 +27,8 @@ void ReadInput::item_exx()
                     para.input.exx_hybrid_alpha = "0.25";
                 }
                 // added by jghan 2024-07-06
-                else if (dft_functional_lower == "muller" || dft_functional_lower == "power" 
-                        || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
+                else if (dft_functional_lower == "muller" || dft_functional_lower == "power"
+                         || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
                 {
                     para.input.exx_hybrid_alpha = "1";
                 }
@@ -48,8 +47,8 @@ void ReadInput::item_exx()
             const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
             if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
-                    "The Hartree-Fock fraction (exx_hybrid_alpha) can only be in range [0, 1]");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "The Hartree-Fock fraction (exx_hybrid_alpha) can only be in range [0, 1]");
             }
         };
         this->add_item(item);
@@ -72,8 +71,7 @@ void ReadInput::item_exx()
         item.annotation = "the maximal electronic iteration number in the "
                           "evaluation of Fock exchange";
         read_sync_int(input.exx_hybrid_step);
-        item.check_value = [](const Input_Item& item, const Parameter& para) 
-        {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_hybrid_step <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_hybrid_step must > 0");
@@ -101,7 +99,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_real_number);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
-            {  // to run through here, the default value of para.input.exx_real_number should be "default"
+            { // to run through here, the default value of para.input.exx_real_number should be "default"
                 if (para.input.gamma_only)
                 {
                     para.input.exx_real_number = "1";
@@ -194,7 +192,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_ccp_rmesh_times);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_ccp_rmesh_times == "default")
-            {   // to run through here, the default value of para.input.exx_ccp_rmesh_times should be "default"
+            { // to run through here, the default value of para.input.exx_ccp_rmesh_times should be "default"
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
@@ -291,8 +289,11 @@ void ReadInput::item_exx()
         item.annotation = "whether to reduce real-space sector in Hexx calculation";
         read_sync_bool(input.exx_symmetry_realspace);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
-            };
+            if (para.input.symmetry != "1")
+            {
+                para.input.exx_symmetry_realspace = false;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -348,7 +349,8 @@ void ReadInput::item_dftu()
             {
                 if (input.basis_type == "pw" && input.nspin != 4)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS, only nspin2 with PW base is not supported now");
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "WRONG ARGUMENTS, only nspin2 with PW base is not supported now");
                 }
             }
         };
@@ -421,7 +423,8 @@ void ReadInput::item_dftu()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
             {
-                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
+                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic
+                // magnetism test
                 para.input.onsite_radius = 3.0;
             }
         };

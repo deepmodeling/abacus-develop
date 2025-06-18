@@ -1,8 +1,8 @@
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/wf_op.h"
-#include "module_base/module_device/device.h"
+#include "source_base/memory.h"
+#include "source_base/module_device/device.h"
+#include "source_base/timer.h"
 #include "structure_factor.h"
 std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
@@ -13,7 +13,7 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
     const double arg = (wfc_basis->kvec_c[ik] * ucell->atoms[it].tau[ia]) * ModuleBase::TWO_PI;
     const std::complex<double> kphase = std::complex<double>(cos(arg), -sin(arg));
     const int npw = wfc_basis->npwk[ik];
-    std::complex<double> *sk = new std::complex<double>[npw];
+    std::complex<double>* sk = new std::complex<double>[npw];
     const int nx = wfc_basis->nx, ny = wfc_basis->ny, nz = wfc_basis->nz;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -26,15 +26,15 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
         const int ixy = wfc_basis->is2fftixy[is];
         int ix = ixy / wfc_basis->fftny;
         int iy = ixy % wfc_basis->fftny;
-        if (ix >= int(nx / 2) + 1) 
+        if (ix >= int(nx / 2) + 1)
         {
             ix -= nx;
         }
-        if (iy >= int(ny / 2) + 1) 
+        if (iy >= int(ny / 2) + 1)
         {
             iy -= ny;
         }
-        if (iz >= int(nz / 2) + 1) 
+        if (iz >= int(nz / 2) + 1)
         {
             iz -= nz;
         }
@@ -68,11 +68,11 @@ void Structure_Factor::get_sk(Device* ctx,
     using syncmem_var_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
 
     int iat = 0, _npw = wfc_basis->npwk[ik], eigts1_nc = this->eigts1.nc, eigts2_nc = this->eigts2.nc,
-            eigts3_nc = this->eigts3.nc;
+        eigts3_nc = this->eigts3.nc;
     int *igl2isz = nullptr, *is2fftixy = nullptr, *atom_na = nullptr, *h_atom_na = new int[ucell->ntype];
     FPTYPE *atom_tau = nullptr, *h_atom_tau = new FPTYPE[ucell->nat * 3], *kvec = wfc_basis->get_kvec_c_data<FPTYPE>();
-    std::complex<FPTYPE> *eigts1 = this->get_eigts1_data<FPTYPE>(), *eigts2 = this->get_eigts2_data<FPTYPE>(),
-            *eigts3 = this->get_eigts3_data<FPTYPE>();
+    std::complex<FPTYPE>*eigts1 = this->get_eigts1_data<FPTYPE>(), *eigts2 = this->get_eigts2_data<FPTYPE>(),
+    *eigts3 = this->get_eigts3_data<FPTYPE>();
     for (int it = 0; it < ucell->ntype; it++)
     {
         h_atom_na[it] = ucell->atoms[it].na;
@@ -84,7 +84,7 @@ void Structure_Factor::get_sk(Device* ctx,
     {
         int it = ucell->iat2it[iat];
         int ia = ucell->iat2ia[iat];
-        auto *tau = reinterpret_cast<double *>(ucell->atoms[it].tau.data());
+        auto* tau = reinterpret_cast<double*>(ucell->atoms[it].tau.data());
         h_atom_tau[iat * 3 + 0] = static_cast<FPTYPE>(tau[ia * 3 + 0]);
         h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
         h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);
@@ -150,7 +150,7 @@ std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 ModuleBase::Vector3<double> q) // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
-    std::complex<double> *skq = new std::complex<double>[npw];
+    std::complex<double>* skq = new std::complex<double>[npw];
 
     for (int ig = 0; ig < npw; ig++)
     {

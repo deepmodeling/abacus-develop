@@ -1,15 +1,15 @@
 #ifndef SURCHEM_H
 #define SURCHEM_H
 
-#include "module_base/atom_in.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_base/parallel_reduce.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_base/atom_in.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
+#include "source_base/parallel_reduce.h"
 
 class surchem
 {
@@ -35,7 +35,10 @@ class surchem
 
     void clear();
 
-    void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
+    void cal_epsilon(const ModulePW::PW_Basis* rho_basis,
+                     const double* PS_TOTN_real,
+                     double* epsilon,
+                     double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
                     const Parallel_Grid& pgrid,

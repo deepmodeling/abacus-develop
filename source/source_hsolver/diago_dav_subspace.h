@@ -1,15 +1,14 @@
 #ifndef DIAGO_NEW_DAV_H
 #define DIAGO_NEW_DAV_H
 
-#include "module_base/macros.h"   // GetRealType
-#include "module_base/module_device/device.h"   // base_device
-#include "module_base/module_device/memory_op.h"// base_device::memory"
-
+#include "source_base/macros.h"                  // GetRealType
+#include "source_base/module_device/device.h"    // base_device
+#include "source_base/module_device/memory_op.h" // base_device::memory"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diag_const_nums.h"
 
-#include <vector>
 #include <functional>
+#include <vector>
 
 namespace hsolver
 {
@@ -141,7 +140,7 @@ class Diago_DavSubspace
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
-    int diag_subspace; // 0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
+    int diag_subspace;         // 0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
     int diago_subspace_bs = 0; // the block size in 2d block cyclic distribution if use elpa or scalapack
 
 #ifdef __DSP

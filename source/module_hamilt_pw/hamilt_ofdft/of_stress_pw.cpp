@@ -1,9 +1,9 @@
 #include "of_stress_pw.h"
 
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
+#include "source_base/timer.h"
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
 // input variable.
@@ -63,20 +63,20 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // hartree contribution
-    stress_har(ucell,sigmahar, this->rhopw, true, pelec->charge);
+    stress_har(ucell, sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(ucell,sigmaewa, this->rhopw, true);
+    stress_ewa(ucell, sigmaewa, this->rhopw, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge);
+    stress_gga(ucell, sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
+    stress_loc(ucell, sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
     stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);

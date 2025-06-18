@@ -1,7 +1,7 @@
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 namespace ModuleIO
 {
 void ReadInput::item_output()
@@ -516,11 +516,14 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_xc_r");
-        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
+        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter "
+                          "controls the precision";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_xc_r(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
             // assign non-negative values to para.input.out_xc_r
             std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
         };

@@ -1,17 +1,17 @@
 #pragma once
 #include "dspin_lcao.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 namespace hamilt
 {
 
 template <typename TK, typename TR>
 void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
-                                                  const bool cal_stress,
-                                                  const HContainer<double>* dmR,
-                                                  ModuleBase::matrix& force,
-                                                  ModuleBase::matrix& stress)
+                                                       const bool cal_stress,
+                                                       const HContainer<double>* dmR,
+                                                       ModuleBase::matrix& force,
+                                                       ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("DeltaSpin", "cal_force_stress");
 
@@ -30,183 +30,186 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         force.zero_out();
     }
-    // 1. calculate <psi|beta> for each pair of atoms
-    // loop over all on-site atoms
-    #pragma omp parallel
+// 1. calculate <psi|beta> for each pair of atoms
+// loop over all on-site atoms
+#pragma omp parallel
     {
-    std::vector<double> stress_local(6, 0);
-    ModuleBase::matrix force_local(force.nr, force.nc);
-    #pragma omp for schedule(dynamic)
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-    {
-        if(!this->constraint_atom_list[iat0])
+        std::vector<double> stress_local(6, 0);
+        ModuleBase::matrix force_local(force.nr, force.nc);
+#pragma omp for schedule(dynamic)
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
         {
-            continue;
-        }
-      
-        // skip the atoms without plus-U
-        auto tau0 = ucell->get_tau(iat0);
-        int T0, I0;
-        ucell->iat2iait(iat0, &I0, &T0);
-        
-        // first step: find the adjacent atoms and filter the real adjacent atoms
-        AdjacentAtomInfo adjs;
-        this->gridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
-
-        std::vector<bool> is_adj(adjs.adj_num + 1, false);
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-        {
-            const int T1 = adjs.ntype[ad];
-            const int I1 = adjs.natom[ad];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
-            // choose the real adjacent atoms
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
-            // but the calculated value is not zero due to the numerical error, which would lead to result changes.
-            if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < this->orb_cutoff_[T1] + PARAM.inp.onsite_radius)
+            if (!this->constraint_atom_list[iat0])
             {
-                is_adj[ad] = true;
+                continue;
             }
-        }
-        filter_adjs(is_adj, adjs);
-        const int max_l_plus_1 = this->ucell->atoms[T0].nwl + 1;
-        const int length = max_l_plus_1 * max_l_plus_1;
-        std::vector<std::unordered_map<int, std::vector<double>>> nlm_iat0(adjs.adj_num + 1);
 
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-        {
-            const int T1 = adjs.ntype[ad];
-            const int I1 = adjs.natom[ad];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-            const Atom* atom1 = &ucell->atoms[T1];
+            // skip the atoms without plus-U
+            auto tau0 = ucell->get_tau(iat0);
+            int T0, I0;
+            ucell->iat2iait(iat0, &I0, &T0);
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
-            // insert col_indexes into all_indexes to get universal set with no repeat elements
-            all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-            std::sort(all_indexes.begin(), all_indexes.end());
-            all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+            // first step: find the adjacent atoms and filter the real adjacent atoms
+            AdjacentAtomInfo adjs;
+            this->gridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
+
+            std::vector<bool> is_adj(adjs.adj_num + 1, false);
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
-                const int iw1 = all_indexes[iw1l] / npol;
-                std::vector<std::vector<double>> nlm;
-                // nlm is a vector of vectors, but size of outer vector is only 1 here
-                // If we are calculating force, we need also to store the gradient
-                // and size of outer vector is then 4
-                // inner loop : all projectors (L0,M0)
-                int L1 = atom1->iw2l[iw1];
-                int N1 = atom1->iw2n[iw1];
-                int m1 = atom1->iw2m[iw1];
-
-                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
-
-                ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
-                // select the elements of nlm with target_L
-                std::vector<double> nlm_target(length * 4);
-                // select the elements of nlm with target_L (0, 1, 2, 3 ...)
-                int target_L = 0, index=0;
-                for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
+                const int T1 = adjs.ntype[ad];
+                const int I1 = adjs.natom[ad];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
+                // choose the real adjacent atoms
+                // Note: the distance of atoms should less than the cutoff radius,
+                // When equal, the theoretical value of matrix element is zero,
+                // but the calculated value is not zero due to the numerical error, which would lead to result changes.
+                if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
+                    < this->orb_cutoff_[T1] + PARAM.inp.onsite_radius)
                 {
-                    const int L0 = this->ucell->atoms[T0].iw2l[iw];
-                    // only the first zeta of each l-orbital is needed
-                    if(L0 == target_L)
+                    is_adj[ad] = true;
+                }
+            }
+            filter_adjs(is_adj, adjs);
+            const int max_l_plus_1 = this->ucell->atoms[T0].nwl + 1;
+            const int length = max_l_plus_1 * max_l_plus_1;
+            std::vector<std::unordered_map<int, std::vector<double>>> nlm_iat0(adjs.adj_num + 1);
+
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+            {
+                const int T1 = adjs.ntype[ad];
+                const int I1 = adjs.natom[ad];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+                const Atom* atom1 = &ucell->atoms[T1];
+
+                auto all_indexes = paraV->get_indexes_row(iat1);
+                auto col_indexes = paraV->get_indexes_col(iat1);
+                // insert col_indexes into all_indexes to get universal set with no repeat elements
+                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+                std::sort(all_indexes.begin(), all_indexes.end());
+                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+                {
+                    const int iw1 = all_indexes[iw1l] / npol;
+                    std::vector<std::vector<double>> nlm;
+                    // nlm is a vector of vectors, but size of outer vector is only 1 here
+                    // If we are calculating force, we need also to store the gradient
+                    // and size of outer vector is then 4
+                    // inner loop : all projectors (L0,M0)
+                    int L1 = atom1->iw2l[iw1];
+                    int N1 = atom1->iw2n[iw1];
+                    int m1 = atom1->iw2m[iw1];
+
+                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                    int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
+                    ModuleBase::Vector3<double> dtau = tau0 - tau1;
+                    intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
+                    // select the elements of nlm with target_L
+                    std::vector<double> nlm_target(length * 4);
+                    // select the elements of nlm with target_L (0, 1, 2, 3 ...)
+                    int target_L = 0, index = 0;
+                    for (int iw = 0; iw < this->ucell->atoms[T0].nw; iw++)
                     {
-                        for(int m = 0; m < 2*L0+1; m++)
+                        const int L0 = this->ucell->atoms[T0].iw2l[iw];
+                        // only the first zeta of each l-orbital is needed
+                        if (L0 == target_L)
                         {
-                            for (int n = 0; n < 4; n++) // value, deri_x, deri_y, deri_z
+                            for (int m = 0; m < 2 * L0 + 1; m++)
                             {
-                                nlm_target[index + n * length] = nlm[n][iw + m];
+                                for (int n = 0; n < 4; n++) // value, deri_x, deri_y, deri_z
+                                {
+                                    nlm_target[index + n * length] = nlm[n][iw + m];
+                                }
+                                index++;
                             }
-                            index++;
+                            target_L++;
                         }
-                        target_L++;
                     }
+                    nlm_iat0[ad].insert({all_indexes[iw1l], nlm_target});
                 }
-                nlm_iat0[ad].insert({all_indexes[iw1l], nlm_target});
             }
-        }      
 
-        // second iteration to calculate force and stress
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
-            const int T1 = adjs.ntype[ad1];
-            const int I1 = adjs.natom[ad1];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
-            double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
-            ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+            // second iteration to calculate force and stress
+            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
-                const int T2 = adjs.ntype[ad2];
-                const int I2 = adjs.natom[ad2];
-                const int iat2 = ucell->itia2iat(T2, I2);
-                ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                ModuleBase::Vector3<double> dis2 = adjs.adjacent_tau[ad2] - tau0;
-                ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                  R_index2[1] - R_index1[1],
-                                                  R_index2[2] - R_index1[2]);
-                const hamilt::BaseMatrix<double>* tmp = dmR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                int row_size = paraV->get_row_size();
-                int col_size = paraV->get_col_size();
-                if(row_size == 0 || col_size == 0)
+                const int T1 = adjs.ntype[ad1];
+                const int I1 = adjs.natom[ad1];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
+                double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
+                ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+                ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
+                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
-                    continue;
-                }
-                // if not found , skip this pair of atoms
-                if (tmp != nullptr)
-                {
-                    // calculate force
-                    if (cal_force) {
-                        this->cal_force_IJR(iat1,
-                                            iat2,
-                                            paraV,
-                                            nlm_iat0[ad1],
-                                            nlm_iat0[ad2],
-                                            tmp,
-                                            lambda[iat0],
-                                            this->nspin,
-                                            force_tmp1,
-                                            force_tmp2);
+                    const int T2 = adjs.ntype[ad2];
+                    const int I2 = adjs.natom[ad2];
+                    const int iat2 = ucell->itia2iat(T2, I2);
+                    ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                    ModuleBase::Vector3<double> dis2 = adjs.adjacent_tau[ad2] - tau0;
+                    ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                                      R_index2[1] - R_index1[1],
+                                                      R_index2[2] - R_index1[2]);
+                    const hamilt::BaseMatrix<double>* tmp
+                        = dmR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    int row_size = paraV->get_row_size();
+                    int col_size = paraV->get_col_size();
+                    if (row_size == 0 || col_size == 0)
+                    {
+                        continue;
                     }
+                    // if not found , skip this pair of atoms
+                    if (tmp != nullptr)
+                    {
+                        // calculate force
+                        if (cal_force)
+                        {
+                            this->cal_force_IJR(iat1,
+                                                iat2,
+                                                paraV,
+                                                nlm_iat0[ad1],
+                                                nlm_iat0[ad2],
+                                                tmp,
+                                                lambda[iat0],
+                                                this->nspin,
+                                                force_tmp1,
+                                                force_tmp2);
+                        }
 
-                    // calculate stress
-                    if (cal_stress) {
-                        this->cal_stress_IJR(iat1,
-                                             iat2,
-                                             paraV,
-                                             nlm_iat0[ad1],
-                                             nlm_iat0[ad2],
-                                             tmp,
-                                             lambda[iat0],
-                                             this->nspin,
-                                             dis1,
-                                             dis2,
-                                             stress_local.data());
+                        // calculate stress
+                        if (cal_stress)
+                        {
+                            this->cal_stress_IJR(iat1,
+                                                 iat2,
+                                                 paraV,
+                                                 nlm_iat0[ad1],
+                                                 nlm_iat0[ad2],
+                                                 tmp,
+                                                 lambda[iat0],
+                                                 this->nspin,
+                                                 dis1,
+                                                 dis2,
+                                                 stress_local.data());
+                        }
                     }
                 }
             }
         }
-    }
-    #pragma omp critical
-    {
-        if(cal_force)
+#pragma omp critical
         {
-            force += force_local;
-        }
-        if(cal_stress)
-        {
-            for(int i = 0; i < 6; i++)
+            if (cal_force)
             {
-                stress_tmp[i] += stress_local[i];
+                force += force_local;
+            }
+            if (cal_stress)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    stress_tmp[i] += stress_local[i];
+                }
             }
         }
-    }
     }
 
     if (cal_force)
@@ -246,15 +249,15 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 
 template <typename TK, typename TR>
 void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
-                                               const int& iat2,
-                                               const Parallel_Orbitals* paraV,
-                                               const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                                               const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                                               const hamilt::BaseMatrix<double>* dmR_pointer,
-                                               const ModuleBase::Vector3<double>& lambda,
-                                               const int nspin,
-                                               double* force1,
-                                               double* force2)
+                                                    const int& iat2,
+                                                    const Parallel_Orbitals* paraV,
+                                                    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                                                    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                                                    const hamilt::BaseMatrix<double>* dmR_pointer,
+                                                    const ModuleBase::Vector3<double>& lambda,
+                                                    const int nspin,
+                                                    double* force1,
+                                                    double* force2)
 {
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -267,7 +270,8 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(nspin, 0);
-    if (nspin == 4) {
+    if (nspin == 4)
+    {
         step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
@@ -276,7 +280,7 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // calculate the local matrix
     for (int is = 1; is < nspin; is++)
     {
-        const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
+        const double lambda_tmp = nspin == 2 ? lambda[2] : lambda[is - 1];
         const double* dm_pointer = dmR_pointer->get_pointer();
         for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
         {
@@ -290,11 +294,11 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                 const int length = nlm1.size() / 4;
                 const int lmax = sqrt(length);
                 int index = 0;
-                for(int l = 0; l<lmax; l++)
+                for (int l = 0; l < lmax; l++)
                 {
-                    for (int m = 0; m < 2*l+1; m++)
+                    for (int m = 0; m < 2 * l + 1; m++)
                     {
-                        index = l*l + m;
+                        index = l * l + m;
                         tmp[0] = lambda_tmp * nlm1[index + length] * nlm2[index] * dm_pointer[step_trace[is]];
                         tmp[1] = lambda_tmp * nlm1[index + length * 2] * nlm2[index] * dm_pointer[step_trace[is]];
                         tmp[2] = lambda_tmp * nlm1[index + length * 3] * nlm2[index] * dm_pointer[step_trace[is]];
@@ -317,16 +321,16 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
 
 template <typename TK, typename TR>
 void DeltaSpin<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
-                                                const int& iat2,
-                                                const Parallel_Orbitals* paraV,
-                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                                                const hamilt::BaseMatrix<double>* dmR_pointer,
-                                                const ModuleBase::Vector3<double>& lambda,
-                                                const int nspin,
-                                                const ModuleBase::Vector3<double>& dis1,
-                                                const ModuleBase::Vector3<double>& dis2,
-                                                double* stress)
+                                                     const int& iat2,
+                                                     const Parallel_Orbitals* paraV,
+                                                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                                                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                                                     const hamilt::BaseMatrix<double>* dmR_pointer,
+                                                     const ModuleBase::Vector3<double>& lambda,
+                                                     const int nspin,
+                                                     const ModuleBase::Vector3<double>& dis1,
+                                                     const ModuleBase::Vector3<double>& dis2,
+                                                     double* stress)
 {
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -339,7 +343,8 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(nspin, 0);
-    if (nspin == 4) {
+    if (nspin == 4)
+    {
         step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
@@ -347,7 +352,7 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     // calculate the local matrix
     for (int is = 1; is < nspin; is++)
     {
-        const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
+        const double lambda_tmp = nspin == 2 ? lambda[2] : lambda[is - 1];
         const double* dm_pointer = dmR_pointer->get_pointer();
         for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
         {
@@ -362,17 +367,20 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                 const int lmax = sqrt(length);
                 double tmp = lambda_tmp * dm_pointer[step_trace[is]];
                 int index = 0;
-                for(int l = 0; l<lmax; l++)
+                for (int l = 0; l < lmax; l++)
                 {
-                    for (int m = 0; m < 2*l+1; m++)
+                    for (int m = 0; m < 2 * l + 1; m++)
                     {
-                        index = l*l + m;
-                        stress[0]
-                            += tmp * (nlm1[index + length] * dis1.x * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.x);
-                        stress[1]
-                            += tmp * (nlm1[index + length] * dis1.y * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.y);
-                        stress[2]
-                            += tmp * (nlm1[index + length] * dis1.z * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.z);
+                        index = l * l + m;
+                        stress[0] += tmp
+                                     * (nlm1[index + length] * dis1.x * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length] * dis2.x);
+                        stress[1] += tmp
+                                     * (nlm1[index + length] * dis1.y * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length] * dis2.y);
+                        stress[2] += tmp
+                                     * (nlm1[index + length] * dis1.z * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length] * dis2.z);
                         stress[3] += tmp
                                      * (nlm1[index + length * 2] * dis1.y * nlm2[index]
                                         + nlm1[index] * nlm2[index + length * 2] * dis2.y);

@@ -1,15 +1,15 @@
 #include "esolver_sdft_pw.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_dos.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_elecond.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
-#include "source_hsolver/diago_iter_assist.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_hsolver/diago_iter_assist.h"
 
 #include <algorithm>
 #include <fstream>
@@ -65,21 +65,20 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input
 
     // 4) allocate spaces for \sqrt(f(H))|chi> and |\tilde{chi}>
     size_t size = stowf.chi0->size();
-    this->stowf.shchi
-        = new psi::Psi<T, Device>(this->kv.get_nks(), 
-                                  this->stowf.nchip_max, 
-                                  this->pw_wfc->npwk_max, 
-                                  this->kv.ngk,
-                                  true);
+    this->stowf.shchi = new psi::Psi<T, Device>(this->kv.get_nks(),
+                                                this->stowf.nchip_max,
+                                                this->pw_wfc->npwk_max,
+                                                this->kv.ngk,
+                                                true);
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
     if (PARAM.inp.nbands > 0)
     {
-        this->stowf.chiortho
-            = new psi::Psi<T, Device>(this->kv.get_nks(), 
-                                      this->stowf.nchip_max, 
-                                      this->pw_wfc->npwk_max, 
-                                      this->kv.ngk, true);
+        this->stowf.chiortho = new psi::Psi<T, Device>(this->kv.get_nks(),
+                                                       this->stowf.nchip_max,
+                                                       this->pw_wfc->npwk_max,
+                                                       this->kv.ngk,
+                                                       true);
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(T));
     }
 
@@ -98,7 +97,7 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                                                          this->pw_wfc,
                                                          &this->kv,
                                                          &this->ppcell,
-                                                         &ucell, 
+                                                         &ucell,
                                                          PARAM.globalv.npol,
                                                          &this->stoche.emin_sto,
                                                          &this->stoche.emax_sto);
@@ -269,7 +268,7 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
     // 3) write down DOS
     if (PARAM.inp.out_dos)
     {
-        if(!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
+        if (!std::is_same<T, std::complex<double>>::value || !std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
             ModuleBase::WARNING_QUIT("ESolver_SDFT_PW", "DOS does not support complex float or GPU yet.");
         }
@@ -314,7 +313,6 @@ void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
                         PARAM.inp.npart_sto);
     }
 }
-
 
 // template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>;

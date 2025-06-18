@@ -1,16 +1,16 @@
 #include "td_nonlocal_lcao.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #ifdef _OPENMP
-#include <unordered_set>
 #include <omp.h>
+#include <unordered_set>
 #endif
 
 template <typename TK, typename TR>
@@ -146,9 +146,9 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             nlm_tot[i].resize(nlm_dim);
         }
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            #pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
                 const int T1 = adjs.ntype[ad];
@@ -206,7 +206,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for(const auto iat1 : ad_atom_set)
+            for (const auto iat1: ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {
@@ -229,7 +229,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     continue;
                 }
 #endif
-                
+
                 const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
                 for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
@@ -251,8 +251,8 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             for (int i = 0; i < 3; i++)
                             {
                                 tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)
-                                                ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
-                                                ->get_pointer();
+                                               ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
+                                               ->get_pointer();
                             }
                             this->cal_HR_IJR(iat1,
                                              iat2,
@@ -397,7 +397,6 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 
-
 // contributeHR()
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
@@ -435,13 +434,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     return;
 }
 
-
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     return;
 }
-
 
 template <>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)

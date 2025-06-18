@@ -1,18 +1,18 @@
 #include "gint_k.h"
 #include "grid_technique.h"
-#include "module_parameter/parameter.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/libm/libm.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/tool_threading.h"
-#include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/libm/libm.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
+#include "source_base/ylm.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -38,7 +38,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
             assert(upper_ap != nullptr);
 #endif
             for (int ir = 0; ir < ap.get_R_size(); ir++)
-            {   
+            {
                 auto R_index = ap.get_R_index(ir);
                 auto upper_mat = upper_ap->find_matrix(-R_index);
                 auto lower_mat = lower_ap->find_matrix(R_index);
@@ -79,7 +79,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
 
     this->hRGintCd->set_zero();
-    
+
     for (int iap = 0; iap < this->hRGintCd->size_atom_pairs(); iap++)
     {
         auto* ap = &this->hRGintCd->get_atom_pair(iap);
@@ -92,7 +92,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
             const hamilt::AtomPair<double>* ap_nspin_0 = this->hRGint_tmp[0]->find_pair(iat1, iat2);
             const hamilt::AtomPair<double>* ap_nspin_3 = this->hRGint_tmp[3]->find_pair(iat1, iat2);
             for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
-            {   
+            {
                 const auto R_index = upper_ap->get_R_index(ir);
                 auto upper_mat = upper_ap->find_matrix(R_index);
                 auto mat_nspin_0 = ap_nspin_0->find_matrix(R_index);
@@ -103,8 +103,10 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                 {
                     for (int icol = 0; icol < mat_nspin_0->get_col_size(); ++icol)
                     {
-                        upper_mat->get_value(2*irow, 2*icol) = mat_nspin_0->get_value(irow, icol) + mat_nspin_3->get_value(irow, icol);
-                        upper_mat->get_value(2*irow+1, 2*icol+1) = mat_nspin_0->get_value(irow, icol) - mat_nspin_3->get_value(irow, icol);
+                        upper_mat->get_value(2 * irow, 2 * icol)
+                            = mat_nspin_0->get_value(irow, icol) + mat_nspin_3->get_value(irow, icol);
+                        upper_mat->get_value(2 * irow + 1, 2 * icol + 1)
+                            = mat_nspin_0->get_value(irow, icol) - mat_nspin_3->get_value(irow, icol);
                     }
                 }
 
@@ -118,8 +120,12 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                     {
                         for (int icol = 0; icol < mat_nspin_1->get_col_size(); ++icol)
                         {
-                            upper_mat->get_value(2*irow, 2*icol+1) = mat_nspin_1->get_value(irow, icol) +  std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
-                            upper_mat->get_value(2*irow+1, 2*icol) = mat_nspin_1->get_value(irow, icol) -  std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
+                            upper_mat->get_value(2 * irow, 2 * icol + 1)
+                                = mat_nspin_1->get_value(irow, icol)
+                                  + std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
+                            upper_mat->get_value(2 * irow + 1, 2 * icol)
+                                = mat_nspin_1->get_value(irow, icol)
+                                  - std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
                         }
                     }
                 }

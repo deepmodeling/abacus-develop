@@ -2,12 +2,12 @@
 #include "LCAO_deepks_interface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "module_base/global_variable.h"
-#include "module_base/tool_title.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_title.h"
 
 template <typename TK, typename TR>
 LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in) : ld(ld_in)
@@ -544,7 +544,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         << " = " << std::setprecision(8) << e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
             ofs_running << "  E_delta_NN = " << std::setprecision(8) << E_delta << " Ry"
                         << " = " << std::setprecision(8) << E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
-                        ofs_running << " -----------------------------------------------" << std::endl;
+            ofs_running << " -----------------------------------------------" << std::endl;
         }
         if (PARAM.inp.deepks_out_unittest)
         {

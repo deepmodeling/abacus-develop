@@ -1,11 +1,11 @@
+#include "source_base/tool_quit.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <cstdio>
 #include <fstream>
 #include <string>
 #include <vector>
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
 /************************************************
  *  unit test of read_input_test_item.cpp
  ***********************************************/
@@ -42,7 +42,7 @@ TEST_F(InputTest, Item_test)
 {
     readinput.check_ntype_flag = false;
 
-    { 
+    {
         param.input.suffix = "test";
         readinput.set_global_dir(param.inp, param.sys);
 
@@ -51,14 +51,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.global_matrix_dir, "OUT.test/matrix/");
 
         readinput.set_globalv(param.inp, param.sys);
-    
+
         param.input.basis_type = "lcao";
         param.input.gamma_only = true;
         param.input.esolver_type = "tddft";
         param.input.nspin = 2;
         readinput.set_globalv(param.inp, param.sys);
         EXPECT_EQ(param.sys.gamma_only_local, 0);
-        
+
         param.input.deepks_scf = true;
         param.input.deepks_out_labels = true;
         readinput.set_globalv(param.inp, param.sys);
@@ -78,7 +78,5 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.domag, 0);
         EXPECT_EQ(param.sys.domag_z, 0);
         EXPECT_EQ(param.sys.npol, 1);
-
-        
     }
 }

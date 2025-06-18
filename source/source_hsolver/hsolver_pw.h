@@ -1,12 +1,13 @@
 #ifndef HSOLVERPW_H
 #define HSOLVERPW_H
 
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_base/macros.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_base/macros.h"
+#include "source_base/memory.h"
+
 #include <unordered_map>
-#include "module_base/memory.h"
 
 namespace hsolver
 {
@@ -39,7 +40,7 @@ class HSolverPW
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
           use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
-          use_k_continuity(use_k_continuity_in) {};
+          use_k_continuity(use_k_continuity_in){};
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -56,7 +57,6 @@ class HSolverPW
                const bool skip_charge,
                const double tpiba,
                const int nat);
-
 
   protected:
     // diago caller
@@ -101,19 +101,18 @@ class HSolverPW
     void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
 #ifdef USE_PAW
-    void paw_func_in_kloop(const int ik,
-                           const double tpiba);
+    void paw_func_in_kloop(const int ik, const double tpiba);
 
     void call_paw_cell_set_currentk(const int ik);
 
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes, const double tpiba, const int nat);
 #endif
 
     // K-point continuity related members
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    
+
     void build_k_neighbors();
     void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
 };

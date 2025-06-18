@@ -1,14 +1,13 @@
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #ifdef __PEXSI
 #include "module_parameter/parameter.h"
 #include "pexsi_solver.h"
-
-#include <mpi.h>
-#include <cstring>
-#include <vector>
-
-#include "module_base/global_variable.h"
 #include "simple_pexsi.h"
+#include "source_base/global_variable.h"
+
+#include <cstring>
+#include <mpi.h>
+#include <vector>
 
 extern MPI_Comm DIAG_WORLD;
 extern MPI_Comm GRID_WORLD;
@@ -72,7 +71,7 @@ int PEXSI_Solver::solve(double mu0)
     MPI_Comm_size(DIAG_WORLD, &grid_np);
     MPI_Comm_group(DIAG_WORLD, &world_group);
 
-    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
+    int grid_proc_range[3] = {0, (GlobalV::NPROC / grid_np) * grid_np - 1, GlobalV::NPROC / grid_np};
     MPI_Group_range_incl(world_group, 1, &grid_proc_range, &grid_group);
 
     simplePEXSI(DIAG_WORLD,

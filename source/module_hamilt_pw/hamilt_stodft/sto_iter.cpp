@@ -1,16 +1,16 @@
 #include "sto_iter.h"
 
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/para_gemm.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "source_hsolver/para_linear_transform.h"
 #include "module_parameter/parameter.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/para_gemm.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
+#include "source_hsolver/para_linear_transform.h"
 
 template <typename T, typename Device>
 Stochastic_Iter<T, Device>::Stochastic_Iter()
@@ -26,7 +26,12 @@ Stochastic_Iter<T, Device>::~Stochastic_Iter()
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy, Real& result)
+void Stochastic_Iter<T, Device>::dot(const int& n,
+                                     const Real* x,
+                                     const int& incx,
+                                     const Real* y,
+                                     const int& incy,
+                                     Real& result)
 {
     Real* result_device = nullptr;
     resmem_var_op()(result_device, 1);
@@ -75,7 +80,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         T* sum = nullptr;
         resmem_complex_op()(sum, nbands * nchipk);
 
-        if(PARAM.globalv.all_ks_run)
+        if (PARAM.globalv.all_ks_run)
         {
             // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
             ModuleBase::PGemmCN<T, Device> pmmcn;
@@ -409,7 +414,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         {
             spolyv_cpu[i] += p_che->polytrace[i] * this->pkv->wk[ik];
         }
-        if(ik == this->pkv->get_nks() - 1)
+        if (ik == this->pkv->get_nks() - 1)
         {
             syncmem_var_h2d_op()(spolyv, spolyv_cpu, norder);
         }
@@ -425,8 +430,9 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         const int M = npwx * nchip_ik * 2; // Do not use kv.ngk[ik]
         const int N = norder;
         const Real kweight = this->pkv->wk[ik];
-        
-        ModuleBase::gemm_op<Real, Device>()(trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
+
+        ModuleBase::gemm_op<Real,
+                            Device>()(trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");
@@ -469,7 +475,7 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
     KS_ne /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    if(PARAM.globalv.all_ks_run)
+    if (PARAM.globalv.all_ks_run)
     {
         MPI_Allreduce(MPI_IN_PLACE, &KS_ne, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
@@ -497,9 +503,9 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecStatePW<T, Device>* pes,
-                                             hamilt::Hamilt<T, Device>* pHamilt,
-                                             ModulePW::PW_Basis_K* wfc_basis)
+                                              elecstate::ElecStatePW<T, Device>* pes,
+                                              hamilt::Hamilt<T, Device>* pHamilt,
+                                              ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "sum_stoeband");
     ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
@@ -536,7 +542,7 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
     pes->f_en.demet /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    if(PARAM.globalv.all_ks_run)
+    if (PARAM.globalv.all_ks_run)
     {
         MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.demet, 1, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
@@ -589,9 +595,9 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
-                                             Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecStatePW<T, Device>* pes,
-                                             ModulePW::PW_Basis_K* wfc_basis)
+                                            Stochastic_WF<T, Device>& stowf,
+                                            elecstate::ElecStatePW<T, Device>* pes,
+                                            ModulePW::PW_Basis_K* wfc_basis)
 {
     ModuleBase::TITLE("Stochastic_Iter", "cal_storho");
     ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
@@ -609,7 +615,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     {
         // If there are KS orbitals, we need to allocate another memory for sto_rho
         _tmprho.resize(nrxx * nspin);
-        for(int is = 0; is < nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             sto_rho[is] = _tmprho.data() + is * nrxx;
         }
@@ -622,9 +628,10 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         }
     }
 
-    // pes->rho is a device memory, and when using cpu and double, we donot need to allocate memory for pes->rho 
-    if (PARAM.inp.device != "gpu" && PARAM.inp.precision != "single") {
-        pes->rho = reinterpret_cast<Real **>(sto_rho.data());
+    // pes->rho is a device memory, and when using cpu and double, we donot need to allocate memory for pes->rho
+    if (PARAM.inp.device != "gpu" && PARAM.inp.precision != "single")
+    {
+        pes->rho = reinterpret_cast<Real**>(sto_rho.data());
     }
     for (int is = 0; is < nspin; is++)
     {
@@ -652,8 +659,9 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
             tmpout += npwx;
         }
     }
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
-        for(int is = 0; is < nspin; ++is)
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    {
+        for (int is = 0; is < nspin; ++is)
         {
             castmem_var_d2h_op()(sto_rho[is], pes->rho[is], nrxx);
         }
@@ -661,12 +669,12 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     else
     {
         // We need to set pes->rho back to the original value
-        pes->rho = reinterpret_cast<Real **>(pes->charge->rho);
+        pes->rho = reinterpret_cast<Real**>(pes->charge->rho);
     }
 
     delmem_complex_op()(porter);
 #ifdef __MPI
-    if(GlobalV::KPAR * PARAM.inp.bndpar > 1)
+    if (GlobalV::KPAR * PARAM.inp.bndpar > 1)
     {
         for (int is = 0; is < nspin; ++is)
         {
@@ -680,7 +688,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
 #endif
 
     double sto_ne = 0;
-    for(int is = 0; is < nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sto_ne)

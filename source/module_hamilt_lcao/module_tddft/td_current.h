@@ -1,16 +1,17 @@
 #ifndef TD_CURRENT_H
 #define TD_CURRENT_H
-#include <unordered_map>
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_basis/module_nao/two_center_integrator.h"
+#include "source_base/vector3.h"
 #include "td_velocity.h"
-#include "module_base/vector3.h"
+
+#include <unordered_map>
 
 #ifdef __LCAO
-//design to calculate current for length gauge
+// design to calculate current for length gauge
 class TD_current
 {
   public:
@@ -21,7 +22,7 @@ class TD_current
                const TwoCenterIntegrator* intor);
     ~TD_current();
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
+    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
     {
         return this->current_term[i];
     }
@@ -37,9 +38,10 @@ class TD_current
     const LCAO_Orbitals& orb_;
 
     const Grid_Driver* Grid = nullptr;
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
+    /// shared between TD operators.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    
+
     const TwoCenterIntegrator* intor_ = nullptr;
 
     /**
@@ -73,7 +75,6 @@ class TD_current
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;
 };
-
 
 #endif // __LCAO
 #endif // TD_CURRENT_H

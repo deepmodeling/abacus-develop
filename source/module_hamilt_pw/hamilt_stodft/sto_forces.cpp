@@ -1,20 +1,20 @@
 #include "sto_forces.h"
 
-#include "module_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
+#include "source_base/mathzone.h"
 
 // new
-#include "module_base/math_integral.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_base/math_integral.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
@@ -43,7 +43,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::matrix forcenl(this->nat, 3);
     ModuleBase::matrix forcescc(this->nat, 3);
     this->cal_force_loc(ucell, forcelc, rho_basis, locpp.vloc, chr);
-    this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
+    this->cal_force_ew(ucell, forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp.numeric, ucell);
@@ -174,11 +174,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
         }
         if (PARAM.inp.gate_flag)
         {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "GATEFIELD   FORCE (eV/Angstrom)",
-                                  force_gate,
-                                  false);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "GATEFIELD   FORCE (eV/Angstrom)", force_gate, false);
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
@@ -187,16 +183,15 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
-    ModuleBase::matrix& forcenl,
-    const ModuleBase::matrix& wg,
-    K_Vectors* p_kv,
-    ModulePW::PW_Basis_K* wfc_basis,
-    const Structure_Factor* p_sf,
-    const pseudopot_cell_vnl& nlpp,
-    const UnitCell& ucell,
-    const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
+void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(ModuleBase::matrix& forcenl,
+                                                  const ModuleBase::matrix& wg,
+                                                  K_Vectors* p_kv,
+                                                  ModulePW::PW_Basis_K* wfc_basis,
+                                                  const Structure_Factor* p_sf,
+                                                  const pseudopot_cell_vnl& nlpp,
+                                                  const UnitCell& ucell,
+                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::TITLE("Sto_Forces", "cal_force_nl");
     const int nkb = nlpp.nkb;
@@ -215,13 +210,12 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         nksbands = 0;
     }
 
-   // allocate memory for the force
+    // allocate memory for the force
     FPTYPE* force = nullptr;
     resmem_var_op()(force, ucell.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell.nat * 3);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
-
 
     for (int ik = 0; ik < wfc_basis->nks; ik++)
     {
@@ -255,7 +249,6 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 
-    
     ModuleBase::timer::tick("Sto_Forces", "cal_force_nl");
     return;
 }

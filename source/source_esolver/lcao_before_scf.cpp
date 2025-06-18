@@ -1,12 +1,12 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
-#include "source_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_esolver/esolver_ks_lcao.h"
 //
-#include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_io/berryphase.h"
 #include "module_io/get_pchg_lcao.h"
 #include "module_io/get_wf_lcao.h"
@@ -15,11 +15,10 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_base/timer.h"
 #ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
@@ -28,6 +27,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/cube_io.h"
 #include "module_io/write_elecstat_pot.h"
+#include "source_base/formatter.h"
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
@@ -59,7 +59,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                          search_radius,
                          PARAM.inp.test_atom_input);
 
-    //! 4) initialize NAO basis set 
+    //! 4) initialize NAO basis set
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
@@ -95,22 +95,21 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     //! 6) prepare grid integral
 #ifdef __NEW_GINT
-    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbz,
-        this->pw_rho->nx,
-        this->pw_rho->ny,
-        this->pw_rho->nz,
-        0,
-        0,
-        this->pw_big->nbzp_start,
-        this->pw_big->nbx,
-        this->pw_big->nby,
-        this->pw_big->nbzp,
-        orb_.Phi,
-        ucell,
-        this->gd);
+    auto gint_info = std::make_shared<ModuleGint::GintInfo>(this->pw_big->nbx,
+                                                            this->pw_big->nby,
+                                                            this->pw_big->nbz,
+                                                            this->pw_rho->nx,
+                                                            this->pw_rho->ny,
+                                                            this->pw_rho->nz,
+                                                            0,
+                                                            0,
+                                                            this->pw_big->nbzp_start,
+                                                            this->pw_big->nbx,
+                                                            this->pw_big->nby,
+                                                            this->pw_big->nbzp,
+                                                            orb_.Phi,
+                                                            ucell,
+                                                            this->gd);
     ModuleGint::Gint::init_gint_info(gint_info);
 #endif
 
@@ -164,9 +163,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 #endif
         );
     }
-
-
-
 
 #ifdef __MLALGO
     // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -269,11 +265,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 18) update of RDMFT, added by jghan
     if (PARAM.inp.rdmft == true)
     {
-        // necessary operation of these parameters have be done with p_esolver->Init() in source/source_main/driver_run.cpp
-        rdmft_solver.update_ion(ucell,
-                                *(this->pw_rho),
-                                this->locpp.vloc,
-                                this->sf.strucFac);
+        // necessary operation of these parameters have be done with p_esolver->Init() in
+        // source/source_main/driver_run.cpp
+        rdmft_solver.update_ion(ucell, *(this->pw_rho), this->locpp.vloc, this->sf.strucFac);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");

@@ -2,8 +2,8 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
 
 #include "atom_pair.h"
-#include "module_base/vector3.h"
 #include "module_cell/unitcell.h"
+#include "source_base/vector3.h"
 
 #include <set>
 #include <vector>
@@ -171,18 +171,22 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
-    * @brief set parallel orbital pointer to check parallel information
-    */
+     * @brief set parallel orbital pointer to check parallel information
+     */
     void set_paraV(const Parallel_Orbitals* paraV_in)
     {
         this->paraV = paraV_in;
-        for (auto& ap : atom_pairs) ap.set_paraV(paraV_in);
+        for (auto& ap: atom_pairs)
+            ap.set_paraV(paraV_in);
     };
     /**
- * @brief get parallel orbital pointer to check parallel information
- * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
- */
-    const Parallel_Orbitals* get_paraV() const { return this->paraV; };
+     * @brief get parallel orbital pointer to check parallel information
+     * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
+     */
+    const Parallel_Orbitals* get_paraV() const
+    {
+        return this->paraV;
+    };
 
     /**
      * @brief allocate memory for all <IJR> matrix
@@ -332,7 +336,6 @@ class HContainer
      */
     size_t size_R_loop() const;
 
-    
     /**
      * @brief find index of R in tmp_R_index, used when current_R is fixed
      *
@@ -418,8 +421,8 @@ class HContainer
      * HContainer has not been allocated after this function,
      * user should call allocate(...) to allocate memory.
      */
-    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol=1);
-    
+    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol = 1);
+
     /**
      * @brief return the wrapper_pointer
      */

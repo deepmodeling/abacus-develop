@@ -1,13 +1,12 @@
 #include "./transfer.h"
 
+#include "source_base/blas_connector.h"
+#include "source_base/global_function.h"
+
 #include <set>
-
-#include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
 #ifdef __MPI
-#include <mpi.h>
-
 #include <algorithm>
+#include <mpi.h>
 
 namespace hamilt
 {
@@ -275,7 +274,7 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
         }
     }
 #ifdef __DEBUG
-    //assert(value_data - values == this->data_size[irank]);
+    // assert(value_data - values == this->data_size[irank]);
     assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
 #endif
 }
@@ -503,7 +502,8 @@ void HTransSerial<T>::pack_data(int irank, T* values)
     {
         value_atoms[i] += size_begin;
         const int atom_i = i;
-        if(sparse_ap[i].size() == 0) continue;
+        if (sparse_ap[i].size() == 0)
+            continue;
         const int size_row = this->orb_indexes[irank][this->orb_row_indexes[irank][atom_i]];
         for (int j = 0; j < sparse_ap[i].size(); ++j)
         {
@@ -561,7 +561,7 @@ void HTransSerial<T>::pack_data(int irank, T* values)
         }
     }
 #ifdef __DEBUG
-    //assert(value_data - values == this->size_values[irank]);
+    // assert(value_data - values == this->size_values[irank]);
 #endif
     return;
 }
@@ -584,7 +584,8 @@ void HTransSerial<T>::unpack_data(int irank, const T* values)
     {
         value_atoms[i] += size_begin;
         const int atom_i = i;
-        if(sparse_ap[i].size() == 0) continue;
+        if (sparse_ap[i].size() == 0)
+            continue;
         const int size_row = this->orb_indexes[irank][this->orb_row_indexes[irank][atom_i]];
         for (int j = 0; j < sparse_ap[i].size(); ++j)
         {
@@ -642,7 +643,7 @@ void HTransSerial<T>::unpack_data(int irank, const T* values)
         }
     }
 #ifdef __DEBUG
-    //assert(value_data - values == this->size_values[irank]);
+    // assert(value_data - values == this->size_values[irank]);
 #endif
     return;
 }

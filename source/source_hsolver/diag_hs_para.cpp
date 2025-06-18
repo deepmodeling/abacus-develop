@@ -1,7 +1,7 @@
 #include "source_hsolver/diag_hs_para.h"
 
-#include "module_base/scalapack_connector.h"
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
+#include "source_base/scalapack_connector.h"
 #include "source_hsolver/diago_pxxxgvx.h"
 
 #ifdef __ELPA
@@ -146,8 +146,8 @@ void diago_hs_para(T* h,
     }
     else
     {
-        std::cout << "Error: parallel diagonalization method is not supported. " << "diag_subspace = " << diag_subspace
-                  << std::endl;
+        std::cout << "Error: parallel diagonalization method is not supported. "
+                  << "diag_subspace = " << diag_subspace << std::endl;
         exit(1);
     }
 

@@ -1,6 +1,6 @@
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -36,9 +36,10 @@ void ReadInput::item_md()
         Input_Item item("md_dt");
         item.annotation = "time step";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.md_dt < 0) {
+            if (para.input.mdp.md_dt < 0)
+            {
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
-}
+            }
         };
         read_sync_double(input.mdp.md_dt);
         this->add_item(item);
@@ -144,9 +145,10 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read()) {
+            if (!item.is_read())
+            {
                 return;
-}
+            }
             size_t n_ljrcut = para.input.mdp.lj_rcut.size();
             if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -175,9 +177,10 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read()) {
+            if (!item.is_read())
+            {
                 return;
-}
+            }
             size_t n_ljepsilon = para.input.mdp.lj_epsilon.size();
             if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -199,9 +202,10 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read()) {
+            if (!item.is_read())
+            {
                 return;
-}
+            }
             size_t n_ljsigma = para.input.mdp.lj_sigma.size();
             if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -364,9 +368,10 @@ void ReadInput::item_md()
         Input_Item item("md_plast");
         item.annotation = "final target pressure";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read()) { // no md_plast in INPUT
+            if (!item.is_read())
+            { // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
-}
+            }
         };
         read_sync_double(input.mdp.md_plast);
         this->add_item(item);

@@ -1,14 +1,14 @@
 #ifndef TDEKINETIC_H
 #define TDEKINETIC_H
-#include "module_base/timer.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "operator_lcao.h"
-#include <vector>
+#include "source_base/timer.h"
 
+#include <vector>
 
 namespace hamilt
 {
@@ -32,7 +32,7 @@ class TDEkinetic : public T
 /// - TR: data type of real space Hamiltonian
 
 template <typename TK, typename TR>
-class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
+class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     TDEkinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
@@ -61,7 +61,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
-    */
+     */
     void initialize_HR_tmp();
 
     /**
@@ -86,11 +86,10 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     TD_Velocity td_velocity;
 
   private:
-
     const UnitCell* ucell = nullptr;
 
     std::vector<double> orb_cutoff_;
-    
+
     HContainer<TR>* SR = nullptr;
 
     /// @brief Store real space hamiltonian. TD term should include imaginary part,

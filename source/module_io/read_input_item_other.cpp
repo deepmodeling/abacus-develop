@@ -1,7 +1,7 @@
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <cstring>
@@ -477,7 +477,8 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("ri_hartree_benchmark");
-        item.annotation = "whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)";
+        item.annotation = "whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with "
+                          "FHI-aims/ABACUS read-in style)";
         read_sync_string(input.ri_hartree_benchmark);
         this->add_item(item);
     }
@@ -490,7 +491,7 @@ void ReadInput::item_others()
             {
                 para.input.aims_nbasis.push_back(std::stod(item.str_values[i]));
             }
-            };
+        };
         sync_intvec(input.aims_nbasis, para.input.aims_nbasis.size(), 0);
         this->add_item(item);
     }
@@ -508,17 +509,17 @@ void ReadInput::item_others()
                           " used in exx-type functionals such as muller and power";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
+            if (para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0")
             {
                 para.input.rdmft_power_alpha = 1.0;
             }
-            else if( para.input.dft_functional == "muller" )
+            else if (para.input.dft_functional == "muller")
             {
                 para.input.rdmft_power_alpha = 0.5;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if( (para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1) )
+            if ((para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1))
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "rdmft_power_alpha should be greater than 0.0 and less than 1.0");
             }
@@ -539,6 +540,5 @@ void ReadInput::item_others()
         read_sync_bool(input.exx_gamma_extrapolation);
         this->add_item(item);
     }
-
 }
 } // namespace ModuleIO

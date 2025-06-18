@@ -1,9 +1,9 @@
 #include "sltk_atom_arrange.h"
 
-#include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
+#include "source_base/timer.h"
 
 // update the followig class in near future
 #include "module_cell/unitcell.h"
@@ -32,7 +32,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
     else
     {
         sr = 2 * (rcutmax_Phi + rcutmax_Beta) + 0.001; // 0.001 is added to make safe.
-                                                      // sr = 2 * longest_orb_rcut + 0.001;
+                                                       // sr = 2 * longest_orb_rcut + 0.001;
     }
 
     if (output_level != "m") // xiaohui add 'output_level', 2015-09-16
@@ -54,7 +54,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ModuleBase::GlobalFunc::OUT(ofs_in, "longest orb rcut (Bohr)", rcutmax_Phi);
         ModuleBase::GlobalFunc::OUT(ofs_in, "longest nonlocal projector rcut (Bohr)", rcutmax_Beta);
         ModuleBase::GlobalFunc::OUT(ofs_in, "search radius (Bohr)", sr);
-	}
+    }
     return sr;
 }
 
@@ -83,10 +83,11 @@ void atom_arrange::search(const bool pbc_flag,
     /*
     2024-12-04 Zhang Haochong
         The neighboring atom search module has been completely rewritten.
-        The new algorithm places atoms into boxes with an edge length of twice the atomic radius. The neighboring 
+        The new algorithm places atoms into boxes with an edge length of twice the atomic radius. The neighboring
     atom list stores the data using the atom's type and its index within that type.
-        By setting pbc_flag = false, periodic boundary conditions can be forcibly disabled. In this case, the search 
-    process will not expand the supercell, and the neighboring atoms will only consider those within the original unit cell.
+        By setting pbc_flag = false, periodic boundary conditions can be forcibly disabled. In this case, the search
+    process will not expand the supercell, and the neighboring atoms will only consider those within the original unit
+    cell.
     */
     const double radius_lat0unit = search_radius_bohr / ucell.lat0;
 
@@ -94,7 +95,8 @@ void atom_arrange::search(const bool pbc_flag,
 
     grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
 
-	// The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
+    // The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here
+    // earlier.
     ModuleBase::timer::tick("atom_arrange", "search");
 
     if (test_only)
@@ -114,7 +116,8 @@ void atom_arrange::search(const bool pbc_flag,
 
                 ofs_in << " " << std::setw(5) << it << std::setw(5) << ia << std::setw(8) << grid_d.getAdjacentNum() + 1
                        << std::endl;
-                std::cout << " adjacent atoms of " << ucell.atoms[it].label + std::to_string(ia + 1) << ":" << std::endl;
+                std::cout << " adjacent atoms of " << ucell.atoms[it].label + std::to_string(ia + 1) << ":"
+                          << std::endl;
                 std::cout << "getAdjacentNum: " << grid_d.getAdjacentNum() + 1 << std::endl;
                 /*
                 for (int ad = 0; ad < grid_d.getAdjacentNum() + 1; ad++)

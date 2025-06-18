@@ -1,12 +1,13 @@
-#include "module_base/element_name.h"
-#include "module_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "write_elecstat_pot.h"
+
 #include "module_elecstate/module_pot/H_Hartree_pw.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
-#include "write_elecstat_pot.h"
+#include "module_parameter/parameter.h"
+#include "source_base/element_name.h"
+#include "source_base/timer.h"
 
 namespace ModuleIO
 {
@@ -44,7 +45,7 @@ void write_elecstat_pot(
     //! Dipole correction
     //==========================================
     ModuleBase::matrix v_efield;
-    if (efield>0 && dip_corr>0)
+    if (efield > 0 && dip_corr > 0)
     {
         v_efield.create(nspin, rho_basis->nrxx);
         v_efield = elecstate::Efield::add_efield(*ucell,
@@ -62,11 +63,11 @@ void write_elecstat_pot(
         // the spin index is 0
         v_elecstat[ir] = vh(0, ir) + v_eff[ir];
 
-        if (efield>0 && dip_corr>0)
+        if (efield > 0 && dip_corr > 0)
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if(imp_sol == true)
+        if (imp_sol == true)
         {
             v_elecstat[ir] += solvent.delta_phi[ir];
         }
@@ -95,15 +96,15 @@ void write_elecstat_pot(
     int out_fermi = 0;
 
     ModuleIO::write_vdata_palgrid(*chr->pgrid,
-        v_elecstat.data(),
-        is,
-        nspin,
-        istep,
-        fn,
-        ef_tmp,
-        ucell,
-        precision,
-        out_fermi);
+                                  v_elecstat.data(),
+                                  is,
+                                  nspin,
+                                  istep,
+                                  fn,
+                                  ef_tmp,
+                                  ucell,
+                                  precision,
+                                  out_fermi);
 
     ModuleBase::timer::tick("ModuleIO", "write_elecstat_pot");
     return;

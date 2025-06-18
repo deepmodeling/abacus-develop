@@ -17,12 +17,12 @@
 
 #include "deepks_iterate.h"
 #include "deepks_pdm.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/timer.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/timer.h"
 #ifdef __MPI
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 #endif
 
 void DeePKS_domain::read_pdm(bool read_pdm_file,
@@ -99,77 +99,76 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
     // save whether the pair with R has been calculated
     std::vector<std::tuple<int, int, int, int, int>> calculated_pairs(0);
 
-    DeePKS_domain::iterate_ad2(
-        ucell,
-        GridD,
-        orb,
-        false, // no trace_alpha
-        [&](const int iat,
-            const ModuleBase::Vector3<double>& tau0,
-            const int ibt1,
-            const ModuleBase::Vector3<double>& tau1,
-            const int start1,
-            const int nw1_tot,
-            ModuleBase::Vector3<int> dR1,
-            const int ibt2,
-            const ModuleBase::Vector3<double>& tau2,
-            const int start2,
-            const int nw2_tot,
-            ModuleBase::Vector3<int> dR2) 
-        {
-            auto row_indexes = pv.get_indexes_row(ibt1);
-            auto col_indexes = pv.get_indexes_col(ibt2);
-            if (row_indexes.size() * col_indexes.size() == 0)
-            {
-                return; // to next loop
-            }
+    DeePKS_domain::iterate_ad2(ucell,
+                               GridD,
+                               orb,
+                               false, // no trace_alpha
+                               [&](const int iat,
+                                   const ModuleBase::Vector3<double>& tau0,
+                                   const int ibt1,
+                                   const ModuleBase::Vector3<double>& tau1,
+                                   const int start1,
+                                   const int nw1_tot,
+                                   ModuleBase::Vector3<int> dR1,
+                                   const int ibt2,
+                                   const ModuleBase::Vector3<double>& tau2,
+                                   const int start2,
+                                   const int nw2_tot,
+                                   ModuleBase::Vector3<int> dR2) {
+                                   auto row_indexes = pv.get_indexes_row(ibt1);
+                                   auto col_indexes = pv.get_indexes_col(ibt2);
+                                   if (row_indexes.size() * col_indexes.size() == 0)
+                                   {
+                                       return; // to next loop
+                                   }
 
-            hamilt::AtomPair<double> dm_pair = dmr_deepks->get_atom_pair(ibt1, ibt2);
+                                   hamilt::AtomPair<double> dm_pair = dmr_deepks->get_atom_pair(ibt1, ibt2);
 
-            int dRx = 0;
-            int dRy = 0;
-            int dRz = 0;
-            if (std::is_same<TK, std::complex<double>>::value)
-            {
-                dRx = (dR1 - dR2).x;
-                dRy = (dR1 - dR2).y;
-                dRz = (dR1 - dR2).z;
-            }
-            ModuleBase::Vector3<int> dR(dRx, dRy, dRz);
+                                   int dRx = 0;
+                                   int dRy = 0;
+                                   int dRz = 0;
+                                   if (std::is_same<TK, std::complex<double>>::value)
+                                   {
+                                       dRx = (dR1 - dR2).x;
+                                       dRy = (dR1 - dR2).y;
+                                       dRz = (dR1 - dR2).z;
+                                   }
+                                   ModuleBase::Vector3<int> dR(dRx, dRy, dRz);
 
-            // avoid duplicate calculation
-            if (std::find(calculated_pairs.begin(), calculated_pairs.end(),
-                          std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z))
-                != calculated_pairs.end())
-            {
-                return;
-            }
-            calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
+                                   // avoid duplicate calculation
+                                   if (std::find(calculated_pairs.begin(),
+                                                 calculated_pairs.end(),
+                                                 std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z))
+                                       != calculated_pairs.end())
+                                   {
+                                       return;
+                                   }
+                                   calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
 
-            dm_pair.find_R(dR);
-            hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
-            dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
+                                   dm_pair.find_R(dR);
+                                   hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
+                                   dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
 
-            for (int ik = 0; ik < dmk.size(); ik++)
-            {
-                std::complex<double> kphase = std::complex<double>(1, 0);
-                if (std::is_same<TK, std::complex<double>>::value)
-                {
-                    const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
-                    kphase = std::complex<double>(cos(arg), sin(arg));
-                }
-                TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-                {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
-                }
-                else
-                {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
-                }
-            }
-        }
-    );
+                                   for (int ik = 0; ik < dmk.size(); ik++)
+                                   {
+                                       std::complex<double> kphase = std::complex<double>(1, 0);
+                                       if (std::is_same<TK, std::complex<double>>::value)
+                                       {
+                                           const double arg
+                                               = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
+                                           kphase = std::complex<double>(cos(arg), sin(arg));
+                                       }
+                                       TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
+                                       if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                                       {
+                                           dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
+                                       }
+                                       else
+                                       {
+                                           dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
+                                       }
+                                   }
+                               });
     return;
 }
 

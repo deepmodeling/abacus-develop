@@ -1,7 +1,7 @@
 #include "diago_pxxxgvx.h"
 
-#include "module_base/blacs_connector.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/blacs_connector.h"
+#include "source_base/scalapack_connector.h"
 
 #include <complex>
 #include <cstring>
@@ -33,7 +33,7 @@ namespace hsolver
 
 /**
  * @brief Wrapper function for Scalapack's generalized eigensolver routines.
- * 
+ *
  * @param itype Specifies the problem type to be solved.
  * @param jobz Specifies whether to compute eigenvectors.
  * @param range Specifies the range of eigenvalues to be found.
@@ -70,7 +70,7 @@ namespace hsolver
  * @param iclustr The array to store the indices of the eigenvalue clusters.
  * @param gap The array to store the gaps between eigenvalue clusters.
  * @param info Output status of the computation.
- * 
+ *
  * @note for a uniform interface, rwork and lrwork are input arguments, but not used in pdsygvx_/pssygvx_
  */
 void pxxxgvx_(const int* itype,
@@ -101,7 +101,7 @@ void pxxxgvx_(const int* itype,
               const int* descz,
               double* work,
               int* lwork,
-              double* rwork, 
+              double* rwork,
               int* lrwork,
               int* iwork,
               int* liwork,
@@ -635,7 +635,7 @@ template void pxxxgvx_diag(const int* const desc,
                            double* const ekb,
                            double* const wfc_2d);
 
-// std::complex<double>                           
+// std::complex<double>
 template void pxxxgvx_diag(const int* const desc,
                            const int ncol,
                            const int nrow,

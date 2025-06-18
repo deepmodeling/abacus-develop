@@ -1,6 +1,6 @@
 #include "operator.h"
 
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 
 using namespace hamilt;
 
@@ -62,8 +62,8 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     {
         syncmem_op()(hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
         delete this->hpsi;
-        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
-                                             1, 
+        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer,
+                                             1,
                                              nbands / psi_input->get_npol(),
                                              psi_input->get_nbasis(),
                                              psi_input->get_nbasis(),
@@ -79,21 +79,21 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
                                         psi_input->get_nbasis(),
                                         true);
 
-		switch (op->get_act_type())
-		{
-			case 2:
-				op->act(psi_wrapper, *this->hpsi, nbands);
-				break;
-			default:
-				op->act(nbands,
-						psi_input->get_nbasis(),
-						psi_input->get_npol(),
-						tmpsi_in,
-						this->hpsi->get_pointer(),
-						psi_input->get_current_nbas(),
-						is_first_node);
-				break;
-		}
+        switch (op->get_act_type())
+        {
+        case 2:
+            op->act(psi_wrapper, *this->hpsi, nbands);
+            break;
+        default:
+            op->act(nbands,
+                    psi_input->get_nbasis(),
+                    psi_input->get_npol(),
+                    tmpsi_in,
+                    this->hpsi->get_pointer(),
+                    psi_input->get_current_nbas(),
+                    is_first_node);
+            break;
+        }
     };
 
     ModuleBase::timer::tick("Operator", "hPsi");
@@ -162,7 +162,6 @@ void Operator<T, Device>::add(Operator* next)
     }
 }
 
-
 template <typename T, typename Device>
 T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
 {
@@ -184,7 +183,7 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
     {
         this->in_place = true;
         // this->hpsi = new psi::Psi<T, Device>(std::get<0>(info)[0], 1, nbands_range);
-        this->hpsi = new psi::Psi<T, Device>(1, 
+        this->hpsi = new psi::Psi<T, Device>(1,
                                              nbands_range,
                                              std::get<0>(info)->get_nbasis(),
                                              std::get<0>(info)->get_nbasis(),
@@ -193,12 +192,12 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
     else
     {
         this->in_place = false;
-        
-        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
-                                             1, 
-                                             nbands_range, 
-                                             std::get<0>(info)->get_nbasis(), 
-                                             std::get<0>(info)->get_nbasis(), 
+
+        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer,
+                                             1,
+                                             nbands_range,
+                                             std::get<0>(info)->get_nbasis(),
+                                             std::get<0>(info)->get_nbasis(),
                                              true);
     }
 

@@ -1,9 +1,9 @@
 #include "cuda_runtime.h"
 #include "fftw3.h"
-#include "module_base/module_device/device.h"
-#include "module_base/vector3.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "source_base/module_device/device.h"
+#include "source_base/vector3.h"
 
 #include <complex>
 #include <gtest/gtest.h>
@@ -75,104 +75,102 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
         G = GT.Transpose();
         GGT = G * GT;
         tmp = new complex<T>[nx * ny * nz];
-            if (rank_in_pool == 0)
+        if (rank_in_pool == 0)
+        {
+            for (int ix = 0; ix < nx; ++ix)
             {
-                for (int ix = 0; ix < nx; ++ix)
+                const T vx = ix - int(nx / 2);
+                for (int iy = 0; iy < ny; ++iy)
                 {
-                    const T vx = ix - int(nx / 2);
-                    for (int iy = 0; iy < ny; ++iy)
+                    const int offset = (ix * ny + iy) * nz;
+                    const T vy = iy - int(ny / 2);
+                    for (int iz = 0; iz < nz; ++iz)
                     {
-                        const int offset = (ix * ny + iy) * nz;
-                        const T vy = iy - int(ny / 2);
-                        for (int iz = 0; iz < nz; ++iz)
+                        tmp[offset + iz] = 0.0;
+                        T vz = iz - int(nz / 2);
+                        ModuleBase::Vector3<double> v(vx, vy, vz);
+                        T modulus = v * (GGT * v);
+                        if (modulus <= ggecut)
                         {
-                            tmp[offset + iz] = 0.0;
-                            T vz = iz - int(nz / 2);
-                            ModuleBase::Vector3<double> v(vx, vy, vz);
-                            T modulus = v * (GGT * v);
-                            if (modulus <= ggecut)
+                            tmp[offset + iz] = 1.0 / (modulus + 1);
+                            if (vy > 0)
                             {
-                                tmp[offset + iz] = 1.0 / (modulus + 1);
-                                if (vy > 0)
-                                {
-                                    tmp[offset + iz]
-                                        += std::complex<T>(0, 1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
-                                }
-                                else if (vy < 0)
-                                {
-                                    tmp[offset + iz]
-                                        -= std::complex<T>(0, 1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
-                                }
+                                tmp[offset + iz] += std::complex<T>(0, 1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
+                            }
+                            else if (vy < 0)
+                            {
+                                tmp[offset + iz] -= std::complex<T>(0, 1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
                             }
                         }
                     }
                 }
-                if (typeid(T) == typeid(double))
-                {
-                    fftw_plan pp = fftw_plan_dft_3d(nx,
-                                                    ny,
-                                                    nz,
-                                                    (fftw_complex*)tmp,
-                                                    (fftw_complex*)tmp,
-                                                    FFTW_BACKWARD,
-                                                    FFTW_ESTIMATE);
-                    fftw_execute(pp);
-                    fftw_destroy_plan(pp);
-                }
-                else if (typeid(T) == typeid(float))
-                {
-                    fftwf_plan pp = fftwf_plan_dft_3d(nx,
-                                                      ny,
-                                                      nz,
-                                                      (fftwf_complex*)tmp,
-                                                      (fftwf_complex*)tmp,
-                                                      FFTW_BACKWARD,
-                                                      FFTW_ESTIMATE);
-                    fftwf_execute(pp);
-                    fftwf_destroy_plan(pp);
-                }
-                ModuleBase::Vector3<T> delta_g(T(int(nx / 2)) / nx, T(int(ny / 2)) / ny, T(int(nz / 2)) / nz);
-                for (int ixy = 0; ixy < nx * ny; ++ixy)
-                {
-                    const int ix = ixy / ny;
-                    const int iy = ixy % ny;
-                    for (int iz = 0; iz < nz; ++iz)
-                    {
-                        ModuleBase::Vector3<T> real_r(ix, iy, iz);
-                        T phase_im = -delta_g * real_r;
-                        complex<T> phase(0, ModuleBase::TWO_PI * phase_im);
-                        tmp[ixy * nz + iz] *= exp(phase);
-                    }
-                }
-
-                h_rhog = new complex<T>[npw];
-                h_rhogout = new complex<T>[npw];
-                for (int ig = 0; ig < npw; ++ig)
-                {
-                    h_rhog[ig] = 1.0 / (pwtest.gg[ig] + 1);
-                   
-                    if (pwtest.gdirect[ig].y > 0)
-                    {
-                        h_rhog[ig] += std::complex<float>(0, 1.0) / (std::abs(float(pwtest.gdirect[ig].x) + 1) + 1);
-                    }
-                    else if (pwtest.gdirect[ig].y < 0)
-                    {
-                        h_rhog[ig] -= std::complex<float>(0, 1.0) / (std::abs(float(-pwtest.gdirect[ig].x) + 1) + 1);
-                    }
-                }
-
-                cudaMalloc((void**)&d_rhog, npw * sizeof(complex<T>));
-                cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<T>));
-                cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<T>), cudaMemcpyHostToDevice);
-
-                h_rhor = new complex<T>[nrxx];
-
-                pwtest.recip_to_real<std::complex<T>, std::complex<T>,base_device::DEVICE_GPU>(d_rhog, d_rhor);
-                cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(complex<T>), cudaMemcpyDeviceToHost);
-
-                pwtest.real_to_recip<std::complex<T>, std::complex<T>,base_device::DEVICE_GPU>(d_rhor, d_rhog);
-                cudaMemcpy(h_rhogout, d_rhog, npw * sizeof(complex<T>), cudaMemcpyDeviceToHost);
             }
+            if (typeid(T) == typeid(double))
+            {
+                fftw_plan pp = fftw_plan_dft_3d(nx,
+                                                ny,
+                                                nz,
+                                                (fftw_complex*)tmp,
+                                                (fftw_complex*)tmp,
+                                                FFTW_BACKWARD,
+                                                FFTW_ESTIMATE);
+                fftw_execute(pp);
+                fftw_destroy_plan(pp);
+            }
+            else if (typeid(T) == typeid(float))
+            {
+                fftwf_plan pp = fftwf_plan_dft_3d(nx,
+                                                  ny,
+                                                  nz,
+                                                  (fftwf_complex*)tmp,
+                                                  (fftwf_complex*)tmp,
+                                                  FFTW_BACKWARD,
+                                                  FFTW_ESTIMATE);
+                fftwf_execute(pp);
+                fftwf_destroy_plan(pp);
+            }
+            ModuleBase::Vector3<T> delta_g(T(int(nx / 2)) / nx, T(int(ny / 2)) / ny, T(int(nz / 2)) / nz);
+            for (int ixy = 0; ixy < nx * ny; ++ixy)
+            {
+                const int ix = ixy / ny;
+                const int iy = ixy % ny;
+                for (int iz = 0; iz < nz; ++iz)
+                {
+                    ModuleBase::Vector3<T> real_r(ix, iy, iz);
+                    T phase_im = -delta_g * real_r;
+                    complex<T> phase(0, ModuleBase::TWO_PI * phase_im);
+                    tmp[ixy * nz + iz] *= exp(phase);
+                }
+            }
+
+            h_rhog = new complex<T>[npw];
+            h_rhogout = new complex<T>[npw];
+            for (int ig = 0; ig < npw; ++ig)
+            {
+                h_rhog[ig] = 1.0 / (pwtest.gg[ig] + 1);
+
+                if (pwtest.gdirect[ig].y > 0)
+                {
+                    h_rhog[ig] += std::complex<float>(0, 1.0) / (std::abs(float(pwtest.gdirect[ig].x) + 1) + 1);
+                }
+                else if (pwtest.gdirect[ig].y < 0)
+                {
+                    h_rhog[ig] -= std::complex<float>(0, 1.0) / (std::abs(float(-pwtest.gdirect[ig].x) + 1) + 1);
+                }
+            }
+
+            cudaMalloc((void**)&d_rhog, npw * sizeof(complex<T>));
+            cudaMalloc((void**)&d_rhor, nrxx * sizeof(complex<T>));
+            cudaMemcpy(d_rhog, h_rhog, npw * sizeof(complex<T>), cudaMemcpyHostToDevice);
+
+            h_rhor = new complex<T>[nrxx];
+
+            pwtest.recip_to_real<std::complex<T>, std::complex<T>, base_device::DEVICE_GPU>(d_rhog, d_rhor);
+            cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(complex<T>), cudaMemcpyDeviceToHost);
+
+            pwtest.real_to_recip<std::complex<T>, std::complex<T>, base_device::DEVICE_GPU>(d_rhor, d_rhog);
+            cudaMemcpy(h_rhogout, d_rhog, npw * sizeof(complex<T>), cudaMemcpyDeviceToHost);
+        }
     }
     ModulePW::PW_Basis* access_pw()
     {
@@ -191,8 +189,8 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
-                                    TypePair<double, base_device::DEVICE_GPU> >;
+using MixedTypes
+    = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, TypePair<double, base_device::DEVICE_GPU>>;
 
 TYPED_TEST_CASE(PW_BASIS_K_GPU_TEST, MixedTypes);
 

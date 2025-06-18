@@ -6,10 +6,10 @@
 
 #include "vdwd3.h"
 
-#include "module_base/constants.h"
-#include "module_base/element_name.h"
-#include "module_base/global_function.h"
-#include "module_base/timer.h"
+#include "source_base/constants.h"
+#include "source_base/element_name.h"
+#include "source_base/global_function.h"
+#include "source_base/timer.h"
 
 namespace vdw
 {
@@ -24,35 +24,39 @@ void Vdwd3::init()
     std::vector<double> at_kind = atom_kind();
     iz_.reserve(ucell_.nat);
     xyz_.reserve(ucell_.nat);
-    for (size_t it = 0; it != ucell_.ntype; it++) {
+    for (size_t it = 0; it != ucell_.ntype; it++)
+    {
         for (size_t ia = 0; ia != ucell_.atoms[it].na; ia++)
         {
             iz_.emplace_back(at_kind[it]);
             xyz_.emplace_back(ucell_.atoms[it].tau[ia] * ucell_.lat0);
         }
-}
+    }
 
     std::vector<double> tau_max(3);
     if (para_.model() == "radius")
     {
         rep_vdw_.resize(3);
         set_criteria(para_.rthr2(), lat_, tau_max);
-        for (size_t i = 0; i < 3; i++) {
+        for (size_t i = 0; i < 3; i++)
+        {
             rep_vdw_[i] = std::ceil(tau_max[i]);
-}
+        }
     }
-    else if (para_.model() == "period") {
+    else if (para_.model() == "period")
+    {
         rep_vdw_ = {para_.period().x, para_.period().y, para_.period().z};
-}
+    }
 
     rep_cn_.resize(3);
     set_criteria(para_.cn_thr2(), lat_, tau_max);
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++)
+    {
         rep_cn_[i] = ceil(tau_max[i]);
-}
+    }
 }
 
-void Vdwd3::set_criteria(double rthr, const std::vector<ModuleBase::Vector3<double>> &lat, std::vector<double> &tau_max)
+void Vdwd3::set_criteria(double rthr, const std::vector<ModuleBase::Vector3<double>>& lat, std::vector<double>& tau_max)
 {
     tau_max.resize(3);
     double r_cutoff = std::sqrt(rthr);
@@ -70,15 +74,17 @@ void Vdwd3::set_criteria(double rthr, const std::vector<ModuleBase::Vector3<doub
 std::vector<double> Vdwd3::atom_kind()
 {
     std::vector<double> atom_kind(ucell_.ntype);
-    for (size_t i = 0; i != ucell_.ntype; i++) {
-        for (int j = 0; j != ModuleBase::element_name.size(); j++) {
+    for (size_t i = 0; i != ucell_.ntype; i++)
+    {
+        for (int j = 0; j != ModuleBase::element_name.size(); j++)
+        {
             if (ucell_.atoms[i].ncpp.psd == ModuleBase::element_name[j])
             {
                 atom_kind[i] = j;
                 break;
             }
-}
-}
+        }
+    }
     return atom_kind;
 }
 
@@ -97,7 +103,8 @@ void Vdwd3::cal_energy()
     if (para_.version() == "d3_0") // DFT-D3(zero-damping)
     {
         double tmp;
-        for (int iat = 0; iat != ucell_.nat - 1; iat++) {
+        for (int iat = 0; iat != ucell_.nat - 1; iat++)
+        {
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
             {
                 get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
@@ -106,16 +113,19 @@ void Vdwd3::cal_energy()
                     ij = lin(iat, jat);
                     cc6ab[ij] = std::sqrt(c6);
                 }
-                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+                {
+                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                    {
                         for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                         {
                             tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                                   + static_cast<double>(tauz) * lat_[2];
                             r2 = (xyz_[iat] - xyz_[jat] + tau).norm2(); // |r+T|^2
-                            if (r2 > para_.rthr2()) { // neglect the distance larger than rthr2
+                            if (r2 > para_.rthr2())
+                            { // neglect the distance larger than rthr2
                                 continue;
-}
+                            }
                             rr = para_.r0ab()[iz_[iat]][iz_[jat]] / std::sqrt(r2);
                             // zero-damping function
                             tmp = para_.rs6() * rr;
@@ -130,10 +140,10 @@ void Vdwd3::cal_energy()
                             r8 = r6 * r2;
                             e8 += c8 * damp8 / r8;
                         } // end tau
-}
-}
+                    }
+                }
             } // end jat
-}
+        }
 
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
@@ -144,19 +154,23 @@ void Vdwd3::cal_energy()
                 ij = lin(iat, jat);
                 cc6ab[ij] = std::sqrt(c6);
             }
-            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+            {
+                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                {
                     for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                     {
-                        if (taux == 0 && tauy == 0 && tauz == 0) {
+                        if (taux == 0 && tauy == 0 && tauz == 0)
+                        {
                             continue;
-}
+                        }
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                               + static_cast<double>(tauz) * lat_[2];
                         r2 = tau.norm2();
-                        if (r2 > para_.rthr2()) {
+                        if (r2 > para_.rthr2())
+                        {
                             continue;
-}
+                        }
                         rr = para_.r0ab()[iz_[iat]][iz_[jat]] / std::sqrt(r2);
 
                         // zero-damping function
@@ -172,10 +186,10 @@ void Vdwd3::cal_energy()
                         r8 = r6 * r2;
                         e8 += c8 * damp8 / r8 * 0.5;
                     } // end tau
-}
-}
-        } // end iat
-    } // end d3_0
+                }
+            }
+        }                                // end iat
+    }                                    // end d3_0
     else if (para_.version() == "d3_bj") // DFT-D3(BJ-damping)
     {
         double r42;
@@ -189,16 +203,19 @@ void Vdwd3::cal_energy()
                     ij = lin(iat, jat);
                     cc6ab[ij] = std::sqrt(c6);
                 }
-                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+                {
+                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                    {
                         for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                         {
                             tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                                   + static_cast<double>(tauz) * lat_[2];
                             r2 = (xyz_[iat] - xyz_[jat] + tau).norm2();
-                            if (r2 > para_.rthr2()) {
+                            if (r2 > para_.rthr2())
+                            {
                                 continue;
-}
+                            }
                             rr = para_.r0ab()[iz_[iat]][iz_[jat]] / std::sqrt(r2);
 
                             // BJ-damping function
@@ -213,8 +230,8 @@ void Vdwd3::cal_energy()
                             r8 = r6 * r2;
                             e8 += c8 / (r8 + damp8);
                         } // end tau
-}
-}
+                    }
+                }
             } // end jat
             int jat = iat;
             get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
@@ -226,19 +243,23 @@ void Vdwd3::cal_energy()
                 ij = lin(iat, jat);
                 cc6ab[ij] = std::sqrt(c6);
             }
-            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+            {
+                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                {
                     for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                     {
-                        if (taux == 0 && tauy == 0 && tauz == 0) {
+                        if (taux == 0 && tauy == 0 && tauz == 0)
+                        {
                             continue;
-}
+                        }
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                               + static_cast<double>(tauz) * lat_[2];
                         r2 = tau.norm2();
-                        if (r2 > para_.rthr2()) {
+                        if (r2 > para_.rthr2())
+                        {
                             continue;
-}
+                        }
                         rr = para_.r0ab()[iz_[iat]][iz_[jat]] / std::sqrt(r2);
 
                         r6 = std::pow(r2, 3);
@@ -248,10 +269,10 @@ void Vdwd3::cal_energy()
                         r8 = r6 * r2;
                         e8 += c8 / (r8 + damp8) * 0.5;
                     } // end tau
-}
-}
+                }
+            }
         } // end iat
-    } // end d3_bj
+    }     // end d3_bj
 
     if (para_.abc())
     {
@@ -277,9 +298,10 @@ void Vdwd3::cal_force()
 
     pbc_gdisp(g, smearing_sigma);
 
-    for (size_t iat = 0; iat != ucell_.nat; iat++) {
+    for (size_t iat = 0; iat != ucell_.nat; iat++)
+    {
         force_[iat] = -2.0 * g[iat];
-}
+    }
 
     ModuleBase::timer::tick("Vdwd3", "cal_force");
 }
@@ -297,18 +319,25 @@ void Vdwd3::cal_stress()
 
     pbc_gdisp(g, smearing_sigma);
 
-    stress_ = ModuleBase::Matrix3(2.0 * smearing_sigma(0, 0), 2.0 * smearing_sigma(0, 1), 2.0 * smearing_sigma(0, 2),
-                                  2.0 * smearing_sigma(1, 0), 2.0 * smearing_sigma(1, 1), 2.0 * smearing_sigma(1, 2),
-                                  2.0 * smearing_sigma(2, 0), 2.0 * smearing_sigma(2, 1), 2.0 * smearing_sigma(2, 2))
+    stress_ = ModuleBase::Matrix3(2.0 * smearing_sigma(0, 0),
+                                  2.0 * smearing_sigma(0, 1),
+                                  2.0 * smearing_sigma(0, 2),
+                                  2.0 * smearing_sigma(1, 0),
+                                  2.0 * smearing_sigma(1, 1),
+                                  2.0 * smearing_sigma(1, 2),
+                                  2.0 * smearing_sigma(2, 0),
+                                  2.0 * smearing_sigma(2, 1),
+                                  2.0 * smearing_sigma(2, 2))
               / ucell_.omega;
     ModuleBase::timer::tick("Vdwd3", "cal_stress");
 }
 
-void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)
+void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double& c6)
 {
     double c6mem = -1e99, rsum = 0.0, csum = 0.0, r_save = 1e99;
     double cn1, cn2, r;
-    for (size_t i = 0; i != para_.mxc()[iat]; i++) {
+    for (size_t i = 0; i != para_.mxc()[iat]; i++)
+    {
         for (size_t j = 0; j != para_.mxc()[jat]; j++)
         {
             c6 = para_.c6ab()[0][j][i][jat][iat];
@@ -327,54 +356,60 @@ void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)
                 csum += tmp1 * c6;
             }
         }
-}
+    }
     c6 = (rsum > 1e-99) ? csum / rsum : c6mem;
 }
 
-void Vdwd3::pbc_ncoord(std::vector<double> &cn)
+void Vdwd3::pbc_ncoord(std::vector<double>& cn)
 {
     for (size_t i = 0; i != ucell_.nat; i++)
     {
         double xn = 0.0;
         ModuleBase::Vector3<double> tau;
         double r2, rr;
-        for (size_t iat = 0; iat != ucell_.nat; iat++) {
-            for (int taux = -rep_cn_[0]; taux <= rep_cn_[0]; taux++) {
-                for (int tauy = -rep_cn_[1]; tauy <= rep_cn_[1]; tauy++) {
+        for (size_t iat = 0; iat != ucell_.nat; iat++)
+        {
+            for (int taux = -rep_cn_[0]; taux <= rep_cn_[0]; taux++)
+            {
+                for (int tauy = -rep_cn_[1]; tauy <= rep_cn_[1]; tauy++)
+                {
                     for (int tauz = -rep_cn_[2]; tauz <= rep_cn_[2]; tauz++)
                     {
-                        if (iat == i && taux == 0 && tauy == 0 && tauz == 0) {
+                        if (iat == i && taux == 0 && tauy == 0 && tauz == 0)
+                        {
                             continue;
-}
+                        }
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                               + static_cast<double>(tauz) * lat_[2];
                         r2 = (xyz_[iat] - xyz_[i] + tau).norm2();
-                        if (r2 > para_.cn_thr2()) {
+                        if (r2 > para_.cn_thr2())
+                        {
                             continue;
-}
+                        }
                         rr = (para_.rcov()[iz_[i]] + para_.rcov()[iz_[iat]]) / std::sqrt(r2);
                         xn += 1.0 / (1.0 + exp(-para_.k1() * (rr - 1.0)));
                     }
-}
-}
-}
+                }
+            }
+        }
         cn[i] = xn;
     }
 }
 
-void Vdwd3::pbc_three_body(const std::vector<int> &iz,
-                           const std::vector<ModuleBase::Vector3<double>> &lat,
-                           const std::vector<ModuleBase::Vector3<double>> &xyz,
-                           const std::vector<int> &rep_cn,
-                           const std::vector<double> &cc6ab,
-                           double &eabc)
+void Vdwd3::pbc_three_body(const std::vector<int>& iz,
+                           const std::vector<ModuleBase::Vector3<double>>& lat,
+                           const std::vector<ModuleBase::Vector3<double>>& xyz,
+                           const std::vector<int>& rep_cn,
+                           const std::vector<double>& cc6ab,
+                           double& eabc)
 {
     double sr9 = 0.75, alp9 = -16.0;
     int ij, ik, jk;
     double r0ij, r0ik, r0jk, c9, rij2, rik2, rjk2, rr0ij, rr0ik, rr0jk, geomean, fdamp, tmp1, tmp2, tmp3, tmp4, ang;
     ModuleBase::Vector3<double> ijvec, ikvec, jkvec, jtau, ktau;
     std::vector<double> repmin(3), repmax(3);
-    for (int iat = 2; iat != ucell_.nat; iat++) {
+    for (int iat = 2; iat != ucell_.nat; iat++)
+    {
         for (int jat = 1; jat != iat; jat++)
         {
             ijvec = xyz_[jat] - xyz_[iat];
@@ -406,28 +441,33 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
                             jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                    + static_cast<double>(jtauz) * lat_[2];
                             rij2 = (ijvec + jtau).norm2();
-                            if (rij2 > para_.cn_thr2()) {
+                            if (rij2 > para_.cn_thr2())
+                            {
                                 continue;
-}
+                            }
                             rr0ij = std::sqrt(rij2) / r0ij;
 
-                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                            {
+                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                                {
                                     for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                     {
                                         ktau = static_cast<double>(ktaux) * lat_[0]
                                                + static_cast<double>(ktauy) * lat_[1]
                                                + static_cast<double>(ktauz) * lat_[2];
                                         rik2 = (ikvec + ktau).norm2();
-                                        if (rik2 > para_.cn_thr2()) {
+                                        if (rik2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
                                         rr0ik = std::sqrt(rik2) / r0ik;
 
                                         rjk2 = (jkvec + ktau - jtau).norm2();
-                                        if (rjk2 > para_.cn_thr2()) {
+                                        if (rjk2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
                                         rr0jk = std::sqrt(rjk2) / r0jk;
 
                                         geomean = std::pow(rr0ij * rr0ik * rr0jk, 1.0 / 3.0);
@@ -441,14 +481,14 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 
                                         eabc += ang * c9 * fdamp;
                                     } // end ktau
-}
-}
+                                }
+                            }
                         } // end jtauz
-                    } // end jtauy
-                } // end jtaux
-            } // end kat
-        } // end jat
-}
+                    }     // end jtauy
+                }         // end jtaux
+            }             // end kat
+        }                 // end jat
+    }
     // end iat
 
     for (int iat = 1; iat != ucell_.nat; iat++)
@@ -479,33 +519,39 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
                     {
                         repmin[2] = std::max(-rep_cn_[2], jtauz - rep_cn_[2]);
                         repmax[2] = std::min(rep_cn_[2], jtauz + rep_cn_[2]);
-                        if (jtaux == 0 && jtauy == 0 && jtauz == 0) {
+                        if (jtaux == 0 && jtauy == 0 && jtauz == 0)
+                        {
                             continue;
-}
+                        }
                         jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                + static_cast<double>(jtauz) * lat_[2];
                         rij2 = (ijvec + jtau).norm2();
-                        if (rij2 > para_.cn_thr2()) {
+                        if (rij2 > para_.cn_thr2())
+                        {
                             continue;
-}
+                        }
                         rr0ij = std::sqrt(rij2) / r0ij;
 
-                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                        {
+                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                            {
                                 for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                 {
                                     ktau = static_cast<double>(ktaux) * lat_[0] + static_cast<double>(ktauy) * lat_[1]
                                            + static_cast<double>(ktauz) * lat_[2];
                                     rik2 = (ikvec + ktau).norm2();
-                                    if (rik2 > para_.cn_thr2()) {
+                                    if (rik2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0ik = std::sqrt(rik2) / r0ik;
 
                                     rjk2 = (jkvec + ktau - jtau).norm2();
-                                    if (rjk2 > para_.cn_thr2()) {
+                                    if (rjk2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0jk = std::sqrt(rjk2) / r0jk;
 
                                     geomean = std::pow(rr0ij * rr0ik * rr0jk, 1.0 / 3.0);
@@ -519,15 +565,16 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 
                                     eabc += ang * c9 * fdamp / 2.0;
                                 } // end ktau
-}
-}
+                            }
+                        }
                     } // end jtauz
-                } // end jtauy
-            } // end jtaux
-        } // end kat
-    } // end iat
+                }     // end jtauy
+            }         // end jtaux
+        }             // end kat
+    }                 // end iat
 
-    for (int iat = 1; iat != ucell_.nat; iat++) {
+    for (int iat = 1; iat != ucell_.nat; iat++)
+    {
         for (int jat = 0; jat != iat; jat++)
         {
             int kat = jat;
@@ -558,30 +605,36 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
                         jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                + static_cast<double>(jtauz) * lat_[2];
                         rij2 = (ijvec + jtau).norm2();
-                        if (rij2 > para_.cn_thr2()) {
+                        if (rij2 > para_.cn_thr2())
+                        {
                             continue;
-}
+                        }
                         rr0ij = std::sqrt(rij2) / r0ij;
 
-                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                        {
+                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                            {
                                 for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                 {
-                                    if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz) {
+                                    if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz)
+                                    {
                                         continue;
-}
+                                    }
                                     ktau = static_cast<double>(ktaux) * lat_[0] + static_cast<double>(ktauy) * lat_[1]
                                            + static_cast<double>(ktauz) * lat_[2];
                                     rik2 = (ikvec + ktau).norm2();
-                                    if (rik2 > para_.cn_thr2()) {
+                                    if (rik2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0ik = std::sqrt(rik2) / r0ik;
 
                                     rjk2 = (jkvec + ktau - jtau).norm2();
-                                    if (rjk2 > para_.cn_thr2()) {
+                                    if (rjk2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0jk = std::sqrt(rjk2) / r0jk;
 
                                     geomean = std::pow(rr0ij * rr0ik * rr0jk, 1.0 / 3.0);
@@ -595,13 +648,13 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 
                                     eabc += ang * c9 * fdamp / 2.0;
                                 } // end ktau
-}
-}
+                            }
+                        }
                     } // end jtauz
-                } // end jtauy
-            } // end jtaux
-        } // end jat
-}
+                }     // end jtauy
+            }         // end jtaux
+        }             // end jat
+    }
     // end iat
 
     for (int iat = 0; iat != ucell_.nat; iat++)
@@ -634,37 +687,45 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
                     repmax[2] = std::min(rep_cn_[2], jtauz + rep_cn_[2]);
                     jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                            + static_cast<double>(jtauz) * lat_[2];
-                    if (jtaux == 0 && jtauy == 0 && jtauz == 0) {
+                    if (jtaux == 0 && jtauy == 0 && jtauz == 0)
+                    {
                         continue;
-}
+                    }
                     rij2 = jtau.norm2();
-                    if (rij2 > para_.cn_thr2()) {
+                    if (rij2 > para_.cn_thr2())
+                    {
                         continue;
-}
+                    }
                     rr0ij = std::sqrt(rij2) / r0ij;
 
-                    for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                        for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                    for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                    {
+                        for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                        {
                             for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                             {
-                                if (ktaux == 0 && ktauy == 0 && ktauz == 0) {
+                                if (ktaux == 0 && ktauy == 0 && ktauz == 0)
+                                {
                                     continue;
-}
-                                if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz) {
+                                }
+                                if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz)
+                                {
                                     continue;
-}
+                                }
                                 ktau = static_cast<double>(ktaux) * lat_[0] + static_cast<double>(ktauy) * lat_[1]
                                        + static_cast<double>(ktauz) * lat_[2];
                                 rik2 = ktau.norm2();
-                                if (rik2 > para_.cn_thr2()) {
+                                if (rik2 > para_.cn_thr2())
+                                {
                                     continue;
-}
+                                }
                                 rr0ik = std::sqrt(rik2) / r0ik;
 
                                 rjk2 = (jkvec + ktau - jtau).norm2();
-                                if (rjk2 > para_.cn_thr2()) {
+                                if (rjk2 > para_.cn_thr2())
+                                {
                                     continue;
-}
+                                }
                                 rr0jk = std::sqrt(rjk2) / r0jk;
 
                                 geomean = std::pow(rr0ij * rr0ik * rr0jk, 1.0 / 3.0);
@@ -678,21 +739,31 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 
                                 eabc += ang * c9 * fdamp / 6.0;
                             } // end ktau
-}
-}
+                        }
+                    }
                 } // end jtauz
-            } // end jtauy
-        } // end jtaux
-    } // end iat
+            }     // end jtauy
+        }         // end jtaux
+    }             // end iat
 }
 
-void Vdwd3::get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, int izj,
-                          int iat, int jat, double &c6check, double &dc6i, double &dc6j)
+void Vdwd3::get_dc6_dcnij(int mxci,
+                          int mxcj,
+                          double cni,
+                          double cnj,
+                          int izi,
+                          int izj,
+                          int iat,
+                          int jat,
+                          double& c6check,
+                          double& dc6i,
+                          double& dc6j)
 {
     double r_save = 9999.0, c6mem = -1e99, zaehler = 0.0, nenner = 0.0;
     double dzaehler_i = 0.0, dnenner_i = 0.0, dzaehler_j = 0.0, dnenner_j = 0.0;
     double c6ref = 0.0, cn_refi = 0.0, cn_refj = 0.0, r = 0.0, expterm = 0.0, term = 0.0;
-    for (size_t a = 0; a != mxci; a++) {
+    for (size_t a = 0; a != mxci; a++)
+    {
         for (size_t b = 0; b != mxcj; b++)
         {
             c6ref = para_.c6ab()[0][b][a][izj][izi];
@@ -719,7 +790,7 @@ void Vdwd3::get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, i
                 dnenner_j += term;
             }
         }
-}
+    }
 
     if (nenner > 1e-99)
     {
@@ -735,7 +806,7 @@ void Vdwd3::get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, i
     }
 }
 
-void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &smearing_sigma)
+void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>>& g, ModuleBase::matrix& smearing_sigma)
 {
     std::vector<double> c6save(ucell_.nat * (ucell_.nat + 1)), dc6_rest_sum(ucell_.nat * (ucell_.nat + 1) / 2),
         dc6i(ucell_.nat), cn(ucell_.nat);
@@ -756,8 +827,17 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
         double damp6 = 0.0, damp8 = 0.0;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
-            get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],
-                          iz_[iat], iz_[iat], iat, iat, c6, dc6iji, dc6ijj);
+            get_dc6_dcnij(para_.mxc()[iz_[iat]],
+                          para_.mxc()[iz_[iat]],
+                          cn[iat],
+                          cn[iat],
+                          iz_[iat],
+                          iz_[iat],
+                          iat,
+                          iat,
+                          c6,
+                          dc6iji,
+                          dc6ijj);
 
             linii = lin(iat, iat);
             c6save[linii] = c6;
@@ -766,8 +846,10 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
             r42 = para_.r2r4()[iz_[iat]] * para_.r2r4()[iz_[iat]];
             rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[iat]];
 
-            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+            {
+                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                {
                     for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                     {
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
@@ -804,12 +886,21 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             dc6_rest_sum[linii] += dc6_rest;
                         }
                     } // end tau
-}
-}
+                }
+            }
             for (int jat = 0; jat != iat; jat++)
             {
-                get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[jat]], cn[iat], cn[jat],
-                              iz_[iat], iz_[jat], iat, jat, c6, dc6iji, dc6ijj);
+                get_dc6_dcnij(para_.mxc()[iz_[iat]],
+                              para_.mxc()[iz_[jat]],
+                              cn[iat],
+                              cn[jat],
+                              iz_[iat],
+                              iz_[jat],
+                              iat,
+                              jat,
+                              c6,
+                              dc6iji,
+                              dc6ijj);
 
                 linij = lin(iat, jat);
                 c6save[linij] = c6;
@@ -818,16 +909,19 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                 rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[jat]];
                 dc6ij[jat][iat] = dc6iji;
                 dc6ij[iat][jat] = dc6ijj;
-                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+                {
+                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                    {
                         for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                         {
                             tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                                   + static_cast<double>(tauz) * lat_[2];
                             r2 = (xyz_[jat] - xyz_[iat] + tau).norm2();
-                            if (r2 > para_.rthr2()) {
+                            if (r2 > para_.rthr2())
+                            {
                                 continue;
-}
+                            }
 
                             r = std::sqrt(r2);
                             r6 = std::pow(r2, 3);
@@ -853,18 +947,27 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             dc6i[jat] += dc6_rest * dc6ijj;
                             dc6_rest_sum[linij] += dc6_rest;
                         } // end tau
-}
-}
+                    }
+                }
             } // end jat
-        } // end iat
-    } // end d3_0
+        }     // end iat
+    }         // end d3_0
     else if (para_.version() == "d3_bj")
     {
         double r4;
         for (int iat = 0; iat != ucell_.nat; iat++)
         {
-            get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],
-                          iz_[iat], iz_[iat], iat, iat, c6, dc6iji, dc6ijj);
+            get_dc6_dcnij(para_.mxc()[iz_[iat]],
+                          para_.mxc()[iz_[iat]],
+                          cn[iat],
+                          cn[iat],
+                          iz_[iat],
+                          iz_[iat],
+                          iat,
+                          iat,
+                          c6,
+                          dc6iji,
+                          dc6ijj);
 
             linii = lin(iat, iat);
             c6save[linii] = c6;
@@ -873,8 +976,10 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
             r0 = para_.rs6() * std::sqrt(3.0 * r42) + para_.rs18();
             rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[iat]];
 
-            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+            {
+                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                {
                     for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                     {
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
@@ -904,12 +1009,21 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             dc6_rest_sum[linii] += dc6_rest;
                         }
                     } // end tau
-}
-}
+                }
+            }
             for (int jat = 0; jat != iat; jat++)
             {
-                get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[jat]], cn[iat], cn[jat],
-                              iz_[iat], iz_[jat], iat, jat, c6, dc6iji, dc6ijj);
+                get_dc6_dcnij(para_.mxc()[iz_[iat]],
+                              para_.mxc()[iz_[jat]],
+                              cn[iat],
+                              cn[jat],
+                              iz_[iat],
+                              iz_[jat],
+                              iat,
+                              jat,
+                              c6,
+                              dc6iji,
+                              dc6ijj);
 
                 linij = lin(iat, jat);
                 c6save[linij] = c6;
@@ -918,16 +1032,19 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                 rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[jat]];
                 dc6ij[jat][iat] = dc6iji;
                 dc6ij[iat][jat] = dc6ijj;
-                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+                for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+                {
+                    for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                    {
                         for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                         {
                             tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                                   + static_cast<double>(tauz) * lat_[2];
                             r2 = (xyz_[jat] - xyz_[iat] + tau).norm2();
-                            if (r2 > para_.rthr2()) {
+                            if (r2 > para_.rthr2())
+                            {
                                 continue;
-}
+                            }
 
                             r = std::sqrt(r2);
                             r4 = r2 * r2;
@@ -948,11 +1065,11 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             dc6i[jat] += dc6_rest * dc6ijj;
                             dc6_rest_sum[linij] += dc6_rest;
                         } // end tau
-}
-}
+                    }
+                }
             } // end jat
-        } // end iat
-    } // end d3_bj
+        }     // end iat
+    }         // end d3_bj
 
     if (para_.abc())
     {
@@ -995,27 +1112,32 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                 jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                        + static_cast<double>(jtauz) * lat_[2];
                                 rij2 = (ijvec + jtau).norm2();
-                                if (rij2 > para_.cn_thr2()) {
+                                if (rij2 > para_.cn_thr2())
+                                {
                                     continue;
-}
+                                }
                                 rr0ij = std::sqrt(rij2) / para_.r0ab()[iz_[jat]][iz_[iat]];
 
-                                for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                                    for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                                for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                                {
+                                    for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                                    {
                                         for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                         {
                                             ktau = static_cast<double>(ktaux) * lat_[0]
                                                    + static_cast<double>(ktauy) * lat_[1]
                                                    + static_cast<double>(ktauz) * lat_[2];
                                             rik2 = (ikvec + ktau).norm2();
-                                            if (rik2 > para_.cn_thr2()) {
+                                            if (rik2 > para_.cn_thr2())
+                                            {
                                                 continue;
-}
+                                            }
 
                                             rjk2 = (jkvec + ktau - jtau).norm2();
-                                            if (rjk2 > para_.cn_thr2()) {
+                                            if (rjk2 > para_.cn_thr2())
+                                            {
                                                 continue;
-}
+                                            }
                                             rr0ik = std::sqrt(rik2) / para_.r0ab()[iz_[kat]][iz_[iat]];
                                             rr0jk = std::sqrt(rjk2) / para_.r0ab()[iz_[kat]][iz_[jat]];
 
@@ -1033,8 +1155,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                             r = std::sqrt(rij2);
                                             dang = -0.375
                                                    * (std::pow(rij2, 3) + std::pow(rij2, 2) * (rjk2 + rik2)
-                                                      + rij2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
-                                                                + 3.0 * std::pow(rik2, 2))
+                                                      + rij2
+                                                            * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
+                                                               + 3.0 * std::pow(rik2, 2))
                                                       - 5.0 * std::pow(rjk2 - rik2, 2) * (rjk2 + rik2))
                                                    / (r * geomean3 * geomean2);
                                             tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1044,8 +1167,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                             r = std::sqrt(rik2);
                                             dang = -0.375
                                                    * (std::pow(rik2, 3) + std::pow(rik2, 2) * (rjk2 + rij2)
-                                                      + rik2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
-                                                                + 3.0 * std::pow(rij2, 2))
+                                                      + rik2
+                                                            * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
+                                                               + 3.0 * std::pow(rij2, 2))
                                                       - 5.0 * std::pow(rjk2 - rij2, 2) * (rjk2 + rij2))
                                                    / (r * geomean3 * geomean2);
                                             tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1055,8 +1179,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                             r = std::sqrt(rjk2);
                                             dang = -0.375
                                                    * (std::pow(rjk2, 3) + std::pow(rjk2, 2) * (rik2 + rij2)
-                                                      + rjk2 * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
-                                                                + 3.0 * std::pow(rij2, 2))
+                                                      + rjk2
+                                                            * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
+                                                               + 3.0 * std::pow(rij2, 2))
                                                       - 5.0 * std::pow(rik2 - rij2, 2) * (rik2 + rij2))
                                                    / (r * geomean3 * geomean2);
                                             tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1073,13 +1198,13 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                             dc9 = (dc6ij[iat][kat] / c6ik + dc6ij[jat][kat] / c6jk) * c9 * 0.5;
                                             dc6i[kat] += dc6_rest * dc9;
                                         } // end ktau
-}
-}
+                                    }
+                                }
                             } // end jtauz
-                        } // end jtauy
-                    } // end jtaux
-                } // end kat
-            } // end jat
+                        }     // end jtauy
+                    }         // end jtaux
+                }             // end kat
+            }                 // end jat
         }
         for (int iat = 1; iat != ucell_.nat; iat++)
         {
@@ -1111,33 +1236,39 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                         {
                             repmin[2] = std::max(-rep_cn_[2], jtauz - rep_cn_[2]);
                             repmax[2] = std::min(rep_cn_[2], jtauz + rep_cn_[2]);
-                            if (jtaux == 0 && jtauy == 0 && jtauz == 0) {
+                            if (jtaux == 0 && jtauy == 0 && jtauz == 0)
+                            {
                                 continue;
-}
+                            }
                             jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                    + static_cast<double>(jtauz) * lat_[2];
                             rij2 = jtau.norm2();
-                            if (rij2 > para_.cn_thr2()) {
+                            if (rij2 > para_.cn_thr2())
+                            {
                                 continue;
-}
+                            }
                             rr0ij = std::sqrt(rij2) / para_.r0ab()[iz_[jat]][iz_[iat]];
 
-                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                            {
+                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                                {
                                     for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                     {
                                         ktau = static_cast<double>(ktaux) * lat_[0]
                                                + static_cast<double>(ktauy) * lat_[1]
                                                + static_cast<double>(ktauz) * lat_[2];
                                         rik2 = (ikvec + ktau).norm2();
-                                        if (rik2 > para_.cn_thr2()) {
+                                        if (rik2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
 
                                         rjk2 = (jkvec + ktau - jtau).norm2();
-                                        if (rjk2 > para_.cn_thr2()) {
+                                        if (rjk2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
                                         rr0ik = std::sqrt(rik2) / para_.r0ab()[iz_[kat]][iz_[iat]];
                                         rr0jk = std::sqrt(rjk2) / para_.r0ab()[iz_[kat]][iz_[jat]];
 
@@ -1155,8 +1286,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rij2);
                                         dang = -0.375
                                                * (std::pow(rij2, 3) + std::pow(rij2, 2) * (rjk2 + rik2)
-                                                  + rij2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
-                                                            + 3.0 * std::pow(rik2, 2))
+                                                  + rij2
+                                                        * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
+                                                           + 3.0 * std::pow(rik2, 2))
                                                   - 5.0 * std::pow(rjk2 - rik2, 2) * (rjk2 + rik2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1166,8 +1298,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rik2);
                                         dang = -0.375
                                                * (std::pow(rik2, 3) + std::pow(rik2, 2) * (rjk2 + rij2)
-                                                  + rik2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
-                                                            + 3.0 * std::pow(rij2, 2))
+                                                  + rik2
+                                                        * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
+                                                           + 3.0 * std::pow(rij2, 2))
                                                   - 5.0 * std::pow(rjk2 - rij2, 2) * (rjk2 + rij2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1177,8 +1310,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rjk2);
                                         dang = -0.375
                                                * (std::pow(rjk2, 3) + std::pow(rjk2, 2) * (rik2 + rij2)
-                                                  + rjk2 * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
-                                                            + 3.0 * std::pow(rij2, 2))
+                                                  + rjk2
+                                                        * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
+                                                           + 3.0 * std::pow(rij2, 2))
                                                   - 5.0 * std::pow(rik2 - rij2, 2) * (rik2 + rij2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1195,15 +1329,16 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         dc9 = (dc6ij[iat][kat] / c6ik + dc6ij[jat][kat] / c6jk) * c9 * 0.5;
                                         dc6i[kat] += dc6_rest * dc9;
                                     } // end ktau
-}
-}
+                                }
+                            }
                         } // end jtauz
-                    } // end jtauy
-                } // end jtaux
-            } // end kat
-        } // end iat
+                    }     // end jtauy
+                }         // end jtaux
+            }             // end kat
+        }                 // end iat
 
-        for (int iat = 1; iat != ucell_.nat; iat++) {
+        for (int iat = 1; iat != ucell_.nat; iat++)
+        {
             for (int jat = 0; jat != iat; jat++)
             {
                 int kat = jat;
@@ -1234,31 +1369,37 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                    + static_cast<double>(jtauz) * lat_[2];
                             rij2 = (ijvec + jtau).norm2();
-                            if (rij2 > para_.cn_thr2()) {
+                            if (rij2 > para_.cn_thr2())
+                            {
                                 continue;
-}
+                            }
                             rr0ij = std::sqrt(rij2) / para_.r0ab()[iz_[jat]][iz_[iat]];
 
-                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                            for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                            {
+                                for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                                {
                                     for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                     {
-                                        if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz) {
+                                        if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz)
+                                        {
                                             continue;
-}
+                                        }
                                         ktau = static_cast<double>(ktaux) * lat_[0]
                                                + static_cast<double>(ktauy) * lat_[1]
                                                + static_cast<double>(ktauz) * lat_[2];
                                         rik2 = (ikvec + ktau).norm2();
-                                        if (rik2 > para_.cn_thr2()) {
+                                        if (rik2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
                                         rr0ik = std::sqrt(rik2) / para_.r0ab()[iz_[kat]][iz_[iat]];
 
                                         rjk2 = (jkvec + ktau - jtau).norm2();
-                                        if (rjk2 > para_.cn_thr2()) {
+                                        if (rjk2 > para_.cn_thr2())
+                                        {
                                             continue;
-}
+                                        }
                                         rr0jk = std::sqrt(rjk2) / para_.r0ab()[iz_[kat]][iz_[jat]];
 
                                         geomean2 = rij2 * rjk2 * rik2;
@@ -1275,8 +1416,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rij2);
                                         dang = -0.375
                                                * (std::pow(rij2, 3) + std::pow(rij2, 2) * (rjk2 + rik2)
-                                                  + rij2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
-                                                            + 3.0 * std::pow(rik2, 2))
+                                                  + rij2
+                                                        * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
+                                                           + 3.0 * std::pow(rik2, 2))
                                                   - 5.0 * std::pow(rjk2 - rik2, 2) * (rjk2 + rik2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1286,8 +1428,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rik2);
                                         dang = -0.375
                                                * (std::pow(rik2, 3) + std::pow(rik2, 2) * (rjk2 + rij2)
-                                                  + rik2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
-                                                            + 3.0 * std::pow(rij2, 2))
+                                                  + rik2
+                                                        * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
+                                                           + 3.0 * std::pow(rij2, 2))
                                                   - 5.0 * std::pow(rjk2 - rij2, 2) * (rjk2 + rij2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1297,8 +1440,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         r = std::sqrt(rjk2);
                                         dang = -0.375
                                                * (std::pow(rjk2, 3) + std::pow(rjk2, 2) * (rik2 + rij2)
-                                                  + rjk2 * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
-                                                            + 3.0 * std::pow(rij2, 2))
+                                                  + rjk2
+                                                        * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
+                                                           + 3.0 * std::pow(rij2, 2))
                                                   - 5.0 * std::pow(rik2 - rij2, 2) * (rik2 + rij2))
                                                / (r * geomean3 * geomean2);
                                         tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1315,13 +1459,13 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         dc9 = (dc6ij[iat][kat] / c6ik + dc6ij[jat][kat] / c6jk) * c9 * 0.5;
                                         dc6i[kat] += dc6_rest * dc9;
                                     } // end ktau
-}
-}
+                                }
+                            }
                         } // end jtauz
-                    } // end jtauy
-                } // end jtaux
-            } // end jat
-}
+                    }     // end jtauy
+                }         // end jtaux
+            }             // end jat
+        }
         // end iat
 
         for (int iat = 0; iat != ucell_.nat; iat++)
@@ -1351,39 +1495,47 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                     {
                         repmin[2] = std::max(-rep_cn_[2], jtauz - rep_cn_[2]);
                         repmax[2] = std::min(rep_cn_[2], jtauz + rep_cn_[2]);
-                        if (jtaux == 0 && jtauy == 0 && jtauz == 0) {
+                        if (jtaux == 0 && jtauy == 0 && jtauz == 0)
+                        {
                             continue;
-}
+                        }
                         jtau = static_cast<double>(jtaux) * lat_[0] + static_cast<double>(jtauy) * lat_[1]
                                + static_cast<double>(jtauz) * lat_[2];
                         rij2 = jtau.norm2();
-                        if (rij2 > para_.cn_thr2()) {
+                        if (rij2 > para_.cn_thr2())
+                        {
                             continue;
-}
+                        }
                         rr0ij = std::sqrt(rij2) / para_.r0ab()[iz_[jat]][iz_[iat]];
 
-                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++) {
-                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++) {
+                        for (int ktaux = repmin[0]; ktaux <= repmax[0]; ktaux++)
+                        {
+                            for (int ktauy = repmin[1]; ktauy <= repmax[1]; ktauy++)
+                            {
                                 for (int ktauz = repmin[2]; ktauz <= repmax[2]; ktauz++)
                                 {
-                                    if (ktaux == 0 && ktauy == 0 && ktauz == 0) {
+                                    if (ktaux == 0 && ktauy == 0 && ktauz == 0)
+                                    {
                                         continue;
-}
-                                    if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz) {
+                                    }
+                                    if (jtaux == ktaux && jtauy == ktauy && jtauz == ktauz)
+                                    {
                                         continue;
-}
+                                    }
                                     ktau = static_cast<double>(ktaux) * lat_[0] + static_cast<double>(ktauy) * lat_[1]
                                            + static_cast<double>(ktauz) * lat_[2];
                                     rik2 = ktau.norm2();
-                                    if (rik2 > para_.cn_thr2()) {
+                                    if (rik2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0ik = std::sqrt(rik2) / para_.r0ab()[iz_[kat]][iz_[iat]];
 
                                     rjk2 = (jkvec + ktau - jtau).norm2();
-                                    if (rjk2 > para_.cn_thr2()) {
+                                    if (rjk2 > para_.cn_thr2())
+                                    {
                                         continue;
-}
+                                    }
                                     rr0jk = std::sqrt(rjk2) / para_.r0ab()[iz_[kat]][iz_[jat]];
 
                                     geomean2 = rij2 * rjk2 * rik2;
@@ -1400,8 +1552,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                     r = std::sqrt(rij2);
                                     dang = -0.375
                                            * (std::pow(rij2, 3) + std::pow(rij2, 2) * (rjk2 + rik2)
-                                              + rij2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
-                                                        + 3.0 * std::pow(rik2, 2))
+                                              + rij2
+                                                    * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rik2
+                                                       + 3.0 * std::pow(rik2, 2))
                                               - 5.0 * std::pow(rjk2 - rik2, 2) * (rjk2 + rik2))
                                            / (r * geomean3 * geomean2);
                                     tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1411,8 +1564,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                     r = std::sqrt(rik2);
                                     dang = -0.375
                                            * (std::pow(rik2, 3) + std::pow(rik2, 2) * (rjk2 + rij2)
-                                              + rik2 * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
-                                                        + 3.0 * std::pow(rij2, 2))
+                                              + rik2
+                                                    * (3.0 * std::pow(rjk2, 2) + 2.0 * rjk2 * rij2
+                                                       + 3.0 * std::pow(rij2, 2))
                                               - 5.0 * std::pow(rjk2 - rij2, 2) * (rjk2 + rij2))
                                            / (r * geomean3 * geomean2);
                                     tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1422,8 +1576,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                     r = std::sqrt(rjk2);
                                     dang = -0.375
                                            * (std::pow(rjk2, 3) + std::pow(rjk2, 2) * (rik2 + rij2)
-                                              + rjk2 * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
-                                                        + 3.0 * std::pow(rij2, 2))
+                                              + rjk2
+                                                    * (3.0 * std::pow(rik2, 2) + 2.0 * rik2 * rij2
+                                                       + 3.0 * std::pow(rij2, 2))
                                               - 5.0 * std::pow(rik2 - rij2, 2) * (rik2 + rij2))
                                            / (r * geomean3 * geomean2);
                                     tmp1 = -dang * c9 * damp9 + dfdmp / r * c9 * ang;
@@ -1440,42 +1595,47 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                     dc9 = (dc6ij[iat][kat] / c6ik + dc6ij[jat][kat] / c6jk) * c9 * 0.5;
                                     dc6i[kat] += dc6_rest * dc9;
                                 } // end ktau
-}
-}
+                            }
+                        }
                     } // end jtauz
-                } // end jtauy
-            } // jtaux
-        } // end iat
+                }     // end jtauy
+            }         // jtaux
+        }             // end iat
     }
 
     // dE/dr_ij * dr_ij/dxyz_i
     double expterm, dcnn, x1;
     ModuleBase::Vector3<double> rij, vec3;
-    for (int iat = 1; iat != ucell_.nat; iat++) {
+    for (int iat = 1; iat != ucell_.nat; iat++)
+    {
         for (int jat = 0; jat != iat; jat++)
         {
             linij = lin(iat, jat);
             rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[jat]];
-            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+            for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+            {
+                for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+                {
                     for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                     {
                         tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                               + static_cast<double>(tauz) * lat_[2];
                         rij = xyz_[jat] - xyz_[iat] + tau;
                         r2 = rij.norm2();
-                        if (r2 > para_.rthr2() || r2 < 0.5) {
+                        if (r2 > para_.rthr2() || r2 < 0.5)
+                        {
                             continue;
-}
+                        }
                         r = std::sqrt(r2);
                         if (r2 < para_.cn_thr2())
                         {
                             expterm = exp(-para_.k1() * (rcovij / r - 1.0));
                             dcnn = -para_.k1() * rcovij * expterm / (r2 * (expterm + 1.0) * (expterm + 1.0));
                         }
-                        else {
+                        else
+                        {
                             dcnn = 0.0;
-}
+                        }
                         x1 = drij[linij][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]]
                              + dcnn * (dc6i[iat] + dc6i[jat]);
                         vec3 = x1 * rij / r;
@@ -1484,28 +1644,32 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
 
                         std::vector<double> vec = {vec3.x, vec3.y, vec3.z};
                         std::vector<double> rij_vec = {rij.x, rij.y, rij.z};
-                        for (size_t i = 0; i != 3; i++) {
+                        for (size_t i = 0; i != 3; i++)
+                        {
                             for (size_t j = 0; j != 3; j++)
                             {
                                 smearing_sigma(i, j) += vec[j] * rij_vec[i];
                             }
-}
+                        }
                     } // end tau
-}
-}
+                }
+            }
         } // end iat, jat
-}
+    }
     for (int iat = 0; iat != ucell_.nat; iat++)
     {
         linii = lin(iat, iat);
         rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[iat]];
-        for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++) {
-            for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++) {
+        for (int taux = -rep_vdw_[0]; taux <= rep_vdw_[0]; taux++)
+        {
+            for (int tauy = -rep_vdw_[1]; tauy <= rep_vdw_[1]; tauy++)
+            {
                 for (int tauz = -rep_vdw_[2]; tauz <= rep_vdw_[2]; tauz++)
                 {
-                    if (taux == 0 && tauy == 0 && tauz == 0) {
+                    if (taux == 0 && tauy == 0 && tauz == 0)
+                    {
                         continue;
-}
+                    }
                     tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                           + static_cast<double>(tauz) * lat_[2];
                     r2 = tau.norm2();
@@ -1515,23 +1679,25 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                         expterm = exp(-para_.k1() * (rcovij / r - 1.0));
                         dcnn = -para_.k1() * rcovij * expterm / (r2 * (expterm + 1.0) * (expterm + 1.0));
                     }
-                    else {
+                    else
+                    {
                         dcnn = 0.0;
-}
+                    }
                     x1 = drij[linii][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]] + dcnn * dc6i[iat];
 
                     vec3 = x1 * tau / r;
                     std::vector<double> vec = {vec3.x, vec3.y, vec3.z};
                     std::vector<double> tau_vec = {tau.x, tau.y, tau.z};
-                    for (size_t i = 0; i != 3; i++) {
+                    for (size_t i = 0; i != 3; i++)
+                    {
                         for (size_t j = 0; j != 3; j++)
                         {
                             smearing_sigma(i, j) += vec[j] * tau_vec[i];
                         }
-}
+                    }
                 } // end tau
-}
-}
+            }
+        }
     } // end iat
 }
 

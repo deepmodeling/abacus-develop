@@ -1,10 +1,10 @@
 #include "ions_move_basic.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_cell/update_cell.h"
 #include "module_cell/print_cell.h"
+#include "module_cell/update_cell.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 int Ions_Move_Basic::dim = 0;
 bool Ions_Move_Basic::converged = false;
 double Ions_Move_Basic::largest_grad = 0.0;
@@ -25,7 +25,7 @@ double Ions_Move_Basic::best_xxx = 1.0;
 int Ions_Move_Basic::out_stru = 0;
 std::string Ions_Move_Basic::relax_method = "bfgs";
 
-void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad)
+void Ions_Move_Basic::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, double* pos, double* grad)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "setup_gradient");
 
@@ -44,7 +44,7 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom *atom = &ucell.atoms[it];
+        Atom* atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
             for (int ik = 0; ik < 3; ++ik)
@@ -62,7 +62,7 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     return;
 }
 
-void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
+void Ions_Move_Basic::move_atoms(UnitCell& ucell, double* move, double* pos)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "move_atoms");
 
@@ -96,9 +96,10 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     const double move_threshold = 1.0e-10;
     const int total_freedom = ucell.nat * 3;
 
-    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0) {
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0)
+    {
         ucell.symm.symmetrize_vec3_nat(move);
-}
+    }
 
     for (int i = 0; i < total_freedom; i++)
     {
@@ -107,17 +108,17 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
             pos[i] += move[i];
         }
     }
-    unitcell::update_pos_tau(ucell.lat,pos,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_tau(ucell.lat, pos, ucell.ntype, ucell.nat, ucell.atoms);
 
     //--------------------------------------------
     // Print out the structure file.
     //--------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, GlobalV::ofs_running);
 
     return;
 }
 
-void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
+void Ions_Move_Basic::check_converged(const UnitCell& ucell, const double* grad)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
@@ -167,7 +168,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         Ions_Move_Basic::converged = true;
     }
     // mohan update 2011-04-21
-    else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr )
+    else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr)
     {
         GlobalV::ofs_running << "\n Ion relaxation is converged!" << std::endl;
         GlobalV::ofs_running << "\n Energy difference (Ry) = " << etot_diff << std::endl;
@@ -178,7 +179,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     else
     {
         GlobalV::ofs_running << "\n Ion relaxation is not converged yet (threshold is "
-                             << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / 0.529177 << ")" << std::endl;
+                             << PARAM.inp.force_thr * ModuleBase::Ry_to_eV / 0.529177 << ")" << std::endl;
         // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
         //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr  << std::endl;
         Ions_Move_Basic::converged = false;
@@ -187,7 +188,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     return;
 }
 
-void Ions_Move_Basic::terminate(const UnitCell &ucell)
+void Ions_Move_Basic::terminate(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
     if (Ions_Move_Basic::converged)
@@ -217,11 +218,11 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     //-----------------------------------------------------------
     // Print the structure.
     //-----------------------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, GlobalV::ofs_running);
     return;
 }
 
-void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement)
+void Ions_Move_Basic::setup_etot(const double& energy_in, const bool judgement)
 {
     if (Ions_Move_Basic::istep == 1)
     {
@@ -261,7 +262,7 @@ void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement)
     return;
 }
 
-double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
+double Ions_Move_Basic::dot_func(const double* a, const double* b, const int& dim_in)
 {
     double result = 0.0;
     for (int i = 0; i < dim_in; i++)

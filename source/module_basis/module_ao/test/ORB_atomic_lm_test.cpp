@@ -1,13 +1,14 @@
+#include "source_base/math_integral.h"
+
 #include "gtest/gtest.h"
-#include "module_base/math_integral.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
 #include <algorithm>
+#include <iomanip>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
-#include <iomanip>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -53,7 +54,7 @@
 
 class NumericalOrbitalLmTest : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp();
     void TearDown();
 
@@ -66,7 +67,11 @@ protected:
     void init_with_different_k(double const& ecut, double const& dk);
     size_t calc_nk(double const& ecutwfc, double const& dk);
     size_t calc_nr_uniform(double const& rcut, double const& dr_uniform);
-    bool check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname);
+    bool check_file_match(size_t const& nline,
+                          double const* col1,
+                          double const* col2,
+                          double const& tol,
+                          std::string const& fname);
 
     // radial real-space mesh spacing
     double dr_;
@@ -89,34 +94,38 @@ protected:
     bool force_flag_;
 };
 
-
-size_t NumericalOrbitalLmTest::calc_nk(double const& ecutwfc, double const& dk) {
+size_t NumericalOrbitalLmTest::calc_nk(double const& ecutwfc, double const& dk)
+{
 
     // current formula for calculating nk from ecutwfc & dk
     // see module_basis/module_ao/ORB_read.cpp, function "Read_Orbitals"
 
     size_t nk = 0;
 
-    if(ecutwfc < 20) {
-        nk = static_cast<int>( 2 * sqrt(ecutwfc) / dk )  + 4;
-    } else {
-        nk = static_cast<int>( sqrt(ecutwfc) / dk )  + 4;
+    if (ecutwfc < 20)
+    {
+        nk = static_cast<int>(2 * sqrt(ecutwfc) / dk) + 4;
+    }
+    else
+    {
+        nk = static_cast<int>(sqrt(ecutwfc) / dk) + 4;
     }
 
-    if (nk%2 == 0) {
+    if (nk % 2 == 0)
+    {
         ++nk;
     }
 
     return nk;
 }
 
-
-size_t NumericalOrbitalLmTest::calc_nr_uniform(double const& rcut, double const& dr_uniform) {
-    return static_cast<int>(rcut/dr_uniform) + 10;
+size_t NumericalOrbitalLmTest::calc_nr_uniform(double const& rcut, double const& dr_uniform)
+{
+    return static_cast<int>(rcut / dr_uniform) + 10;
 }
 
-
-void NumericalOrbitalLmTest::SetUp() {
+void NumericalOrbitalLmTest::SetUp()
+{
 
     ///////////////////////////////////////////////////
     //                  Parameters
@@ -152,7 +161,6 @@ void NumericalOrbitalLmTest::SetUp() {
     // if true, extra_uniform will compute zty
     force_flag_ = true;
 
-
     ///////////////////////////////////////////////////
     //              Read orbital file
     ///////////////////////////////////////////////////
@@ -164,7 +172,7 @@ void NumericalOrbitalLmTest::SetUp() {
     double rcut = 0.0;
     unsigned lmax = 0;
     std::vector<unsigned> nchi_l; // number of chi of each angular momentum
-    int nr_read = 0; // number of mesh points
+    int nr_read = 0;              // number of mesh points
 
     // nr_ has to be odd, probably due to the way Simpson_Integral works
     // nr_ equals nr_read if nr_read is odd,
@@ -183,9 +191,10 @@ void NumericalOrbitalLmTest::SetUp() {
     ifs >> lmax;
 
     // number of chi for each angular momentum
-    nchi_l.resize(lmax+1);
+    nchi_l.resize(lmax + 1);
     std::vector<std::string> symbol = {"S", "P", "D", "F", "G", "H", "I", "K"};
-    for (size_t l = 0; l <= lmax; ++l) {
+    for (size_t l = 0; l <= lmax; ++l)
+    {
         std::string key = symbol[l] + "orbital-->";
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, key);
         ifs >> nchi_l[l];
@@ -194,7 +203,7 @@ void NumericalOrbitalLmTest::SetUp() {
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "Mesh");
     ifs >> nr_read;
 
-    nr_ = (nr_read%2) ? nr_read : nr_read+1;
+    nr_ = (nr_read % 2) ? nr_read : nr_read + 1;
 
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "dr");
     ifs >> dr_;
@@ -208,14 +217,16 @@ void NumericalOrbitalLmTest::SetUp() {
 
     r_radial_ = new double[nr_];
     rab_ = new double[nr_];
-    for (int i = 0; i != nr_; ++i) {
-        r_radial_[i] = i*dr_;
+    for (int i = 0; i != nr_; ++i)
+    {
+        r_radial_[i] = i * dr_;
         rab_[i] = dr_;
     }
 
     // used in the normalization of input chi
-    double* integrand= new double[nr_];
-    for (int ir = 0; ir != nr_; ++ir) {
+    double* integrand = new double[nr_];
+    for (int ir = 0; ir != nr_; ++ir)
+    {
         integrand[ir] = 0.0;
     }
 
@@ -224,8 +235,10 @@ void NumericalOrbitalLmTest::SetUp() {
 
     size_t ichi_tot = 0;
 
-    for (size_t l = 0; l <= lmax; ++l) {
-        for (size_t ichi_l = 0; ichi_l < nchi_l[l]; ++ichi_l) {
+    for (size_t l = 0; l <= lmax; ++l)
+    {
+        for (size_t ichi_l = 0; ichi_l < nchi_l[l]; ++ichi_l)
+        {
 
             // the next block of the orbital file is like
             // Type    L    N
@@ -236,7 +249,7 @@ void NumericalOrbitalLmTest::SetUp() {
             ifs >> type >> L >> N;
             assert(L == l);
             assert(N == ichi_l);
-            //std::cout << "l = " << l << "   index_chi_l = " << N << std::endl;
+            // std::cout << "l = " << l << "   index_chi_l = " << N << std::endl;
 
             l_[ichi_tot] = l;
             index_chi_l_[ichi_tot] = ichi_l;
@@ -244,68 +257,85 @@ void NumericalOrbitalLmTest::SetUp() {
             // read & normalize chi
             chi_[ichi_tot] = new double[nr_];
 
-            for (int ir = 0; ir != nr_; ++ir) {
+            for (int ir = 0; ir != nr_; ++ir)
+            {
                 chi_[ichi_tot][ir] = 0.0;
             }
 
-            for (int ir = 0; ir != nr_read; ++ir) {
+            for (int ir = 0; ir != nr_read; ++ir)
+            {
                 ifs >> chi_[ichi_tot][ir];
-                integrand[ir] = std::pow(chi_[ichi_tot][ir]*r_radial_[ir], 2);
+                integrand[ir] = std::pow(chi_[ichi_tot][ir] * r_radial_[ir], 2);
             }
 
             // radint = \int_0^{\infty} dr r^2 [chi(r)]^2
             double radint = 0.0;
             ModuleBase::Integral::Simpson_Integral(nr_, integrand, rab_, radint);
 
-            for (int ir = 0; ir != nr_; ++ir) {
+            for (int ir = 0; ir != nr_; ++ir)
+            {
                 chi_[ichi_tot][ir] /= std::sqrt(radint);
-
             }
 
             ++ichi_tot;
-
         }
     }
 
     delete[] integrand;
 }
 
-
-void NumericalOrbitalLmTest::TearDown() {
+void NumericalOrbitalLmTest::TearDown()
+{
     delete[] r_radial_;
     delete[] rab_;
-    for (size_t ichi = 0; ichi != chi_.size(); ++ichi) {
+    for (size_t ichi = 0; ichi != chi_.size(); ++ichi)
+    {
         delete[] chi_[ichi];
     }
 }
 
-
-void NumericalOrbitalLmTest::init() {
+void NumericalOrbitalLmTest::init()
+{
 
     // initialized the tested objects by pouring
     // the data collected in SetUp() into nolm_
 
-    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot) {
-        nolm_[ichi_tot].set_orbital_info(elem_label_, index_atom_type_,
-                l_[ichi_tot], index_chi_l_[ichi_tot], nr_, rab_,
-                r_radial_, psi_type_, chi_[ichi_tot], nk_, dk_,
-                dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
+    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot)
+    {
+        nolm_[ichi_tot].set_orbital_info(elem_label_,
+                                         index_atom_type_,
+                                         l_[ichi_tot],
+                                         index_chi_l_[ichi_tot],
+                                         nr_,
+                                         rab_,
+                                         r_radial_,
+                                         psi_type_,
+                                         chi_[ichi_tot],
+                                         nk_,
+                                         dk_,
+                                         dr_uniform_,
+                                         flag_plot_,
+                                         flag_sbpool_,
+                                         force_flag_);
     }
 }
 
-
-void NumericalOrbitalLmTest::init_with_different_k(double const& ecut, double const& dk) {
+void NumericalOrbitalLmTest::init_with_different_k(double const& ecut, double const& dk)
+{
 
     // initialize nolm_ with a k mesh specified by given ecut & dk
 
     this->dk_ = dk;
     this->nk_ = calc_nk(ecut, dk);
     this->init();
-
 }
 
-
-bool NumericalOrbitalLmTest::check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname) {
+bool NumericalOrbitalLmTest::check_file_match(size_t const& nline,
+                                              double const* col1,
+                                              double const* col2,
+                                              double const& tol,
+                                              std::string const& fname)
+{
 
     /* This function checks whether the content of file named "fname"
      * contains certain data with certain format.
@@ -323,21 +353,23 @@ bool NumericalOrbitalLmTest::check_file_match(size_t const& nline, double const*
 
     ifs.open(fname);
 
-    for (size_t i = 0; i != nline; ++i) {
+    for (size_t i = 0; i != nline; ++i)
+    {
         std::stringstream ss;
         std::getline(ifs, tmp_line);
         ss << tmp_line;
         ss >> tmp1 >> tmp2;
 
-        if( std::abs( col1[i] - std::stod(tmp1.c_str()) ) > tol ||
-            std::abs( col2[i] - std::stod(tmp2.c_str()) ) > tol ||
-            ss.tellg() != -1 ) {
+        if (std::abs(col1[i] - std::stod(tmp1.c_str())) > tol || std::abs(col2[i] - std::stod(tmp2.c_str())) > tol
+            || ss.tellg() != -1)
+        {
             return false;
         }
     }
 
     std::getline(ifs, tmp_line);
-    if ( ifs.tellg() != -1 ) {
+    if (ifs.tellg() != -1)
+    {
         return false;
     }
 
@@ -346,14 +378,15 @@ bool NumericalOrbitalLmTest::check_file_match(size_t const& nline, double const*
     return true;
 }
 
-
-TEST_F(NumericalOrbitalLmTest, Init) {
+TEST_F(NumericalOrbitalLmTest, Init)
+{
 
     // this test checks whether set_orbital_info works as expected
 
     // before
     // a brief check of the default constructor
-    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot) {
+    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot)
+    {
         EXPECT_EQ(nolm_[ichi_tot].label, "");
         EXPECT_EQ(nolm_[ichi_tot].index_atom_type, 0);
         EXPECT_EQ(nolm_[ichi_tot].angular_momentum_l, 0);
@@ -380,17 +413,17 @@ TEST_F(NumericalOrbitalLmTest, Init) {
     this->init();
 
     // after
-    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot) {
+    for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot)
+    {
         EXPECT_EQ(nolm_[ichi_tot].index_atom_type, index_atom_type_);
         EXPECT_EQ(nolm_[ichi_tot].nk, nk_);
-        EXPECT_EQ(nolm_[ichi_tot].nr_uniform,
-                this->calc_nr_uniform(nolm_[ichi_tot].rcut, dr_uniform_));
+        EXPECT_EQ(nolm_[ichi_tot].nr_uniform, this->calc_nr_uniform(nolm_[ichi_tot].rcut, dr_uniform_));
 
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].kcut, (nk_-1)*dk_);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].kcut, (nk_ - 1) * dk_);
         EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dk, dk_);
         EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dr_uniform, dr_uniform_);
         // TODO zty yet to be understood
-        //EXPECT_DOUBLE_EQ(nolm_[ichi_tot].zty, 0.0);
+        // EXPECT_DOUBLE_EQ(nolm_[ichi_tot].zty, 0.0);
 
         EXPECT_EQ(nolm_[ichi_tot].r_radial.size(), nr_);
         EXPECT_EQ(nolm_[ichi_tot].k_radial.size(), nk_);
@@ -400,18 +433,20 @@ TEST_F(NumericalOrbitalLmTest, Init) {
         EXPECT_EQ(nolm_[ichi_tot].psik.size(), nk_);
         EXPECT_EQ(nolm_[ichi_tot].psik2.size(), nk_);
 
-        for (int ir = 0; ir != nr_; ++ir) {
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].r_radial[ir], ir*0.01);
+        for (int ir = 0; ir != nr_; ++ir)
+        {
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].r_radial[ir], ir * 0.01);
             EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psi[ir], chi_[ichi_tot][ir]);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psir[ir], ir*0.01*chi_[ichi_tot][ir]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psir[ir], ir * 0.01 * chi_[ichi_tot][ir]);
         }
 
         // whether psif makes sense or not is checked in r2k2r_consistency
 
-        for (size_t ik = 0; ik != nk_; ++ik) {
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].k_radial[ik], ik*dk_);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik[ik], ik*dk_*nolm_[ichi_tot].psif[ik]);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik2[ik], ik*dk_*nolm_[ichi_tot].psik[ik]);
+        for (size_t ik = 0; ik != nk_; ++ik)
+        {
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].k_radial[ik], ik * dk_);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik[ik], ik * dk_ * nolm_[ichi_tot].psif[ik]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik2[ik], ik * dk_ * nolm_[ichi_tot].psik[ik]);
         }
     }
 
@@ -475,15 +510,16 @@ TEST_F(NumericalOrbitalLmTest, Init) {
     EXPECT_NEAR(nolm_[4].psi[700], 0.0, max_tol);
 }
 
-
-TEST_F(NumericalOrbitalLmTest, Getters) {
+TEST_F(NumericalOrbitalLmTest, Getters)
+{
 
     // this test checks whether all the getters work as expected
     // whether the values make sense or not is tested in "initialize"
 
     this->init();
 
-    for (size_t i = 0; i != chi_.size(); ++i) {
+    for (size_t i = 0; i != chi_.size(); ++i)
+    {
         EXPECT_EQ(nolm_[i].getLabel(), nolm_[i].label);
         EXPECT_EQ(nolm_[i].getType(), nolm_[i].index_atom_type);
         EXPECT_EQ(nolm_[i].getL(), nolm_[i].angular_momentum_l);
@@ -523,14 +559,16 @@ TEST_F(NumericalOrbitalLmTest, Getters) {
         EXPECT_EQ(nolm_[i].get_psi_k(), nolm_[i].psik);
         EXPECT_EQ(nolm_[i].get_psi_k2(), nolm_[i].psik2);
 
-        for (size_t ir = 0; ir != nolm_[i].r_radial.size(); ++ir) {
+        for (size_t ir = 0; ir != nolm_[i].r_radial.size(); ++ir)
+        {
             EXPECT_EQ(nolm_[i].getRadial(ir), nolm_[i].r_radial[ir]);
             EXPECT_EQ(nolm_[i].getRab(ir), nolm_[i].rab[ir]);
             EXPECT_EQ(nolm_[i].getPsi(ir), nolm_[i].psi[ir]);
             EXPECT_EQ(nolm_[i].getPsi_r(ir), nolm_[i].psir[ir]);
         }
 
-        for (size_t ik = 0; ik != nolm_[i].k_radial.size(); ++ik) {
+        for (size_t ik = 0; ik != nolm_[i].k_radial.size(); ++ik)
+        {
             EXPECT_EQ(nolm_[i].getKpoint(ik), nolm_[i].k_radial[ik]);
             EXPECT_EQ(nolm_[i].getPsif(ik), nolm_[i].psif[ik]);
             EXPECT_EQ(nolm_[i].getPsi_k(ik), nolm_[i].psik[ik]);
@@ -539,8 +577,8 @@ TEST_F(NumericalOrbitalLmTest, Getters) {
     }
 }
 
-
-TEST_F(NumericalOrbitalLmTest, PsiNormalization) {
+TEST_F(NumericalOrbitalLmTest, PsiNormalization)
+{
 
     // This test checks the normalization of
     // 1. the radial function in the real space
@@ -554,10 +592,12 @@ TEST_F(NumericalOrbitalLmTest, PsiNormalization) {
     double* rintegrand = new double[nr_];
     double* kintegrand = new double[nk_];
 
-    for (size_t i = 0; i != chi_.size(); ++i) {
+    for (size_t i = 0; i != chi_.size(); ++i)
+    {
 
         // normalization check of chi(r)
-        for (int ir = 0; ir != nr_; ++ir) {
+        for (int ir = 0; ir != nr_; ++ir)
+        {
             rintegrand[ir] = std::pow(nolm_[i].getPsi_r(ir), 2);
         }
 
@@ -565,37 +605,40 @@ TEST_F(NumericalOrbitalLmTest, PsiNormalization) {
         EXPECT_NEAR(radint, 1.0, 1e-10);
 
         // normalization check of chi(k)
-        for (size_t ik = 0; ik != nk_; ++ik) {
+        for (size_t ik = 0; ik != nk_; ++ik)
+        {
             kintegrand[ik] = std::pow(nolm_[i].getPsi_k(ik), 2);
         }
 
         ModuleBase::Integral::Simpson_Integral(nk_, kintegrand, dk_, radint);
         EXPECT_NEAR(radint, 1.0, 1e-6); // what is a reasonable error?
-
     }
 
     delete[] rintegrand;
     delete[] kintegrand;
 
-
     // check the normalization of psi_uniform
-    for (size_t i = 0; i != chi_.size(); ++i) {
+    for (size_t i = 0; i != chi_.size(); ++i)
+    {
 
         int nr = nolm_[i].nr_uniform;
 
         // note that Simpson_Integral only accepts an odd number of mesh points
-        if (nr%2 == 0) {
+        if (nr % 2 == 0)
+        {
             ++nr;
         }
 
         rintegrand = new double[nr];
-        for (int ir = 0; ir != nr; ++ir) {
+        for (int ir = 0; ir != nr; ++ir)
+        {
             rintegrand[ir] = 0.0;
         }
 
         // normalization check of psi_uniform
-        for (int ir = 0; ir != nolm_[i].nr_uniform; ++ir) {
-            rintegrand[ir] = std::pow(ir*dr_uniform_*nolm_[i].psi_uniform[ir], 2);
+        for (int ir = 0; ir != nolm_[i].nr_uniform; ++ir)
+        {
+            rintegrand[ir] = std::pow(ir * dr_uniform_ * nolm_[i].psi_uniform[ir], 2);
         }
 
         ModuleBase::Integral::Simpson_Integral(nr, rintegrand, dr_uniform_, radint);
@@ -605,8 +648,8 @@ TEST_F(NumericalOrbitalLmTest, PsiNormalization) {
     }
 }
 
-
-TEST_F(NumericalOrbitalLmTest, K2RConsistency) {
+TEST_F(NumericalOrbitalLmTest, K2RConsistency)
+{
 
     // This test checks whether the results of
     // cal_kradial & cal_kradial_sbpool agree.
@@ -617,23 +660,29 @@ TEST_F(NumericalOrbitalLmTest, K2RConsistency) {
     double* kchik_ = new double[nk_];
     double* k2chik_ = new double[nk_];
 
-    for (size_t i = 0; i != chi_.size(); ++i) {
+    for (size_t i = 0; i != chi_.size(); ++i)
+    {
         // save previous chi(k) results obtained by init()
-        for (size_t ik = 0; ik != nk_; ++ik) {
+        for (size_t ik = 0; ik != nk_; ++ik)
+        {
             chik_[ik] = nolm_[i].getPsif(ik);
             kchik_[ik] = nolm_[i].getPsi_k(ik);
             k2chik_[ik] = nolm_[i].getPsi_k2(ik);
         }
 
         // use a different method than which used in init()
-        if (flag_sbpool_) {
+        if (flag_sbpool_)
+        {
             nolm_[i].cal_kradial();
-        } else {
+        }
+        else
+        {
             nolm_[i].cal_kradial_sbpool();
         }
 
         double max_tol = 1e-6;
-        for (size_t ik = 0; ik != nk_; ++ik) {
+        for (size_t ik = 0; ik != nk_; ++ik)
+        {
             EXPECT_NEAR(chik_[ik], nolm_[i].getPsif(ik), max_tol);
             EXPECT_NEAR(kchik_[ik], nolm_[i].getPsi_k(ik), max_tol);
             EXPECT_NEAR(k2chik_[ik], nolm_[i].getPsi_k2(ik), max_tol);
@@ -641,8 +690,8 @@ TEST_F(NumericalOrbitalLmTest, K2RConsistency) {
     }
 }
 
-
-TEST_F(NumericalOrbitalLmTest, R2K2RConsistency) {
+TEST_F(NumericalOrbitalLmTest, R2K2RConsistency)
+{
 
     // This test checks whether cal_rradial_sbpool brings chi(k)
     // back to the original chi(r) by looking at the error
@@ -658,15 +707,18 @@ TEST_F(NumericalOrbitalLmTest, R2K2RConsistency) {
     // maximum tolerance of err
     double max_tol = 1e-6;
 
-    for (size_t i = 0; i != chi_.size(); ++i) {
-        for (int ir = 0; ir != nr_; ++ir) {
+    for (size_t i = 0; i != chi_.size(); ++i)
+    {
+        for (int ir = 0; ir != nr_; ++ir)
+        {
             rchi_[ir] = nolm_[i].getPsi_r(ir);
         }
 
         nolm_[i].cal_rradial_sbpool();
 
-        for (int ir = 0; ir != nr_; ++ir) {
-            err_integrand[ir] = std::pow(rchi_[ir]-nolm_[i].getPsi_r(ir), 2);
+        for (int ir = 0; ir != nr_; ++ir)
+        {
+            err_integrand[ir] = std::pow(rchi_[ir] - nolm_[i].getPsi_r(ir), 2);
         }
 
         ModuleBase::Integral::Simpson_Integral(nr_, err_integrand, rab_, err);
@@ -674,8 +726,8 @@ TEST_F(NumericalOrbitalLmTest, R2K2RConsistency) {
     }
 }
 
-
-TEST_F(NumericalOrbitalLmTest, FiniteDiffPsiUniform) {
+TEST_F(NumericalOrbitalLmTest, FiniteDiffPsiUniform)
+{
 
     // this test checks whether dpsi_uniform agrees with the
     // finite difference of psi_uniform
@@ -684,21 +736,21 @@ TEST_F(NumericalOrbitalLmTest, FiniteDiffPsiUniform) {
 
     double max_tol = 1e-3;
 
-    for (size_t i = 0; i != nolm_.size(); ++i) {
+    for (size_t i = 0; i != nolm_.size(); ++i)
+    {
         std::vector<double>& f = nolm_[i].psi_uniform;
-        for (int ir = 4; ir != nolm_[i].nr_uniform-4; ++ir) {
-            double fd =
-            ( +1.0/280*f[ir-4] - 4.0/105*f[ir-3] + 1.0/5*f[ir-2] - 4.0/5*f[ir-1]
-              -1.0/280*f[ir+4] + 4.0/105*f[ir+3] - 1.0/5*f[ir+2] + 4.0/5*f[ir+1]
-            ) / nolm_[i].dr_uniform;
+        for (int ir = 4; ir != nolm_[i].nr_uniform - 4; ++ir)
+        {
+            double fd = (+1.0 / 280 * f[ir - 4] - 4.0 / 105 * f[ir - 3] + 1.0 / 5 * f[ir - 2] - 4.0 / 5 * f[ir - 1]
+                         - 1.0 / 280 * f[ir + 4] + 4.0 / 105 * f[ir + 3] - 1.0 / 5 * f[ir + 2] + 4.0 / 5 * f[ir + 1])
+                        / nolm_[i].dr_uniform;
             EXPECT_NEAR(fd, nolm_[i].dpsi_uniform[ir], max_tol);
         }
     }
-
 }
 
-
-TEST_F(NumericalOrbitalLmTest, PsiSave) {
+TEST_F(NumericalOrbitalLmTest, PsiSave)
+{
 
     // This test checks whether plot() works as expected.
     //
@@ -724,14 +776,14 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
     // we now creat the directory to hold data files
     mkdir(dir.c_str(), 0777);
 
-    for (size_t i = 0; i != nolm_.size(); ++i) {
+    for (size_t i = 0; i != nolm_.size(); ++i)
+    {
 
         // this call should successfully write data to files
         ASSERT_NO_THROW(nolm_[i].plot());
 
-        auto get_fname = [&] (std::string const& suffix) -> std::string {
-            return dir+"/O-" + orb[i] + std::to_string(nolm_[i].index_chi+1)
-                + "-orbital-" + suffix + ".dat";
+        auto get_fname = [&](std::string const& suffix) -> std::string {
+            return dir + "/O-" + orb[i] + std::to_string(nolm_[i].index_chi + 1) + "-orbital-" + suffix + ".dat";
         };
 
         std::string psi_fname = get_fname("r");
@@ -739,20 +791,17 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
         std::string psiru_fname = get_fname("ru");
         std::string psidru_fname = get_fname("dru");
 
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nr,
-                    nolm_[i].getRadial(), nolm_[i].getPsi(), tol, psi_fname));
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nk,
-                    nolm_[i].getKpoint(), nolm_[i].getPsi_k(), tol, psik_fname));
+        EXPECT_TRUE(this->check_file_match(nolm_[i].nr, nolm_[i].getRadial(), nolm_[i].getPsi(), tol, psi_fname));
+        EXPECT_TRUE(this->check_file_match(nolm_[i].nk, nolm_[i].getKpoint(), nolm_[i].getPsi_k(), tol, psik_fname));
 
         double* ru_mesh = new double[nolm_[i].nr_uniform];
-        for (int ir = 0; ir != nolm_[i].nr_uniform; ++ir) {
-            ru_mesh[ir] = ir*nolm_[i].dr_uniform;
+        for (int ir = 0; ir != nolm_[i].nr_uniform; ++ir)
+        {
+            ru_mesh[ir] = ir * nolm_[i].dr_uniform;
         }
 
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nr_uniform,
-                    ru_mesh, nolm_[i].getPsiuniform(), tol, psiru_fname));
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nr_uniform,
-                    ru_mesh, nolm_[i].getDpsiuniform(), tol, psidru_fname));
+        EXPECT_TRUE(this->check_file_match(nolm_[i].nr_uniform, ru_mesh, nolm_[i].getPsiuniform(), tol, psiru_fname));
+        EXPECT_TRUE(this->check_file_match(nolm_[i].nr_uniform, ru_mesh, nolm_[i].getDpsiuniform(), tol, psidru_fname));
 
         remove(psi_fname.c_str());
         remove(psik_fname.c_str());
@@ -761,11 +810,10 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
     }
 
     remove(dir.c_str());
-
 }
 
-
-TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
+TEST_F(NumericalOrbitalLmTest, VariousPsiType)
+{
 
     // this test checks the behavior of set_orbital_info
     // under various input Psi_Type
@@ -776,7 +824,8 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
     // rather than an integration (as in r2k2r_consistency)
     double max_tol = 1e-3;
 
-    for (size_t i = 0; i != nolm_.size(); ++i) {
+    for (size_t i = 0; i != nolm_.size(); ++i)
+    {
         std::vector<double> psi_ref, psif_ref, psik_ref, psik2_ref;
 
         psi_ref = nolm_[i].psi;
@@ -784,47 +833,78 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
         psik_ref = nolm_[i].psik;
         psik2_ref = nolm_[i].psik2;
 
-
         // alternative Psi_Type input
 
         // Psi_Type == Psif
-        nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psif,
-                &psif_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
+        nolm_[i].set_orbital_info(elem_label_,
+                                  index_atom_type_,
+                                  l_[i],
+                                  index_chi_l_[i],
+                                  nr_,
+                                  rab_,
+                                  r_radial_,
+                                  Numerical_Orbital_Lm::Psi_Type::Psif,
+                                  &psif_ref[0],
+                                  nk_,
+                                  dk_,
+                                  dr_uniform_,
+                                  flag_plot_,
+                                  flag_sbpool_,
+                                  force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
+        for (int ir = 0; ir != nolm_[i].nr; ++ir)
+        {
             EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
         }
 
         // Psi_Type == Psik
-        nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psik,
-                &psik_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
+        nolm_[i].set_orbital_info(elem_label_,
+                                  index_atom_type_,
+                                  l_[i],
+                                  index_chi_l_[i],
+                                  nr_,
+                                  rab_,
+                                  r_radial_,
+                                  Numerical_Orbital_Lm::Psi_Type::Psik,
+                                  &psik_ref[0],
+                                  nk_,
+                                  dk_,
+                                  dr_uniform_,
+                                  flag_plot_,
+                                  flag_sbpool_,
+                                  force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
+        for (int ir = 0; ir != nolm_[i].nr; ++ir)
+        {
             EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
         }
 
         // Psi_Type == Psik2
-        nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psik2,
-                &psik2_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
+        nolm_[i].set_orbital_info(elem_label_,
+                                  index_atom_type_,
+                                  l_[i],
+                                  index_chi_l_[i],
+                                  nr_,
+                                  rab_,
+                                  r_radial_,
+                                  Numerical_Orbital_Lm::Psi_Type::Psik2,
+                                  &psik2_ref[0],
+                                  nk_,
+                                  dk_,
+                                  dr_uniform_,
+                                  flag_plot_,
+                                  flag_sbpool_,
+                                  force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
+        for (int ir = 0; ir != nolm_[i].nr; ++ir)
+        {
             EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
         }
-
     }
 }
 
-
-TEST_F(NumericalOrbitalLmTest, TurnOffSphBesPool) {
+TEST_F(NumericalOrbitalLmTest, TurnOffSphBesPool)
+{
 
     // checks the behavior of set_orbital_info when sbpool is turned off
     //
@@ -835,7 +915,8 @@ TEST_F(NumericalOrbitalLmTest, TurnOffSphBesPool) {
     flag_sbpool_ = false;
     EXPECT_NO_THROW(this->init());
 
-    for (size_t i = 0; i != nolm_.size(); ++i) {
+    for (size_t i = 0; i != nolm_.size(); ++i)
+    {
         std::vector<double> psi_ref, psif_ref, psik_ref, psik2_ref;
 
         psi_ref = nolm_[i].psi;
@@ -843,37 +924,79 @@ TEST_F(NumericalOrbitalLmTest, TurnOffSphBesPool) {
         psik_ref = nolm_[i].psik;
         psik2_ref = nolm_[i].psik2;
 
-        EXPECT_NO_THROW(nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psi,
-                &psi_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, false, force_flag_));
-        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psif,
-                &psif_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, false, force_flag_), std::domain_error);
-        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psik,
-                &psik_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, false, force_flag_), std::domain_error);
-        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
-                l_[i], index_chi_l_[i], nr_, rab_,
-                r_radial_, Numerical_Orbital_Lm::Psi_Type::Psik2,
-                &psik2_ref[0], nk_, dk_,
-                dr_uniform_, flag_plot_, false, force_flag_), std::domain_error);
+        EXPECT_NO_THROW(nolm_[i].set_orbital_info(elem_label_,
+                                                  index_atom_type_,
+                                                  l_[i],
+                                                  index_chi_l_[i],
+                                                  nr_,
+                                                  rab_,
+                                                  r_radial_,
+                                                  Numerical_Orbital_Lm::Psi_Type::Psi,
+                                                  &psi_ref[0],
+                                                  nk_,
+                                                  dk_,
+                                                  dr_uniform_,
+                                                  flag_plot_,
+                                                  false,
+                                                  force_flag_));
+        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_,
+                                               index_atom_type_,
+                                               l_[i],
+                                               index_chi_l_[i],
+                                               nr_,
+                                               rab_,
+                                               r_radial_,
+                                               Numerical_Orbital_Lm::Psi_Type::Psif,
+                                               &psif_ref[0],
+                                               nk_,
+                                               dk_,
+                                               dr_uniform_,
+                                               flag_plot_,
+                                               false,
+                                               force_flag_),
+                     std::domain_error);
+        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_,
+                                               index_atom_type_,
+                                               l_[i],
+                                               index_chi_l_[i],
+                                               nr_,
+                                               rab_,
+                                               r_radial_,
+                                               Numerical_Orbital_Lm::Psi_Type::Psik,
+                                               &psik_ref[0],
+                                               nk_,
+                                               dk_,
+                                               dr_uniform_,
+                                               flag_plot_,
+                                               false,
+                                               force_flag_),
+                     std::domain_error);
+        EXPECT_THROW(nolm_[i].set_orbital_info(elem_label_,
+                                               index_atom_type_,
+                                               l_[i],
+                                               index_chi_l_[i],
+                                               nr_,
+                                               rab_,
+                                               r_radial_,
+                                               Numerical_Orbital_Lm::Psi_Type::Psik2,
+                                               &psik2_ref[0],
+                                               nk_,
+                                               dk_,
+                                               dr_uniform_,
+                                               flag_plot_,
+                                               false,
+                                               force_flag_),
+                     std::domain_error);
     }
 }
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);
@@ -885,5 +1008,3 @@ int main(int argc, char **argv)
 
     return result;
 }
-
-

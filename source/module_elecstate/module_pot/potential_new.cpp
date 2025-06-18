@@ -1,13 +1,13 @@
 #include "potential_new.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
 
 #include <map>
 
@@ -94,14 +94,14 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
     int nrxx = this->rho_basis_->nrxx;
     int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0) 
-	{
-		return;
-	}
-	if (nrxx_smooth == 0) 
-	{
-		return;
-	}
+    if (nrxx == 0)
+    {
+        return;
+    }
+    if (nrxx_smooth == 0)
+    {
+        return;
+    }
 
     this->v_effective_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
@@ -149,10 +149,10 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
+void Potential::update_from_charge(const Charge* const chg, const UnitCell* const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    // ModuleBase::timer::tick("Potential", "update_from_charge");
 
     if (!this->fixed_done)
     {
@@ -188,7 +188,7 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
 
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    // ModuleBase::timer::tick("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
@@ -208,7 +208,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
     ModuleBase::timer::tick("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
     ModuleBase::timer::tick("Potential", "cal_veff");
@@ -241,7 +241,7 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     ModuleBase::timer::tick("Potential", "cal_veff");
 }
 
-void Potential::init_pot(int istep, const Charge*const chg)
+void Potential::init_pot(int istep, const Charge* const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::tick("Potential", "init_pot");
@@ -277,7 +277,7 @@ void Potential::interpolate_vrs()
     ModuleBase::TITLE("Potential", "interpolate_vrs");
     ModuleBase::timer::tick("Potential", "interpolate_vrs");
 
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {

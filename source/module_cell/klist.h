@@ -1,17 +1,18 @@
 #ifndef K_VECTORS_H
 #define K_VECTORS_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix3.h"
+#include "k_vector_utils.h"
 #include "module_cell/unitcell.h"
 #include "parallel_kpoints.h"
-#include "k_vector_utils.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix3.h"
+
 #include <vector>
 
 class K_Vectors
 {
-public:
+  public:
     std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
 
@@ -20,10 +21,10 @@ public:
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nmp[3]={0};                 /// Number of Monhorst-Pack
+    int nmp[3] = {0};           /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
-    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
+    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations.
     /// dim: [iks_ibz][(isym, kvec_d)]
     std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
@@ -36,7 +37,6 @@ public:
     K_Vectors& operator=(K_Vectors&& rhs) = default;
 
     Parallel_Kpoints para_k; ///< parallel for kpoints
-
 
     /**
      * @brief Set up the k-points for the system.
@@ -58,12 +58,12 @@ public:
      * @note Only available for nspin = 1 or 2 or 4.
      */
     void set(const UnitCell& ucell,
-        const ModuleSymmetry::Symmetry& symm,
-        const std::string& k_file_name,
-        const int& nspin,
-        const ModuleBase::Matrix3& reciprocal_vec,
-        const ModuleBase::Matrix3& latvec,
-        std::ofstream& ofs);
+             const ModuleSymmetry::Symmetry& symm,
+             const std::string& k_file_name,
+             const int& nspin,
+             const ModuleBase::Matrix3& reciprocal_vec,
+             const ModuleBase::Matrix3& latvec,
+             std::ofstream& ofs);
 
     int get_nks() const
     {
@@ -277,8 +277,6 @@ public:
      * spin.
      */
     void normalize_wk(const int& degspin);
-
-
 
     // step 4 : *2 kpoints.
 

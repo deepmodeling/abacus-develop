@@ -1,16 +1,16 @@
 #include "esolver_of.h"
 
-#include "module_parameter/parameter.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_parameter/parameter.h"
 //-----------temporary-------------------------
-#include "module_base/global_function.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
-#include "module_elecstate/cal_ux.h"
+#include "source_base/global_function.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
@@ -90,7 +90,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
@@ -100,20 +100,19 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves
     Pgrid.init(pw_rho->nx,
-                        pw_rho->ny,
-                        pw_rho->nz,
-                        pw_rho->nplane,
-                        pw_rho->nrxx,
-                        pw_big->nbz,
-                        pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+               pw_rho->ny,
+               pw_rho->nz,
+               pw_rho->nplane,
+               pw_rho->nrxx,
+               pw_big->nbz,
+               pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
     // Calculate Structure factor
     sf.setup_structure_factor(&ucell, Pgrid, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     // initialize local pseudopotential
-    this->locpp.init_vloc(ucell,pw_rho);
+    this->locpp.init_vloc(ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
 
     // initialize elecstate, including potential
     this->init_elecstate(ucell);
@@ -161,10 +160,11 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 
 #ifdef __MLALGO
     // for ML KEDF test
-    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
+    if (PARAM.inp.of_ml_local_test)
+        this->ml_->localTest(this->chr.rho, this->pw_rho);
 #endif
 
-    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302
 #ifdef __MPI
     this->iter_time = MPI_Wtime();
 #else
@@ -180,7 +180,6 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
         this->energy_llast_ = this->energy_last_;
         this->energy_last_ = this->energy_current_;
         this->energy_current_ = this->cal_energy();
-
 
         // check if the job is done
         if (this->check_exit(conv_esolver))
@@ -235,11 +234,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         // Refresh the arrays
         delete this->psi_;
-        this->psi_ = new psi::Psi<double>(1, 
-                                          PARAM.inp.nspin, 
-                                          this->pw_rho->nrxx,
-                                          this->pw_rho->nrxx,
-                                          true);
+        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx, this->pw_rho->nrxx, true);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             this->pphi_[is] = this->psi_->get_pointer(is);
@@ -457,7 +452,7 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
     }
 
     conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
-                         || (this->of_conv_ == "both" && potConv && energyConv);
+                   || (this->of_conv_ == "both" && potConv && energyConv);
 
     this->print_info(conv_esolver);
 
@@ -505,7 +500,6 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
-
     // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
@@ -520,9 +514,8 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     {
         this->tf_->get_energy(this->chr.rho);
 
-        std::cout << "ML Term = " << this->ml_->ml_energy 
-                  << " Ry, TF Term = " << this->tf_->tf_energy 
-                  << " Ry." << std::endl;
+        std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry."
+                  << std::endl;
 
         if (this->ml_->ml_energy >= this->tf_->tf_energy)
         {
@@ -536,8 +529,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
-        this->kinetic_potential(this->chr.rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
-        
+        this->kinetic_potential(this->chr.rho,
+                                this->pphi_,
+                                this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+
         const double* vr_eff = this->pelec->pot->get_effective_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
@@ -577,10 +572,8 @@ double ESolver_OF::cal_energy()
     double pseudopot_energy = 0.;                   // electron-ion interaction energy
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        pseudopot_energy += this->inner_product(this->pelec->pot->get_fixed_v(),
-                                                this->chr.rho[is],
-                                                this->pw_rho->nrxx,
-                                                this->dV_);
+        pseudopot_energy
+            += this->inner_product(this->pelec->pot->get_fixed_v(), this->chr.rho[is], this->pw_rho->nrxx, this->dV_);
     }
     Parallel_Reduce::reduce_all(pseudopot_energy);
     this->pelec->f_en.ekinetic = kinetic_energy;

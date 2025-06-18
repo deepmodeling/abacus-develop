@@ -6,9 +6,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #ifdef __MPI
-#include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
+#include "source_base/parallel_global.h"
 #endif
 
 /**
@@ -30,12 +30,14 @@ class ReadWfcPwTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (wfcpw != nullptr) {
+        if (wfcpw != nullptr)
+        {
             delete wfcpw;
-}
-        if (kvec_d != nullptr) {
+        }
+        if (kvec_d != nullptr)
+        {
             delete[] kvec_d;
-}
+        }
     }
 };
 
@@ -58,10 +60,16 @@ TEST_F(ReadWfcPwTest, ReadWfcPw)
 
     const int ik = 0;
     const int ik_tot = 0;
-	ModuleIO::read_wfc_pw(filename, wfcpw, 
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-			PARAM.inp.nbands, PARAM.globalv.npol,
-			ik, ik_tot, nkstot, wfcatom);
+    ModuleIO::read_wfc_pw(filename,
+                          wfcpw,
+                          GlobalV::RANK_IN_POOL,
+                          GlobalV::NPROC_IN_POOL,
+                          PARAM.inp.nbands,
+                          PARAM.globalv.npol,
+                          ik,
+                          ik_tot,
+                          nkstot,
+                          wfcatom);
 
     if (GlobalV::NPROC_IN_POOL == 1)
     {
@@ -127,47 +135,65 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
 
     ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, wfcpw->npwk[0]);
 
-    if(GlobalV::RANK_IN_POOL == 0)
-	{
-		const int ik=0;
-		const int ik_tot=0;
+    if (GlobalV::RANK_IN_POOL == 0)
+    {
+        const int ik = 0;
+        const int ik_tot = 0;
 
-		// dat file
-		std::string filename = "notfound.dat";
-		testing::internal::CaptureStdout();
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
-		std::string output = testing::internal::GetCapturedStdout();
-		EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.dat"));
+        // dat file
+        std::string filename = "notfound.dat";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Can't open file notfound.dat"));
 
-		// txt file
-		filename = "notfound.txt";
-		testing::internal::CaptureStdout();
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
-		output = testing::internal::GetCapturedStdout();
-		EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.txt"));
+        // txt file
+        filename = "notfound.txt";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Can't open file notfound.txt"));
 
-		// other file
-		filename = "notfound";
-		testing::internal::CaptureStdout();
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
-		output = testing::internal::GetCapturedStdout();
-		EXPECT_THAT(output,testing::HasSubstr("Unknown file type"));
-	}
+        // other file
+        filename = "notfound";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Unknown file type"));
+    }
 }
 
 // Test the read_wfc_pw function when nbands is inconsistent
@@ -190,22 +216,27 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
 
-		const int ik = 0;
-		const int ik_tot = 0;
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
+        const int ik = 0;
+        const int ik_tot = 0;
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("nbands_in = 8"));
         EXPECT_THAT(output, testing::HasSubstr("nbands = 4"));
-        EXPECT_THAT(
-            output,
-            testing::HasSubstr(
-                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != nbands"));
+        EXPECT_THAT(output,
+                    testing::HasSubstr(
+                        "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != nbands"));
     }
 }
 
@@ -231,14 +262,20 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
 
-        const int ik=0;
-        const int ik_tot=0;
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
+        const int ik = 0;
+        const int ik_tot = 0;
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("kvec_in[0] = 0 0 0"));
@@ -268,15 +305,21 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
         const int nbasis = wfcpw->npwk[0];
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
-       
-        const int ik=0;
-        const int ik_tot=0;
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
+
+        const int ik = 0;
+        const int ik_tot = 0;
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("lat0_in = 5.3233"));
@@ -306,14 +349,20 @@ TEST_F(ReadWfcPwTest, InconsistentG)
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
 
-        const int ik=0;
-        const int ik_tot=0;
-		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
-					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-					PARAM.inp.nbands, PARAM.globalv.npol,
-					ik, ik_tot, nkstot, wfcatom),
-				::testing::ExitedWithCode(1), "");
+        const int ik = 0;
+        const int ik_tot = 0;
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename,
+                                          wfcpw,
+                                          GlobalV::RANK_IN_POOL,
+                                          GlobalV::NPROC_IN_POOL,
+                                          PARAM.inp.nbands,
+                                          PARAM.globalv.npol,
+                                          ik,
+                                          ik_tot,
+                                          nkstot,
+                                          wfcatom),
+                    ::testing::ExitedWithCode(1),
+                    "");
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("G_in[0] = -1 -1 1\nG_in[1] = 1 1 1\nG_in[2] = -1 1 -1\n"));

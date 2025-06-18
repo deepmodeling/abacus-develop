@@ -6,7 +6,7 @@
 #include "grid_technique.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_base/array_pool.h"
+#include "source_base/array_pool.h"
 
 #include <cstdlib>
 #include <utility> // for std::pair
@@ -33,19 +33,19 @@ class Gint_inout
 {
   public:
     // input
-    double*** DM=nullptr;
-    const double* vl=nullptr;
-    const double* vofk=nullptr;
-    bool isforce=false;
-    bool isstress=false;
-    int ispin=0;
-    int nspin_rho=0;  // usually, but not always, equal to global nspin
+    double*** DM = nullptr;
+    const double* vl = nullptr;
+    const double* vofk = nullptr;
+    bool isforce = false;
+    bool isstress = false;
+    int ispin = 0;
+    int nspin_rho = 0;    // usually, but not always, equal to global nspin
     bool if_symm = false; // if true, use dsymv in gint_kernel_rho; if false, use dgemv.
 
     // output
-    double** rho=nullptr;
-    ModuleBase::matrix* fvl_dphi=nullptr;
-    ModuleBase::matrix* svl_dphi=nullptr;
+    double** rho = nullptr;
+    ModuleBase::matrix* fvl_dphi = nullptr;
+    ModuleBase::matrix* svl_dphi = nullptr;
     Gint_Tools::job_type job;
 
     // electron density and kin_r, multi-k
@@ -161,16 +161,21 @@ inline double pow_int(const double base, const int exp)
  * @param bx number of big grids in x direction
  * @param by number of big grids in y direction
  * @param bz number of big grids in z direction
- * @param nplane Currently using Z-axis 1D division, 
+ * @param nplane Currently using Z-axis 1D division,
  * recording the number of the Z-axis process
  * (nbz in the current process).
  * @param start_ind start index of the grid in the 1D FFT grid
  * @param ncyz number of grids in yz plane
- * @param vindex the index of the grid 
-*/
-void get_vindex(const int bxyz, const int bx, const int by,
-                    const int bz, const int nplane, 
-                    const int start_ind,const int ncyz,int* vindex);
+ * @param vindex the index of the grid
+ */
+void get_vindex(const int bxyz,
+                const int bx,
+                const int by,
+                const int bz,
+                const int nplane,
+                const int start_ind,
+                const int ncyz,
+                int* vindex);
 
 /**
  * @brief Get the vldr3 form the grid index
@@ -180,13 +185,13 @@ void get_vindex(const int bxyz, const int bx, const int by,
  * @param bx number of grids in x direction
  * @param by number of grids in y direction
  * @param bz number of grids in z direction
- * @param nplane Currently using Z-axis 1D division, 
+ * @param nplane Currently using Z-axis 1D division,
  * recording the number of the Z-axis process
  * (nbz in the current process).
  * @param start_ind start index of the grid in the 1D FFT grid
  * @param ncyz number of grids in yz plane
  * @param dv the volume of the grid
-*/
+ */
 void get_gint_vldr3(double* vldr3,
                     const double* const vlocal,
                     const int bxyz,
@@ -208,9 +213,15 @@ void get_gint_vldr3(double* vldr3,
  * @param block_index count total number of atomis orbitals
  * @param block_size count the number of atomis orbitals in each atom
  * @param cal_flag whether the atom-grid distance is larger than cutoff
-*/                    
-void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
-                    int* block_iw, int* block_index, int* block_size, bool** cal_flag);
+ */
+void get_block_info(const Grid_Technique& gt,
+                    const int bxyz,
+                    const int na_grid,
+                    const int grid_index,
+                    int* block_iw,
+                    int* block_index,
+                    int* block_size,
+                    bool** cal_flag);
 
 void init_orb(double& dr_uniform,
               std::vector<double>& rcuts,
@@ -248,13 +259,16 @@ void cal_dpsir_ylm(
 
 // dpsir_ylm * (r-R), R is the atomic position
 void cal_dpsirr_ylm(
-    const Grid_Technique& gt, const int bxyz,
+    const Grid_Technique& gt,
+    const int bxyz,
     const int na_grid,                 // number of atoms on this grid
     const int grid_index,              // 1d index of FFT index (i,j,k)
     const int* const block_index,      // block_index[na_grid+1], count total number of atomis orbitals
     const int* const block_size,       // block_size[na_grid],	number of columns of a band
     const bool* const* const cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
-    double* const* const dpsir_ylm_x, double* const* const dpsir_ylm_y, double* const* const dpsir_ylm_z,
+    double* const* const dpsir_ylm_x,
+    double* const* const dpsir_ylm_y,
+    double* const* const dpsir_ylm_z,
     double* const* const dpsir_ylm);
 
 void cal_ddpsir_ylm(
@@ -284,28 +298,23 @@ ModuleBase::Array_Pool<double> get_psir_vlbr3(
     const double* const* const psir_ylm); // psir_ylm[bxyz][LD_pool]
 
 // sum_nu,R rho_mu,nu(R) psi_nu, for multi-k and gamma point
-void mult_psi_DMR(
-    const Grid_Technique& gt,
-    const int bxyz,
-    const int LD_pool,
-    const int &grid_index,
-    const int &na_grid,
-    const int*const block_index,
-    const int*const block_size,
-    const bool*const*const cal_flag,
-    const double*const*const psi,
-    double*const*const psi_DMR,
-    const hamilt::HContainer<double>*const DM,
-    const bool if_symm);
-
+void mult_psi_DMR(const Grid_Technique& gt,
+                  const int bxyz,
+                  const int LD_pool,
+                  const int& grid_index,
+                  const int& na_grid,
+                  const int* const block_index,
+                  const int* const block_size,
+                  const bool* const* const cal_flag,
+                  const double* const* const psi,
+                  double* const* const psi_DMR,
+                  const hamilt::HContainer<double>* const DM,
+                  const bool if_symm);
 
 // pair.first is the first index of the meshcell which is inside atoms ia1 and ia2.
 // pair.second is the number of meshcells which should be calculated in the following gemm.
 // If no meshcell is inside both ia1 and ia2, return [bxyz, 0].
-std::pair<int, int> cal_info(const int bxyz, 
-			                 const int ia1,
-			                 const int ia2,
-			                 const bool* const* const cal_flag);
-            
+std::pair<int, int> cal_info(const int bxyz, const int ia1, const int ia2, const bool* const* const cal_flag);
+
 } // namespace Gint_Tools
 #endif

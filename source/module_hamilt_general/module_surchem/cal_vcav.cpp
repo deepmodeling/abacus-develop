@@ -1,35 +1,34 @@
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 #include "surchem.h"
 
-void lapl_rho(const double& tpiba2,
-              const std::complex<double>* rhog, 
-              double* lapn, 
-              const ModulePW::PW_Basis* rho_basis)
+void lapl_rho(const double& tpiba2, const std::complex<double>* rhog, double* lapn, const ModulePW::PW_Basis* rho_basis)
 {
-    std::complex<double> *gdrtmpg = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* gdrtmpg = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(lapn, rho_basis->nrxx);
 
-    std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
+    std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
 
     // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
-    for (int ig = 0; ig < rho_basis->npw; ig++) {
+    for (int ig = 0; ig < rho_basis->npw; ig++)
+    {
         gdrtmpg[ig] = rhog[ig];
-}
-    for(int i = 0 ; i < 3 ; ++i)
+    }
+    for (int i = 0; i < 3; ++i)
     {
         // calculate the charge density gradient in reciprocal space.
-        for (int ig = 0; ig < rho_basis->npw; ig++) {
+        for (int ig = 0; ig < rho_basis->npw; ig++)
+        {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
-}
+        }
         // bring the gdr from G --> R
         rho_basis->recip2real(aux, aux);
         // remember to multily 2pi/a0, which belongs to G vectors.
-        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
+        for (int ir = 0; ir < rho_basis->nrxx; ir++)
+        {
             lapn[ir] -= aux[ir].real() * tpiba2;
-}
-
+        }
     }
 
     delete[] gdrtmpg;
@@ -42,7 +41,7 @@ void lapl_rho(const double& tpiba2,
 void shape_gradn(const complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime)
 {
 
-    double *ps_totn_real = new double[rho_basis->nrxx];
+    double* ps_totn_real = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(ps_totn_real, rho_basis->nrxx);
     rho_basis->recip2real(ps_totn, ps_totn_real);
 
@@ -64,11 +63,11 @@ void surchem::createcavity(const UnitCell& ucell,
                            const complex<double>* ps_totn,
                            double* vwork)
 {
-    ModuleBase::Vector3<double> *nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+    ModuleBase::Vector3<double>* nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(nablan, rho_basis->nrxx);
-    double *nablan_2 = new double[rho_basis->nrxx];
-    double *sqrt_nablan_2 = new double[rho_basis->nrxx];
-    double *lapn = new double[rho_basis->nrxx];
+    double* nablan_2 = new double[rho_basis->nrxx];
+    double* sqrt_nablan_2 = new double[rho_basis->nrxx];
+    double* lapn = new double[rho_basis->nrxx];
 
     ModuleBase::GlobalFunc::ZEROS(nablan_2, rho_basis->nrxx);
     ModuleBase::GlobalFunc::ZEROS(sqrt_nablan_2, rho_basis->nrxx);
@@ -84,7 +83,7 @@ void surchem::createcavity(const UnitCell& ucell,
     }
 
     // Laplacian of n
-    lapl_rho(ucell.tpiba2,ps_totn, lapn, rho_basis);
+    lapl_rho(ucell.tpiba2, ps_totn, lapn, rho_basis);
 
     //-------------------------------------------------------------
     // add -Lap(n)/|\nabla n| to vwork and copy \sqrt(|\nabla n|^2)
@@ -104,7 +103,7 @@ void surchem::createcavity(const UnitCell& ucell,
     // term1 = gamma*A / n, where
     // gamma * A = exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )
     //-------------------------------------------------------------
-    double *term1 = new double[rho_basis->nrxx];
+    double* term1 = new double[rho_basis->nrxx];
     shape_gradn(ps_totn, rho_basis, term1);
 
     //-------------------------------------------------------------
@@ -131,11 +130,11 @@ void surchem::createcavity(const UnitCell& ucell,
 
     //  packs the real array into a complex one
     //  to G space
-    complex<double> *inv_gn = new complex<double>[rho_basis->npw];
+    complex<double>* inv_gn = new complex<double>[rho_basis->npw];
     rho_basis->real2recip(sqrt_nablan_2, inv_gn);
-    
+
     // \nabla(1 / |\nabla n|), ggn in real space
-    ModuleBase::Vector3<double> *ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+    ModuleBase::Vector3<double>* ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     XC_Functional::grad_rho(inv_gn, ggn, rho_basis, ucell.tpiba);
 
     //-------------------------------------------------------------
@@ -170,7 +169,7 @@ ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
     ModuleBase::TITLE("surchem", "cal_vcav");
     ModuleBase::timer::tick("surchem", "cal_vcav");
 
-    double *tmp_Vcav = new double[rho_basis->nrxx];
+    double* tmp_Vcav = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(tmp_Vcav, rho_basis->nrxx);
 
     createcavity(ucell, rho_basis, ps_totn, tmp_Vcav);

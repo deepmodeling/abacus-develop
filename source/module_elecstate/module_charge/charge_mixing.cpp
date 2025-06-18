@@ -1,10 +1,10 @@
 #include "charge_mixing.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/module_mixing/broyden_mixing.h"
-#include "module_base/module_mixing/pulay_mixing.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/pulay_mixing.h"
+#include "source_base/timer.h"
 
 Charge_Mixing::Charge_Mixing()
 {
@@ -58,14 +58,14 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     // print into running.log
-    GlobalV::ofs_running<<"\n ----------- Charge Mixing Parameters ------------"<<std::endl;
+    GlobalV::ofs_running << "\n ----------- Charge Mixing Parameters ------------" << std::endl;
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_type", this->mixing_mode);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta", this->mixing_beta);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0", this->mixing_gg0);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_min", PARAM.inp.mixing_gg0_min);
 
-    if (PARAM.inp.nspin==2 || PARAM.inp.nspin==4)
+    if (PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta_mag", this->mixing_beta_mag);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_gg0_mag", PARAM.inp.mixing_gg0_mag);
@@ -108,7 +108,7 @@ void Charge_Mixing::init_mixing()
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
 
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         // ONLY smooth part of charge density is mixed by specific mixing method
         // The high_frequency part is mixed by plain mixing method.
@@ -119,23 +119,21 @@ void Charge_Mixing::init_mixing()
     // allocate memory for mixing data, if exists, free it first and then allocate new memory
     // initailize rho_mdata
     if (PARAM.inp.scf_thr_type == 1)
-    {  
-        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0 )
+    {
+        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0)
         {
-            this->mixing->init_mixing_data(this->rho_mdata,
-                                        this->rhopw->npw * 2,
-                                        sizeof(std::complex<double>));
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->npw * 2, sizeof(std::complex<double>));
         }
         else
         {
             this->mixing->init_mixing_data(this->rho_mdata,
-                                        this->rhopw->npw * PARAM.inp.nspin,
-                                        sizeof(std::complex<double>));
+                                           this->rhopw->npw * PARAM.inp.nspin,
+                                           sizeof(std::complex<double>));
         }
     }
     else
     {
-        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0 )
+        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0)
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
         }
@@ -144,7 +142,7 @@ void Charge_Mixing::init_mixing()
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
         }
     }
-    
+
     // initailize tau_mdata
     if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
@@ -182,11 +180,14 @@ void Charge_Mixing::mix_reset()
     }
 }
 
-bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold)
+bool Charge_Mixing::if_scf_oscillate(const int iteration,
+                                     const double drho,
+                                     const int iternum_used,
+                                     const double threshold)
 {
     ModuleBase::TITLE("Charge_Mixing", "if_scf_oscillate");
 
-    if(this->_drho_history.size() == 0)
+    if (this->_drho_history.size() == 0)
     {
         this->_drho_history.resize(PARAM.inp.scf_nmax);
     }
@@ -194,13 +195,13 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     // add drho into history
     this->_drho_history[iteration - 1] = drho;
 
-    if(threshold >= 0) // close the function
+    if (threshold >= 0) // close the function
     {
         return false;
     }
 
     // check if the history is long enough
-    if(iteration < iternum_used + this->mixing_restart_last)
+    if (iteration < iternum_used + this->mixing_restart_last)
     {
         return false;
     }
@@ -220,13 +221,14 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     }
     double numerator = iternum_used * sumXY - sumX * sumY;
     double denominator = iternum_used * sumXX - sumX * sumX;
-    if (denominator == 0) {
+    if (denominator == 0)
+    {
         return false;
     }
-    slope =  numerator / denominator;
+    slope = numerator / denominator;
 
     // if the slope is less than the threshold, return true
-    if(slope > threshold)
+    if (slope > threshold)
     {
         return true;
     }

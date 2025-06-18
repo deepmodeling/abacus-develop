@@ -1,32 +1,32 @@
 #include "FORCE.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_base/memory.h"
 #include "module_parameter/parameter.h"
-template<>
+#include "source_base/memory.h"
+template <>
 elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecstate::ElecState* pelec,
-    const psi::Psi<double>& psi,
-    const elecstate::DensityMatrix<double, double>& dm,
-    const K_Vectors& kv,
-    const Parallel_Orbitals& pv,
-    const int& nspin, 
-    const int& nbands,
-    const UnitCell& ucell,
-    Record_adj& ra) const
+                                                                     const psi::Psi<double>& psi,
+                                                                     const elecstate::DensityMatrix<double, double>& dm,
+                                                                     const K_Vectors& kv,
+                                                                     const Parallel_Orbitals& pv,
+                                                                     const int& nspin,
+                                                                     const int& nbands,
+                                                                     const UnitCell& ucell,
+                                                                     Record_adj& ra) const
 {
     ModuleBase::matrix wg_ekb;
     wg_ekb.create(nspin, nbands);
 
-    for(int is=0; is<nspin; is++)
+    for (int is = 0; is < nspin; is++)
     {
-        for(int ib=0; ib<nbands; ib++)
+        for (int ib = 0; ib < nbands; ib++)
         {
-            wg_ekb(is,ib) = pelec->wg(is,ib) * pelec->ekb(is, ib);
+            wg_ekb(is, ib) = pelec->wg(is, ib) * pelec->ekb(is, ib);
         }
     }
 
     // construct a DensityMatrix for Gamma-Only
     elecstate::DensityMatrix<double, double> edm(&pv, nspin);
-    
+
 #ifdef __PEXSI
     if (PARAM.inp.ks_solver == "pexsi")
     {
@@ -35,7 +35,6 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
         {
             edm.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
         }
-        
     }
     else
 #endif
@@ -45,13 +44,14 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
     return edm;
 }
 
-template<>
-elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<double>>::cal_edm(const elecstate::ElecState* pelec,
+template <>
+elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<double>>::cal_edm(
+    const elecstate::ElecState* pelec,
     const psi::Psi<std::complex<double>>& psi,
     const elecstate::DensityMatrix<std::complex<double>, double>& dm,
     const K_Vectors& kv,
     const Parallel_Orbitals& pv,
-    const int& nspin, 
+    const int& nspin,
     const int& nbands,
     const UnitCell& ucell,
     Record_adj& ra) const

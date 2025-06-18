@@ -1,10 +1,10 @@
 #include "charge.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #ifdef __MPI
 void Charge::init_chgmpi()
 {
@@ -109,7 +109,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
         delete[] array_tot;
         delete[] array_tmp;
     }
-    if(PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
+    if (PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
     {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
@@ -119,9 +119,10 @@ void Charge::reduce_diff_pools(double* array_rho) const
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) {
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1)
+    {
         return;
-}
+    }
     ModuleBase::timer::tick("Charge", "rho_mpi");
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)

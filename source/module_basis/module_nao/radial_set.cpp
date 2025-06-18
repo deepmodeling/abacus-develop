@@ -1,11 +1,11 @@
 #include "module_basis/module_nao/radial_set.h"
 
+#include "source_base/spherical_bessel_transformer.h"
+
 #include <algorithm>
 #include <cstring>
-#include <memory>
 #include <fstream>
-
-#include "module_base/spherical_bessel_transformer.h"
+#include <memory>
 
 // FIXME: should update with pyabacus
 // #include "module_io/orb_io.h"
@@ -17,16 +17,9 @@ RadialSet::~RadialSet()
     delete[] index_map_;
 }
 
-RadialSet::RadialSet(const RadialSet& other) :
-    symbol_(other.symbol_),
-    itype_(other.itype_),
-    lmax_(other.lmax_),
-    rcut_max_(other.rcut_max_),
-    nzeta_(nullptr),
-    nzeta_max_(other.nzeta_max_),
-    nchi_(other.nchi_),
-    chi_(nullptr),
-    index_map_(nullptr)
+RadialSet::RadialSet(const RadialSet& other)
+    : symbol_(other.symbol_), itype_(other.itype_), lmax_(other.lmax_), rcut_max_(other.rcut_max_), nzeta_(nullptr),
+      nzeta_max_(other.nzeta_max_), nchi_(other.nchi_), chi_(nullptr), index_map_(nullptr)
 {
     if (nchi_ == 0)
     {
@@ -202,9 +195,9 @@ void RadialSet::write_abacus_orb(const std::string& file_name, const int rank) c
     file_to.open(file_name, std::ios::out);
 
     std::vector<std::string> sublayers = {"S", "P", "D", "F", "G", "H", "I", "J", "K"};
-    if(file_to.good())
+    if (file_to.good())
     {
-        for(int i = 0; i < 75; ++i)
+        for (int i = 0; i < 75; ++i)
         {
             file_to << "-";
         }
@@ -213,40 +206,39 @@ void RadialSet::write_abacus_orb(const std::string& file_name, const int rank) c
         file_to << std::left << std::setw(28) << "Element" << symbol_ << std::endl;
         file_to << std::left << std::setw(28) << "Energy Cutoff(Ry)" << std::to_string(int(100.0)) << std::endl;
         // rcut .1f, not scientific
-        file_to << std::left << std::setw(28) << "Radius Cutoff(a.u.)" 
-                << std::fixed << std::setprecision(1) << rcut_max_ << std::endl;
+        file_to << std::left << std::setw(28) << "Radius Cutoff(a.u.)" << std::fixed << std::setprecision(1)
+                << rcut_max_ << std::endl;
         file_to << std::left << std::setw(28) << "Lmax" << lmax_ << std::endl;
-        for(int l = 0; l <= lmax_; ++l)
+        for (int l = 0; l <= lmax_; ++l)
         {
             std::string title = "Number of " + sublayers[l] + "orbital-->";
             file_to << std::left << std::setw(28) << title << nzeta_[l] << std::endl;
         }
-        for(int i = 0; i < 75; ++i)
+        for (int i = 0; i < 75; ++i)
         {
             file_to << "-";
         }
         file_to << std::endl;
         file_to << "SUMMARY  END\n\n";
-        file_to << std::left << std::setw(28) << "Mesh" << std::setprecision(0) << int(rcut_max_/0.01) + 1 << std::endl;
+        file_to << std::left << std::setw(28) << "Mesh" << std::setprecision(0) << int(rcut_max_ / 0.01) + 1
+                << std::endl;
         file_to << std::left << std::setw(28) << "dr" << std::setprecision(2) << 0.01 << std::endl;
 
-        for(int l = 0; l <= lmax_; l++)
+        for (int l = 0; l <= lmax_; l++)
         {
-            for(int izeta = 0; izeta < nzeta_[l]; izeta++)
+            for (int izeta = 0; izeta < nzeta_[l]; izeta++)
             {
-                file_to << std::right << std::setw(20) << "Type"
-                        << std::right << std::setw(20) << "L"
-                        << std::right << std::setw(20) << "N" << std::endl;
-                file_to << std::right << std::setw(20) << std::to_string(0)
-                        << std::right << std::setw(20) << std::to_string(l)
-                        << std::right << std::setw(20) << std::to_string(izeta);
-                for(int i = 0; i < int(rcut_max_/0.01) + 1; i++)
+                file_to << std::right << std::setw(20) << "Type" << std::right << std::setw(20) << "L" << std::right
+                        << std::setw(20) << "N" << std::endl;
+                file_to << std::right << std::setw(20) << std::to_string(0) << std::right << std::setw(20)
+                        << std::to_string(l) << std::right << std::setw(20) << std::to_string(izeta);
+                for (int i = 0; i < int(rcut_max_ / 0.01) + 1; i++)
                 {
-                    if(i % 4 == 0)
+                    if (i % 4 == 0)
                     {
                         file_to << std::endl;
                     }
-                    file_to << std::left << std::setw(22) << std::setprecision(14) << std::scientific 
+                    file_to << std::left << std::setw(22) << std::setprecision(14) << std::scientific
                             << chi_[index(l, izeta)].rvalue()[i];
                 }
                 file_to << std::endl;

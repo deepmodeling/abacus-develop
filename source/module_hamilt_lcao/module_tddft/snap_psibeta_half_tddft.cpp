@@ -1,10 +1,10 @@
 #include "snap_psibeta_half_tddft.h"
 
-#include "module_base/constants.h"
-#include "module_base/math_integral.h"
-#include "module_base/math_polyint.h"
-#include "module_base/timer.h"
-#include "module_base/ylm.h"
+#include "source_base/constants.h"
+#include "source_base/math_integral.h"
+#include "source_base/math_polyint.h"
+#include "source_base/timer.h"
+#include "source_base/ylm.h"
 
 namespace module_tddft
 {
@@ -163,7 +163,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                 const ModuleBase::Vector3<double> r_coor = r_ridial[ir] * r_angular_tmp;
                 const ModuleBase::Vector3<double> tmp_r_coor = r_coor + dRa;
                 const double tmp_r_coor_norm = tmp_r_coor.norm();
-                if (tmp_r_coor_norm > Rcut1) 
+                if (tmp_r_coor_norm > Rcut1)
                 {
                     continue;
                 }
@@ -182,13 +182,13 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                 const std::complex<double> exp_iAr = std::exp(ModuleBase::IMAG_UNIT * phase);
 
                 const ModuleBase::Vector3<double> tmp_r_coor_r_commu = r_coor + R0;
-                const double interp_v = ModuleBase::PolyInt::Polynomial_Interpolation(psi_1, 
-                      mesh_r1, dk_1, tmp_r_coor_norm);
+                const double interp_v
+                    = ModuleBase::PolyInt::Polynomial_Interpolation(psi_1, mesh_r1, dk_1, tmp_r_coor_norm);
 
                 for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
                 {
-                    std::complex<double> temp = exp_iAr * rly0[L0 * L0 + m0] * rly1[L1 * L1 + m1]
-                                                * interp_v * weights_angular;
+                    std::complex<double> temp
+                        = exp_iAr * rly0[L0 * L0 + m0] * rly1[L1 * L1 + m1] * interp_v * weights_angular;
                     result_angular[m0] += temp;
 
                     if (calc_r)
@@ -201,8 +201,8 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
             }
 
             int index_tmp = index;
-            const double temp = ModuleBase::PolyInt::Polynomial_Interpolation(beta_r,
-                     mesh_r0, dk_0, r_ridial[ir]) * r_ridial[ir] * weights_ridial[ir];
+            const double temp = ModuleBase::PolyInt::Polynomial_Interpolation(beta_r, mesh_r0, dk_0, r_ridial[ir])
+                                * r_ridial[ir] * weights_ridial[ir];
 
             if (!calc_r)
             {
@@ -228,13 +228,13 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         index += 2 * L0 + 1;
     }
 
-    for(int dim = 0; dim < nlm.size(); dim++)
+    for (int dim = 0; dim < nlm.size(); dim++)
     {
-        for (auto &x : nlm[dim])
+        for (auto& x: nlm[dim])
         {
             // nlm[0] is <phi|exp^{-iAr}|beta>
             // nlm[1 or 2 or 3] is <phi|r_a * exp^{-iAr}|beta>, a = x, y, z
-            x = std::conj(x); 
+            x = std::conj(x);
         }
     }
 

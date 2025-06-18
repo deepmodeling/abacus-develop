@@ -1,8 +1,8 @@
 #include "lattice_change_cg.h"
 
 #include "lattice_change_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 
 // the 'dim' variable is defined in Lattice_Change_Basic
 using namespace Lattice_Change_Basic;
@@ -61,7 +61,7 @@ void Lattice_Change_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
+void Lattice_Change_CG::start(UnitCell& ucell, const ModuleBase::matrix& stress_in, const double& etot_in)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
@@ -69,7 +69,6 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     assert(grad0 != 0);
     assert(cg_grad0 != 0);
     assert(move0 != 0);
-   
 
     // sd , trial are two parameters, when sd=trial=true,
     // a new direction begins, when sd = false trial =true
@@ -78,11 +77,11 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     // a cubic interpolation is used to make the third point,
     // when sa = trial = false, we use Brent to get the
     // minimum point in this direction.
-    static bool trial = false; 
+    static bool trial = false;
 
     // ncggrad is a parameter to control the cg method,
     // every ten cg direction, we change the direction back to
-    // the steepest descent method  
+    // the steepest descent method
     static int ncggrad = 0;
 
     static double fa = 0.0;
@@ -99,11 +98,11 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
     static int nbrent = 0;
 
-    double *lat = new double[dim];
-    double *grad = new double[dim];
-    double *cg_gradn = new double[dim];
-    double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    double* lat = new double[dim];
+    double* grad = new double[dim];
+    double* cg_gradn = new double[dim];
+    double* move = new double[dim];
+    double* cg_grad = new double[dim];
 
     double best_x = 0.0;
     double fmin = 0.0;
@@ -312,12 +311,12 @@ CG_begin:
     return;
 }
 
-void Lattice_Change_CG::setup_cg_grad(double *grad,
-                                      const double *grad0,
-                                      double *cg_grad,
-                                      const double *cg_grad0,
-                                      const int &ncggrad,
-                                      int &flag)
+void Lattice_Change_CG::setup_cg_grad(double* grad,
+                                      const double* grad0,
+                                      double* cg_grad,
+                                      const double* cg_grad0,
+                                      const int& ncggrad,
+                                      int& flag)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "setup_cg_grad");
     assert(Lattice_Change_Basic::stress_step > 0);
@@ -372,12 +371,12 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
     return;
 }
 
-void Lattice_Change_CG::third_order(const double &e0,
-                                    const double &e1,
-                                    const double &fa,
-                                    const double &fb,
+void Lattice_Change_CG::third_order(const double& e0,
+                                    const double& e1,
+                                    const double& fa,
+                                    const double& fb,
                                     const double x,
-                                    double &best_x)
+                                    double& best_x)
 {
     double k3, k2, k1;
     double dmoveh, dmove1, dmove2, dmove, ecal1, ecal2;
@@ -413,14 +412,14 @@ void Lattice_Change_CG::third_order(const double &e0,
     return;
 }
 
-void Lattice_Change_CG::Brent(double &fa,
-                              double &fb,
-                              double &fc,
-                              double &xa,
-                              double &xb,
-                              double &xc,
-                              double &best_x,
-                              double &xpt)
+void Lattice_Change_CG::Brent(double& fa,
+                              double& fb,
+                              double& fc,
+                              double& xa,
+                              double& xb,
+                              double& xc,
+                              double& best_x,
+                              double& xpt)
 {
     double dmove;
     double tmp;
@@ -485,7 +484,7 @@ void Lattice_Change_CG::Brent(double &fa,
     return;
 }
 
-void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
+void Lattice_Change_CG::f_cal(const double* g0, const double* g1, const int& dim, double& f_value)
 {
     double hv0, hel;
     hel = 0;
@@ -503,7 +502,7 @@ void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim
     return;
 }
 
-void Lattice_Change_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
+void Lattice_Change_CG::setup_move(double* move, double* cg_gradn, const double& trust_radius)
 {
     // movement using gradient and trust_radius.
     for (int i = 0; i < dim; ++i)

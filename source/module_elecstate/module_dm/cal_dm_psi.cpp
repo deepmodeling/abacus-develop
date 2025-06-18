@@ -1,19 +1,19 @@
 #include "cal_dm_psi.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/blas_connector.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/timer.h"
 #include "module_psi/psi.h"
+#include "source_base/blas_connector.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/timer.h"
 
 namespace elecstate
 {
 
 // for Gamma-Only case where DMK is double
 void cal_dm_psi(const Parallel_Orbitals* ParaV,
-                       const ModuleBase::matrix& wg,
-                       const psi::Psi<double>& wfc,
-                       elecstate::DensityMatrix<double, double>& DM)
+                const ModuleBase::matrix& wg,
+                const psi::Psi<double>& wfc,
+                elecstate::DensityMatrix<double, double>& DM)
 {
     ModuleBase::TITLE("elecstate", "cal_dm");
     ModuleBase::timer::tick("elecstate", "cal_dm");
@@ -33,13 +33,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // dm[ik].create(ParaV->ncol, ParaV->nrow);
         //  wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
 
-        psi::Psi<double> wg_wfc(1, 
-                                wfc.get_nbands(), 
-                                wfc.get_nbasis(),
-                                wfc.get_nbasis(),
-                                true);
+        psi::Psi<double> wg_wfc(1, wfc.get_nbands(), wfc.get_nbasis(), wfc.get_nbasis(), true);
         wg_wfc.set_all_psi(wfc.get_pointer(), wg_wfc.size());
-
 
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
@@ -53,10 +48,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-			if (ib_global >= wg.nc)
-			{
-				continue;
-			}
+            if (ib_global >= wg.nc)
+            {
+                continue;
+            }
             const double wg_local = wg(ik, ib_global);
 
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
@@ -76,9 +71,9 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 }
 
 void cal_dm_psi(const Parallel_Orbitals* ParaV,
-                       const ModuleBase::matrix& wg,
-                       const psi::Psi<std::complex<double>>& wfc,
-                       elecstate::DensityMatrix<std::complex<double>, double>& DM)
+                const ModuleBase::matrix& wg,
+                const psi::Psi<std::complex<double>>& wfc,
+                elecstate::DensityMatrix<std::complex<double>, double>& DM)
 {
     ModuleBase::TITLE("elecstate", "cal_dm");
     ModuleBase::timer::tick("elecstate", "cal_dm");
@@ -94,14 +89,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         wfc.fix_k(ik);
         std::complex<double>* dmk_pointer = DM.get_DMK_pointer(ik);
         // dm.fix_k(ik);
-        //dm[ik].create(ParaV->ncol, ParaV->nrow);
+        // dm[ik].create(ParaV->ncol, ParaV->nrow);
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi::Psi<std::complex<double>> wg_wfc(1, 
-                                              wfc.get_nbands(), 
-                                              wfc.get_nbasis(),
-                                              wfc.get_nbasis(),
-                                              true);
-        
+        psi::Psi<std::complex<double>> wg_wfc(1, wfc.get_nbands(), wfc.get_nbasis(), wfc.get_nbasis(), true);
+
         const std::complex<double>* pwfc = wfc.get_pointer();
         std::complex<double>* pwg_wfc = wg_wfc.get_pointer();
 #ifdef _OPENMP
@@ -124,11 +115,11 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-			if (ib_global >= wg.nc)
-			{
-				continue;
-			}
-			const double wg_local = wg(ik, ib_global);
+            if (ib_global >= wg.nc)
+            {
+                continue;
+            }
+            const double wg_local = wg(ik, ib_global);
             std::complex<double>* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
         }
@@ -139,7 +130,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         if (PARAM.inp.ks_solver == "cg_in_lcao")
         {
             psiMulPsi(wg_wfc, wfc, dmk_pointer);
-        } else 
+        }
+        else
         {
             psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
         }
@@ -154,10 +146,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
 #ifdef __MPI
 void psiMulPsiMpi(const psi::Psi<double>& psi1,
-                         const psi::Psi<double>& psi2,
-                         double* dm_out,
-                         const int* desc_psi,
-                         const int* desc_dm)
+                  const psi::Psi<double>& psi2,
+                  double* dm_out,
+                  const int* desc_psi,
+                  const int* desc_dm)
 {
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
     const double one_float = 1.0, zero_float = 0.0;
@@ -189,10 +181,10 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
 }
 
 void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
-                         const psi::Psi<std::complex<double>>& psi2,
-                         std::complex<double>* dm_out,
-                         const int* desc_psi,
-                         const int* desc_dm)
+                  const psi::Psi<std::complex<double>>& psi2,
+                  std::complex<double>* dm_out,
+                  const int* desc_psi,
+                  const int* desc_dm)
 {
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
     const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
@@ -247,8 +239,8 @@ void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, doubl
 }
 
 void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
-                      const psi::Psi<std::complex<double>>& psi2,
-                      std::complex<double>* dm_out)
+               const psi::Psi<std::complex<double>>& psi2,
+               std::complex<double>* dm_out)
 {
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';

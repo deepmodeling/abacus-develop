@@ -1,10 +1,11 @@
-#include "module_base/global_function.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_base/blas_connector.h"
-#include "gint_common.h"
 #include "gint_vl_metagga_nspin4.h"
-#include "phi_operator.h"
+
+#include "gint_common.h"
 #include "gint_helper.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "phi_operator.h"
+#include "source_base/blas_connector.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {
@@ -20,7 +21,7 @@ void Gint_vl_metagga_nspin4::cal_gint()
 void Gint_vl_metagga_nspin4::init_hr_gint_()
 {
     hr_gint_part_.resize(nspin_);
-    for(int i = 0; i < nspin_; i++)
+    for (int i = 0; i < nspin_; i++)
     {
         hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
@@ -42,9 +43,9 @@ void Gint_vl_metagga_nspin4::cal_hr_gint_()
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (const auto& biggrid: gint_info_->get_biggrids())
         {
-            if(biggrid->get_atoms().size() == 0)
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -59,16 +60,28 @@ void Gint_vl_metagga_nspin4::cal_hr_gint_()
             dphi_y_vldr3.resize(phi_len);
             dphi_z_vldr3.resize(phi_len);
             phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
-            for(int is = 0; is < nspin_; is++)
+            for (int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.data(), dphi_x_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.data(), dphi_y_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.data(), dphi_z_vldr3.data());
-                phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), *hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_x.data(), dphi_x_vldr3.data(), *hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_y.data(), dphi_y_vldr3.data(), *hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_z.data(), dphi_z_vldr3.data(), *hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(phi.data(),
+                                   phi_vldr3.data(),
+                                   *hr_gint_part_[is],
+                                   PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(dphi_x.data(),
+                                   dphi_x_vldr3.data(),
+                                   *hr_gint_part_[is],
+                                   PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(dphi_y.data(),
+                                   dphi_y_vldr3.data(),
+                                   *hr_gint_part_[is],
+                                   PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(dphi_z.data(),
+                                   dphi_z_vldr3.data(),
+                                   *hr_gint_part_[is],
+                                   PhiOperator::Triangular_Matrix::Upper);
             }
         }
     }

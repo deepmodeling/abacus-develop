@@ -1,8 +1,8 @@
-#include "module_base/complexmatrix.h"
-#include "module_base/lapack_connector.h"
-#include "module_base/module_device/memory_op.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 
 #include <algorithm>
 #include <complex>
@@ -87,43 +87,41 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
     // prepare W & V in CPU in dngv_op
     std::vector<double> W_dngv_op = {0.0, 0.0, 0.0, 0.0};
     std::vector<std::complex<double>> matrix_V_dngv_op = {{0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0}};
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0}};
 
     // prepare W & V in CPU in dngvx_op
     std::vector<double> W_DNGVX = {0.0, 0.0};
     std::vector<std::complex<double>> matrix_V_DNGVX = {{0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0}};
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0}};
 };
-
-
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
 
@@ -146,9 +144,9 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
     // run
     ModuleBase::createGpuBlasHandle();
     ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(2,
-                                                                                 3,
-                                                                                 device_transpose,
-                                                                                 device_transpose);
+                                                                                    3,
+                                                                                    device_transpose,
+                                                                                    device_transpose);
     ModuleBase::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU

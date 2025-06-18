@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "../../../module_base/parallel_global.h"
+#include "../../../source_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../surchem.h"
@@ -104,7 +104,7 @@ TEST_F(cal_totn_test, induced_charge)
     precision_flag = "double";
     device_flag = "cpu";
     Setcell::setupcell(ucell);
-    
+
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G

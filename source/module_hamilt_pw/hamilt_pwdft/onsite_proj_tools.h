@@ -1,14 +1,14 @@
 #ifndef MODULEHAMILTPW_ONSITEPROJTOOLS_H
 #define MODULEHAMILTPW_ONSITEPROJTOOLS_H
 
-#include "module_base/module_device/device.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/device.h"
 
 #include <complex>
 
@@ -40,9 +40,9 @@ class Onsite_Proj_tools
                       const ModuleBase::matrix& ekb);
 
     // a more general constructor is in the following
-    Onsite_Proj_tools(const std::vector<int>& nproj,     // number of projectors for each atom type
+    Onsite_Proj_tools(const std::vector<int>& nproj, // number of projectors for each atom type
                       const std::vector<int>& lproj,
-                      const ModuleBase::realArray& tab,  // radials' spherical bessel transform
+                      const ModuleBase::realArray& tab, // radials' spherical bessel transform
                       const ModuleBase::matrix& nhtol,
                       std::complex<FPTYPE>* vkb_buf,
                       const UnitCell* ucell_in,
@@ -58,7 +58,10 @@ class Onsite_Proj_tools
     /**
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr);
+    void cal_becp(int ik,
+                  int npm,
+                  std::complex<FPTYPE>* becp_in = nullptr,
+                  const std::complex<FPTYPE>* ppsi_in = nullptr);
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
@@ -69,20 +72,41 @@ class Onsite_Proj_tools
      */
     void cal_dbecp_f(int ik, int npm, int ipol);
 
-    void cal_force_dftu(int ik, int npm, FPTYPE* force, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
+    void cal_force_dftu(int ik,
+                        int npm,
+                        FPTYPE* force,
+                        const int* orbital_corr,
+                        const std::complex<FPTYPE>* vu,
+                        const int size_vu,
+                        const FPTYPE* h_wg);
     void cal_force_dspin(int ik, int npm, FPTYPE* force, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
-    void cal_stress_dftu(int ik, int npm, FPTYPE* stress, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
-    void cal_stress_dspin(int ik, int npm, FPTYPE* stress, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
+    void cal_stress_dftu(int ik,
+                         int npm,
+                         FPTYPE* stress,
+                         const int* orbital_corr,
+                         const std::complex<FPTYPE>* vu,
+                         const int size_vu,
+                         const FPTYPE* h_wg);
+    void cal_stress_dspin(int ik,
+                          int npm,
+                          FPTYPE* stress,
+                          const ModuleBase::Vector3<double>* lambda,
+                          const FPTYPE* h_wg);
 
-
-    std::complex<FPTYPE>* get_becp() { return becp; }
-    std::complex<FPTYPE>* get_dbecp() { return dbecp; }
+    std::complex<FPTYPE>* get_becp()
+    {
+        return becp;
+    }
+    std::complex<FPTYPE>* get_dbecp()
+    {
+        return dbecp;
+    }
 
   private:
     /**
      * @brief allocate the memory for the variables
      */
-    void allocate_memory(const ModuleBase::matrix& wg, 
+    void allocate_memory(const ModuleBase::matrix& wg,
                          const ModuleBase::matrix& ekb,
                          const std::vector<int>& nproj,
                          const std::vector<int>& nch);
@@ -106,7 +130,7 @@ class Onsite_Proj_tools
     base_device::AbacusDevice_t device = {};
     int nkb;
     int nbands;
-    int deeq_dims[4] = {0, 0, 0, 0};    // deeq can be something other than that in pseudopotentials
+    int deeq_dims[4] = {0, 0, 0, 0}; // deeq can be something other than that in pseudopotentials
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
     int current_ik = -1;

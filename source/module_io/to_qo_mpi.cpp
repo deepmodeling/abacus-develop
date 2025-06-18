@@ -1,18 +1,17 @@
 #include "module_io/to_qo.h"
 #ifdef __MPI
-#include "../module_base/parallel_common.h"
+#include "../source_base/parallel_common.h"
 #endif
 
-void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec,
-                                        const int rank)
+void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec, const int rank)
 {
-    #ifdef __MPI
+#ifdef __MPI
     int dim;
     std::vector<int> vec_1d;
-    if(rank == 0)
+    if (rank == 0)
     {
         dim = vec.size();
-        for(int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++)
         {
             vec_1d.push_back(vec[i].x);
             vec_1d.push_back(vec[i].y);
@@ -20,29 +19,32 @@ void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& v
         }
     }
     Parallel_Common::bcast_int(dim);
-    if(rank != 0) { vec_1d.resize(dim * 3); }
-    Parallel_Common::bcast_int(vec_1d.data(), dim * 3);
-    if(rank != 0)
+    if (rank != 0)
     {
-        vec.clear(); vec.resize(dim);
-        for(int i = 0; i < dim; i++)
+        vec_1d.resize(dim * 3);
+    }
+    Parallel_Common::bcast_int(vec_1d.data(), dim * 3);
+    if (rank != 0)
+    {
+        vec.clear();
+        vec.resize(dim);
+        for (int i = 0; i < dim; i++)
         {
-            vec[i] = ModuleBase::Vector3<int>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]);
+            vec[i] = ModuleBase::Vector3<int>(vec_1d[i * 3], vec_1d[i * 3 + 1], vec_1d[i * 3 + 2]);
         }
     }
-    #endif
+#endif
 }
 
-void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec,
-                                           const int rank)
+void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec, const int rank)
 {
-    #ifdef __MPI
+#ifdef __MPI
     int dim;
     std::vector<double> vec_1d;
-    if(rank == 0)
+    if (rank == 0)
     {
         dim = vec.size();
-        for(int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++)
         {
             vec_1d.push_back(vec[i].x);
             vec_1d.push_back(vec[i].y);
@@ -50,15 +52,19 @@ void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<doubl
         }
     }
     Parallel_Common::bcast_int(dim);
-    if(rank != 0) { vec_1d.resize(dim * 3); }
-    Parallel_Common::bcast_double(vec_1d.data(), dim * 3);
-    if(rank != 0)
+    if (rank != 0)
     {
-        vec.clear(); vec.resize(dim);
-        for(int i = 0; i < dim; i++)
+        vec_1d.resize(dim * 3);
+    }
+    Parallel_Common::bcast_double(vec_1d.data(), dim * 3);
+    if (rank != 0)
+    {
+        vec.clear();
+        vec.resize(dim);
+        for (int i = 0; i < dim; i++)
         {
-            vec[i] = ModuleBase::Vector3<double>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]);
+            vec[i] = ModuleBase::Vector3<double>(vec_1d[i * 3], vec_1d[i * 3 + 1], vec_1d[i * 3 + 2]);
         }
     }
-    #endif
+#endif
 }

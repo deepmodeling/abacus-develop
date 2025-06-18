@@ -1,5 +1,7 @@
 #include "atom_spec.h"
+
 #include "module_parameter/parameter.h"
+
 #include <cstdlib>
 
 Atom::Atom()
@@ -73,7 +75,7 @@ void Atom::print_Atom(std::ofstream& ofs)
     return;
 }
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #ifdef __MPI
 void Atom::bcast_atom()
 {

@@ -2,43 +2,43 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_base/inverse_matrix.h"
-#include "module_base/lapack_connector.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/psi.h"
-#include "module_hamilt_general/hamilt.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "../diago_cg.h"
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"
-#include "mpi.h"
 #include "module_basis/module_pw/test/test_tool.h"
-#include <complex>
-#include <random>
+#include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "module_psi/psi.h"
+#include "mpi.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/lapack_connector.h"
 
 #include <ATen/core/tensor_map.h>
+#include <complex>
+#include <random>
 
 /************************************************
  *  unit test of functions in Diago_CG
  ***********************************************/
 
- /**
-  * Class Diago_CG is an approach for eigenvalue problems
-  * This unittest test the function Diago_CG::diag() for FPTYPE=double, Device=cpu
-  * with different examples.
-  *  - the Hermite matrices (npw=500,1000) produced using random numbers and with sparsity of 0%, 60%, 80%
-  *  - the Hamiltonian matrix read from "data-H", produced by using out_hs in INPUT of a LCAO calculation
-  *  - a 2x2 Hermite matrix for learning and checking
-  *
-  * Note:
-  * The test is passed when the eignvalues are closed to these calculated by LAPACK.
-  * It is used together with a header file diago_mock.h.
-  * The default Hermite matrix generated here is real symmetric, one can add an imaginary part
-  * by changing two commented out lines in diago_mock.h.
-  *
-  */
+/**
+ * Class Diago_CG is an approach for eigenvalue problems
+ * This unittest test the function Diago_CG::diag() for FPTYPE=double, Device=cpu
+ * with different examples.
+ *  - the Hermite matrices (npw=500,1000) produced using random numbers and with sparsity of 0%, 60%, 80%
+ *  - the Hamiltonian matrix read from "data-H", produced by using out_hs in INPUT of a LCAO calculation
+ *  - a 2x2 Hermite matrix for learning and checking
+ *
+ * Note:
+ * The test is passed when the eignvalues are closed to these calculated by LAPACK.
+ * It is used together with a header file diago_mock.h.
+ * The default Hermite matrix generated here is real symmetric, one can add an imaginary part
+ * by changing two commented out lines in diago_mock.h.
+ *
+ */
 
-  // call lapack in order to compare to cg
+// call lapack in order to compare to cg
 void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = false)
 {
     int info = 0;
@@ -49,30 +49,33 @@ void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = fa
 
     double work_tmp;
     constexpr int minus_one = -1;
-    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, &work_tmp, &minus_one, &info);		// get best lwork
+    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, &work_tmp, &minus_one, &info); // get best lwork
 
     const int lwork = work_tmp;
     double* work2 = new double[lwork];
     dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, &info);
     end = clock();
-    if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
-}
-    if (outtime) { std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
-}
+    if (info)
+    {
+        std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
+    }
+    if (outtime)
+    {
+        std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    }
     delete[] work2;
 }
 
 class DiagoCGPrepare
 {
-public:
+  public:
     DiagoCGPrepare(int nband, int npw, int sparsity, bool reorder, double eps, int maxiter, double threshold)
-        : nband(nband), npw(npw), sparsity(sparsity), reorder(reorder), eps(eps), maxiter(maxiter),
-        threshold(threshold)
+        : nband(nband), npw(npw), sparsity(sparsity), reorder(reorder), eps(eps), maxiter(maxiter), threshold(threshold)
     {
-#ifdef __MPI	
+#ifdef __MPI
         MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
         MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
-#endif	
+#endif
     }
 
     int nband, npw, sparsity, maxiter, notconv;
@@ -88,8 +91,10 @@ public:
         // calculate eigenvalues by LAPACK;
         double* e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix_d;
-        if (mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
-}
+        if (mypnum == 0)
+        {
+            lapackEigen(npw, ev, e_lapack, false);
+        }
         // initial guess of psi by perturbing lapack psi
         ModuleBase::matrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -104,7 +109,7 @@ public:
             }
         }
         // run cg
-    //======================================================================
+        //======================================================================
         double* en = new double[npw];
         int ik = 1;
         hamilt::Hamilt<double>* ha;
@@ -112,7 +117,7 @@ public:
         int* ngk = new int[1];
         psi::Psi<double> psi;
         psi.resize(ik, nband, npw);
-        //psi.fix_k(0);
+        // psi.fix_k(0);
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < npw; j++)
@@ -124,9 +129,12 @@ public:
         psi::Psi<double> psi_local;
         double* precondition_local;
         DIAGOTEST::npw_local = new int[nprocs];
-#ifdef __MPI				
+#ifdef __MPI
         DIAGOTEST::cal_division(DIAGOTEST::npw);
-        DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix_d, DIAGOTEST::hmatrix_local_d); //will distribute psi and Hmatrix to each process
+        DIAGOTEST::divide_hpsi(psi,
+                               psi_local,
+                               DIAGOTEST::hmatrix_d,
+                               DIAGOTEST::hmatrix_local_d); // will distribute psi and Hmatrix to each process
         precondition_local = new double[DIAGOTEST::npw_local[mypnum]];
         DIAGOTEST::divide_psi<double>(precondition, precondition_local);
 #else
@@ -134,7 +142,8 @@ public:
         DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
         psi_local = psi;
         precondition_local = new double[DIAGOTEST::npw];
-        for (int i = 0;i < DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
+        for (int i = 0; i < DIAGOTEST::npw; i++)
+            precondition_local[i] = precondition[i];
 #endif
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
@@ -142,20 +151,18 @@ public:
         // start = MPI_Wtime();
         // cg.diag(ha, psi_local, en);
 
-
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
-        hsolver::DiagoCG<double> cg(
-            PARAM.input.basis_type,
-            PARAM.input.calculation,
-            hsolver::DiagoIterAssist<double>::need_subspace,
-            subspace_func,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
-            GlobalV::NPROC_IN_POOL);
+        hsolver::DiagoCG<double> cg(PARAM.input.basis_type,
+                                    PARAM.input.calculation,
+                                    hsolver::DiagoIterAssist<double>::need_subspace,
+                                    subspace_func,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
+                                    GlobalV::NPROC_IN_POOL);
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
@@ -164,10 +171,11 @@ public:
         auto hpsi_func = [ha](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
             const auto ndim = psi_in.shape().ndim();
             REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-            auto psi_wrapper = psi::Psi<double>(
-                psi_in.data<double>(), 1, 
-                ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
-                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), true);
+            auto psi_wrapper = psi::Psi<double>(psi_in.data<double>(),
+                                                1,
+                                                ndim == 1 ? 1 : psi_in.shape().dim_size(0),
+                                                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                                                true);
             psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
             using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
             hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<double>());
@@ -176,35 +184,36 @@ public:
         auto spsi_func = [ha](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
             const auto ndim = psi_in.shape().ndim();
             REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-            ha->sPsi(psi_in.data<double>(), spsi_out.data<double>(), 
-                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
-                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
-                ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+            ha->sPsi(psi_in.data<double>(),
+                     spsi_out.data<double>(),
+                     ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                     ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                     ndim == 1 ? 1 : psi_in.shape().dim_size(0));
         };
-        auto psi_tensor = ct::TensorMap(
-            psi_local.get_pointer(), 
-            ct::DataType::DT_DOUBLE, 
-            ct::DeviceType::CpuDevice,
-            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_ngk()});
-        auto eigen_tensor = ct::TensorMap(
-            en,
-            ct::DataType::DT_DOUBLE,
-            ct::DeviceType::CpuDevice,
-            ct::TensorShape({psi_local.get_nbands()}));
-        auto prec_tensor = ct::TensorMap(
-            precondition_local,
-            ct::DataType::DT_DOUBLE, 
-            ct::DeviceType::CpuDevice,
-            ct::TensorShape({static_cast<int>(psi_local.get_current_ngk())})).slice({0}, {psi_local.get_current_ngk()});
+        auto psi_tensor = ct::TensorMap(psi_local.get_pointer(),
+                                        ct::DataType::DT_DOUBLE,
+                                        ct::DeviceType::CpuDevice,
+                                        ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()}))
+                              .slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_ngk()});
+        auto eigen_tensor = ct::TensorMap(en,
+                                          ct::DataType::DT_DOUBLE,
+                                          ct::DeviceType::CpuDevice,
+                                          ct::TensorShape({psi_local.get_nbands()}));
+        auto prec_tensor = ct::TensorMap(precondition_local,
+                                         ct::DataType::DT_DOUBLE,
+                                         ct::DeviceType::CpuDevice,
+                                         ct::TensorShape({static_cast<int>(psi_local.get_current_ngk())}))
+                               .slice({0}, {psi_local.get_current_ngk()});
 
         std::vector<double> ethr_band(nband, 1e-5);
         cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, prec_tensor);
         // TODO: Double check tensormap's potential problem
-        ct::TensorMap(psi_local.get_pointer(), psi_tensor, {psi_local.get_nbands(), psi_local.get_nbasis()}).sync(psi_tensor);
+        ct::TensorMap(psi_local.get_pointer(), psi_tensor, {psi_local.get_nbands(), psi_local.get_nbasis()})
+            .sync(psi_tensor);
         /**************************************************************/
 
         end = MPI_Wtime();
-        //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
+        // if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete[] DIAGOTEST::npw_local;
         delete[] precondition_local;
         //======================================================================
@@ -237,15 +246,15 @@ TEST_P(DiagoCGTest, RandomHamilt)
 }
 
 INSTANTIATE_TEST_SUITE_P(VerifyCG,
-    DiagoCGTest,
-    ::testing::Values(
-        // nband, npw, sparsity, reorder, eps, maxiter, threshold
-        DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3),
-        DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3),
-        DiagoCGPrepare(20, 1000, 8, true, 1e-5, 300, 1e-3),
-        DiagoCGPrepare(40, 1000, 8, true, 1e-6, 300, 1e-3)));
-//DiagoCGPrepare(40, 2000, 8, true, 1e-5, 500, 1e-2))); 
-// the last one is passed but time-consumming.
+                         DiagoCGTest,
+                         ::testing::Values(
+                             // nband, npw, sparsity, reorder, eps, maxiter, threshold
+                             DiagoCGPrepare(10, 500, 0, true, 1e-5, 300, 1e-3),
+                             DiagoCGPrepare(20, 500, 6, true, 1e-5, 300, 1e-3),
+                             DiagoCGPrepare(20, 1000, 8, true, 1e-5, 300, 1e-3),
+                             DiagoCGPrepare(40, 1000, 8, true, 1e-6, 300, 1e-3)));
+// DiagoCGPrepare(40, 2000, 8, true, 1e-5, 500, 1e-2)));
+//  the last one is passed but time-consumming.
 
 // check that the mock class HPsi work well
 // in generating a Hermite matrix
@@ -327,8 +336,10 @@ int main(int argc, char** argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
-}
+    if (myrank != 0)
+    {
+        delete listeners.Release(listeners.default_result_printer());
+    }
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

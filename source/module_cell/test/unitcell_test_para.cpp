@@ -4,18 +4,19 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "memory"
-#include "module_base/global_variable.h"
-#include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/read_pseudo.h"
+#include "source_base/global_variable.h"
+#include "source_base/mathzone.h"
+
 #include <valarray>
 #include <vector>
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "prepare_unitcell.h"
-#include "../update_cell.h"
 #include "../bcast_cell.h"
+#include "../update_cell.h"
+#include "prepare_unitcell.h"
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -161,15 +162,14 @@ TEST_F(UcellTest, UpdatePosTau)
             pos_in[iat * 3 + ik] = (iat * 3 + ik) / (ucell->nat * 3.0) * (ucell->lat.lat0);
         }
     }
-    unitcell::update_pos_tau(ucell->lat,pos_in,ucell->ntype,ucell->nat,ucell->atoms);
+    unitcell::update_pos_tau(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         int it, ia;
         ucell->iat2iait(iat, &ia, &it);
         for (int ik = 0; ik < 3; ++ik)
         {
-            EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia][ik],
-                            (iat*3+ik)/(ucell->nat*3.0));
+            EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia][ik], (iat * 3 + ik) / (ucell->nat * 3.0));
         }
     }
     delete[] pos_in;
@@ -188,8 +188,7 @@ TEST_F(UcellTest, UpdatePosTaud_pointer)
         ucell->iat2iait(iat, &ia, &it);
         tmp[iat] = ucell->atoms[it].taud[ia];
     }
-    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
-                              ucell->nat,ucell->atoms);
+    unitcell::update_pos_taud(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         int it, ia;
@@ -202,7 +201,7 @@ TEST_F(UcellTest, UpdatePosTaud_pointer)
     delete[] pos_in;
 }
 
-//test update_pos_taud with ModuleBase::Vector3<double> version
+// test update_pos_taud with ModuleBase::Vector3<double> version
 TEST_F(UcellTest, UpdatePosTaud_Vector3)
 {
     ModuleBase::Vector3<double>* pos_in = new ModuleBase::Vector3<double>[ucell->nat];
@@ -214,13 +213,12 @@ TEST_F(UcellTest, UpdatePosTaud_Vector3)
         {
             pos_in[iat][ik] = 0.01;
         }
-        int it=0;
-        int ia=0;
+        int it = 0;
+        int ia = 0;
         ucell->iat2iait(iat, &ia, &it);
         tmp[iat] = ucell->atoms[it].taud[ia];
     }
-    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
-                              ucell->nat,ucell->atoms);
+    unitcell::update_pos_taud(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         int it, ia;

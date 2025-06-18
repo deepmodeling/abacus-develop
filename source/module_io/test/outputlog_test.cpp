@@ -3,14 +3,14 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include <unistd.h>
+#include "module_io/output_log.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
+
 #include <cstdio>
 #include <iostream>
 #include <sstream>
-
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
-#include "module_io/output_log.h"
+#include <unistd.h>
 
 #ifdef __MPI
 #include "module_basis/module_pw/test/test_tool.h"
@@ -20,10 +20,11 @@
  * - Tested Functions:
  *  - output_convergence_after_scf()
  *  - output_efermi()
-*/
+ */
 
 // Test the output_convergence_after_scf function
-TEST(OutputConvergenceAfterSCFTest, TestConvergence) {
+TEST(OutputConvergenceAfterSCFTest, TestConvergence)
+{
     bool convergence = true;
     double energy = 2.0;
     std::ofstream ofs_running("test_output_convergence.txt");
@@ -40,10 +41,11 @@ TEST(OutputConvergenceAfterSCFTest, TestConvergence) {
                                    " final etot is 27.211396 eV\n";
 
     EXPECT_EQ(file_content, expected_content);
-     std::remove("test_output_convergence.txt");
+    std::remove("test_output_convergence.txt");
 }
 
-TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
+TEST(OutputConvergenceAfterSCFTest, TestNotConvergence)
+{
     bool convergence = false;
     double energy = 2.0;
     std::ofstream ofs_running("test_output_convergence_noconvergence.txt");
@@ -67,7 +69,8 @@ TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
 }
 
 // Test the output_efermi function
-TEST(OutputEfermiTest, TestConvergence) {
+TEST(OutputEfermiTest, TestConvergence)
+{
     bool convergence = true;
     double efermi = 1.0;
     std::ofstream ofs_running("test_output_efermi.txt");
@@ -113,7 +116,8 @@ TEST(OutputAfterRelaxTest, TestConvergence)
     std::remove("test_output_after_relax.txt");
 }
 
-TEST(OutputEfermiTest, TestNotConvergence) {
+TEST(OutputEfermiTest, TestNotConvergence)
+{
     bool convergence = false;
     double efermi = 1.0;
     std::ofstream ofs_running("test_output_efermi_noconvergence.txt");
@@ -132,7 +136,8 @@ TEST(OutputEfermiTest, TestNotConvergence) {
     std::remove("test_output_efermi_noconvergence.txt");
 }
 
-TEST(OutputEfermiTest, TestMOutputLevel) {
+TEST(OutputEfermiTest, TestMOutputLevel)
+{
     bool convergence = true;
     double efermi = 1.0;
     PARAM.input.out_level = "m"; // Setting output level to "m"
@@ -275,12 +280,10 @@ TEST(PrintForce, PrintForce)
                 testing::HasSubstr("-------------------------------------------------------------------------"));
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("Al1        25.7110532015        51.4221064030        77.1331596044"));
+    EXPECT_THAT(output_str, testing::HasSubstr("Al1        25.7110532015        51.4221064030        77.1331596044"));
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("Al2         0.0000000000         0.0000000000         0.0000000000"));
+    EXPECT_THAT(output_str, testing::HasSubstr("Al2         0.0000000000         0.0000000000         0.0000000000"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
@@ -302,7 +305,6 @@ TEST(PrintStress, PrintStress)
     stress(2, 0) = 0.0;
     stress(2, 1) = 0.0;
     stress(2, 2) = 0.0;
-
 
     std::ofstream ofs("running_stress.txt");
     ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, ofs);
@@ -335,7 +337,8 @@ TEST(PrintStress, PrintStress)
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
+    EXPECT_THAT(output_str,
+                testing::HasSubstr(" TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
     ifs.close();
     std::remove("running_stress.txt");
 }

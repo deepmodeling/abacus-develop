@@ -1,10 +1,9 @@
 #include "esolver_ks_pw.h"
-
-#include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
+#include "source_base/global_variable.h"
 
 #include <iostream>
 
@@ -19,15 +18,9 @@
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
-#include "module_base/memory.h"
-#include "module_base/module_device/device.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "source_hsolver/diago_iter_assist.h"
-#include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -36,15 +29,22 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
+#include "source_base/formatter.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/memory.h"
+#include "source_base/module_device/device.h"
+#include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/hsolver_pw.h"
+#include "source_hsolver/kernels/dngvd_op.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
-#include "module_base/formatter.h"
 
 // mohan add 2025-03-06
 #include "module_io/cal_test.h"
 
-namespace ModuleESolver {
+namespace ModuleESolver
+{
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
@@ -53,7 +53,7 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
 
     const std::string cal_type = PARAM.inp.calculation;
 
-    if (cal_type == "test_memory") 
+    if (cal_type == "test_memory")
     {
         Cal_Test::test_memory(ucell.nat,
                               ucell.ntype,
@@ -62,8 +62,8 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
-    } 
-    else if (cal_type == "gen_bessel") 
+    }
+    else if (cal_type == "gen_bessel")
     {
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
@@ -73,11 +73,10 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
                              PARAM.inp.bessel_descriptor_tolerence,
                              this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
-    } 
-    else 
+    }
+    else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW::others",
-                                 "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW::others", "CALCULATION type not supported");
     }
 
     return;

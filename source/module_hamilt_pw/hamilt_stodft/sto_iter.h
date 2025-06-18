@@ -1,10 +1,10 @@
 #ifndef STO_ITER_H
 #define STO_ITER_H
-#include "module_base/math_chebyshev.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_psi/psi.h"
+#include "source_base/math_chebyshev.h"
 #include "sto_che.h"
 #include "sto_func.h"
 #include "sto_wf.h"
@@ -22,6 +22,7 @@ class Stochastic_Iter
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     // constructor and deconstructor
     Stochastic_Iter();
@@ -46,20 +47,20 @@ class Stochastic_Iter
 
     /**
      * @brief sum demet and eband energies for each k point and each band
-     * 
+     *
      * @param stowf stochastic wave function
      * @param pes elecstate
      * @param pHamilt hamiltonian
      * @param wfc_basis wfc pw basis
      */
     void sum_stoeband(Stochastic_WF<T, Device>& stowf,
-                     elecstate::ElecStatePW<T, Device>* pes,
-                     hamilt::Hamilt<T, Device>* pHamilt,
-                     ModulePW::PW_Basis_K* wfc_basis);
+                      elecstate::ElecStatePW<T, Device>* pes,
+                      hamilt::Hamilt<T, Device>* pHamilt,
+                      ModulePW::PW_Basis_K* wfc_basis);
 
     /**
      * @brief calculate the density
-     * 
+     *
      * @param ucell reference to unit cell
      * @param stowf stochastic wave function
      * @param pes elecstate
@@ -72,15 +73,15 @@ class Stochastic_Iter
 
     /**
      * @brief calculate total number of electrons
-     * 
+     *
      * @param pes elecstate
-     * @return double 
+     * @return double
      */
     double calne(elecstate::ElecState* pes);
 
     /**
      * @brief solve ne(mu) = ne_target and get chemical potential mu
-     * 
+     *
      * @param iter scf iteration index
      * @param pes elecstate
      */
@@ -88,7 +89,7 @@ class Stochastic_Iter
 
     /**
      * @brief orthogonalize stochastic wave functions with KS wave functions
-     * 
+     *
      * @param ik k point index
      * @param psi KS wave functions
      * @param stowf stochastic wave functions
@@ -97,7 +98,7 @@ class Stochastic_Iter
 
     /**
      * @brief check emax and emin
-     * 
+     *
      * @param ik k point index
      * @param istep ion step index
      * @param iter scf iteration index
@@ -107,7 +108,7 @@ class Stochastic_Iter
 
     /**
      * @brief check precision of Chebyshev expansion
-     * 
+     *
      * @param ref reference value
      * @param thr threshold
      * @param info information
@@ -121,15 +122,15 @@ class Stochastic_Iter
 
     double mu0; // chemical potential; unit in Ry
     bool change;
-    double targetne=0.0;
+    double targetne = 0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
     bool check = false;
-    double th_ne=0.0;
-    double KS_ne=0.0;
+    double th_ne = 0.0;
+    double KS_ne = 0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
@@ -141,14 +142,15 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
-    K_Vectors* pkv=nullptr;
+    K_Vectors* pkv = nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]
      * @param y [Device]
      * @param result [CPU] dot result
      */
-    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy,  Real& result);
+    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy, Real& result);
+
   private:
     const Device* ctx = {};
     const base_device::DEVICE_CPU* cpu_ctx = {};

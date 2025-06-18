@@ -1,7 +1,7 @@
 #include "pot_local_paw.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 #include <complex>
 
@@ -11,7 +11,7 @@ namespace elecstate
 //==========================================================
 // This routine computes the local potential in real space
 //==========================================================
-void PotLocal_PAW::cal_fixed_v(double *vl_pseudo // store the local pseudopotential
+void PotLocal_PAW::cal_fixed_v(double* vl_pseudo // store the local pseudopotential
 )
 {
     ModuleBase::TITLE("PotLocal_PAW", "cal_fixed_v");

@@ -1,14 +1,14 @@
 #ifndef OUTPUT_MULLIKEN_H
 #define OUTPUT_MULLIKEN_H
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/cell_index.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_sk.h"
-#include "module_base/formatter.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/formatter.h"
+#include "source_base/matrix.h"
 
 #include <map>
 #include <vector>
@@ -133,33 +133,33 @@ void cal_mag(Parallel_Orbitals* pv,
         std::vector<double> mag_y(ucell.nat, 0.0);
         std::vector<double> mag_z(ucell.nat, 0.0);
         auto atomLabels = ucell.get_atomLabels();
-        if(PARAM.inp.nspin == 2)
+        if (PARAM.inp.nspin == 2)
         {
-            auto sc_lambda
-				= new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
-						kv.kvec_d,
-						dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
-						ucell,
-						&gd,
-						two_center_bundle.overlap_orb_onsite.get(),
-						orb.cutoffs());
-			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
-			moments = sc_lambda->cal_moment(dmr, constrain);
-			dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
-			delete sc_lambda;
-			//const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
-            //const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-            //FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
-            for(int iat=0;iat<ucell.nat;iat++)
+            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(
+                nullptr,
+                kv.kvec_d,
+                dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
+                ucell,
+                &gd,
+                two_center_bundle.overlap_orb_onsite.get(),
+                orb.cutoffs());
+            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
+            moments = sc_lambda->cal_moment(dmr, constrain);
+            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
+            delete sc_lambda;
+            // const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
+            // const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
+            // FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+            for (int iat = 0; iat < ucell.nat; iat++)
             {
                 atom_mag[iat][0] = 0.0;
                 atom_mag[iat][1] = moments[iat];
-            //    mag_z[iat] = moments[iat];
+                //    mag_z[iat] = moments[iat];
             }
-            //table << atomLabels << mag_z;
-            //GlobalV::ofs_running << table.str() << std::endl;
+            // table << atomLabels << mag_z;
+            // GlobalV::ofs_running << table.str() << std::endl;
         }
-        else if(PARAM.inp.nspin == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
                 nullptr,
@@ -171,21 +171,21 @@ void cal_mag(Parallel_Orbitals* pv,
                 orb.cutoffs());
             moments = sc_lambda->cal_moment(dmr, constrain);
             delete sc_lambda;
-            //const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
-            //const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-            //FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
-            for(int iat=0;iat<ucell.nat;iat++)
+            // const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
+            // const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
+            // FmtTable table(title, ucell.nat, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
+            for (int iat = 0; iat < ucell.nat; iat++)
             {
                 atom_mag[iat][0] = 0.0;
-                atom_mag[iat][1] = moments[iat*3];
-                atom_mag[iat][2] = moments[iat*3+1];
-                atom_mag[iat][3] = moments[iat*3+2];
-                //mag_x[iat] = moments[iat*3];
-                //mag_y[iat] = moments[iat*3+1];
-                //mag_z[iat] = moments[iat*3+2];
+                atom_mag[iat][1] = moments[iat * 3];
+                atom_mag[iat][2] = moments[iat * 3 + 1];
+                atom_mag[iat][3] = moments[iat * 3 + 2];
+                // mag_x[iat] = moments[iat*3];
+                // mag_y[iat] = moments[iat*3+1];
+                // mag_z[iat] = moments[iat*3+2];
             }
-            //table << atomLabels << mag_x << mag_y << mag_z;
-            //GlobalV::ofs_running << table.str() << std::endl;
+            // table << atomLabels << mag_x << mag_y << mag_z;
+            // GlobalV::ofs_running << table.str() << std::endl;
         }
         ucell.atom_mulliken = atom_mag;
     }

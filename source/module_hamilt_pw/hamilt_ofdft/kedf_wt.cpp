@@ -1,11 +1,11 @@
 #include "./kedf_wt.h"
 
 #include "module_parameter/parameter.h"
-#include <iostream>
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/tool_quit.h"
+#include <iostream>
 
 /**
  * @brief Set the parameters of WT KEDF, and initialize kernel
@@ -58,11 +58,14 @@ void KEDF_WT::set_para(double dV,
     delete[] this->kernel_;
     this->kernel_ = new double[pw_rho->npw];
 
-    if (read_kernel) {
+    if (read_kernel)
+    {
         this->read_kernel(kernel_file, pw_rho);
-    } else {
+    }
+    else
+    {
         this->fill_kernel(tf_weight, vw_weight, pw_rho);
-}
+    }
 }
 
 /**
@@ -76,9 +79,10 @@ void KEDF_WT::set_para(double dV,
 double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
@@ -126,9 +130,10 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
 double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
 {
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
@@ -144,7 +149,7 @@ double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, Mo
 /**
  * @brief Get the kinetic energy of WT KEDF, and add it onto rtau_wt
  * \f[ \tau_{WT} = c_{TF} * \rho^\alpha * \int{W(r - r') * \rho^\beta dr'} \f]
- * 
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rtau_wt rtau_wt => rtau_wt + tau_wt
@@ -152,9 +157,10 @@ double KEDF_WT::get_energy_density(const double* const* prho, int is, int ir, Mo
 void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt)
 {
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     if (PARAM.inp.nspin == 1)
@@ -191,15 +197,17 @@ void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho
     ModuleBase::timer::tick("KEDF_WT", "wt_potential");
 
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double** kernelRhoAlpha = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         kernelRhoAlpha[is] = new double[pw_rho->nrxx];
-}
+    }
     this->multi_kernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -311,9 +319,10 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
                     else
                     {
                         this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
-                        if (a == b) {
+                        if (a == b)
+                        {
                             this->stress(a, b) += diff * coef;
-}
+                        }
                     }
                 }
             }
@@ -391,23 +400,38 @@ double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
     {
         double eta2 = eta * eta;
         double invEta2 = 1. / eta2;
-        double LindG = 3. * (1. - vw_weight) * eta2
-                        -tf_weight-0.6
-                        + invEta2 * (-0.13714285714285712
-                        + invEta2 * (-6.39999999999999875E-2
-                        + invEta2 * (-3.77825602968460128E-2
-                        + invEta2 * (-2.51824061652633074E-2
-                        + invEta2 * (-1.80879839616166146E-2
-                        + invEta2 * (-1.36715733124818332E-2
-                        + invEta2 * (-1.07236045520990083E-2
-                        + invEta2 * (-8.65192783339199453E-3
-                        + invEta2 * (-7.1372762502456763E-3
-                        + invEta2 * (-5.9945117538835746E-3
-                        + invEta2 * (-5.10997527675418131E-3
-                        + invEta2 * (-4.41060829979912465E-3
-                        + invEta2 * (-3.84763737842981233E-3
-                        + invEta2 * (-3.38745061493813488E-3
-                        + invEta2 * (-3.00624946457977689E-3)))))))))))))));
+        double LindG
+            = 3. * (1. - vw_weight) * eta2 - tf_weight - 0.6
+              + invEta2
+                    * (-0.13714285714285712
+                       + invEta2
+                             * (-6.39999999999999875E-2
+                                + invEta2
+                                      * (-3.77825602968460128E-2
+                                         + invEta2
+                                               * (-2.51824061652633074E-2
+                                                  + invEta2
+                                                        * (-1.80879839616166146E-2
+                                                           + invEta2
+                                                                 * (-1.36715733124818332E-2
+                                                                    + invEta2
+                                                                          * (-1.07236045520990083E-2
+                                                                             + invEta2
+                                                                                   * (-8.65192783339199453E-3
+                                                                                      + invEta2
+                                                                                            * (-7.1372762502456763E-3
+                                                                                               + invEta2
+                                                                                                     * (-5.9945117538835746E-3
+                                                                                                        + invEta2
+                                                                                                              * (-5.10997527675418131E-3
+                                                                                                                 + invEta2
+                                                                                                                       * (-4.41060829979912465E-3
+                                                                                                                          + invEta2
+                                                                                                                                * (-3.84763737842981233E-3
+                                                                                                                                   + invEta2
+                                                                                                                                         * (-3.38745061493813488E-3
+                                                                                                                                            + invEta2
+                                                                                                                                                  * (-3.00624946457977689E-3)))))))))))))));
         return LindG;
     }
     else
@@ -509,9 +533,10 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
     std::ifstream ifs(file_name.c_str(), std::ios::in);
 
     GlobalV::ofs_running << "Read WT kernel from " << file_name << std::endl;
-    if (!ifs) {
+    if (!ifs)
+    {
         ModuleBase::WARNING_QUIT("kedf_wt.cpp", "The kernel file of WT KEDF not found");
-}
+    }
 
     int kineType = 0;
     double kF_in = 0.;
@@ -546,11 +571,15 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
         eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
         maxEta = std::max(eta, maxEta);
 
-        if (eta <= eta_in[0]) {
+        if (eta <= eta_in[0])
+        {
             this->kernel_[ig] = w0_in[0];
-        } else if (eta > maxEta_in) {
+        }
+        else if (eta > maxEta_in)
+        {
             this->kernel_[ig] = w0_in[nq_in - 1];
-        } else
+        }
+        else
         {
             ind1 = 1;
             ind2 = nq_in;
@@ -573,9 +602,10 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
         }
     }
 
-    if (maxEta > maxEta_in) {
+    if (maxEta > maxEta_in)
+    {
         ModuleBase::WARNING("kedf_wt.cpp", "Please increase the maximal eta value in KEDF kernel file");
-}
+    }
 
     delete[] eta_in;
     delete[] w0_in;

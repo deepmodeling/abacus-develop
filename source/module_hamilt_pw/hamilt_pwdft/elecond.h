@@ -1,21 +1,23 @@
 #ifndef ELECOND_H
 #define ELECOND_H
 
-#include "module_base/matrix.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
+#include "source_base/matrix.h"
 
-template<typename FPTYPE, typename Device>
+template <typename FPTYPE, typename Device>
 class EleCond
 {
   public:
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_d2h_op
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+
   public:
     EleCond(UnitCell* p_ucell_in,
             K_Vectors* p_kv_in,

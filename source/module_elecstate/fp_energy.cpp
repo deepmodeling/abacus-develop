@@ -1,10 +1,8 @@
 #include "fp_energy.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/global_variable.h"
-
-
-#include "module_base/tool_quit.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_quit.h"
 
 #include <iomanip>
 #include <iostream>
@@ -15,16 +13,16 @@ namespace elecstate
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield
+           + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot;
 }
 
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     return etot_harris;
 }
 

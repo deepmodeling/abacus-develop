@@ -1,9 +1,6 @@
 #ifndef UNKOVERLAP_LCAO
 #define UNKOVERLAP_LCAO
 
-#include "module_base/sph_bessel_recursive.h"
-#include "module_base/vector3.h"
-#include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
@@ -13,6 +10,9 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "source_base/sph_bessel_recursive.h"
+#include "source_base/vector3.h"
+#include "source_base/ylm.h"
 
 #include <map>
 #include <set>
@@ -28,10 +28,10 @@ class unkOverlap_lcao
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> orb1_orb2_R;
     std::vector<std::vector<std::vector<double>>> psi_psi;
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> psi_r_psi;
-    bool allocate_flag;                      // translate: Used to initialize the array
-    int** cal_tag=nullptr;                           // Used for parallel scheme
+    bool allocate_flag;      // translate: Used to initialize the array
+    int** cal_tag = nullptr; // Used for parallel scheme
 
-    int kpoints_number=0;
+    int kpoints_number = 0;
 
     std::vector<double> rcut_orb_; // real space cutoffs of LCAO orbitals' radial functions
 

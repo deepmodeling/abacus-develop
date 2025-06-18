@@ -1,8 +1,8 @@
 #ifndef PSEUDO_H
 #define PSEUDO_H
 
-#include "module_base/global_function.h"
 #include "module_io/output.h"
+#include "source_base/global_function.h"
 
 //-----------------------------------------
 // read in pseudopotentials
@@ -22,7 +22,7 @@ class pseudo
     bool tvanp = false;   // .true. if Ultrasoft
     bool nlcc = false;    // Non linear core corrections(bool)
     std::string xc_func;  // Exch-Corr type
-    double zv = 0;           // z valence
+    double zv = 0;        // z valence
     double etotps = 0.0;  // total energy
     double ecutwfc = 0.0; // suggested cut-off for wfc
     double ecutrho = 0.0; // suggested cut-off for rho

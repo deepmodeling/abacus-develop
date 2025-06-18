@@ -1,11 +1,11 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_common.h"
-#include "module_base/ylm.h"
 #include "module_basis/module_nao/real_gaunt_table.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_common.h"
+#include "source_base/ylm.h"
 
 #include <memory>
 
@@ -63,29 +63,49 @@ void TwoCenterBundle::tabulate()
 {
     ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
-    if (beta_) { beta_->set_transformer(sbt); }
-    if (alpha_) {
+    if (beta_)
+    {
+        beta_->set_transformer(sbt);
+    }
+    if (alpha_)
+    {
         alpha_->set_transformer(sbt);
-}
-    if (orb_onsite_) {
+    }
+    if (orb_onsite_)
+    {
         orb_onsite_->set_transformer(sbt);
-}
+    }
 
     //================================================================
     //              build two-center integration tables
     //================================================================
     // set up a universal radial grid
     double rmax = orb_->rcut_max();
-    if (beta_) { rmax = std::max(rmax, beta_->rcut_max()); }
-    if (alpha_) { rmax = std::max(rmax, alpha_->rcut_max()); }
+    if (beta_)
+    {
+        rmax = std::max(rmax, beta_->rcut_max());
+    }
+    if (alpha_)
+    {
+        rmax = std::max(rmax, alpha_->rcut_max());
+    }
     double dr = 0.01;
     double cutoff = 2.0 * rmax;
     int nr = static_cast<int>(rmax / dr) + 1;
 
     orb_->set_uniform_grid(true, nr, cutoff, 'i', true);
-    if (beta_) { beta_->set_uniform_grid(true, nr, cutoff, 'i', true); }
-    if (alpha_) { alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);}
-    if (orb_onsite_) {  orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);}
+    if (beta_)
+    {
+        beta_->set_uniform_grid(true, nr, cutoff, 'i', true);
+    }
+    if (alpha_)
+    {
+        alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);
+    }
+    if (orb_onsite_)
+    {
+        orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);
+    }
 
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
@@ -129,12 +149,14 @@ void TwoCenterBundle::tabulate(const double lcao_ecut,
     ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
     beta_->set_transformer(sbt);
-    if (alpha_) {
+    if (alpha_)
+    {
         alpha_->set_transformer(sbt);
-}
-    if (orb_onsite_) {
+    }
+    if (orb_onsite_)
+    {
         orb_onsite_->set_transformer(sbt);
-}
+    }
 
     //================================================================
     //              build two-center integration tables

@@ -1,8 +1,8 @@
 #include "gatefield.h"
 
-#include "module_parameter/parameter.h"
 #include "efield.h"
-#include "module_base/timer.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 
 namespace elecstate
 {
@@ -16,11 +16,11 @@ double Gatefield::block_down = 0.45;
 double Gatefield::block_up = 0.55;
 double Gatefield::block_height = 0.1;
 
-void Gatefield::add_gatefield(double *vltot,
-                              const UnitCell &cell,
-                              const ModulePW::PW_Basis *rho_basis,
-                              const bool &linear,
-                              const bool &quadratic)
+void Gatefield::add_gatefield(double* vltot,
+                              const UnitCell& cell,
+                              const ModulePW::PW_Basis* rho_basis,
+                              const bool& linear,
+                              const bool& quadratic)
 {
     ModuleBase::TITLE("Gatefield", "add_gatefield");
     ModuleBase::timer::tick("Gatefield", "add_gatefield");
@@ -29,7 +29,7 @@ void Gatefield::add_gatefield(double *vltot,
     // preparation for constants
     //=======================================================
     double latvec; // latvec along the efield direction
-    double area; // surface area along the efield direction
+    double area;   // surface area along the efield direction
     Efield::prepare(cell, latvec, area);
 
     double ion_charge = 0;
@@ -52,7 +52,7 @@ void Gatefield::add_gatefield(double *vltot,
         {
             double pos = cell.atoms[it].taud[ia][Efield::efield_dir];
             factor += zval * (mopopla(zgate, pos, true) + 1.0 / 6.0); // linear part
-            factor += zval * mopopla(zgate, pos, false); // quadratic part
+            factor += zval * mopopla(zgate, pos, false);              // quadratic part
         }
     }
     etotgatefield
@@ -140,7 +140,7 @@ void Gatefield::add_gatefield(double *vltot,
     ModuleBase::timer::tick("Gatefield", "add_gatefield");
 }
 
-double Gatefield::mopopla(double &zgate, double z, bool flag)
+double Gatefield::mopopla(double& zgate, double z, bool flag)
 {
     while (z > 1.0)
         z -= 1.0;
@@ -168,7 +168,7 @@ double Gatefield::mopopla(double &zgate, double z, bool flag)
     }
 }
 
-void Gatefield::compute_force(const UnitCell &cell, ModuleBase::matrix &fgate)
+void Gatefield::compute_force(const UnitCell& cell, ModuleBase::matrix& fgate)
 {
     int iat = 0;
     for (int it = 0; it < cell.ntype; ++it)

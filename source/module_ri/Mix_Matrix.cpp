@@ -7,36 +7,38 @@
 #define MIX_DATA_HPP
 
 #include "Mix_Matrix.h"
-#include "module_base/matrix.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/tool_title.h"
 
-template<>
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix.h"
+#include "source_base/tool_title.h"
+
+
+template <>
 void Mix_Matrix<ModuleBase::matrix>::mix(const ModuleBase::matrix& data_in, const bool flag_restart)
 {
-	if(separate_loop)
-	{
-			this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
-	}
+    if (separate_loop)
+    {
+        this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
+    }
 
-	if(flag_restart)
-	{
-		this->data_out = data_in;
-		this->mixing->init_mixing_data(this->matrix_data, data_in.nc*data_in.nr, sizeof(*data_in.c));
-	}
-	else
-	{
-		this->mixing->push_data(this->matrix_data, data_out.c, data_in.c, nullptr, false);
-		this->mixing->mix_data(this->matrix_data, data_out.c);
-	}
-	
-	if(separate_loop)
-	{
-		delete this->mixing;
-		this->mixing = nullptr;
-	}
+    if (flag_restart)
+    {
+        this->data_out = data_in;
+        this->mixing->init_mixing_data(this->matrix_data, data_in.nc * data_in.nr, sizeof(*data_in.c));
+    }
+    else
+    {
+        this->mixing->push_data(this->matrix_data, data_out.c, data_in.c, nullptr, false);
+        this->mixing->mix_data(this->matrix_data, data_out.c);
+    }
+
+    if (separate_loop)
+    {
+        delete this->mixing;
+        this->mixing = nullptr;
+    }
 }
-template<>
+template <>
 void Mix_Matrix<ModuleBase::ComplexMatrix>::mix(const ModuleBase::ComplexMatrix& data_in, const bool flag_restart)
 {
     if (separate_loop)
@@ -62,7 +64,7 @@ void Mix_Matrix<ModuleBase::ComplexMatrix>::mix(const ModuleBase::ComplexMatrix&
     }
 }
 
-template<>
+template <>
 void Mix_Matrix<std::vector<double>>::mix(const std::vector<double>& data_in, const bool flag_restart)
 {
     if (separate_loop)
@@ -87,8 +89,9 @@ void Mix_Matrix<std::vector<double>>::mix(const std::vector<double>& data_in, co
         this->mixing = nullptr;
     }
 }
-template<>
-void Mix_Matrix<std::vector<std::complex<double>>>::mix(const std::vector<std::complex<double>>& data_in, const bool flag_restart)
+template <>
+void Mix_Matrix<std::vector<std::complex<double>>>::mix(const std::vector<std::complex<double>>& data_in,
+                                                        const bool flag_restart)
 {
     if (separate_loop)
     {
@@ -127,7 +130,8 @@ void Mix_Matrix<ct::Tensor>::mix(const ct::Tensor& data_in, const bool flag_rest
     if (flag_restart)
     {
         this->data_out = data_in;
-        this->mixing->init_mixing_data(this->matrix_data, data_in.NumElements(), sizeof(data_in.SizeOfType(data_in.data_type())));
+        this->mixing->init_mixing_data(this->matrix_data, data_in.NumElements(),
+sizeof(data_in.SizeOfType(data_in.data_type())));
     }
     else
     {
@@ -138,12 +142,10 @@ void Mix_Matrix<ct::Tensor>::mix(const ct::Tensor& data_in, const bool flag_rest
             this->mixing->mix_data(this->matrix_data, data_out.data<double>());
             break;
         case ct::DataType::DT_COMPLEX_DOUBLE:
-            this->mixing->push_data(this->matrix_data, data_out.data<std::complex<double>>(), data_in.data<std::complex<double>>(), nullptr, false);
-            this->mixing->mix_data(this->matrix_data, data_out.data<std::complex<double>>());
-            break;
-        default:
-            throw std::invalid_argument("Mix_Matrix: data type not supported");
-            break;
+            this->mixing->push_data(this->matrix_data, data_out.data<std::complex<double>>(),
+data_in.data<std::complex<double>>(), nullptr, false); this->mixing->mix_data(this->matrix_data,
+data_out.data<std::complex<double>>()); break; default: throw std::invalid_argument("Mix_Matrix: data type not
+supported"); break;
         }
     }
 

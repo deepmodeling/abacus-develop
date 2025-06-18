@@ -1,13 +1,13 @@
 #ifndef ELECSTATEPW_H
 #define ELECSTATEPW_H
 
-#include <module_base/macros.h>
-
 #include "elecstate.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
+
+#include <source_base/macros.h>
 
 namespace elecstate
 {
@@ -49,7 +49,6 @@ class ElecStatePW : public ElecState
     ModulePW::PW_Basis_K* basis = nullptr;
 
   protected:
-
     ModulePW::PW_Basis* rhopw_smooth = nullptr;
 
     UnitCell* ucell = nullptr;
@@ -59,10 +58,10 @@ class ElecStatePW : public ElecState
     //! calculate electronic charge density on grid points or density matrix in real space
     //! the consequence charge density rho saved into rho_out, preparing for charge mixing.
     void updateRhoK(const psi::Psi<T, Device>& psi); // override;
-    
+
     //! sum over all pools for rho and ebands
     void parallelK();
-    
+
     //! calcualte rho for each k
     void rhoBandK(const psi::Psi<T, Device>& psi);
 
@@ -73,7 +72,7 @@ class ElecStatePW : public ElecState
     //! \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
     void addusdens_g(const Real* becsum, T** rhog);
 
-    Device * ctx = {};
+    Device* ctx = {};
 
     bool init_rho = false;
 
@@ -82,7 +81,7 @@ class ElecStatePW : public ElecState
     Real* rho_data = nullptr;
     T* rhog_data = nullptr;
     Real* kin_r_data = nullptr;
-    T* wfcr = nullptr; 
+    T* wfcr = nullptr;
     T* wfcr_another_spin = nullptr;
 
   private:

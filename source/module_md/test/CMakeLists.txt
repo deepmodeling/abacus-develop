@@ -19,27 +19,27 @@ list(APPEND depend_files
   ../../module_cell/read_pp_upf201.cpp
   ../../module_cell/read_pp_vwr.cpp
   ../../module_cell/read_pp_blps.cpp
-  ../../module_base/matrix3.cpp
-  ../../module_base/matrix.cpp
-  ../../module_base/timer.cpp
-  ../../module_base/blas_connector_base.cpp
-  ../../module_base/blas_connector_matrix.cpp
-  ../../module_base/blas_connector_vector.cpp
-  ../../module_base/memory.cpp
-  ../../module_base/global_variable.cpp
-  ../../module_base/global_function.cpp
-  ../../module_base/global_file.cpp
-  ../../module_base/tool_title.cpp
-  ../../module_base/tool_check.cpp
-  ../../module_base/tool_quit.cpp
-  ../../module_base/intarray.cpp
-  ../../module_base/realarray.cpp
-  ../../module_base/complexarray.cpp
-  ../../module_base/complexmatrix.cpp
-  ../../module_base/global_variable.cpp
-  ../../module_base/libm/branred.cpp
-  ../../module_base/libm/sincos.cpp
-  ../../module_base/math_integral.cpp
+  ../../source_base/matrix3.cpp
+  ../../source_base/matrix.cpp
+  ../../source_base/timer.cpp
+  ../../source_base/blas_connector_base.cpp
+  ../../source_base/blas_connector_matrix.cpp
+  ../../source_base/blas_connector_vector.cpp
+  ../../source_base/memory.cpp
+  ../../source_base/global_variable.cpp
+  ../../source_base/global_function.cpp
+  ../../source_base/global_file.cpp
+  ../../source_base/tool_title.cpp
+  ../../source_base/tool_check.cpp
+  ../../source_base/tool_quit.cpp
+  ../../source_base/intarray.cpp
+  ../../source_base/realarray.cpp
+  ../../source_base/complexarray.cpp
+  ../../source_base/complexmatrix.cpp
+  ../../source_base/global_variable.cpp
+  ../../source_base/libm/branred.cpp
+  ../../source_base/libm/sincos.cpp
+  ../../source_base/math_integral.cpp
   ../../module_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../module_cell/module_neighbor/sltk_atom.cpp
   ../../module_cell/module_neighbor/sltk_grid.cpp
@@ -49,9 +49,9 @@ list(APPEND depend_files
   ../../module_io/print_info.cpp
   ../../module_io/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp
-  ../../module_base/parallel_reduce.cpp
-  ../../module_base/parallel_global.cpp
-  ../../module_base/parallel_comm.cpp
+  ../../source_base/parallel_reduce.cpp
+  ../../source_base/parallel_global.cpp
+  ../../source_base/parallel_comm.cpp
   ../../module_elecstate/read_pseudo.cpp
   ../../module_elecstate/cal_wfc.cpp
   ../../module_elecstate/cal_nelec_nband.cpp

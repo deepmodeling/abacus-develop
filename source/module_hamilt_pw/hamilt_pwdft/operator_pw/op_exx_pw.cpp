@@ -1,11 +1,11 @@
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_general/operator.h"
 #include "module_psi/psi.h"
-#include "module_base/tool_quit.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 #include <cmath>
 #include <complex>
@@ -15,22 +15,22 @@
 
 extern "C"
 {
-    void ztrtri_(char *uplo, char *diag, int *n, std::complex<double> *a, int *lda, int *info);
-    void ctrtri_(char *uplo, char *diag, int *n, std::complex<float> *a, int *lda, int *info);
+    void ztrtri_(char* uplo, char* diag, int* n, std::complex<double>* a, int* lda, int* info);
+    void ctrtri_(char* uplo, char* diag, int* n, std::complex<float>* a, int* lda, int* info);
 }
 
-//extern "C" void zpotrf_(char* uplo, const int* n, std::complex<double>* A, const int* lda, int* info);
-//extern "C" void cpotrf_(char* uplo, const int* n, std::complex<float>* A, const int* lda, int* info);
+// extern "C" void zpotrf_(char* uplo, const int* n, std::complex<double>* A, const int* lda, int* info);
+// extern "C" void cpotrf_(char* uplo, const int* n, std::complex<float>* A, const int* lda, int* info);
 
-#include "op_exx_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "op_exx_pw.h"
 
 namespace hamilt
 {
 template <typename T, typename Device>
 struct trtri_op
 {
-    void operator()(char *uplo, char *diag, int *n, T *a, int *lda, int *info)
+    void operator()(char* uplo, char* diag, int* n, T* a, int* lda, int* info)
     {
         std::cout << "trtri_op not implemented" << std::endl;
     }
@@ -39,7 +39,7 @@ struct trtri_op
 template <typename T, typename Device>
 struct potrf_op
 {
-    void operator()(char *uplo, int *n, T *a, int *lda, int *info)
+    void operator()(char* uplo, int* n, T* a, int* lda, int* info)
     {
         std::cout << "potrf_op not implemented" << std::endl;
     }
@@ -49,8 +49,8 @@ template <typename T, typename Device>
 OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const ModulePW::PW_Basis_K* wfcpw_in,
                                         const ModulePW::PW_Basis* rhopw_in,
-                                        K_Vectors *kv_in,
-                                        const UnitCell *ucell)
+                                        K_Vectors* kv_in,
+                                        const UnitCell* ucell)
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell)
 {
     gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
@@ -89,7 +89,6 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     Real tpiba2 = tpiba * tpiba;
     // calculate the exx_divergence
     exx_divergence();
-
 }
 
 template <typename T, typename Device>
@@ -108,28 +107,27 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
     delmem_complex_op()(h_psi_ace);
     delmem_complex_op()(psi_h_psi_ace);
     delmem_complex_op()(L_ace);
-    for (auto &Xi_ace: Xi_ace_k)
+    for (auto& Xi_ace: Xi_ace_k)
     {
         delmem_complex_op()(Xi_ace);
     }
     Xi_ace_k.clear();
-
 }
 
 template <typename T>
-inline bool is_finite(const T &val)
+inline bool is_finite(const T& val)
 {
     return std::isfinite(val);
 }
 
 template <>
-inline bool is_finite(const std::complex<float> &val)
+inline bool is_finite(const std::complex<float>& val)
 {
     return std::isfinite(val.real()) && std::isfinite(val.imag());
 }
 
 template <>
-inline bool is_finite(const std::complex<double> &val)
+inline bool is_finite(const std::complex<double>& val)
 {
     return std::isfinite(val.real()) && std::isfinite(val.imag());
 }
@@ -138,16 +136,17 @@ template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act(const int nbands,
                                    const int nbasis,
                                    const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
+                                   const T* tmpsi_in,
+                                   T* tmhpsi,
                                    const int ngk_ik,
                                    const bool is_first_node) const
 {
-    if (first_iter) return;
+    if (first_iter)
+        return;
 
     if (is_first_node)
     {
-        setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
+        setmem_complex_op()(tmhpsi, 0, nbasis * nbands / npol);
     }
 
     if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
@@ -162,26 +161,26 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op(const int nbands,
-                                   const int nbasis,
-                                   const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
-                                   const int ngk_ik,
-                                   const bool is_first_node) const
+                                      const int nbasis,
+                                      const int npol,
+                                      const T* tmpsi_in,
+                                      T* tmhpsi,
+                                      const int ngk_ik,
+                                      const bool is_first_node) const
 {
-//    std::cout << "nbands: " << nbands
-//              << " nbasis: " << nbasis
-//              << " npol: " << npol
-//              << " ngk_ik: " << ngk_ik
-//              << " is_first_node: " << is_first_node
-//              << std::endl;
+    //    std::cout << "nbands: " << nbands
+    //              << " nbasis: " << nbasis
+    //              << " npol: " << npol
+    //              << " ngk_ik: " << ngk_ik
+    //              << " is_first_node: " << is_first_node
+    //              << std::endl;
     if (!potential_got)
     {
         get_potential();
         potential_got = true;
     }
 
-//    set_psi(&p_exx_helper->psi);
+    //    set_psi(&p_exx_helper->psi);
 
     ModuleBase::timer::tick("OperatorEXXPW", "act_op");
 
@@ -197,7 +196,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     // ik fixed here, select band n
     for (int n_iband = 0; n_iband < nbands; n_iband++)
     {
-        const T *psi_nk = tmpsi_in + n_iband * nbasis;
+        const T* psi_nk = tmpsi_in + n_iband * nbasis;
         // retrieve \psi_nk in real space
         wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
 
@@ -206,7 +205,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         Real nqs = q_points.size();
         for (int iq: q_points)
         {
-//            std::cout << "ik" << this->ik << " iq" << iq << std::endl;
+            //            std::cout << "ik" << this->ik << " iq" << iq << std::endl;
             for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
             {
                 // double wg_mqb_real = GlobalC::exx_helper.wg(iq, m_iband);
@@ -219,22 +218,22 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
                 // if (has_real.find({iq, m_iband}) == has_real.end())
                 // {
-                    const T* psi_mq = get_pw(m_iband, iq);
-                    wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
-                //     syncmem_complex_op()(this->ctx, this->ctx, psi_all_real + m_iband * wfcpw->nrxx, psi_mq_real, wfcpw->nrxx);
-                //     has_real[{iq, m_iband}] = true;
-                // }
-                // else
-                // {
-                //     // const T* psi_mq = get_pw(m_iband, iq);
-                //     // wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
-                //     syncmem_complex_op()(this->ctx, this->ctx, psi_mq_real, psi_all_real + m_iband * wfcpw->nrxx, wfcpw->nrxx);
-                // }
-                
-                // direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
-                #ifdef _OPENMP
-                #pragma omp parallel for schedule(static)
-                #endif
+                const T* psi_mq = get_pw(m_iband, iq);
+                wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
+//     syncmem_complex_op()(this->ctx, this->ctx, psi_all_real + m_iband * wfcpw->nrxx, psi_mq_real, wfcpw->nrxx);
+//     has_real[{iq, m_iband}] = true;
+// }
+// else
+// {
+//     // const T* psi_mq = get_pw(m_iband, iq);
+//     // wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
+//     syncmem_complex_op()(this->ctx, this->ctx, psi_mq_real, psi_all_real + m_iband * wfcpw->nrxx, wfcpw->nrxx);
+// }
+
+// direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
                 for (int ir = 0; ir < wfcpw->nrxx; ir++)
                 {
                     // assert(is_finite(psi_nk_real[ir]));
@@ -243,7 +242,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                     density_real[ir] = psi_nk_real[ir] * std::conj(psi_mq_real[ir]) / ucell_omega; // Phase e^(i(q-k)r)
                 }
                 // to be changed into kernel function
-                
+
                 // bring the density to recip space
                 rhopw->real2recip(density_real, density_recip);
 
@@ -253,10 +252,10 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 // bring the potential back to real space
                 rhopw->recip2real(density_recip, density_real);
 
-                // get the h|psi_ik>(r), save in density_real
-                #ifdef _OPENMP
-                #pragma omp parallel for schedule(static)
-                #endif
+// get the h|psi_ik>(r), save in density_real
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
                 for (int ir = 0; ir < wfcpw->nrxx; ir++)
                 {
                     // assert(is_finite(psi_mq_real[ir]));
@@ -267,9 +266,9 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 T wk_iq = kv->wk[iq];
                 T wk_ik = kv->wk[this->ik];
 
-                #ifdef _OPENMP
-                #pragma omp parallel for schedule(static)
-                #endif
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
                 for (int ir = 0; ir < wfcpw->nrxx; ir++)
                 {
                     h_psi_real[ir] += density_real[ir] * wg_mqb / wk_iq / nqs;
@@ -285,32 +284,30 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
         wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw->nrxx);
-        
     }
 
     ModuleBase::timer::tick("OperatorEXXPW", "act_op");
-    
 }
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                                           const int nbasis,
                                           const int npol,
-                                          const T *tmpsi_in,
-                                          T *tmhpsi,
+                                          const T* tmpsi_in,
+                                          T* tmhpsi,
                                           const int ngk_ik,
                                           const bool is_first_node) const
 {
     ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
 
-//    std::cout << "act_op_ace" << std::endl;
+    //    std::cout << "act_op_ace" << std::endl;
     // hpsi += -Xi^\dagger * Xi * psi
     T* Xi_ace = Xi_ace_k[this->ik];
     int nbands_tot = psi.get_nbands();
     int nbasis_max = psi.get_nbasis();
-//    T* hpsi = nullptr;
-//    resmem_complex_op()(hpsi, nbands_tot * nbasis);
-//    setmem_complex_op()(hpsi, 0, nbands_tot * nbasis);
+    //    T* hpsi = nullptr;
+    //    resmem_complex_op()(hpsi, nbands_tot * nbasis);
+    //    setmem_complex_op()(hpsi, 0, nbands_tot * nbasis);
     T* Xi_psi = nullptr;
     resmem_complex_op()(Xi_psi, nbands_tot * nbands);
     setmem_complex_op()(Xi_psi, 0, nbands_tot * nbands);
@@ -330,8 +327,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbasis,
                       &intermediate_zero,
                       Xi_psi,
-                      nbands_tot
-        );
+                      nbands_tot);
 
     Parallel_Reduce::reduce_pool(Xi_psi, nbands_tot * nbands);
 
@@ -348,29 +344,26 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbands_tot,
                       &intermediate_one,
                       tmhpsi,
-                      nbasis
-        );
+                      nbasis);
 
-
-//    // negative sign, add to hpsi
-//    vec_add_vec_complex_op()(this->ctx, nbands * nbasis, tmhpsi, hpsi, -1, tmhpsi, 1);
-//    delmem_complex_op()(hpsi);
+    //    // negative sign, add to hpsi
+    //    vec_add_vec_complex_op()(this->ctx, nbands * nbasis, tmhpsi, hpsi, -1, tmhpsi, 1);
+    //    delmem_complex_op()(hpsi);
     delmem_complex_op()(Xi_psi);
     ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
-
 }
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::construct_ace() const
 {
     ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
-//    int nkb = p_exx_helper->psi.get_nbands() * p_exx_helper->psi.get_nk();
+    //    int nkb = p_exx_helper->psi.get_nbands() * p_exx_helper->psi.get_nk();
     int nbands = psi.get_nbands();
     int nbasis = psi.get_nbasis();
     int nk = psi.get_nk();
 
     int ik_save = this->ik;
-    int * ik_ = const_cast<int*>(&this->ik);
+    int* ik_ = const_cast<int*>(&this->ik);
 
     T intermediate_one = 1.0, intermediate_zero = 0.0;
 
@@ -417,15 +410,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 
         *ik_ = ik;
 
-        act_op(
-            nbands,
-            nbasis,
-            1,
-            p_psi,
-            h_psi_ace,
-            nbasis,
-            false
-            );
+        act_op(nbands, nbasis, 1, p_psi, h_psi_ace, nbasis, false);
 
         // psi_h_psi_ace = psi^\dagger * h_psi_ace
         // p_exx_helper->psi.fix_kb(0, 0);
@@ -446,10 +431,10 @@ void OperatorEXXPW<T, Device>::construct_ace() const
         // reduction of psi_h_psi_ace, due to distributed memory
         Parallel_Reduce::reduce_pool(psi_h_psi_ace, nbands * nbands);
 
-        // L_ace = cholesky(-psi_h_psi_ace)
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(static)
-        #endif
+// L_ace = cholesky(-psi_h_psi_ace)
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int i = 0; i < nbands; i++)
         {
             for (int j = 0; j < nbands; j++)
@@ -463,10 +448,10 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 
         potrf_op<T, Device>()(&lo, &nbands, L_ace, &nbands, &info);
 
-        // expand for-loop
-        #ifdef _OPENMP
-        #pragma omp parallel for schedule(static) collapse(2)
-        #endif
+// expand for-loop
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) collapse(2)
+#endif
         for (int i = 0; i < nbands; i++)
         {
             for (int j = 0; j < nbands; j++)
@@ -503,12 +488,10 @@ void OperatorEXXPW<T, Device>::construct_ace() const
         setmem_complex_op()(h_psi_ace, 0, nbands * nbasis);
         setmem_complex_op()(psi_h_psi_ace, 0, nbands * nbands);
         setmem_complex_op()(L_ace, 0, nbands * nbands);
-
     }
 
     *ik_ = ik_save;
     ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
-
 }
 
 template <typename T, typename Device>
@@ -526,7 +509,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
     {
         for (int iq = 0; iq < wfcpw->nks; iq++)
         {
-            if (PARAM.inp.nspin ==1 )
+            if (PARAM.inp.nspin == 1)
             {
                 q_points_ik.push_back(iq);
             }
@@ -558,7 +541,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 }
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int iq) const
+void OperatorEXXPW<T, Device>::multiply_potential(T* density_recip, int ik, int iq) const
 {
     ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
     int npw = rhopw->npw;
@@ -566,21 +549,20 @@ void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int 
     int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     int nk = nks / nk_fac;
 
-    #ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ig = 0; ig < npw; ig++)
     {
         int ig_kq = ik * nks * npw + iq * npw + ig;
         density_recip[ig] *= pot[ig_kq];
-
     }
 
     ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
 }
 
 template <typename T, typename Device>
-const T *OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const
+const T* OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const
 {
     // return pws[iq].get() + m * wfcpw->npwk[iq];
     psi.fix_kb(iq, m);
@@ -590,7 +572,7 @@ const T *OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const
 
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
-OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op)
+OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in>* op)
 {
     // copy all the datas
     this->isk = op->isk;
@@ -605,9 +587,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
     resmem_complex_op()(this->ctx, h_psi_real, rhopw->nrxx);
     resmem_complex_op()(this->ctx, density_recip, rhopw->npw);
     resmem_complex_op()(this->ctx, h_psi_recip, wfcpw->npwk_max);
-//    this->pws.resize(wfcpw->nks);
-
-
+    //    this->pws.resize(wfcpw->nks);
 }
 
 template <typename T, typename Device>
@@ -629,9 +609,9 @@ void OperatorEXXPW<T, Device>::get_potential() const
             const ModuleBase::Vector3<double> q_c = wfcpw->kvec_c[iq];
             const ModuleBase::Vector3<double> q_d = wfcpw->kvec_d[iq];
 
-            #ifdef _OPENMP
-            #pragma omp parallel for schedule(static)
-            #endif
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
             for (int ig = 0; ig < rhopw->npw; ig++)
             {
                 const ModuleBase::Vector3<double> g_d = rhopw->gdirect[ig];
@@ -640,18 +620,15 @@ void OperatorEXXPW<T, Device>::get_potential() const
                 // 7/8 of the points in the grid are "activated" and 1/8 are disabled.
                 // grid_factor is designed for the 7/8 of the grid to function like all of the points
                 Real grid_factor = 1;
-                double extrapolate_grid = 8.0/7.0;
+                double extrapolate_grid = 8.0 / 7.0;
                 if (gamma_extrapolation)
                 {
                     // if isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)
-                    auto isint = [](double x)
-                    {
+                    auto isint = [](double x) {
                         double epsilon = 1e-6; // this follows the isint judgement in q-e
                         return std::abs(x - std::round(x)) < epsilon;
                     };
-                    if (isint(kqg_d[0] * nqs_half1) &&
-                        isint(kqg_d[1] * nqs_half2) &&
-                        isint(kqg_d[2] * nqs_half3))
+                    if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3))
                     {
                         grid_factor = 0;
                     }
@@ -689,8 +666,8 @@ void OperatorEXXPW<T, Device>::get_potential() const
                 else
                 {
                     // if (PARAM.inp.dft_functional == "hse")
-                    if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc &&
-                        !gamma_extrapolation)
+                    if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc
+                        && !gamma_extrapolation)
                     {
                         pot[ig_kq] = exx_div - ModuleBase::PI * ModuleBase::e2 / hse_omega2;
                     }
@@ -731,7 +708,7 @@ void OperatorEXXPW<T, Device>::exx_divergence()
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:div)
+#pragma omp parallel for reduction(+ : div)
 #endif
         for (int ig = 0; ig < rhopw->npw; ig++)
         {
@@ -742,17 +719,14 @@ void OperatorEXXPW<T, Device>::exx_divergence()
             // 7/8 of the points in the grid are "activated" and 1/8 are disabled.
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             Real grid_factor = 1;
-            double extrapolate_grid = 8.0/7.0;
+            double extrapolate_grid = 8.0 / 7.0;
             if (gamma_extrapolation)
             {
-                auto isint = [](double x)
-                {
+                auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(q_d[0] * nqs_half1) &&
-                    isint(q_d[1] * nqs_half2) &&
-                    isint(q_d[2] * nqs_half3))
+                if (isint(q_d[0] * nqs_half1) && isint(q_d[1] * nqs_half2) && isint(q_d[2] * nqs_half3))
                 {
                     grid_factor = 0;
                 }
@@ -762,13 +736,14 @@ void OperatorEXXPW<T, Device>::exx_divergence()
                 }
             }
 
-            if (qq <= 1e-8) continue;
+            if (qq <= 1e-8)
+                continue;
             // else if (PARAM.inp.dft_functional == "hse")
             else if (GlobalC::exx_info.info_global.ccp_type == Conv_Coulomb_Pot_K::Ccp_Type::Erfc)
             {
                 double omega = GlobalC::exx_info.info_global.hse_omega;
                 double omega2 = omega * omega;
-                div += std::exp(-alpha * qq) / qq * (1.0 - std::exp(-qq*tpiba2 / 4.0 / omega2)) * grid_factor;
+                div += std::exp(-alpha * qq) / qq * (1.0 - std::exp(-qq * tpiba2 / 4.0 / omega2)) * grid_factor;
             }
             else
             {
@@ -792,11 +767,10 @@ void OperatorEXXPW<T, Device>::exx_divergence()
         {
             div -= alpha;
         }
-
     }
 
     div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / wfcpw->nks;
-//    std::cout << "div: " << div << std::endl;
+    //    std::cout << "div: " << div << std::endl;
 
     // numerically value the mean value of F(q) in the reciprocal space
     // This means we need to calculate the average of F(q) in the first brillouin zone
@@ -810,12 +784,12 @@ void OperatorEXXPW<T, Device>::exx_divergence()
         double omega = GlobalC::exx_info.info_global.hse_omega;
         double omega2 = omega * omega;
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:aa)
+#pragma omp parallel for reduction(+ : aa)
 #endif
         for (int i = 0; i < nqq; i++)
         {
-            double q = dq * (i+0.5);
-            aa -= exp(-alpha * q * q) * exp(-q*q / 4.0 / omega2) * dq;
+            double q = dq * (i + 0.5);
+            aa -= exp(-alpha * q * q) * exp(-q * q / 4.0 / omega2) * dq;
         }
     }
     aa *= 8 / ModuleBase::FOUR_PI;
@@ -825,14 +799,14 @@ void OperatorEXXPW<T, Device>::exx_divergence()
     double omega = ucell->omega;
     div -= ModuleBase::e2 * omega * aa;
     exx_div = div * wfcpw->nks / nk_fac;
-//    exx_div = 0;
-//    std::cout << "EXX divergence: " << exx_div << std::endl;
+    //    exx_div = 0;
+    //    std::cout << "EXX divergence: " << exx_div << std::endl;
 
     return;
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
+double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device>* psi_) const
 {
     if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
     {
@@ -845,12 +819,12 @@ double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device> *ppsi_) const
+double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) const
 {
     double Eexx = 0;
 
     psi::Psi<T, Device> psi_ = *ppsi_;
-    int *ik_ = const_cast<int*>(&this->ik);
+    int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
     for (int i = 0; i < wfcpw->nks; i++)
     {
@@ -868,10 +842,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device> *ppsi_) 
             double wg_i_n = (*wg)(i, nband);
             // Eexx += dot(psi_i_n, h_psi_i_n)
             Eexx += dot_op()(psi_.get_nbasis(), psi_i_n, hpsi_i_n, false) * wg_i_n * 2;
-
         }
-
-
     }
 
     Parallel_Reduce::reduce_pool(Eexx);
@@ -880,7 +851,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device> *ppsi_) 
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) const
+double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device>* ppsi_) const
 {
     psi::Psi<T, Device> psi_ = *ppsi_;
 
@@ -893,7 +864,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     T* density_real = new T[wfcpw->nrxx];
     T* density_recip = new T[rhopw->npw];
 
-    if (wg == nullptr) return 0.0;
+    if (wg == nullptr)
+        return 0.0;
     const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     double Eexx_ik_real = 0.0;
     for (int ik = 0; ik < wfcpw->nks; ik++)
@@ -949,10 +921,10 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
                     T omega_inv = 1.0 / ucell->omega;
 
-                    // direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
-                    #ifdef _OPENMP
-                    #pragma omp parallel for
-                    #endif
+// direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                     for (int ir = 0; ir < wfcpw->nrxx; ir++)
                     {
                         // assert(is_finite(psi_nk_real[ir]));
@@ -964,17 +936,17 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                     // bring the density to recip space
                     rhopw->real2recip(density_real, density_recip);
 
-                    #ifdef _OPENMP
-                    #pragma omp parallel for reduction(+:Eexx_ik_real)
-                    #endif
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : Eexx_ik_real)
+#endif
                     for (int ig = 0; ig < rhopw->npw; ig++)
                     {
                         int nks = wfcpw->nks;
                         int npw = rhopw->npw;
                         int nk = nks / nk_fac;
                         Real Fac = pot[ik * nks * npw + iq * npw + ig];
-                        Eexx_ik_real += Fac * (density_recip[ig] * std::conj(density_recip[ig])).real()
-                                        * wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik];
+                        Eexx_ik_real += Fac * (density_recip[ig] * std::conj(density_recip[ig])).real() * wg_iqb_real
+                                        / nqs * wg_ikb_real / kv->wk[ik];
                     }
 
                 } // m_iband
@@ -986,7 +958,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     } // ik
     Eexx_ik_real *= 0.5 * ucell->omega;
     Parallel_Reduce::reduce_pool(Eexx_ik_real);
-    //    std::cout << "omega = " << this_->pelec->omega << " tpiba = " << this_->pw_rho->tpiba2 << " exx_div = " << exx_div << std::endl;
+    //    std::cout << "omega = " << this_->pelec->omega << " tpiba = " << this_->pw_rho->tpiba2 << " exx_div = " <<
+    //    exx_div << std::endl;
 
     delete[] psi_nk_real;
     delete[] psi_mq_real;
@@ -1000,25 +973,43 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 }
 
 template <>
-void trtri_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char *uplo, char *diag, int *n, std::complex<float> *a, int *lda, int *info)
+void trtri_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char* uplo,
+                                                                        char* diag,
+                                                                        int* n,
+                                                                        std::complex<float>* a,
+                                                                        int* lda,
+                                                                        int* info)
 {
     ctrtri_(uplo, diag, n, a, lda, info);
 }
 
 template <>
-void trtri_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char *uplo, char *diag, int *n, std::complex<double> *a, int *lda, int *info)
+void trtri_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char* uplo,
+                                                                         char* diag,
+                                                                         int* n,
+                                                                         std::complex<double>* a,
+                                                                         int* lda,
+                                                                         int* info)
 {
     ztrtri_(uplo, diag, n, a, lda, info);
 }
 
 template <>
-void potrf_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char *uplo, int *n, std::complex<float> *a, int *lda, int *info)
+void potrf_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char* uplo,
+                                                                        int* n,
+                                                                        std::complex<float>* a,
+                                                                        int* lda,
+                                                                        int* info)
 {
     cpotrf_(uplo, n, a, lda, info);
 }
 
 template <>
-void potrf_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char *uplo, int *n, std::complex<double> *a, int *lda, int *info)
+void potrf_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char* uplo,
+                                                                         int* n,
+                                                                         std::complex<double>* a,
+                                                                         int* lda,
+                                                                         int* info)
 {
     zpotrf_(uplo, n, a, lda, info);
 }

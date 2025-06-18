@@ -1,13 +1,13 @@
 #ifndef HAMILTPW_NONLOCAL_MATHS_H
 #define HAMILTPW_NONLOCAL_MATHS_H
 
-#include "module_base/module_device/device.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/device.h"
 
 namespace hamilt
 {
@@ -45,18 +45,18 @@ class Nonlocal_maths
     /**
      * @brief this function prepares all the q (G+k) information in one contiguous memory block
      * including the x, y and z components, its norm and the reciprocal of its norm
-     * 
+     *
      * @param ik index of k point
      * @param pw_basis the plane wave basis
      * @return std::vector<FPTYPE> 1d contiguous memory block containing all the q information. The
-     * first 3*npw are data of x, y and z components, the next 2*npw are data of norm and 1/norm. 
+     * first 3*npw are data of x, y and z components, the next 2*npw are data of norm and 1/norm.
      * This is beneficial for GPU memory access.
      */
     std::vector<FPTYPE> cal_gk(int ik, const ModulePW::PW_Basis_K* pw_basis);
     /**
      * @brief calculate the real spherical harmonic functions on cpu (and optionally send to gpu,
      * if gpu is available)
-     * 
+     *
      * @param lmax [in] maximum angular momentum to calculate
      * @param npw [in] number of G+k vectors
      * @param gk_in [in] the G+k vectors
@@ -137,14 +137,15 @@ std::vector<FPTYPE> Nonlocal_maths<FPTYPE, Device>::cal_gk(int ik, const ModuleP
     {
         // written in memory block from 0 to 3*npw. This is like a matrix with npw rows and 3 columns
         q = pw_basis->getgpluskcar(ik, ig);
-        gk[ig * 3]     = q.x;
+        gk[ig * 3] = q.x;
         gk[ig * 3 + 1] = q.y;
         gk[ig * 3 + 2] = q.z;
         // the following written in memory block from 3*npw to 5*npw, the excess 2*npw is for norm and 1/norm
         // for memory consecutive consideration, there are blocks storing the norm and 1/norm.
         FPTYPE norm = sqrt(q.norm2());
         gk[3 * npw + ig] = norm * this->ucell_->tpiba; // one line with length npw, storing the norm
-        gk[4 * npw + ig] = norm < 1e-8 ? 0.0 : 1.0 / norm * this->ucell_->tpiba; // one line with length npw, storing 1/norm
+        gk[4 * npw + ig]
+            = norm < 1e-8 ? 0.0 : 1.0 / norm * this->ucell_->tpiba; // one line with length npw, storing 1/norm
     }
     return gk;
 }
@@ -210,7 +211,7 @@ template <typename FPTYPE, typename Device>
 std::vector<std::complex<FPTYPE>> Nonlocal_maths<FPTYPE, Device>::cal_pref(int it, const int nh)
 {
     // nh is the total number of m-channels of the beta functions
-    // for example, if angular momentum of beta functions are 0, 0, 1, 1, 1, 1, the nh will be 
+    // for example, if angular momentum of beta functions are 0, 0, 1, 1, 1, 1, the nh will be
     // 1 + 1 + 3 + 3 + 3 + 3 = 14
     std::vector<std::complex<FPTYPE>> pref(nh);
     for (int ih = 0; ih < nh; ih++)
@@ -370,9 +371,9 @@ void Nonlocal_maths<FPTYPE, Device>::cal_dvkb_index(const int nbeta,
         int l = nhtol[it * nhtol_nc + ih];
         for (int m = 0; m < 2 * l + 1; m++)
         {
-            //std::cout << "in function cal_dvkb_index, nhtol(" << it << ", " << ih << ") = " << l << std::endl;
+            // std::cout << "in function cal_dvkb_index, nhtol(" << it << ", " << ih << ") = " << l << std::endl;
             int lm = l * l + m;
-            indexes[ih * 4] = lm; // the index of ylm matrix, for given l and m, together with ig to get value
+            indexes[ih * 4] = lm;     // the index of ylm matrix, for given l and m, together with ig to get value
             indexes[ih * 4 + 1] = nb; // the iproj of present atom type
             indexes[ih * 4 + 2] = (ipol * x1 + lm);
             indexes[ih * 4 + 3] = (jpol * x1 + lm);

@@ -4,7 +4,15 @@
 // the Density Matrix and Energy Density Matrix calculated by PEXSI are transformed to 2D block cyclic distribution
 // #include "mpi.h"
 #ifdef __PEXSI
-#include <mpi.h>
+#include "c_pexsi_interface.h"
+#include "dist_bcd_matrix.h"
+#include "dist_ccs_matrix.h"
+#include "dist_matrix_transformer.h"
+#include "source_base/global_variable.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_hsolver/diago_pexsi.h"
 
 #include <cfloat>
 #include <cmath>
@@ -12,16 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
-#include "c_pexsi_interface.h"
-#include "dist_bcd_matrix.h"
-#include "dist_ccs_matrix.h"
-#include "dist_matrix_transformer.h"
-#include "module_base/lapack_connector.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "module_base/global_variable.h"
-#include "source_hsolver/diago_pexsi.h"
+#include <mpi.h>
 
 namespace pexsi
 {
@@ -115,7 +114,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = 2;//PARAM.inp.nspin; // pexsi::PEXSI_Solver::pexsi_spin;
+    double_para[0] = 2; // PARAM.inp.nspin; // pexsi::PEXSI_Solver::pexsi_spin;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;
@@ -249,7 +248,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
     }
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIPlanInit");
-    
+
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "setup_PEXSI_plan");
 
     // create compressed column storage distribution matrix parameter
@@ -258,7 +257,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     DistCCSMatrix DST_Matrix(comm_PEXSI, numProcessPerPole, size);
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create compressed column storage distribution matrix parameter, finish");
-
 
     // create block cyclic distribution matrix parameter
     DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, layout);
@@ -299,16 +297,16 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         int numTotalInertiaIter; // Number of total inertia[out]
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
-        PPEXSIDFTDriver2(plan,                 // PEXSI plan[in]
-                        &options,              // PEXSI Options[in]
-                        numElectronExact,     // exact electron number[in]
-                        &mu,                  // chemical potential[out]
-                        &nelec,               // number of electrons[out]
-                        // &muMinInertia,        // Lower bound for mu after the last inertia[out]
-                        // &muMaxInertia,        // Upper bound for mu after the last inertia[out]
-                        &numTotalInertiaIter, // Number of total inertia[out]
-                        // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
-                        &info);               // 0: successful; otherwise: unsuccessful
+        PPEXSIDFTDriver2(plan,             // PEXSI plan[in]
+                         &options,         // PEXSI Options[in]
+                         numElectronExact, // exact electron number[in]
+                         &mu,              // chemical potential[out]
+                         &nelec,           // number of electrons[out]
+                         // &muMinInertia,        // Lower bound for mu after the last inertia[out]
+                         // &muMaxInertia,        // Upper bound for mu after the last inertia[out]
+                         &numTotalInertiaIter, // Number of total inertia[out]
+                         // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
+                         &info); // 0: successful; otherwise: unsuccessful
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
 

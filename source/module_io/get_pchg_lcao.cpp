@@ -1,16 +1,16 @@
 #include "get_pchg_lcao.h"
 
-#include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_common.h"
-#include "module_base/scalapack_connector.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
+#include "source_base/blas_connector.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+#include "source_base/scalapack_connector.h"
 
 IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
     : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
@@ -55,8 +55,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)."
-              << std::endl;
+    std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)." << std::endl;
 
     // Determine the mode based on the input parameters
     int mode = 0;
@@ -101,7 +100,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            //std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+            // std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
@@ -120,7 +119,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
-
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
@@ -135,7 +133,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleIO::write_vdata_palgrid(pgrid, rho_save[is].data(), is, nspin, 0, ssc.str(), ef_spin, ucell_in);
             }
 
-            //std::cout << " Complete!" << std::endl;
+            // std::cout << " Complete!" << std::endl;
         }
     }
 
@@ -252,7 +250,7 @@ void IState_Charge::begin(Gint_k& gk,
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
                         std::stringstream ssc;
-                        ssc << global_out_dir << "pchgs" << is + 1 << "k" << ik+1 << "i" << ib + 1 << ".cube";
+                        ssc << global_out_dir << "pchgs" << is + 1 << "k" << ik + 1 << "i" << ib + 1 << ".cube";
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,

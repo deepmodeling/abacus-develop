@@ -1,7 +1,7 @@
 #include "parallel_kpoints.h"
 
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_global.h"
 
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
@@ -109,7 +109,6 @@ void Parallel_Kpoints::set_startpro_pool()
     return;
 }
 
-
 // gather kpoints from all processor pools, only need to be called by the first processor of each pool.
 void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
                                   std::vector<ModuleBase::Vector3<double>>& vec_global) const
@@ -150,7 +149,6 @@ void Parallel_Kpoints::pool_collection(double& value, const double* wk, const in
             {
                 MPI_Status ierror;
                 MPI_Recv(&value, 1, MPI_DOUBLE, this->startpro_pool[pool], ik, MPI_COMM_WORLD, &ierror);
-
             }
         }
         else
@@ -192,7 +190,9 @@ void Parallel_Kpoints::pool_collection(double* value_re,
     return;
 }
 
-void Parallel_Kpoints::pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik) const
+void Parallel_Kpoints::pool_collection(std::complex<double>* value,
+                                       const ModuleBase::ComplexArray& w,
+                                       const int& ik) const
 {
     const int dim2 = w.getBound2();
     const int dim3 = w.getBound3();
@@ -211,10 +211,10 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-	if (this->nspin != 2) 
-	{
-		pool = this->whichpool[ik];
-	}
+    if (this->nspin != 2)
+    {
+        pool = this->whichpool[ik];
+    }
 
     if (this->rank_in_pool == 0)
     {

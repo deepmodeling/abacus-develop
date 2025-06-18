@@ -1,10 +1,10 @@
 #include "cal_r_overlap_R.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 cal_r_overlap_R::cal_r_overlap_R()
 {
@@ -14,8 +14,7 @@ cal_r_overlap_R::~cal_r_overlap_R()
 {
 }
 
-void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
-                                           const LCAO_Orbitals& orb)
+void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
     int Lmax_used = 0;
     int Lmax = 0;
@@ -54,8 +53,7 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
     MGT.init_Gaunt(Lmax);
 }
 
-void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
-                                               const LCAO_Orbitals& orb)
+void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
     int orb_r_ntype = 0;
     int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
@@ -226,14 +224,14 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
     }
 }
 
-void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::init(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
-    initialize_orb_table(ucell,orb);
-    construct_orbs_and_orb_r(ucell,orb);
+    initialize_orb_table(ucell, orb);
+    construct_orbs_and_orb_r(ucell, orb);
 
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     return;
@@ -333,8 +331,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
                             int im2 = iw2im[orb_index_col];
 
                             ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car)
-                                  * ucell.lat0;
+                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
 
                             double overlap_o = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
                                                                                                           r_distance,
@@ -451,8 +448,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         std::stringstream ssr;
         if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
-            ssr << PARAM.globalv.global_matrix_dir
-                << "rrg" << step << ".csr";
+            ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
         }
         else
         {
@@ -508,7 +504,9 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     return;
 }
 
-void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
+void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
+                                   const int& istep,
+                                   const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR_other");
@@ -524,8 +522,7 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     std::stringstream ssr;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
-        ssr << PARAM.globalv.global_matrix_dir
-            << "rrg" << step << ".csr";
+        ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
     }
     else
     {
@@ -609,8 +606,7 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
                             int im2 = iw2im[orb_index_col];
 
                             ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car)
-                                  * ucell.lat0;
+                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
 
                             double overlap_o = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
                                                                                                           r_distance,

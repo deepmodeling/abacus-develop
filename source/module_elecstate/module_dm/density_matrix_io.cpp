@@ -1,11 +1,10 @@
 #include "density_matrix.h"
-
-#include "module_parameter/parameter.h"
-#include "module_base/libm/libm.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/klist.h"
+#include "module_parameter/parameter.h"
+#include "source_base/libm/libm.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 namespace elecstate
 {
@@ -439,8 +438,8 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
 }
 
 // T of HContainer can be double or complex<double>
-template class DensityMatrix<double, double>;               // Gamma-Only case
-template class DensityMatrix<std::complex<double>, double>; // Multi-k case
+template class DensityMatrix<double, double>;                             // Gamma-Only case
+template class DensityMatrix<std::complex<double>, double>;               // Multi-k case
 template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate

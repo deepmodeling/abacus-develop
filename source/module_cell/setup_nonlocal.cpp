@@ -1,7 +1,7 @@
 #include "setup_nonlocal.h"
 
-#include "module_base/parallel_common.h"
 #include "module_parameter/parameter.h"
+#include "source_base/parallel_common.h"
 
 #ifdef __LCAO
 //#include "../module_hamilt_pw/hamilt_pwdft/global.h"
@@ -22,7 +22,7 @@ InfoNonlocal::~InfoNonlocal()
     delete[] nproj;
 }
 
-#include "../module_base/complexmatrix.h"
+#include "../source_base/complexmatrix.h"
 void InfoNonlocal::Set_NonLocal(const int& it,
                                 Atom* atom,
                                 int& n_projectors,
@@ -141,7 +141,8 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info) {
+        if (PARAM.inp.out_element_info)
+        {
             tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
         }
 
@@ -391,9 +392,10 @@ void InfoNonlocal::Read_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info) {
+        if (PARAM.inp.out_element_info)
+        {
             tmpBeta_lm[p1].plot(my_rank);
-}
+        }
 
         delete[] radial_ps;
         delete[] rab_ps;

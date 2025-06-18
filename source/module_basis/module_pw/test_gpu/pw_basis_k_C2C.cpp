@@ -1,9 +1,9 @@
 #include "cuda_runtime.h"
 #include "fftw3.h"
-#include "module_base/module_device/device.h"
-#include "module_base/vector3.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "source_base/module_device/device.h"
+#include "source_base/vector3.h"
 
 #include <complex>
 #include <gtest/gtest.h>
@@ -196,8 +196,8 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
-                                    TypePair<double, base_device::DEVICE_GPU> >;
+using MixedTypes
+    = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, TypePair<double, base_device::DEVICE_GPU>>;
 
 TYPED_TEST_CASE(PW_BASIS_K_GPU_TEST, MixedTypes);
 
@@ -258,7 +258,8 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble)
     const int ny = pwtest.ny;
     const int nz = pwtest.nz;
     const int nplane = pwtest.nplane;
-    const int npwk = pwtest.npwk[0];;
+    const int npwk = pwtest.npwk[0];
+    ;
     for (int ixy = 0; ixy < nx * ny; ++ixy)
     {
         const int offset = ixy * nz + startiz;

@@ -2,19 +2,19 @@
 
 #include <fstream>
 // numerical algorithm support
-#include "module_base/math_integral.h" // for numerical integration
+#include "source_base/math_integral.h" // for numerical integration
 // numerical algorithm support
-#include "module_base/math_polyint.h" // for polynomial interpolation
-#include "module_base/math_ylmreal.h" // for real spherical harmonics
+#include "source_base/math_polyint.h" // for polynomial interpolation
+#include "source_base/math_ylmreal.h" // for real spherical harmonics
 // basic functions support
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 // three global variables definition
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 // parallel communication
 #ifdef __MPI
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #endif
 #include "module_io/orb_io.h"
 #include "module_parameter/parameter.h"
@@ -345,8 +345,9 @@ void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         psig[(ibasis + 2 * L + 1) * 2 * npwk_max + ig] = this->template cast_to_T<T>(
                                             (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup);
-                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig] = this->template cast_to_T<T>(
-                                            (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
+                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig]
+                                            = this->template cast_to_T<T>(
+                                                (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
                                     }
                                     ibasis++;
                                 }
@@ -363,7 +364,8 @@ void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
 #pragma omp parallel for
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                psig[ibasis * npwk_max + ig] = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
+                                psig[ibasis * npwk_max + ig]
+                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
                             }
                             ++ibasis;
                         }

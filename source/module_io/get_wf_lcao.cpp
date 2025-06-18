@@ -1,14 +1,14 @@
 #include "get_wf_lcao.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -221,10 +221,21 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-			nbands, nspin, PARAM.globalv.npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			out_wfc_pw, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
+    ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                           GlobalV::MY_POOL,
+                           GlobalV::MY_RANK,
+                           nbands,
+                           nspin,
+                           PARAM.globalv.npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           out_wfc_pw,
+                           PARAM.inp.ecutwfc,
+                           global_out_dir,
+                           psi_g,
+                           kv,
+                           pw_wfc,
+                           GlobalV::ofs_running);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -372,10 +383,21 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-			nbands, nspin, PARAM.globalv.npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			out_wf, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
+    ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                           GlobalV::MY_POOL,
+                           GlobalV::MY_RANK,
+                           nbands,
+                           nspin,
+                           PARAM.globalv.npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           out_wf,
+                           PARAM.inp.ecutwfc,
+                           global_out_dir,
+                           psi_g,
+                           kv,
+                           pw_wfc,
+                           GlobalV::ofs_running);
 
     std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 

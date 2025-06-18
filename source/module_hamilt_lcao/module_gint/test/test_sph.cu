@@ -1,14 +1,14 @@
-#include <bits/stdc++.h>
 #include "../kernels/cuda/sph.cuh"
-
-#include "float.h"
 #include "cuda_runtime.h"
 #include "device_functions.h"
 #include "device_launch_parameters.h"
-#include "gtest/gtest.h"
+#include "float.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "source_base/array_pool.h"
 #include "test_sph.h"
-#include "module_base/array_pool.h"
+
+#include "gtest/gtest.h"
+#include <bits/stdc++.h>
 using namespace std;
 
 class gintTest : public ::testing::Test
@@ -74,15 +74,16 @@ TEST_F(gintTest, test)
     std::vector<double> ylma_cpu(49, 0.0);
     std::vector<double> ylma_cpu_dpsir(49, 0.0);
     ModuleBase::Array_Pool<double> ylma_cpu_ddpsir(49, 3);
-    
-    nwl=3;
-    for (int i=0;i<3;i++){
-        dr[i]=i*1.0;
+
+    nwl = 3;
+    for (int i = 0; i < 3; i++)
+    {
+        dr[i] = i * 1.0;
         distance += dr[i] * dr[i];
     }
-    for (int i=0;i<100;i++)
+    for (int i = 0; i < 100; i++)
     {
-        ylmcoef[i]=i*0.1;
+        ylmcoef[i] = i * 0.1;
     }
 
     cudaMalloc((void**)&ylmcoef_g, 100 * sizeof(double));
@@ -106,19 +107,18 @@ TEST_F(gintTest, test)
     for (int i = 0; i < 49; i++)
     {
         ylma_ans[i] = ylma_cpu[i];
-        if ((abs(ylma[i])!= 0) && (ylma_ans[i]==ylma_ans[i]) && (ylma[i]==ylma[i]))
+        if ((abs(ylma[i]) != 0) && (ylma_ans[i] == ylma_ans[i]) && (ylma[i] == ylma[i]))
         {
             EXPECT_LT(abs(ylma_ans[i] - ylma[i]) / abs(ylma[i]), 1e-15);
         }
         ylma_ans[i] = ylma_cpu_dpsir[i];
-        if ((abs(dylma[i]) != 0) &&(ylma_ans[i]==ylma_ans[i]) && (dylma[i]==dylma[i]))
+        if ((abs(dylma[i]) != 0) && (ylma_ans[i] == ylma_ans[i]) && (dylma[i] == dylma[i]))
         {
             EXPECT_LT(abs(ylma_ans[i] - dylma[i]) / abs(dylma[i]), 1e-15);
         }
     }
     delete[] dr;
     delete[] ylmcoef;
-    
 }
 
 int main(int argc, char** argv)

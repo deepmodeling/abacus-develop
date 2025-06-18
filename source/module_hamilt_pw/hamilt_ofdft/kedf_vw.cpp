@@ -1,9 +1,9 @@
 #include "./kedf_vw.h"
 
 #include "module_parameter/parameter.h"
-#include <iostream>
+#include "source_base/parallel_reduce.h"
 
-#include "module_base/parallel_reduce.h"
+#include <iostream>
 
 void KEDF_vW::set_para(double dV, double vw_weight)
 {
@@ -33,9 +33,10 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
     }
 
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         LapPhi[is] = new double[pw_rho->nrxx];
-}
+    }
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energy = 0.; // in Ry
@@ -96,9 +97,10 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
     }
 
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         LapPhi[is] = new double[pw_rho->nrxx];
-}
+    }
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energyDen = 0.; // in Ry
@@ -118,7 +120,7 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
 /**
  * @brief Get the positive definite energy density of vW KEDF
  * \f[ \tau_{vW} = |\nabla \phi|^2 / 2 \f]
- * 
+ *
  * @param pphi sqrt(rho)
  * @param pw_rho pw basis
  * @param rtau_vw rtau_vw => rtau_vw + tau_vw
@@ -139,7 +141,7 @@ void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, doub
         std::vector<std::complex<double>> recip_nabla_phi(pw_rho->npw, 0.);
 
         pw_rho->real2recip(abs_phi.data(), recip_phi.data());
-        
+
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
@@ -186,9 +188,10 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
 
     // calculate the minus \nabla^2 sqrt(rho)
     double** LapPhi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
         LapPhi[is] = new double[pw_rho->nrxx];
-}
+    }
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     // calculate potential

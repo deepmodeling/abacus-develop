@@ -1,15 +1,15 @@
 #include "write_wfc_nao.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_base/parallel_2d.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/global_variable.h"
-#include "module_base/global_function.h"
 #include "binstream.h"
 #include "filename.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_2d.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 namespace ModuleIO
 {
@@ -114,8 +114,8 @@ void wfc_nao_write2file_complex(const std::string& name,
                                 const bool& writeBinary,
                                 const bool& append_flag)
 {
-    ModuleBase::TITLE("ModuleIO","wfc_nao_write2file_complex");
-    ModuleBase::timer::tick("ModuleIO","wfc_nao_write2file_complex");
+    ModuleBase::TITLE("ModuleIO", "wfc_nao_write2file_complex");
+    ModuleBase::timer::tick("ModuleIO", "wfc_nao_write2file_complex");
 
     int nbands = ekb.nc;
 
@@ -196,22 +196,22 @@ void wfc_nao_write2file_complex(const std::string& name,
         ofs.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO","wfc_nao_write2file_complex");
+    ModuleBase::timer::tick("ModuleIO", "wfc_nao_write2file_complex");
     return;
 }
 
 template <typename T>
 void write_wfc_nao(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<T>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep)
+                   const bool out_app_flag,
+                   const psi::Psi<T>& psi,
+                   const ModuleBase::matrix& ekb,
+                   const ModuleBase::matrix& wg,
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                   const std::vector<int>& ik2iktot,
+                   const int nkstot,
+                   const Parallel_Orbitals& pv,
+                   const int nspin,
+                   const int istep)
 {
     if (!out_type)
     {
@@ -223,7 +223,7 @@ void write_wfc_nao(const int out_type,
     int nbands = 0;
     int nlocal = 0;
 
-    // If using MPI, the nbasis and nbands in psi is the value on local rank, 
+    // If using MPI, the nbasis and nbands in psi is the value on local rank,
     // so get nlocal and nbands from pv->desc_wfc[2] and pv->desc_wfc[3]
 #ifdef __MPI
     MPI_Comm_rank(pv.comm(), &myid);
@@ -244,8 +244,8 @@ void write_wfc_nao(const int out_type,
     for (int ik = 0; ik < psi.get_nk(); ik++)
     {
         psi.fix_k(ik);
-#ifdef __MPI        
-        pv_glb.set(nlocal, nbands, blk_glb, pv.blacs_ctxt);   
+#ifdef __MPI
+        pv_glb.set(nlocal, nbands, blk_glb, pv.blacs_ctxt);
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),
@@ -262,15 +262,24 @@ void write_wfc_nao(const int out_type,
         {
             for (int i = 0; i < nlocal; i++)
             {
-                ctot[ib * nlocal + i] = psi(ib,i);
+                ctot[ib * nlocal + i] = psi(ib, i);
             }
-        }    
+        }
 #endif
 
         if (myid == 0)
         {
-            std::string fn = filename_output(PARAM.globalv.global_out_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
-              out_type,out_app_flag,gamma_only,istep);
+            std::string fn = filename_output(PARAM.globalv.global_out_dir,
+                                             "wf",
+                                             "nao",
+                                             ik,
+                                             ik2iktot,
+                                             nspin,
+                                             nkstot,
+                                             out_type,
+                                             out_app_flag,
+                                             gamma_only,
+                                             istep);
 
             bool append_flag = (istep > 0 && out_app_flag);
             if (std::is_same<double, T>::value)
@@ -302,27 +311,27 @@ void write_wfc_nao(const int out_type,
 }
 
 template void write_wfc_nao<double>(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<double>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep);
+                                    const bool out_app_flag,
+                                    const psi::Psi<double>& psi,
+                                    const ModuleBase::matrix& ekb,
+                                    const ModuleBase::matrix& wg,
+                                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                    const std::vector<int>& ik2iktot,
+                                    const int nkstot,
+                                    const Parallel_Orbitals& pv,
+                                    const int nspin,
+                                    const int istep);
 
 template void write_wfc_nao<std::complex<double>>(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<std::complex<double>>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep);
+                                                  const bool out_app_flag,
+                                                  const psi::Psi<std::complex<double>>& psi,
+                                                  const ModuleBase::matrix& ekb,
+                                                  const ModuleBase::matrix& wg,
+                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                                                  const std::vector<int>& ik2iktot,
+                                                  const int nkstot,
+                                                  const Parallel_Orbitals& pv,
+                                                  const int nspin,
+                                                  const int istep);
 
 } // namespace ModuleIO

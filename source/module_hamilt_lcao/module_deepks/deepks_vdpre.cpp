@@ -10,12 +10,12 @@
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
-#include "module_base/blas_connector.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
+#include "source_base/blas_connector.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
 
 // calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gevdm * v_delta_pdm;
 // v_delta_pdm[nks,nlocal,nlocal,Inl,nm,nm] = overlap * overlap;
@@ -67,8 +67,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
             const ModuleBase::Vector3<double>& tau2,
             const int start2,
             const int nw2_tot,
-            ModuleBase::Vector3<int> dR2)
-        {
+            ModuleBase::Vector3<int> dR2) {
             const int T0 = ucell.iat2it[iat];
             const int I0 = ucell.iat2ia[iat];
             if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr
@@ -130,8 +129,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                     } // ik
                 }     // iw2
             }         // iw1
-        }
-    );
+        });
 #ifdef __MPI
     const int size = nks * nlocal * nlocal * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
     TK_tensor* data_tensor_ptr = v_delta_pdm.data_ptr<TK_tensor>();
@@ -196,65 +194,63 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     auto accessor
         = phialpha_out.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
 
-    DeePKS_domain::iterate_ad1(
-        ucell,
-        GridD,
-        orb,
-        false, // no trace_alpha
-        [&](const int iat,
-            const ModuleBase::Vector3<double>& tau0,
-            const int ibt,
-            const ModuleBase::Vector3<double>& tau,
-            const int start,
-            const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
-            if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
-            {
-                return; // to next loop
-            }
+    DeePKS_domain::iterate_ad1(ucell,
+                               GridD,
+                               orb,
+                               false, // no trace_alpha
+                               [&](const int iat,
+                                   const ModuleBase::Vector3<double>& tau0,
+                                   const int ibt,
+                                   const ModuleBase::Vector3<double>& tau,
+                                   const int start,
+                                   const int nw_tot,
+                                   ModuleBase::Vector3<int> dR) {
+                                   if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
+                                   {
+                                       return; // to next loop
+                                   }
 
-            // middle loop : all atomic basis on the adjacent atom ad
-            for (int iw1 = 0; iw1 < nw_tot; ++iw1)
-            {
-                const int iw1_all = start + iw1;
-                const int iw1_local = pv.global2local_row(iw1_all);
-                const int iw2_local = pv.global2local_col(iw1_all);
-                if (iw1_local < 0 || iw2_local < 0)
-                {
-                    continue;
-                }
-                hamilt::BaseMatrix<double>* overlap = phialpha[0]->find_matrix(iat, ibt, dR);
+                                   // middle loop : all atomic basis on the adjacent atom ad
+                                   for (int iw1 = 0; iw1 < nw_tot; ++iw1)
+                                   {
+                                       const int iw1_all = start + iw1;
+                                       const int iw1_local = pv.global2local_row(iw1_all);
+                                       const int iw2_local = pv.global2local_col(iw1_all);
+                                       if (iw1_local < 0 || iw2_local < 0)
+                                       {
+                                           continue;
+                                       }
+                                       hamilt::BaseMatrix<double>* overlap = phialpha[0]->find_matrix(iat, ibt, dR);
 
-                for (int ik = 0; ik < nks; ik++)
-                {
-                    std::complex<double> kphase = std::complex<double>(1.0, 0.0);
-                    if (std::is_same<TK, std::complex<double>>::value)
-                    {
-                        const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
-                        kphase = std::complex<double>(cos(arg), sin(arg));
-                    }
-                    TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
-                    int ib = 0;
-                    int nl = 0;
-                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                    {
-                        for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                        {
-                            const int nm = 2 * L0 + 1;
-                            for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
-                            {
-                                TK_tensor tmp = overlap->get_value(iw1, ib + m1) * *kpase_ptr;
-                                accessor[iat][nl][ik][iw1_all][m1] += tmp;
-                            }
-                            ib += nm;
-                            nl++;
-                        }
-                    }
-                } // end ik
-            }     // end iw
-        }
-    );
+                                       for (int ik = 0; ik < nks; ik++)
+                                       {
+                                           std::complex<double> kphase = std::complex<double>(1.0, 0.0);
+                                           if (std::is_same<TK, std::complex<double>>::value)
+                                           {
+                                               const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR))
+                                                                  * ModuleBase::TWO_PI;
+                                               kphase = std::complex<double>(cos(arg), sin(arg));
+                                           }
+                                           TK_tensor* kpase_ptr = reinterpret_cast<TK_tensor*>(&kphase);
+                                           int ib = 0;
+                                           int nl = 0;
+                                           for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
+                                           {
+                                               for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
+                                               {
+                                                   const int nm = 2 * L0 + 1;
+                                                   for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
+                                                   {
+                                                       TK_tensor tmp = overlap->get_value(iw1, ib + m1) * *kpase_ptr;
+                                                       accessor[iat][nl][ik][iw1_all][m1] += tmp;
+                                                   }
+                                                   ib += nm;
+                                                   nl++;
+                                               }
+                                           }
+                                       } // end ik
+                                   }     // end iw
+                               });
 
 #ifdef __MPI
     int size = nat * nlmax * nks * nlocal * mmax;

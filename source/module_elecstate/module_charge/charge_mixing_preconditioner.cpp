@@ -1,22 +1,24 @@
 #include "charge_mixing.h"
-
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) {
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+    {
         return;
-}
+    }
     double fac = 0.0;
     double gg0 = 0.0;
     double amin = 0.0;
 
     /// consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0)
+    {
+        resize_tmp = 2;
+    }
 
     /// implement Kerker for density and magnetization separately
     for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
@@ -30,10 +32,10 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = PARAM.inp.nspin - 1;
-                //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                // for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 //{
-                //    drhog[is * this->rhopw->npw + ig] *= 1;
-                //}
+                //     drhog[is * this->rhopw->npw + ig] *= 1;
+                // }
                 break;
             }
             fac = this->mixing_gg0_mag;
@@ -61,14 +63,17 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) {
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
+    {
         return;
-}
+    }
     /// consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
-    
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0)
+    {
+        resize_tmp = 2;
+    }
+
     std::vector<std::complex<double>> drhog(this->rhopw->npw * PARAM.inp.nspin / resize_tmp);
     std::vector<double> drhor_filter(this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp);
     for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
@@ -93,8 +98,10 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                 assert(is == 1); /// make sure break works
 #endif
                 double is_mag = PARAM.inp.nspin - 1;
-                if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { is_mag = 1;
-}
+                if (PARAM.inp.nspin == 4 && this->mixing_angle > 0)
+                {
+                    is_mag = 1;
+                }
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
@@ -109,7 +116,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             fac = this->mixing_gg0;
             amin = this->mixing_beta;
         }
-        
+
         gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
@@ -118,7 +125,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         {
             double gg = this->rhopw->gg[ig];
             // I have not decided how to handle gg=0 part, will be changed in future
-            //if (gg == 0)
+            // if (gg == 0)
             //{
             //    drhog[is * this->rhopw->npw + ig] *= 0;
             //    continue;

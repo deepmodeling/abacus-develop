@@ -1,7 +1,7 @@
 #ifndef PSI_INITIALIZER_ATOMIC_H
 #define PSI_INITIALIZER_ATOMIC_H
-#include "module_base/realarray.h"
 #include "psi_initializer.h"
+#include "source_base/realarray.h"
 
 /*
 Psi (planewave based wavefunction) initializer: atomic

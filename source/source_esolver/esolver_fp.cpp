@@ -1,6 +1,6 @@
 #include "esolver_fp.h"
 
-#include "module_base/global_variable.h"
+#include "module_cell/k_vector_utils.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/read_pseudo.h"
@@ -17,7 +17,7 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
-#include "module_cell/k_vector_utils.h"
+#include "source_base/global_variable.h"
 
 #ifdef USE_LIBXC
 #include "module_io/write_libxc_r.h"
@@ -50,24 +50,24 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     std::string fft_device = PARAM.inp.device;
     std::string fft_precison = PARAM.inp.precision;
     // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(PARAM.inp.basis_type == "lcao")
+    if (PARAM.inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
-    if ((PARAM.inp.precision=="single") || (PARAM.inp.precision=="mixing"))
+    if ((PARAM.inp.precision == "single") || (PARAM.inp.precision == "mixing"))
     {
         fft_precison = "mixing";
     }
-    else if (PARAM.inp.precision=="double")
+    else if (PARAM.inp.precision == "double")
     {
         fft_precison = "double";
     }
-    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
-        if (fft_device == "gpu")
-        {
-            fft_precison = "double";
-        }
-    #endif
+#if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
+    if (fft_device == "gpu")
+    {
+        fft_precison = "double";
+    }
+#endif
     pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
     pw_rho_flag = true;
     if (PARAM.globalv.double_grid)
@@ -110,7 +110,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->pw_rho->collect_uniqgg();
 
     //! 3) initialize the double grid (for uspp) if necessary
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
 #ifdef __MPI
@@ -170,7 +170,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
+                std::string fn = PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
                 ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->chr.rho_save[is],
                                               is,
@@ -184,7 +184,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
                 if (XC_Functional::get_ked_flag())
                 {
-                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
+                    fn = PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
                     ModuleIO::write_vdata_palgrid(Pgrid,
                                                   this->chr.kin_r_save[is],
                                                   is,
@@ -202,7 +202,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
             {
-                std::string fn =PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
+                std::string fn = PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
 
                 ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->pelec->pot->get_effective_v(is),
@@ -218,7 +218,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
         }
         else if (PARAM.inp.out_pot == 2)
         {
-            std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/pot_es.cube";
             ModuleIO::write_elecstat_pot(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -243,7 +243,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                 srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
             }
 
-            std::string out_dir =PARAM.globalv.global_out_dir;
+            std::string out_dir = PARAM.globalv.global_out_dir;
             ModuleIO::write_elf(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -262,17 +262,16 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
 #ifdef USE_LIBXC
         // 7) write xc(r)
-        if(PARAM.inp.out_xc_r[0]>=0)
+        if (PARAM.inp.out_xc_r[0] >= 0)
         {
-            ModuleIO::write_libxc_r(
-                PARAM.inp.out_xc_r[0],
-                XC_Functional::get_func_id(),
-                this->pw_rhod->nrxx, // number of real-space grid
-                ucell.omega, // volume of cell
-                ucell.tpiba,
-                this->chr,
-                *this->pw_big,
-                *this->pw_rhod);
+            ModuleIO::write_libxc_r(PARAM.inp.out_xc_r[0],
+                                    XC_Functional::get_func_id(),
+                                    this->pw_rhod->nrxx, // number of real-space grid
+                                    ucell.omega,         // volume of cell
+                                    ucell.tpiba,
+                                    this->chr,
+                                    *this->pw_big,
+                                    *this->pw_rhod);
         }
 #endif
     }
@@ -323,12 +322,8 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid,
-                                    ucell,
-                                    &this->chr,
-                                    &this->sf,
-                                    GlobalV::ofs_running,
-                                    GlobalV::ofs_warning);
+        this->CE
+            .extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
     //----------------------------------------------------------
@@ -349,7 +344,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     }
 
     //----------------------------------------------------------
-    //! set direction of magnetism, used in non-collinear case 
+    //! set direction of magnetism, used in non-collinear case
     //----------------------------------------------------------
     elecstate::cal_ux(ucell);
 

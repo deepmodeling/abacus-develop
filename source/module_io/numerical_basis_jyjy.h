@@ -1,9 +1,9 @@
 #ifndef NUMERICAL_BASIS_JYJY_H
 #define NUMERICAL_BASIS_JYJY_H
 
-#include "module_base/complexarray.h"
-#include "module_base/matrix3.h"
-#include "module_base/vector3.h"
+#include "source_base/complexarray.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 
 #include <tuple>
 #include <vector>
@@ -26,7 +26,9 @@ std::vector<std::tuple<int, int, int, int>> indexgen(const std::vector<int>& nat
  *
  */
 ModuleBase::ComplexArray cal_overlap_Sq(const char type, // 'S' or 'T'
-                                        const int lmax, const int nbes, const double rcut,
+                                        const int lmax,
+                                        const int nbes,
+                                        const double rcut,
                                         const std::vector<std::vector<ModuleBase::Vector3<double>>>& tau_cart,
                                         const ModuleBase::Matrix3& latvec,
                                         const std::vector<std::tuple<int, int, int, int>>& mu_index);
@@ -44,7 +46,8 @@ ModuleBase::ComplexArray cal_overlap_Sq(const char type, // 'S' or 'T'
  *
  */
 std::vector<ModuleBase::Vector3<double>> neighbor_vec(const ModuleBase::Vector3<double>& d0,
-                                                      const ModuleBase::Matrix3& latvec, const double r);
+                                                      const ModuleBase::Matrix3& latvec,
+                                                      const double r);
 
 } // namespace NumericalBasis
 

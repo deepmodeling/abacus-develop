@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "../../../module_base/parallel_global.h"
+#include "../../../source_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../../module_xc/xc_functional.h"
@@ -41,7 +41,7 @@ TEST_F(cal_vcav_test, lapl_rho)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -148,7 +148,7 @@ TEST_F(cal_vcav_test, createcavity)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -209,7 +209,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz;
     double wfcecut;

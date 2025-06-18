@@ -1,11 +1,12 @@
 #include "dspin_lcao.h"
+
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_base/blas_connector.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
-#include "module_base/tool_title.h"
-#include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
+#include "source_base/blas_connector.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 template <typename TK, typename TR>
 hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_in,
@@ -24,7 +25,7 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_
     assert(this->ucell != nullptr);
     assert(this->gridD != nullptr);
 #endif
-    //set nspin
+    // set nspin
     this->nspin = PARAM.inp.nspin;
     this->spin_num = this->nspin == 2 ? 2 : 1;
 
@@ -36,7 +37,7 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_
 template <typename TK, typename TR>
 hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
 {
-    for (auto& hr : this->pre_hr)
+    for (auto& hr: this->pre_hr)
     {
         if (hr != nullptr)
         {
@@ -55,10 +56,10 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
     coefficients[1] = -current_lambda[0];
 }
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
+{ // {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
     coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , -1 * current_lambda[1]);
+    coefficients[1] = std::complex<double>(current_lambda[0], current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0], -1 * current_lambda[1]);
     coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
 }
 
@@ -66,24 +67,24 @@ template <typename TK, typename TR>
 void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     // if lambda has not changed, calculate the HR^I = lambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}>
-    // if lambda has changed, calculate the dHR^I = dlambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}> 
+    // if lambda has changed, calculate the dHR^I = dlambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}>
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-    // there are three case for contributeHR 
+    // there are three case for contributeHR
     // 1. HR has not been calculated, reset lambda_save and calculate HR = lambda * pre_hr
     // 2. HR has been calculated, but lambda has changed, calculate dHR = dlambda * pre_hr
     // 3. HR has been calculated, and lambda has not changed, do nothing
-    if(!this->hr_done)
+    if (!this->hr_done)
     {
         // set the lambda_save to zero if lambda loop is started
         this->lambda_save.assign(this->ucell->nat * 3, 0.0);
     }
-    else if(this->hr_done && !this->update_lambda_[this->current_spin])
+    else if (this->hr_done && !this->update_lambda_[this->current_spin])
     {
         return;
     }
 
     // calculate Hpre^I = \sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}>
-    if(!this->initialized)
+    if (!this->initialized)
     {
         auto& constrain = sc.get_constrain();
         this->cal_constraint_atom_list(constrain);
@@ -91,59 +92,59 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->initialized = true;
     }
     auto& lambda = sc.get_sc_lambda();
-    
-    for(int iat=0;iat<this->ucell->nat;iat++)
+
+    for (int iat = 0; iat < this->ucell->nat; iat++)
     {
-        if(!this->constraint_atom_list[iat])
+        if (!this->constraint_atom_list[iat])
         {
             continue;
         }
         // calculate the delta lambda to update the real space Hamiltonian
         std::vector<double> current_lambda;
-        if(this->nspin==4)
+        if (this->nspin == 4)
         {
-            current_lambda = {lambda[iat].x - this->lambda_save[iat*3], 
-            lambda[iat].y - this->lambda_save[iat*3+1], 
-            lambda[iat].z - this->lambda_save[iat*3+2]};
+            current_lambda = {lambda[iat].x - this->lambda_save[iat * 3],
+                              lambda[iat].y - this->lambda_save[iat * 3 + 1],
+                              lambda[iat].z - this->lambda_save[iat * 3 + 2]};
         }
-        else if(this->nspin==2)
+        else if (this->nspin == 2)
         {
-            current_lambda = {lambda[iat].z-this->lambda_save[iat*3+2], 0.0, 0.0};
+            current_lambda = {lambda[iat].z - this->lambda_save[iat * 3 + 2], 0.0, 0.0};
         }
         std::vector<TR> coefficients(this->nspin);
 
         cal_coeff_lambda(current_lambda, coefficients);
 
         // magnetic moment = \sum_{\mu\nu,R} dmR * pre_hr
-        for(int iap=0;iap<this->pre_hr[iat]->size_atom_pairs();iap++)
+        for (int iap = 0; iap < this->pre_hr[iat]->size_atom_pairs(); iap++)
         {
             hamilt::AtomPair<TR>& tmp = this->pre_hr[iat]->get_atom_pair(iap);
             int iat1 = tmp.get_atom_i();
             int iat2 = tmp.get_atom_j();
             int row_size = tmp.get_row_size();
             int col_size = tmp.get_col_size();
-            if(this->nspin==4)
+            if (this->nspin == 4)
             {
                 this->pre_coeff_array(coefficients, row_size, col_size);
             }
-            for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+            for (int ir = 0; ir < tmp.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
                 const TR* pre_hr_data = tmp.get_pointer(ir);
                 TR* dhr_data = this->hR->find_matrix(iat1, iat2, r_index[0], r_index[1], r_index[2])->get_pointer();
                 // TR== double: axpy for dhr_data += current_lambda * pre_hr_data
                 // TR!= double: call cal_lambda_hr_IJR
-                if (this->nspin==2)
+                if (this->nspin == 2)
                 {
-                    //BlasConnector::axpy(row_size*col_size, coefficients[this->current_spin], pre_hr_data, dhr_data);
-                    for(int i=0;i<tmp.get_size();i++)
+                    // BlasConnector::axpy(row_size*col_size, coefficients[this->current_spin], pre_hr_data, dhr_data);
+                    for (int i = 0; i < tmp.get_size(); i++)
                     {
                         dhr_data[i] += pre_hr_data[i] * coefficients[this->current_spin];
                     }
                 }
                 else
                 {
-                    for(int i=0;i<tmp.get_size();i++)
+                    for (int i = 0; i < tmp.get_size(); i++)
                     {
                         dhr_data[i] += pre_hr_data[i] * this->tmp_coeff_array[i];
                     }
@@ -154,15 +155,15 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
     // save lambda to lambda_save or update the current_spin in NSPIN=2
     this->update_lambda_[this->current_spin] = false;
-    if(this->current_spin == this->spin_num - 1)
+    if (this->current_spin == this->spin_num - 1)
     {
-        for(int i=0;i<this->ucell->nat;i++)
+        for (int i = 0; i < this->ucell->nat; i++)
         {
-            if(this->constraint_atom_list[i])
+            if (this->constraint_atom_list[i])
             {
-                for(int j=0;j<3;j++)
-                {   
-                    this->lambda_save[i*3+j] = lambda[i][j];
+                for (int j = 0; j < 3; j++)
+                {
+                    this->lambda_save[i * 3 + j] = lambda[i][j];
                 }
             }
         }
@@ -172,34 +173,36 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
 // cal_lambda_hr_IJR
 template <typename TK, typename TR>
-void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::pre_coeff_array(
-    const std::vector<TR>& coeff, const int row_size, const int col_size)
+void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::pre_coeff_array(const std::vector<TR>& coeff,
+                                                                      const int row_size,
+                                                                      const int col_size)
 {
-    this->tmp_coeff_array.resize(row_size*col_size);
-    for(int irow=0;irow<row_size;irow+=2)
+    this->tmp_coeff_array.resize(row_size * col_size);
+    for (int irow = 0; irow < row_size; irow += 2)
     {
-        for(int icol=0;icol<col_size;icol+=2)
+        for (int icol = 0; icol < col_size; icol += 2)
         {
-            this->tmp_coeff_array[irow*col_size+icol] = coeff[0];
-            this->tmp_coeff_array[irow*col_size+icol+1] = coeff[1];
-            this->tmp_coeff_array[(irow+1)*col_size+icol] = coeff[2];
-            this->tmp_coeff_array[(irow+1)*col_size+icol+1] = coeff[3];
+            this->tmp_coeff_array[irow * col_size + icol] = coeff[0];
+            this->tmp_coeff_array[irow * col_size + icol + 1] = coeff[1];
+            this->tmp_coeff_array[(irow + 1) * col_size + icol] = coeff[2];
+            this->tmp_coeff_array[(irow + 1) * col_size + icol + 1] = coeff[3];
         }
     }
 }
 
 // cal_constraint_atom_list()
 template <typename TK, typename TR>
-void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_constraint_atom_list(const std::vector<ModuleBase::Vector3<int>>& constraints)
+void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_constraint_atom_list(
+    const std::vector<ModuleBase::Vector3<int>>& constraints)
 {
     this->constraint_atom_list.clear();
     this->constraint_atom_list.resize(this->ucell->nat, false);
 #ifdef __DEBUG
     assert(this->ucell->nat == constraints.size());
 #endif
-    for(int iat=0;iat<this->ucell->nat;iat++)
+    for (int iat = 0; iat < this->ucell->nat; iat++)
     {
-        if(constraints[iat][0] + constraints[iat][1] + constraints[iat][2] == 0)
+        if (constraints[iat][0] + constraints[iat][1] + constraints[iat][2] == 0)
         {
             this->constraint_atom_list[iat] = false;
         }
@@ -215,7 +218,7 @@ template <typename TK, typename TR>
 void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
 {
     ModuleBase::TITLE("DeltaSpin", "cal_pre_HR");
-    if(this->initialized)
+    if (this->initialized)
     {
         return;
     }
@@ -226,13 +229,13 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
 
     const int npol = this->ucell->get_npol();
     size_t memory_cost = 0;
-    for(int iat=0;iat<this->ucell->nat;iat++)
+    for (int iat = 0; iat < this->ucell->nat; iat++)
     {
-        if(!this->constraint_atom_list[iat])
+        if (!this->constraint_atom_list[iat])
         {
             continue;
         }
-        
+
         auto tau0 = ucell->get_tau(iat);
         int T0, I0;
         this->ucell->iat2iait(iat, &I0, &T0);
@@ -249,8 +252,8 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             const int iat1 = ucell->itia2iat(T1, I1);
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
             // choose the real adjacent atoms
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat, iat1, R_index1).norm() * this->ucell->lat0
                 < this->orb_cutoff_[T1] + PARAM.inp.onsite_radius)
@@ -276,16 +279,11 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
                 int r_vector[3] = {R_index2.x - R_index1.x, R_index2.y - R_index1.y, R_index2.z - R_index1.z};
                 // keep the size of pre_hr for each atom less than this->hR
-                if(this->hR->find_matrix(iat1, iat2, r_vector[0], r_vector[1], r_vector[2]) == nullptr)
+                if (this->hR->find_matrix(iat1, iat2, r_vector[0], r_vector[1], r_vector[2]) == nullptr)
                 {
                     continue;
                 }
-                hamilt::AtomPair<TR> tmp(iat1,
-                                         iat2,
-                                         r_vector[0],
-                                         r_vector[1],
-                                         r_vector[2],
-                                         paraV);
+                hamilt::AtomPair<TR> tmp(iat1, iat2, r_vector[0], r_vector[1], r_vector[2], paraV);
                 this->pre_hr[iat]->insert_pair(tmp);
             }
         }
@@ -294,7 +292,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
         // third step: calculate the <phi|alpha> overlap integrals
         const int max_l_plus_1 = this->ucell->atoms[T0].nwl + 1;
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_iat0(adjs.adj_num + 1);
-        for(int ad = 0; ad < adjs.adj_num + 1; ++ad)
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             const int T1 = adjs.ntype[ad];
             const int I1 = adjs.natom[ad];
@@ -313,9 +311,9 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 const int iw1 = all_indexes[iw1l] / npol;
                 // only first zeta orbitals in target L of atom iat0 are needed
                 std::vector<double> nlm_target(max_l_plus_1 * max_l_plus_1);
-                const int L1 = atom1->iw2l[ iw1 ];
-                const int N1 = atom1->iw2n[ iw1 ];
-                const int m1 = atom1->iw2m[ iw1 ];
+                const int L1 = atom1->iw2l[iw1];
+                const int N1 = atom1->iw2n[iw1];
+                const int m1 = atom1->iw2m[iw1];
                 std::vector<std::vector<double>> nlm;
                 // nlm is a vector of vectors, but size of outer vector is only 1 here
                 // If we are calculating force, we need also to store the gradient
@@ -328,16 +326,16 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
                 intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
 
                 // select the elements of nlm with target_L (0, 1, 2, 3 ...)
-                int target_L = 0, index=0;
-                for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
+                int target_L = 0, index = 0;
+                for (int iw = 0; iw < this->ucell->atoms[T0].nw; iw++)
                 {
                     const int L0 = this->ucell->atoms[T0].iw2l[iw];
                     // only the first zeta of each l-orbital is needed
-                    if(L0 == target_L)
+                    if (L0 == target_L)
                     {
-                        for(int m = 0; m < 2*L0+1; m++)
+                        for (int m = 0; m < 2 * L0 + 1; m++)
                         {
-                            nlm_target[index] = nlm[0][iw+m];
+                            nlm_target[index] = nlm[0][iw + m];
                             index++;
                         }
                         target_L++;
@@ -354,18 +352,19 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            const std::unordered_map<int,std::vector<double>>& nlm1 = nlm_iat0[ad1];
+            const std::unordered_map<int, std::vector<double>>& nlm1 = nlm_iat0[ad1];
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
-                const std::unordered_map<int,std::vector<double>>& nlm2 = nlm_iat0[ad2];
+                const std::unordered_map<int, std::vector<double>>& nlm2 = nlm_iat0[ad2];
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
-                hamilt::BaseMatrix<TR>* tmp = this->pre_hr[iat]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                hamilt::BaseMatrix<TR>* tmp
+                    = this->pre_hr[iat]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                 // if not found , skip this pair of atoms
                 if (tmp != nullptr)
                 {
@@ -381,11 +380,12 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
 
 // cal_HR_IJR()
 template <typename TK, typename TR>
-void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
-                    const int& iat2,
-                    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    TR* data_pointer)
+void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
+    const int& iat1,
+    const int& iat2,
+    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+    TR* data_pointer)
 {
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -397,7 +397,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
     auto row_indexes = this->paraV->get_indexes_row(iat1);
     auto col_indexes = this->paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol*npol, 0);
+    std::vector<int> step_trace(npol * npol, 0);
     for (int is = 0; is < npol; is++)
     {
         for (int is2 = 0; is2 < npol; is2++)
@@ -421,7 +421,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
             {
                 nlm_tmp += nlm1[m1] * nlm2[m1];
             }
-            for (int is = 0; is < npol*npol; ++is)
+            for (int is = 0; is < npol * npol; ++is)
             {
                 data_pointer[step_trace[is]] += nlm_tmp;
             }
@@ -433,90 +433,89 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
 
 // cal_moment
 template <typename TK, typename TR>
-std::vector<double> hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment(const HContainer<double>* dmR, const std::vector<ModuleBase::Vector3<int>>& constrain)
+std::vector<double> hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment(
+    const HContainer<double>* dmR,
+    const std::vector<ModuleBase::Vector3<int>>& constrain)
 {
-    const int mag_fold = this->nspin==4?3:1;
+    const int mag_fold = this->nspin == 4 ? 3 : 1;
     std::vector<double> moment(this->ucell->nat * mag_fold, 0.0);
-    if(dmR == nullptr)
+    if (dmR == nullptr)
     {
         return moment;
     }
     if (!this->initialized)
     {
-        //spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-        //auto& constrain = sc.get_constrain();
+        // spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        // auto& constrain = sc.get_constrain();
         this->cal_constraint_atom_list(constrain);
         this->cal_pre_HR();
         this->initialized = true;
     }
-    for(int iat=0;iat<this->ucell->nat;iat++)
+    for (int iat = 0; iat < this->ucell->nat; iat++)
     {
-        if(!this->constraint_atom_list[iat])
+        if (!this->constraint_atom_list[iat])
         {
             continue;
         }
         // magnetic moment = \sum_{\mu\nu,R} dmR * pre_hr
-        for(int iap=0;iap<this->pre_hr[iat]->size_atom_pairs();iap++)
+        for (int iap = 0; iap < this->pre_hr[iat]->size_atom_pairs(); iap++)
         {
             hamilt::AtomPair<TR>& tmp = this->pre_hr[iat]->get_atom_pair(iap);
             int iat1 = tmp.get_atom_i();
             int iat2 = tmp.get_atom_j();
             int row_size = tmp.get_row_size();
             int col_size = tmp.get_col_size();
-            for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+            for (int ir = 0; ir < tmp.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
                 double* dmr_data = dmR->find_matrix(iat1, iat2, r_index[0], r_index[1], r_index[2])->get_pointer();
                 const TR* hr_data = tmp.get_pointer(ir);
-                this->cal_moment_IJR(dmr_data, hr_data, row_size, col_size, &moment[iat*mag_fold]);
+                this->cal_moment_IJR(dmr_data, hr_data, row_size, col_size, &moment[iat * mag_fold]);
             }
         }
     }
 #ifdef __MPI
     // sum up the magnetic moments
     Parallel_Reduce::reduce_all(moment.data(), moment.size());
-#endif 
+#endif
     return moment;
 }
 
 // cal_moment_IJR
 template <typename TK, typename TR>
-void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment_IJR(
-    const double* dmR, 
-    const TR* hr, 
-    const int row_size,
-    const int col_size, 
-    double* moment
-)
+void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment_IJR(const double* dmR,
+                                                                     const TR* hr,
+                                                                     const int row_size,
+                                                                     const int col_size,
+                                                                     double* moment)
 {
     // collinear spin case
     TR tmp_moment = TR(0);
-    for(int i=0;i<row_size*col_size;i++)
+    for (int i = 0; i < row_size * col_size; i++)
     {
         tmp_moment += dmR[i] * hr[i];
     }
     moment[0] += tmp_moment;
 }
 
-template<>
+template <>
 void hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_moment_IJR(
-    const double* dmR, 
-    const std::complex<double>* hr, 
+    const double* dmR,
+    const std::complex<double>* hr,
     const int row_size,
-    const int col_size, 
-    double* moment
-)
+    const int col_size,
+    double* moment)
 {
-    const int step_trace[4] = {0, 1, col_size, col_size+1};
+    const int step_trace[4] = {0, 1, col_size, col_size + 1};
     int index = 0;
     std::vector<std::complex<double>> tmp_moment(3, std::complex<double>(0.0, 0.0));
-    for(int irow=0;irow<row_size;irow+=2)
+    for (int irow = 0; irow < row_size; irow += 2)
     {
-        for(int icol=0;icol<col_size;icol+=2)
+        for (int icol = 0; icol < col_size; icol += 2)
         {
-            tmp_moment[0] += dmR[index+step_trace[1]] * hr[index];
-            tmp_moment[1] += dmR[index+step_trace[2]] * hr[index];
-            tmp_moment[2] += dmR[index+step_trace[3]] * hr[index];
+            tmp_moment[0] += dmR[index + step_trace[1]] * hr[index];
+            tmp_moment[1] += dmR[index + step_trace[2]] * hr[index];
+            tmp_moment[2] += dmR[index + step_trace[3]] * hr[index];
             index += 2;
         }
         index += col_size;

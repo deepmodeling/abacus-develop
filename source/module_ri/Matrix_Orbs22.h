@@ -6,17 +6,18 @@
 #ifndef MATRIX_ORB22_H
 #define MATRIX_ORB22_H
 
-#include "module_base/element_basis_index.h"
-#include "module_base/vector3.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb22.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb22.h"
+#include "source_base/element_basis_index.h"
+#include "source_base/vector3.h"
 
 #include <RI/global/Tensor.h>
 #include <map>
 #include <set>
 #include <vector>
+
 
 class Matrix_Orbs22
 {
@@ -93,7 +94,7 @@ class Matrix_Orbs22
 
     template <typename Tdata>
     std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor<Tdata>>>>> cal_overlap_matrix_all(
-        const UnitCell &ucell,
+        const UnitCell& ucell,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_B1,
@@ -103,7 +104,7 @@ class Matrix_Orbs22
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
     const double lcao_dr_ = 0.01;
-    double* lat0 = nullptr;                                                                      // restore ucell.lat0
+    double* lat0 = nullptr; // restore ucell.lat0
     std::map<
         size_t,                                                                                  // TA
         std::map<size_t,                                                                         // TB

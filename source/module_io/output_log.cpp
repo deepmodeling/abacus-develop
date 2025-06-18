@@ -1,11 +1,10 @@
 #include "output_log.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/constants.h"
-#include "module_base/formatter.h"
-#include "module_base/global_variable.h"
-
-#include "module_base/parallel_comm.h"
+#include "source_base/constants.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -13,12 +12,13 @@
 
 namespace ModuleIO
 {
-void output_convergence_after_scf(const bool &convergence, double& energy, std::ofstream& ofs_running)
+void output_convergence_after_scf(const bool& convergence, double& energy, std::ofstream& ofs_running)
 {
     if (convergence)
     {
         ofs_running << "\n charge density convergence is achieved" << std::endl;
-        ofs_running << " final etot is " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        ofs_running << " final etot is " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV"
+                    << std::endl;
     }
     else
     {
@@ -49,7 +49,7 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
     }
 }
 
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running)
+void output_efermi(const bool& convergence, double& efermi, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
     {
@@ -251,25 +251,27 @@ void print_force(std::ofstream& ofs_running,
         }
     }
 
-
-    FmtTable fmt(/*titles=*/titles, 
-                 /*nrows=*/atom_label.size(), 
-                 /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
+    FmtTable fmt(/*titles=*/titles,
+                 /*nrows=*/atom_label.size(),
+                 /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"},
                  0,
-			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+                 {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
 
-	fmt << atom_label << force_x << force_y << force_z;
-	table = fmt.str();
+    fmt << atom_label << force_x << force_y << force_z;
+    table = fmt.str();
     ofs_running << table << std::endl;
 
-	if (PARAM.inp.test_force) 
-	{ 
-		std::cout << table << std::endl;
-	}
+    if (PARAM.inp.test_force)
+    {
+        std::cout << table << std::endl;
+    }
 }
 
-void print_stress(const std::string& name, const ModuleBase::matrix& scs, 
-  const bool screen, const bool ry, std::ofstream &ofs)
+void print_stress(const std::string& name,
+                  const ModuleBase::matrix& scs,
+                  const bool screen,
+                  const bool ry,
+                  std::ofstream& ofs)
 {
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
@@ -306,28 +308,27 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
 
     double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
 
-    FmtTable fmt(/*titles=*/titles, 
-                 /*nrows=*/3, 
-                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 0,
-                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+    FmtTable fmt(/*titles=*/titles,
+                 /*nrows=*/3,
+                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"},
+                 0,
+                 {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
 
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
     ofs << table;
     if (name == "TOTAL-STRESS")
     {
-        ofs << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
-                             << std::setprecision(6) << pressure << unit
-                             << std::endl;
+        ofs << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed << std::setprecision(6)
+            << pressure << unit << std::endl;
     }
     if (screen)
     {
         std::cout << table;
         if (name == "TOTAL-STRESS")
         {
-            std::cout << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
-                      << std::setprecision(6) << pressure << unit
-                      << std::endl;
+            std::cout << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed << std::setprecision(6)
+                      << pressure << unit << std::endl;
         }
     }
     return;
@@ -336,7 +337,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
 void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std::string& basisname)
 {
     ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
-                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
+        << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 
-}// namespace ModuleIO
+} // namespace ModuleIO

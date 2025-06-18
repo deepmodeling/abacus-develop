@@ -1,18 +1,18 @@
+#include "unitcell.h"
+
+#include "bcast_cell.h"
+#include "module_cell/read_stru.h"
+#include "module_parameter/parameter.h"
+#include "source_base/atom_in.h"
+#include "source_base/constants.h"
+#include "source_base/element_elec_config.h"
+#include "source_base/global_file.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+
 #include <cstdlib>
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
-
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "unitcell.h"
-#include "bcast_cell.h"
-#include "module_parameter/parameter.h"
-#include "module_cell/read_stru.h"
-#include "module_base/atom_in.h"
-#include "module_base/element_elec_config.h"
-#include "module_base/global_file.h"
-#include "module_base/parallel_common.h"
-#include "module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "mpi.h"
@@ -23,21 +23,21 @@
 #endif
 
 #include "update_cell.h"
-UnitCell::UnitCell() 
+UnitCell::UnitCell()
 {
     itia2iat.create(1, 1);
 }
 
-UnitCell::~UnitCell() 
+UnitCell::~UnitCell()
 {
-    if (set_atom_flag) 
+    if (set_atom_flag)
     {
         delete[] atoms;
     }
 }
 
-
-void UnitCell::print_cell(std::ofstream& ofs) const {
+void UnitCell::print_cell(std::ofstream& ofs) const
+{
 
     ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
 
@@ -58,16 +58,18 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
     return;
 }
 
-
-void UnitCell::set_iat2itia() {
+void UnitCell::set_iat2itia()
+{
     assert(nat > 0);
     delete[] iat2it;
     delete[] iat2ia;
     this->iat2it = new int[nat];
     this->iat2ia = new int[nat];
     int iat = 0;
-    for (int it = 0; it < ntype; it++) {
-        for (int ia = 0; ia < atoms[it].na; ia++) {
+    for (int it = 0; it < ntype; it++)
+    {
+        for (int ia = 0; ia < atoms[it].na; ia++)
+        {
             this->iat2it[iat] = it;
             this->iat2ia[iat] = ia;
             ++iat;
@@ -76,28 +78,36 @@ void UnitCell::set_iat2itia() {
     return;
 }
 
-std::map<int, int> UnitCell::get_atom_Counts() const {
+std::map<int, int> UnitCell::get_atom_Counts() const
+{
     std::map<int, int> atomCounts;
-    for (int it = 0; it < this->ntype; it++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
         atomCounts.insert(std::pair<int, int>(it, this->atoms[it].na));
     }
     return atomCounts;
 }
 
-std::map<int, int> UnitCell::get_orbital_Counts() const {
+std::map<int, int> UnitCell::get_orbital_Counts() const
+{
     std::map<int, int> orbitalCounts;
-    for (int it = 0; it < this->ntype; it++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
         orbitalCounts.insert(std::pair<int, int>(it, this->atoms[it].nw));
     }
     return orbitalCounts;
 }
 
-std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const {
+std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const
+{
     std::map<int, std::map<int, int>> lnchiCounts;
-    for (int it = 0; it < this->ntype; it++) {
-        for (int L = 0; L < this->atoms[it].nwl + 1; L++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
+        for (int L = 0; L < this->atoms[it].nwl + 1; L++)
+        {
             // Check if the key 'it' exists in the outer map
-            if (lnchiCounts.find(it) == lnchiCounts.end()) {
+            if (lnchiCounts.find(it) == lnchiCounts.end())
+            {
                 // If it doesn't exist, initialize an empty inner map
                 lnchiCounts[it] = std::map<int, int>();
             }
@@ -109,27 +119,34 @@ std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const {
     return lnchiCounts;
 }
 
-std::vector<std::string> UnitCell::get_atomLabels() const {
+std::vector<std::string> UnitCell::get_atomLabels() const
+{
     std::vector<std::string> atomLabels(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
         atomLabels[it] = this->atoms[it].label;
     }
     return atomLabels;
 }
 
-std::vector<int> UnitCell::get_atomCounts() const {
+std::vector<int> UnitCell::get_atomCounts() const
+{
     std::vector<int> atomCounts(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
         atomCounts[it] = this->atoms[it].na;
     }
     return atomCounts;
 }
 
-std::vector<std::vector<int>> UnitCell::get_lnchiCounts() const {
+std::vector<std::vector<int>> UnitCell::get_lnchiCounts() const
+{
     std::vector<std::vector<int>> lnchiCounts(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
+    for (int it = 0; it < this->ntype; it++)
+    {
         lnchiCounts[it].resize(this->atoms[it].nwl + 1);
-        for (int L = 0; L < this->atoms[it].nwl + 1; L++) {
+        for (int L = 0; L < this->atoms[it].nwl + 1; L++)
+        {
             lnchiCounts[it][L] = this->atoms[it].l_nchi[L];
         }
     }
@@ -138,50 +155,50 @@ std::vector<std::vector<int>> UnitCell::get_lnchiCounts() const {
 
 std::vector<ModuleBase::Vector3<double>> UnitCell::get_target_mag() const
 {
-	std::vector<ModuleBase::Vector3<double>> target_mag(this->nat);
-	for (int it = 0; it < this->ntype; it++)
-	{
-		for (int ia = 0; ia < this->atoms[it].na; ia++)
-		{
-			int iat = itia2iat(it, ia);
-			target_mag[iat] = this->atoms[it].m_loc_[ia];
-		}
-	}
-	return target_mag;
+    std::vector<ModuleBase::Vector3<double>> target_mag(this->nat);
+    for (int it = 0; it < this->ntype; it++)
+    {
+        for (int ia = 0; ia < this->atoms[it].na; ia++)
+        {
+            int iat = itia2iat(it, ia);
+            target_mag[iat] = this->atoms[it].m_loc_[ia];
+        }
+    }
+    return target_mag;
 }
 
 std::vector<ModuleBase::Vector3<double>> UnitCell::get_lambda() const
 {
-	std::vector<ModuleBase::Vector3<double>> lambda(this->nat);
-	for (int it = 0; it < this->ntype; it++)
-	{
-		for (int ia = 0; ia < this->atoms[it].na; ia++)
-		{
-			int iat = itia2iat(it, ia);
-			lambda[iat] = this->atoms[it].lambda[ia];
-		}
-	}
-	return lambda;
+    std::vector<ModuleBase::Vector3<double>> lambda(this->nat);
+    for (int it = 0; it < this->ntype; it++)
+    {
+        for (int ia = 0; ia < this->atoms[it].na; ia++)
+        {
+            int iat = itia2iat(it, ia);
+            lambda[iat] = this->atoms[it].lambda[ia];
+        }
+    }
+    return lambda;
 }
 
 std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 {
-	std::vector<ModuleBase::Vector3<int>> constrain(this->nat);
-	for (int it = 0; it < this->ntype; it++)
-	{
-		for (int ia = 0; ia < this->atoms[it].na; ia++)
-		{
-			int iat = itia2iat(it, ia);
-			constrain[iat] = this->atoms[it].constrain[ia];
-		}
-	}
-	return constrain;
+    std::vector<ModuleBase::Vector3<int>> constrain(this->nat);
+    for (int it = 0; it < this->ntype; it++)
+    {
+        for (int ia = 0; ia < this->atoms[it].na; ia++)
+        {
+            int iat = itia2iat(it, ia);
+            constrain[iat] = this->atoms[it].constrain[ia];
+        }
+    }
+    return constrain;
 }
 
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) 
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
@@ -207,17 +224,17 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     this->pseudo_type.resize(ntype);
     this->orbital_fn.resize(ntype);
 
-    if (GlobalV::MY_RANK == 0) 
+    if (GlobalV::MY_RANK == 0)
     {
         // open "atom_unitcell" file.
         std::ifstream ifa(fn.c_str(), std::ios::in);
-        if (!ifa) 
+        if (!ifa)
         {
             GlobalV::ofs_warning << fn;
             ok = false;
         }
 
-        if (ok) 
+        if (ok)
         {
             log << "\n\n";
             log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -265,11 +282,11 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             //========================
             // call read_atom_species
             //========================
-            const bool read_atom_species = unitcell::read_atom_species(ifa, log ,*this);
+            const bool read_atom_species = unitcell::read_atom_species(ifa, log, *this);
             //========================
             // call read_lattice_constant
             //========================
-            const bool read_lattice_constant = unitcell::read_lattice_constant(ifa, log ,this->lat);
+            const bool read_lattice_constant = unitcell::read_lattice_constant(ifa, log, this->lat);
             //==========================
             // call read_atom_positions
             //==========================
@@ -280,14 +297,13 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     Parallel_Common::bcast_bool(ok);
     Parallel_Common::bcast_bool(ok2);
 #endif
-    if (!ok) {
-        ModuleBase::WARNING_QUIT(
-            "UnitCell::setup_cell",
-            "Can not find the file containing atom positions.!");
+    if (!ok)
+    {
+        ModuleBase::WARNING_QUIT("UnitCell::setup_cell", "Can not find the file containing atom positions.!");
     }
-    if (!ok2) {
-        ModuleBase::WARNING_QUIT("UnitCell::setup_cell",
-                                 "Something wrong during read_atom_positions.");
+    if (!ok2)
+    {
+        ModuleBase::WARNING_QUIT("UnitCell::setup_cell", "Something wrong during read_atom_positions.");
     }
 
 #ifdef __MPI
@@ -302,18 +318,17 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     assert(lat0 > 0.0);
     this->omega = latvec.Det() * this->lat0 * this->lat0 * this->lat0;
 
-
     if (this->omega < 0)
     {
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         std::cout << " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << 
-        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        GlobalV::ofs_warning << 
-        " Warning: The lattice vector is left-handed; a right-handed vector is prefered." << std::endl;
-        GlobalV::ofs_warning << 
-        "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        GlobalV::ofs_warning << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                             << std::endl;
+        GlobalV::ofs_warning << " Warning: The lattice vector is left-handed; a right-handed vector is prefered."
+                             << std::endl;
+        GlobalV::ofs_warning << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                             << std::endl;
         this->omega = std::abs(this->omega);
     }
     else if (this->omega == 0)
@@ -343,13 +358,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     this->invGGT0 = GGT.Inverse();
 
     log << std::endl;
-    output::printM3(log,
-                    "Lattice vectors: (Cartesian coordinate: in unit of a_0)",
-                    latvec);
-    output::printM3(
-        log,
-        "Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",
-        G);
+    output::printM3(log, "Lattice vectors: (Cartesian coordinate: in unit of a_0)", latvec);
+    output::printM3(log, "Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)", G);
 
     //===================================
     // set index for iat2it, iat2ia
@@ -359,8 +369,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     return;
 }
 
-
-void UnitCell::set_iat2iwt(const int& npol_in) 
+void UnitCell::set_iat2iwt(const int& npol_in)
 {
 #ifdef __DEBUG
     assert(npol_in == 1 || npol_in == 2);
@@ -372,9 +381,9 @@ void UnitCell::set_iat2iwt(const int& npol_in)
     int iat = 0;
     int iwt = 0;
 
-    for (int it = 0; it < this->ntype; it++) 
+    for (int it = 0; it < this->ntype; it++)
     {
-        for (int ia = 0; ia < atoms[it].na; ia++) 
+        for (int ia = 0; ia < atoms[it].na; ia++)
         {
             this->iat2iwt[iat] = iwt;
             iwt += atoms[it].nw * this->npol;
@@ -384,174 +393,176 @@ void UnitCell::set_iat2iwt(const int& npol_in)
     return;
 }
 
-
-
 // check if any atom can be moved
-bool UnitCell::if_atoms_can_move() const 
+bool UnitCell::if_atoms_can_move() const
 {
-    for (int it = 0; it < this->ntype; it++) 
+    for (int it = 0; it < this->ntype; it++)
     {
         Atom* atom = &atoms[it];
-		for (int ia = 0; ia < atom->na; ia++) 
-		{
-			if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z) 
-			{
-				return true;
-			}
-		}
-	}
+        for (int ia = 0; ia < atom->na; ia++)
+        {
+            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
+            {
+                return true;
+            }
+        }
+    }
     return false;
 }
 
 // check if lattice vector can be changed
-bool UnitCell::if_cell_can_change() const 
+bool UnitCell::if_cell_can_change() const
 {
-	// need to be fixed next
-	if (this->lc[0] || this->lc[1] || this->lc[2]) 
-	{
-		return true;
-	}
-	return false;
+    // need to be fixed next
+    if (this->lc[0] || this->lc[1] || this->lc[2])
+    {
+        return true;
+    }
+    return false;
 }
 
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
-                     const std::string& fixed_axes_in) {
+                     const std::string& fixed_axes_in)
+{
     this->latName = latname_in;
     this->ntype = ntype_in;
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
-    if (fixed_axes_in == "None") {
+    if (fixed_axes_in == "None")
+    {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    } else if (fixed_axes_in == "volume") {
+    }
+    else if (fixed_axes_in == "volume")
+    {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!PARAM.inp.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "there are bugs in the old implementation; set relax_new to be "
-                "1 for fixed_volume relaxation");
+        if (!PARAM.inp.relax_new)
+        {
+            ModuleBase::WARNING_QUIT("Input",
+                                     "there are bugs in the old implementation; set relax_new to be "
+                                     "1 for fixed_volume relaxation");
         }
-    } else if (fixed_axes_in == "shape") {
-        if (!PARAM.inp.relax_new) {
-            ModuleBase::WARNING_QUIT(
-                "Input",
-                "set relax_new to be 1 for fixed_shape relaxation");
+    }
+    else if (fixed_axes_in == "shape")
+    {
+        if (!PARAM.inp.relax_new)
+        {
+            ModuleBase::WARNING_QUIT("Input", "set relax_new to be 1 for fixed_shape relaxation");
         }
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    } else if (fixed_axes_in == "a") {
+    }
+    else if (fixed_axes_in == "a")
+    {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    } else if (fixed_axes_in == "b") {
+    }
+    else if (fixed_axes_in == "b")
+    {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    } else if (fixed_axes_in == "c") {
+    }
+    else if (fixed_axes_in == "c")
+    {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    } else if (fixed_axes_in == "ab") {
+    }
+    else if (fixed_axes_in == "ab")
+    {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    } else if (fixed_axes_in == "ac") {
+    }
+    else if (fixed_axes_in == "ac")
+    {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    } else if (fixed_axes_in == "bc") {
+    }
+    else if (fixed_axes_in == "bc")
+    {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    } else if (fixed_axes_in == "abc") {
+    }
+    else if (fixed_axes_in == "abc")
+    {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    } else {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "fixed_axes should be none, volume, shape, a, b, c, ab, ac, bc or abc!");
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Input", "fixed_axes should be none, volume, shape, a, b, c, ab, ac, bc or abc!");
     }
     return;
 }
 
-
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) 
+void UnitCell::compare_atom_labels(const std::string& label1, const std::string& label2)
 {
-    if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
+    if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {
         atom_in ai;
-        if (!(std::to_string(ai.atom_Z[label1]) == label2
-              ||                                  // '!( "Ag" == "47" )'
-              ai.atom_symbol[label1] == label2 || // '!( "Ag" == "Silver" )'
-              label1 == std::to_string(ai.atom_Z[label2])
-              || // '!( "47" == "Ag" )'
-              label1 == std::to_string(ai.symbol_Z[label2])
-              ||                                  // '!( "47" == "Silver" )'
-              label1 == ai.atom_symbol[label2] || // '!( "Silver" == "Ag" )'
-              std::to_string(ai.symbol_Z[label1])
-                  == label2)) // '!( "Silver" == "47" )'
+        if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
+              ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
+              label1 == std::to_string(ai.atom_Z[label2]) ||   // '!( "47" == "Ag" )'
+              label1 == std::to_string(ai.symbol_Z[label2]) || // '!( "47" == "Silver" )'
+              label1 == ai.atom_symbol[label2] ||              // '!( "Silver" == "Ag" )'
+              std::to_string(ai.symbol_Z[label1]) == label2))  // '!( "Silver" == "47" )'
         {
             std::string stru_label = "";
             std::string psuedo_label = "";
-			for (int ip = 0; ip < label1.length(); ip++) 
-			{
-				if (!(isdigit(label1[ip]) || label1[ip] == '_')) 
-				{
-					stru_label += label1[ip];
-				} 
-				else 
-				{
-					break;
-				}
-			}
-			stru_label[0] = toupper(stru_label[0]);
+            for (int ip = 0; ip < label1.length(); ip++)
+            {
+                if (!(isdigit(label1[ip]) || label1[ip] == '_'))
+                {
+                    stru_label += label1[ip];
+                }
+                else
+                {
+                    break;
+                }
+            }
+            stru_label[0] = toupper(stru_label[0]);
 
-			for (int ip = 0; ip < label2.length(); ip++) 
-			{
-				if (!(isdigit(label2[ip]) || label2[ip] == '_')) 
-				{
-					psuedo_label += label2[ip];
-				} 
-				else 
-				{
-					break;
-				}
-			}
+            for (int ip = 0; ip < label2.length(); ip++)
+            {
+                if (!(isdigit(label2[ip]) || label2[ip] == '_'))
+                {
+                    psuedo_label += label2[ip];
+                }
+                else
+                {
+                    break;
+                }
+            }
             psuedo_label[0] = toupper(psuedo_label[0]);
 
-            if (!(stru_label == psuedo_label
-                  || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" ==
-                     //Silver" )'
-                  std::to_string(ai.atom_Z[stru_label]) == psuedo_label
-                  || // ' !("Ag1" == "47" )'
-                  ai.atom_symbol[stru_label] == psuedo_label
-                  || // ' !("Ag1" == "Silver")'
-                  stru_label == std::to_string(ai.atom_Z[psuedo_label])
-                  || // ' !("47" == "Ag1" )'
-                  stru_label == std::to_string(ai.symbol_Z[psuedo_label])
-                  || // ' !("47" == "Silver1" )'
-                  stru_label == ai.atom_symbol[psuedo_label]
-                  || // ' !("Silver1" == "Ag" )'
-                  std::to_string(ai.symbol_Z[stru_label])
-                      == psuedo_label)) // ' !("Silver1" == "47" )'
+            if (!(stru_label == psuedo_label || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" ==
+                                                // Silver" )'
+                  std::to_string(ai.atom_Z[stru_label]) == psuedo_label ||   // ' !("Ag1" == "47" )'
+                  ai.atom_symbol[stru_label] == psuedo_label ||              // ' !("Ag1" == "Silver")'
+                  stru_label == std::to_string(ai.atom_Z[psuedo_label]) ||   // ' !("47" == "Ag1" )'
+                  stru_label == std::to_string(ai.symbol_Z[psuedo_label]) || // ' !("47" == "Silver1" )'
+                  stru_label == ai.atom_symbol[psuedo_label] ||              // ' !("Silver1" == "Ag" )'
+                  std::to_string(ai.symbol_Z[stru_label]) == psuedo_label))  // ' !("Silver1" == "47" )'
 
             {
-                std::string atom_label_in_orbtial
-                    = "atom label in orbital file ";
-                std::string mismatch_with_pseudo
-                    = " mismatch with pseudo file of ";
+                std::string atom_label_in_orbtial = "atom label in orbital file ";
+                std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
                 ModuleBase::WARNING_QUIT("UnitCell::read_pseudo",
-                                         atom_label_in_orbtial + label1
-                                             + mismatch_with_pseudo + label2);
+                                         atom_label_in_orbtial + label1 + mismatch_with_pseudo + label2);
             }
         }
     }

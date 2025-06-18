@@ -1,8 +1,10 @@
 #include "cal_nelec_nband.h"
-#include "module_base/constants.h"
-#include "module_parameter/parameter.h"
 
-namespace elecstate {
+#include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+
+namespace elecstate
+{
 
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec)
 {
@@ -46,7 +48,8 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     // calculate number of bands (setup.f90)
     //=======================================
     double occupied_bands = static_cast<double>(nelec / ModuleBase::DEGSPIN);
-    if (PARAM.inp.lspinorb == 1) {
+    if (PARAM.inp.lspinorb == 1)
+    {
         occupied_bands = static_cast<double>(nelec);
     }
 
@@ -64,7 +67,8 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
             const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
             nbands = std::max(nbands1, nbands2);
-            if (PARAM.inp.basis_type != "pw") {
+            if (PARAM.inp.basis_type != "pw")
+            {
                 nbands = std::min(nbands, nlocal);
             }
         }
@@ -73,7 +77,8 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
             const int nbands3 = nelec + 20;
             const int nbands4 = static_cast<int>(1.2 * nelec) + 1;
             nbands = std::max(nbands3, nbands4);
-            if (PARAM.inp.basis_type != "pw") {
+            if (PARAM.inp.basis_type != "pw")
+            {
                 nbands = std::min(nbands, nlocal);
             }
         }
@@ -83,17 +88,19 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
             const int nbands3 = static_cast<int>(max_occ) + 11;
             const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
             nbands = std::max(nbands3, nbands4);
-            if (PARAM.inp.basis_type != "pw") {
+            if (PARAM.inp.basis_type != "pw")
+            {
                 nbands = std::min(nbands, nlocal);
             }
         }
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", nbands);
     }
-    // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax") //pengfei
-    // 2014-10-13
+    // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax")
+    // //pengfei 2014-10-13
     else
     {
-        if (nbands < occupied_bands) {
+        if (nbands < occupied_bands)
+        {
             ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
         }
         if (PARAM.inp.nspin == 2)
@@ -139,4 +146,4 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", nbands);
 }
 
-}
+} // namespace elecstate

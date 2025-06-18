@@ -4,7 +4,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 
 FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
@@ -56,7 +56,6 @@ void FIRE::first_half(std::ofstream& ofs)
     return;
 }
 
-
 void FIRE::second_half(void)
 {
     ModuleBase::TITLE("FIRE", "second_half");
@@ -71,19 +70,17 @@ void FIRE::second_half(void)
     return;
 }
 
-
 void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
 
     const double max_force = max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
 
-	ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
-	std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
+    ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
+    std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
 
     return;
 }
-
 
 void FIRE::write_restart(const std::string& global_out_dir)
 {
@@ -107,7 +104,6 @@ void FIRE::write_restart(const std::string& global_out_dir)
 
     return;
 }
-
 
 void FIRE::restart(const std::string& global_readin_dir)
 {
@@ -152,7 +148,6 @@ void FIRE::restart(const std::string& global_readin_dir)
     return;
 }
 
-
 void FIRE::check_force(void)
 {
     max = 0;
@@ -175,7 +170,6 @@ void FIRE::check_force(void)
 
     return;
 }
-
 
 void FIRE::check_fire(void)
 {
@@ -231,6 +225,6 @@ void FIRE::check_fire(void)
 
         alpha = alpha_start;
     }
-    
+
     return;
 }

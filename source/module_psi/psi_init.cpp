@@ -1,11 +1,5 @@
 #include "psi_init.h"
 
-#include "module_base/macros.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_device.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_atomic_random.h"
@@ -13,6 +7,12 @@
 #include "module_psi/psi_initializer_nao.h"
 #include "module_psi/psi_initializer_nao_random.h"
 #include "module_psi/psi_initializer_random.h"
+#include "source_base/macros.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_device.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_hsolver/diago_iter_assist.h"
 namespace psi
 {
 
@@ -133,7 +133,8 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
     for (int ik = 0; ik < this->pw_wfc.nks; ik++)
     {
-        if(PARAM.inp.use_k_continuity && ik > 0) continue;
+        if (PARAM.inp.use_k_continuity && ik > 0)
+            continue;
         //! Fix the wavefunction to initialize at given kpoint
         psi->fix_k(ik);
         kspw_psi->fix_k(ik);
@@ -148,7 +149,6 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
             }
-                
 
             if (this->ks_solver == "cg")
             {
@@ -205,8 +205,13 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             else
             {
                 MPI_Status status;
-                Parallel_Common::recv_dev<T, Device>(kspw_psi->get_pointer(), nbands_l * nbasis, 0, 0, BP_WORLD, &status);
-            }            
+                Parallel_Common::recv_dev<T, Device>(kspw_psi->get_pointer(),
+                                                     nbands_l * nbasis,
+                                                     0,
+                                                     0,
+                                                     BP_WORLD,
+                                                     &status);
+            }
         }
 #endif
     } // end k-point loop

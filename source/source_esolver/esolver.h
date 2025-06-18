@@ -1,9 +1,9 @@
 #ifndef ESOLVER_H
 #define ESOLVER_H
 
-#include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_parameter/parameter.h"
+#include "source_base/matrix.h"
 
 namespace ModuleESolver
 {
@@ -30,7 +30,7 @@ class ESolver
 
     //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg
-    virtual void others(UnitCell& ucell, const int istep) {};
+    virtual void others(UnitCell& ucell, const int istep){};
 
     //! calculate total energy of a given system
     virtual double cal_energy() = 0;
@@ -50,7 +50,7 @@ class ESolver
  * @brief A subrutine called in init_esolver()
  *        This function returns type of ESolver
  *        Based on PARAM.inp.basis_type and PARAM.inp.esolver_type
- * 
+ *
  * @return [out] std::string The type of ESolver
  */
 std::string determine_type();

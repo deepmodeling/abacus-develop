@@ -1,10 +1,8 @@
 #include "elpa_new.h"
 #include "elpa_solver.h"
-
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/tool_quit.h"
 #include "utils.h"
-
-#include "module_base/tool_quit.h"
 
 #include <cfloat>
 #include <complex>
@@ -56,10 +54,14 @@ int ELPA_Solver::generalized_eigenvector(double* A,
     {
         timer(myid, "decomposeRightMatrix", "1", t);
     }
-    if (allinfo != 0){
+    if (allinfo != 0)
+    {
         // if allinfo is still not 0 anyway, report error and quit
-        if(myid == 0){
-            ModuleBase::WARNING_QUIT("ELPA_Solver::generalized_eigenvector", "decomposeRightMatrix failed to decompose right matrix!\n info = " + std::to_string(allinfo));
+        if (myid == 0)
+        {
+            ModuleBase::WARNING_QUIT("ELPA_Solver::generalized_eigenvector",
+                                     "decomposeRightMatrix failed to decompose right matrix!\n info = "
+                                         + std::to_string(allinfo));
         }
     }
 
@@ -321,11 +323,12 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
     }
 
     // if allinfo is still not 0 anyway, report error and quit
-    if(allinfo != 0)
+    if (allinfo != 0)
     {
-        if(myid == 0){
+        if (myid == 0)
+        {
             ModuleBase::WARNING_QUIT("decomposeRightMatrix",
-                "Failed to decompose right matrix!\n info = " + std::to_string(allinfo));
+                                     "Failed to decompose right matrix!\n info = " + std::to_string(allinfo));
         }
     }
     return allinfo;
@@ -343,7 +346,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, double* B, double* Eige
             timer(myid, "Cpdtrmm", "1", t);
         }
         ScalapackConnector::trmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
-        //Cpdtrmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
+        // Cpdtrmm('L', 'U', 'N', 'N', nFull, nev, 1.0, B, EigenVector, desc);
         if (loglevel > 1)
         {
             timer(myid, "Cpdtrmm", "1", t);

@@ -1,8 +1,9 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "module_base/module_mixing/broyden_mixing.h"
 #include "module_ri/Mix_DMk_2D.h"
 #include "module_ri/Mix_Matrix.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 /************************************************
  *  unit test of charge_mixing.cpp & Mix_DMk_2D.cpp
@@ -66,9 +67,9 @@ class DM_Mixing_Test : public ::testing::Test
         {
             for (int j = 0; j < nc; ++j)
             {
-                mix_complexdata_vector[0][i * nc + j] = std::complex<double>{ double(i), double(j) };
-                mix_complexdata_vector[1][i * nc + j] = std::complex<double>{ double(i), double(j) + 0.2 };
-                mix_complexdata_vector[2][i * nc + j] = std::complex<double>{ double(i) + 0.8, double(j) };
+                mix_complexdata_vector[0][i * nc + j] = std::complex<double>{double(i), double(j)};
+                mix_complexdata_vector[1][i * nc + j] = std::complex<double>{double(i), double(j) + 0.2};
+                mix_complexdata_vector[2][i * nc + j] = std::complex<double>{double(i) + 0.8, double(j)};
             }
         }
     };
@@ -123,10 +124,12 @@ TEST_F(DM_Mixing_Test, Mix_Matrix)
     {
         for (int j = 0; j < nc; ++j)
         {
-            EXPECT_DOUBLE_EQ(data_out_vector[i * nc + j], (1 - mixing_beta) * mix_data_vector[0][i * nc + j] + mixing_beta * mix_data_vector[1][i * nc + j]);
+            EXPECT_DOUBLE_EQ(data_out_vector[i * nc + j],
+                             (1 - mixing_beta) * mix_data_vector[0][i * nc + j]
+                                 + mixing_beta * mix_data_vector[1][i * nc + j]);
         }
     }
-    //vector<complex<double>>
+    // vector<complex<double>>
     Mix_Matrix<std::vector<std::complex<double>>> mix_vector_complex;
     mix_vector_complex.init(nullptr);
     mix_vector_complex.mixing_beta = mixing_beta;
@@ -140,15 +143,21 @@ TEST_F(DM_Mixing_Test, Mix_Matrix)
     {
         for (int j = 0; j < nc; ++j)
         {
-            EXPECT_DOUBLE_EQ(data_out_vector_complex[i * nc + j].real(), ((1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j] + mixing_beta * mix_complexdata_vector[1][i * nc + j]).real());
-            EXPECT_DOUBLE_EQ(data_out_vector_complex[i * nc + j].imag(), ((1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j] + mixing_beta * mix_complexdata_vector[1][i * nc + j]).imag());
+            EXPECT_DOUBLE_EQ(data_out_vector_complex[i * nc + j].real(),
+                             ((1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j]
+                              + mixing_beta * mix_complexdata_vector[1][i * nc + j])
+                                 .real());
+            EXPECT_DOUBLE_EQ(data_out_vector_complex[i * nc + j].imag(),
+                             ((1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j]
+                              + mixing_beta * mix_complexdata_vector[1][i * nc + j])
+                                 .imag());
         }
     }
 
     // Broyden mix
     Mix_Matrix<ModuleBase::ComplexMatrix> mix_complexmatrix;
     mix_complexmatrix.init(mixing);
-    mixing->coef = { 1.1, -0.1 };
+    mixing->coef = {1.1, -0.1};
     for (int istep = 0; istep < 3; ++istep)
     {
         mix_complexmatrix.mix(mix_complexdata[istep], (istep == 0));
@@ -171,7 +180,7 @@ TEST_F(DM_Mixing_Test, Mix_Matrix)
 
 TEST_F(DM_Mixing_Test, Mix_DMk_2D)
 {
-    //Gamma only
+    // Gamma only
     Mix_DMk_2D mix_dmk_gamma;
     mix_dmk_gamma.set_nks(1, true);
     mix_dmk_gamma.set_mixing(nullptr);
@@ -190,7 +199,9 @@ TEST_F(DM_Mixing_Test, Mix_DMk_2D)
     {
         for (int j = 0; j < nc; ++j)
         {
-            EXPECT_DOUBLE_EQ(dm_gamma_out[0][0][i * nc + j], (1 - mixing_beta) * mix_data_vector[0][i * nc + j] + mixing_beta * mix_data_vector[1][i * nc + j]);
+            EXPECT_DOUBLE_EQ(dm_gamma_out[0][0][i * nc + j],
+                             (1 - mixing_beta) * mix_data_vector[0][i * nc + j]
+                                 + mixing_beta * mix_data_vector[1][i * nc + j]);
         }
     }
 
@@ -213,8 +224,8 @@ TEST_F(DM_Mixing_Test, Mix_DMk_2D)
     {
         for (int j = 0; j < nc; ++j)
         {
-            std::complex<double> first_step_result
-                = (1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j] + mixing_beta * mix_complexdata_vector[1][i * nc + j];
+            std::complex<double> first_step_result = (1 - mixing_beta) * mix_complexdata_vector[0][i * nc + j]
+                                                     + mixing_beta * mix_complexdata_vector[1][i * nc + j];
             EXPECT_DOUBLE_EQ(dm_out[0][0][i * nc + j].real(), first_step_result.real());
             EXPECT_DOUBLE_EQ(dm_out[0][0][i * nc + j].imag(), first_step_result.imag());
         }

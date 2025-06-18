@@ -1,6 +1,6 @@
 #include "output_sk.h"
 
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -30,8 +30,7 @@ std::complex<double>* Output_Sk<std::complex<double>>::get_Sk(int ik)
     }
     if (this->nspin_ == 4)
     {
-        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt_)
-            ->updateSk(ik, 1);
+        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt_)->updateSk(ik, 1);
         return dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt_)->getSk();
     }
     else

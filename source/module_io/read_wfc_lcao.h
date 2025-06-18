@@ -1,14 +1,15 @@
 #ifndef READ_WFC_LCAO_H
 #define READ_WFC_LCAO_H
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
+
 #include <complex>
 #include <string>
 #include <vector>
 
 #ifdef __MPI
-#include "module_base/scalapack_connector.h"
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
+#include "source_base/scalapack_connector.h"
 #endif
 
 /**
@@ -25,7 +26,7 @@ namespace ModuleIO
  * @brief Read the wavefunction coefficients from the file (for complex wavefunction coefficients)
  *
  * @tparam T
- * @param file [in] file name 
+ * @param file [in] file name
  * @param ik [out] the index of k points
  * @param kvec_c [out] the k vector in Cartesian coordinates
  * @param nbands [out] the number of bands
@@ -83,5 +84,5 @@ void restart_from_file(const std::string& out_dir, // hard-code the file name to
                        std::vector<double>& occ, std::vector<ModuleBase::Vector3<double>>& kvec_c,
                        std::vector<double>& wk);
 */
-}
+} // namespace ModuleIO
 #endif

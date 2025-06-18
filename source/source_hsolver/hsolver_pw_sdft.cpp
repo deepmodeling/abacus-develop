@@ -1,11 +1,11 @@
 #include "hsolver_pw_sdft.h"
 
-#include "module_base/global_function.h"
-#include "module_base/parallel_device.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/elecstate_tools.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "source_base/global_function.h"
+#include "source_base/parallel_device.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 #include <algorithm>
 
@@ -61,7 +61,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 #ifdef __MPI
         if (nbands > 0 && !PARAM.globalv.all_ks_run)
         {
-            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, &psi_cpu(ik, 0, 0));
+            Parallel_Common::bcast_dev<T, Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif
@@ -90,14 +90,12 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
-    elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
-    if(!PARAM.globalv.all_ks_run)
+    elecstate::calEBand(pes_pw->ekb, pes_pw->wg, pes_pw->f_en);
+    if (!PARAM.globalv.all_ks_run)
     {
         pes->f_en.eband /= PARAM.inp.bndpar;
     }
     stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
-    
-    
 
     // for nscf, skip charge
     if (skip_charge)
@@ -114,7 +112,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         pes_pw->psiToRho(psi);
     }
     // calculate stochastic rho
-    stoiter.cal_storho(ucell, stowf, pes_pw,wfc_basis);
+    stoiter.cal_storho(ucell, stowf, pes_pw, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");

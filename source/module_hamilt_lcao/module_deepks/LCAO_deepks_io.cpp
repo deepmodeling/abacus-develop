@@ -3,8 +3,8 @@
 #ifdef __MLALGO
 
 #include "LCAO_deepks_io.h"
-#include "module_base/tool_quit.h"
 #include "npy.hpp"
+#include "source_base/tool_quit.h"
 
 #include <mpi.h>
 

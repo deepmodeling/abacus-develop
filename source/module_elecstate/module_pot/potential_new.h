@@ -1,11 +1,11 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
-#include "module_base/complexmatrix.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "pot_base.h"
+#include "source_base/complexmatrix.h"
 
 #include <vector>
 
@@ -65,11 +65,11 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(int istep, const Charge*const chg);
+    void init_pot(int istep, const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge
-    void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
+    void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
@@ -170,13 +170,12 @@ class Potential : public PotBase
     {
         return this->v_effective_fixed.data();
     }
-    const ModulePW::PW_Basis *get_rho_basis() const
+    const ModulePW::PW_Basis* get_rho_basis() const
     {
         return this->rho_basis_;
     }
-    // What about adding a function to get the wfc? 
+    // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
-
 
     /// @brief get the value of vloc at G=0;
     /// @return vl(0)
@@ -186,7 +185,7 @@ class Potential : public PotBase
     }
 
   private:
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
     // interpolate potential on the smooth mesh if necessary
     void interpolate_vrs();

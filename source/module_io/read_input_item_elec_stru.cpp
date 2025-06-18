@@ -1,7 +1,7 @@
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -128,16 +128,16 @@ void ReadInput::item_elec_stru()
 #endif
 #ifndef __CUDA
                     warningstr = "ks_solver is set to " + ks_solver + " but ABACUS is built with CPU only!\n"
-                    + " Please rebuild ABACUS with GPU support or change the ks_solver.";  
+                                 + " Please rebuild ABACUS with GPU support or change the ks_solver.";
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
 #endif
-                    if( ks_solver == "cusolvermp")
+                    if (ks_solver == "cusolvermp")
                     {
 #ifndef __CUSOLVERMP
-                    warningstr = "ks_solver is set to cusolvermp, but ABACUS is not built with cusolvermp support\n"
-                    " Please rebuild ABACUS with cusolvermp support or change the ks_solver.";
-                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-#endif              
+                        warningstr = "ks_solver is set to cusolvermp, but ABACUS is not built with cusolvermp support\n"
+                                     " Please rebuild ABACUS with cusolvermp support or change the ks_solver.";
+                        ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+#endif
                     }
                 }
                 else if (ks_solver == "pexsi")
@@ -236,7 +236,8 @@ void ReadInput::item_elec_stru()
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.input.nspin == 1 && para.input.nupdown != 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "nupdown mustn't have a non-zero value for spin-unpolarized calculations.");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "nupdown mustn't have a non-zero value for spin-unpolarized calculations.");
             }
         };
         sync_double(input.nupdown);
@@ -260,7 +261,8 @@ void ReadInput::item_elec_stru()
         item.annotation = "placeholder for xcpnet exchange functional";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.xc_exch_ext.resize(item.get_size());
-            std::transform(item.str_values.begin(), item.str_values.end(),
+            std::transform(item.str_values.begin(),
+                           item.str_values.end(),
                            para.input.xc_exch_ext.begin(),
                            [](const std::string& str) { return std::stod(str); });
         };
@@ -274,19 +276,15 @@ void ReadInput::item_elec_stru()
             const double libxc_id_dbl = para.input.xc_exch_ext[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
-                    "The first parameter (libxc id) can never be a float number");
+                ModuleBase::WARNING_QUIT("ReadInput", "The first parameter (libxc id) can never be a float number");
             }
             // the first value is a positive integer
             if (libxc_id_dbl < 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
-                    "The first parameter (libxc id) should be a positive integer");
+                ModuleBase::WARNING_QUIT("ReadInput", "The first parameter (libxc id) should be a positive integer");
             }
         };
-        sync_doublevec(input.xc_exch_ext,
-                       para.input.xc_exch_ext.size(),
-                       0.0);
+        sync_doublevec(input.xc_exch_ext, para.input.xc_exch_ext.size(), 0.0);
         this->add_item(item);
     }
     {
@@ -294,7 +292,8 @@ void ReadInput::item_elec_stru()
         item.annotation = "placeholder for xcpnet exchange functional";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.xc_corr_ext.resize(item.get_size());
-            std::transform(item.str_values.begin(), item.str_values.end(),
+            std::transform(item.str_values.begin(),
+                           item.str_values.end(),
                            para.input.xc_corr_ext.begin(),
                            [](const std::string& str) { return std::stod(str); });
         };
@@ -308,19 +307,15 @@ void ReadInput::item_elec_stru()
             const double libxc_id_dbl = para.input.xc_corr_ext[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
-                    "The first parameter (libxc id) can never be a float number");
+                ModuleBase::WARNING_QUIT("ReadInput", "The first parameter (libxc id) can never be a float number");
             }
             // the first value is a positive integer
             if (libxc_id_dbl < 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
-                    "The first parameter (libxc id) should be a positive integer");
+                ModuleBase::WARNING_QUIT("ReadInput", "The first parameter (libxc id) should be a positive integer");
             }
         };
-        sync_doublevec(input.xc_corr_ext,
-                       para.input.xc_corr_ext.size(),
-                       0.0);
+        sync_doublevec(input.xc_corr_ext, para.input.xc_corr_ext.size(), 0.0);
         this->add_item(item);
     }
     {
@@ -386,16 +381,20 @@ void ReadInput::item_elec_stru()
         item.annotation = "whether to use k-point continuity for initializing wave functions";
         read_sync_bool(input.use_k_continuity);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
+            if (para.input.use_k_continuity && para.input.basis_type != "pw")
+            {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
             }
-            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
+            if (para.input.use_k_continuity && para.input.calculation == "nscf")
+            {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
             }
-            if (para.input.use_k_continuity && para.input.nspin == 2) {
+            if (para.input.use_k_continuity && para.input.nspin == 2)
+            {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
             }
-            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
+            if (para.input.use_k_continuity && para.input.esolver_type == "sdft")
+            {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
             }
         };
@@ -418,11 +417,17 @@ void ReadInput::item_elec_stru()
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         read_sync_string(input.smearing_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> methods = {"gauss", "gaussian", 
-                                                      "fd", "fermi-dirac",
+            const std::vector<std::string> methods = {"gauss",
+                                                      "gaussian",
+                                                      "fd",
+                                                      "fermi-dirac",
                                                       "fixed",
-                                                      "mp", "mp2", "mp3"
-                                                      "marzari-vanderbilt", "cold", "mv"};
+                                                      "mp",
+                                                      "mp2",
+                                                      "mp3"
+                                                      "marzari-vanderbilt",
+                                                      "cold",
+                                                      "mv"};
             if (std::find(methods.begin(), methods.end(), para.input.smearing_method) == methods.end())
             {
                 const std::string warningstr = nofound_str(methods, "smearing_method");
@@ -492,13 +497,13 @@ void ReadInput::item_elec_stru()
         read_sync_double(input.mixing_restart);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.sc_mag_switch == 1)
-            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
-                if(para.input.sc_scf_thr != 10.0)
+            { // for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
+                if (para.input.sc_scf_thr != 10.0)
                 {
                     para.input.mixing_restart = para.input.sc_scf_thr;
                 }
                 else
-                {// no mixing_restart until oscillation happen in PW base
+                { // no mixing_restart until oscillation happen in PW base
                     para.input.mixing_restart = para.input.scf_thr / 10.0;
                 }
             }
@@ -575,13 +580,13 @@ void ReadInput::item_elec_stru()
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.basis_type == "pw" && para.input.gamma_only) 
+            if (para.input.basis_type == "pw" && para.input.gamma_only)
             {
-                para.input.gamma_only = false;   
+                para.input.gamma_only = false;
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
                 GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
                 GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
-                GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point"<< std::endl;
+                GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point" << std::endl;
                 GlobalV::ofs_warning << " Auto generating k-points file: " << para.input.kpoint_file << std::endl;
                 std::ofstream ofs(para.input.kpoint_file.c_str());
                 ofs << "K_POINTS" << std::endl;
@@ -594,7 +599,9 @@ void ReadInput::item_elec_stru()
             {
                 if (para.input.nspin == 4)
                 {
-                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4 (soc or noncollinear-spin) does not support gamma\n only calculation");
+                    ModuleBase::WARNING_QUIT(
+                        "NOTICE",
+                        "nspin=4 (soc or noncollinear-spin) does not support gamma\n only calculation");
                 }
             }
         };
@@ -870,7 +877,7 @@ void ReadInput::item_elec_stru()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            for(auto rcut: para.input.bessel_nao_rcuts)
+            for (auto rcut: para.input.bessel_nao_rcuts)
             {
                 if (rcut < 0)
                 {

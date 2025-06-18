@@ -1,10 +1,10 @@
-#include "stress_func.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
+#include "source_base/timer.h"
+#include "stress_func.h"
 
-//calculate the kinetic stress in PW base
+// calculate the kinetic stress in PW base
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const ModuleBase::matrix& wg,
@@ -14,12 +14,12 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const UnitCell& ucell_in,
                                              const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
-    ModuleBase::TITLE("Stress","stress_kin");
-	ModuleBase::timer::tick("Stress","stress_kin");
+    ModuleBase::TITLE("Stress", "stress_kin");
+    ModuleBase::timer::tick("Stress", "stress_kin");
 
-	this->ucell = &ucell_in;
+    this->ucell = &ucell_in;
 
-	hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
+    hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
     for (int ik = 0; ik < wfc_basis->nks; ++ik)
     {
         int nbands_occ = wg.nc;
@@ -36,9 +36,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
         kin_tool.cal_stress_kin(ik, npm, true, &psi_in[0](ik, 0, 0));
     }
     kin_tool.symmetrize_stress(p_symm, sigma);
-		
-	ModuleBase::timer::tick("Stress","stress_kin");
-	return;
+
+    ModuleBase::timer::tick("Stress", "stress_kin");
+    return;
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

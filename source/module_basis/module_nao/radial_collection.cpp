@@ -1,26 +1,20 @@
 #include "module_basis/module_nao/radial_collection.h"
-#include <memory>
 
-#include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/atomic_radials.h"
 #include "module_basis/module_nao/beta_radials.h"
-#include "module_basis/module_nao/sphbes_radials.h"
-
-#include "module_base/parallel_common.h"
-#include "module_base/tool_quit.h"
-#include "module_base/global_variable.h"
 #include "module_basis/module_nao/hydrogen_radials.h"
 #include "module_basis/module_nao/pswfc_radials.h"
+#include "module_basis/module_nao/sphbes_radials.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/tool_quit.h"
 
-RadialCollection::RadialCollection(const RadialCollection& other) :
-    ntype_(other.ntype_),
-    lmax_(other.lmax_),
-    nchi_(other.nchi_),
-    nzeta_max_(other.nzeta_max_),
-    rcut_max_(other.rcut_max_),
-    radset_(nullptr),
-    iter_(nullptr),
-    nl_(nullptr)
+#include <memory>
+
+RadialCollection::RadialCollection(const RadialCollection& other)
+    : ntype_(other.ntype_), lmax_(other.lmax_), nchi_(other.nchi_), nzeta_max_(other.nzeta_max_),
+      rcut_max_(other.rcut_max_), radset_(nullptr), iter_(nullptr), nl_(nullptr)
 {
     if (ntype_ == 0)
     {
@@ -157,7 +151,7 @@ void RadialCollection::build(const RadialCollection* nls, const double radius)
 {
     cleanup();
     this->ntype_ = nls->ntype();
-    this->rcut_max_ = radius>0.0?radius:nls->rcut_max();
+    this->rcut_max_ = radius > 0.0 ? radius : nls->rcut_max();
     this->radset_ = new RadialSet*[ntype_];
     this->lmax_ = nls->lmax();
     this->nchi_ = nls->nchi();
@@ -199,15 +193,15 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
 
     for (int itype = 0; itype < ntype_; ++itype)
     {
-        switch(file_type[itype])
+        switch (file_type[itype])
         {
-          case 'o': // orbital file
+        case 'o': // orbital file
             radset_[itype] = new AtomicRadials;
             break;
-          case 'c': // coefficient file
+        case 'c': // coefficient file
             radset_[itype] = new SphbesRadials;
             break;
-          default: // not supposed to happend
+        default: // not supposed to happend
             ModuleBase::WARNING_QUIT("RadialCollection::build", "Unrecognized file: " + file[itype]);
         }
         radset_[itype]->build(file[itype], itype);
@@ -226,10 +220,10 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     set_rcut_max();
 }
 
-void RadialCollection::build(const int ntype, 
-                             const double* const charges, 
+void RadialCollection::build(const int ntype,
+                             const double* const charges,
                              const bool with_slater_screening,
-                             const int* const nmax, 
+                             const int* const nmax,
                              const std::string* symbols,
                              const double conv_thr,
                              const std::string* strategies,
@@ -242,11 +236,11 @@ void RadialCollection::build(const int ntype,
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = new HydrogenRadials;
-        radset_[itype]->build(itype, 
-                              charges[itype], 
+        radset_[itype]->build(itype,
+                              charges[itype],
                               with_slater_screening,
-                              nmax[itype], 
-                              10.0,             // rcut should be determined automatically, in principle...
+                              nmax[itype],
+                              10.0, // rcut should be determined automatically, in principle...
                               0.01,
                               conv_thr,
                               rank,

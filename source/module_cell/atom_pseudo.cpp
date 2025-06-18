@@ -1,5 +1,4 @@
 #include "atom_pseudo.h"
-#include "module_parameter/parameter.h"
 
 #include "module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
@@ -86,7 +85,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                                     || fabs(this->d_so(is, L1, L2).imag()) > 1.0e-8)
                                 {
                                     //									std::cout << "tt in atom is=" << is << " L1=" <<
-                                    //L1
+                                    // L1
                                     //<< " L2="
                                     //									<< L2 << " " << d_so(is, L1, L2) << std::endl;
 
@@ -107,9 +106,10 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= PARAM.inp.nspin) {
+                        if (is >= PARAM.inp.nspin)
+                        {
                             break;
-}
+                        }
                         for (int L1 = 0; L1 < nproj_soc; L1++)
                         {
                             for (int L2 = 0; L2 < nproj_soc; L2++)
@@ -142,7 +142,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     return;
 }
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #ifdef __MPI
 
 void Atom_pseudo::bcast_atom_pseudo()
@@ -219,9 +219,10 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == end of pseudo_vl ==
 
     // == pseudo ==
-    if (nbeta == 0) {
+    if (nbeta == 0)
+    {
         return;
-}
+    }
 
     if (GlobalV::MY_RANK != 0)
     {

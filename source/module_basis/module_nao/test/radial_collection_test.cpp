@@ -1,6 +1,8 @@
 #include "module_basis/module_nao/radial_collection.h"
+
+#include "source_base/spherical_bessel_transformer.h"
+
 #include "gtest/gtest.h"
-#include "module_base/spherical_bessel_transformer.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -35,13 +37,14 @@ class RadialCollectionTest : public ::testing::Test
     void SetUp();
     void TearDown();
 
-    RadialCollection orb;                                         //!< object under test
-    int nfile = 0; // number of orbital/pseudopotential files
-    std::string* file = nullptr; //!< orbitals file to read from
-    std::string log_file = "./test_files/radial_collection.log";         //!< file for logging
+    RadialCollection orb;                                        //!< object under test
+    int nfile = 0;                                               // number of orbital/pseudopotential files
+    std::string* file = nullptr;                                 //!< orbitals file to read from
+    std::string log_file = "./test_files/radial_collection.log"; //!< file for logging
 };
 
-void RadialCollectionTest::SetUp() {
+void RadialCollectionTest::SetUp()
+{
     std::string dir = "../../../../../tests/PP_ORB/";
     nfile = 4;
     file = new std::string[nfile];
@@ -51,11 +54,13 @@ void RadialCollectionTest::SetUp() {
     file[3] = dir + "Fe_gga_9au_100Ry_4s2p2d1f.orb";
 }
 
-void RadialCollectionTest::TearDown() {
+void RadialCollectionTest::TearDown()
+{
     delete[] file;
 }
 
-TEST_F(RadialCollectionTest, BuildAndGet) {
+TEST_F(RadialCollectionTest, BuildAndGet)
+{
     orb.build(nfile, file, 'o');
 
     EXPECT_EQ(orb.symbol(0), "C");
@@ -67,21 +72,21 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
     EXPECT_EQ(orb.lmax(), 3);
     EXPECT_DOUBLE_EQ(orb.rcut_max(), 10.0);
 
-    EXPECT_EQ(orb.nzeta(0,0), 2);
-    EXPECT_EQ(orb.nzeta(0,1), 2);
-    EXPECT_EQ(orb.nzeta(0,2), 1);
+    EXPECT_EQ(orb.nzeta(0, 0), 2);
+    EXPECT_EQ(orb.nzeta(0, 1), 2);
+    EXPECT_EQ(orb.nzeta(0, 2), 1);
 
-    EXPECT_EQ(orb.nzeta(1,0), 2);
-    EXPECT_EQ(orb.nzeta(1,1), 1);
+    EXPECT_EQ(orb.nzeta(1, 0), 2);
+    EXPECT_EQ(orb.nzeta(1, 1), 1);
 
-    EXPECT_EQ(orb.nzeta(2,0), 2);
-    EXPECT_EQ(orb.nzeta(2,1), 2);
-    EXPECT_EQ(orb.nzeta(2,2), 1);
+    EXPECT_EQ(orb.nzeta(2, 0), 2);
+    EXPECT_EQ(orb.nzeta(2, 1), 2);
+    EXPECT_EQ(orb.nzeta(2, 2), 1);
 
-    EXPECT_EQ(orb.nzeta(3,0), 4);
-    EXPECT_EQ(orb.nzeta(3,1), 2);
-    EXPECT_EQ(orb.nzeta(3,2), 2);
-    EXPECT_EQ(orb.nzeta(3,3), 1);
+    EXPECT_EQ(orb.nzeta(3, 0), 4);
+    EXPECT_EQ(orb.nzeta(3, 1), 2);
+    EXPECT_EQ(orb.nzeta(3, 2), 2);
+    EXPECT_EQ(orb.nzeta(3, 3), 1);
 
     EXPECT_EQ(orb.nzeta_max(0), 2);
     EXPECT_EQ(orb.nzeta_max(1), 2);
@@ -94,20 +99,25 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
     EXPECT_EQ(orb.nchi(3), 9);
     EXPECT_EQ(orb.nchi(), 22);
 
-    for (int itype = 0; itype <= 3; ++itype) {
+    for (int itype = 0; itype <= 3; ++itype)
+    {
         EXPECT_EQ(orb(itype).itype(), itype);
     }
 
-    for (int itype = 0; itype <= 3; ++itype) {
-        for (int l = 0; l <= orb(itype).lmax(); ++l) {
-            for (int izeta = 0; izeta != orb(itype).nzeta(l); ++izeta) {
+    for (int itype = 0; itype <= 3; ++itype)
+    {
+        for (int l = 0; l <= orb(itype).lmax(); ++l)
+        {
+            for (int izeta = 0; izeta != orb(itype).nzeta(l); ++izeta)
+            {
                 EXPECT_EQ(orb(itype, l, izeta).l(), l);
             }
         }
     }
 }
 
-TEST_F(RadialCollectionTest, BatchSet) {
+TEST_F(RadialCollectionTest, BatchSet)
+{
     orb.build(nfile, file, 'o');
 
     ModuleBase::SphericalBesselTransformer sbt;
@@ -120,9 +130,12 @@ TEST_F(RadialCollectionTest, BatchSet) {
 
     EXPECT_EQ(orb.rcut_max(), 10.0);
     std::array<int, 4> rcut = {8, 8, 10, 9};
-    for (int itype = 0; itype != orb.ntype(); ++itype) {
-        for (int l = 0; l <= orb(itype).lmax(); ++l) {
-            for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
+    for (int itype = 0; itype != orb.ntype(); ++itype)
+    {
+        for (int l = 0; l <= orb(itype).lmax(); ++l)
+        {
+            for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta)
+            {
                 EXPECT_EQ(sbt, orb(itype, l, izeta).sbt());
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), rcut[itype]);
             }
@@ -135,9 +148,12 @@ TEST_F(RadialCollectionTest, BatchSet) {
     grid[2] = 3.14;
 
     orb.set_grid(true, 3, grid, 'i');
-    for (int itype = 0; itype != orb.ntype(); ++itype) {
-        for (int l = 0; l <= orb(itype).lmax(); ++l) {
-            for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
+    for (int itype = 0; itype != orb.ntype(); ++itype)
+    {
+        for (int l = 0; l <= orb(itype).lmax(); ++l)
+        {
+            for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta)
+            {
                 EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 3.14);
             }
         }
@@ -271,13 +287,14 @@ TEST_F(RadialCollectionTest, Iteration)
     EXPECT_EQ(*(orb.cbegin() + 17), &orb(0, 2, 0));
     EXPECT_EQ(*(orb.cbegin() + 21), &orb(3, 3, 0));
     EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
-    //EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
+    // EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
 }
 
-TEST_F(RadialCollectionTest, Build2) {
+TEST_F(RadialCollectionTest, Build2)
+{
     // build a collection of truncated spherical Bessel functions
     int lmax = 3;
     int nbes = 10;
@@ -292,15 +309,15 @@ TEST_F(RadialCollectionTest, Build2) {
     EXPECT_EQ(orb.lmax(), lmax);
     EXPECT_DOUBLE_EQ(orb.rcut_max(), rcut);
 
-    for (int l = 0; l <= lmax; ++l) {
+    for (int l = 0; l <= lmax; ++l)
+    {
         EXPECT_EQ(orb.nzeta(0, l), nbes);
     }
 
     EXPECT_EQ(orb.nzeta_max(0), nbes);
-    EXPECT_EQ(orb.nchi(0), nbes*(lmax+1));
-    EXPECT_EQ(orb.nchi(), nbes*(lmax+1));
+    EXPECT_EQ(orb.nchi(0), nbes * (lmax + 1));
+    EXPECT_EQ(orb.nchi(), nbes * (lmax + 1));
 }
-
 
 int main(int argc, char** argv)
 {

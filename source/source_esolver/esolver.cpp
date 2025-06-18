@@ -2,8 +2,8 @@
 
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
-#include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
+#include "source_base/module_device/device.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
 #include "esolver_gets.h"
@@ -13,7 +13,7 @@
 #include "module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
-#include "module_base/blacs_connector.h"
+#include "source_base/blacs_connector.h"
 }
 #endif
 #include "esolver_dp.h"
@@ -114,7 +114,7 @@ std::string determine_type()
     }
 
     GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl; 
+                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
@@ -275,20 +275,20 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
         ModuleESolver::ESolver* p_esolver_lr = nullptr;
-		if (PARAM.globalv.gamma_only_local)
-		{
-			p_esolver_lr = new LR::ESolver_LR<double, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
+        if (PARAM.globalv.gamma_only_local)
+        {
+            p_esolver_lr = new LR::ESolver_LR<double, double>(
+                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
+                inp,
+                ucell);
+        }
         else
-		{
-			p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
+        {
+            p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+                std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
+                inp,
+                ucell);
+        }
         // clean the 1st ESolver_KS and swap the pointer
         ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
         return p_esolver_lr;

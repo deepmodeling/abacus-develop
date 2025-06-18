@@ -1,8 +1,8 @@
 #include "velocity_pw.h"
 
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 namespace hamilt
 {
 
@@ -51,7 +51,7 @@ void Velocity<FPTYPE, Device>::init(const int ik_in)
     resmem_var_op()(gy_, npw);
     resmem_var_op()(gz_, npw);
     std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
-    for(int i=0; i<3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         for (int ig = 0; ig < npw; ++ig)
         {
@@ -93,7 +93,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     const int npw = this->wfcpw->npwk[this->ik];
     const int max_npw = this->wfcpw->npwk_max;
     const int npol = psi_in->get_npol();
-    
+
     std::vector<FPTYPE*> gtmp_ptr = {this->gx_, this->gy_, this->gz_};
     // -------------
     //       p
@@ -123,8 +123,8 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     // 1. <\beta|\psi>
     Complex* becp1_ = nullptr; ///<[Device, n_npwx * nkb] <\beta|\psi>
     Complex* becp2_ = nullptr; ///<[Device, n_npwx * 3*nkb] <\nabla\beta|\psi>
-    Complex* ps1_ = nullptr; ///<[Device, nkb * n_npwx] sum of becp1
-    Complex* ps2_ = nullptr; ///<[Device, 3*nkb * n_npwx] sum of becp2
+    Complex* ps1_ = nullptr;   ///<[Device, nkb * n_npwx] sum of becp1
+    Complex* ps2_ = nullptr;   ///<[Device, 3*nkb * n_npwx] sum of becp2
     resmem_complex_op()(ps1_, this->ppcell->nkb * n_npwx);
     resmem_complex_op()(ps2_, 3 * this->ppcell->nkb * n_npwx);
     resmem_complex_op()(becp1_, this->ppcell->nkb * n_npwx);
@@ -184,14 +184,14 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     Complex* ps1_cpu = nullptr;
     Complex* ps2_cpu = nullptr;
     std::vector<Complex> tmp_space1, tmp_space2;
-    if(std::is_same<Device, base_device::DEVICE_GPU>::value)
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
     {
         tmp_space1.resize(nkb * n_npwx + nkb3 * n_npwx);
         becp1_cpu = tmp_space1.data();
         becp2_cpu = becp1_cpu + nkb * n_npwx;
         syncmem_complex_d2h_op()(becp1_cpu, becp1_, nkb * n_npwx);
         syncmem_complex_d2h_op()(becp2_cpu, becp2_, nkb3 * n_npwx);
-        
+
         tmp_space2.resize(nkb * n_npwx + nkb3 * n_npwx, 0.0);
         ps1_cpu = tmp_space2.data();
         ps2_cpu = ps1_cpu + nkb * n_npwx;
@@ -246,7 +246,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
         ModuleBase::WARNING_QUIT("Velocity", "Velocity operator does not support the non-collinear case yet!");
     }
 
-    if(std::is_same<Device, base_device::DEVICE_GPU>::value)
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
     {
         syncmem_complex_h2d_op()(ps1_, ps1_cpu, nkb * n_npwx);
         syncmem_complex_h2d_op()(ps2_, ps2_cpu, nkb3 * n_npwx);

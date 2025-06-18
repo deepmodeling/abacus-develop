@@ -1,9 +1,9 @@
 #ifndef DIAGOCUSOLVER_H
 #define DIAGOCUSOLVER_H
 
-#include "module_base/macros.h"   // GetRealType
-#include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_hamilt_general/hamilt.h"
+#include "source_base/macros.h" // GetRealType
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 // #include "source_hsolver/kernels/cuda/dngvd_op.cu"
 
@@ -17,13 +17,12 @@ class DiagoCusolver
   private:
     // Real is the real part of the complex type T
     using Real = typename GetTypeReal<T>::type;
-    Parallel_Orbitals const * ParaV;
+    Parallel_Orbitals const* ParaV;
 
   public:
-
     DiagoCusolver(const Parallel_Orbitals* ParaV = nullptr);
     ~DiagoCusolver();
-    
+
     // Override the diag function for CUSOLVER diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 

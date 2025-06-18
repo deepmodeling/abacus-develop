@@ -1,14 +1,14 @@
 #ifndef HAMILTPW_H
 #define HAMILTPW_H
 
-#include "module_base/macros.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/module_pot/potential_new.h"
-#include "source_esolver/esolver_ks_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/macros.h"
+#include "source_esolver/esolver_ks_pw.h"
 
 namespace hamilt
 {
@@ -17,13 +17,18 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class HamiltPW : public Hamilt<T, Device>
 {
   private:
-    // Note GetTypeReal<T>::type will 
-    // return T if T is real type(float, double), 
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+
   public:
-    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl* nlpp,const UnitCell* ucell);
-    template<typename T_in, typename Device_in = Device>
+    HamiltPW(elecstate::Potential* pot_in,
+             ModulePW::PW_Basis_K* wfc_basis,
+             K_Vectors* p_kv,
+             pseudopot_cell_vnl* nlpp,
+             const UnitCell* ucell);
+    template <typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
     ~HamiltPW();
 
@@ -39,7 +44,7 @@ class HamiltPW : public Hamilt<T, Device>
 
     void set_exx_helper(Exx_Helper<T, Device>& exx_helper_in);
 
-protected:
+  protected:
     // used in sPhi, which are calculated in hPsi or sPhi
     const pseudopot_cell_vnl* ppcell = nullptr;
     const UnitCell* const ucell = nullptr;

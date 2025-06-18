@@ -1,7 +1,4 @@
 #include "elecstate.h"
-#include "module_base/formatter.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_common.h"
 #include "module_elecstate/module_pot/H_Hartree_pw.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
@@ -9,6 +6,9 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_parameter/parameter.h"
 #include "occupy.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
 namespace elecstate
 {
 /**
@@ -159,7 +159,7 @@ void print_band(const ModuleBase::matrix& ekb,
                 const int& ik,
                 const int& printe,
                 const int& iter,
-                std::ofstream &ofs)
+                std::ofstream& ofs)
 {
     const double largest_eig = 1.0e10;
 
@@ -183,13 +183,11 @@ void print_band(const ModuleBase::matrix& ekb,
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             ofs << std::setprecision(6);
-            ofs << " Energy (eV) & Occupations for spin=" << klist->isk[ik] + 1
-                                 << " k-point=" << ik + 1 << std::endl;
+            ofs << " Energy (eV) & Occupations for spin=" << klist->isk[ik] + 1 << " k-point=" << ik + 1 << std::endl;
             ofs << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
-                ofs << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                     << ekb(ik, ib) * ModuleBase::Ry_to_eV;
+                ofs << " " << std::setw(6) << ib + 1 << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV;
                 // for the first electron iteration, we don't have the energy
                 // spectrum, so we can't get the occupations.
                 ofs << std::setw(15) << wg(ik, ib);
@@ -349,16 +347,14 @@ void print_etot(const Magnetism& magnet,
     // for each SCF step, we print out energy
     FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
                    /*nrows=*/titles.size(),
-                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"},
                    /*indents=*/0,
-                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
+                   /*align=*/{/*value*/ FmtTable::Align::LEFT, /*title*/ FmtTable::Align::CENTER});
     // print out the titles
     table << titles << energies_Ry << energies_eV;
 
     GlobalV::ofs_running << table.str() << std::endl;
 
-
-    
     if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
     {
         std::vector<double> mag;
@@ -368,10 +364,7 @@ void print_etot(const Magnetism& magnet,
             mag = {magnet.tot_mag, magnet.abs_mag};
             break;
         case 4:
-            mag = {magnet.tot_mag_nc[0],
-                   magnet.tot_mag_nc[1],
-                   magnet.tot_mag_nc[2],
-                   magnet.abs_mag};
+            mag = {magnet.tot_mag_nc[0], magnet.tot_mag_nc[1], magnet.tot_mag_nc[2], magnet.abs_mag};
             break;
         default:
             mag = {};

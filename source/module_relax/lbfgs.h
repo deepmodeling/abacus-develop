@@ -1,16 +1,17 @@
 #ifndef LBFGS_H
 #define LBFGS_H
 
-#include <vector>
-#include <tuple> 
+#include "matrix_methods.h"
+#include "source_base/lapack_connector.h"
+
 #include <algorithm>
 #include <cmath>
-#include "module_base/lapack_connector.h"
-#include "matrix_methods.h"
+#include <tuple>
+#include <vector>
 //#include "line_search.h"
-#include "module_base/matrix.h"
-#include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
+#include "source_base/matrix.h"
+#include "source_base/matrix3.h"
 #include "source_esolver/esolver.h"
 #include "source_esolver/esolver_ks.h"
 
@@ -20,7 +21,7 @@
  */
 class LBFGS
 {
-public:
+  public:
     /**
      * @brief Initialize L-BFGS parameters
      * @param _size Number of atoms in system
@@ -34,34 +35,32 @@ public:
      * @param etot Current total energy
      * @param p_esolver  Structure solver
      */
-    void relax_step(const ModuleBase::matrix _force,
-                    UnitCell& ucell,
-                    const double &etot);
+    void relax_step(const ModuleBase::matrix _force, UnitCell& ucell, const double& etot);
 
-private:
-    //LineSearch l_search;
-    double alpha;                           ///< Initial Hessian diagonal element
-    double maxstep;                         ///< Maximum allowed step length
-    int size;                               ///< Number of atoms in system
-    int memory;                             ///< Number of previous steps to store
-    double H0;                              ///< Initial inverse Hessian approximation
-    int iteration;                          ///< Current iteration count
-    double energy;                          ///< Current system energy
-    double alpha_k;                         ///< Step size parameter
+  private:
+    // LineSearch l_search;
+    double alpha;   ///< Initial Hessian diagonal element
+    double maxstep; ///< Maximum allowed step length
+    int size;       ///< Number of atoms in system
+    int memory;     ///< Number of previous steps to store
+    double H0;      ///< Initial inverse Hessian approximation
+    int iteration;  ///< Current iteration count
+    double energy;  ///< Current system energy
+    double alpha_k; ///< Step size parameter
 
-    ModuleESolver::ESolver* solver;         ///< Structure solver
-    std::vector<std::vector<double>> H;     ///< Inverse Hessian approximation
-    std::vector<double> force0;             ///< Previous step forces
-    std::vector<std::vector<double>> force;  ///< Force history
-    std::vector<double> pos0;                ///< Previous positions
-    std::vector<std::vector<double>> pos;   ///< Position history
-    std::vector<double> pos_taud0;           ///< Previous fractional positions
+    ModuleESolver::ESolver* solver;            ///< Structure solver
+    std::vector<std::vector<double>> H;        ///< Inverse Hessian approximation
+    std::vector<double> force0;                ///< Previous step forces
+    std::vector<std::vector<double>> force;    ///< Force history
+    std::vector<double> pos0;                  ///< Previous positions
+    std::vector<std::vector<double>> pos;      ///< Position history
+    std::vector<double> pos_taud0;             ///< Previous fractional positions
     std::vector<std::vector<double>> pos_taud; ///< Fractional position history
-    std::vector<std::vector<double>> dpos;  ///< Position displacements
-    std::vector<std::vector<double>> s;     ///< Position difference vectors
-    std::vector<std::vector<double>> y;     ///< Force difference vectors
-    std::vector<double> rho;                ///< Scalar products for L-BFGS update
-    std::vector<double> steplength;         ///< Step lengths for each atom
+    std::vector<std::vector<double>> dpos;     ///< Position displacements
+    std::vector<std::vector<double>> s;        ///< Position difference vectors
+    std::vector<std::vector<double>> y;        ///< Force difference vectors
+    std::vector<double> rho;                   ///< Scalar products for L-BFGS update
+    std::vector<double> steplength;            ///< Step lengths for each atom
 
     /**
      * @brief Prepare optimization step parameters
@@ -73,7 +72,7 @@ private:
                       std::vector<double>& force0,
                       std::vector<std::vector<double>>& dpos,
                       UnitCell& ucell,
-                      const double &etot);
+                      const double& etot);
 
     /**
      * @brief Judge if the cell is restrain
@@ -86,24 +85,21 @@ private:
      * @param _force Current force matrix
      * @param ucell Unit cell being optimized
      */
-    void calculate_largest_grad(const ModuleBase::matrix& _force,
-                                UnitCell& ucell);
+    void calculate_largest_grad(const ModuleBase::matrix& _force, UnitCell& ucell);
 
     /**
      * @brief Extract atomic positions from unit cell
      * @param ucell Unit cell to read
      * @param pos Output position vector
      */
-    void get_pos(UnitCell& ucell,
-                 std::vector<std::vector<double>>& pos);
+    void get_pos(UnitCell& ucell, std::vector<std::vector<double>>& pos);
 
     /**
      * @brief Get fractional positions from unit cell
      * @param ucell Unit cell to read
      * @param pos_taud Output fractional positions
      */
-    void get_pos_taud(UnitCell& ucell,
-                      std::vector<std::vector<double>>& pos_taud);
+    void get_pos_taud(UnitCell& ucell, std::vector<std::vector<double>>& pos_taud);
 
     /**
      * @brief Update L-BFGS history buffers
@@ -118,10 +114,10 @@ private:
      * @param y Force differences buffer
      * @param rho Scalar products buffer
      */
-    void update(std::vector<std::vector<double>>& pos_taud, 
-                std::vector<double>& pos_taud0, 
+    void update(std::vector<std::vector<double>>& pos_taud,
+                std::vector<double>& pos_taud0,
                 std::vector<double>& force,
-                std::vector<double>& force0, 
+                std::vector<double>& force0,
                 UnitCell& ucell,
                 int iteration,
                 int memory,
@@ -135,15 +131,13 @@ private:
      * @param dpos Position displacements
      * @param maxstep Maximum allowed step length
      */
-    void determine_step(std::vector<double>& steplength,
-                       std::vector<std::vector<double>>& dpos,
-                       double& maxstep);
+    void determine_step(std::vector<double>& steplength, std::vector<std::vector<double>>& dpos, double& maxstep);
 
     /**
      * @brief Update atomic positions in unit cell
      * @param ucell Unit cell to update
      */
-    void update_pos(UnitCell& ucell);  
+    void update_pos(UnitCell& ucell);
 };
 
 #endif

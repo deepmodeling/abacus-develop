@@ -1,8 +1,8 @@
 #include "module_basis/module_nao/two_center_table.h"
 
-#include "module_base/constants.h"
-#include "module_base/cubic_spline.h"
-#include "module_base/math_integral.h"
+#include "source_base/constants.h"
+#include "source_base/cubic_spline.h"
+#include "source_base/math_integral.h"
 
 #include <algorithm>
 #include <cstring>

@@ -4,19 +4,19 @@
 #include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
 
 #include <cmath>
 #include <complex>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <cstdio>
-#include <cstring>
 
 namespace ModuleDFTU
 {
@@ -35,8 +35,10 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
     double sum_rho_lambda = 0.0;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        if(PARAM.inp.nspin == 4 && is > 0) { continue;// for non-collinear spin case, first spin contains the charge density
-}
+        if (PARAM.inp.nspin == 4 && is > 0)
+        {
+            continue; // for non-collinear spin case, first spin contains the charge density
+        }
         for (int ir = 0; ir < nrxx; ir++)
         {
             double rho_ir = rho[is][ir];
@@ -63,9 +65,7 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
     return;
 }
 
-void DFTU::cal_slater_Fk(const UnitCell& ucell,
-                         const int L, 
-                         const int T)
+void DFTU::cal_slater_Fk(const UnitCell& ucell, const int L, const int T)
 {
     ModuleBase::TITLE("DFTU", "cal_slater_Fk");
 
@@ -116,9 +116,10 @@ void DFTU::cal_slater_Fk(const UnitCell& ucell,
 void DFTU::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("DFTU", "cal_slater_UJ");
-    if (!Yukawa) {
+    if (!Yukawa)
+    {
         return;
-}
+    }
 
     this->cal_yukawa_lambda(rho, nrxx);
 
@@ -146,16 +147,18 @@ void DFTU::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
 
             if (L >= PARAM.inp.orbital_corr[T] && PARAM.inp.orbital_corr[T] != -1)
             {
-                if (L != PARAM.inp.orbital_corr[T]) {
+                if (L != PARAM.inp.orbital_corr[T])
+                {
                     continue;
-}
-                this->cal_slater_Fk(ucell,L, T);
+                }
+                this->cal_slater_Fk(ucell, L, T);
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (n != 0) {
+                    if (n != 0)
+                    {
                         continue;
-}
+                    }
 
                     switch (L)
                     {
@@ -170,9 +173,10 @@ void DFTU::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
                         break;
 
                     case 3: // f electrons
-                        if (Yukawa) {
+                        if (Yukawa)
+                        {
                             this->U_Yukawa[T][L][n] = this->Fk[T][L][n][0];
-}
+                        }
                         this->J_Yukawa[T][L][n] = (286.0 * this->Fk[T][L][n][1] + 195.0 * this->Fk[T][L][n][2]
                                                    + 250.0 * this->Fk[T][L][n][3])
                                                   / 6435.0;
@@ -185,9 +189,9 @@ void DFTU::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
                     // update current U with calculated U-J from Slater integrals
                     this->U[T] = this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n];
                 } // end n
-            } // end if
-        } // end L
-    } // end T
+            }     // end if
+        }         // end L
+    }             // end T
 
     return;
 }
@@ -196,7 +200,7 @@ double DFTU::spherical_Bessel(const int k, const double r, const double lambda)
 {
     ModuleBase::TITLE("DFTU", "spherical_Bessel");
 
-    double val=0.0;
+    double val = 0.0;
     double x = r * lambda;
     if (k == 0)
     {
@@ -251,7 +255,7 @@ double DFTU::spherical_Hankel(const int k, const double r, const double lambda)
 {
     ModuleBase::TITLE("DFTU", "spherical_Bessel");
 
-    double val=0.0;
+    double val = 0.0;
     double x = r * lambda;
     if (k == 0)
     {

@@ -4,15 +4,15 @@
 #define RELAX1_H
 
 #include "line_search.h"
-#include "module_base/matrix.h"
-#include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
+#include "source_base/matrix.h"
+#include "source_base/matrix3.h"
 
 class Relax
 {
   public:
-    Relax() {};
-    ~Relax() {};
+    Relax(){};
+    ~Relax(){};
 
     // prepare for relaxation
     void init_relax(const int nat_in);

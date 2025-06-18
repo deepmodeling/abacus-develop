@@ -1,10 +1,10 @@
-#include <iostream>
-
-#include "gemm_selector.cuh"
-#include "vbatch_matrix_mul.cuh"
-#include "cuda_tools.cuh"
-#include "module_base/blas_connector.h"
 #include "code_gen.cuh"
+#include "cuda_tools.cuh"
+#include "gemm_selector.cuh"
+#include "source_base/blas_connector.h"
+#include "vbatch_matrix_mul.cuh"
+
+#include <iostream>
 
 /*
  * Here we have utilized a very straightforward and brute-force method to select
@@ -13,11 +13,10 @@
  * find the fastest parameter combination. This approach can lead to an increase
  * in compilation time.
  */
-void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,const UnitCell& ucell)
+void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo, const UnitCell& ucell)
 {
     int batchCount_per_type = 32;
-    int batchCount
-        = batchCount_per_type * ucell.ntype * ucell.ntype;
+    int batchCount = batchCount_per_type * ucell.ntype * ucell.ntype;
 
     Cuda_Mem_Wrapper<int> m(batchCount);
     Cuda_Mem_Wrapper<int> n(batchCount);
@@ -63,27 +62,22 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,co
                 ldb.get_host_pointer()[index] = matrix_k;
                 ldc.get_host_pointer()[index] = ucell.atoms[l].nw;
 
-                A_array.get_host_pointer()[index]
-                    = &A.get_device_pointer()[index * max_m * matrix_k];
-                B_array.get_host_pointer()[index]
-                    = &B.get_device_pointer()[index * max_n * matrix_k];
-                C_array.get_host_pointer()[index]
-                    = &C.get_device_pointer()[index * max_n
-                                              * max_m]; // test atom add
-                BlasConnector::gemm(
-                    'N',
-                    'T',
-                    m.get_host_pointer()[index],
-                    n.get_host_pointer()[index],
-                    matrix_k,
-                    1.0,
-                    &A.get_host_pointer()[index * max_m * matrix_k],
-                    matrix_k,
-                    &B.get_host_pointer()[index * max_n * matrix_k],
-                    matrix_k,
-                    1.0,
-                    &cpu_result[index * max_m * max_n],
-                    n.get_host_pointer()[index]);
+                A_array.get_host_pointer()[index] = &A.get_device_pointer()[index * max_m * matrix_k];
+                B_array.get_host_pointer()[index] = &B.get_device_pointer()[index * max_n * matrix_k];
+                C_array.get_host_pointer()[index] = &C.get_device_pointer()[index * max_n * max_m]; // test atom add
+                BlasConnector::gemm('N',
+                                    'T',
+                                    m.get_host_pointer()[index],
+                                    n.get_host_pointer()[index],
+                                    matrix_k,
+                                    1.0,
+                                    &A.get_host_pointer()[index * max_m * matrix_k],
+                                    matrix_k,
+                                    &B.get_host_pointer()[index * max_n * matrix_k],
+                                    matrix_k,
+                                    1.0,
+                                    &cpu_result[index * max_m * max_n],
+                                    n.get_host_pointer()[index]);
                 index++;
             }
         }
@@ -130,8 +124,7 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,co
  */
 #include "code_gen.cpp"
     checkCuda(cudaStreamDestroy(temp_stream));
-    std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms"
-              << std::endl;
+    std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
     // fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16,
     // 4>;
     delete[] cpu_result;

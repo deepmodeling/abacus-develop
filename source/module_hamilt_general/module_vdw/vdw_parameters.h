@@ -1,7 +1,7 @@
 #ifndef VDW_PARAMETERS_H
 #define VDW_PARAMETERS_H
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 
@@ -14,8 +14,14 @@ class VdwParameters
     VdwParameters() = default;
     virtual ~VdwParameters() = default;
 
-    inline const std::string &model() const { return model_; }
-    inline const ModuleBase::Vector3<int> &period() const { return period_; };
+    inline const std::string& model() const
+    {
+        return model_;
+    }
+    inline const ModuleBase::Vector3<int>& period() const
+    {
+        return period_;
+    };
 
   protected:
     std::string model_;

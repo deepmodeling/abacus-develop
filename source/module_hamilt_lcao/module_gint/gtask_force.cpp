@@ -1,9 +1,9 @@
-#include <omp.h>
-
 #include "gint_force_gpu.h"
-#include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
+#include "source_base/ylm.h"
+
+#include <omp.h>
 namespace GintKernel
 {
 
@@ -35,12 +35,9 @@ void gtask_force(const Grid_Technique& gridt,
             const int iat = gridt.which_atom[mcell_index];
             const int it_temp = ucell.iat2it[iat];
 
-            dr_part[atoms_per_z * 3] = gridt.meshball_positions[imcell][0]
-                                       - gridt.tau_in_bigcell[iat][0];
-            dr_part[atoms_per_z * 3 + 1] = gridt.meshball_positions[imcell][1]
-                                           - gridt.tau_in_bigcell[iat][1];
-            dr_part[atoms_per_z * 3 + 2] = gridt.meshball_positions[imcell][2]
-                                           - gridt.tau_in_bigcell[iat][2];
+            dr_part[atoms_per_z * 3] = gridt.meshball_positions[imcell][0] - gridt.tau_in_bigcell[iat][0];
+            dr_part[atoms_per_z * 3 + 1] = gridt.meshball_positions[imcell][1] - gridt.tau_in_bigcell[iat][1];
+            dr_part[atoms_per_z * 3 + 2] = gridt.meshball_positions[imcell][2] - gridt.tau_in_bigcell[iat][2];
             atoms_type[atoms_per_z] = it_temp;
             iat_on_nbz[atoms_per_z] = iat;
             atoms_per_z++;
@@ -54,10 +51,8 @@ void gtask_force(const Grid_Technique& gridt,
             {
                 for (int bz_index = 0; bz_index < gridt.bz; bz_index++)
                 {
-                    int vindex_global = bx_index * gridt.ncy * nczp
-                                        + by_index * nczp + bz_index
-                                        + start_ind_grid;
-                    vldr3[id]= vlocal_global_value[vindex_global] * vfactor;
+                    int vindex_global = bx_index * gridt.ncy * nczp + by_index * nczp + bz_index + start_ind_grid;
+                    vldr3[id] = vlocal_global_value[vindex_global] * vfactor;
                     id++;
                 }
             }
@@ -70,7 +65,7 @@ void alloc_mult_force(const hamilt::HContainer<double>* dm,
                       const UnitCell& ucell,
                       const int grid_index_ij,
                       const int max_atom,
-                      const int *atoms_num_info,
+                      const int* atoms_num_info,
                       double* const psi_g,
                       double* const psi_dm_g,
                       double* const dm_matrix_g,
@@ -103,17 +98,17 @@ void alloc_mult_force(const hamilt::HContainer<double>* dm,
             const int mcell_index1 = bcell_start_index + atom1;
             const int iat1 = gridt.which_atom[mcell_index1];
             const int uc1 = gridt.which_unitcell[mcell_index1];
-            const ModuleBase::Vector3<int> r1 = gridt.get_ucell_coords(uc1); 
+            const ModuleBase::Vector3<int> r1 = gridt.get_ucell_coords(uc1);
             const int it1 = ucell.iat2it[iat1];
             const int nw1 = ucell.atoms[it1].nw;
 
-            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];atom2++)
+            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index]; atom2++)
             {
                 const int mcell_index2 = bcell_start_index + atom2;
                 const int iat2 = gridt.which_atom[mcell_index2];
                 const int uc2 = gridt.which_unitcell[mcell_index2];
                 const ModuleBase::Vector3<int> r2 = gridt.get_ucell_coords(uc2);
-                const int offset = dm->find_matrix_offset(iat1, iat2, r1-r2);
+                const int offset = dm->find_matrix_offset(iat1, iat2, r1 - r2);
                 if (offset == -1)
                 {
                     continue;

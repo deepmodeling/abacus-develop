@@ -1,15 +1,18 @@
 #include "read_pseudo.h"
-#include "module_parameter/parameter.h"
-#include "module_base/global_file.h"
-#include "module_cell/read_pp.h"
+
 #include "module_cell/bcast_cell.h"
-#include "module_base/element_elec_config.h"
-#include "module_base/parallel_common.h"
+#include "module_cell/read_pp.h"
+#include "module_parameter/parameter.h"
+#include "source_base/element_elec_config.h"
+#include "source_base/global_file.h"
+#include "source_base/parallel_common.h"
 
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
-namespace elecstate {
-void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
+namespace elecstate
+{
+void read_pseudo(std::ofstream& ofs, UnitCell& ucell)
+{
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -58,23 +61,28 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
 
     read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
 
-    if (GlobalV::MY_RANK == 0) {
-        for (int it = 0; it < ucell.ntype; it++) {
+    if (GlobalV::MY_RANK == 0)
+    {
+        for (int it = 0; it < ucell.ntype; it++)
+        {
             Atom* atom = &ucell.atoms[it];
-            if (!(atom->label_orb.empty())) {
+            if (!(atom->label_orb.empty()))
+            {
                 ucell.compare_atom_labels(atom->label_orb, atom->ncpp.psd);
             }
         }
 
-        if (PARAM.inp.out_element_info) {
-            for (int i = 0; i < ucell.ntype; i++) {
+        if (PARAM.inp.out_element_info)
+        {
+            for (int i = 0; i < ucell.ntype; i++)
+            {
                 ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label);
             }
-            for (int it = 0; it < ucell.ntype; it++) {
+            for (int it = 0; it < ucell.ntype; it++)
+            {
                 Atom* atom = &ucell.atoms[it];
                 std::stringstream ss;
-                ss << PARAM.globalv.global_out_dir << atom->label << "/"
-                   << atom->label << ".NONLOCAL";
+                ss << PARAM.globalv.global_out_dir << atom->label << "/" << atom->label << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
 
                 ofs << "<HEADER>" << std::endl;
@@ -89,16 +97,18 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
                 ofs << "\n<DIJ>" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.nbeta << "\t"
                     << "nummber of projectors." << std::endl;
-                for (int ib = 0; ib < atom->ncpp.nbeta; ib++) {
-                    for (int ib2 = 0; ib2 < atom->ncpp.nbeta; ib2++) {
-                        ofs << std::setw(10) << atom->ncpp.lll[ib] << " "
-                            << atom->ncpp.lll[ib2] << " "
+                for (int ib = 0; ib < atom->ncpp.nbeta; ib++)
+                {
+                    for (int ib2 = 0; ib2 < atom->ncpp.nbeta; ib2++)
+                    {
+                        ofs << std::setw(10) << atom->ncpp.lll[ib] << " " << atom->ncpp.lll[ib2] << " "
                             << atom->ncpp.dion(ib, ib2) << std::endl;
                     }
                 }
                 ofs << "</DIJ>" << std::endl;
 
-                for (int i = 0; i < atom->ncpp.nbeta; i++) {
+                for (int i = 0; i < atom->ncpp.nbeta; i++)
+                {
                     ofs << "<PP_BETA>" << std::endl;
                     ofs << std::setw(10) << i << "\t"
                         << "the index of projectors." << std::endl;
@@ -108,23 +118,26 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
                     // mohan add
                     // only keep the nonzero part.
                     int cut_mesh = atom->ncpp.mesh;
-                    for (int j = atom->ncpp.mesh - 1; j >= 0; --j) {
-                        if (std::abs(atom->ncpp.betar(i, j)) > 1.0e-10) {
+                    for (int j = atom->ncpp.mesh - 1; j >= 0; --j)
+                    {
+                        if (std::abs(atom->ncpp.betar(i, j)) > 1.0e-10)
+                        {
                             cut_mesh = j;
                             break;
                         }
                     }
-                    if (cut_mesh % 2 == 0) {
+                    if (cut_mesh % 2 == 0)
+                    {
                         ++cut_mesh;
                     }
 
                     ofs << std::setw(10) << cut_mesh << "\t"
                         << "the number of mesh points." << std::endl;
 
-                    for (int j = 0; j < cut_mesh; ++j) {
-                        ofs << std::setw(15) << atom->ncpp.r[j] << std::setw(15)
-                            << atom->ncpp.betar(i, j) << std::setw(15)
-                            << atom->ncpp.rab[j] << std::endl;
+                    for (int j = 0; j < cut_mesh; ++j)
+                    {
+                        ofs << std::setw(15) << atom->ncpp.r[j] << std::setw(15) << atom->ncpp.betar(i, j)
+                            << std::setw(15) << atom->ncpp.rab[j] << std::endl;
                     }
                     ofs << "</PP_BETA>" << std::endl;
                 }
@@ -135,43 +148,46 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     }
 
 #ifdef __MPI
-    unitcell::bcast_atoms_pseudo(ucell.atoms,ucell.ntype);
+    unitcell::bcast_atoms_pseudo(ucell.atoms, ucell.ntype);
 #endif
 
-    for (int it = 0; it < ucell.ntype; it++) {
-        if (ucell.atoms[0].ncpp.xc_func != ucell.atoms[it].ncpp.xc_func) {
-            GlobalV::ofs_warning << "\n type " << ucell.atoms[0].label
-                                 << " functional is " << ucell.atoms[0].ncpp.xc_func;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        if (ucell.atoms[0].ncpp.xc_func != ucell.atoms[it].ncpp.xc_func)
+        {
+            GlobalV::ofs_warning << "\n type " << ucell.atoms[0].label << " functional is "
+                                 << ucell.atoms[0].ncpp.xc_func;
 
-            GlobalV::ofs_warning << "\n type " << ucell.atoms[it].label
-                                 << " functional is " << ucell.atoms[it].ncpp.xc_func
-                                 << std::endl;
+            GlobalV::ofs_warning << "\n type " << ucell.atoms[it].label << " functional is "
+                                 << ucell.atoms[it].ncpp.xc_func << std::endl;
 
-            ModuleBase::WARNING_QUIT("setup_cell",
-                                     "All DFT functional must consistent.");
+            ModuleBase::WARNING_QUIT("setup_cell", "All DFT functional must consistent.");
         }
     }
 
     // setup the total number of PAOs
-    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms);
+    cal_natomwfc(ofs, ucell.natomwfc, ucell.ntype, ucell.atoms);
 
     // Calculate the information of atoms from the pseudopotential to set PARAM
     CalAtomsInfo ca;
     ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
 
     // setup PARAM.globalv.nlocal
-    cal_nwfc(ofs,ucell,ucell.atoms);
+    cal_nwfc(ofs, ucell, ucell.atoms);
 
     // Check whether the number of valence is minimum
-    if (GlobalV::MY_RANK == 0) {
+    if (GlobalV::MY_RANK == 0)
+    {
         int abtype = 0;
-        for (int it = 0; it < ucell.ntype; it++) {
-            if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd)
-                != ModuleBase::MinZval.end()) {
-                if (ucell.atoms[it].ncpp.zv
-                    > ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd)) {
+        for (int it = 0; it < ucell.ntype; it++)
+        {
+            if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd) != ModuleBase::MinZval.end())
+            {
+                if (ucell.atoms[it].ncpp.zv > ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd))
+                {
                     abtype += 1;
-                    if (abtype == 1) {
+                    if (abtype == 1)
+                    {
                         std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -185,27 +201,25 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
                                  "pseudopotential > "
                               << ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd);
                     std::cout << " for " << ucell.atoms[it].ncpp.psd << ": "
-                              << ModuleBase::EleConfig.at(ucell.atoms[it].ncpp.psd)
-                              << std::endl;
+                              << ModuleBase::EleConfig.at(ucell.atoms[it].ncpp.psd) << std::endl;
                     ofs << " Warning: the number of valence electrons in "
                            "pseudopotential > "
                         << ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd);
                     ofs << " for " << ucell.atoms[it].ncpp.psd << ": "
-                        << ModuleBase::EleConfig.at(ucell.atoms[it].ncpp.psd)
-                        << std::endl;
+                        << ModuleBase::EleConfig.at(ucell.atoms[it].ncpp.psd) << std::endl;
                 }
             }
         }
-        if (abtype > 0) {
+        if (abtype > 0)
+        {
             std::cout << " Pseudopotentials with additional electrons can "
                          "yield (more) accurate outcomes, but may be "
                          "less efficient."
                       << std::endl;
-            std::cout
-                << " If you're confident that your chosen pseudopotential is "
-                   "appropriate, you can safely ignore "
-                   "this warning."
-                << std::endl;
+            std::cout << " If you're confident that your chosen pseudopotential is "
+                         "appropriate, you can safely ignore "
+                         "this warning."
+                      << std::endl;
             std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%\n"
@@ -225,7 +239,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
         }
     }
 
-    cal_meshx(ucell.meshx,ucell.atoms,ucell.ntype);
+    cal_meshx(ucell.meshx, ucell.atoms, ucell.ntype);
 
 #ifdef __MPI
     Parallel_Common::bcast_int(ucell.meshx);
@@ -259,7 +273,9 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
         if (GlobalV::MY_RANK == 0)
         {
             pp_address = pp_dir + ucell.pseudo_fn[i];
-            error = upf.init_pseudo_reader(pp_address, ucell.pseudo_type[i], ucell.atoms[i].ncpp); // xiaohui add 2013-06-23
+            error = upf.init_pseudo_reader(pp_address,
+                                           ucell.pseudo_type[i],
+                                           ucell.atoms[i].ncpp); // xiaohui add 2013-06-23
 
             if (error == 0) // mohan add 2021-04-16
             {
@@ -311,7 +327,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (GlobalV::MY_RANK == 0)
         {
-		    upf.complete_default(ucell.atoms[i].ncpp);
+            upf.complete_default(ucell.atoms[i].ncpp);
             log << "\n Read in pseudopotential file is " << ucell.pseudo_fn[i] << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", ucell.atoms[i].ncpp.pp_type);
             ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", ucell.atoms[i].ncpp.xc_func);
@@ -334,13 +350,12 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 {
                     std::cout << " NAME OF ELEMENT      : " << ucell.atoms[i].label << std::endl;
                     std::cout << " DFT FUNC. (PSEUDO)   : " << ucell.atoms[i].ncpp.xc_func << std::endl;
-                    std::cout << " DFT FUNC. (SET TO)   : " << xc_func1 << std::endl; 
+                    std::cout << " DFT FUNC. (SET TO)   : " << xc_func1 << std::endl;
                     std::cout << " MAKE SURE THIS DFT FUNCTIONAL IS WHAT YOU NEED" << std::endl;
-
 
                     GlobalV::ofs_warning << " NAME OF ELEMENT      : " << ucell.atoms[i].label << std::endl;
                     GlobalV::ofs_warning << " DFT FUNC. (PSEUDO)   : " << ucell.atoms[i].ncpp.xc_func << std::endl;
-                    GlobalV::ofs_warning << " DFT FUNC. (SET TO)   : " << xc_func1 << std::endl; 
+                    GlobalV::ofs_warning << " DFT FUNC. (SET TO)   : " << xc_func1 << std::endl;
                     GlobalV::ofs_warning << " MAKE SURE THIS DFT FUNCTIONAL IS WHAT YOU NEED" << std::endl;
 
                     ucell.atoms[i].ncpp.xc_func = xc_func1;
@@ -354,7 +369,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
 void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
 {
-    if (PARAM.inp.test_pseudo_cell) 
+    if (PARAM.inp.test_pseudo_cell)
     {
         ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
     }
@@ -370,4 +385,4 @@ void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
     return;
 }
 
-}
+} // namespace elecstate

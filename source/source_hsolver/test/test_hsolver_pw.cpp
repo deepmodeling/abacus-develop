@@ -4,77 +4,72 @@
 
 #define private public
 #define protected public
-#include "module_parameter/parameter.h"
-#include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/hsolver_lcaopw.h"
-#include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
 
 // Mock implementations for the template functions causing linking errors
-namespace ModulePW {
-    // Mock implementation for recip_to_real
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::recip_to_real(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-        // In a real test, you might want to implement behavior that simulates the actual function
-    }
-
-    // Mock implementation for real_to_recip
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::real_to_recip(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-    }
-
-    // Explicit template instantiations
-    template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
-
-    template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
+namespace ModulePW
+{
+// Mock implementation for recip_to_real
+template <typename FPTYPE, typename Device>
+void PW_Basis_K::recip_to_real(const Device* ctx,
+                               const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+    // In a real test, you might want to implement behavior that simulates the actual function
 }
+
+// Mock implementation for real_to_recip
+template <typename FPTYPE, typename Device>
+void PW_Basis_K::real_to_recip(const Device* ctx,
+                               const std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out,
+                               const int ik,
+                               const bool add,
+                               const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+}
+
+// Explicit template instantiations
+template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                        const std::complex<float>* in,
+                                                                        std::complex<float>* out,
+                                                                        const int ik,
+                                                                        const bool add,
+                                                                        const float factor) const;
+
+template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                         const std::complex<double>* in,
+                                                                         std::complex<double>* out,
+                                                                         const int ik,
+                                                                         const bool add,
+                                                                         const double factor) const;
+
+template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                        const std::complex<float>* in,
+                                                                        std::complex<float>* out,
+                                                                        const int ik,
+                                                                        const bool add,
+                                                                        const float factor) const;
+
+template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                         const std::complex<double>* in,
+                                                                         std::complex<double>* out,
+                                                                         const int ik,
+                                                                         const bool add,
+                                                                         const double factor) const;
+} // namespace ModulePW
 
 /************************************************
  *  unit test of HSolverPW class
@@ -96,7 +91,8 @@ namespace ModulePW {
  */
 
 // mock diago_hs_para
-namespace hsolver {
+namespace hsolver
+{
 template <typename T>
 void diago_hs_para(T* h,
                    T* s,
@@ -107,7 +103,8 @@ void diago_hs_para(T* h,
                    const MPI_Comm& comm,
                    const int diag_subspace,
                    const int block_size = 0)
-{}
+{
+}
 template void diago_hs_para<double>(double* h,
                                     double* s,
                                     const int lda,
@@ -137,7 +134,7 @@ template void diago_hs_para<float>(float* h,
                                    const MPI_Comm& comm,
                                    const int diag_subspace,
                                    const int block_size);
-                                   
+
 template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
                                                  std::complex<float>* s,
                                                  const int lda,
@@ -148,35 +145,38 @@ template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
                                                  const int diag_subspace,
                                                  const int block_size);
 
-}
+} // namespace hsolver
 
-class TestHSolverPW : public ::testing::Test {
+class TestHSolverPW : public ::testing::Test
+{
   public:
     ModulePW::PW_Basis_K pwbk;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
-        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
-                                                                           "scf",
-                                                                           "pw",
-                                                                           "cg",
-                                                                           false,
-                                                                           PARAM.sys.use_uspp,
-                                                                           PARAM.input.nspin,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
+            &pwbk,
+            "scf",
+            "pw",
+            "cg",
+            false,
+            PARAM.sys.use_uspp,
+            PARAM.input.nspin,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
-                                                                            "scf",
-                                                                            "pw",
-                                                                            "cg",
-                                                                            false,
-                                                                            PARAM.sys.use_uspp,
-                                                                            PARAM.input.nspin,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
+            &pwbk,
+            "scf",
+            "pw",
+            "cg",
+            false,
+            PARAM.sys.use_uspp,
+            PARAM.input.nspin,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -228,12 +228,12 @@ class TestHSolverPW : public ::testing::Test {
 //                      psi_test_cd,
 //                      &elecstate_test,
 //                      elecstate_test.ekb.c,
-                     
+
 //                      GlobalV::RANK_IN_POOL,
 //                      GlobalV::NPROC_IN_POOL,
 
 //                      true);
-  
+
 //     // EXPECT_EQ(this->hs_d.initialed_psi, true);
 //     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
 //                      0.0);
@@ -325,13 +325,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // EXPECT_EQ(test_diagethr_d, 0.0001);
 // }
 
-TEST_F(TestHSolverPW, SolveLcaoInPW) {
+TEST_F(TestHSolverPW, SolveLcaoInPW)
+{
     pwbk.nks = 1;
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
-    elecstate_test.wg.create(1,2);
-    elecstate_test.klist=new K_Vectors;
-    elecstate_test.skip_weights=true;
+    elecstate_test.wg.create(1, 2);
+    elecstate_test.klist = new K_Vectors;
+    elecstate_test.skip_weights = true;
     elecstate_test.pot = new elecstate::Potential;
     // 1 kpt, 2 bands, 3 basis
     psi_test_cf.resize(1, 2, 3);
@@ -347,15 +348,12 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     std::complex<double> psi_value_d = {0.0, 0.0};
     std::complex<float> psi_value_f = {0.0, 0.0};
-    for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++) {
-        for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis();
-             ibasis++) {
-            transform_test_cd
-                .get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis]
-                = psi_value_d;
-            transform_test_cf
-                .get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis]
-                = psi_value_f;
+    for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++)
+    {
+        for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis(); ibasis++)
+        {
+            transform_test_cd.get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis] = psi_value_d;
+            transform_test_cf.get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis] = psi_value_f;
             psi_value_d += std::complex<double>(1.0, 0.0);
             psi_value_f += std::complex<float>(1.0, 0.0);
         }
@@ -365,12 +363,10 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    
-    hsolver::HSolverLIP<std::complex<float>> hs_f_lip
-        = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
-    hsolver::HSolverLIP<std::complex<double>> hs_d_lip
-        = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
-    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
+
+    hsolver::HSolverLIP<std::complex<float>> hs_f_lip = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
+    hsolver::HSolverLIP<std::complex<double>> hs_d_lip = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
+    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, transform_test_cf, true, 0.0, 0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)
     {
@@ -381,7 +377,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0);
+    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true, 0.0, 0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cd.size(); i++)
     {

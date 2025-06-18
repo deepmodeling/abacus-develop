@@ -1,21 +1,21 @@
-#include "module_base/module_device/device.h"
-#include "module_base/timer.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "source_base/module_device/device.h"
+#include "source_base/timer.h"
 #include "stress_func.h"
 // calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
-                                            const ModuleBase::matrix& wg,
-                                            const ModulePW::PW_Basis_K* wfc_basis,
-                                            const UnitCell& ucell_in,
-                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in,
-                                            ModuleSymmetry::Symmetry* p_symm)
+                                                const ModuleBase::matrix& wg,
+                                                const ModulePW::PW_Basis_K* wfc_basis,
+                                                const UnitCell& ucell_in,
+                                                const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                                                ModuleSymmetry::Symmetry* p_symm)
 {
     ModuleBase::TITLE("Stress", "stress_onsite");
-    if(psi_in == nullptr || wfc_basis == nullptr)
+    if (psi_in == nullptr || wfc_basis == nullptr)
     {
         return;
     }
@@ -54,21 +54,21 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
             {
                 FPTYPE* stress_device_tmp = stress_device + (ipol * 3 + jpol);
                 onsite_p->get_fs_tools()->cal_dbecp_s(ik, npm, ipol, jpol);
-                if(PARAM.inp.dft_plus_u)
+                if (PARAM.inp.dft_plus_u)
                 {
                     auto* dftu = ModuleDFTU::DFTU::get_instance();
-					onsite_p->get_fs_tools()->cal_stress_dftu(ik, 
-							npm, 
-							stress_device_tmp, 
-							dftu->orbital_corr.data(), 
-							dftu->get_eff_pot_pw(0), 
-							dftu->get_size_eff_pot_pw(), 
-							wg.c);
+                    onsite_p->get_fs_tools()->cal_stress_dftu(ik,
+                                                              npm,
+                                                              stress_device_tmp,
+                                                              dftu->orbital_corr.data(),
+                                                              dftu->get_eff_pot_pw(0),
+                                                              dftu->get_size_eff_pot_pw(),
+                                                              wg.c);
                 }
-                if(PARAM.inp.sc_mag_switch)
+                if (PARAM.inp.sc_mag_switch)
                 {
-                    spinconstrain::SpinConstrain<std::complex<double>>& sc = 
-                        spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+                    spinconstrain::SpinConstrain<std::complex<double>>& sc
+                        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
                     const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
                     onsite_p->get_fs_tools()->cal_stress_dspin(ik, npm, stress_device_tmp, lambda.data(), wg.c);
                 }

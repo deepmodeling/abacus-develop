@@ -1,6 +1,6 @@
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 #include "surchem.h"
 
 void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
@@ -23,7 +23,7 @@ void eps_pot(const double* PS_TOTN_real,
              double* d_eps,
              double* vwork)
 {
-    double *eprime = new double[rho_basis->nrxx];
+    double* eprime = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(eprime, rho_basis->nrxx);
 
     shape_gradn(PS_TOTN_real, rho_basis, eprime);
@@ -33,8 +33,8 @@ void eps_pot(const double* PS_TOTN_real,
         eprime[ir] = eprime[ir] * (PARAM.inp.eb_k - 1);
     }
 
-    ModuleBase::Vector3<double> *nabla_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
-    double *phisq = new double[rho_basis->nrxx];
+    ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+    double* phisq = new double[rho_basis->nrxx];
 
     // nabla phi
     XC_Functional::grad_rho(phi, nabla_phi, rho_basis, tpiba);
@@ -66,26 +66,26 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     rho_basis->recip2real(TOTN, TOTN_real);
 
     // -4pi * TOTN(G)
-    complex<double> *B = new complex<double>[rho_basis->npw];
+    complex<double>* B = new complex<double>[rho_basis->npw];
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
         B[ig] = -4.0 * ModuleBase::PI * TOTN[ig];
     }
 
     // Build a nrxx vector to DO FFT .
-    double *PS_TOTN_real = new double[rho_basis->nrxx];
+    double* PS_TOTN_real = new double[rho_basis->nrxx];
     rho_basis->recip2real(PS_TOTN, PS_TOTN_real);
 
     // build epsilon in real space (nrxx)
-    double *epsilon = new double[rho_basis->nrxx];
-    double *epsilon0 = new double[rho_basis->nrxx];
+    double* epsilon = new double[rho_basis->nrxx];
+    double* epsilon0 = new double[rho_basis->nrxx];
     cal_epsilon(rho_basis, PS_TOTN_real, epsilon, epsilon0);
 
-    complex<double> *Sol_phi = new complex<double>[rho_basis->npw];
-    complex<double> *Sol_phi0 = new complex<double>[rho_basis->npw];
+    complex<double>* Sol_phi = new complex<double>[rho_basis->npw];
+    complex<double>* Sol_phi0 = new complex<double>[rho_basis->npw];
     int ncgsol = 0;
 
-    double *tmp_Vel = new double[rho_basis->nrxx];
+    double* tmp_Vel = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(tmp_Vel, rho_basis->nrxx);
 
     // Calculate Sol_phi with epsilon.
@@ -96,8 +96,8 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     // Calculate Sol_phi0 with epsilon0.
     minimize_cg(cell, rho_basis, epsilon0, B, Sol_phi0, ncgsol);
 
-    double *phi_tilda_R = new double[rho_basis->nrxx];
-    double *phi_tilda_R0 = new double[rho_basis->nrxx];
+    double* phi_tilda_R = new double[rho_basis->nrxx];
+    double* phi_tilda_R0 = new double[rho_basis->nrxx];
 
     rho_basis->recip2real(Sol_phi, phi_tilda_R);
     rho_basis->recip2real(Sol_phi0, phi_tilda_R0);

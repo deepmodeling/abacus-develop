@@ -3,8 +3,8 @@
 
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_base/macros.h"
-#include "module_base/module_device/types.h"
+#include "source_base/macros.h"
+#include "source_base/module_device/types.h"
 namespace hsolver
 {
 
@@ -19,7 +19,7 @@ class HSolverLIP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in) {};
+    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in){};
 
     /// @brief solve function for lcao_in_pw
     /// @param pHamilt interface to hamilt

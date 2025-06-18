@@ -1,11 +1,12 @@
 #include "overlap_new.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
+
 #include <vector>
 
 template <typename TK, typename TR>
@@ -41,8 +42,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(const Grid_
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1=0;
-        int I1=0;
+        int T1 = 0;
+        int I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
@@ -117,11 +118,11 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
-    int T1=0;
-    int I1=0;
+    int T1 = 0;
+    int I1 = 0;
     this->ucell->iat2iait(iat1, &I1, &T1);
-    int T2=0;
-    int I2=0;
+    int T2 = 0;
+    int I2 = 0;
     this->ucell->iat2iait(iat2, &I2, &T2);
     Atom& atom1 = this->ucell->atoms[T1];
     Atom& atom2 = this->ucell->atoms[T2];
@@ -198,7 +199,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
     ModuleBase::TITLE("OverlapNew", "contributeHk");
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
-    
+
     //! set SK to zero and then calculate SK for each k vector
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -211,7 +212,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
         hamilt::folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
     }
-    
+
     // update kvec_d_old
     this->kvec_d_old = this->kvec_d[ik];
 

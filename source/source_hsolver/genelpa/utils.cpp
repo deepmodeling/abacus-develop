@@ -1,7 +1,7 @@
 #include "utils.h"
 
-#include "module_base/blacs_connector.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/blacs_connector.h"
+#include "source_base/scalapack_connector.h"
 
 #include <complex>
 #include <cstring>
@@ -94,7 +94,7 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
 
-    double* b; // buffer
+    double* b;                       // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -179,7 +179,7 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         matrixFile.width(24);
     }
 
-    double* b; // buffer
+    double* b;                       // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -231,7 +231,7 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     if (myid == ROOT_PROC)
         matrixFile.open(FileName);
 
-    std::complex<double>* b; // buffer
+    std::complex<double>* b;         // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
@@ -317,7 +317,7 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
         matrixFile.width(24);
     }
 
-    std::complex<double>* b; // buffer
+    std::complex<double>* b;         // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;

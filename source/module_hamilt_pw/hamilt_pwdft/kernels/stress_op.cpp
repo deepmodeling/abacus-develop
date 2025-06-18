@@ -1,10 +1,10 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/math_polyint.h"
-#include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/math_polyint.h"
+#include "source_base/memory.h"
 #include "vnl_tools.hpp"
 
 #include <iomanip>
@@ -108,7 +108,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
                     FPTYPE ekb_now = 0.0;
-                    if(d_ekb != nullptr)
+                    if (d_ekb != nullptr)
                     {
                         ekb_now = d_ekb[ib];
                     }
@@ -133,9 +133,9 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                     fac = d_wg[0];
                                 }
                                 FPTYPE ps_qq = 0;
-                                if(ekb_now != 0)
+                                if (ekb_now != 0)
                                 {
-                                    ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+                                    ps_qq = -ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
                                 }
                                 FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 const int inkb1 = sum + ia * nproj + ip1;
@@ -192,7 +192,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
                     FPTYPE ekb_now = 0.0;
-                    if(d_ekb != nullptr)
+                    if (d_ekb != nullptr)
                     {
                         ekb_now = d_ekb[ib];
                     }
@@ -202,7 +202,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         {
                             for (int ip2 = 0; ip2 < nproj; ip2++)
                             {
-                                const int ib2 = ib*2;
+                                const int ib2 = ib * 2;
                                 FPTYPE fac;
                                 if (occ)
                                 {
@@ -213,22 +213,29 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                     fac = d_wg[0];
                                 }
                                 std::complex<FPTYPE> ps_qq = 0;
-                                if(ekb_now != 0)
+                                if (ekb_now != 0)
                                 {
-                                    ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+                                    ps_qq = -ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
                                 }
                                 std::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
-                                std::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-                                std::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-                                std::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
+                                std::complex<FPTYPE> ps1
+                                    = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                                std::complex<FPTYPE> ps2
+                                    = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                                std::complex<FPTYPE> ps3
+                                    = deeq_nc[((3 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 const int inkb1 = sum + ia * nproj + ip1;
                                 const int inkb2 = sum + ia * nproj + ip2;
                                 // out<<"\n ps = "<<ps;
 
-                                const std::complex<FPTYPE> dbb0 = conj(dbecp[ib2 * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
-                                const std::complex<FPTYPE> dbb1 = conj(dbecp[ib2 * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
-                                const std::complex<FPTYPE> dbb2 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
-                                const std::complex<FPTYPE> dbb3 = conj(dbecp[(ib2+1) * nkb + inkb1]) * becp[(ib2+1) * nkb + inkb2];
+                                const std::complex<FPTYPE> dbb0
+                                    = conj(dbecp[ib2 * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
+                                const std::complex<FPTYPE> dbb1
+                                    = conj(dbecp[ib2 * nkb + inkb1]) * becp[(ib2 + 1) * nkb + inkb2];
+                                const std::complex<FPTYPE> dbb2
+                                    = conj(dbecp[(ib2 + 1) * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
+                                const std::complex<FPTYPE> dbb3
+                                    = conj(dbecp[(ib2 + 1) * nkb + inkb1]) * becp[(ib2 + 1) * nkb + inkb2];
                                 local_stress -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
                             }
                         } // end ip
@@ -264,7 +271,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
         {
             const int orbital_l = orbital_corr[it];
             const int nproj = atom_nh[it];
-            if(orbital_l == -1)
+            if (orbital_l == -1)
             {
                 sum += nproj * atom_na[it];
                 continue;
@@ -277,7 +284,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             {
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
-                    const int ib2 = ib*2;
+                    const int ib2 = ib * 2;
                     FPTYPE fac = d_wg[ik * wg_nc + ib];
                     for (int ip1 = ip_begin; ip1 < ip_end; ip1++)
                     {
@@ -288,7 +295,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         {
                             const int m2 = ip2 - ip_begin;
                             std::complex<FPTYPE> ps[4];
-                            for(int i = 0; i < 4; i++)
+                            for (int i = 0; i < 4; i++)
                             {
                                 ps[i] = vu[(i * tlp1_2 + m1 * tlp1 + m2)];
                             }
@@ -300,16 +307,16 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb2];
                             local_stress -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
                         }
-                    } // end ip
-                }// ib
-                vu += 4 * tlp1_2;// step for vu
-            }// ia
+                    }             // end ip
+                }                 // ib
+                vu += 4 * tlp1_2; // step for vu
+            }                     // ia
             sum += atom_na[it] * nproj;
             iat += atom_na[it];
         } // end it
         *stress += local_stress;
     };
-    // kernel for DeltaSpin 
+    // kernel for DeltaSpin
     void operator()(const base_device::DEVICE_CPU* ctx,
                     const int& nkb,
                     const int& nbands_occ,
@@ -332,13 +339,13 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             for (int ia = 0; ia < atom_na[it]; ia++)
             {
                 int iat = iat0 + ia;
-                const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-                const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-                const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+                const std::complex<FPTYPE> coefficients0(lambda[iat * 3 + 2], 0.0);
+                const std::complex<FPTYPE> coefficients1(lambda[iat * 3], lambda[iat * 3 + 1]);
+                const std::complex<FPTYPE> coefficients2(lambda[iat * 3], -1 * lambda[iat * 3 + 1]);
+                const std::complex<FPTYPE> coefficients3(-1 * lambda[iat * 3 + 2], 0.0);
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
-                    const int ib2 = ib*2;
+                    const int ib2 = ib * 2;
                     FPTYPE fac = d_wg[ik * wg_nc + ib];
                     for (int ip = 0; ip < nproj; ip++)
                     {
@@ -348,10 +355,13 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         const std::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb1];
                         const std::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb1];
                         const std::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb1];
-                        local_stress -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
+                        local_stress -= fac
+                                        * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2
+                                           + coefficients3 * dbb3)
+                                              .real();
                     } // end ip
-                }// ib
-            }// ia
+                }     // ib
+            }         // ia
             sum += atom_na[it] * nproj;
             iat0 += atom_na[it];
         } // end it
@@ -531,35 +541,29 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_CPU>
     }
 };
 
-
 template <typename FPTYPE>
-void Simpson_Integral
-(
-    const int mesh,
-    FPTYPE * func,
-    const FPTYPE * rab,
-    FPTYPE &asum
-)
+void Simpson_Integral(const int mesh, FPTYPE* func, const FPTYPE* rab, FPTYPE& asum)
 {
-    assert(mesh&1);
+    assert(mesh & 1);
 
     asum = 0.00;
-	const size_t end = mesh-2;
-    for( size_t i=1; i!=end; i+=2 )
+    const size_t end = mesh - 2;
+    for (size_t i = 1; i != end; i += 2)
     {
-		const double f1 = func[i]*rab[i];
-		asum += f1 + f1 + func[i+1]*rab[i+1];
+        const double f1 = func[i] * rab[i];
+        asum += f1 + f1 + func[i + 1] * rab[i + 1];
     }
-	const double f1 = func[mesh-2]*rab[mesh-2];
-	asum += f1+f1;
-	asum += asum;
-	asum += func[0]*rab[0] + func[mesh-1]*rab[mesh-1];
-	asum /= 3.0;
+    const double f1 = func[mesh - 2] * rab[mesh - 2];
+    asum += f1 + f1;
+    asum += asum;
+    asum += func[0] * rab[0] + func[mesh - 1] * rab[mesh - 1];
+    asum /= 3.0;
     return;
-}// end subroutine simpson
+} // end subroutine simpson
 
 template <typename FPTYPE>
-struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
+struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU>
+{
     void operator()(const FPTYPE* r,
                     const FPTYPE* rhoc,
                     const FPTYPE* gx_arr,
@@ -574,64 +578,74 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 
 #ifdef _OPENMP
 #pragma omp parallel
-    {
+        {
 #endif
 
 #ifdef _OPENMP
 #pragma omp for
 #endif
-        for(int igl = 0;igl< ngg;igl++)
-        {
-            FPTYPE rhocg1 = 0;
-            //FPTYPE *aux = new FPTYPE[mesh];
-            std::vector<FPTYPE> aux(mesh);
-            for( int ir = 0;ir< mesh; ir++)
+            for (int igl = 0; igl < ngg; igl++)
             {
-                if(type ==0 ){
-                    aux [ir] = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[igl] * r [ir] ) / gx_arr[igl] - sin (gx_arr[igl] * r [ir] ) / pow(gx_arr[igl],2));
-                } else if(type == 1) {
-                    aux [ir] = ir!=0 ? std::sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]) : 1.0;
-                    aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
-                } else if(type == 2) {
-                    aux [ir] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
-                } else if(type == 3) {
-                    FPTYPE sinp, cosp;
-                    sinp = std::sin(gx_arr[igl] * r[ir]);
-                    cosp = std::cos(gx_arr[igl] * r[ir]);
-                    aux[ir] = rhoc [ir] *  (r [ir] * cosp / gx_arr[igl] - sinp / pow(gx_arr[igl],2));
+                FPTYPE rhocg1 = 0;
+                // FPTYPE *aux = new FPTYPE[mesh];
+                std::vector<FPTYPE> aux(mesh);
+                for (int ir = 0; ir < mesh; ir++)
+                {
+                    if (type == 0)
+                    {
+                        aux[ir] = r[ir] * rhoc[ir]
+                                  * (r[ir] * cos(gx_arr[igl] * r[ir]) / gx_arr[igl]
+                                     - sin(gx_arr[igl] * r[ir]) / pow(gx_arr[igl], 2));
+                    }
+                    else if (type == 1)
+                    {
+                        aux[ir] = ir != 0 ? std::sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]) : 1.0;
+                        aux[ir] = r[ir] * r[ir] * rhoc[ir] * aux[ir];
+                    }
+                    else if (type == 2)
+                    {
+                        aux[ir]
+                            = r[ir] < 1.0e-8 ? rhoc[ir] : rhoc[ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
+                    }
+                    else if (type == 3)
+                    {
+                        FPTYPE sinp, cosp;
+                        sinp = std::sin(gx_arr[igl] * r[ir]);
+                        cosp = std::cos(gx_arr[igl] * r[ir]);
+                        aux[ir] = rhoc[ir] * (r[ir] * cosp / gx_arr[igl] - sinp / pow(gx_arr[igl], 2));
+                    }
+                } // ir
+                Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
+                if (type == 0)
+                {
+                    drhocg[igl] = ModuleBase::FOUR_PI / omega * rhocg1;
                 }
-            }//ir
-            Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
-            if (type == 0)
-            {
-                drhocg[igl] = ModuleBase::FOUR_PI / omega * rhocg1;
+                else if (type == 1)
+                {
+                    drhocg[igl] = ModuleBase::FOUR_PI * rhocg1 / omega;
+                }
+                else if (type == 2)
+                {
+                    drhocg[igl] = rhocg1;
+                }
+                else if (type == 3)
+                {
+                    rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
+                    FPTYPE g2a = (gx_arr[igl] * gx_arr[igl]) / 4.0;
+                    rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp(-g2a) * (g2a + 1)
+                              / pow(gx_arr[igl] * gx_arr[igl], 2);
+                    drhocg[igl] = rhocg1;
+                }
             }
-            else if (type == 1)
-            {
-                drhocg[igl] = ModuleBase::FOUR_PI * rhocg1 / omega;
-            }
-            else if (type == 2)
-            {
-                drhocg[igl] = rhocg1;
-            }
-            else if (type == 3)
-            {
-                rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
-                FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
-                rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp(-g2a) * (g2a + 1)
-                          / pow(gx_arr[igl] * gx_arr[igl], 2);
-                drhocg [igl] = rhocg1;
-            }
-        }
 #ifdef _OPENMP
         }
 #endif
     }
 };
 
-
 template <typename FPTYPE>
-struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU>
+{
     void operator()(const std::complex<FPTYPE>* psiv,
                     const FPTYPE* gv_x,
                     const FPTYPE* gv_y,
@@ -673,7 +687,8 @@ struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
 };
 
 template <typename FPTYPE>
-struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU>
+{
     FPTYPE operator()(const int& npw,
                       const FPTYPE& fac,
                       const FPTYPE* gk1,
@@ -773,7 +788,6 @@ template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_multi_dot_op<float, base_device::DEVICE_CPU>;
 template struct cal_multi_dot_op<double, base_device::DEVICE_CPU>;
-
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_CPU>;

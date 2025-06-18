@@ -1,18 +1,18 @@
 #ifndef FORCES_H
 #define FORCES_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_base/module_device/memory_op.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/matrix.h"
+#include "source_base/module_device/memory_op.h"
 #include "structure_factor.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
@@ -57,8 +57,8 @@ class Forces
                        const ModuleBase::matrix& vloc,
                        const Charge* const chr);
     void cal_force_ew(const UnitCell& ucell,
-                      ModuleBase::matrix& forceion, 
-                      const ModulePW::PW_Basis* const rho_basis, 
+                      ModuleBase::matrix& forceion,
+                      const ModulePW::PW_Basis* const rho_basis,
                       const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc,
                       const ModulePW::PW_Basis* const rho_basis,
@@ -91,10 +91,10 @@ class Forces
     /// @param ucell_in , the unit cell
     /// @param psi_in , the wave function
     void cal_force_onsite(ModuleBase::matrix& force_onsite,
-                      const ModuleBase::matrix& wg,
-                      const ModulePW::PW_Basis_K* wfc_basis,
-                      const UnitCell& ucell_in,
-                      const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
+                          const ModuleBase::matrix& wg,
+                          const ModulePW::PW_Basis_K* wfc_basis,
+                          const UnitCell& ucell_in,
+                          const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& v_current,
@@ -117,17 +117,18 @@ class Forces
                      int type,
                      const UnitCell& ucell_in); // used in nonlinear core correction stress
     void deriv_drhoc_scc(const bool& numeric,
-                     const int mesh,
-                     const FPTYPE* r,
-                     const FPTYPE* rab,
-                     const FPTYPE* rhoc,
-                     FPTYPE* drhocg,
-                     const ModulePW::PW_Basis* const rho_basis,
-                     const UnitCell& ucell_in); // used in nonlinear core correction stress
+                         const int mesh,
+                         const FPTYPE* r,
+                         const FPTYPE* rab,
+                         const FPTYPE* rhoc,
+                         FPTYPE* drhocg,
+                         const ModulePW::PW_Basis* const rho_basis,
+                         const UnitCell& ucell_in); // used in nonlinear core correction stress
   protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+
   private:
     using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
 

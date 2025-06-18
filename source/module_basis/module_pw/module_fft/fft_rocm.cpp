@@ -1,12 +1,11 @@
 #include "fft_rocm.h"
-#include "module_base/module_device/memory_op.h"
+
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_base/module_device/memory_op.h"
 namespace ModulePW
 {
 template <typename FPTYPE>
-void FFT_ROCM<FPTYPE>::initfft(int nx_in, 
-                               int ny_in, 
-                               int nz_in)
+void FFT_ROCM<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in)
 {
     this->nx = nx_in;
     this->ny = ny_in;
@@ -17,9 +16,8 @@ void FFT_ROCM<float>::setupFFT()
 {
     hipfftPlan3d(&c_handle, this->nx, this->ny, this->nz, HIPFFT_C2C);
     resmem_cd_op()(this->c_auxr_3d, this->nx * this->ny * this->nz);
-        
 }
-template <>  
+template <>
 void FFT_ROCM<double>::setupFFT()
 {
     hipfftPlan3d(&z_handle, this->nx, this->ny, this->nz, HIPFFT_Z2Z);
@@ -64,47 +62,49 @@ void FFT_ROCM<double>::clear()
     }
 }
 template <>
-void FFT_ROCM<float>::fft3D_forward(std::complex<float>* in, 
-                                    std::complex<float>* out) const
+void FFT_ROCM<float>::fft3D_forward(std::complex<float>* in, std::complex<float>* out) const
 {
-    CHECK_CUFFT(hipfftExecC2C(this->c_handle, 
+    CHECK_CUFFT(hipfftExecC2C(this->c_handle,
                               reinterpret_cast<hipfftComplex*>(in),
-                              reinterpret_cast<hipfftComplex*>(out), 
+                              reinterpret_cast<hipfftComplex*>(out),
                               HIPFFT_FORWARD));
 }
 template <>
-void FFT_ROCM<double>::fft3D_forward(std::complex<double>* in, 
-                                     std::complex<double>* out) const
+void FFT_ROCM<double>::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
 {
-    CHECK_CUFFT(hipfftExecZ2Z(this->z_handle, 
+    CHECK_CUFFT(hipfftExecZ2Z(this->z_handle,
                               reinterpret_cast<hipfftDoubleComplex*>(in),
-                              reinterpret_cast<hipfftDoubleComplex*>(out), 
+                              reinterpret_cast<hipfftDoubleComplex*>(out),
                               HIPFFT_FORWARD));
 }
 template <>
-void FFT_ROCM<float>::fft3D_backward(std::complex<float>* in, 
-                                     std::complex<float>* out) const
+void FFT_ROCM<float>::fft3D_backward(std::complex<float>* in, std::complex<float>* out) const
 {
-    CHECK_CUFFT(hipfftExecC2C(this->c_handle, 
+    CHECK_CUFFT(hipfftExecC2C(this->c_handle,
                               reinterpret_cast<hipfftComplex*>(in),
-                              reinterpret_cast<hipfftComplex*>(out), 
+                              reinterpret_cast<hipfftComplex*>(out),
                               HIPFFT_BACKWARD));
 }
 template <>
-void FFT_ROCM<double>::fft3D_backward(std::complex<double>* in, 
-                                      std::complex<double>* out) const
+void FFT_ROCM<double>::fft3D_backward(std::complex<double>* in, std::complex<double>* out) const
 {
-    CHECK_CUFFT(hipfftExecZ2Z(this->z_handle, 
+    CHECK_CUFFT(hipfftExecZ2Z(this->z_handle,
                               reinterpret_cast<hipfftDoubleComplex*>(in),
-                              reinterpret_cast<hipfftDoubleComplex*>(out), 
+                              reinterpret_cast<hipfftDoubleComplex*>(out),
                               HIPFFT_BACKWARD));
 }
-template <> std::complex<float>* 
-FFT_ROCM<float>::get_auxr_3d_data()  const {return this->c_auxr_3d;}
-template <> std::complex<double>* 
-FFT_ROCM<double>::get_auxr_3d_data() const {return this->z_auxr_3d;}
+template <>
+std::complex<float>* FFT_ROCM<float>::get_auxr_3d_data() const
+{
+    return this->c_auxr_3d;
+}
+template <>
+std::complex<double>* FFT_ROCM<double>::get_auxr_3d_data() const
+{
+    return this->z_auxr_3d;
+}
 template FFT_ROCM<float>::FFT_ROCM();
 template FFT_ROCM<float>::~FFT_ROCM();
 template FFT_ROCM<double>::FFT_ROCM();
 template FFT_ROCM<double>::~FFT_ROCM();
-}// namespace ModulePW
+} // namespace ModulePW

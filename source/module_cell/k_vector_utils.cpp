@@ -4,13 +4,12 @@
 #include "k_vector_utils.h"
 
 #include "klist.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix3.h"
-
-#include "module_base/formatter.h"
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 
 namespace KVectorUtils
 {
@@ -341,7 +340,6 @@ void kvec_mpi_k(K_Vectors& kv)
 } // END SUBROUTINE
 #endif
 
-
 void kvec_ibz_kpoint(K_Vectors& kv,
                      const ModuleSymmetry::Symmetry& symm,
                      bool use_symm,
@@ -365,9 +363,12 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     ModuleBase::Matrix3 k_vec;
     if (kv.get_is_mp())
     {
-        k_vec1 = ModuleBase::Vector3<double>(recip_vec1.x / kv.nmp[0], recip_vec1.y / kv.nmp[0], recip_vec1.z / kv.nmp[0]);
-        k_vec2 = ModuleBase::Vector3<double>(recip_vec2.x / kv.nmp[1], recip_vec2.y / kv.nmp[1], recip_vec2.z / kv.nmp[1]);
-        k_vec3 = ModuleBase::Vector3<double>(recip_vec3.x / kv.nmp[2], recip_vec3.y / kv.nmp[2], recip_vec3.z / kv.nmp[2]);
+        k_vec1
+            = ModuleBase::Vector3<double>(recip_vec1.x / kv.nmp[0], recip_vec1.y / kv.nmp[0], recip_vec1.z / kv.nmp[0]);
+        k_vec2
+            = ModuleBase::Vector3<double>(recip_vec2.x / kv.nmp[1], recip_vec2.y / kv.nmp[1], recip_vec2.z / kv.nmp[1]);
+        k_vec3
+            = ModuleBase::Vector3<double>(recip_vec3.x / kv.nmp[2], recip_vec3.y / kv.nmp[2], recip_vec3.z / kv.nmp[2]);
         k_vec = ModuleBase::Matrix3(k_vec1.x,
                                     k_vec1.y,
                                     k_vec1.z,

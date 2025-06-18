@@ -1,14 +1,14 @@
 #include "sto_wf.h"
 
-#include "module_base/memory.h"
 #include "module_parameter/parameter.h"
+#include "source_base/memory.h"
 
 #include <cassert>
 #include <ctime>
 
 //---------Temporary------------------------------------
-#include "module_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_base/global_function.h"
 //------------------------------------------------------
 
 template <typename T, typename Device>
@@ -72,7 +72,8 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
+        srand((unsigned)std::abs(seed_in)
+              + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
     }
 
     this->allocate_chi0();
@@ -374,9 +375,7 @@ void Stochastic_WF<T, Device>::sync_chi0()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        syncmem_h2d_op()(this->chi0->get_pointer(),
-                         this->chi0_cpu->get_pointer(),
-                         this->chi0_cpu->size());
+        syncmem_h2d_op()(this->chi0->get_pointer(), this->chi0_cpu->get_pointer(), this->chi0_cpu->size());
     }
 }
 

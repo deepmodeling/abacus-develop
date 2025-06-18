@@ -1,9 +1,9 @@
 #include "./kedf_tf.h"
 
 #include "module_parameter/parameter.h"
-#include <iostream>
+#include "source_base/parallel_reduce.h"
 
-#include "module_base/parallel_reduce.h"
+#include <iostream>
 
 void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 {
@@ -65,7 +65,7 @@ double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
 /**
  * @brief Get the kinetic energy of TF KEDF, and add it onto rtau_tf
  * \f[ \tau_{TF} = c_{TF} * \prho^{5/3} \f]
- * 
+ *
  * @param prho charge density
  * @param rtau_tf rtau_tf => rtau_tf + tau_tf
  */

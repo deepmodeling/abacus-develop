@@ -1,8 +1,8 @@
 #include "module_io/numerical_basis_jyjy.h"
 
-#include "module_base/matrix3.h"
-#include "module_base/vector3.h"
 #include "module_basis/module_nao/two_center_integrator.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 
 namespace NumericalBasis
 {
@@ -36,8 +36,12 @@ std::vector<index_t> indexgen(const std::vector<int>& natom, const std::vector<i
     return index;
 }
 
-ModuleBase::ComplexArray cal_overlap_Sq(const char type, const int lmax, const int nbes, const double rcut,
-                                        const std::vector<std::vector<Vec3>>& R, const ModuleBase::Matrix3& latvec,
+ModuleBase::ComplexArray cal_overlap_Sq(const char type,
+                                        const int lmax,
+                                        const int nbes,
+                                        const double rcut,
+                                        const std::vector<std::vector<Vec3>>& R,
+                                        const ModuleBase::Matrix3& latvec,
                                         const std::vector<index_t>& mu_index)
 {
     // allocate output array

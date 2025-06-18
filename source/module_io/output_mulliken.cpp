@@ -1,10 +1,10 @@
 #include "module_io/output_mulliken.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/formatter.h"
-#include "module_base/name_angular.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/tool_quit.h"
+#include "source_base/formatter.h"
+#include "source_base/name_angular.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/tool_quit.h"
 
 #include <numeric>
 
@@ -440,11 +440,11 @@ void Output_Mulliken<TK>::print_atom_mag(const std::vector<std::vector<double>>&
     {
         const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0, 
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::LEFT});
         for (int iat = 0; iat < nat; ++iat)
         {
             atom_label.push_back(this->cell_index_->get_atom_label(iat, true));
@@ -460,11 +460,11 @@ void Output_Mulliken<TK>::print_atom_mag(const std::vector<std::vector<double>>&
         std::vector<double> azimuth(nat, 0.0);
         const std::vector<std::string> title = {"Total Magnetism (uB)", "x", "y", "z"};
         const std::vector<std::string> fmts = {"%26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0, 
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::RIGHT});
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::RIGHT});
         for (int iat = 0; iat < nat; ++iat)
         {
             atom_label.push_back(this->cell_index_->get_atom_label(iat, true));
@@ -478,13 +478,14 @@ void Output_Mulliken<TK>::print_atom_mag(const std::vector<std::vector<double>>&
         table << atom_label << mag_x << mag_y << mag_z;
         os << table.str() << std::endl;
         /// output mag in polar coordinates
-        const std::vector<std::string> title_polar = {"Total Magnetism (uB)", "Magnitude (uB)", "Polar (degree)", "Azimuth (degree)"};
+        const std::vector<std::string> title_polar
+            = {"Total Magnetism (uB)", "Magnitude (uB)", "Polar (degree)", "Azimuth (degree)"};
         const std::vector<std::string> fmts_polar = {"%26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table_polar(/*titles=*/title_polar, 
-                             /*nrows=*/nat, 
-                             /*formats=*/fmts_polar, 
-                             /*indent=*/0, 
-                             /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::RIGHT});
+        FmtTable table_polar(/*titles=*/title_polar,
+                             /*nrows=*/nat,
+                             /*formats=*/fmts_polar,
+                             /*indent=*/0,
+                             /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::RIGHT});
         table_polar << atom_label << magnitude << polar << azimuth;
         os << table_polar.str() << std::endl;
     }

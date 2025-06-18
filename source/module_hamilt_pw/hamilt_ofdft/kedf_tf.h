@@ -1,12 +1,12 @@
 #ifndef KEDF_TF_H
 #define KEDF_TF_H
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
+#include "source_base/timer.h"
+
 #include <math.h>
 #include <stdio.h>
-
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_base/timer.h"
 
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with Thomas-Fermi (TF) KEDF.

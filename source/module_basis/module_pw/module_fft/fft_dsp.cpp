@@ -1,6 +1,6 @@
 #include "fft_dsp.h"
 
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 #include <iostream>
 #include <string.h>
@@ -24,14 +24,14 @@ void FFT_DSP<double>::setupFFT()
     PLAN* ptr_plan_forward;
     PLAN* ptr_plan_backward;
     INT num_thread = 8;
-    INT size=0;
+    INT size = 0;
     hthread_dat_load(cluster_id, FFT_DAT_DIR);
 
     // compute the size of and malloc thread
     size = nx * ny * nz * 2 * sizeof(E);
     forward_in = (E*)hthread_malloc((int)cluster_id, size, HT_MEM_RW);
 
-    //init 3d fft problem
+    // init 3d fft problem
     pbm_forward.num_dim = 3;
     pbm_forward.n[0] = nx;
     pbm_forward.n[1] = ny;
@@ -40,7 +40,7 @@ void FFT_DSP<double>::setupFFT()
     pbm_forward.in = forward_in;
     pbm_forward.out = forward_in;
 
-    //make ptr plan
+    // make ptr plan
     make_plan(&pbm_forward, &ptr_plan_forward, cluster_id, num_thread);
     ptr_plan_forward->in = forward_in;
     ptr_plan_forward->out = forward_in;
@@ -68,7 +68,7 @@ void FFT_DSP<double>::resource_handler(const int flag) const
         hthread_barrier_destroy(b_id);
         hthread_group_destroy(thread_id_for);
     }
-    else if (flag==1)
+    else if (flag == 1)
     {
         INT num_thread = 8;
         thread_id_for = hthread_group_create(cluster_id, num_thread, NULL, 0, 0, NULL);
@@ -76,7 +76,9 @@ void FFT_DSP<double>::resource_handler(const int flag) const
         b_id = hthread_barrier_create(cluster_id);
         args_for[0] = b_id;
         args_back[0] = b_id;
-    }else{
+    }
+    else
+    {
         ModuleBase::WARNING_QUIT("FFT_DSP", "Error use of fft resource handle");
     }
 }

@@ -1,8 +1,8 @@
 #include "fft_bundle.h"
 
-#include "module_base/module_device/device.h"
-#include "module_base/module_device/memory_op.h"
-#include "module_base/tool_quit.h"
+#include "source_base/module_device/device.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/tool_quit.h"
 
 #include <cassert>
 #if defined(__CUDA)
@@ -64,7 +64,9 @@ void FFT_Bundle::initfft(int nx_in,
     else if (this->precision == "double")
     {
         double_flag = true;
-    }else{
+    }
+    else
+    {
         ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the precision to single or double or mixing");
     }
 #if defined(__DSP)
@@ -76,9 +78,10 @@ void FFT_Bundle::initfft(int nx_in,
         }
         fft_double = make_unique<FFT_DSP<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
-    }else
+    }
+    else
 #endif
-    if (device == "cpu")
+        if (device == "cpu")
     {
         if (float_flag)
         {
@@ -92,7 +95,8 @@ void FFT_Bundle::initfft(int nx_in,
             fft_double
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }
-    }else if (device == "gpu")
+    }
+    else if (device == "gpu")
     {
 #if defined(__ROCM)
         fft_float = make_unique<FFT_ROCM<float>>();
@@ -105,7 +109,9 @@ void FFT_Bundle::initfft(int nx_in,
         fft_double = make_unique<FFT_CUDA<double>>();
         fft_double->initfft(nx_in, ny_in, nz_in);
 #endif
-    }else{
+    }
+    else
+    {
         ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
 }
@@ -148,7 +154,7 @@ void FFT_Bundle::clear()
 
 void FFT_Bundle::resource_handler(const int flag) const
 {
-    if (this->device=="dsp")
+    if (this->device == "dsp")
     {
         if (double_flag)
         {
@@ -227,27 +233,23 @@ void FFT_Bundle::fftxyc2r(std::complex<double>* in, double* out) const
 }
 
 template <>
-void FFT_Bundle::fft3D_forward(std::complex<float>* in,
-                               std::complex<float>* out) const
+void FFT_Bundle::fft3D_forward(std::complex<float>* in, std::complex<float>* out) const
 {
     fft_float->fft3D_forward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_forward(std::complex<double>* in,
-                               std::complex<double>* out) const
+void FFT_Bundle::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
 {
     fft_double->fft3D_forward(in, out);
 }
 
 template <>
-void FFT_Bundle::fft3D_backward(std::complex<float>* in,
-                                std::complex<float>* out) const
+void FFT_Bundle::fft3D_backward(std::complex<float>* in, std::complex<float>* out) const
 {
     fft_float->fft3D_backward(in, out);
 }
 template <>
-void FFT_Bundle::fft3D_backward(std::complex<double>* in,
-                                std::complex<double>* out) const
+void FFT_Bundle::fft3D_backward(std::complex<double>* in, std::complex<double>* out) const
 {
     fft_double->fft3D_backward(in, out);
 }

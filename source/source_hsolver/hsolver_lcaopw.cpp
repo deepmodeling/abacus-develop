@@ -1,16 +1,15 @@
 #include "hsolver_lcaopw.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/parallel_global.h" // for MPI
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_tools.h"
-
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h" // for MPI
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_hsolver/diago_iter_assist.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
@@ -101,7 +100,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                                  pes->f_en,
                                  pes->nelec_spin,
                                  pes->skip_weights);
-    elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
+    elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
         if (PARAM.globalv.use_uspp)

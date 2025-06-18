@@ -18,18 +18,18 @@
 //----------------------------------------------------------
 #include "charge.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/libm/libm.h"
-#include "module_base/math_integral.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/tool_threading.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/libm/libm.h"
+#include "source_base/math_integral.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
 
 #include <vector>
 
@@ -232,16 +232,15 @@ void Charge::atomic_rho(const int spin_number_need,
     ModuleBase::timer::tick("Charge", "atomic_rho");
 
     {
-		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
-		{
-			// use interpolation to get three dimension charge density.
-			ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
+        ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix {
+            // use interpolation to get three dimension charge density.
+            ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
 
             for (int it = 0; it < ucell.ntype; it++)
             {
                 // check the start magnetization
                 const int startmag_type = [&]() -> int {
-                    if (ucell.magnet.start_mag[it] != 0.0) 
+                    if (ucell.magnet.start_mag[it] != 0.0)
                     {
                         return 1;
                     }
@@ -281,8 +280,10 @@ void Charge::atomic_rho(const int spin_number_need,
                                     double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
                                     rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
                                 }
-                                rhoatm[0]
-                                    = pow((rhoatm[2] / rhoatm[1]), atom->ncpp.r[1] / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add, sunliang updated 2024-03-04
+                                rhoatm[0] = pow(
+                                    (rhoatm[2] / rhoatm[1]),
+                                    atom->ncpp.r[1]
+                                        / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add, sunliang updated 2024-03-04
                                 if (rhoatm[0] < 1e-12)
                                 {
                                     rhoatm[0] = rhoatm[1];
@@ -332,7 +333,10 @@ void Charge::atomic_rho(const int spin_number_need,
                             {
                                 rho1d[ir] = rhoatm[ir];
                             }
-                            ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[0]);
+                            ModuleBase::Integral::Simpson_Integral(mesh,
+                                                                   rho1d.data(),
+                                                                   atom->ncpp.rab.data(),
+                                                                   rho_lgl[0]);
                             gstart = 1;
                         }
                         if (PARAM.inp.test_charge > 0)
@@ -343,15 +347,15 @@ void Charge::atomic_rho(const int spin_number_need,
                             // G=0 term only belong to 1 cpu.
                             // Other processors start from '0'
                             //----------------------------------------------------------
-    #ifdef _OPENMP
-    #pragma omp parallel
+#ifdef _OPENMP
+#pragma omp parallel
                         {
-    #endif
+#endif
                             std::vector<double> rho1d(ucell.meshx);
 
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
+#ifdef _OPENMP
+#pragma omp for
+#endif
                             for (int igg = gstart; igg < this->rhopw->ngg; ++igg)
                             {
                                 const double gx = sqrt(this->rhopw->gg_uniq[igg]) * ucell.tpiba;
@@ -367,11 +371,14 @@ void Charge::atomic_rho(const int spin_number_need,
                                         rho1d[ir] = rhoatm[ir] * ModuleBase::libm::sin(gxx) / gxx;
                                     }
                                 }
-                                ModuleBase::Integral::Simpson_Integral(mesh, rho1d.data(), atom->ncpp.rab.data(), rho_lgl[igg]);
+                                ModuleBase::Integral::Simpson_Integral(mesh,
+                                                                       rho1d.data(),
+                                                                       atom->ncpp.rab.data(),
+                                                                       rho_lgl[igg]);
                             }
-    #ifdef _OPENMP
-    #pragma omp single
-    #endif
+#ifdef _OPENMP
+#pragma omp single
+#endif
                             {
                                 if (PARAM.inp.test_charge > 0)
                                     std::cout << " |G|>0 term done." << std::endl;
@@ -380,16 +387,16 @@ void Charge::atomic_rho(const int spin_number_need,
                             // EXPLAIN : Complete the transfer of rho from real space to
                             // reciprocal space
                             //----------------------------------------------------------
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
-							for (int igg = 0; igg < this->rhopw->ngg; igg++)
-							{
-								rho_lgl[igg] /= omega;
-							}
-    #ifdef _OPENMP
+#ifdef _OPENMP
+#pragma omp for
+#endif
+                            for (int igg = 0; igg < this->rhopw->ngg; igg++)
+                            {
+                                rho_lgl[igg] /= omega;
+                            }
+#ifdef _OPENMP
                         }
-    #endif
+#endif
                         return rho_lgl;
                     }();
                     //----------------------------------------------------------
@@ -397,9 +404,9 @@ void Charge::atomic_rho(const int spin_number_need,
                     //----------------------------------------------------------
                     if (spin_number_need == 1)
                     {
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                         for (int ig = 0; ig < this->rhopw->npw; ig++)
                         {
                             rho_g3d(0, ig) += strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -410,9 +417,9 @@ void Charge::atomic_rho(const int spin_number_need,
                     {
                         if (startmag_type == 1)
                         {
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                             for (int ig = 0; ig < this->rhopw->npw; ig++)
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -433,9 +440,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 const double up = 0.5 * (1 + atom->mag[ia] / atom->ncpp.zv);
                                 const double dw = 0.5 * (1 - atom->mag[ia] / atom->ncpp.zv);
                                 // std::cout << " atom " << ia << " up=" << up << " dw=" << dw << std::endl;
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                                 for (int ig = 0; ig < this->rhopw->npw; ig++)
                                 {
                                     const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
@@ -462,9 +469,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
                                 ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
                             }
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                             for (int ig = 0; ig < this->rhopw->npw; ig++)
                             {
                                 const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
@@ -475,8 +482,7 @@ void Charge::atomic_rho(const int spin_number_need,
                                         += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * cos_a2;
                                     rho_g3d(2, ig)
                                         += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * sin_a2;
-                                    rho_g3d(3, ig)
-                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * cos_a1;
+                                    rho_g3d(3, ig) += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * cos_a1;
                                 }
                                 else if (PARAM.globalv.domag_z)
                                 {
@@ -500,9 +506,9 @@ void Charge::atomic_rho(const int spin_number_need,
                                 {
                                     ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
                                 }
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                                 for (int ig = 0; ig < this->rhopw->npw; ig++)
                                 {
                                     const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
@@ -535,7 +541,8 @@ void Charge::atomic_rho(const int spin_number_need,
                     }
                     else
                     {
-                        ModuleBase::WARNING_QUIT("Charge::spin_number_need", " Either 1 or 2 or 4, check SPIN number !");
+                        ModuleBase::WARNING_QUIT("Charge::spin_number_need",
+                                                 " Either 1 or 2 or 4, check SPIN number !");
                     }
                 }
             }
@@ -548,15 +555,15 @@ void Charge::atomic_rho(const int spin_number_need,
         {
             this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
 
-			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
-			{
-				ne[is] += rho_in[is][ir];
-			}
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+            {
+                ne[is] += rho_in[is][ir];
+            }
 
-			ne[is] *= omega / (double)this->rhopw->nxyz;
-    #ifdef __MPI
+            ne[is] *= omega / (double)this->rhopw->nxyz;
+#ifdef __MPI
             Parallel_Reduce::reduce_pool(ne[is]);
-    #endif
+#endif
             // we check that everything is correct
             double neg = 0.0;
             double rea = 0.0;
@@ -570,11 +577,11 @@ void Charge::atomic_rho(const int spin_number_need,
                 ima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
             }
 
-    #ifdef __MPI
+#ifdef __MPI
             Parallel_Reduce::reduce_pool(neg);
             Parallel_Reduce::reduce_pool(ima);
             Parallel_Reduce::reduce_pool(sumrea);
-    #endif
+#endif
             // mohan fix bug 2011-04-03
             neg = neg / (double)this->rhopw->nxyz * omega;
             ima = ima / (double)this->rhopw->nxyz * omega;
@@ -590,10 +597,10 @@ void Charge::atomic_rho(const int spin_number_need,
 
         double ne_tot = 0.0;
         int spin0 = 1;
-		if (spin_number_need == 2) 
-		{
-			spin0 = spin_number_need;
-		}
+        if (spin_number_need == 2)
+        {
+            spin0 = spin_number_need;
+        }
         for (int is = 0; is < spin0; ++is)
         {
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
@@ -603,13 +610,13 @@ void Charge::atomic_rho(const int spin_number_need,
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
 
-        for (int is = 0; is < spin_number_need; ++is) 
-		{
-			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
-			{
-				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-			}
-		}
+        for (int is = 0; is < spin_number_need; ++is)
+        {
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+            {
+                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
+            }
+        }
     }
 
     ModuleBase::timer::tick("Charge", "atomic_rho");
@@ -646,7 +653,7 @@ double Charge::cal_rho2ne(const double* rho_in) const
 
 void Charge::check_rho()
 {
-    if (this->nspin==1 || this->nspin==4)
+    if (this->nspin == 1 || this->nspin == 4)
     {
         double ne = 0.0;
         ne = this->cal_rho2ne(rho[0]);
@@ -662,14 +669,18 @@ void Charge::check_rho()
         ne_up = this->cal_rho2ne(rho[0]);
         if (ne_up < 0.0)
         {
-            ModuleBase::WARNING_QUIT("Charge", "Number of spin-down electrons set in starting magnetization exceeds all available.");
+            ModuleBase::WARNING_QUIT(
+                "Charge",
+                "Number of spin-down electrons set in starting magnetization exceeds all available.");
         }
         // for spin down
         double ne_dn = 0.0;
         ne_dn = this->cal_rho2ne(rho[1]);
         if (ne_dn < 0.0)
         {
-            ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
+            ModuleBase::WARNING_QUIT(
+                "Charge",
+                "Number of spin-up electrons set in starting magnetization exceeds all available.");
         }
         // for total charge
         if (std::abs(ne_up + ne_dn - PARAM.inp.nelec) > 1.0e-6)
@@ -687,7 +698,8 @@ void Charge::init_final_scf()
     assert(allocate_rho_final_scf == false);
     if (PARAM.inp.test_charge > 1)
     {
-        std::cout << "\n spin_number = " << PARAM.inp.nspin << " real_point_number = " << this->rhopw->nrxx << std::endl;
+        std::cout << "\n spin_number = " << PARAM.inp.nspin << " real_point_number = " << this->rhopw->nrxx
+                  << std::endl;
     }
 
     // allocate memory

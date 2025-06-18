@@ -1,7 +1,8 @@
-#include "module_base/global_function.h"
 #include "gint_rho.h"
+
 #include "gint_common.h"
 #include "phi_operator.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {
@@ -30,9 +31,9 @@ void Gint_rho::cal_rho_()
         std::vector<double> phi;
         std::vector<double> phi_dm;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (const auto& biggrid: gint_info_->get_biggrids())
         {
-            if(biggrid->get_atoms().size() == 0)
+            if (biggrid->get_atoms().size() == 0)
             {
                 continue;
             }
@@ -50,5 +51,4 @@ void Gint_rho::cal_rho_()
     }
 }
 
-
-}
+} // namespace ModuleGint

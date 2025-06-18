@@ -9,9 +9,9 @@
 // Taoni add 2024-10-08
 //======================
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "write_wfc_r.h"
 
 #include <cstdlib>
@@ -67,16 +67,15 @@ void write_psi_r_1(const UnitCell& ucell,
                     wfc_imag[ir] = wfc_r[ir].imag();
                 }
             }
-            const std::string file_name_base = outdir + "wfc_realspace_" + 
-                                         ModuleBase::GlobalFunc::TO_STRING(ik_out) + "_" + 
-                                         ModuleBase::GlobalFunc::TO_STRING(ib);
-            const std::string file_name = square ?  file_name_base : file_name_base + "_imag";
+            const std::string file_name_base = outdir + "wfc_realspace_" + ModuleBase::GlobalFunc::TO_STRING(ik_out)
+                                               + "_" + ModuleBase::GlobalFunc::TO_STRING(ib);
+            const std::string file_name = square ? file_name_base : file_name_base + "_imag";
 #ifdef __MPI
             // Use write_chg_r_1 to output the real and imaginary parts of the wave function to file
             mpi_requests.push_back({});
-            write_chg_r_1(ucell,wfcpw, wfc_real, file_name, mpi_requests.back());
+            write_chg_r_1(ucell, wfcpw, wfc_real, file_name, mpi_requests.back());
 #else
-            write_chg_r_1(ucell,wfcpw, wfc_real, file_name);
+            write_chg_r_1(ucell, wfcpw, wfc_real, file_name);
             // if (!square)
             // write_chg_r_1(wfc_imag, file_name + "_imag", mpi_requests.back());
 #endif
@@ -118,10 +117,11 @@ void write_chg_r_1(const UnitCell& ucell,
                    const ModulePW::PW_Basis_K* wfcpw,
                    const std::vector<double>& chg_r,
                    const std::string& file_name
-                   #ifdef __MPI
-                   ,MPI_Request& mpi_request
-                   #endif
-                  )
+#ifdef __MPI
+                   ,
+                   MPI_Request& mpi_request
+#endif
+)
 {
     ModuleBase::timer::tick("ModuleIO", "write_chg_r_1");
     std::ofstream ofs;
@@ -135,12 +135,9 @@ void write_chg_r_1(const UnitCell& ucell,
 
         ofs << "calculated by ABACUS" << std::endl;
         ofs << ucell.lat0_angstrom << std::endl;
-        ofs << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13
-            << std::endl
-            << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23
-            << std::endl
-            << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33
-            << std::endl;
+        ofs << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13 << std::endl
+            << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23 << std::endl
+            << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33 << std::endl;
 
         for (int it = 0; it < ucell.ntype; ++it)
         {

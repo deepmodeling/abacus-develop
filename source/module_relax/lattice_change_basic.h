@@ -1,8 +1,8 @@
 #ifndef LATTICE_CHANGE_BASIC_H
 #define LATTICE_CHANGE_BASIC_H
 
-#include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
+#include "source_base/matrix.h"
 
 namespace Lattice_Change_Basic
 {
@@ -22,18 +22,18 @@ extern std::string fixed_axes;    // convert from INPUT.fixed_axes
 //----------------------------------------------------------------------------
 // setup the gradient, all the same for any geometry optimization methods.
 //----------------------------------------------------------------------------
-void setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress);
+void setup_gradient(const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress);
 
 //----------------------------------------------------------------------------
 // move the atom positions, considering the periodic boundary condition.
 //----------------------------------------------------------------------------
-void change_lattice(UnitCell &ucell, double *move, double *lat);
+void change_lattice(UnitCell& ucell, double* move, double* lat);
 
 //----------------------------------------------------------------------------
 // check the converged conditions ( if largest gradient is smaller than
 // the threshold)
 //----------------------------------------------------------------------------
-void check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad);
+void check_converged(const UnitCell& ucell, ModuleBase::matrix& stress, double* grad);
 
 //----------------------------------------------------------------------------
 // terminate the geometry optimization.
@@ -43,6 +43,6 @@ void terminate(void);
 //----------------------------------------------------------------------------
 // setup the total energy, keep the new energy or not.
 //----------------------------------------------------------------------------
-void setup_etot(const double &energy_in, const bool judgement);
+void setup_etot(const double& energy_in, const bool judgement);
 } // namespace Lattice_Change_Basic
 #endif

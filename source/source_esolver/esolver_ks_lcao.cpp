@@ -1,12 +1,6 @@
 #include "esolver_ks_lcao.h"
 
-#include "module_io/write_proj_band_lcao.h" // projcted band structure
-
-#include "module_base/formatter.h"
-#include "module_base/global_variable.h"
-#include "module_base/tool_title.h"
 #include "module_elecstate/elecstate_tools.h"
-
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -26,23 +20,26 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_io/write_proj_band_lcao.h" // projcted band structure
 #include "module_parameter/parameter.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_title.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-#include "module_io/write_eband_terms.hpp"
-#include "module_io/write_vxc.hpp"
-#include "module_io/write_vxc_r.hpp"
-
-#include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_io/write_eband_terms.hpp"
+#include "module_io/write_vxc.hpp"
+#include "module_io/write_vxc_r.hpp"
+#include "source_base/global_function.h"
 
 #include <memory>
 
@@ -160,14 +157,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 5) read psi from file
     if (PARAM.inp.init_wfc == "file")
-	{
-		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
-					this->pv, 
-					*(this->psi), 
-					this->pelec, 
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
-					PARAM.inp.nspin))
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
+                                    this->pv,
+                                    *(this->psi),
+                                    this->pelec,
+                                    this->pelec->klist->ik2iktot,
+                                    this->pelec->klist->get_nkstot(),
+                                    PARAM.inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
         }

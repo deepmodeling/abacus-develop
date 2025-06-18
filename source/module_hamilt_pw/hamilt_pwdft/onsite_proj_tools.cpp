@@ -1,12 +1,12 @@
 #include "onsite_proj_tools.h"
 
-#include "module_base/math_polyint.h"
-#include "module_base/math_ylmreal.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "nonlocal_maths.hpp"
+#include "source_base/math_polyint.h"
+#include "source_base/math_ylmreal.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 #include <numeric>
 
@@ -820,7 +820,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
         syncmem_int_h2d_op()(orbital_corr_tmp, orbital_corr, this->ucell_->ntype);
         resmem_complex_op()(vu_tmp, size_vu);
         syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
     }
     else
 #endif
@@ -876,7 +876,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
     {
         resmem_var_op()(lambda_tmp, this->ucell_->nat * 3);
         syncmem_var_h2d_op()(lambda_tmp, lambda_array.data(), this->ucell_->nat * 3);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
     }
     else
 #endif
@@ -928,7 +928,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
         syncmem_int_h2d_op()(orbital_corr_tmp, orbital_corr, this->ucell_->ntype);
         resmem_complex_op()(vu_tmp, size_vu);
         syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
     }
     else
 #endif
@@ -980,7 +980,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dspin(int ik,
     {
         resmem_var_op()(lambda_tmp, this->ucell_->nat * 3);
         syncmem_var_h2d_op()(lambda_tmp, lambda_array.data(), this->ucell_->nat * 3);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
     }
     else
 #endif

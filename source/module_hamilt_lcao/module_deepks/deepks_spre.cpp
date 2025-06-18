@@ -3,13 +3,13 @@
 #include "deepks_spre.h"
 
 #include "deepks_iterate.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/vector3.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
 
 /// this subroutine calculates the gradient of PDM wrt strain tensor:
 /// gdmepsl = d/d\epsilon_{ab} *
@@ -55,8 +55,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
             const ModuleBase::Vector3<double>& tau2,
             const int start2,
             const int nw2_tot,
-            ModuleBase::Vector3<int> dR2)
-        {
+            ModuleBase::Vector3<int> dR2) {
             double r1[3] = {0, 0, 0};
             double r2[3] = {0, 0, 0};
             r1[0] = (tau1.x - tau0.x);
@@ -143,8 +142,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                     dm_current++;
                 } // iw2
             }     // iw1
-        }
-    );
+        });
 
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * inlmax * nm * nm);

@@ -6,8 +6,8 @@
 #include "module_parameter/parameter.h"
 #include "tddft_test.h"
 
-#include <module_base/scalapack_connector.h>
 #include <mpi.h>
+#include <source_base/scalapack_connector.h>
 
 /************************************************
  *  unit test of functions in propagator.h

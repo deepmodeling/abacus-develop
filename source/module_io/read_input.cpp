@@ -1,19 +1,20 @@
 #include "read_input.h"
 
+#include "source_base/formatter.h"
+#include "source_base/global_file.h"
+#include "source_base/global_function.h"
+#include "source_base/module_device/device.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
+
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <array>
 #include <vector>
-#include <cassert>
-#include "module_base/formatter.h"
-#include "module_base/global_file.h"
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
-#include "module_base/module_device/device.h"
 namespace ModuleIO
 {
 
@@ -63,7 +64,7 @@ std::string to_dir(const std::string& str)
     {
         str_dir += "/";
     }
-    
+
     return str_dir;
 }
 
@@ -89,7 +90,7 @@ bool ReadInput::check_mode = false;
 ReadInput::ReadInput(const int& rank)
 {
     this->rank = rank;
-    
+
     // add items
     this->item_system();
     this->item_elec_stru();
@@ -119,7 +120,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     // 2. check the number of atom types from STRU file
     // set the global directories
-    this->set_global_dir(param.inp, param.sys); 
+    this->set_global_dir(param.inp, param.sys);
     if (this->check_ntype_flag && this->rank == 0)
     {
         check_ntype(param.globalv.global_in_stru, param.input.ntype);
@@ -150,16 +151,13 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
         }
     }
 
-    // 6. check and reset kpar. 
+    // 6. check and reset kpar.
     // It must be after bcastfunc, and kpar and bndpar are synchronized
     // It must be before wirte_txt_input, because kpar is used in write_txt_input
-    if (param.inp.device  == "gpu" && param.inp.basis_type == "pw")
+    if (param.inp.device == "gpu" && param.inp.basis_type == "pw")
     {
         param.input.kpar = base_device::information::get_device_kpar(param.inp.kpar, param.inp.bndpar);
     }
-
-
-    
 
     if (this->check_mode)
     {
@@ -182,7 +180,8 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh || param.input.out_mat_ds))
+        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh
+            || param.input.out_mat_ds))
     {
         out_dir = true;
     }
@@ -257,7 +256,10 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     while (ifs.good())
     {
         ifs >> word1;
-        if (ifs.eof()) { break; }
+        if (ifs.eof())
+        {
+            break;
+        }
         word = FmtCore::lower(word1);
         auto it = std::find_if(input_lists.begin(),
                                input_lists.end(),
@@ -266,7 +268,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
-            if(p_item->is_read())
+            if (p_item->is_read())
             {
                 std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -317,7 +319,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     for (auto& input_item: this->input_lists)
     {
         Input_Item* resetvalue_item = &(input_item.second);
-        if (resetvalue_item->reset_value != nullptr) {
+        if (resetvalue_item->reset_value != nullptr)
+        {
             resetvalue_item->reset_value(*resetvalue_item, param);
         }
     }
@@ -334,9 +337,10 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
-        if (p_item->get_final_value == nullptr) {
+        if (p_item->get_final_value == nullptr)
+        {
             continue;
-}
+        }
         p_item->get_final_value(*p_item, param);
         if (p_item->label == "ks_solver")
         {
@@ -503,16 +507,16 @@ std::string nofound_str(std::vector<std::string> init_chgs, const std::string& s
     std::string warningstr = "The parameter ";
     warningstr.append(str);
     warningstr.append(" must be ");
-    for(int i = 0; i < init_chgs.size(); i++)
+    for (int i = 0; i < init_chgs.size(); i++)
     {
         warningstr.append("'");
         warningstr.append(init_chgs[i]);
         warningstr.append("'");
-        if(i < init_chgs.size() - 2)
+        if (i < init_chgs.size() - 2)
         {
             warningstr.append(", ");
         }
-        else if(i == init_chgs.size() - 2)
+        else if (i == init_chgs.size() - 2)
         {
             warningstr.append(" or ");
         }

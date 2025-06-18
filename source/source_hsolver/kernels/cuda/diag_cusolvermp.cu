@@ -1,7 +1,7 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
 #include "helper_cuda.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 #include <assert.h>
 
@@ -9,11 +9,12 @@ extern "C"
 {
 #include "source_hsolver/genelpa/Cblacs.h"
 }
-#include <iostream>
-#include <cstdint>
 #include "helper_cusolver.h"
-#include "module_base/global_function.h"
-#include "module_base/module_device/device.h"
+#include "source_base/global_function.h"
+#include "source_base/module_device/device.h"
+
+#include <cstdint>
+#include <iostream>
 static calError_t allgather(void* src_buf, void* recv_buf, size_t size, void* data, void** request)
 {
     MPI_Request req;
@@ -114,26 +115,26 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
     CUSOLVER_CHECK(cusolverMpCreateDeviceGrid(cusolverMpHandle,
-                                                   &this->grid,
-                                                   this->cusolverCalComm,
-                                                   this->nprows,
-                                                   this->npcols,
-                                                   CUSOLVERMP_GRID_MAPPING_COL_MAJOR));
+                                              &this->grid,
+                                              this->cusolverCalComm,
+                                              this->nprows,
+                                              this->npcols,
+                                              CUSOLVERMP_GRID_MAPPING_COL_MAJOR));
 
     // 20240529 zhanghaochong
     // Actually, there should be three matrix descriptors, A matrix, B matrix, and output eigenvector matrix.
     // But in ABACUS the three matrices descriptors are the same.
     // So, I only create one matrix descriptor and use it for the three matrices.
     CUSOLVER_CHECK(cusolverMpCreateMatrixDesc(&this->desc_for_cusolvermp,
-                               this->grid,
-                               this->datatype,
-                               nFull,
-                               nFull,
-                               mb,
-                               nb,
-                               rsrc,
-                               csrc,
-                               this->lda));
+                                              this->grid,
+                                              this->datatype,
+                                              nFull,
+                                              nFull,
+                                              mb,
+                                              nb,
+                                              rsrc,
+                                              csrc,
+                                              this->lda));
 }
 
 template <typename inputT>
@@ -147,46 +148,43 @@ Diag_CusolverMP_gvd<inputT>::~Diag_CusolverMP_gvd()
     checkCudaErrors(cudaStreamDestroy(this->localStream));
 }
 
-
 template <typename inputT>
 int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, outputT* EigenValue, inputT* EigenVector)
 {
-    void *d_A = NULL;
-    void *d_B = NULL;
-    void *d_D = NULL;
-    void *d_Z = NULL;
+    void* d_A = NULL;
+    void* d_B = NULL;
+    void* d_D = NULL;
+    void* d_Z = NULL;
 
     checkCudaErrors(cudaMalloc((void**)&d_A, this->n_local * this->m_local * sizeof(inputT)));
     checkCudaErrors(cudaMalloc((void**)&d_B, this->n_local * this->m_local * sizeof(inputT)));
     checkCudaErrors(cudaMalloc((void**)&d_D, this->nFull * sizeof(outputT)));
     checkCudaErrors(cudaMalloc((void**)&d_Z, this->n_local * this->m_local * sizeof(inputT)));
 
-    checkCudaErrors(
-        cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
-    checkCudaErrors(
-        cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
     CAL_CHECK(cal_stream_sync(this->cusolverCalComm, this->localStream));
 
     size_t sygvdWorkspaceInBytesOnDevice = 0;
     size_t sygvdWorkspaceInBytesOnHost = 0;
 
     CUSOLVER_CHECK(cusolverMpSygvd_bufferSize(cusolverMpHandle,
-                               CUSOLVER_EIG_TYPE_1,
-                               CUSOLVER_EIG_MODE_VECTOR,
-                               CUBLAS_FILL_MODE_LOWER,
-                               this->nFull,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->datatype,
-                               &sygvdWorkspaceInBytesOnDevice,
-                               &sygvdWorkspaceInBytesOnHost));
+                                              CUSOLVER_EIG_TYPE_1,
+                                              CUSOLVER_EIG_MODE_VECTOR,
+                                              CUBLAS_FILL_MODE_LOWER,
+                                              this->nFull,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->datatype,
+                                              &sygvdWorkspaceInBytesOnDevice,
+                                              &sygvdWorkspaceInBytesOnHost));
 
     /* Distributed host workspace */
     void* h_sygvdWork = NULL;
@@ -205,29 +203,29 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     CAL_CHECK(cal_stream_sync(cusolverCalComm, localStream));
 
     CUSOLVER_CHECK(cusolverMpSygvd(cusolverMpHandle,
-                    CUSOLVER_EIG_TYPE_1,
-                    CUSOLVER_EIG_MODE_VECTOR,
-                    CUBLAS_FILL_MODE_LOWER,
-                    this->nFull,
-                    d_A,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    d_B,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    d_D,
-                    d_Z,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    this->datatype,
-                    d_sygvdWork,
-                    sygvdWorkspaceInBytesOnDevice,
-                    h_sygvdWork,
-                    sygvdWorkspaceInBytesOnHost,
-                    d_sygvdInfo));
+                                   CUSOLVER_EIG_TYPE_1,
+                                   CUSOLVER_EIG_MODE_VECTOR,
+                                   CUBLAS_FILL_MODE_LOWER,
+                                   this->nFull,
+                                   d_A,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   d_B,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   d_D,
+                                   d_Z,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   this->datatype,
+                                   d_sygvdWork,
+                                   sygvdWorkspaceInBytesOnDevice,
+                                   h_sygvdWork,
+                                   sygvdWorkspaceInBytesOnHost,
+                                   d_sygvdInfo));
 
     int h_sygvdInfo = 0;
     checkCudaErrors(cudaMemcpyAsync(&h_sygvdInfo, d_sygvdInfo, sizeof(int), cudaMemcpyDeviceToHost, this->localStream));
@@ -245,15 +243,13 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     free(h_sygvdWork);
 
     checkCudaErrors(cudaMemcpy((void*)EigenValue, d_D, this->nFull * sizeof(outputT), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaMemcpy((void*)EigenVector,
-                               d_Z,
-                               this->n_local * this->m_local * sizeof(inputT),
-                               cudaMemcpyDeviceToHost));
+    checkCudaErrors(
+        cudaMemcpy((void*)EigenVector, d_Z, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyDeviceToHost));
     // 20240529 zhanghaochong
     // I move the free operations from destructor to here.
     // Because I think it is more reasonable to free the memory in the function where it is allocated.
     // Destructor is used to release resources that allocated in the constructor.
-    // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we 
+    // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we
     // will construct the object only once during the whole program life cycle.
     // In that case, allocate and free memory in compute function is more reasonable.
     checkCudaErrors(cudaFree(d_A));

@@ -1,16 +1,16 @@
-#include <cmath>
-#include <memory>
-#include <fftw3.h>
+#include "source_base/spherical_bessel_transformer.h"
 
 #include "gtest/gtest.h"
-#include "module_base/spherical_bessel_transformer.h"
+#include <cmath>
+#include <fftw3.h>
+#include <memory>
 
 #ifdef __MPI
 #include <mpi.h>
 #endif
 
-#include "module_base/constants.h"
 #include "module_basis/module_nao/numerical_radial.h"
+#include "source_base/constants.h"
 
 using ModuleBase::PI;
 using ModuleBase::SphericalBesselTransformer;
@@ -236,7 +236,7 @@ TEST_F(NumericalRadialTest, GridSetAndWipe)
     double dr = 0.01;
     int nr = 5000;
     int pr = -1;
-    for (int ir = 0; ir != nr ; ++ir)
+    for (int ir = 0; ir != nr; ++ir)
     {
         double r = ir * dr;
         grid[ir] = r;
@@ -313,7 +313,8 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     }
 }
 
-TEST_F(NumericalRadialTest, Interpolate) {
+TEST_F(NumericalRadialTest, Interpolate)
+{
     /*
      * This test starts with a NumericalRadial object with k-space values
      *
@@ -328,27 +329,29 @@ TEST_F(NumericalRadialTest, Interpolate) {
     double dk = 0.01;
     int sz = 10000;
     int pk = -2;
-    double pref = 48 * std::sqrt(2./PI);
-    for (int ik = 0; ik != sz; ++ik) {
+    double pref = 48 * std::sqrt(2. / PI);
+    for (int ik = 0; ik != sz; ++ik)
+    {
         double k = ik * dk;
-        k *= std::exp(0.02*k);
+        k *= std::exp(0.02 * k);
         grid[ik] = k;
-        f[ik] = pref / std::pow(k*k+1, 4);
+        f[ik] = pref / std::pow(k * k + 1, 4);
     }
 
     chi.build(2, false, sz, grid, f, pk);
 
-    chi.set_uniform_grid(false, sz, PI/50*(sz-1), 'i', true);
+    chi.set_uniform_grid(false, sz, PI / 50 * (sz - 1), 'i', true);
 
     double dr = PI / chi.kmax();
     for (int ir = 0; ir != sz; ++ir)
     {
         double r = ir * dr;
-        EXPECT_NEAR(r*r*std::exp(-r), chi.rvalue(ir), tol*2); // slightly relax the tolerance due to interpolation
+        EXPECT_NEAR(r * r * std::exp(-r), chi.rvalue(ir), tol * 2); // slightly relax the tolerance due to interpolation
     }
 }
 
-TEST_F(NumericalRadialTest, ZeroPadding) {
+TEST_F(NumericalRadialTest, ZeroPadding)
+{
     /*
      * This test checks whether set_grid properly pads the value array.
      *                                                                      */
@@ -366,7 +369,7 @@ TEST_F(NumericalRadialTest, ZeroPadding) {
     chi.build(2, false, sz1, grid, f, pk);
 
     int sz2 = 10000;
-    chi.set_uniform_grid(false, sz2, dk*(sz2-1), 'i');
+    chi.set_uniform_grid(false, sz2, dk * (sz2 - 1), 'i');
 
     for (int ik = 0; ik != sz1; ++ik)
     {
@@ -400,7 +403,7 @@ TEST_F(NumericalRadialTest, SetValue)
     chi.build(1, true, sz, grid, f, p);
 
     EXPECT_EQ(chi.rcut(), sz_cut * dx);
-    EXPECT_EQ(chi.rmax(), (sz-1) * dx);
+    EXPECT_EQ(chi.rmax(), (sz - 1) * dx);
 
     for (int ir = 0; ir != sz; ++ir)
     {

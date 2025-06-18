@@ -1,10 +1,10 @@
-#include "module_base/libm/libm.h"
-#include "module_parameter/parameter.h"
-#include "module_base/math_polyint.h"
-#include "module_base/math_ylmreal.h"
-#include "module_base/timer.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/nonlocal_maths.hpp"
+#include "module_parameter/parameter.h"
+#include "source_base/libm/libm.h"
+#include "source_base/math_polyint.h"
+#include "source_base/math_ylmreal.h"
+#include "source_base/timer.h"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due
@@ -52,11 +52,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     for (int ipol = 0; ipol < 3; ipol++)
     {
         double* gcar_ptr = reinterpret_cast<double*>(rho_basis->gcar);
-        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(nlpp.lmaxq * nlpp.lmaxq,
-                                                       npw,
-                                                       gcar_ptr,
-                                                       dylmk0.c,
-                                                       ipol);
+        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(nlpp.lmaxq * nlpp.lmaxq, npw, gcar_ptr, dylmk0.c, ipol);
         for (int it = 0; it < ucell.ntype; it++)
         {
             Atom* atom = &ucell.atoms[it];
@@ -202,10 +198,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-	if (PARAM.inp.test_pp) 
-	{
-		ModuleBase::TITLE("Stress", "dqvan2");
-	}
+    if (PARAM.inp.test_pp)
+    {
+        ModuleBase::TITLE("Stress", "dqvan2");
+    }
 
     // computes the indices which correspond to ih,jh
     const int nb = nlpp.indv(itype, ih);

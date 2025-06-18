@@ -1,8 +1,8 @@
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 #define strvalue item.str_values[0]
@@ -191,12 +191,12 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
 
             int num = std::stoi(int_part);
             T T_value = static_cast<T>(std::stof(T_part));
-            for(int i = 0 ; i < num; ++i)
+            for (int i = 0; i < num; ++i)
             {
                 result.push_back(T_value);
             }
         }
-        // e.g. "2*3*3" 
+        // e.g. "2*3*3"
         // If more than one '*' found, output an error message
         else
         {

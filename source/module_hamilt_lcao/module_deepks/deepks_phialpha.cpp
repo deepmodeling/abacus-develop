@@ -11,9 +11,9 @@
 #include "deepks_phialpha.h"
 
 #include "deepks_iterate.h"
-#include "module_base/timer.h"
-#include "module_base/vector3.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
 
 void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       const UnitCell& ucell,
@@ -48,8 +48,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             const ModuleBase::Vector3<double>& tau1,
             const int start,
             const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
+            ModuleBase::Vector3<int> dR) {
             // Create virtual atom_begin_row and atom_begin_col for the construction of atom pair
             // In DeePKS, phialpha is used to save data, so it is safe to do this
             int atom_begin_row[ucell.nat];
@@ -63,8 +62,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             // Notice: in AtomPair, the usage is set_size(ncol, nrow)
             pair.set_size(nw_alpha, nw_tot);
             phialpha[0]->insert_pair(pair);
-        }
-    );
+        });
 
     phialpha[0]->allocate(nullptr, true);
     // whether to calculate the derivative of phialpha
@@ -109,8 +107,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
             const ModuleBase::Vector3<double>& tau1,
             const int start,
             const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
+            ModuleBase::Vector3<int> dR) {
             int R[3] = {dR.x, dR.y, dR.z};
             const int T1 = ucell.iat2it[ibt];
             const Atom* atom1 = &ucell.atoms[T1];
@@ -177,8 +174,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                     }
                 }
             } // end iw
-        }
-    );
+        });
 
     ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
     return;

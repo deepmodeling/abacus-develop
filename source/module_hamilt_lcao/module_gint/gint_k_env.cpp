@@ -1,12 +1,12 @@
 #include "gint_k.h"
 #include "grid_technique.h"
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
-#include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/array_pool.h"
-#include "module_base/vector3.h"
+#include "module_parameter/parameter.h"
+#include "source_base/array_pool.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
+#include "source_base/ylm.h"
 
 void Gint_k::cal_env_k(int ik,
                        const std::complex<double>* psi_k,
@@ -21,22 +21,22 @@ void Gint_k::cal_env_k(int ik,
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
     const double delta_r = this->gridt->dr_uniform;
     const int max_size = this->gridt->max_atom;
-    if (max_size <= 0){
-        ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env",
-                                    "the max_size is less than 0!");
+    if (max_size <= 0)
+    {
+        ModuleBase::WARNING_QUIT("Gint_Gamma::cal_env", "the max_size is less than 0!");
     }
     const int nbx = this->gridt->nbx;
     const int nby = this->gridt->nby;
     const int nbz = this->gridt->nbzp;
     const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
 
-    #pragma omp parallel 
+#pragma omp parallel
     {
         std::vector<int> vindex(this->bxyz, 0);
         std::vector<int> block_iw(max_size, 0);
         std::vector<int> block_index(max_size + 1, 0);
         std::vector<int> block_size(max_size, 0);
-        #pragma omp for
+#pragma omp for
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
         {
 
@@ -70,13 +70,13 @@ void Gint_k::cal_env_k(int ik,
                                      psir_ylm.get_ptr_2D());
 
             Gint_Tools::get_vindex(this->bxyz,
-                                    this->bx,
-                                    this->by,
-                                    this->bz,
-                                    this->nplane,
-                                    this->gridt->start_ind[grid_index],
-                                    ncyz,
-                                    vindex.data());
+                                   this->bx,
+                                   this->by,
+                                   this->bz,
+                                   this->nplane,
+                                   this->gridt->start_ind[grid_index],
+                                   ncyz,
+                                   vindex.data());
 
             for (int ia1 = 0; ia1 < size; ia1++)
             {
@@ -131,7 +131,7 @@ void Gint_k::cal_env_k(int ik,
                     } // cal_flag
                 }     // ib
             }         // ia1
-        } // i
+        }             // i
     }
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
     return;

@@ -1,11 +1,11 @@
 #include "dftu.h"
-#include "module_base/timer.h"
-#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #endif
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
 
 namespace ModuleDFTU
 {
@@ -16,10 +16,10 @@ void DFTU::copy_locale(const UnitCell& ucell)
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (orbital_corr[T] == -1) 
-		{
-			continue;
-		}
+        if (orbital_corr[T] == -1)
+        {
+            continue;
+        }
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -54,10 +54,10 @@ void DFTU::zero_locale(const UnitCell& ucell)
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (orbital_corr[T] == -1) 
-		{ 
-			continue;
-		}
+        if (orbital_corr[T] == -1)
+        {
+            continue;
+        }
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -85,8 +85,7 @@ void DFTU::zero_locale(const UnitCell& ucell)
     ModuleBase::timer::tick("DFTU", "zero_locale");
 }
 
-void DFTU::mix_locale(const UnitCell& ucell,
-                      const double& mixing_beta)
+void DFTU::mix_locale(const UnitCell& ucell, const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "mix_locale");
     ModuleBase::timer::tick("DFTU", "mix_locale");
@@ -95,10 +94,10 @@ void DFTU::mix_locale(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (orbital_corr[T] == -1) 
-		{
-			continue;
-		}
+        if (orbital_corr[T] == -1)
+        {
+            continue;
+        }
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -112,12 +111,12 @@ void DFTU::mix_locale(const UnitCell& ucell,
                 {
                     if (PARAM.inp.nspin == 4)
                     {
-                        locale[iat][l][n][0] = locale[iat][l][n][0]*beta + locale_save[iat][l][n][0]*(1.0-beta);
+                        locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0 - beta);
                     }
                     else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
-                        locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0-beta);
-                        locale[iat][l][n][1] = locale[iat][l][n][1] * beta + locale_save[iat][l][n][1] * (1.0-beta);
+                        locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0 - beta);
+                        locale[iat][l][n][1] = locale[iat][l][n][1] * beta + locale_save[iat][l][n][1] * (1.0 - beta);
                     }
                 }
             }
@@ -128,7 +127,7 @@ void DFTU::mix_locale(const UnitCell& ucell,
 
 #ifdef __LCAO
 
-void DFTU::cal_occup_m_k(const int iter, 
+void DFTU::cal_occup_m_k(const int iter,
                          const UnitCell& ucell,
                          const std::vector<std::vector<std::complex<double>>>& dm_k,
                          const K_Vectors& kv,
@@ -146,7 +145,7 @@ void DFTU::cal_occup_m_k(const int iter,
     const char transN = 'N';
     const char transT = 'T';
     const int one_int = 1;
-    const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
+    const std::complex<double> beta(0.0, 0.0), alpha(1.0, 0.0);
 
     std::vector<std::complex<double>> srho(this->paraV->nloc);
 
@@ -157,7 +156,7 @@ void DFTU::cal_occup_m_k(const int iter,
 
         std::complex<double>* s_k_pointer = nullptr;
 
-        if(PARAM.inp.nspin != 4)
+        if (PARAM.inp.nspin != 4)
         {
             s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
         }
@@ -168,25 +167,25 @@ void DFTU::cal_occup_m_k(const int iter,
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
-            transT,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            alpha,
-            s_k_pointer,
-            one_int,
-            one_int,
-            &this->paraV->desc[0],
-            dm_k[ik].data(),
-            //dm_k[ik].c,
-            one_int,
-            one_int,
-            &this->paraV->desc[0],
-            beta,
-            srho.data(),
-            one_int,
-            one_int,
-            &this->paraV->desc[0]);
+                                 transT,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.nlocal,
+                                 alpha,
+                                 s_k_pointer,
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0],
+                                 dm_k[ik].data(),
+                                 // dm_k[ik].c,
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0],
+                                 beta,
+                                 srho.data(),
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0]);
         /*pzgemm_(&transN,
                 &transT,
                 &PARAM.globalv.nlocal,
@@ -215,10 +214,10 @@ void DFTU::cal_occup_m_k(const int iter,
             const int NL = ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
-			if (LC == -1) 
-			{
-				continue;
-			}
+            if (LC == -1)
+            {
+                continue;
+            }
 
             for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
@@ -226,20 +225,20 @@ void DFTU::cal_occup_m_k(const int iter,
 
                 for (int l = 0; l < NL; l++)
                 {
-					if (l != orbital_corr[it]) 
-					{
-						continue;
-					}
+                    if (l != orbital_corr[it])
+                    {
+                        continue;
+                    }
 
                     const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
                         // if(!Yukawa && n!=0) continue;
-						if (n != 0) 
-						{
-							continue;
-						}
+                        if (n != 0)
+                        {
+                            continue;
+                        }
 
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
@@ -264,35 +263,35 @@ void DFTU::cal_occup_m_k(const int iter,
                                         const int m0_all = m0 + ipol0 * (2 * l + 1);
                                         const int m1_all = m1 + ipol1 * (2 * l + 1);
 
-										if ((nu >= 0) && (mu >= 0))
-										{
-											locale[iat][l][n][spin](m0_all, m1_all) += (srho[irc]).real() / 4.0;
-										}
+                                        if ((nu >= 0) && (mu >= 0))
+                                        {
+                                            locale[iat][l][n][spin](m0_all, m1_all) += (srho[irc]).real() / 4.0;
+                                        }
 
-										if ((nu_prime >= 0) && (mu_prime >= 0))
-										{
-											locale[iat][l][n][spin](m0_all, m1_all)
-												+= (std::conj(srho[irc_prime])).real() / 4.0;
-										}
+                                        if ((nu_prime >= 0) && (mu_prime >= 0))
+                                        {
+                                            locale[iat][l][n][spin](m0_all, m1_all)
+                                                += (std::conj(srho[irc_prime])).real() / 4.0;
+                                        }
                                     } // ipol1
-                                } // m1
-                            } // ipol0
-                        } // m0
-                    } // end n
-                } // end l
-            } // end ia
-        } // end it
-    } // ik
+                                }     // m1
+                            }         // ipol0
+                        }             // m0
+                    }                 // end n
+                }                     // end l
+            }                         // end ia
+        }                             // end it
+    }                                 // ik
 
     for (int it = 0; it < ucell.ntype; it++)
     {
         const int NL = ucell.atoms[it].nwl + 1;
         const int LC = orbital_corr[it];
 
-		if (LC == -1) 
-		{
-			continue;
-		}
+        if (LC == -1)
+        {
+            continue;
+        }
 
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
@@ -300,21 +299,21 @@ void DFTU::cal_occup_m_k(const int iter,
 
             for (int l = 0; l < NL; l++)
             {
-				if (l != orbital_corr[it]) 
-				{
-					continue;
-				}
+                if (l != orbital_corr[it])
+                {
+                    continue;
+                }
 
                 const int N = ucell.atoms[it].l_nchi[l];
 
                 for (int n = 0; n < N; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-					if (n != 0) 
-					{
-						continue;
-					}
-					// set the local occupation mumber matrix of spin up and down zeros
+                    if (n != 0)
+                    {
+                        continue;
+                    }
+                    // set the local occupation mumber matrix of spin up and down zeros
 
 #ifdef __MPI
                     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
@@ -370,13 +369,13 @@ void DFTU::cal_occup_m_k(const int iter,
                         exit(0);
                     }
                 } // end n
-            } // end l
-        } // end ia
-    } // end it
+            }     // end l
+        }         // end ia
+    }             // end it
 
-    if(mixing_dftu && initialed_locale)
+    if (mixing_dftu && initialed_locale)
     {
-        this->mix_locale(ucell,mixing_beta);
+        this->mix_locale(ucell, mixing_beta);
     }
 
     this->initialed_locale = true;
@@ -385,9 +384,9 @@ void DFTU::cal_occup_m_k(const int iter,
 }
 
 void DFTU::cal_occup_m_gamma(const int iter,
-                             const UnitCell &ucell,
-                             const std::vector<std::vector<double>> &dm_gamma, 
-                             const double& mixing_beta, 
+                             const UnitCell& ucell,
+                             const std::vector<std::vector<double>>& dm_gamma,
+                             const double& mixing_beta,
                              hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
@@ -409,25 +408,25 @@ void DFTU::cal_occup_m_gamma(const int iter,
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
-            transT,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            alpha,
-            s_gamma_pointer,
-            one_int,
-            one_int,
-            &this->paraV->desc[0],
-            dm_gamma[is].data(),
-            //dm_gamma[is].c,
-            one_int,
-            one_int,
-            &this->paraV->desc[0],
-            beta,
-            srho.data(),
-            one_int,
-            one_int,
-            &this->paraV->desc[0]);
+                                 transT,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.nlocal,
+                                 alpha,
+                                 s_gamma_pointer,
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0],
+                                 dm_gamma[is].data(),
+                                 // dm_gamma[is].c,
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0],
+                                 beta,
+                                 srho.data(),
+                                 one_int,
+                                 one_int,
+                                 &this->paraV->desc[0]);
         /*pdgemm_(&transN,
                 &transT,
                 &PARAM.globalv.nlocal,
@@ -453,29 +452,29 @@ void DFTU::cal_occup_m_gamma(const int iter,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-			if (orbital_corr[it] == -1) 
-			{
-				continue;
-			}
-			for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+            if (orbital_corr[it] == -1)
+            {
+                continue;
+            }
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
                 const int iat = ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
-					if (l != orbital_corr[it]) 
-					{
-						continue;
-					}
+                    if (l != orbital_corr[it])
+                    {
+                        continue;
+                    }
 
                     const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
-						if (n != 0) 
-						{
-							continue;
-						}
+                        if (n != 0)
+                        {
+                            continue;
+                        }
 
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
@@ -547,14 +546,14 @@ void DFTU::cal_occup_m_gamma(const int iter,
                         }
 
                     } // end for(n)
-                } // L
-            } // ia
-        } // it
-    } // is
+                }     // L
+            }         // ia
+        }             // it
+    }                 // is
 
-    if(mixing_dftu && initialed_locale)
+    if (mixing_dftu && initialed_locale)
     {
-        this->mix_locale(ucell,mixing_beta);
+        this->mix_locale(ucell, mixing_beta);
     }
 
     this->initialed_locale = true;

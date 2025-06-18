@@ -1,8 +1,9 @@
 #include "single_R_io.h"
-#include "module_base/parallel_reduce.h"
+
 #include "module_parameter/parameter.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 
 inline void write_data(std::ofstream& ofs, const double& data)
 {
@@ -10,17 +11,17 @@ inline void write_data(std::ofstream& ofs, const double& data)
 }
 inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
 {
-    ofs << " (" << std::fixed << std::scientific << std::setprecision(8) << data.real() << ","
-        << std::fixed << std::scientific << std::setprecision(8) << data.imag() << ")";
+    ofs << " (" << std::fixed << std::scientific << std::setprecision(8) << data.real() << "," << std::fixed
+        << std::scientific << std::setprecision(8) << data.imag() << ")";
 }
 
-template<typename T>
+template <typename T>
 void ModuleIO::output_single_R(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, T>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
-    const Parallel_Orbitals& pv,
-    const bool& reduce)
+                               const std::map<size_t, std::map<size_t, T>>& XR,
+                               const double& sparse_threshold,
+                               const bool& binary,
+                               const Parallel_Orbitals& pv,
+                               const bool& reduce)
 {
     T* line = nullptr;
     std::vector<int> indptr;
@@ -45,7 +46,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     }
 
     line = new T[PARAM.globalv.nlocal];
-    for(int row = 0; row < PARAM.globalv.nlocal; ++row)
+    for (int row = 0; row < PARAM.globalv.nlocal; ++row)
     {
         ModuleBase::GlobalFunc::ZEROS(line, PARAM.globalv.nlocal);
 
@@ -54,17 +55,17 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             auto iter = XR.find(row);
             if (iter != XR.end())
             {
-                for (auto &value : iter->second)
+                for (auto& value: iter->second)
                 {
                     line[value.first] = value.second;
                 }
             }
         }
 
-		if (reduce) 
-		{
-			Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
-		}
+        if (reduce)
+        {
+            Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+        }
 
         if (!reduce || GlobalV::DRANK == 0)
         {
@@ -76,7 +77,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
                     if (binary)
                     {
                         ofs.write(reinterpret_cast<char*>(&line[col]), sizeof(T));
-                        ofs_tem1.write(reinterpret_cast<char *>(&col), sizeof(int));
+                        ofs_tem1.write(reinterpret_cast<char*>(&col), sizeof(int));
                     }
                     else
                     {
@@ -85,9 +86,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
                     }
 
                     nonzeros_count++;
-
                 }
-
             }
             nonzeros_count += indptr.back();
             indptr.push_back(nonzeros_count);
@@ -104,9 +103,9 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
-            for (auto &i : indptr)
+            for (auto& i: indptr)
             {
-                ofs.write(reinterpret_cast<char *>(&i), sizeof(int));
+                ofs.write(reinterpret_cast<char*>(&i), sizeof(int));
             }
         }
         else
@@ -117,7 +116,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             ifs_tem1.open(tem1.str().c_str());
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
-            for (auto &i : indptr)
+            for (auto& i: indptr)
             {
                 ofs << " " << i;
             }
@@ -129,13 +128,14 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 }
 
 template void ModuleIO::output_single_R<double>(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, double>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
-    const Parallel_Orbitals& pv,
-    const bool& reduce);
+                                                const std::map<size_t, std::map<size_t, double>>& XR,
+                                                const double& sparse_threshold,
+                                                const bool& binary,
+                                                const Parallel_Orbitals& pv,
+                                                const bool& reduce);
 
-template void ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
+template void ModuleIO::output_single_R<std::complex<double>>(
+    std::ofstream& ofs,
     const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
     const double& sparse_threshold,
     const bool& binary,

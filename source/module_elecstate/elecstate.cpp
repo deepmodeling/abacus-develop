@@ -1,11 +1,11 @@
 #include "elecstate.h"
+
 #include "module_parameter/parameter.h"
-#include "module_base/global_variable.h"
-#include "module_parameter/parameter.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/tool_title.h"
 #include "occupy.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/tool_title.h"
 
 namespace elecstate
 {
@@ -14,8 +14,6 @@ const double* ElecState::getRho(int spin) const
 {
     return &(this->charge->rho[spin][0]);
 }
-
-
 
 void ElecState::init_nelec_spin()
 {
@@ -27,22 +25,22 @@ void ElecState::init_nelec_spin()
     }
 }
 
-void ElecState::init_scf(const int istep, 
+void ElecState::init_scf(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac, 
+                         const ModuleBase::ComplexMatrix& strucfac,
                          const bool* numeric,
-                         ModuleSymmetry::Symmetry& symm, 
+                         ModuleSymmetry::Symmetry& symm,
                          const void* wfcpw)
 {
     //! core correction potential.
-    this->charge->set_rho_core(ucell,strucfac, numeric);
+    this->charge->set_rho_core(ucell, strucfac, numeric);
 
     //! other effective potentials need charge density,
     // choose charge density from ionic step 0.
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm,ucell, pgrid, strucfac, symm, (const void*)this->klist, wfcpw);
+        this->charge->init_rho(this->eferm, ucell, pgrid, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 
@@ -52,7 +50,6 @@ void ElecState::init_scf(const int istep,
     //! initialize the potential
     this->pot->init_pot(istep, this->charge);
 }
-
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,

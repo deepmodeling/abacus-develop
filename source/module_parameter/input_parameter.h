@@ -1,7 +1,7 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
 #include "md_parameter.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 #include <vector>
@@ -88,7 +88,7 @@ struct Input_para
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
-    bool use_k_continuity = false;   ///< whether to use k-point continuity for initializing wave functions
+    bool use_k_continuity = false;  ///< whether to use k-point continuity for initializing wave functions
 
     std::string smearing_method = "gauss"; ///< "gauss",
                                            ///< "mp","methfessel-paxton"
@@ -115,7 +115,7 @@ struct Input_para
     double scf_thr = -1.0;     ///< \sum |rhog_out - rhog_in |^2
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
-//    bool final_scf = false;    ///< whether to do final scf
+                               //    bool final_scf = false;    ///< whether to do final scf
     bool scf_os_stop = false;  ///< whether to stop scf when oscillation is detected
     double scf_os_thr = -0.01; ///< drho threshold for oscillation
     int scf_os_ndim = 0;       ///< number of old iterations used for oscillation detection
@@ -261,17 +261,17 @@ struct Input_para
     //==========================================================
     // DeepKS -- added by caoyu and mohan
     //==========================================================
-    int deepks_out_labels = 0;         ///< (need libnpy) prints energy and force labels and
-                                       ///< descriptors for training, wenfei 2022-1-12
-    bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
-                                       ///< would be needed to calculate V_delta and F_delta
-    int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
+    int deepks_out_labels = 0;                    ///< (need libnpy) prints energy and force labels and
+                                                  ///< descriptors for training, wenfei 2022-1-12
+    bool deepks_scf = false;                      ///< (need libnpy and libtorch) if set to true, a trained model
+                                                  ///< would be needed to calculate V_delta and F_delta
+    int deepks_bandgap = 0;                       ///< for bandgap label. QO added 2021-12-15
     std::vector<int> deepks_band_range = {-1, 0}; ///< the range of bands to calculate bandgap
-    int deepks_v_delta = 0;            ///< for v_delta label. xuan added
-    bool deepks_equiv = false;         ///< whether to use equivariant version of DeePKS
-    bool deepks_out_unittest = false;  ///< if set to true, prints intermediate quantities that shall
-                                       ///< be used for making unit test
-    std::string deepks_model = "None"; ///< needed when deepks_scf=1
+    int deepks_v_delta = 0;                       ///< for v_delta label. xuan added
+    bool deepks_equiv = false;                    ///< whether to use equivariant version of DeePKS
+    bool deepks_out_unittest = false;             ///< if set to true, prints intermediate quantities that shall
+                                                  ///< be used for making unit test
+    std::string deepks_model = "None";            ///< needed when deepks_scf=1
 
     int bessel_descriptor_lmax = 2;                 ///< lmax used in descriptor
     std::string bessel_descriptor_ecut = "default"; ///< energy cutoff for spherical bessel functions(Ry)
@@ -390,20 +390,20 @@ struct Input_para
                               ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output
     bool out_mat_t = false;
-    bool out_element_info = false;        ///< output information of all elements
-    bool out_mat_r = false;               ///< jingan add 2019-8-14, output r(R) matrix.
-    int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
-    bool out_dipole = false;              ///< output the dipole or not
-    bool out_efield = false;              ///< output the efield or not
-    bool out_current = false;             ///< output the current or not
-    bool out_current_k = false;           ///< output tddft current for all k points
-    bool out_vecpot = false;              ///< output the vector potential or not
-    bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04
-    bool rpa = false;                     ///< rpa calculation
-    int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
-    std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
-    std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
-    std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
+    bool out_element_info = false;       ///< output information of all elements
+    bool out_mat_r = false;              ///< jingan add 2019-8-14, output r(R) matrix.
+    int out_wfc_lcao = 0;                ///< output the wave functions in local basis.
+    bool out_dipole = false;             ///< output the dipole or not
+    bool out_efield = false;             ///< output the efield or not
+    bool out_current = false;            ///< output the current or not
+    bool out_current_k = false;          ///< output tddft current for all k points
+    bool out_vecpot = false;             ///< output the vector potential or not
+    bool restart_save = false;           ///< restart //Peize Lin add 2020-04-04
+    bool rpa = false;                    ///< rpa calculation
+    int nbands_istate = 5;               ///< number of bands around fermi level for get_pchg calculation.
+    std::vector<int> out_pchg = {};      ///< specify the bands to be calculated for partial charge
+    std::vector<int> out_wfc_norm = {};  ///< specify the bands to be calculated for norm of wfc
+    std::vector<int> out_wfc_re_im = {}; ///< specify the bands to be calculated for real and imaginary parts of wfc
     bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
     std::vector<int> out_elf = {0, 3}; ///< output the electron localization function (ELF). 0: no; 1: yes
 
@@ -412,8 +412,8 @@ struct Input_para
     double dos_emax_ev = 15.0;
     double dos_edelta_ev = 0.01;
     double dos_scale = 0.01;
-    double dos_sigma = 0.07; ///< pengfei 2014-10-13
-    int dos_nche = 100;      ///< orders of Chebyshev expansions for dos
+    double dos_sigma = 0.07;                      ///< pengfei 2014-10-13
+    int dos_nche = 100;                           ///< orders of Chebyshev expansions for dos
     std::vector<double> stm_bias = {1.0, 0.1, 1}; ///< bias voltage for STM (start value, step, number)
     std::vector<double> ldos_line
         = {0.0,
@@ -653,36 +653,35 @@ struct Input_para
     // ==============   #Parameters (22.EXX PW) =====================
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
-    bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+    bool exx_gamma_extrapolation
+        = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*
      * the following two sets of parameters are for the XC parameterization.
      * The first element should be the LibXC id, to assign the analytical
      * form of the eXchange and Correlation part of the functional.
-     * 
+     *
      * Starting from the second parameter, the parameters are the coefficients
      * of the functional. For example the M06-L functional, one should refer
      * to the source file (source code of LibXC)
-     * 
+     *
      * src/mgga_x_m06l.c
-     * 
+     *
      * the implementation can be found in the file
-     * 
+     *
      * src/maple2c/mgga_exc/mgga_x_m06l.c.
-     * 
+     *
      * There are 18 parameters for the exchange part, so the whole length of
      * the xc_exch_ext should be 19. (MGGA_X_M06L, id = 203)
-     * 
+     *
      * Likewise, the correlation part can be found in corresponding files.
-     * 
+     *
      * PBE functional is used as the default functional for XCPNet.
      */
     // src/gga_x_pbe.c
-    std::vector<double> xc_exch_ext = {
-        101, 0.8040, 0.2195149727645171}; 
+    std::vector<double> xc_exch_ext = {101, 0.8040, 0.2195149727645171};
     // src/gga_c_pbe.c
-    std::vector<double> xc_corr_ext = {
-        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
+    std::vector<double> xc_corr_ext = {130, 0.06672455060314922, 0.031090690869654895034, 1.00000};
 };
 #endif

@@ -1,4 +1,4 @@
-add_subdirectory(module_base)
+add_subdirectory(source_base)
 add_subdirectory(module_cell)
 add_subdirectory(module_psi)
 add_subdirectory(module_elecstate)
@@ -42,17 +42,17 @@ list(APPEND device_srcs
   # module_psi/kernels/psi_memory_op.cpp
   # module_psi/kernels/device.cpp
 
-  module_base/module_device/device.cpp
-  module_base/module_device/memory_op.cpp
-  module_base/kernels/math_kernel_op.cpp
-  module_base/kernels/math_kernel_op_vec.cpp
+  source_base/module_device/device.cpp
+  source_base/module_device/memory_op.cpp
+  source_base/kernels/math_kernel_op.cpp
+  source_base/kernels/math_kernel_op_vec.cpp
 
   module_hamilt_pw/hamilt_pwdft/kernels/force_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/stress_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/wf_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.cpp
-  module_base/kernels/math_ylm_op.cpp
+  source_base/kernels/math_ylm_op.cpp
   module_hamilt_general/module_xc/kernels/xc_functional_op.cpp
 )
 
@@ -70,15 +70,15 @@ if(USE_CUDA)
     module_elecstate/kernels/cuda/elecstate_op.cu
 
     # module_psi/kernels/cuda/memory_op.cu
-    module_base/module_device/cuda/memory_op.cu
+    source_base/module_device/cuda/memory_op.cu
 
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/force_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/stress_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/wf_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/vnl_op.cu
-    module_base/kernels/cuda/math_ylm_op.cu
-    module_base/kernels/cuda/math_kernel_op.cu
-    module_base/kernels/cuda/math_kernel_op_vec.cu
+    source_base/kernels/cuda/math_ylm_op.cu
+    source_base/kernels/cuda/math_kernel_op.cu
+    source_base/kernels/cuda/math_kernel_op_vec.cu
     module_hamilt_general/module_xc/kernels/cuda/xc_functional_op.cu
   )
 endif()
@@ -97,22 +97,22 @@ if(USE_ROCM)
     module_elecstate/kernels/rocm/elecstate_op.hip.cu
 
     # module_psi/kernels/rocm/memory_op.hip.cu
-    module_base/module_device/rocm/memory_op.hip.cu
+    source_base/module_device/rocm/memory_op.hip.cu
 
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/force_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/stress_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/wf_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/vnl_op.hip.cu
-    module_base/kernels/rocm/math_kernel_op.hip.cu
-    module_base/kernels/rocm/math_kernel_op_vec.hip.cu
-    module_base/kernels/rocm/math_ylm_op.hip.cu
+    source_base/kernels/rocm/math_kernel_op.hip.cu
+    source_base/kernels/rocm/math_kernel_op_vec.hip.cu
+    source_base/kernels/rocm/math_ylm_op.hip.cu
     module_hamilt_general/module_xc/kernels/rocm/xc_functional_op.hip.cu
   )
 endif()
 
 if(USE_DSP)
   list(APPEND device_srcs
-  module_base/kernels/dsp/dsp_connector.cpp
+  source_base/kernels/dsp/dsp_connector.cpp
   )
 endif()
 

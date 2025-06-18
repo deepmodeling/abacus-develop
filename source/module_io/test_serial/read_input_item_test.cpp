@@ -1,11 +1,11 @@
+#include "source_base/tool_quit.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <cstdio>
 #include <fstream>
 #include <string>
 #include <vector>
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
 /************************************************
  *  unit test of read_input_test_item.cpp
  ***********************************************/
@@ -772,7 +772,7 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { //relax_new
+    { // relax_new
         auto it = find_label("relax_new", readinput.input_lists);
         param.input.relax_new = true;
         param.input.relax_method = "cg";
@@ -911,7 +911,6 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-
     }
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
@@ -1384,7 +1383,7 @@ TEST_F(InputTest, Item_test2)
     { // exx_symmetry_realspace
         auto it = find_label("exx_symmetry_realspace", readinput.input_lists);
         param.input.exx_symmetry_realspace = true;
-        param.input.symmetry="0";
+        param.input.symmetry = "0";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_symmetry_realspace, false);
     }
@@ -1792,7 +1791,7 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // nocc 
+    { // nocc
         auto it = find_label("nocc", readinput.input_lists);
         param.input.nocc = 5;
         param.input.nbands = 4;

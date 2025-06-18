@@ -1,9 +1,8 @@
 #include "ions_move_methods.h"
 
 #include "ions_move_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 
 Ions_Move_Methods::Ions_Move_Methods()
 {
@@ -12,7 +11,7 @@ Ions_Move_Methods::~Ions_Move_Methods()
 {
 }
 
-void Ions_Move_Methods::allocate(const int &natom)
+void Ions_Move_Methods::allocate(const int& natom)
 {
     Ions_Move_Basic::dim = natom * 3;
 
@@ -33,13 +32,13 @@ void Ions_Move_Methods::allocate(const int &natom)
         this->cg.allocate();
         this->bfgs.allocate(); // added by pengfei  13-8-8
     }
-    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    else if (Ions_Move_Basic::relax_method == "bfgs_trad")
     {
-        this->bfgs_trad.allocate(natom);       
+        this->bfgs_trad.allocate(natom);
     }
-    else if(Ions_Move_Basic::relax_method == "lbfgs")
+    else if (Ions_Move_Basic::relax_method == "lbfgs")
     {
-        this->lbfgs.allocate(natom);       
+        this->lbfgs.allocate(natom);
     }
     else
     {
@@ -49,11 +48,11 @@ void Ions_Move_Methods::allocate(const int &natom)
 }
 
 // void Ions_Move_Methods::cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot)
-void Ions_Move_Methods::cal_movement(const int &istep,
-                                     const int &force_step,
-                                     const ModuleBase::matrix &f,
-                                     const double &etot,
-                                     UnitCell &ucell)
+void Ions_Move_Methods::cal_movement(const int& istep,
+                                     const int& force_step,
+                                     const ModuleBase::matrix& f,
+                                     const double& etot,
+                                     UnitCell& ucell)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
 
@@ -79,13 +78,13 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
     }
-    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    else if (Ions_Move_Basic::relax_method == "bfgs_trad")
     {
-        bfgs_trad.relax_step(f,ucell);        
+        bfgs_trad.relax_step(f, ucell);
     }
-    else if(Ions_Move_Basic::relax_method == "lbfgs")
+    else if (Ions_Move_Basic::relax_method == "lbfgs")
     {
-        lbfgs.relax_step(f,ucell,etot);        
+        lbfgs.relax_step(f, ucell, etot);
     }
     else
     {

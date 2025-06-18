@@ -8,12 +8,13 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
-#include "module_base/abfs-vector3_order.h"
+#include "source_base/abfs-vector3_order.h"
 
-class Gint_k : public Gint {
+class Gint_k : public Gint
+{
   public:
     /// @brief move operator for the next ESolver to directly use its infomation
-    /// @param rhs 
+    /// @param rhs
     /// @return *this
     Gint_k& operator=(Gint_k&& rhs);
 
@@ -54,18 +55,14 @@ class Gint_k : public Gint {
         const int current_spin,
         const int dim,
         const double& sparse_threshold,
-        const std::map<Abfs::Vector3_Order<int>,
-                       std::map<size_t, std::map<size_t, double>>>&
-            pvdpR_sparseMatrix,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvdpR_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);
 
     void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
         const double& sparse_threshold,
-        const std::map<
-            Abfs::Vector3_Order<int>,
-            std::map<size_t, std::map<size_t, std::complex<double>>>>&
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&
             pvdpR_soc_sparseMatrix,
         LCAO_HS_Arrays& HS_Arrays,
         const Parallel_Orbitals* pv);

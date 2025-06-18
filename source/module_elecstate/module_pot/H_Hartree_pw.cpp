@@ -1,9 +1,9 @@
 #include "H_Hartree_pw.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/constants.h"
-#include "module_base/timer.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/constants.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 namespace elecstate
 {
@@ -13,10 +13,10 @@ double H_Hartree_pw::hartree_energy = 0.0;
 //--------------------------------------------------------------------
 // Transform charge density to hartree potential.
 //--------------------------------------------------------------------
-ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
-                                           ModulePW::PW_Basis *rho_basis,
-                                           const int &nspin,
-                                           const double *const *const rho)
+ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell& cell,
+                                           ModulePW::PW_Basis* rho_basis,
+                                           const int& nspin,
+                                           const double* const* const rho)
 {
     ModuleBase::TITLE("H_Hartree_pw", "v_hartree");
     ModuleBase::timer::tick("H_Hartree_pw", "v_hartree");
@@ -45,7 +45,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
 
     std::vector<std::complex<double>> vh_g(rho_basis->npw);
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:ehart)
+#pragma omp parallel for reduction(+ : ehart)
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
@@ -101,7 +101,7 @@ PotHartree::PotHartree(const ModulePW::PW_Basis* rho_basis_in)
     this->fixed_mode = false;
 }
 
-void PotHartree::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void PotHartree::cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
 {
     v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
     return;

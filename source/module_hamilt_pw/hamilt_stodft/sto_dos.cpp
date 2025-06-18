@@ -1,8 +1,8 @@
 #include "sto_dos.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "sto_tool.h"
 template <typename FPTYPE, typename Device>
 Sto_DOS<FPTYPE, Device>::~Sto_DOS()
@@ -245,10 +245,9 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         double maxerror = 0;
         double sum = 0;
 
-		ofsdos << ndos << " # number of points" << std::endl;
-		ofsdos << "#" << std::setw(19) << "energy(eV)"
-			<< std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
-			<< std::setw(20) << "error(eV^-1)" << std::endl;
+        ofsdos << ndos << " # number of points" << std::endl;
+        ofsdos << "#" << std::setw(19) << "energy(eV)" << std::setw(20) << "dos(eV^-1)" << std::setw(20) << "sum"
+               << std::setw(20) << "error(eV^-1)" << std::endl;
         for (int ie = 0; ie < ndos; ++ie)
         {
             double tmperror = 2.0 * std::abs(error[ie]);

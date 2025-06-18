@@ -1,8 +1,8 @@
 #include "cuda_runtime.h"
 #include "fftw3.h"
-#include "module_base/module_device/device.h"
-#include "module_base/vector3.h"
 #include "module_basis/module_pw/pw_basis.h"
+#include "source_base/module_device/device.h"
+#include "source_base/vector3.h"
 
 #include <complex>
 #include <gtest/gtest.h>
@@ -34,7 +34,7 @@ class PW_BASIS_C2R_GPU_TEST : public ::testing::Test
     void init(ModulePW::PW_Basis& pwtest)
     {
         cout << "dividemthd 1, gamma_only: off, check fft between T and complex" << endl;
-        
+
         ModuleBase::Matrix3 latvec(1, 1, 0, 0, 1, 1, 0, 0, 2);
         T wfcecut;
         T lat0 = 2.2;
@@ -92,31 +92,41 @@ class PW_BASIS_C2R_GPU_TEST : public ::testing::Test
                             tmp[offset + iz] = 1.0 / (modulus + 1);
                             if (vy > 0)
                             {
-                                tmp[offset + iz] += std::complex<T>(0,1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
+                                tmp[offset + iz] += std::complex<T>(0, 1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
                             }
                             else if (vy < 0)
                             {
-                                tmp[offset + iz] -= std::complex<T>(0,1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
+                                tmp[offset + iz] -= std::complex<T>(0, 1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
                             }
                         }
                     }
                 }
             }
-            if (typeid(T)==typeid(double))
+            if (typeid(T) == typeid(double))
             {
-            fftw_plan pp
-                = fftw_plan_dft_3d(nx, ny, nz, (fftw_complex*)tmp, (fftw_complex*)tmp, FFTW_BACKWARD, FFTW_ESTIMATE);
-            fftw_execute(pp);
-            fftw_destroy_plan(pp);
-            }else if (typeid(T)==typeid(float)){
-                fftwf_plan pp
-                = fftwf_plan_dft_3d(nx, ny, nz, (fftwf_complex*)tmp, (fftwf_complex*)tmp, FFTW_BACKWARD, FFTW_ESTIMATE);
+                fftw_plan pp = fftw_plan_dft_3d(nx,
+                                                ny,
+                                                nz,
+                                                (fftw_complex*)tmp,
+                                                (fftw_complex*)tmp,
+                                                FFTW_BACKWARD,
+                                                FFTW_ESTIMATE);
+                fftw_execute(pp);
+                fftw_destroy_plan(pp);
+            }
+            else if (typeid(T) == typeid(float))
+            {
+                fftwf_plan pp = fftwf_plan_dft_3d(nx,
+                                                  ny,
+                                                  nz,
+                                                  (fftwf_complex*)tmp,
+                                                  (fftwf_complex*)tmp,
+                                                  FFTW_BACKWARD,
+                                                  FFTW_ESTIMATE);
                 fftwf_execute(pp);
                 fftwf_destroy_plan(pp);
             }
-            ModuleBase::Vector3<T> delta_g(T(int(nx / 2)) / nx,
-                                                T(int(ny / 2)) / ny,
-                                                T(int(nz / 2)) / nz);
+            ModuleBase::Vector3<T> delta_g(T(int(nx / 2)) / nx, T(int(ny / 2)) / ny, T(int(nz / 2)) / nz);
             for (int ixy = 0; ixy < nx * ny; ++ixy)
             {
                 const int ix = ixy / ny;
@@ -157,10 +167,8 @@ class PW_BASIS_C2R_GPU_TEST : public ::testing::Test
         pwtest.recip_to_real<std::complex<T>, T, base_device::DEVICE_GPU>(d_rhog, d_rhor);
         cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(T), cudaMemcpyDeviceToHost);
 
-        pwtest.real_to_recip<T,std::complex<T>,base_device::DEVICE_GPU>(d_rhor,d_rhog);
-        cudaMemcpy(h_rhogout,d_rhog,npw * sizeof(complex<T>),cudaMemcpyDeviceToHost);
-
-        
+        pwtest.real_to_recip<T, std::complex<T>, base_device::DEVICE_GPU>(d_rhor, d_rhog);
+        cudaMemcpy(h_rhogout, d_rhog, npw * sizeof(complex<T>), cudaMemcpyDeviceToHost);
     }
     ModulePW::PW_Basis* access_pw()
     {
@@ -179,9 +187,8 @@ class PW_BASIS_C2R_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
-                                    TypePair<double, base_device::DEVICE_GPU> 
-                                    >;
+using MixedTypes
+    = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, TypePair<double, base_device::DEVICE_GPU>>;
 
 TYPED_TEST_CASE(PW_BASIS_C2R_GPU_TEST, MixedTypes);
 
@@ -206,8 +213,7 @@ TYPED_TEST(PW_BASIS_C2R_GPU_TEST, Mixing)
         const int startz = ixy * nplane;
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(this->tmp[offset + iz].real(), 
-                        this->h_rhor[startz + iz], 1e-4);
+            EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz], 1e-4);
         }
     }
     for (int ig = 0; ig < pwtest.npw; ++ig)
@@ -250,12 +256,11 @@ TYPED_TEST(PW_BASIS_C2R_GPU_TEST, FloatDouble)
         const int startz = ixy * nplane;
         for (int iz = 0; iz < nplane; ++iz)
         {
-            EXPECT_NEAR(this->tmp[offset + iz].real(), 
-                        this->h_rhor[startz + iz], 1e-4);
+            EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz], 1e-4);
         }
     }
 
-     for (int ig = 0; ig < pwtest.npw; ++ig)
+    for (int ig = 0; ig < pwtest.npw; ++ig)
     {
         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);

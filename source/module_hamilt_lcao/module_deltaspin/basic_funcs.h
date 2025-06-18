@@ -1,11 +1,11 @@
 #ifndef BASIC_FUNCS_H
 #define BASIC_FUNCS_H
 
-#include <cmath>
-#include <vector>
-#include <ostream>
+#include "source_base/vector3.h"
 
-#include "module_base/vector3.h"
+#include <cmath>
+#include <ostream>
+#include <vector>
 
 /**
  * @brief Find the maximum absolute value in a 2D array.
@@ -15,7 +15,7 @@ double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array);
 /**
  * @brief Find the maximum absolute value in a 2D array and its index.
  */
-std::pair<int,int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array);
+std::pair<int, int> maxloc_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array);
 
 /**
  * @brief sum of all elements in a 2D array.
@@ -64,6 +64,10 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
                                const std::vector<ModuleBase::Vector3<double>>& rest,
                                std::vector<ModuleBase::Vector3<double>>& result);
 
-void print_2d(const std::string info, const std::vector<ModuleBase::Vector3<double>> &array, const int nspin, const double unit_convert = 1.0, std::ostream& ofs = std::cout);
+void print_2d(const std::string info,
+              const std::vector<ModuleBase::Vector3<double>>& array,
+              const int nspin,
+              const double unit_convert = 1.0,
+              std::ostream& ofs = std::cout);
 
 #endif // BASIC_FUNCS_H

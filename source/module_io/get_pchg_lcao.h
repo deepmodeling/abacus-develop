@@ -9,8 +9,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
 
-#include <module_base/complexmatrix.h>
-#include <module_base/matrix.h>
+#include <source_base/complexmatrix.h>
+#include <source_base/matrix.h>
 #include <stdexcept>
 #include <vector>
 
@@ -141,8 +141,8 @@ class IState_Charge
 
 #endif
     std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma=nullptr;
-    psi::Psi<std::complex<double>>* psi_k=nullptr;
+    psi::Psi<double>* psi_gamma = nullptr;
+    psi::Psi<std::complex<double>>* psi_k = nullptr;
     const Parallel_Orbitals* ParaV;
 };
 #endif

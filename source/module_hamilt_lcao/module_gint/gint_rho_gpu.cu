@@ -1,8 +1,8 @@
-#include "kernels/cuda/cuda_tools.cuh"
-#include "module_base/ylm.h"
 #include "gint_rho_gpu.h"
 #include "gint_tools.h"
+#include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gint_rho.cuh"
+#include "source_base/ylm.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -12,18 +12,18 @@ namespace GintKernel
 {
 
 void gint_rho_gpu(const hamilt::HContainer<double>* dm,
-                        const double* ylmcoef_now,
-                        const double dr,
-                        const double* rcut,
-                        const Grid_Technique& gridt,
-                        const UnitCell& ucell,
-                        double* rho)
+                  const double* ylmcoef_now,
+                  const double dr,
+                  const double* rcut,
+                  const Grid_Technique& gridt,
+                  const UnitCell& ucell,
+                  double* rho)
 {
     checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
-    const int nczp =nbzp * gridt.bz;
+    const int nczp = nbzp * gridt.bz;
     const int num_mcell_on_proc = nczp * gridt.ncx * gridt.ncy;
     const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
@@ -60,7 +60,7 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
     Cuda_Mem_Wrapper<double*> gemm_A(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_B(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_C(max_atompair_per_z, num_streams, true);
-    
+
     Cuda_Mem_Wrapper<double> rho_g(num_mcell_on_proc, 1, false);
     Cuda_Mem_Wrapper<double*> dot_product(nbzp * gridt.bxyz, num_streams, true);
 
@@ -73,157 +73,152 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
 
 // calculate the rho for every nbzp bigcells
 #ifdef _OPENMP
-const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
+    const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
 #endif
 #pragma omp parallel num_threads(max_thread_num)
-{
+    {
 #ifdef _OPENMP
-    const int tid = omp_get_thread_num();
-    const int num_threads = omp_get_num_threads();
-    const int sid_start = tid * num_streams / num_threads;
-    const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
+        const int tid = omp_get_thread_num();
+        const int num_threads = omp_get_num_threads();
+        const int sid_start = tid * num_streams / num_threads;
+        const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
 #else
-    const int sid_start = 0;
-    const int thread_num_streams = num_streams;
+        const int sid_start = 0;
+        const int thread_num_streams = num_streams;
 #endif
 #pragma omp for collapse(2) schedule(dynamic)
-    for (int i = 0; i < gridt.nbx; i++)
-    {
-        for (int j = 0; j < gridt.nby; j++)
+        for (int i = 0; i < gridt.nbx; i++)
         {
-            // 20240620 Note that it must be set again here because 
-            // cuda's device is not safe in a multi-threaded environment.
+            for (int j = 0; j < gridt.nby; j++)
+            {
+                // 20240620 Note that it must be set again here because
+                // cuda's device is not safe in a multi-threaded environment.
 
-            checkCuda(cudaSetDevice(gridt.dev_id));
+                checkCuda(cudaSetDevice(gridt.dev_id));
 
-            const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
-            checkCuda(cudaEventSynchronize(events[sid]));
+                const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
+                checkCuda(cudaEventSynchronize(events[sid]));
 
-            int max_m = 0;
-            int max_n = 0;
-            int atom_pair_num = 0;
-            int atoms_per_z = 0;
-            const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
+                int max_m = 0;
+                int max_n = 0;
+                int atom_pair_num = 0;
+                int atoms_per_z = 0;
+                const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
 
-            // generate GPU tasks, including the calculation of psir, matrix
-            // multiplication, and dot product
-            gtask_rho(gridt,
-                      grid_index_ij,
-                      ucell,
-                      dr_part.get_host_pointer(sid),
-                      atoms_type.get_host_pointer(sid),
-                      atoms_num_info.get_host_pointer(sid),
-                      atoms_per_z);
+                // generate GPU tasks, including the calculation of psir, matrix
+                // multiplication, and dot product
+                gtask_rho(gridt,
+                          grid_index_ij,
+                          ucell,
+                          dr_part.get_host_pointer(sid),
+                          atoms_type.get_host_pointer(sid),
+                          atoms_num_info.get_host_pointer(sid),
+                          atoms_per_z);
 
-            alloc_mult_dot_rho(
-                dm,
-                gridt,
-                ucell,
-                grid_index_ij,
-                max_atom,
-                lgd,
-                nczp,
-                atoms_num_info.get_host_pointer(sid),
-                psi.get_device_pointer(sid),
-                psi_dm.get_device_pointer(sid),
-                dm_matrix.get_device_pointer(),
-                gemm_alpha.get_host_pointer(sid),
-                gemm_m.get_host_pointer(sid),
-                gemm_n.get_host_pointer(sid),
-                gemm_k.get_host_pointer(sid),
-                gemm_lda.get_host_pointer(sid),
-                gemm_ldb.get_host_pointer(sid),
-                gemm_ldc.get_host_pointer(sid),
-                gemm_A.get_host_pointer(sid),
-                gemm_B.get_host_pointer(sid),
-                gemm_C.get_host_pointer(sid),
-                max_m,
-                max_n,
-                atom_pair_num,
-                rho_g.get_device_pointer(),
-                dot_product.get_host_pointer(sid));
-            
-            dr_part.copy_host_to_device_async(streams[sid], sid, atoms_per_z * 3);
-            atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
-            atoms_num_info.copy_host_to_device_async(streams[sid], sid);
+                alloc_mult_dot_rho(dm,
+                                   gridt,
+                                   ucell,
+                                   grid_index_ij,
+                                   max_atom,
+                                   lgd,
+                                   nczp,
+                                   atoms_num_info.get_host_pointer(sid),
+                                   psi.get_device_pointer(sid),
+                                   psi_dm.get_device_pointer(sid),
+                                   dm_matrix.get_device_pointer(),
+                                   gemm_alpha.get_host_pointer(sid),
+                                   gemm_m.get_host_pointer(sid),
+                                   gemm_n.get_host_pointer(sid),
+                                   gemm_k.get_host_pointer(sid),
+                                   gemm_lda.get_host_pointer(sid),
+                                   gemm_ldb.get_host_pointer(sid),
+                                   gemm_ldc.get_host_pointer(sid),
+                                   gemm_A.get_host_pointer(sid),
+                                   gemm_B.get_host_pointer(sid),
+                                   gemm_C.get_host_pointer(sid),
+                                   max_m,
+                                   max_n,
+                                   atom_pair_num,
+                                   rho_g.get_device_pointer(),
+                                   dot_product.get_host_pointer(sid));
 
-            gemm_alpha.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_lda.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_ldb.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_ldc.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            dot_product.copy_host_to_device_async(streams[sid], sid);
-            checkCuda(cudaEventRecord(events[sid], streams[sid]));
-            
-            psi.memset_device_async(streams[sid], sid, 0);
-            psi_dm.memset_device_async(streams[sid], sid, 0);
+                dr_part.copy_host_to_device_async(streams[sid], sid, atoms_per_z * 3);
+                atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+                atoms_num_info.copy_host_to_device_async(streams[sid], sid);
 
-            // Launching kernel to calculate psi
-            dim3 grid_psi(nbzp, gridt.bxyz);
-            dim3 block_psi(64);
-            get_psi<<<grid_psi, block_psi, 0, streams[sid]>>>(
-                gridt.ylmcoef_g,
-                dr,
-                gridt.bxyz,
-                ucell.nwmax,
-                max_atom,
-                gridt.atom_nwl_g,
-                gridt.atom_new_g,
-                gridt.atom_ylm_g,
-                gridt.atom_nw_g,
-                gridt.rcut_g,
-                gridt.nr_max,
-                gridt.psi_u_g,
-                gridt.mcell_pos_g,
-                dr_part.get_device_pointer(sid),
-                atoms_type.get_device_pointer(sid),
-                atoms_num_info.get_device_pointer(sid),
-                psi.get_device_pointer(sid));
-            checkCudaLastError();
+                gemm_alpha.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_lda.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_ldb.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_ldc.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                dot_product.copy_host_to_device_async(streams[sid], sid);
+                checkCuda(cudaEventRecord(events[sid], streams[sid]));
 
-            // Performing matrix multiplication alpha * mat_dm * mat_psir
-            gridt.fastest_matrix_mul(max_m,
-                                     max_n,
-                                     gemm_m.get_device_pointer(sid),
-                                     gemm_n.get_device_pointer(sid),
-                                     gemm_k.get_device_pointer(sid),
-                                     gemm_A.get_device_pointer(sid),
-                                     gemm_lda.get_device_pointer(sid),
-                                     gemm_B.get_device_pointer(sid),
-                                     gemm_ldb.get_device_pointer(sid),
-                                     gemm_C.get_device_pointer(sid),
-                                     gemm_ldc.get_device_pointer(sid),
-                                     atom_pair_num,
-                                     streams[sid],
-                                     gemm_alpha.get_device_pointer(sid));
-            checkCudaLastError();
+                psi.memset_device_async(streams[sid], sid, 0);
+                psi_dm.memset_device_async(streams[sid], sid, 0);
 
-            // Launching kernel to calculate dot product psir * psir_dm
-            // if warpSize is not eauql to 32, the psir_dot kernel should be modified
-            dim3 grid_dot(nbzp, gridt.bxyz);
-            dim3 block_dot(64); 
-            psir_dot<<<grid_dot, block_dot, sizeof(double) * 32, streams[sid]>>>(
-                gridt.bxyz,
-                ucell.nwmax,
-                atoms_num_info.get_device_pointer(sid),
-                psi.get_device_pointer(sid),
-                psi_dm.get_device_pointer(sid),
-                dot_product.get_device_pointer(sid));
-            checkCudaLastError();
+                // Launching kernel to calculate psi
+                dim3 grid_psi(nbzp, gridt.bxyz);
+                dim3 block_psi(64);
+                get_psi<<<grid_psi, block_psi, 0, streams[sid]>>>(gridt.ylmcoef_g,
+                                                                  dr,
+                                                                  gridt.bxyz,
+                                                                  ucell.nwmax,
+                                                                  max_atom,
+                                                                  gridt.atom_nwl_g,
+                                                                  gridt.atom_new_g,
+                                                                  gridt.atom_ylm_g,
+                                                                  gridt.atom_nw_g,
+                                                                  gridt.rcut_g,
+                                                                  gridt.nr_max,
+                                                                  gridt.psi_u_g,
+                                                                  gridt.mcell_pos_g,
+                                                                  dr_part.get_device_pointer(sid),
+                                                                  atoms_type.get_device_pointer(sid),
+                                                                  atoms_num_info.get_device_pointer(sid),
+                                                                  psi.get_device_pointer(sid));
+                checkCudaLastError();
+
+                // Performing matrix multiplication alpha * mat_dm * mat_psir
+                gridt.fastest_matrix_mul(max_m,
+                                         max_n,
+                                         gemm_m.get_device_pointer(sid),
+                                         gemm_n.get_device_pointer(sid),
+                                         gemm_k.get_device_pointer(sid),
+                                         gemm_A.get_device_pointer(sid),
+                                         gemm_lda.get_device_pointer(sid),
+                                         gemm_B.get_device_pointer(sid),
+                                         gemm_ldb.get_device_pointer(sid),
+                                         gemm_C.get_device_pointer(sid),
+                                         gemm_ldc.get_device_pointer(sid),
+                                         atom_pair_num,
+                                         streams[sid],
+                                         gemm_alpha.get_device_pointer(sid));
+                checkCudaLastError();
+
+                // Launching kernel to calculate dot product psir * psir_dm
+                // if warpSize is not eauql to 32, the psir_dot kernel should be modified
+                dim3 grid_dot(nbzp, gridt.bxyz);
+                dim3 block_dot(64);
+                psir_dot<<<grid_dot, block_dot, sizeof(double) * 32, streams[sid]>>>(
+                    gridt.bxyz,
+                    ucell.nwmax,
+                    atoms_num_info.get_device_pointer(sid),
+                    psi.get_device_pointer(sid),
+                    psi_dm.get_device_pointer(sid),
+                    dot_product.get_device_pointer(sid));
+                checkCudaLastError();
+            }
         }
     }
-}
 
     // Copy rho from device to host
-    checkCuda(cudaMemcpy(rho,
-                         rho_g.get_device_pointer(),
-                         num_mcell_on_proc * sizeof(double),
-                         cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(rho, rho_g.get_device_pointer(), num_mcell_on_proc * sizeof(double), cudaMemcpyDeviceToHost));
 
     for (int i = 0; i < num_streams; i++)
     {

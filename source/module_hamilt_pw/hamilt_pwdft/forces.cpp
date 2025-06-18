@@ -1,25 +1,24 @@
 #include "forces.h"
 
-#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
+#include "module_parameter/parameter.h"
 // new
-#include "module_base/complexmatrix.h"
-#include "module_base/libm/libm.h"
-#include "module_base/math_integral.h"
-#include "module_base/mathzone.h"
-#include "module_base/timer.h"
-#include "module_base/tool_threading.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/libm/libm.h"
+#include "source_base/math_integral.h"
+#include "source_base/mathzone.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
@@ -52,10 +51,10 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential
-    this->cal_force_loc(ucell,forcelc, rho_basis, locpp->vloc, chr);
+    this->cal_force_loc(ucell, forcelc, rho_basis, locpp->vloc, chr);
 
     // Ewald
-    this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
+    this->cal_force_ew(ucell, forceion, rho_basis, p_sf);
 
     // Force due to nonlocal part of pseudopotential
     if (wfc_basis != nullptr)
@@ -70,7 +69,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         }
 
         // DFT+U and DeltaSpin
-        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
             this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, psi_in);
         }
@@ -168,7 +167,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
 
-                if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+                if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
                 {
                     force(iat, ipol) += forceonsite(iat, ipol);
                 }
@@ -292,19 +291,11 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
         }
         if (PARAM.inp.gate_flag)
         {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "GATEFIELD   FORCE (eV/Angstrom)",
-                                  force_gate,
-                                  false);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "GATEFIELD   FORCE (eV/Angstrom)", force_gate, false);
         }
         if (PARAM.inp.imp_sol)
         {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "IMP_SOL   FORCE (eV/Angstrom)",
-                                  forcesol,
-                                  false);
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, false);
         }
         if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
@@ -381,8 +372,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * ucell.atoms[it].tau[ia]);
             double sinp, cosp;
             ModuleBase::libm::sincos(phase, &sinp, &cosp);
-            const double factor
-                = vloc(it, rho_basis->ig2igg[ig]) * (cosp * aux[ig].imag() + sinp * aux[ig].real());
+            const double factor = vloc(it, rho_basis->ig2igg[ig]) * (cosp * aux[ig].imag() + sinp * aux[ig].real());
             forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
             forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
             forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
@@ -596,8 +586,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                 {
                     if (iat1 != iat2 && ucell.atoms[T2].na != 0 && ucell.atoms[T1].na != 0)
                     {
-                        ModuleBase::Vector3<double> d_tau
-                            = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
+                        ModuleBase::Vector3<double> d_tau = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
                         H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
 
                         for (int n = 0; n < nrm; n++)
@@ -606,8 +595,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 
                             double factor;
                             {
-                                factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
-                                         * ModuleBase::e2 / (rr * rr)
+                                factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv * ModuleBase::e2 / (rr * rr)
                                          * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
                                          * ucell.lat0;
                             }
@@ -642,8 +630,6 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 
     return;
 }
-
-
 
 template class Forces<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

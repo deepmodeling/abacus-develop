@@ -1,21 +1,21 @@
 #include "forces.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
-#include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
+#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
-                                          const ModuleBase::matrix& wg,
-                                          const ModulePW::PW_Basis_K* wfc_basis,
-                                          const UnitCell& ucell_in,
-                                          const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                              const ModuleBase::matrix& wg,
+                                              const ModulePW::PW_Basis_K* wfc_basis,
+                                              const UnitCell& ucell_in,
+                                              const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_onsite");
-    if(psi_in == nullptr || wfc_basis == nullptr)
+    if (psi_in == nullptr || wfc_basis == nullptr)
     {
         return;
     }
@@ -51,18 +51,25 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
         }
         // calculate the force_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
         // force for DFT+U
-        if(PARAM.inp.dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             auto* dftu = ModuleDFTU::DFTU::get_instance();
-            onsite_p->get_fs_tools()->cal_force_dftu(ik, npm, force, dftu->orbital_corr.data(), dftu->get_eff_pot_pw(0), dftu->get_size_eff_pot_pw(), wg.c);
+            onsite_p->get_fs_tools()->cal_force_dftu(ik,
+                                                     npm,
+                                                     force,
+                                                     dftu->orbital_corr.data(),
+                                                     dftu->get_eff_pot_pw(0),
+                                                     dftu->get_size_eff_pot_pw(),
+                                                     wg.c);
         }
-        if(PARAM.inp.sc_mag_switch)
+        if (PARAM.inp.sc_mag_switch)
         {
-            spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+            spinconstrain::SpinConstrain<std::complex<double>>& sc
+                = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
             const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
             onsite_p->get_fs_tools()->cal_force_dspin(ik, npm, force, lambda.data(), wg.c);
         }
-        
+
     } // end ik
 
     syncmem_var_d2h_op()(force_onsite.c, force, force_onsite.nr * force_onsite.nc);

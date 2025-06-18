@@ -1,11 +1,11 @@
 #include "deepks_lcao.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -233,7 +233,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const Parallel_Orbitals* paraV = this->V_delta_R->get_paraV();
     const int npol = this->ucell->get_npol();
 
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -378,11 +378,11 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                        hr_current.data(),
                        &col_size);
 
-            // add data of HR to target BaseMatrix
-            #pragma omp critical
-            {
-                this->cal_HR_IJR(hr_current.data(), row_size, col_size, tmp->get_pointer());
-            }
+// add data of HR to target BaseMatrix
+#pragma omp critical
+                {
+                    this->cal_HR_IJR(hr_current.data(), row_size, col_size, tmp->get_pointer());
+                }
             }
         }
     }

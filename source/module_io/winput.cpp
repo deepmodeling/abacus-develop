@@ -6,6 +6,7 @@
 
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+
 #include <cstring>
 #include <iostream>
 
@@ -96,10 +97,10 @@ void winput::Read(const std::string& fn)
 {
     ModuleBase::TITLE("winput", "Read");
 
-	if (GlobalV::MY_RANK != 0)
-	{
-		return;
-	}
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     std::ifstream ifs(fn.c_str(), std::ios::in);
     if (!ifs)
@@ -595,10 +596,10 @@ void winput::Check()
 
 void winput::Print(const std::string& fn)
 {
-	if (GlobalV::MY_RANK != 0)
-	{
-		return;
-	}
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     std::ofstream ofs(fn.c_str());
     ofs << std::setiosflags(std::ios::left);
@@ -690,7 +691,7 @@ void winput::Print(const std::string& fn)
     return;
 }
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #ifdef __MPI
 void winput::Bcast()
 {

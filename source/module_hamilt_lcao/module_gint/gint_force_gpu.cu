@@ -3,10 +3,10 @@
 #endif
 
 #include "gint_force_gpu.h"
+#include "gint_tools.h"
 #include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gint_force.cuh"
-#include "module_base/ylm.h"
-#include "gint_tools.h"
+#include "source_base/ylm.h"
 
 namespace GintKernel
 {
@@ -23,16 +23,16 @@ namespace GintKernel
  * 7. Copy the results back to the host.
  */
 void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
-                        const double* vlocal,
-                        double* force_in,
-                        double* stress_in,
-                        double dr,
-                        const double* rcut,
-                        const int isforce,
-                        const int isstress,
-                        const Grid_Technique& gridt,
-                        const UnitCell& ucell)
-{ 
+                  const double* vlocal,
+                  double* force_in,
+                  double* stress_in,
+                  double dr,
+                  const double* rcut,
+                  const int isforce,
+                  const int isstress,
+                  const Grid_Technique& gridt,
+                  const UnitCell& ucell)
+{
     checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
@@ -46,7 +46,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
     const int max_atompair_per_z = max_atom * max_atom * nbzp;
     const double vfactor = ucell.omega / gridt.ncxyz;
     const int nczp = nbzp * gridt.bz;
-    const int nat=ucell.nat;
+    const int nat = ucell.nat;
 
     const int num_streams = gridt.nstreams;
 
@@ -93,173 +93,165 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                          cudaMemcpyHostToDevice));
 
 #ifdef _OPENMP
-const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
+    const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
 #endif
 #pragma omp parallel num_threads(max_thread_num)
-{
+    {
 #ifdef _OPENMP
-    const int tid = omp_get_thread_num();
-    const int num_threads = omp_get_num_threads();
-    const int sid_start = tid * num_streams / num_threads;
-    const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
+        const int tid = omp_get_thread_num();
+        const int num_threads = omp_get_num_threads();
+        const int sid_start = tid * num_streams / num_threads;
+        const int thread_num_streams = tid == num_threads - 1 ? num_streams - sid_start : num_streams / num_threads;
 #else
-    const int sid_start = 0;
-    const int thread_num_streams = num_streams;
+        const int sid_start = 0;
+        const int thread_num_streams = num_streams;
 #endif
 #pragma omp for collapse(2) schedule(dynamic)
-    for (int i = 0; i < gridt.nbx; i++)
-    {
-        for (int j = 0; j < gridt.nby; j++)
+        for (int i = 0; i < gridt.nbx; i++)
         {
-            // 20240620 Note that it must be set again here because 
-            // cuda's device is not safe in a multi-threaded environment.
-            checkCuda(cudaSetDevice(gridt.dev_id));
+            for (int j = 0; j < gridt.nby; j++)
+            {
+                // 20240620 Note that it must be set again here because
+                // cuda's device is not safe in a multi-threaded environment.
+                checkCuda(cudaSetDevice(gridt.dev_id));
 
-            const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
-            checkCuda(cudaEventSynchronize(events[sid]));
+                const int sid = (i * gridt.nby + j) % thread_num_streams + sid_start;
+                checkCuda(cudaEventSynchronize(events[sid]));
 
-            int max_m = 0;
-            int max_n = 0;
-            int atom_pair_num = 0;
-            int atoms_per_z = 0;
-            const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
+                int max_m = 0;
+                int max_n = 0;
+                int atom_pair_num = 0;
+                int atoms_per_z = 0;
+                const int grid_index_ij = i * gridt.nby * nbzp + j * nbzp;
 
-            gtask_force(gridt,
-                        ucell,
-                        grid_index_ij,
-                        nczp,
-                        vfactor,
-                        vlocal,
-                        atoms_per_z,
-                        atoms_num_info.get_host_pointer(sid),
-                        iat_on_nbz.get_host_pointer(sid),
-                        atoms_type.get_host_pointer(sid),
-                        dr_part.get_host_pointer(sid),
-                        vldr3.get_host_pointer(sid));
-           
-            alloc_mult_force(dm,
-                             gridt,
-                             ucell, 
-                             grid_index_ij,
-                             max_atom,
-                             atoms_num_info.get_host_pointer(sid),
-                             psi.get_device_pointer(sid),
-                             psi_dm.get_device_pointer(sid),
-                             dm_matrix.get_device_pointer(),
-                             max_m,
-                             max_n, 
-                             atom_pair_num,
-                             gemm_m.get_host_pointer(sid),
-                             gemm_n.get_host_pointer(sid),
-                             gemm_k.get_host_pointer(sid),
-                             gemm_lda.get_host_pointer(sid),
-                             gemm_ldb.get_host_pointer(sid),
-                             gemm_ldc.get_host_pointer(sid),
-                             gemm_A.get_host_pointer(sid),
-                             gemm_B.get_host_pointer(sid),
-                             gemm_C.get_host_pointer(sid));
+                gtask_force(gridt,
+                            ucell,
+                            grid_index_ij,
+                            nczp,
+                            vfactor,
+                            vlocal,
+                            atoms_per_z,
+                            atoms_num_info.get_host_pointer(sid),
+                            iat_on_nbz.get_host_pointer(sid),
+                            atoms_type.get_host_pointer(sid),
+                            dr_part.get_host_pointer(sid),
+                            vldr3.get_host_pointer(sid));
 
-            dr_part.copy_host_to_device_async(streams[sid], sid, 3 * atoms_per_z);
-            atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
-            iat_on_nbz.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
-            vldr3.copy_host_to_device_async(streams[sid], sid);
-            atoms_num_info.copy_host_to_device_async(streams[sid], sid);
-            
-            gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_lda.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_ldb.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_ldc.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
-            checkCuda(cudaEventRecord(events[sid], streams[sid]));
+                alloc_mult_force(dm,
+                                 gridt,
+                                 ucell,
+                                 grid_index_ij,
+                                 max_atom,
+                                 atoms_num_info.get_host_pointer(sid),
+                                 psi.get_device_pointer(sid),
+                                 psi_dm.get_device_pointer(sid),
+                                 dm_matrix.get_device_pointer(),
+                                 max_m,
+                                 max_n,
+                                 atom_pair_num,
+                                 gemm_m.get_host_pointer(sid),
+                                 gemm_n.get_host_pointer(sid),
+                                 gemm_k.get_host_pointer(sid),
+                                 gemm_lda.get_host_pointer(sid),
+                                 gemm_ldb.get_host_pointer(sid),
+                                 gemm_ldc.get_host_pointer(sid),
+                                 gemm_A.get_host_pointer(sid),
+                                 gemm_B.get_host_pointer(sid),
+                                 gemm_C.get_host_pointer(sid));
 
-            psi.memset_device_async(streams[sid], sid, 0);
-            psi_dm.memset_device_async(streams[sid], sid, 0);
-            dpsi.memset_device_async(streams[sid], sid, 0);
-            d2psi.memset_device_async(streams[sid], sid, 0);
+                dr_part.copy_host_to_device_async(streams[sid], sid, 3 * atoms_per_z);
+                atoms_type.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+                iat_on_nbz.copy_host_to_device_async(streams[sid], sid, atoms_per_z);
+                vldr3.copy_host_to_device_async(streams[sid], sid);
+                atoms_num_info.copy_host_to_device_async(streams[sid], sid);
 
-            dim3 grid_psi(nbzp, gridt.bxyz);
-            dim3 block_psi(64);
-            get_psi_force<<<grid_psi,
-                            block_psi,
-                            0,
-                            streams[sid]>>>(
-                gridt.ylmcoef_g,
-                dr,
-                bxyz,
-                nwmax,
-                max_atom,
-                gridt.atom_nwl_g,
-                gridt.atom_new_g,
-                gridt.atom_ylm_g,
-                gridt.atom_l_g,
-                gridt.atom_nw_g,
-                gridt.rcut_g,
-                gridt.nr_max,
-                gridt.psi_u_g,
-                gridt.mcell_pos_g,
-                dr_part.get_device_pointer(sid),
-                vldr3.get_device_pointer(sid),
-                atoms_type.get_device_pointer(sid),
-                atoms_num_info.get_device_pointer(sid),
-                psi.get_device_pointer(sid),
-                dpsi.get_device_pointer(sid),
-                d2psi.get_device_pointer(sid));
-            checkCudaLastError();
+                gemm_m.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_n.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_k.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_lda.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_ldb.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_ldc.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_A.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_B.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                gemm_C.copy_host_to_device_async(streams[sid], sid, atom_pair_num);
+                checkCuda(cudaEventRecord(events[sid], streams[sid]));
 
-            gridt.fastest_matrix_mul(max_m,
-                                     max_n,
-                                     gemm_m.get_device_pointer(sid),
-                                     gemm_n.get_device_pointer(sid),
-                                     gemm_k.get_device_pointer(sid),
-                                     gemm_A.get_device_pointer(sid),
-                                     gemm_lda.get_device_pointer(sid),
-                                     gemm_B.get_device_pointer(sid),
-                                     gemm_ldb.get_device_pointer(sid),
-                                     gemm_C.get_device_pointer(sid),
-                                     gemm_ldc.get_device_pointer(sid),
-                                     atom_pair_num,
-                                     streams[sid],
-                                     nullptr);
-   
-            if (isforce){
-                dim3 grid_force(nbzp);
-                dim3 block_force(64);
-                dot_product_force<<<grid_force,
-                                    block_force,
-                                    32 * 3 * sizeof(double),
-                                    streams[sid]>>>(
-                                        bxyz,
-                                        nwmax,
-                                        atoms_num_info.get_device_pointer(sid),
-                                        iat_on_nbz.get_device_pointer(sid),
-                                        dpsi.get_device_pointer(sid),
-                                        psi_dm.get_device_pointer(sid),
-                                        force.get_device_pointer(sid));
+                psi.memset_device_async(streams[sid], sid, 0);
+                psi_dm.memset_device_async(streams[sid], sid, 0);
+                dpsi.memset_device_async(streams[sid], sid, 0);
+                d2psi.memset_device_async(streams[sid], sid, 0);
+
+                dim3 grid_psi(nbzp, gridt.bxyz);
+                dim3 block_psi(64);
+                get_psi_force<<<grid_psi, block_psi, 0, streams[sid]>>>(gridt.ylmcoef_g,
+                                                                        dr,
+                                                                        bxyz,
+                                                                        nwmax,
+                                                                        max_atom,
+                                                                        gridt.atom_nwl_g,
+                                                                        gridt.atom_new_g,
+                                                                        gridt.atom_ylm_g,
+                                                                        gridt.atom_l_g,
+                                                                        gridt.atom_nw_g,
+                                                                        gridt.rcut_g,
+                                                                        gridt.nr_max,
+                                                                        gridt.psi_u_g,
+                                                                        gridt.mcell_pos_g,
+                                                                        dr_part.get_device_pointer(sid),
+                                                                        vldr3.get_device_pointer(sid),
+                                                                        atoms_type.get_device_pointer(sid),
+                                                                        atoms_num_info.get_device_pointer(sid),
+                                                                        psi.get_device_pointer(sid),
+                                                                        dpsi.get_device_pointer(sid),
+                                                                        d2psi.get_device_pointer(sid));
                 checkCudaLastError();
-            }
 
-            if (isstress){ 
-                dim3 grid_stress(nbzp);
-                dim3 block_stress(64);
-                dot_product_stress<<<grid_stress,
-                                        block_stress,
-                                        32 * 6 * sizeof(double),
-                                        streams[sid]>>>(
-                                    d2psi.get_device_pointer(sid),
-                                    psi_dm.get_device_pointer(sid),
-                                    atoms_per_z * nwmax * bxyz,
-                                    stress.get_device_pointer(sid));
-                checkCudaLastError();
+                gridt.fastest_matrix_mul(max_m,
+                                         max_n,
+                                         gemm_m.get_device_pointer(sid),
+                                         gemm_n.get_device_pointer(sid),
+                                         gemm_k.get_device_pointer(sid),
+                                         gemm_A.get_device_pointer(sid),
+                                         gemm_lda.get_device_pointer(sid),
+                                         gemm_B.get_device_pointer(sid),
+                                         gemm_ldb.get_device_pointer(sid),
+                                         gemm_C.get_device_pointer(sid),
+                                         gemm_ldc.get_device_pointer(sid),
+                                         atom_pair_num,
+                                         streams[sid],
+                                         nullptr);
+
+                if (isforce)
+                {
+                    dim3 grid_force(nbzp);
+                    dim3 block_force(64);
+                    dot_product_force<<<grid_force, block_force, 32 * 3 * sizeof(double), streams[sid]>>>(
+                        bxyz,
+                        nwmax,
+                        atoms_num_info.get_device_pointer(sid),
+                        iat_on_nbz.get_device_pointer(sid),
+                        dpsi.get_device_pointer(sid),
+                        psi_dm.get_device_pointer(sid),
+                        force.get_device_pointer(sid));
+                    checkCudaLastError();
+                }
+
+                if (isstress)
+                {
+                    dim3 grid_stress(nbzp);
+                    dim3 block_stress(64);
+                    dot_product_stress<<<grid_stress, block_stress, 32 * 6 * sizeof(double), streams[sid]>>>(
+                        d2psi.get_device_pointer(sid),
+                        psi_dm.get_device_pointer(sid),
+                        atoms_per_z * nwmax * bxyz,
+                        stress.get_device_pointer(sid));
+                    checkCudaLastError();
+                }
             }
         }
     }
-}
 
-    for(int i = 0; i < num_streams; i++)
+    for (int i = 0; i < num_streams; i++)
     {
         stress.copy_device_to_host_async(streams[i], i);
         force.copy_device_to_host_async(streams[i], i);
@@ -271,7 +263,8 @@ const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
         checkCuda(cudaEventDestroy(events[i]));
     }
 
-    if (isstress){
+    if (isstress)
+    {
         for (int i = 0; i < num_streams; i++)
         {
             const int offset = 6 * i;
@@ -281,7 +274,8 @@ const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
             }
         }
     }
-    if (isforce){
+    if (isforce)
+    {
         for (int i = 0; i < num_streams; i++)
         {
             const int offset = 3 * i * nat;

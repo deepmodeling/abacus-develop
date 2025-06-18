@@ -10,16 +10,16 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "module_io/filename.h" // mohan add 2025-05-17
 #include "module_io/read_wf2rho_pw.h"
 #include "module_io/write_wfc_pw.h"
-#include "module_io/filename.h" // mohan add 2025-05-17
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
 
 #ifdef __MPI
-#include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
+#include "source_base/parallel_global.h"
 #endif
 
 Parallel_Grid::Parallel_Grid()
@@ -65,35 +65,35 @@ void Symmetry_rho::begin(const int& spin_now,
 
 void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot)
 {
-    if(PARAM.inp.kpar==1)
-	{
-		for(int ik = 0; ik < nks; ++ik)
-		{
-			ik2iktot[ik] = ik;
-		}
-    }
-    else if(PARAM.inp.kpar==2)
+    if (PARAM.inp.kpar == 1)
     {
-        if(GlobalV::MY_POOL==0)
-		{
-			for(int ik = 0; ik < nks; ++ik)
-			{
-				ik2iktot[ik] = ik;
-			}
-		}
-		else if(GlobalV::MY_POOL==1)
-		{
-			for(int ik = 0; ik < nks; ++ik)
-			{
-				ik2iktot[ik] = ik+2; // only works for this test
-			}
-		}
+        for (int ik = 0; ik < nks; ++ik)
+        {
+            ik2iktot[ik] = ik;
+        }
+    }
+    else if (PARAM.inp.kpar == 2)
+    {
+        if (GlobalV::MY_POOL == 0)
+        {
+            for (int ik = 0; ik < nks; ++ik)
+            {
+                ik2iktot[ik] = ik;
+            }
+        }
+        else if (GlobalV::MY_POOL == 1)
+        {
+            for (int ik = 0; ik < nks; ++ik)
+            {
+                ik2iktot[ik] = ik + 2; // only works for this test
+            }
+        }
     }
 }
 
 namespace GlobalC
 {
-	Parallel_Grid Pgrid;
+Parallel_Grid Pgrid;
 } // namespace GlobalC
 
 /**
@@ -195,20 +195,19 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 
         const int is = 0; // nspin is 1
         for (int ik = 0; ik < nkstot; ++ik)
-		{
-			ofs << " spin=" << is+1 << " k-point="
-				<< ik + 1 << "/" << nkstot
-				<< " Cartesian=" << kv->kvec_c[ik].x << " " << kv->kvec_c[ik].y
-				<< " " << kv->kvec_c[ik].z << " (" << kv->ngk[ik] << " plane wave)" << std::endl;
+        {
+            ofs << " spin=" << is + 1 << " k-point=" << ik + 1 << "/" << nkstot << " Cartesian=" << kv->kvec_c[ik].x
+                << " " << kv->kvec_c[ik].y << " " << kv->kvec_c[ik].z << " (" << kv->ngk[ik] << " plane wave)"
+                << std::endl;
 
             ofs << std::setprecision(16);
             ofs << std::setiosflags(std::ios::showpoint);
 
             double ekb = -1.23456; // energy
             for (int ib = 0; ib < nbands; ib++)
-			{
-                ofs << " " << ib + 1 << " " << ekb  << " " << wg(ik,ib) << std::endl;
-			}
+            {
+                ofs << " " << ib + 1 << " " << ekb << " " << wg(ik, ib) << std::endl;
+            }
 
             ofs << std::endl;
         }
@@ -268,32 +267,52 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 #endif
 
     // for spin=1 or 2, npol=1
-    const int npol=1;
+    const int npol = 1;
 
     // Write the wave functions to file
-	const std::string out_dir = "./";
+    const std::string out_dir = "./";
 
     // Read the wave functions to charge density
     std::stringstream ss;
     ss << "running_log" << GlobalV::MY_RANK << ".txt";
-	std::ofstream running_log(ss.str().c_str());
+    std::ofstream running_log(ss.str().c_str());
 
     running_log << " rank=" << GlobalV::MY_RANK << std::endl;
 
-
     const double ecutwfc = 20; // this is a fake number
 
-	ModuleIO::write_wfc_pw(
-			kpar, my_pool, my_rank, nbands, nspin, npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			PARAM.input.out_wfc_pw, ecutwfc, out_dir, *psi, *kv, wfcpw,
-			running_log);
+    ModuleIO::write_wfc_pw(kpar,
+                           my_pool,
+                           my_rank,
+                           nbands,
+                           nspin,
+                           npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           PARAM.input.out_wfc_pw,
+                           ecutwfc,
+                           out_dir,
+                           *psi,
+                           *kv,
+                           wfcpw,
+                           running_log);
 
-	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg, 
-			out_dir, kpar, my_pool, my_rank, 
-			GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
-			nbands, nspin, npol, 
-			nkstot, kv->ik2iktot, kv->isk, running_log);
+    ModuleIO::read_wf2rho_pw(wfcpw,
+                             symm,
+                             chg,
+                             out_dir,
+                             kpar,
+                             my_pool,
+                             my_rank,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::RANK_IN_POOL,
+                             nbands,
+                             nspin,
+                             npol,
+                             nkstot,
+                             kv->ik2iktot,
+                             kv->isk,
+                             running_log);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
@@ -301,24 +320,24 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
         EXPECT_NEAR(chg.rho[0][ir], chg_ref.rho[0][ir], 1e-8);
     }
 
-	if (GlobalV::NPROC == 1) 
-	{
-		EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-	} 
-	else if (GlobalV::NPROC == 4)
-	{
-		const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
-		EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
-		// for (int ip = 0; ip < GlobalV::NPROC; ++ip)
-		// {
-		//     if (GlobalV::MY_RANK == ip)
-		//     {
-		//         std::cout.precision(16);
-		//         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
-		//     }
-		//     MPI_Barrier(MPI_COMM_WORLD);
-		// }
-	}
+    if (GlobalV::NPROC == 1)
+    {
+        EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
+    }
+    else if (GlobalV::NPROC == 4)
+    {
+        const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
+        EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
+        // for (int ip = 0; ip < GlobalV::NPROC; ++ip)
+        // {
+        //     if (GlobalV::MY_RANK == ip)
+        //     {
+        //         std::cout.precision(16);
+        //         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
+        //     }
+        //     MPI_Barrier(MPI_COMM_WORLD);
+        // }
+    }
 
     delete[] chg.rho;
     delete[] chg._space_rho;
@@ -335,11 +354,11 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
         if (GlobalV::KPAR == 2)
         {
             remove("wfs1k3_pw.dat");
-			remove("wfs1k4_pw.dat");
-			remove("running_log1.txt");
-			remove("running_log2.txt");
-			remove("running_log3.txt");
-		}
+            remove("wfs1k4_pw.dat");
+            remove("running_log1.txt");
+            remove("running_log2.txt");
+            remove("running_log3.txt");
+        }
     }
 }
 

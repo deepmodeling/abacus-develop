@@ -1,16 +1,16 @@
 #ifndef CHARGE_H
 #define CHARGE_H
 
-#include "module_base/complexmatrix.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_global.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/fp_energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h"
 
-//a forward declaration of UnitCell
+// a forward declaration of UnitCell
 class UnitCell;
 
 //==========================================================
@@ -35,33 +35,33 @@ class Charge
     // NAME : rhog_core [ngm], the core charge in reciprocal space
     //==========================================================
 
-    double **rho = nullptr;
-    double **rho_save = nullptr;
+    double** rho = nullptr;
+    double** rho_save = nullptr;
 
-    std::complex<double> **rhog = nullptr;
-    std::complex<double> **rhog_save = nullptr;
+    std::complex<double>** rhog = nullptr;
+    std::complex<double>** rhog_save = nullptr;
 
-    double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
-    double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
+    double** kin_r = nullptr;      // kinetic energy density in real space, for meta-GGA
+    double** kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
                                    // wenfei 2021-07-28
     const Parallel_Grid* pgrid = nullptr;
-  private:
 
-    //temporary
-    double *_space_rho = nullptr; 
-    double *_space_rho_save = nullptr;
-    std::complex<double> *_space_rhog = nullptr;
-    std::complex<double> *_space_rhog_save = nullptr;
-    double *_space_kin_r = nullptr;
-    double *_space_kin_r_save = nullptr;
+  private:
+    // temporary
+    double* _space_rho = nullptr;
+    double* _space_rho_save = nullptr;
+    std::complex<double>* _space_rhog = nullptr;
+    std::complex<double>* _space_rhog_save = nullptr;
+    double* _space_kin_r = nullptr;
+    double* _space_kin_r_save = nullptr;
 
   public:
-    double **nhat = nullptr; //compensation charge for PAW
-    double **nhat_save = nullptr; //compensation charge for PAW
-                                 // wenfei 2023-09-05
+    double** nhat = nullptr;      // compensation charge for PAW
+    double** nhat_save = nullptr; // compensation charge for PAW
+                                  //  wenfei 2023-09-05
 
-    double *rho_core = nullptr;
-    std::complex<double> *rhog_core = nullptr;
+    double* rho_core = nullptr;
+    std::complex<double>* rhog_core = nullptr;
 
     int prenspin = 1;
 
@@ -85,7 +85,7 @@ class Charge
                   const void* klist = nullptr,
                   const void* wfcpw = nullptr);
 
-    void allocate(const int &nspin_in);
+    void allocate(const int& nspin_in);
 
     void atomic_rho(const int spin_number_need,
                     const double& omega,
@@ -93,9 +93,7 @@ class Charge
                     const ModuleBase::ComplexMatrix& strucFac,
                     const UnitCell& ucell) const;
 
-    void set_rho_core(const UnitCell& ucell,
-                      const ModuleBase::ComplexMatrix& structure_factor, 
-                      const bool* numeric);
+    void set_rho_core(const UnitCell& ucell, const ModuleBase::ComplexMatrix& structure_factor, const bool* numeric);
     void set_rho_core_paw();
 
     void renormalize_rho();
@@ -104,29 +102,26 @@ class Charge
 
     void save_rho_before_sum_band();
 
-	// for non-linear core correction
-    void non_linear_core_correction
-    (
-        const bool &numeric,
-        const double omega,
-        const double tpiba2,
-        const int mesh,
-        const double *r,
-        const double *rab,
-        const double *rhoc,
-        double *rhocg
-    ) const;
+    // for non-linear core correction
+    void non_linear_core_correction(const bool& numeric,
+                                    const double omega,
+                                    const double tpiba2,
+                                    const int mesh,
+                                    const double* r,
+                                    const double* rab,
+                                    const double* rhoc,
+                                    double* rhocg) const;
 
-	double cal_rho2ne(const double *rho_in) const;
+    double cal_rho2ne(const double* rho_in) const;
 
-  void check_rho(); // to check whether the charge density is normal
+    void check_rho(); // to check whether the charge density is normal
 
-  void init_final_scf(); //LiuXh add 20180619
+    void init_final_scf(); // LiuXh add 20180619
 
-	public:
+  public:
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
-     * 
+     *
      */
     void init_chgmpi();
 
@@ -136,27 +131,29 @@ class Charge
      */
     void rho_mpi();
 
-	  /**
-	   * @brief 	Reduce among different pools 
+    /**
+     * @brief 	Reduce among different pools
      *          If NPROC_IN_POOLs are all the same, use GlobalV::KP_WORLD
      *          else, gather rho in a POOL, and then reduce among different POOLs
-	   * 
-	   * @param array_rho f(rho): an array [nrxx]
-	   */
-	  void reduce_diff_pools(double* array_rho) const;
+     *
+     * @param array_rho f(rho): an array [nrxx]
+     */
+    void reduce_diff_pools(double* array_rho) const;
 
-    void set_omega(double* omega_in){this->omega_ = omega_in;};
+    void set_omega(double* omega_in)
+    {
+        this->omega_ = omega_in;
+    };
 
     // mohan add 2021-02-20
-    int nrxx=0; // number of r vectors in this processor
-    int nxyz = 0; // total number of r vectors
-    int ngmc=0; // number of g vectors in this processor
-    int nspin=0; // number of spins
-    ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
-    bool cal_elf = false; // whether to calculate electron localization function (ELF)
+    int nrxx = 0;                        // number of r vectors in this processor
+    int nxyz = 0;                        // total number of r vectors
+    int ngmc = 0;                        // number of g vectors in this processor
+    int nspin = 0;                       // number of spins
+    ModulePW::PW_Basis* rhopw = nullptr; // When double_grid is used, rhopw = rhodpw (dense grid)
+    bool cal_elf = false;                // whether to calculate electron localization function (ELF)
   private:
-
-    void destroy();    // free arrays  liuyu 2023-03-12
+    void destroy(); // free arrays  liuyu 2023-03-12
 
     double* omega_ = nullptr; // omega for non-linear core correction
 
@@ -165,10 +162,9 @@ class Charge
     bool allocate_rho_final_scf; // LiuXh add 20180606
 #ifdef __MPI
   private:
-    int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
-    int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
+    int* rec = nullptr; // The number of elements each process should receive into the receive buffer.
+    int* dis = nullptr; // The displacement (relative to recvbuf) for each process in the receive buffer.
 #endif
-    
 };
 
 #endif // charge

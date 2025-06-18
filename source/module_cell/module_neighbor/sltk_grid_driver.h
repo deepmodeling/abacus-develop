@@ -1,13 +1,13 @@
 #ifndef GRID_DRIVER_H
 #define GRID_DRIVER_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/vector3.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "sltk_atom.h"
 #include "sltk_grid.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/vector3.h"
 
 #include <memory>
 #include <stdexcept>
@@ -49,7 +49,10 @@ class Grid_Driver : public Grid
     //		adjacent of this atom,and store the information
     //		in 'adj_num','ntype','natom'
     //==========================================================
-    Grid_Driver(){ test_deconstructor = false; };
+    Grid_Driver()
+    {
+        test_deconstructor = false;
+    };
     Grid_Driver(const int& test_d_in, const int& test_grid_in);
 
     ~Grid_Driver();
@@ -65,10 +68,7 @@ class Grid_Driver : public Grid
     // 2. And store results into parameter adjs when adjs is
     //     NOT NULL
     //==========================================================
-    void Find_atom(const UnitCell& ucell,
-                   const int ntype,
-                   const int nnumber,
-                   AdjacentAtomInfo* adjs = nullptr) const;
+    void Find_atom(const UnitCell& ucell, const int ntype, const int nnumber, AdjacentAtomInfo* adjs = nullptr) const;
 
     // cartesian_posi and ucell is deprecated 20241204 zhanghaochong
     // this interface is deprecated, please use Find_atom above

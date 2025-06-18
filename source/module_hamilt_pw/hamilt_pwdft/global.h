@@ -1,12 +1,12 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_io/restart.h"
 #include "module_relax/relax_driver.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #ifdef __EXX
 #include "module_hamilt_general/module_xc/exx_info.h"
 #include "module_ri/exx_lip.h"
@@ -88,8 +88,11 @@ static const char* _cufftGetErrorString(cufftResult_t error)
         cudaError_t status = (func);                                                                                   \
         if (status != cudaSuccess)                                                                                     \
         {                                                                                                              \
-            printf("In File %s : CUDA API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,                \
-                   cudaGetErrorString(status), status);                                                                \
+            printf("In File %s : CUDA API failed at line %d with error: %s (%d)\n",                                    \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   cudaGetErrorString(status),                                                                         \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 
@@ -98,8 +101,11 @@ static const char* _cufftGetErrorString(cufftResult_t error)
         cublasStatus_t status = (func);                                                                                \
         if (status != CUBLAS_STATUS_SUCCESS)                                                                           \
         {                                                                                                              \
-            printf("In File %s : CUBLAS API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,              \
-                   _cublasGetErrorString(status), status);                                                             \
+            printf("In File %s : CUBLAS API failed at line %d with error: %s (%d)\n",                                  \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   _cublasGetErrorString(status),                                                                      \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 
@@ -108,8 +114,11 @@ static const char* _cufftGetErrorString(cufftResult_t error)
         cusolverStatus_t status = (func);                                                                              \
         if (status != CUSOLVER_STATUS_SUCCESS)                                                                         \
         {                                                                                                              \
-            printf("In File %s : CUSOLVER API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,            \
-                   _cusolverGetErrorString(status), status);                                                           \
+            printf("In File %s : CUSOLVER API failed at line %d with error: %s (%d)\n",                                \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   _cusolverGetErrorString(status),                                                                    \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 
@@ -118,8 +127,11 @@ static const char* _cufftGetErrorString(cufftResult_t error)
         cufftResult_t status = (func);                                                                                 \
         if (status != CUFFT_SUCCESS)                                                                                   \
         {                                                                                                              \
-            printf("In File %s : CUFFT API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,               \
-                   _cufftGetErrorString(status), status);                                                              \
+            printf("In File %s : CUFFT API failed at line %d with error: %s (%d)\n",                                   \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   _cufftGetErrorString(status),                                                                       \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 #endif // __CUDA
@@ -214,8 +226,11 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
         hipError_t status = (func);                                                                                    \
         if (status != hipSuccess)                                                                                      \
         {                                                                                                              \
-            printf("In File %s : HIP API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,                 \
-                   hipGetErrorString(status), status);                                                                 \
+            printf("In File %s : HIP API failed at line %d with error: %s (%d)\n",                                     \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   hipGetErrorString(status),                                                                          \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 
@@ -224,8 +239,11 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
         hipblasStatus_t status = (func);                                                                               \
         if (status != HIPBLAS_STATUS_SUCCESS)                                                                          \
         {                                                                                                              \
-            printf("In File %s : HIPBLAS API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,             \
-                   _hipblasGetErrorString(status), status);                                                            \
+            printf("In File %s : HIPBLAS API failed at line %d with error: %s (%d)\n",                                 \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   _hipblasGetErrorString(status),                                                                     \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 
@@ -244,8 +262,11 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
         hipfftResult_t status = (func);                                                                                \
         if (status != HIPFFT_SUCCESS)                                                                                  \
         {                                                                                                              \
-            printf("In File %s : HIPFFT API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,              \
-                   _hipfftGetErrorString(status), status);                                                             \
+            printf("In File %s : HIPFFT API failed at line %d with error: %s (%d)\n",                                  \
+                   __FILE__,                                                                                           \
+                   __LINE__,                                                                                           \
+                   _hipfftGetErrorString(status),                                                                      \
+                   status);                                                                                            \
         }                                                                                                              \
     }
 #endif // __ROCM
@@ -256,7 +277,7 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
 namespace GlobalC
 {
 //#ifdef __EXX
-    extern Exx_Info exx_info;
+extern Exx_Info exx_info;
 //#endif
 } // namespace GlobalC
 

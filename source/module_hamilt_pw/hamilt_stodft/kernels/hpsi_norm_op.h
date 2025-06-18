@@ -1,7 +1,8 @@
 #ifndef HPSI_NORM_OP_H
 #define HPSI_NORM_OP_H
+#include "source_base/module_device/device.h"
+
 #include <complex>
-#include "module_base/module_device/device.h"
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>

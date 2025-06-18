@@ -1,8 +1,9 @@
 #include "base_matrix.h"
+
+#include "source_base/global_function.h"
+
 #include <complex>
 #include <vector>
-
-#include "module_base/global_function.h"
 
 namespace hamilt
 {
@@ -68,19 +69,19 @@ template <typename T>
 void BaseMatrix<T>::allocate(T* data_array, bool if_zero)
 {
 #ifdef __DEBUG
-assert(nrow_local*ncol_local>0);
+    assert(nrow_local * ncol_local > 0);
 #endif
-    if(data_array != nullptr && !this->allocated)
+    if (data_array != nullptr && !this->allocated)
     {
         this->value_begin = data_array;
     }
-    else if(data_array != nullptr && this->allocated)
+    else if (data_array != nullptr && this->allocated)
     {
         delete[] this->value_begin;
         this->value_begin = data_array;
         this->allocated = false;
     }
-    else if(data_array == nullptr && !this->allocated)
+    else if (data_array == nullptr && !this->allocated)
     {
         this->value_begin = new T[nrow_local * ncol_local];
         this->allocated = true;
@@ -89,7 +90,7 @@ assert(nrow_local*ncol_local>0);
     {
         // do nothing
     }
-    if(if_zero) 
+    if (if_zero)
     {
         this->set_zero();
     }
@@ -100,7 +101,7 @@ template <typename T>
 void BaseMatrix<T>::set_zero()
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert(this->value_begin != nullptr);
 #endif
     ModuleBase::GlobalFunc::ZEROS(this->value_begin, nrow_local * ncol_local);
 }
@@ -110,7 +111,7 @@ template <typename T>
 void BaseMatrix<T>::add_array(T* array)
 {
 #ifdef __DEBUG
-assert(this->value_begin != nullptr);
+    assert(this->value_begin != nullptr);
 #endif
     // if allocated, add data from array into matrix
     // if whole matrix and 2d-block format, add data from array into matrix either
@@ -183,7 +184,7 @@ template <typename T>
 size_t BaseMatrix<T>::get_memory_size() const
 {
     size_t memory_size = sizeof(*this);
-    if(this->allocated)
+    if (this->allocated)
     {
         memory_size += nrow_local * ncol_local * sizeof(T);
     }

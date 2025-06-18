@@ -1,8 +1,8 @@
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-#include "module_base/module_device/device.h"
+#include "source_base/global_function.h"
+#include "source_base/module_device/device.h"
+#include "source_base/tool_quit.h"
 
 #include <fstream>
 #include <unistd.h>
@@ -110,7 +110,8 @@ void ReadInput::item_system()
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, ks-lr, lr";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
+            const std::vector<std::string> esolver_types
+                = {"ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr"};
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -126,10 +127,10 @@ void ReadInput::item_system()
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.esolver_type == "lr" && para.input.calculation == "scf")
-            {   // for LR-only calculation based on the ground-state, set calculation to "nscf"
+            { // for LR-only calculation based on the ground-state, set calculation to "nscf"
                 para.input.calculation = "nscf";
             }
-            };
+        };
         this->add_item(item);
     }
     {
@@ -216,7 +217,8 @@ void ReadInput::item_system()
                 }
                 para.input.cal_force = true;
             }
-            else if (std::find(not_use_force.begin(), not_use_force.end(), para.input.calculation) != not_use_force.end())
+            else if (std::find(not_use_force.begin(), not_use_force.end(), para.input.calculation)
+                     != not_use_force.end())
             {
                 if (para.input.cal_force)
                 {
@@ -339,9 +341,7 @@ void ReadInput::item_system()
     {
         Input_Item item("nx");
         item.annotation = "number of points along x axis for FFT grid";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.nx = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.nx = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
             {
@@ -354,9 +354,7 @@ void ReadInput::item_system()
     {
         Input_Item item("ny");
         item.annotation = "number of points along y axis for FFT grid";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.ny = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.ny = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
             {
@@ -369,9 +367,7 @@ void ReadInput::item_system()
     {
         Input_Item item("nz");
         item.annotation = "number of points along z axis for FFT grid";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.nz = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.nz = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
             {
@@ -418,9 +414,10 @@ void ReadInput::item_system()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read()) {
+            if (!item.is_read())
+            {
                 return;
-}
+            }
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
@@ -443,9 +440,10 @@ void ReadInput::item_system()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read()) {
+            if (!item.is_read())
+            {
                 return;
-}
+            }
             if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
@@ -643,7 +641,7 @@ void ReadInput::item_system()
         Input_Item item("pseudo_dir");
         item.annotation = "the directory containing pseudo files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            if(item.get_size() == 0)
+            if (item.get_size() == 0)
             {
                 para.input.pseudo_dir = "";
             }
@@ -659,7 +657,7 @@ void ReadInput::item_system()
         Input_Item item("orbital_dir");
         item.annotation = "the directory containing orbital files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            if(item.get_size() == 0)
+            if (item.get_size() == 0)
             {
                 para.input.orbital_dir = "";
             }
@@ -788,8 +786,7 @@ void ReadInput::item_system()
         item.annotation = "the computing device for ABACUS";
         read_sync_string(input.device);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.device=base_device::information::get_device_flag(
-                                para.inp.device, para.inp.basis_type);
+            para.input.device = base_device::information::get_device_flag(para.inp.device, para.inp.basis_type);
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"cpu", "gpu"};

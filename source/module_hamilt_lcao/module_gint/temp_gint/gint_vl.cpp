@@ -1,8 +1,9 @@
-#include "module_base/blas_connector.h"
-#include "gint_common.h"
 #include "gint_vl.h"
-#include "phi_operator.h"
+
+#include "gint_common.h"
 #include "gint_helper.h"
+#include "phi_operator.h"
+#include "source_base/blas_connector.h"
 
 namespace ModuleGint
 {
@@ -34,9 +35,9 @@ void Gint_vl::cal_hr_gint_()
         std::vector<double> phi;
         std::vector<double> phi_vldr3;
 #pragma omp for schedule(dynamic)
-        for(const auto& biggrid: gint_info_->get_biggrids())
+        for (const auto& biggrid: gint_info_->get_biggrids())
         {
-            if(biggrid->get_atoms().empty())
+            if (biggrid->get_atoms().empty())
             {
                 continue;
             }
@@ -51,4 +52,4 @@ void Gint_vl::cal_hr_gint_()
     }
 }
 
-}
+} // namespace ModuleGint

@@ -1,15 +1,15 @@
 #include "dftu.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/inverse_matrix.h"
-#include "module_base/memory.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/timer.h"
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/memory.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/timer.h"
 
 #include <cmath>
 #include <complex>
@@ -40,9 +40,10 @@ void DFTU::init(UnitCell& cell, // unitcell class
                 const Parallel_Orbitals* pv,
                 const int nks
 #ifdef __LCAO
-                , const LCAO_Orbitals* orb
+                ,
+                const LCAO_Orbitals* orb
 #endif
-                )
+)
 {
     ModuleBase::TITLE("DFTU", "init");
 
@@ -53,9 +54,9 @@ void DFTU::init(UnitCell& cell, // unitcell class
 
     this->paraV = pv;
 
-#ifdef __LCAO    
+#ifdef __LCAO
     ptr_orb_ = orb;
-    if(ptr_orb_ != nullptr)
+    if (ptr_orb_ != nullptr)
     {
         orb_cutoff_ = orb->cutoffs();
     }
@@ -66,7 +67,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     // global parameters, need to be removed in future
     const int npol = PARAM.globalv.npol;     // number of polarization directions
     const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
-    const int nspin = PARAM.inp.nspin;   // number of spins
+    const int nspin = PARAM.inp.nspin;       // number of spins
 
     this->EU = 0.0;
 
@@ -91,7 +92,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
 
-            const int tlp1_npol = (this->orbital_corr[it]*2+1)*npol;
+            const int tlp1_npol = (this->orbital_corr[it] * 2 + 1) * npol;
             this->eff_pot_pw_index[iat] = pot_index;
             pot_index += tlp1_npol * tlp1_npol;
 
@@ -196,7 +197,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     {
         std::stringstream sst;
         sst << "initial_onsite.dm";
-        this->read_occup_m(cell,sst.str());
+        this->read_occup_m(cell, sst.str());
 #ifdef __MPI
         this->local_occup_bcast(cell);
 #endif
@@ -210,7 +211,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
         {
             std::stringstream sst;
             sst << PARAM.globalv.global_out_dir << "onsite.dm";
-            this->read_occup_m(cell,sst.str());
+            this->read_occup_m(cell, sst.str());
 #ifdef __MPI
             this->local_occup_bcast(cell);
 #endif
@@ -228,8 +229,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
 
 #ifdef __LCAO
 
-void DFTU::cal_energy_correction(const UnitCell& ucell,
-                                 const int istep)
+void DFTU::cal_energy_correction(const UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("DFTU", "cal_energy_correction");
     ModuleBase::timer::tick("DFTU", "cal_energy_correction");
@@ -384,9 +384,10 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
 void DFTU::uramping_update()
 {
     // if uramping < 0.1, use the original U
-    if (this->uramping < 0.01) {
+    if (this->uramping < 0.01)
+    {
         return;
-}
+    }
     // loop to change U
     for (int i = 0; i < this->U0.size(); i++)
     {
@@ -452,7 +453,7 @@ void dftu_cal_occup_m(const int iter,
                       const double& mixing_beta,
                       hamilt::Hamilt<double>* p_ham)
 {
-    GlobalC::dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
+    GlobalC::dftu.cal_occup_m_gamma(iter, ucell, dm, mixing_beta, p_ham);
 }
 
 //! dftu occupation matrix for multiple k-points using dm(complex)
@@ -464,7 +465,7 @@ void dftu_cal_occup_m(const int iter,
                       const double& mixing_beta,
                       hamilt::Hamilt<std::complex<double>>* p_ham)
 {
-    GlobalC::dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
+    GlobalC::dftu.cal_occup_m_k(iter, ucell, dm, kv, mixing_beta, p_ham);
 }
 
 #endif

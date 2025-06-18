@@ -1,15 +1,15 @@
 #include "dftu_lcao.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 
 template <typename TK, typename TR>
 hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
@@ -52,14 +52,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
-        int T0=0;
-        int I0=0;
+        int T0 = 0;
+        int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (target_L == -1)
+        {
+            continue;
+        }
 
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -92,10 +92,10 @@ template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("DFTU", "cal_nlm_all");
-	if (this->precal_nlm_done) 
-	{
-		return;
-	}
+    if (this->precal_nlm_done)
+    {
+        return;
+    }
 
     ModuleBase::timer::tick("DFTU", "cal_nlm_all");
     nlm_tot.resize(this->ucell->nat);
@@ -104,15 +104,15 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
-        int T0=0;
-        int I0=0;
+        int T0 = 0;
+        int I0 = 0;
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
-		const int tlp1 = 2 * target_L + 1;
+        if (target_L == -1)
+        {
+            continue;
+        }
+        const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         // calculate and save the table of two-center integrals
@@ -184,11 +184,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     else
     {
         // will update this->dftu->locale and this->dftu->EU
-		if (this->current_spin == 0) 
-		{
-			this->dftu->EU = 0.0;
-		}
-	}
+        if (this->current_spin == 0)
+        {
+            this->dftu->EU = 0.0;
+        }
+    }
     ModuleBase::timer::tick("DFTU", "contributeHR");
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
@@ -204,10 +204,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (target_L == -1)
+        {
+            continue;
+        }
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
@@ -251,10 +251,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // save occ to dftu
             for (int i = 0; i < occ.size(); i++)
             {
-				if (this->nspin == 1) 
-				{
-					occ[i] *= 0.5;
-				}
+                if (this->nspin == 1)
+                {
+                    occ[i] *= 0.5;
+                }
                 this->dftu->locale[iat0][target_L][0][this->current_spin].c[i] = occ[i];
             }
         }
@@ -309,23 +309,23 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     }
 
     // energy correction for NSPIN=1
-	if (this->nspin == 1) 
-	{
-		this->dftu->EU *= 2.0;
-	}
-	// for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
-	if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
-	{
-		this->dftu->initialed_locale = false;
-	}
+    if (this->nspin == 1)
+    {
+        this->dftu->EU *= 2.0;
+    }
+    // for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
+    if (this->current_spin == this->nspin - 1 || this->nspin == 4)
+    {
+        this->dftu->initialed_locale = false;
+    }
 
     // update this->current_spin: only nspin=2 iterate change it between 0 and 1
     // the key point is only nspin=2 calculate spin-up and spin-down separately,
     // and won't calculate spin-up twice without spin-down
-	if (this->nspin == 2) 
-	{
-		this->current_spin = 1 - this->current_spin;
-	}
+    if (this->nspin == 2)
+    {
+        this->current_spin = 1 - this->current_spin;
+    }
 
     ModuleBase::timer::tick("DFTU", "contributeHR");
 }
@@ -506,7 +506,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
 {
     // calculate the local matrix
     int spin_fold = occ.size() / m_size / m_size;
-    if (spin_fold < 4) {
+    if (spin_fold < 4)
+    {
         for (int is = 0; is < spin_fold; ++is)
         {
             int start = is * m_size * m_size;
@@ -519,7 +520,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
                 }
             }
         }
-    } else
+    }
+    else
     {
         for (int m1 = 0; m1 < m_size; m1++)
         {

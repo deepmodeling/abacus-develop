@@ -2,8 +2,6 @@
 #define GET_PCHG_PW_H
 
 #include "cube_io.h"
-#include "module_base/module_device/device.h"
-#include "module_base/tool_quit.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/unitcell.h"
@@ -12,6 +10,8 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
+#include "source_base/module_device/device.h"
+#include "source_base/tool_quit.h"
 
 #include <string>
 #include <vector>
@@ -135,8 +135,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     }
 
                     std::stringstream ssc;
-                    ssc << global_out_dir << "pchgs" << spin_index + 1 << "k" << k_number << "i" << ib + 1
-                        << ".cube";
+                    ssc << global_out_dir << "pchgs" << spin_index + 1 << "k" << k_number << "i" << ib + 1 << ".cube";
 
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_band[spin_index].data(),
@@ -213,8 +212,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell);
                 }
             } // else if_separate_k is false
-        } // end of ib loop over nbands
-    } // end of ip loop over kpar
+        }     // end of ib loop over nbands
+    }         // end of ip loop over kpar
 } // get_pchg_pw
 } // namespace ModuleIO
 

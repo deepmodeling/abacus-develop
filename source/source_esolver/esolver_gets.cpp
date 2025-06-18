@@ -1,6 +1,5 @@
 #include "esolver_gets.h"
 
-#include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/read_pseudo.h"
@@ -10,6 +9,7 @@
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/print_info.h"
 #include "module_io/write_HS_R.h"
+#include "source_base/timer.h"
 
 namespace ModuleESolver
 {
@@ -154,12 +154,12 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
-void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
+void ESolver_GetS::after_all_runners(UnitCell& ucell){};
 double ESolver_GetS::cal_energy()
 {
     return 0.0;
 };
-void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
-void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
+void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force){};
+void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress){};
 
 } // namespace ModuleESolver

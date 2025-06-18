@@ -3,8 +3,8 @@
 #include "module_cell/klist.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_base/module_device/memory_op.h"
 #include "module_psi/psi.h"
+#include "source_base/module_device/memory_op.h"
 
 /**
  * @brief Check if Emin and Emax are converged
@@ -17,7 +17,8 @@
 template <typename FPTYPE, typename Device>
 struct check_che_op
 {
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
     void operator()(const int& nche_in,
                     const double& try_emin,
                     const double& try_emax,

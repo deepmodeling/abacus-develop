@@ -1,15 +1,15 @@
 #ifdef __LCAO
 #include "fR_overlap.h"
+
 #include "module_basis/module_ao/ORB_read.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_base/math_integral.h"
-#include "module_base/blas_connector.h"
+#include "source_base/blas_connector.h"
+#include "source_base/math_integral.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 template <typename T>
 FR_overlap<T>::FR_overlap()
 {
-
 }
 
 template <typename T>
@@ -60,7 +60,7 @@ FR_overlap<T>::~FR_overlap()
     {
         delete this->Leb_grid;
     }
-    
+
     if (this->FR_container)
     {
         delete this->FR_container;
@@ -137,7 +137,11 @@ void FR_overlap<T>::calculate_FR()
 }
 
 template <typename T>
-void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_Orbitals* paraV, const ModuleBase::Vector3<double>& dtau, T* data_pointer)
+void FR_overlap<T>::cal_FR_IJR(const int& iat1,
+                               const int& iat2,
+                               const Parallel_Orbitals* paraV,
+                               const ModuleBase::Vector3<double>& dtau,
+                               T* data_pointer)
 {
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
@@ -182,7 +186,7 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
         const int iw1 = row_indexes[iw1l] / npol;
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
-        
+
         LN_pair1.insert(std::make_pair(L1, N1));
     }
 
@@ -191,7 +195,7 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
         const int iw2 = col_indexes[iw2l] / npol;
         const int L2 = iw2l2[iw2];
         const int N2 = iw2n2[iw2];
-        
+
         LN_pair2.insert(std::make_pair(L2, N2));
     }
 
@@ -200,17 +204,17 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
     int row_num = static_cast<int>(row_indexes.size() / npol);
     int col_num = static_cast<int>(col_indexes.size() / npol);
 
-    T *grid_1 = new T[row_num*grid_num]; // matrix [row_num, grid_num]
-    T *grid_2 = new T[grid_num*col_num]; // matrix [grid_num, col_num]
-    ModuleBase::GlobalFunc::ZEROS(grid_1, row_num*grid_num);
-    ModuleBase::GlobalFunc::ZEROS(grid_2, grid_num*col_num);
+    T* grid_1 = new T[row_num * grid_num]; // matrix [row_num, grid_num]
+    T* grid_2 = new T[grid_num * col_num]; // matrix [grid_num, col_num]
+    ModuleBase::GlobalFunc::ZEROS(grid_1, row_num * grid_num);
+    ModuleBase::GlobalFunc::ZEROS(grid_2, grid_num * col_num);
 
     double xmin = 0.0;
     double xmax = Rcut1;
-    double *r_radial = new double[radial_grid_num];
-    double *weights_radial = new double[radial_grid_num];
+    double* r_radial = new double[radial_grid_num];
+    double* weights_radial = new double[radial_grid_num];
     ModuleBase::Integral::Gauss_Legendre_grid_and_weight(xmin, xmax, radial_grid_num, r_radial, weights_radial);
-    
+
     int count = -1;
     for (int ir = 0; ir < radial_grid_num; ir++)
     {
@@ -230,16 +234,18 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
                 tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
             }
 
-            if (tmp_r_coor_norm > Rcut2) { continue;
-}
+            if (tmp_r_coor_norm > Rcut2)
+            {
+                continue;
+            }
 
             std::map<std::pair<int, int>, double> psi_value2 = psi_inter(T2, LN_pair2, tmp_r_coor_norm);
 
             std::vector<double> rly1;
-            ModuleBase::Ylm::rl_sph_harm (maxL1, r_angular_tmp.x, r_angular_tmp.y, r_angular_tmp.z, rly1);
+            ModuleBase::Ylm::rl_sph_harm(maxL1, r_angular_tmp.x, r_angular_tmp.y, r_angular_tmp.z, rly1);
 
             std::vector<double> rly2;
-            ModuleBase::Ylm::rl_sph_harm (maxL2, tmp_r_unit.x, tmp_r_unit.y, tmp_r_unit.z, rly2);
+            ModuleBase::Ylm::rl_sph_harm(maxL2, tmp_r_unit.x, tmp_r_unit.y, tmp_r_unit.z, rly2);
 
             double weights_angular = Leb_grid->get_weight()[ian];
 
@@ -252,7 +258,8 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
                 const int N1 = iw2n1[iw1];
                 const int m1 = iw2m1[iw1];
 
-                grid_1[irow1*grid_num+count] = psi_value1[std::make_pair(L1, N1)] * rly1[L1*L1+m1] * r_radial[ir] * r_radial[ir] * weights_radial[ir];
+                grid_1[irow1 * grid_num + count] = psi_value1[std::make_pair(L1, N1)] * rly1[L1 * L1 + m1]
+                                                   * r_radial[ir] * r_radial[ir] * weights_radial[ir];
 
                 int icol2 = -1;
                 for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
@@ -263,29 +270,38 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
                     const int N2 = iw2n2[iw2];
                     const int m2 = iw2m2[iw2];
 
-                    grid_2[count*col_num+icol2] = psi_value2[std::make_pair(L2, N2)] * rly2[L2*L2+m2] * weights_angular * fr(r_coor+tau_1);
+                    grid_2[count * col_num + icol2] = psi_value2[std::make_pair(L2, N2)] * rly2[L2 * L2 + m2]
+                                                      * weights_angular * fr(r_coor + tau_1);
                 }
-
             }
-
         }
     }
 
-    T *matrix_mul = new T[row_num*col_num]; // matrix [row_num, col_num]
-    ModuleBase::GlobalFunc::ZEROS(matrix_mul, row_num*col_num);
+    T* matrix_mul = new T[row_num * col_num]; // matrix [row_num, col_num]
+    ModuleBase::GlobalFunc::ZEROS(matrix_mul, row_num * col_num);
 
-    BlasConnector::gemm('N', 'N', row_num, col_num, grid_num,
-        1, grid_1, grid_num, grid_2, col_num,
-        0, matrix_mul, col_num);
+    BlasConnector::gemm('N',
+                        'N',
+                        row_num,
+                        col_num,
+                        grid_num,
+                        1,
+                        grid_1,
+                        grid_num,
+                        grid_2,
+                        col_num,
+                        0,
+                        matrix_mul,
+                        col_num);
 
-    for(int ir = 0; ir < row_num; ir++)
+    for (int ir = 0; ir < row_num; ir++)
     {
-        for(int ic = 0; ic < col_num; ic++)
+        for (int ic = 0; ic < col_num; ic++)
         {
             for (int ipol = 0; ipol < npol; ipol++)
             {
-                int index = (npol*ir+ipol)*col_num*npol + npol*ic + ipol;
-                data_pointer[index] = matrix_mul[ir*col_num+ic];
+                int index = (npol * ir + ipol) * col_num * npol + npol * ic + ipol;
+                data_pointer[index] = matrix_mul[ir * col_num + ic];
             }
         }
     }
@@ -298,16 +314,18 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
 }
 
 template <typename T>
-std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int &T1, const std::set<std::pair<int, int>> &LN_pair1, const double &r_norm)
+std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int& T1,
+                                                               const std::set<std::pair<int, int>>& LN_pair1,
+                                                               const double& r_norm)
 {
     std::map<std::pair<int, int>, double> psi_value;
 
-    for (auto i : LN_pair1)
+    for (auto i: LN_pair1)
     {
         int L1 = i.first;
         int N1 = i.second;
 
-        const double *psi_r1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getPsi();
+        const double* psi_r1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getPsi();
         int mesh_r1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getNr();
         double dr1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getRab(0);
 
@@ -318,12 +336,10 @@ std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int &T1, co
 }
 
 template <typename T>
-double FR_overlap<T>::Polynomial_Interpolation(
-    const double *psi_r,
-    const int &mesh_r,
-    const double &dr,
-    const double &x	
-)
+double FR_overlap<T>::Polynomial_Interpolation(const double* psi_r,
+                                               const int& mesh_r,
+                                               const double& dr,
+                                               const double& x)
 {
     const double position = x / dr;
     const int iq = static_cast<int>(position);
@@ -336,20 +352,20 @@ double FR_overlap<T>::Polynomial_Interpolation(
     if (iq <= mesh_r - 4)
     {
         t1 = psi_r[iq];
-        t2 = psi_r[iq+1];
-        t3 = psi_r[iq+2];
-        t4 = psi_r[iq+3];
+        t2 = psi_r[iq + 1];
+        t3 = psi_r[iq + 2];
+        t4 = psi_r[iq + 3];
     }
     else if (iq == mesh_r - 3)
     {
         t1 = psi_r[iq];
-        t2 = psi_r[iq+1];
-        t3 = psi_r[iq+2];
+        t2 = psi_r[iq + 1];
+        t3 = psi_r[iq + 2];
     }
     else if (iq == mesh_r - 2)
     {
         t1 = psi_r[iq];
-        t2 = psi_r[iq+1];
+        t2 = psi_r[iq + 1];
     }
     else if (iq == mesh_r - 1)
     {
@@ -360,11 +376,8 @@ double FR_overlap<T>::Polynomial_Interpolation(
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;
     const double x3 = 3.0 - x0;
-    const double y =
-        t1 * x1 * x2 * x3 / 6.0 +
-        t2 * x0 * x2 * x3 / 2.0 -
-        t3 * x1 * x0 * x3 / 2.0 +
-        t4 * x1 * x2 * x0 / 6.0 ;
+    const double y
+        = t1 * x1 * x2 * x3 / 6.0 + t2 * x0 * x2 * x3 / 2.0 - t3 * x1 * x0 * x3 / 2.0 + t4 * x1 * x2 * x0 / 6.0;
 
     return y;
 }

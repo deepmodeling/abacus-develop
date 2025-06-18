@@ -1,11 +1,11 @@
 #include "esolver_of.h"
-#include "module_base/formatter.h"
-#include "module_base/memory.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/cal_ux.h"
+#include "source_base/formatter.h"
+#include "source_base/memory.h"
 
 namespace ModuleESolver
 {
@@ -71,11 +71,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, 
-                                      PARAM.inp.nspin, 
-                                      this->pw_rho->nrxx,
-                                      this->pw_rho->nrxx,
-                                      true);
+    this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx, this->pw_rho->nrxx, true);
     ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     this->pphi_ = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -106,7 +102,8 @@ void ESolver_OF::allocate_array()
     ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * PARAM.inp.nspin * this->pw_rho->npw);
+    ModuleBase::Memory::record("OFDFT::precip_dir_",
+                               sizeof(std::complex<double>) * PARAM.inp.nspin * this->pw_rho->npw);
 }
 
 /**
@@ -374,9 +371,10 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
-            if (this->theta_[0] == 0) {
+            if (this->theta_[0] == 0)
+            {
                 std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
-}
+            }
         }
         exit(0);
     }
@@ -393,29 +391,25 @@ void ESolver_OF::print_info(const bool conv_esolver)
         std::cout << " ============================= Running OFDFT "
                      "=============================="
                   << std::endl;
-        std::cout << " ITER       ETOT/eV           EDIFF/eV        EFERMI/eV    POTNORM   TIME/s"
-                  << std::endl;
+        std::cout << " ITER       ETOT/eV           EDIFF/eV        EFERMI/eV    POTNORM   TIME/s" << std::endl;
     }
 
-    std::map<std::string, std::string> prefix_map = {
-        {"cg1", "CG"},
-        {"cg2", "CG"},
-        {"tn", "TN"}
-    };
+    std::map<std::string, std::string> prefix_map = {{"cg1", "CG"}, {"cg2", "CG"}, {"tn", "TN"}};
     std::string iteration = prefix_map[PARAM.inp.of_method] + std::to_string(this->iter_);
 #ifdef __MPI
     double duration = (double)(MPI_Wtime() - this->iter_time);
 #else
     double duration
-        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - this->iter_time)).count()
+        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - this->iter_time))
+              .count()
           / static_cast<double>(1e6);
 #endif
-    std::cout << " " << std::setw(8) << iteration
-              << std::setw(18) << std::scientific << std::setprecision(8) << this->energy_current_ * ModuleBase::Ry_to_eV
-              << std::setw(18) << (this->energy_current_ - this->energy_last_) * ModuleBase::Ry_to_eV
-              << std::setw(13) << std::setprecision(4) << this->pelec->eferm.get_efval(0) * ModuleBase::Ry_to_eV
-              << std::setw(13) << std::setprecision(4) << this->normdLdphi_
-              << std::setw(6) << std::fixed << std::setprecision(2) << duration << std::endl;
+    std::cout << " " << std::setw(8) << iteration << std::setw(18) << std::scientific << std::setprecision(8)
+              << this->energy_current_ * ModuleBase::Ry_to_eV << std::setw(18)
+              << (this->energy_current_ - this->energy_last_) * ModuleBase::Ry_to_eV << std::setw(13)
+              << std::setprecision(4) << this->pelec->eferm.get_efval(0) * ModuleBase::Ry_to_eV << std::setw(13)
+              << std::setprecision(4) << this->normdLdphi_ << std::setw(6) << std::fixed << std::setprecision(2)
+              << duration << std::endl;
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
@@ -425,11 +419,9 @@ void ESolver_OF::print_info(const bool conv_esolver)
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-	if ((PARAM.inp.printe > 0 && 
-				((this->iter_ + 1) % PARAM.inp.printe == 0 || 
-				 conv_esolver || 
-				 this->iter_ == PARAM.inp.scf_nmax)) || 
-			PARAM.inp.init_chg == "file")
+    if ((PARAM.inp.printe > 0
+         && ((this->iter_ + 1) % PARAM.inp.printe == 0 || conv_esolver || this->iter_ == PARAM.inp.scf_nmax))
+        || PARAM.inp.init_chg == "file")
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);
@@ -522,9 +514,10 @@ void ESolver_OF::print_info(const bool conv_esolver)
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) {
         return energy * ModuleBase::Ry_to_eV;
     });
-    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"}, 
-                   /*nrows=*/titles.size(), 
-                   /*formats=*/{"%20s", "%20.12f", "%20.12f"}, 0);
+    FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
+                   /*nrows=*/titles.size(),
+                   /*formats=*/{"%20s", "%20.12f", "%20.12f"},
+                   0);
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
 

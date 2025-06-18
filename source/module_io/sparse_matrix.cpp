@@ -1,9 +1,9 @@
 #include "sparse_matrix.h"
 
+#include "source_base/tool_quit.h"
+
 #include <algorithm>
 #include <complex>
-
-#include "module_base/tool_quit.h"
 
 namespace ModuleIO
 {
@@ -35,13 +35,13 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     csr_row_ptr.assign(_rows + 1, 0);
 
     // print the CSR values
-    for (const auto &element : elements)
+    for (const auto& element: elements)
     {
         ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << element.second;
     }
     ofs << std::endl;
     // print the CSR column indices
-    for (const auto &element : elements)
+    for (const auto& element: elements)
     {
         ofs << " " << element.first.second;
         int row = element.first.first;

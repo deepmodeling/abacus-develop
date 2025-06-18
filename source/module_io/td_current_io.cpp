@@ -1,12 +1,5 @@
 #include "td_current_io.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/tool_threading.h"
-#include "module_base/vector3.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
@@ -14,6 +7,13 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
+#include "source_base/vector3.h"
 
 #ifdef __LCAO
 
@@ -157,12 +157,12 @@ void ModuleIO::write_current(const UnitCell& ucell,
     }
 
     // construct a DensityMatrix object
-    // Since the function cal_dm_psi do not suport DMR in complex type, 
+    // Since the function cal_dm_psi do not suport DMR in complex type,
     // I replace it with two DMR in double type.
     // Should be refactored in the future.
 
     const int nspin0 = PARAM.inp.nspin;
-    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin0];
+    const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin0];
 
     elecstate::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
@@ -279,9 +279,9 @@ void ModuleIO::write_current(const UnitCell& ucell,
                                 ++local_total_irr;
                                 ++irr;
                             } // end kk
-                        } // end jj
-                    } // end cb
-                } // end iat
+                        }     // end jj
+                    }         // end cb
+                }             // end iat
 #ifdef _OPENMP
 #pragma omp critical(cal_current_k_reduce)
                 {
@@ -313,7 +313,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
             }
             // write end
         } // end nks
-    } // end is
+    }     // end is
     if (GlobalV::MY_RANK == 0)
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_total.dat";

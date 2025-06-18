@@ -1,7 +1,7 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 
 // references
 // 1) Roger Fletcher, Practical Methods of Optimization, John Wiley and
@@ -39,15 +39,15 @@ class BFGS_Basic
     static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 
   protected:
-    bool save_flag=false;
-    bool tr_min_hit=false; //.TRUE. if the trust_radius has already been set
-                     // to the minimum value at the previous step
+    bool save_flag = false;
+    bool tr_min_hit = false; //.TRUE. if the trust_radius has already been set
+                             // to the minimum value at the previous step
 
     // mohan add 2010-07-27
     double check_move(const double& lat0, const double& pos, const double& pos_p);
 
   private:
-    bool wolfe_flag=false;
+    bool wolfe_flag = false;
     ModuleBase::matrix inv_hess;
 
     int bfgs_ndim;

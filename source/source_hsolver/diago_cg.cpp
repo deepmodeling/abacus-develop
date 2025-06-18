@@ -4,12 +4,12 @@
 #include <ATen/kernels/memory.h>
 #include <ATen/ops/einsum_op.h>
 #include <ATen/ops/linalg_op.h>
-#include <module_base/constants.h>
-#include <module_base/memory.h>
-#include <module_base/parallel_reduce.h>
-#include <module_base/timer.h>
-#include <module_base/tool_title.h>             // ModuleBase::TITLE
-#include <module_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
+#include <source_base/constants.h>
+#include <source_base/global_function.h> // ModuleBase::GlobalFunc::NOTE
+#include <source_base/memory.h>
+#include <source_base/parallel_reduce.h>
+#include <source_base/timer.h>
+#include <source_base/tool_title.h> // ModuleBase::TITLE
 #include <source_hsolver/diago_cg.h>
 
 using namespace hsolver;
@@ -184,7 +184,8 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in,
                 int ii = 0;
                 for (ii = m - 2; ii >= 0; ii--)
                 {
-                    if (eigen_pack[m] - eigen_pack[ii] > 2.0 * pw_diag_thr_){
+                    if (eigen_pack[m] - eigen_pack[ii] > 2.0 * pw_diag_thr_)
+                    {
                         break;
                     }
                 }
@@ -324,8 +325,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
         // (1) Update gg_inter!
         // gg_inter = <g|g0>
         // Attention : the 'g' in g0 is getted last time
-        gg_inter
-            = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, grad.data<T>(), g0.data<T>()); // b means before
+        gg_inter = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, grad.data<T>(), g0.data<T>()); // b means before
     }
 
     // (2) Update for g0!
@@ -402,7 +402,8 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
 {
     cg_norm = sqrt(ModuleBase::dot_real_op<T, Device>()(this->n_basis_, cg.data<T>(), scg.data<T>()));
 
-    if (cg_norm < 1.0e-10){
+    if (cg_norm < 1.0e-10)
+    {
         return true;
     }
 
@@ -529,8 +530,8 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
         psi_norm -= ( conj(lagrange[j]) * lagrange[j] ).real();
     }*/
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    auto psi_norm = ct::extract<Real>(lagrange_so[m])
-                    - dot_real_op()(m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
+    auto psi_norm
+        = ct::extract<Real>(lagrange_so[m]) - dot_real_op()(m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
 
     if (psi_norm <= 0.0)
     {

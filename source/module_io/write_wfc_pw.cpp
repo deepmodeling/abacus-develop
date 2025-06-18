@@ -5,85 +5,89 @@
 #endif
 
 #include "binstream.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_global.h"
-#include "module_base/tool_title.h"
-#include "module_parameter/parameter.h"
 #include "module_io/filename.h"
+#include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h"
+#include "source_base/tool_title.h"
 
-void ModuleIO::write_wfc_pw(
-        const int kpar,
-        const int my_pool,
-        const int my_rank,
-        const int nbands,
-        const int nspin,
-        const int npol,
-        const int rank_in_pool,
-        const int nproc_in_pool,
-        const int out_wfc_pw,
-        const double& ecutwfc,
-        const std::string& global_out_dir,
-        const psi::Psi<std::complex<double>>& psi,
-        const K_Vectors& kv,
-        const ModulePW::PW_Basis_K* wfcpw,
-        std::ofstream &ofs_running)
+void ModuleIO::write_wfc_pw(const int kpar,
+                            const int my_pool,
+                            const int my_rank,
+                            const int nbands,
+                            const int nspin,
+                            const int npol,
+                            const int rank_in_pool,
+                            const int nproc_in_pool,
+                            const int out_wfc_pw,
+                            const double& ecutwfc,
+                            const std::string& global_out_dir,
+                            const psi::Psi<std::complex<double>>& psi,
+                            const K_Vectors& kv,
+                            const ModulePW::PW_Basis_K* wfcpw,
+                            std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_pw");
 
-	if(out_wfc_pw!=1 && out_wfc_pw!=2)
-	{
-		return;
-	}
+    if (out_wfc_pw != 1 && out_wfc_pw != 2)
+    {
+        return;
+    }
 
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
 
-    assert(nkstot>0);
-    assert(nks>0);
+    assert(nkstot > 0);
+    assert(nks > 0);
 
     bool out_app_flag = false; // need to modify later, mohan 2025-05-17
-    bool gamma_only = false; // need to modify later, mohan 2025-05-17
-    int istep = -1; // need to modify later, mohan 2025-05-17
+    bool gamma_only = false;   // need to modify later, mohan 2025-05-17
+    int istep = -1;            // need to modify later, mohan 2025-05-17
 
     std::string* wfilename = new std::string[nks];
 
     for (int ip = 0; ip < kpar; ip++)
     {
-        if (my_pool != ip) continue;
+        if (my_pool != ip)
+            continue;
 
         for (int ik_local = 0; ik_local < kv.get_nks(); ik_local++)
         {
-            std::string fn = filename_output(global_out_dir,"wf","pw",
-                    ik_local,kv.ik2iktot,nspin,nkstot,
-                    out_wfc_pw,out_app_flag,gamma_only,istep);
+            std::string fn = filename_output(global_out_dir,
+                                             "wf",
+                                             "pw",
+                                             ik_local,
+                                             kv.ik2iktot,
+                                             nspin,
+                                             nkstot,
+                                             out_wfc_pw,
+                                             out_app_flag,
+                                             gamma_only,
+                                             istep);
 
-            ofs_running << " Write G-space wave functions into file "
-                << fn << std::endl;
+            ofs_running << " Write G-space wave functions into file " << fn << std::endl;
 
-			wfilename[ik_local] = fn;
+            wfilename[ik_local] = fn;
 
-			if (rank_in_pool == 0)
-			{
-				if (out_wfc_pw == 1)
-				{
-					std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
-					ofs.close();
-				}
-				else if (out_wfc_pw == 2)
-				{
-					Binstream wfs(fn, "w");
-					wfs.close();
-				}
-			}
-		}
-	}
-
+            if (rank_in_pool == 0)
+            {
+                if (out_wfc_pw == 1)
+                {
+                    std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
+                    ofs.close();
+                }
+                else if (out_wfc_pw == 2)
+                {
+                    Binstream wfs(fn, "w");
+                    wfs.close();
+                }
+            }
+        }
+    }
 
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-
 
 #ifdef __MPI
     // out put the wave functions in plane wave basis.
@@ -102,7 +106,7 @@ void ModuleIO::write_wfc_pw(
 #ifdef __MPI
                 MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
 #else
-                ikngtot = kv.ngk[ik];
+        ikngtot = kv.ngk[ik];
 #endif
                 const int ikngtot_npol = ikngtot * npol;
 #ifdef __MPI
@@ -128,8 +132,8 @@ void ModuleIO::write_wfc_pw(
                                 ofs2 << std::setw(10) << ikstot + 1 << std::setw(10) << nkstot << std::setw(10)
                                      << kv.kvec_c[ik].x << std::setw(10) << kv.kvec_c[ik].y << std::setw(10)
                                      << kv.kvec_c[ik].z << std::setw(10) << kv.wk[ik] << std::setw(10) << ikngtot
-                                     << std::setw(10) << nbands << std::setw(10) << ecutwfc
-                                     << std::setw(10) << wfcpw->lat0 << std::setw(10) << wfcpw->tpiba << std::endl;
+                                     << std::setw(10) << nbands << std::setw(10) << ecutwfc << std::setw(10)
+                                     << wfcpw->lat0 << std::setw(10) << wfcpw->tpiba << std::endl;
                                 ofs2 << "\n<Reciprocal Lattice Vector>" << std::endl;
                                 ofs2 << std::setw(10) << wfcpw->G.e11 << std::setw(10) << wfcpw->G.e12 << std::setw(10)
                                      << wfcpw->G.e13 << std::endl;
@@ -163,8 +167,8 @@ void ModuleIO::write_wfc_pw(
                             if (id == 0)
                             {
                                 wfs2 << int(72) << ikstot + 1 << nkstot << kv.kvec_c[ik].x << kv.kvec_c[ik].y
-                                     << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << nbands << ecutwfc
-                                     << wfcpw->lat0 << wfcpw->tpiba << 72; // 4 int + 7 double is 72B
+                                     << kv.kvec_c[ik].z << kv.wk[ik] << ikngtot << nbands << ecutwfc << wfcpw->lat0
+                                     << wfcpw->tpiba << 72; // 4 int + 7 double is 72B
                                 wfs2 << 72 << wfcpw->G.e11 << wfcpw->G.e12 << wfcpw->G.e13 << wfcpw->G.e21
                                      << wfcpw->G.e22 << wfcpw->G.e23 << wfcpw->G.e31 << wfcpw->G.e32 << wfcpw->G.e33
                                      << 72; // 9 double is 72B
@@ -203,7 +207,7 @@ void ModuleIO::write_wfc_pw(
                         if (rank_in_pool == id)
                         {
 #else
-                        int id = 0;
+            int id = 0;
 #endif
                             if (out_wfc_pw == 1)
                             {
@@ -257,7 +261,7 @@ void ModuleIO::write_wfc_pw(
                             if (rank_in_pool == id)
                             {
 #else
-                        int id = 0;
+                int id = 0;
 #endif
                                 if (out_wfc_pw == 1)
                                 {
@@ -294,7 +298,7 @@ void ModuleIO::write_wfc_pw(
                                 }
 #ifdef __MPI
                             } // end if rank_in_pool
-                        } // end id
+                        }     // end id
 #endif
                     } // end if npol>1
 

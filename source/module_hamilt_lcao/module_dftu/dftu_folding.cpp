@@ -1,12 +1,12 @@
 #ifdef __LCAO
 #include "dftu.h"
-#include "module_base/timer.h"
-#include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 
 namespace ModuleDFTU
 {
@@ -27,18 +27,18 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(dSR_gamma, pv.nloc);
 
     double* dS_ptr = nullptr;
-	if(dim1 == 0) 
-	{
-		dS_ptr = dsloc_x;
-	}
-	else if(dim1 == 1) 
-	{
-		dS_ptr = dsloc_y;
-	}
-	else if (dim1 == 2) 
-	{
-		dS_ptr = dsloc_z;
-	}
+    if (dim1 == 0)
+    {
+        dS_ptr = dsloc_x;
+    }
+    else if (dim1 == 1)
+    {
+        dS_ptr = dsloc_y;
+    }
+    else if (dim1 == 2)
+    {
+        dS_ptr = dsloc_z;
+    }
 
     int nnr = 0;
     ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -63,10 +63,10 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                 double distance = dtau.norm() * ucell.lat0;
                 double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
                 bool adj = false;
-				if (distance < rcut)
-				{
-					adj = true;
-				}
+                if (distance < rcut)
+                {
+                    adj = true;
+                }
                 else if (distance >= rcut)
                 {
                     for (int ad0 = 0; ad0 < gd->getAdjacentNum() + 1; ++ad0)
@@ -97,30 +97,30 @@ void DFTU::fold_dSR_gamma(const UnitCell& ucell,
                         const int jj0 = jj / PARAM.globalv.npol;
                         const int iw1_all = start1 + jj0;
                         const int mu = pv.global2local_row(iw1_all);
-						if (mu < 0) 
-						{
-							continue;
-						}
+                        if (mu < 0)
+                        {
+                            continue;
+                        }
 
                         for (int kk = 0; kk < atom2->nw * PARAM.globalv.npol; ++kk)
                         {
                             const int kk0 = kk / PARAM.globalv.npol;
                             const int iw2_all = start2 + kk0;
                             const int nu = pv.global2local_col(iw2_all);
-							if (nu < 0) 
-							{
-								continue;
-							}
+                            if (nu < 0)
+                            {
+                                continue;
+                            }
 
                             dSR_gamma[nu * pv.nrow + mu] += dS_ptr[nnr] * dh_r[nnr * 3 + dim2];
 
                             ++nnr;
                         } // kk
-                    } // jj
-                } // adj
-            } // ad
-        } // I1
-    } // T1
+                    }     // jj
+                }         // adj
+            }             // ad
+        }                 // I1
+    }                     // T1
 
     return;
 }
@@ -236,19 +236,19 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
-						if (mu < 0) 
-						{
-							continue;
-						}
+                        if (mu < 0)
+                        {
+                            continue;
+                        }
 
                         for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
-							if (nu < 0) 
-							{ 
-								continue;
-							}
+                            if (nu < 0)
+                            {
+                                continue;
+                            }
 
                             int iic;
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -271,19 +271,18 @@ void DFTU::folding_matrix_k(const UnitCell& ucell,
 
                             ++nnr;
                         } // kk
-                    } // jj
-                } // adj
+                    }     // jj
+                }         // adj
 
             } // ad
-        } // I1
-    } // T1
+        }     // I1
+    }         // T1
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
 
     return;
 }
 
-void DFTU::folding_matrix_k_new(const int ik,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+void DFTU::folding_matrix_k_new(const int ik, hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k_new");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
@@ -295,22 +294,19 @@ void DFTU::folding_matrix_k_new(const int ik,
     }
 
     // get SR and fold to mat_k
-    if(PARAM.globalv.gamma_only_local)
+    if (PARAM.globalv.gamma_only_local)
     {
-        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)
-                    ->updateSk(ik, hk_type);
+        dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
     }
     else
     {
-        if(PARAM.inp.nspin != 4)
+        if (PARAM.inp.nspin != 4)
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
-                        ->updateSk(ik, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
         }
         else
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)
-                        ->updateSk(ik, hk_type);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, hk_type);
         }
     }
 }

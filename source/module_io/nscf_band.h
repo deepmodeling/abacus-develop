@@ -1,8 +1,8 @@
 #ifndef NSCF_BAND_H
 #define NSCF_BAND_H
-#include "module_base/matrix.h"
 #include "module_cell/klist.h"
 #include "module_cell/parallel_kpoints.h"
+#include "source_base/matrix.h"
 
 namespace ModuleIO
 {
@@ -24,6 +24,6 @@ void nscf_band(const int& is,
                const int& precision,
                const ModuleBase::matrix& ekb,
                const K_Vectors& kv);
-}
+} // namespace ModuleIO
 
 #endif

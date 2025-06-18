@@ -1,50 +1,55 @@
 #include "cal_dos.h"
 
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 
 void ModuleIO::prepare_dos(std::ofstream& ofs_running,
-		const elecstate::efermi &energy_fermi,
-        const ModuleBase::matrix& ekb,
-        const int nks,
-        const int nbands,
-		const double& dos_edelta_ev,
-		const double& dos_scale,
-		double &emax,
-		double &emin)
+                           const elecstate::efermi& energy_fermi,
+                           const ModuleBase::matrix& ekb,
+                           const int nks,
+                           const int nbands,
+                           const double& dos_edelta_ev,
+                           const double& dos_scale,
+                           double& emax,
+                           double& emin)
 {
-	ofs_running << " DOS CALCULATIONS BEGINS" << std::endl;
-	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-	ofs_running << " |                                            "
-		"                        |" << std::endl;
-	ofs_running << " | DOS stands for Density of States. It represents the number of      |" << std::endl;
-	ofs_running << " | available electronic states per unit energy range.                 |" << std::endl;
-	ofs_running << " | By analyzing the DOS, we can gain insights into how electrons are  |" << std::endl;
-	ofs_running << " | distributed among different energy levels within the material.     |" << std::endl;
-	ofs_running << " |                                            "
-		"                        |" << std::endl;
-	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " DOS CALCULATIONS BEGINS" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
+                << std::endl;
+    ofs_running << " |                                            "
+                   "                        |"
+                << std::endl;
+    ofs_running << " | DOS stands for Density of States. It represents the number of      |" << std::endl;
+    ofs_running << " | available electronic states per unit energy range.                 |" << std::endl;
+    ofs_running << " | By analyzing the DOS, we can gain insights into how electrons are  |" << std::endl;
+    ofs_running << " | distributed among different energy levels within the material.     |" << std::endl;
+    ofs_running << " |                                            "
+                   "                        |"
+                << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
+                << std::endl;
 
     ofs_running << std::setprecision(6);
 
-    assert(nbands>0);
+    assert(nbands > 0);
 
     if (PARAM.globalv.two_fermi == false)
     {
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Fermi energy (eV)",
-        energy_fermi.ef * ModuleBase::Ry_to_eV);
+        ModuleBase::GlobalFunc::OUT(ofs_running, "Fermi energy (eV)", energy_fermi.ef * ModuleBase::Ry_to_eV);
     }
     else
     {
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin up, Fermi energy (Ry)",
-        energy_fermi.ef_up * ModuleBase::Ry_to_eV);
-        ModuleBase::GlobalFunc::OUT(ofs_running, "Spin dw, Fermi energy (Ry)",
-        energy_fermi.ef_dw * ModuleBase::Ry_to_eV);
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "Spin up, Fermi energy (Ry)",
+                                    energy_fermi.ef_up * ModuleBase::Ry_to_eV);
+        ModuleBase::GlobalFunc::OUT(ofs_running,
+                                    "Spin dw, Fermi energy (Ry)",
+                                    energy_fermi.ef_dw * ModuleBase::Ry_to_eV);
     }
 
     // find energy range
@@ -84,28 +89,27 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
         emin = emin - delta / 2.0;
     }
 
-    assert(dos_edelta_ev>0.0);
+    assert(dos_edelta_ev > 0.0);
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "Minimal energy is (eV)", emin);
     ModuleBase::GlobalFunc::OUT(ofs_running, "Maximal energy is (eV)", emax);
     ModuleBase::GlobalFunc::OUT(ofs_running, "Energy interval (eV)", dos_edelta_ev);
-
 }
 
-bool ModuleIO::cal_dos(const int& is,  // index for spin
-		const std::string& fn,   // file name for DOS
-		const double& de_ev,           // delta energy in ev
-		const double& emax_ev, // maximal energy in eV
-		const double& emin_ev, // minimal energy in ev.
-		const double& bcoeff,
-		const int& nks, // number of k points in this pool
-		const int& nkstot, // number of total kpoints
-		const std::vector<double>& wk, // weight of k points
-		const std::vector<int>& isk,   // index of spin for each k-point
-		const int& nbands,             // number of bands
-		const ModuleBase::matrix& ekb, // energy for each k point and each band
-		const ModuleBase::matrix& wg   // weight of k-points and bands 
-		)
+bool ModuleIO::cal_dos(const int& is,         // index for spin
+                       const std::string& fn, // file name for DOS
+                       const double& de_ev,   // delta energy in ev
+                       const double& emax_ev, // maximal energy in eV
+                       const double& emin_ev, // minimal energy in ev.
+                       const double& bcoeff,
+                       const int& nks,                // number of k points in this pool
+                       const int& nkstot,             // number of total kpoints
+                       const std::vector<double>& wk, // weight of k points
+                       const std::vector<int>& isk,   // index of spin for each k-point
+                       const int& nbands,             // number of bands
+                       const ModuleBase::matrix& ekb, // energy for each k point and each band
+                       const ModuleBase::matrix& wg   // weight of k-points and bands
+)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
@@ -141,7 +145,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         return false;
     }
 
-    const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev))+1;
+    const int npoints = static_cast<int>(std::floor((emax_ev - emin_ev) / de_ev)) + 1;
 
     if (npoints <= 0)
     {
@@ -152,14 +156,11 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     if (GlobalV::MY_RANK == 0)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << "#" << std::setw(14) << "energy" 
-                 << std::setw(15) << "elec_states" 
-                 << std::setw(15) << "sum_states" 
-                 << std::setw(15) << "states_smear" 
-                 << std::setw(15) << "sum_states" << std::endl;
+        ofs_dos << "#" << std::setw(14) << "energy" << std::setw(15) << "elec_states" << std::setw(15) << "sum_states"
+                << std::setw(15) << "states_smear" << std::setw(15) << "sum_states" << std::endl;
     }
 
-    std::vector<double> e_mod(npoints, 0.0); 
+    std::vector<double> e_mod(npoints, 0.0);
 
     double sum = 0.0;
     double curr_energy = emin_ev;
@@ -181,10 +182,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
                 for (int ib = 0; ib < nbands; ib++)
                 {
                     //  compare et and e_old(curr_energy) in ev unit.
-                    if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old 
-                     && ekb(ik, ib) * ModuleBase::Ry_to_eV < curr_energy)
+                    if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old && ekb(ik, ib) * ModuleBase::Ry_to_eV < curr_energy)
                     {
-                        nstates += wk[ik] * nkstot; 
+                        nstates += wk[ik] * nkstot;
                     }
                 }
             }
@@ -211,7 +211,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         dos_smear.resize(dos.size());
 
         double b = sqrt(2.0) * bcoeff;
-        for (int i = 0; i < dos.size() ; i++)
+        for (int i = 0; i < dos.size(); i++)
         {
             double Gauss = 0.0;
 
@@ -225,22 +225,19 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         }
 
         // mohan add 2025-06-08
-        const double dos_thr = 1.0e-12; 
+        const double dos_thr = 1.0e-12;
         double sum2 = 0.0;
 
         for (int i = 0; i < dos.size(); i++)
         {
-            if(dos_smear[i]<dos_thr)
+            if (dos_smear[i] < dos_thr)
             {
-                 dos_smear[i]=0.0;
+                dos_smear[i] = 0.0;
             }
             sum2 += dos_smear[i] * de_ev;
 
-            ofs_dos << std::setw(15) << ene[i] 
-                 << std::setw(15) << dos[i]
-                 << std::setw(15) << sum_elec[i]
-                 << std::setw(15) << dos_smear[i] 
-                 << std::setw(15) << sum2 << std::endl;
+            ofs_dos << std::setw(15) << ene[i] << std::setw(15) << dos[i] << std::setw(15) << sum_elec[i]
+                    << std::setw(15) << dos_smear[i] << std::setw(15) << sum2 << std::endl;
         }
     }
 

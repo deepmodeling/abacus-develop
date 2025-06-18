@@ -1,19 +1,18 @@
 #include "md_func.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
-
+#include "source_base/global_variable.h"
+#include "source_base/timer.h"
 
 namespace MD_func
 {
 
 double gaussrand()
 {
-    static double v1=0.0;
-    static double v2=0.0;
-    static double S=0.0;
+    static double v1 = 0.0;
+    static double v2 = 0.0;
+    static double S = 0.0;
     static int phase = 0;
-    double xx=0.0;
+    double xx = 0.0;
 
     if (phase == 0)
     {
@@ -196,18 +195,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-	if (frozen.x == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.y == 0)
-	{
-		++frozen_freedom;
-	}
-	if (frozen.z == 0)
-	{
-		++frozen_freedom;
-	}
+    if (frozen.x == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.y == 0)
+    {
+        ++frozen_freedom;
+    }
+    if (frozen.z == 0)
+    {
+        ++frozen_freedom;
+    }
 
     if (unit_in.init_vel)
     {
@@ -286,7 +285,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     return;
 }
 
-
 void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
     double stress_scalar = 0.0;
@@ -302,20 +300,21 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 
     ofs << " MD PRESSURE (ELECTRONS+IONS)  : " << stress_scalar * unit_transform << " kbar" << std::endl;
     ofs << " ELECTRONIC      PART OF STRESS: " << virial_scalar * unit_transform << " kbar" << std::endl;
-    ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar" << std::endl;
+    ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar"
+        << std::endl;
 
     // one should use 'print_stress' function in ../source/module_io/output_log.cpp
-/*
-    ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8) << std::endl;
-    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
-    for (int i = 0; i < 3; i++)
-    {
-        ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
-            << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
-    }
-    ofs << std::setiosflags(std::ios::left);
-*/
+    /*
+        ofs.unsetf(std::ios::fixed);
+        ofs << std::setprecision(8) << std::endl;
+        ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
+        for (int i = 0; i < 3; i++)
+        {
+            ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
+                << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
+        }
+        ofs << std::setiosflags(std::ios::left);
+    */
 
     return;
 }
@@ -425,15 +424,18 @@ void get_mass_mbl(const UnitCell& unit_in,
         {
             allmass[ion] = unit_in.atoms[it].mass / ModuleBase::AU_to_MASS;
             ionmbl[ion] = unit_in.atoms[it].mbl[i];
-            if (ionmbl[ion].x == 0) {
+            if (ionmbl[ion].x == 0)
+            {
                 ++frozen.x;
-}
-            if (ionmbl[ion].y == 0) {
+            }
+            if (ionmbl[ion].y == 0)
+            {
                 ++frozen.y;
-}
-            if (ionmbl[ion].z == 0) {
+            }
+            if (ionmbl[ion].z == 0)
+            {
                 ++frozen.z;
-}
+            }
 
             ion++;
         }
@@ -444,7 +446,7 @@ void get_mass_mbl(const UnitCell& unit_in,
 
 double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
-    assert(nstep>0);
+    assert(nstep > 0);
     double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
@@ -487,7 +489,6 @@ void temp_vector(const int& natom,
 
     return;
 }
-
 
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
 {

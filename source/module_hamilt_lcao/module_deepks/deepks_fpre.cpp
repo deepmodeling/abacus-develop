@@ -3,13 +3,13 @@
 #include "deepks_fpre.h"
 
 #include "deepks_iterate.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/vector3.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
@@ -55,8 +55,7 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
             const ModuleBase::Vector3<double>& tau2,
             const int start2,
             const int nw2_tot,
-            ModuleBase::Vector3<int> dR2)
-        {
+            ModuleBase::Vector3<int> dR2) {
             auto row_indexes = pv.get_indexes_row(ibt1);
             auto col_indexes = pv.get_indexes_col(ibt2);
             if (row_indexes.size() * col_indexes.size() == 0)
@@ -132,8 +131,7 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
                     dm_current++;
                 } // iw2
             }     // iw1
-        }
-    );
+        });
 
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmx.data_ptr<double>(), 3 * ucell.nat * inlmax * nm * nm);

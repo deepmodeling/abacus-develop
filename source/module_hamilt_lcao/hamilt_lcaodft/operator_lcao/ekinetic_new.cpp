@@ -1,10 +1,10 @@
 #include "ekinetic_new.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 // Constructor
 template <typename TK, typename TR>
@@ -45,14 +45,14 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid
     ModuleBase::TITLE("EkineticNew", "initialize_HR");
     ModuleBase::timer::tick("EkineticNew", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1=0;
-        int I1=0;
+        int T1 = 0;
+        int I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
@@ -112,8 +112,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     for (int iat1 = 0; iat1 < this->ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1=0; 
-        int I1=0;
+        int T1 = 0;
+        int I1 = 0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo& adjs = this->adjs_all[iat1];
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)

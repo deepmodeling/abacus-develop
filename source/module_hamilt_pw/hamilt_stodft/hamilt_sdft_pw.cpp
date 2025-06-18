@@ -1,6 +1,7 @@
 #include "hamilt_sdft_pw.h"
-#include "module_base/timer.h"
+
 #include "kernels/hpsi_norm_op.h"
+#include "source_base/timer.h"
 
 namespace hamilt
 {
@@ -14,7 +15,7 @@ HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
                                       const int& npol,
                                       Real* emin_in,
                                       Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp,ucell), ngk(p_kv->ngk)
+    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, ucell), ngk(p_kv->ngk)
 {
     this->classname = "HamiltSdftPW";
     this->npwk_max = wfc_basis->npwk_max;
@@ -27,7 +28,7 @@ template <typename T, typename Device>
 void HamiltSdftPW<T, Device>::hPsi(const T* psi_in, T* hpsi, const int& nbands)
 {
     auto call_act = [&, this](const Operator<T, Device>* op, const bool& is_first_node) -> void {
-        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()],  is_first_node);
+        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()], is_first_node);
     };
 
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi");

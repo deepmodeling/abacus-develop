@@ -1,5 +1,5 @@
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
+#include "source_base/mathzone.h"
+#include "source_base/parallel_global.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
@@ -86,7 +86,6 @@ Soc::~Soc()
 Fcoef::~Fcoef()
 {
 }
-
 
 /************************************************
  *  unit test of class K_Vectors
@@ -207,9 +206,10 @@ TEST_F(KlistParaTest, Set)
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
-    if (GlobalV::MY_RANK == 0) {
+    if (GlobalV::MY_RANK == 0)
+    {
         GlobalV::ofs_running.open("tmp_klist_5");
-}
+    }
     symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
@@ -231,24 +231,28 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec,  GlobalV::ofs_running);
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
     {
-        if (GlobalV::MY_RANK == 0) {
+        if (GlobalV::MY_RANK == 0)
+        {
             EXPECT_EQ(kv->get_nks(), 18);
-}
-        if (GlobalV::MY_RANK == 1) {
+        }
+        if (GlobalV::MY_RANK == 1)
+        {
             EXPECT_EQ(kv->get_nks(), 18);
-}
-        if (GlobalV::MY_RANK == 2) {
+        }
+        if (GlobalV::MY_RANK == 2)
+        {
             EXPECT_EQ(kv->get_nks(), 17);
-}
-        if (GlobalV::MY_RANK == 3) {
+        }
+        if (GlobalV::MY_RANK == 3)
+        {
             EXPECT_EQ(kv->get_nks(), 17);
-}
+        }
     }
     ClearUcell();
     if (GlobalV::MY_RANK == 0)
@@ -264,9 +268,10 @@ TEST_F(KlistParaTest, SetAfterVC)
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
-    if (GlobalV::MY_RANK == 0) {
+    if (GlobalV::MY_RANK == 0)
+    {
         GlobalV::ofs_running.open("tmp_klist_6");
-}
+    }
     symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
@@ -288,28 +293,32 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
     {
-        if (GlobalV::MY_RANK == 0) {
+        if (GlobalV::MY_RANK == 0)
+        {
             EXPECT_EQ(kv->get_nks(), 35);
-}
-        if (GlobalV::MY_RANK == 1) {
+        }
+        if (GlobalV::MY_RANK == 1)
+        {
             EXPECT_EQ(kv->get_nks(), 35);
-}
-        if (GlobalV::MY_RANK == 2) {
+        }
+        if (GlobalV::MY_RANK == 2)
+        {
             EXPECT_EQ(kv->get_nks(), 35);
-}
-        if (GlobalV::MY_RANK == 3) {
+        }
+        if (GlobalV::MY_RANK == 3)
+        {
             EXPECT_EQ(kv->get_nks(), 35);
-}
+        }
     }
     // call set_after_vc here
     kv->kc_done = false;
-//    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+    //    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
     KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);

@@ -1,7 +1,7 @@
 #include "parallel_grid.h"
 
-#include "module_base/parallel_global.h"
 #include "module_parameter/parameter.h"
+#include "source_base/parallel_global.h"
 Parallel_Grid::Parallel_Grid()
 {
     this->allocate = false;

@@ -1,11 +1,11 @@
 #include "hamilt_lcao.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 
 #include <vector>
 
@@ -27,7 +27,6 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_hsolver/hsolver_lcao.h"
 #include "operator_lcao/dftu_lcao.h"
 #include "operator_lcao/dspin_lcao.h"
 #include "operator_lcao/ekinetic_new.h"
@@ -39,6 +38,7 @@
 #include "operator_lcao/td_ekinetic_lcao.h"
 #include "operator_lcao/td_nonlocal_lcao.h"
 #include "operator_lcao/veff_lcao.h"
+#include "source_hsolver/hsolver_lcao.h"
 
 namespace hamilt
 {
@@ -498,9 +498,7 @@ Operator<TK>*& HamiltLCAO<TK, TR>::getOperator()
 }
 
 template <typename TK, typename TR>
-void HamiltLCAO<TK, TR>::updateSk(
-		const int ik, 
-		const int hk_type)
+void HamiltLCAO<TK, TR>::updateSk(const int ik, const int hk_type)
 {
     ModuleBase::TITLE("HamiltLCAO", "updateSk");
     ModuleBase::timer::tick("HamiltLCAO", "updateSk");
@@ -510,17 +508,17 @@ void HamiltLCAO<TK, TR>::updateSk(
     if (hk_type == 1) // collumn-major matrix for SK
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
-		hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], nrow, 1);
-	}
-	else if (hk_type == 0) // row-major matrix for SK
-	{
+        hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], nrow, 1);
+    }
+    else if (hk_type == 0) // row-major matrix for SK
+    {
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], ncol, 0);
     }
-	else
-	{
-        ModuleBase::WARNING_QUIT("updateSk","the value of hk_type is incorrect.");
-	}
+    else
+    {
+        ModuleBase::WARNING_QUIT("updateSk", "the value of hk_type is incorrect.");
+    }
 
     ModuleBase::timer::tick("HamiltLCAO", "updateSk");
 }

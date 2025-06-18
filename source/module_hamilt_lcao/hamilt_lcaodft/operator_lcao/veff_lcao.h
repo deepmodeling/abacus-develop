@@ -1,12 +1,13 @@
 #ifndef VEFFLCAO_H
 #define VEFFLCAO_H
-#include "module_base/timer.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 #include "module_elecstate/module_pot/potential_new.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/unitcell.h"
+#include "source_base/timer.h"
+
 #include <vector>
 
 namespace hamilt
@@ -25,8 +26,8 @@ class Veff : public T
 /// @brief Effective potential class, used for calculating Hamiltonian with grid integration tools
 /// If user want to separate the contribution of V_{eff} into V_{H} and V_{XC} and V_{local pseudopotential} and so on,
 /// the user can separate the Potential class into different parts, and construct different Veff class for each part.
-/// @tparam TK 
-/// @tparam TR 
+/// @tparam TK
+/// @tparam TR
 template <typename TK, typename TR>
 class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
@@ -34,7 +35,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief Construct a new Veff object for multi-kpoint calculation
      * @param GK_in: the pointer of Gint_k object, used for grid integration
-    */
+     */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
                                HS_Matrix_K<TK>* hsk_in,
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
@@ -55,7 +56,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief Construct a new Veff object for Gamma-only calculation
      * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
-    */
+     */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                                HS_Matrix_K<TK>* hsk_in,
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
@@ -78,35 +79,35 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief contributeHR() is used to calculate the HR matrix
      * <phi_{\mu, 0}|V_{eff}|phi_{\nu, R}>
-     * the contribution of V_{eff} is calculated by the contribution of V_{H} and V_{XC} and V_{local pseudopotential} and so on.
-     * grid integration is used to calculate the contribution Hamiltonian of effective potential
+     * the contribution of V_{eff} is calculated by the contribution of V_{H} and V_{XC} and V_{local pseudopotential}
+     * and so on. grid integration is used to calculate the contribution Hamiltonian of effective potential
      */
     virtual void contributeHR() override;
-  
-  const UnitCell* ucell;
-  const Grid_Driver* gd;
 
-private:
-  // used for k-dependent grid integration.
-  Gint_k* GK = nullptr;
+    const UnitCell* ucell;
+    const Grid_Driver* gd;
 
-  // used for gamma only algorithms.
-  Gint_Gamma* GG = nullptr;
+  private:
+    // used for k-dependent grid integration.
+    Gint_k* GK = nullptr;
 
-  std::vector<double> orb_cutoff_;
+    // used for gamma only algorithms.
+    Gint_Gamma* GG = nullptr;
 
-  // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
+    std::vector<double> orb_cutoff_;
 
-  elecstate::Potential* pot = nullptr;
+    // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
 
-  int nspin = 1;
+    elecstate::Potential* pot = nullptr;
 
-  /**
-   * @brief initialize HR, search the nearest neighbor atoms
-   * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
-   * the size of HR will be fixed after initialization
-   */
-  void initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD_in);
+    int nspin = 1;
+
+    /**
+     * @brief initialize HR, search the nearest neighbor atoms
+     * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
+     * the size of HR will be fixed after initialization
+     */
+    void initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD_in);
 };
 
 } // namespace hamilt

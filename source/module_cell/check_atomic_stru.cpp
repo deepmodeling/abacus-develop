@@ -1,7 +1,7 @@
 #include "check_atomic_stru.h"
 
-#include "module_base/element_covalent_radius.h"
-#include "module_base/timer.h"
+#include "source_base/element_covalent_radius.h"
+#include "source_base/timer.h"
 
 namespace unitcell
 {
@@ -21,7 +21,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
 
     if (GlobalV::MY_RANK == 0)
     {
-        
+
         const int ntype = ucell.ntype;
         const double lat0 = ucell.lat0;
         const double warning_coef = 0.6;
@@ -52,7 +52,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
                 std::cout << mess.str();
             }
         }
-        std::vector<double> latvec (9);
+        std::vector<double> latvec(9);
         latvec[0] = ucell.a1.x;
         latvec[1] = ucell.a2.x;
         latvec[2] = ucell.a3.x;
@@ -62,7 +62,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
         latvec[6] = ucell.a1.z;
         latvec[7] = ucell.a2.z;
         latvec[8] = ucell.a3.z;
-        std::vector<double> A(27*3);
+        std::vector<double> A(27 * 3);
         std::vector<std::string> cell(27);
         std::vector<std::string> label(ntype);
         for (int i = 0; i < 27; i++)
@@ -127,7 +127,7 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
                             if (flag)
                             {
                                 const double sqrt_bon = sqrt(bond_length) * lat0;
-                                #pragma omp critical
+#pragma omp critical
                                 {
                                     no_warning = false;
                                     all_pass = all_pass && (sqrt_bon < factor_error ? false : true);
@@ -136,10 +136,10 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
                                              << sqrt_bon << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
                                 }
                             }
-                        } 
+                        }
                     } // ia2
-                } // it2
-            } // iat
+                }     // it2
+            }         // iat
         }
     }
     if (!all_pass || !no_warning)
@@ -171,4 +171,4 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
     ModuleBase::timer::tick("unitcell", "check_atomic_stru");
 }
 
-}
+} // namespace unitcell

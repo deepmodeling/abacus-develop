@@ -1,10 +1,10 @@
 #include "./elecstate_pw_sdft.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/timer.h"
 namespace elecstate
 {
 
@@ -26,10 +26,12 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
             psi.fix_k(ik);
             this->updateRhoK(psi);
         }
-        if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
-        for (int ii = 0; ii < nspin; ii++) {
-            castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
-        }
+        if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+        {
+            for (int ii = 0; ii < nspin; ii++)
+            {
+                castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
+            }
         }
         this->parallelK();
     }

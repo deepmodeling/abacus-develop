@@ -1,8 +1,8 @@
 #include "ions_move_cg.h"
 
 #include "ions_move_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 using namespace Ions_Move_Basic;
 
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
@@ -58,7 +58,7 @@ void Ions_Move_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in)
+void Ions_Move_CG::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(dim > 0);
@@ -75,7 +75,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     static bool trial = false;
 
     // ncggrad is a parameter to control the cg method , every ten cg directions,
-    // we change the direction back to the steepest descent method                       
+    // we change the direction back to the steepest descent method
     static int ncggrad = 0;
 
     static double fa = 0.0;
@@ -91,13 +91,12 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
     static int nbrent = 0;
 
-    
     // some arrays
-    double *pos = new double[dim];
-    double *grad = new double[dim];
-    double *cg_gradn = new double[dim];
-    double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    double* pos = new double[dim];
+    double* grad = new double[dim];
+    double* cg_gradn = new double[dim];
+    double* move = new double[dim];
+    double* cg_grad = new double[dim];
     double best_x = 0.0;
     double fmin = 0.0;
 
@@ -308,12 +307,12 @@ CG_begin:
     return;
 }
 
-void Ions_Move_CG::setup_cg_grad(double *grad,
-                                 const double *grad0,
-                                 double *cg_grad,
-                                 const double *cg_grad0,
-                                 const int &ncggrad,
-                                 int &flag)
+void Ions_Move_CG::setup_cg_grad(double* grad,
+                                 const double* grad0,
+                                 double* cg_grad,
+                                 const double* cg_grad0,
+                                 const int& ncggrad,
+                                 int& flag)
 {
     ModuleBase::TITLE("Ions_Move_CG", "setup_cg_grad");
     assert(Ions_Move_Basic::istep > 0);
@@ -368,12 +367,12 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
     return;
 }
 
-void Ions_Move_CG::third_order(const double &e0,
-                               const double &e1,
-                               const double &fa,
-                               const double &fb,
+void Ions_Move_CG::third_order(const double& e0,
+                               const double& e1,
+                               const double& fa,
+                               const double& fb,
                                const double x,
-                               double &best_x)
+                               double& best_x)
 {
     double k3, k2, k1;
     double dmoveh, dmove1, dmove2, dmove, ecal1, ecal2;
@@ -409,14 +408,14 @@ void Ions_Move_CG::third_order(const double &e0,
     return;
 }
 
-void Ions_Move_CG::Brent(double &fa,
-                         double &fb,
-                         double &fc,
-                         double &xa,
-                         double &xb,
-                         double &xc,
-                         double &best_x,
-                         double &xpt)
+void Ions_Move_CG::Brent(double& fa,
+                         double& fb,
+                         double& fc,
+                         double& xa,
+                         double& xb,
+                         double& xc,
+                         double& best_x,
+                         double& xpt)
 {
     double dmove;
     double tmp;
@@ -481,7 +480,7 @@ void Ions_Move_CG::Brent(double &fa,
     return;
 }
 
-void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
+void Ions_Move_CG::f_cal(const double* g0, const double* g1, const int& dim, double& f_value)
 {
     double hv0, hel;
     hel = 0;
@@ -499,7 +498,7 @@ void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, dou
     return;
 }
 
-void Ions_Move_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
+void Ions_Move_CG::setup_move(double* move, double* cg_gradn, const double& trust_radius)
 {
     // movement using gradient and trust_radius.
     for (int i = 0; i < dim; ++i)

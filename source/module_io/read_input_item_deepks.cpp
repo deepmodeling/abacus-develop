@@ -1,8 +1,8 @@
-#include "module_base/constants.h"
-#include "module_base/tool_quit.h"
 #include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 namespace ModuleIO
 {
 void ReadInput::item_deepks()
@@ -63,23 +63,29 @@ void ReadInput::item_deepks()
             {
                 if (para.input.deepks_band_range[0] >= para.input.deepks_band_range[1])
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "deepks_band_range[0] must be smaller than deepks_band_range[1] for deepks_bandgap = 1.");
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "deepks_band_range[0] must be smaller than deepks_band_range[1] for deepks_bandgap = 1.");
                 }
             }
             else if (para.input.deepks_bandgap == 2)
             {
                 if (para.input.deepks_band_range[0] > para.input.deepks_band_range[1])
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "deepks_band_range[0] must be no more than deepks_band_range[1] for deepks_bandgap = 2.");
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "deepks_band_range[0] must be no more than deepks_band_range[1] for deepks_bandgap = 2.");
                 }
             }
             else
             {
                 if (para.input.deepks_band_range[0] != -1 || para.input.deepks_band_range[1] != 0)
                 {
-                    ModuleBase::WARNING("ReadInput", "deepks_band_range is used for deepks_bandgap = 1/2. Ignore its setting for other cases.");
+                    ModuleBase::WARNING(
+                        "ReadInput",
+                        "deepks_band_range is used for deepks_bandgap = 1/2. Ignore its setting for other cases.");
                 }
-            } 
+            }
         };
         this->add_item(item);
     }

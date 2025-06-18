@@ -4,15 +4,15 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "module_base/timer.h"
 #include "module_cell/update_cell.h"
+#include "source_base/timer.h"
 Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
     md_tfreq = mdp.md_tfreq * ModuleBase::AU_to_FS;
 
-    assert(unit_transform>0.0);
+    assert(unit_transform > 0.0);
 
     md_pfirst = mdp.md_pfirst / unit_transform;
     md_plast = mdp.md_plast / unit_transform;
@@ -89,7 +89,7 @@ Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base
 
     tdof = 3 * ucell.nat - frozen_freedom_;
 
-    assert(mdp.md_tchain>0);
+    assert(mdp.md_tchain > 0);
 
     /// allocate thermostats coupled with particles
     mass_eta = new double[mdp.md_tchain];
@@ -271,7 +271,6 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     return;
 }
 
-
 void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
@@ -314,7 +313,6 @@ void Nose_Hoover::second_half()
 
     return;
 }
-
 
 void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
@@ -809,7 +807,7 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
     }
 
     /// reset ucell and pos due to change of lattice
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell, ofs);
 }
 
 void Nose_Hoover::target_stress()

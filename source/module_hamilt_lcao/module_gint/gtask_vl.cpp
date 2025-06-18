@@ -1,9 +1,9 @@
-#include <omp.h>
-
 #include "gint_vl_gpu.h"
-#include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
+#include "source_base/ylm.h"
+
+#include <omp.h>
 namespace GintKernel
 {
 
@@ -34,12 +34,9 @@ void gtask_vlocal(const Grid_Technique& gridt,
             const int iat = gridt.which_atom[mcell_index];
             const int it_temp = ucell.iat2it[iat];
 
-            dr_part[atoms_per_z * 3] = gridt.meshball_positions[imcell][0]
-                                       - gridt.tau_in_bigcell[iat][0];
-            dr_part[atoms_per_z * 3 + 1] = gridt.meshball_positions[imcell][1]
-                                           - gridt.tau_in_bigcell[iat][1];
-            dr_part[atoms_per_z * 3 + 2] = gridt.meshball_positions[imcell][2]
-                                           - gridt.tau_in_bigcell[iat][2];
+            dr_part[atoms_per_z * 3] = gridt.meshball_positions[imcell][0] - gridt.tau_in_bigcell[iat][0];
+            dr_part[atoms_per_z * 3 + 1] = gridt.meshball_positions[imcell][1] - gridt.tau_in_bigcell[iat][1];
+            dr_part[atoms_per_z * 3 + 2] = gridt.meshball_positions[imcell][2] - gridt.tau_in_bigcell[iat][2];
             atoms_type[atoms_per_z] = it_temp;
             atoms_per_z++;
         }
@@ -52,10 +49,8 @@ void gtask_vlocal(const Grid_Technique& gridt,
             {
                 for (int bz_index = 0; bz_index < gridt.bz; bz_index++)
                 {
-                    int vindex_global = bx_index * gridt.ncy * nczp
-                                        + by_index * nczp + bz_index
-                                        + start_ind_grid;
-                    vldr3[id]= vlocal_global_value[vindex_global] * vfactor;
+                    int vindex_global = bx_index * gridt.ncy * nczp + by_index * nczp + bz_index + start_ind_grid;
+                    vldr3[id] = vlocal_global_value[vindex_global] * vfactor;
                     id++;
                 }
             }
@@ -106,7 +101,7 @@ void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
                 const int iat2 = gridt.which_atom[bcell_start_index + atom2];
                 const int uc2 = gridt.which_unitcell[bcell_start_index + atom2];
                 const ModuleBase::Vector3<int> r2 = gridt.get_ucell_coords(uc2);
-                int offset = hRGint->find_matrix_offset(iat1, iat2, r1-r2);
+                int offset = hRGint->find_matrix_offset(iat1, iat2, r1 - r2);
                 if (offset == -1)
                 {
                     continue;
@@ -115,18 +110,14 @@ void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
 
                 if (iat1 <= iat2)
                 {
-                    const int atom_pair_nw
-                        = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
+                    const int atom_pair_nw = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
 
                     const int calc_index1 = vldr3_index + atom1 * nwmax * gridt.bxyz;
                     const int calc_index2 = vldr3_index + atom2 * nwmax * gridt.bxyz;
 
-                    mat_A[atom_pair_num]
-                        = psi + calc_index1;
-                    mat_B[atom_pair_num]
-                        = psi_vldr3 + calc_index2;
-                    mat_C[atom_pair_num]
-                        = grid_vlocal_g + offset;
+                    mat_A[atom_pair_num] = psi + calc_index1;
+                    mat_B[atom_pair_num] = psi_vldr3 + calc_index2;
+                    mat_C[atom_pair_num] = grid_vlocal_g + offset;
 
                     mat_lda[atom_pair_num] = gridt.bxyz;
                     mat_ldb[atom_pair_num] = gridt.bxyz;
@@ -135,7 +126,7 @@ void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
                     mat_m[atom_pair_num] = ucell.atoms[it1].nw;
                     mat_n[atom_pair_num] = ucell.atoms[it2].nw;
                     mat_k[atom_pair_num] = gridt.bxyz;
-                    
+
                     if (mat_m[atom_pair_num] > max_m)
                     {
                         max_m = mat_m[atom_pair_num];

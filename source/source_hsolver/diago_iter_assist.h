@@ -1,10 +1,10 @@
 #ifndef DIAGOITERASSIST_H
 #define DIAGOITERASSIST_H
 
-#include "module_base/complexmatrix.h"
-#include "module_base/macros.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_psi/psi.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/macros.h"
 
 namespace hsolver
 {
@@ -42,17 +42,18 @@ class DiagoIterAssist
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
     /// @param en eigenenergies
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
     /// and return all - zero eigenenergies.
     static void diagH_subspace_init(
-            hamilt::Hamilt<T, Device>* pHamilt,
-            const T* psi,
-            int psi_nr,
-            int psi_nc,
-            psi::Psi<T, Device> &evc,
-            Real* en,
-            const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
-            const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
+        hamilt::Hamilt<T, Device>* pHamilt,
+        const T* psi,
+        int psi_nr,
+        int psi_nc,
+        psi::Psi<T, Device>& evc,
+        Real* en,
+        const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
+        const std::function<void(const T* const, const int, const int)>& export_vcc
+        = [](const T* null, const int n, const int m) {});
 
     static void diagH_LAPACK(const int nstart,
                              const int nbands,
@@ -68,9 +69,9 @@ class DiagoIterAssist
     /// @param hcc : Hamiltonian matrix
     /// @param scc : overlap matrix
     static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                T *hcc, 
-                                                T *scc);
+                                const psi::Psi<T, Device>& psi,           // [in] wavefunction
+                                T* hcc,
+                                T* scc);
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix
@@ -83,17 +84,17 @@ class DiagoIterAssist
     static void diag_responce(const T* hcc,
                               const T* scc,
                               const int nbands,
-                              const T* mat_in, 
-                              T* mat_out, 
-                              int mat_col, 
+                              const T* mat_in,
+                              T* mat_out,
+                              int mat_col,
                               Real* en);
-    
+
     /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
     static void diag_subspace_psi(const T* hcc,
-                              const T* scc,
-                              const int dim_subspace,
-                              psi::Psi<T, Device>& evc,
-                              Real* en);
+                                  const T* scc,
+                                  const int dim_subspace,
+                                  psi::Psi<T, Device>& evc,
+                                  Real* en);
 
     static bool test_exit_cond(const int& ntry, const int& notconv);
 

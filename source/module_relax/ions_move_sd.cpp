@@ -1,10 +1,11 @@
 #include "ions_move_sd.h"
 
-#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include<vector>
+#include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+
+#include <vector>
 
 using namespace Ions_Move_Basic;
 
@@ -58,9 +59,10 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         printf("in cheak_converged");
         printf("pos[0]: %f\n", pos[0]);
         energy_saved = etot_in;
-        for (int i = 0; i < dim; i++) {
+        for (int i = 0; i < dim; i++)
+        {
             pos_saved[i] = pos[i];
-}
+        }
         for (int i = 0; i < dim; i++)
         {
             grad_saved[i] = grad[i];

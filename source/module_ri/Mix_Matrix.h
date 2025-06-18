@@ -6,10 +6,11 @@
 #ifndef MIX_MATRIX_H
 #define MIX_MATRIX_H
 
+#include "source_base/module_mixing/mixing.h"
+#include "source_base/module_mixing/plain_mixing.h"
+
 #include <vector>
 
-#include "module_base/module_mixing/mixing.h"
-#include "module_base/module_mixing/plain_mixing.h"
 template <typename Tdata>
 class Mix_Matrix
 {

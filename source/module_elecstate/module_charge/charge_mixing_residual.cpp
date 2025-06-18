@@ -1,9 +1,8 @@
 #include "charge_mixing.h"
-
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
@@ -79,7 +78,7 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     ModuleBase::TITLE("Charge_Mixing", "get_dkin");
     ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
     double dkin = 0.0;
-    
+
     // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -126,19 +125,18 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 
     double sum = 0.0;
 
-    auto part_of_noncolin = [&]()
-    {
+    auto part_of_noncolin = [&]() {
         double sum = 0.0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-			if (this->rhopw->gg[ig] < 1e-8) 
-			{
-				continue;
-			}
-			sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
+            if (this->rhopw->gg[ig] < 1e-8)
+            {
+                continue;
+            }
+            sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
         return sum;
@@ -157,9 +155,10 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
+            if (this->rhopw->gg[ig] < 1e-8)
+            {
                 continue;
-}
+            }
             sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -198,9 +197,11 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     }
     case 4:
         // non-collinear spin, added by zhengdy
-        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z) {
+        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z)
+        {
             sum += part_of_noncolin();
-        } else
+        }
+        else
         {
             // another part with magnetization
 #ifdef _OPENMP
@@ -208,10 +209,10 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-				if (ig == this->rhopw->ig_gge0) 
-				{
-					continue;
-				}
+                if (ig == this->rhopw->ig_gge0)
+                {
+                    continue;
+                }
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -232,9 +233,10 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0) {
+                if (ig == ig0)
+                {
                     continue;
-}
+                }
                 sum += fac3
                        * ((conj(rhog1[1][ig]) * rhog2[1][ig]).real() + (conj(rhog1[2][ig]) * rhog2[2][ig]).real()
                           + (conj(rhog1[3][ig]) * rhog2[3][ig]).real());
@@ -264,8 +266,10 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0)
+    {
+        resize_tmp = 2;
+    }
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
@@ -295,28 +299,28 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     const int npw = this->rhopw->npw;
 
     // a lambda function for summing the charge density
-    auto part_of_rho = [&]()
-    {
+    auto part_of_rho = [&]() {
         double sum = 0.0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
+            if (this->rhopw->gg[ig] < 1e-8)
+            {
                 continue;
-}
+            }
             sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
         return sum;
     };
-    
-    if (PARAM.inp.nspin==1)
+
+    if (PARAM.inp.nspin == 1)
     {
         sum += part_of_rho();
     }
-    else if (PARAM.inp.nspin==2)
+    else if (PARAM.inp.nspin == 2)
     {
         // charge density part
 #ifdef _OPENMP
@@ -324,9 +328,10 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
+            if (this->rhopw->gg[ig] < 1e-8)
+            {
                 continue;
-}
+            }
             sum += (conj(rhog1[ig]) * (rhog2[ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -360,7 +365,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         sum2 += mag;
         sum += sum2;
     }
-    else if (PARAM.inp.nspin==4)
+    else if (PARAM.inp.nspin == 4)
     {
         if (!PARAM.globalv.domag && !PARAM.globalv.domag_z)
         {
@@ -374,9 +379,10 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0) {
+                if (ig == this->rhopw->ig_gge0)
+                {
                     continue;
-}
+                }
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -384,8 +390,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
             if (ig0 > 0)
             {
                 sum += fac2
-                       * ((conj(rhog1[ig0 + npw]) * rhog2[ig0 + npw]).real() + (conj(rhog1[ig0 + 2*npw]) * rhog2[ig0 + 2*npw]).real()
-                          + (conj(rhog1[ig0 + 3*npw]) * rhog2[ig0 + 3*npw]).real());
+                       * ((conj(rhog1[ig0 + npw]) * rhog2[ig0 + npw]).real()
+                          + (conj(rhog1[ig0 + 2 * npw]) * rhog2[ig0 + 2 * npw]).real()
+                          + (conj(rhog1[ig0 + 3 * npw]) * rhog2[ig0 + 3 * npw]).real());
             }
             double fac3 = fac2;
             if (PARAM.globalv.gamma_only_pw)
@@ -397,12 +404,14 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0) {
+                if (ig == ig0)
+                {
                     continue;
-}
+                }
                 sum += fac3
-                       * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real() + (conj(rhog1[ig + 2*npw]) * rhog2[ig + 2*npw]).real()
-                          + (conj(rhog1[ig + 3*npw]) * rhog2[ig + 3*npw]).real());
+                       * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real()
+                          + (conj(rhog1[ig + 2 * npw]) * rhog2[ig + 2 * npw]).real()
+                          + (conj(rhog1[ig + 3 * npw]) * rhog2[ig + 3 * npw]).real());
             }
         }
         else if (this->mixing_angle > 0)
@@ -413,17 +422,17 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0) {
+                if (ig == this->rhopw->ig_gge0)
+                {
                     continue;
-}
+                }
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
             const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
-                sum += fac2
-                       * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
+                sum += fac2 * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
             }
             double fac3 = fac2;
             if (PARAM.globalv.gamma_only_pw)
@@ -435,11 +444,11 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0) {
+                if (ig == ig0)
+                {
                     continue;
-}
-                sum += fac3
-                       * ((conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real());
+                }
+                sum += fac3 * ((conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real());
             }
         }
     }
@@ -459,10 +468,10 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-	if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) 
-	{ 
-		resize_tmp = 2;
-	}
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0)
+    {
+        resize_tmp = 2;
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)

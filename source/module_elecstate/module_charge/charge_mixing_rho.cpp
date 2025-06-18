@@ -1,7 +1,7 @@
 #include "charge_mixing.h"
-#include "module_parameter/parameter.h"
-#include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
@@ -14,7 +14,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     std::complex<double>* rhoghf_in = nullptr;
     std::complex<double>* rhoghf_out = nullptr;
 
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         // divide into smooth part and high_frequency part
         divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
@@ -38,8 +38,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     else if (PARAM.inp.nspin == 2)
     {
         // magnetic density
-        std::complex<double> *rhog_mag = nullptr;
-        std::complex<double> *rhog_mag_save = nullptr;
+        std::complex<double>* rhog_mag = nullptr;
+        std::complex<double>* rhog_mag_save = nullptr;
         const int npw = this->rhopw->npw;
         // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
         rhog_mag = new std::complex<double>[npw * PARAM.inp.nspin];
@@ -90,14 +90,14 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
         for (int ig = 0; ig < npw; ig++)
         {
-            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]);
-            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]);
+            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig + npw]);
+            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig + npw]);
         }
         // delete
         delete[] rhog_mag;
         delete[] rhog_mag_save;
         // get rhogs_out for combine_data()
-        if ( PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid)
         {
             for (int ig = 0; ig < npw; ig++)
             {
@@ -140,7 +140,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
         // old support see mix_rho_recip()
-        if ( PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid)
         {
             ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
         }
@@ -154,9 +154,12 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         for (int ir = 0; ir < nrxx; ir++)
         {
             // |m| for rho
-            rho_magabs[ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
+            rho_magabs[ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir]
+                                       + chr->rho[3][ir] * chr->rho[3][ir]);
             // |m| for rho_save
-            rho_magabs_save[ir] = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] + chr->rho_save[2][ir] * chr->rho_save[2][ir] + chr->rho_save[3][ir] * chr->rho_save[3][ir]);
+            rho_magabs_save[ir]
+                = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] + chr->rho_save[2][ir] * chr->rho_save[2][ir]
+                            + chr->rho_save[3][ir] * chr->rho_save[3][ir]);
         }
         // allocate memory for rhog_magabs and rhog_magabs_save
         const int npw = this->rhopw->npw;
@@ -167,7 +170,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         // calculate rhog_magabs and rhog_magabs_save
         for (int ig = 0; ig < npw; ig++)
         {
-            rhog_magabs[ig] = chr->rhog[0][ig]; // rho
+            rhog_magabs[ig] = chr->rhog[0][ig];           // rho
             rhog_magabs_save[ig] = chr->rhog_save[0][ig]; // rho_save
         }
         // FT to get rhog_magabs and rhog_magabs_save
@@ -204,10 +207,13 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         for (int ig = 0; ig < npw; ig++)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
-            double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
-            if (std::abs(norm) < 1e-10) { continue;
-}
-            double rescale_tmp = rho_magabs[npw + ig] / norm; 
+            double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig]
+                                    + chr->rho[3][ig] * chr->rho[3][ig]);
+            if (std::abs(norm) < 1e-10)
+            {
+                continue;
+            }
+            double rescale_tmp = rho_magabs[npw + ig] / norm;
             chr->rho[1][ig] *= rescale_tmp;
             chr->rho[2][ig] *= rescale_tmp;
             chr->rho[3][ig] *= rescale_tmp;
@@ -219,7 +225,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rho_magabs_save;
     }
 
-    if ( PARAM.globalv.double_grid)
+    if (PARAM.globalv.double_grid)
     {
         // plain mixing for high_frequencies
         const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * PARAM.inp.nspin;
@@ -243,7 +249,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             // use rhodpw for double_grid
             // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
-            this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_CPU>(chr->rhog[is], chr->rho[is]);
+            this->rhodpw->recip_to_real<std::complex<double>, double, base_device::DEVICE_CPU>(chr->rhog[is],
+                                                                                               chr->rho[is]);
         }
     }
     // For kinetic energy density
@@ -261,7 +268,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
         // for high frequency part
         std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
-        if ( PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid)
         {
             // divide into smooth part and high_frequency part
             divide_data(kin_g_save.data(), taugs_in, taughf_in);
@@ -274,7 +281,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taugs_out);
 
-        if ( PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid)
         {
             // simple mixing for high_frequencies
             const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * PARAM.inp.nspin;
@@ -292,21 +299,20 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
     }
 
-
     return;
 }
 
 void Charge_Mixing::mix_rho_real(Charge* chr)
 {
-    double* rhor_in=nullptr;
-    double* rhor_out=nullptr;
+    double* rhor_in = nullptr;
+    double* rhor_out = nullptr;
 
     if (PARAM.inp.nspin == 1)
     {
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);    
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
         auto inner_product
             = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
@@ -315,8 +321,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     else if (PARAM.inp.nspin == 2)
     {
         // magnetic density
-        double *rho_mag = nullptr;
-        double *rho_mag_save = nullptr; 
+        double* rho_mag = nullptr;
+        double* rho_mag_save = nullptr;
         const int nrxx = this->rhopw->nrxx;
         // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
         rho_mag = new double[nrxx * PARAM.inp.nspin];
@@ -338,8 +344,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         rhor_in = rho_mag_save;
         rhor_out = rho_mag;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-        auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
+        auto twobeta_mix = [this, nrxx](double* out, const double* in, const double* sres) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
@@ -365,12 +370,12 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rho[is], nrxx);
-            //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+            // ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         }
         for (int ir = 0; ir < nrxx; ir++)
         {
-            chr->rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
-            chr->rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+            chr->rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir + nrxx]);
+            chr->rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir + nrxx]);
         }
         // delete
         delete[] rho_mag;
@@ -383,8 +388,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         rhor_out = chr->rho[0];
         const int nrxx = this->rhopw->nrxx;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-        auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
+        auto twobeta_mix = [this, nrxx](double* out, const double* in, const double* sres) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
@@ -420,23 +424,21 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         // calculate rho_magabs and rho_magabs_save
         for (int ir = 0; ir < nrxx; ir++)
         {
-            rho_magabs[ir] = chr->rho[0][ir]; // rho
+            rho_magabs[ir] = chr->rho[0][ir];           // rho
             rho_magabs_save[ir] = chr->rho_save[0][ir]; // rho_save
-            // |m| for rho
-			rho_magabs[nrxx + ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] 
-					+ chr->rho[2][ir] * chr->rho[2][ir] 
-					+ chr->rho[3][ir] * chr->rho[3][ir]);
-			// |m| for rho_save
-			rho_magabs_save[nrxx + ir] = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] 
-					+ chr->rho_save[2][ir] * chr->rho_save[2][ir] 
-					+ chr->rho_save[3][ir] * chr->rho_save[3][ir]);
-		}
+                                                        // |m| for rho
+            rho_magabs[nrxx + ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir]
+                                              + chr->rho[3][ir] * chr->rho[3][ir]);
+            // |m| for rho_save
+            rho_magabs_save[nrxx + ir]
+                = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] + chr->rho_save[2][ir] * chr->rho_save[2][ir]
+                            + chr->rho_save[3][ir] * chr->rho_save[3][ir]);
+        }
         rhor_in = rho_magabs_save;
         rhor_out = rho_magabs;
 
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-        auto twobeta_mix
-            = [this, nrxx](double* out, const double* in, const double* sres) {
+        auto twobeta_mix = [this, nrxx](double* out, const double* in, const double* sres) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
@@ -463,15 +465,14 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         for (int ir = 0; ir < nrxx; ir++)
         {
             chr->rho[0][ir] = rho_magabs[ir]; // rho
-			double norm = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] 
-					+ chr->rho[2][ir] * chr->rho[2][ir] 
-					+ chr->rho[3][ir] * chr->rho[3][ir]);
+            double norm = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir]
+                                    + chr->rho[3][ir] * chr->rho[3][ir]);
 
-			if (norm < 1e-10) 
-			{ 
-				continue;
-			}
-            double rescale_tmp = rho_magabs[nrxx + ir] / norm; 
+            if (norm < 1e-10)
+            {
+                continue;
+            }
+            double rescale_tmp = rho_magabs[nrxx + ir] / norm;
             chr->rho[1][ir] *= rescale_tmp;
             chr->rho[2][ir] *= rescale_tmp;
             chr->rho[3][ir] *= rescale_tmp;
@@ -480,9 +481,9 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_magabs;
         delete[] rho_magabs_save;
     }
-    
-    double *taur_out=nullptr;
-    double *taur_in=nullptr;
+
+    double* taur_out = nullptr;
+    double* taur_in = nullptr;
     if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         taur_in = chr->kin_r_save[0];
@@ -493,9 +494,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taur_out);
     }
-
 }
-
 
 void Charge_Mixing::mix_rho(Charge* chr)
 {
@@ -513,7 +512,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-            for(int ir = 0 ; ir < nrxx ; ++ir)
+            for (int ir = 0; ir < nrxx; ++ir)
             {
                 rho123_is[ir] = chr->rho[is][ir];
             }
@@ -529,7 +528,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-            for(int ir = 0 ; ir < nrxx ; ++ir)
+            for (int ir = 0; ir < nrxx; ++ir)
             {
                 kin_r123_is[ir] = chr->kin_r[is][ir];
             }
@@ -556,7 +555,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-            for(int ir = 0 ; ir < nrxx ; ++ir)
+            for (int ir = 0; ir < nrxx; ++ir)
             {
                 chr->rho_save[is][ir] = rho123_is[ir];
             }
@@ -571,18 +570,18 @@ void Charge_Mixing::mix_rho(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-            for(int ir = 0 ; ir < nrxx ; ++ir)
+            for (int ir = 0; ir < nrxx; ++ir)
             {
                 chr->kin_r_save[is][ir] = kin_r123_is[ir];
             }
         }
     }
 
-	if (new_e_iteration) 
-	{
-		new_e_iteration = false;
-	}
+    if (new_e_iteration)
+    {
+        new_e_iteration = false;
+    }
 
-	ModuleBase::timer::tick("Charge_Mixing", "mix_rho");
+    ModuleBase::timer::tick("Charge_Mixing", "mix_rho");
     return;
 }

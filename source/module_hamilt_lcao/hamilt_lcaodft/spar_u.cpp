@@ -1,32 +1,33 @@
 #include "spar_u.h"
-#include "module_base/parallel_reduce.h"
-#include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/timer.h"
+
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 void sparse_format::cal_HR_dftu(
-	    const Parallel_Orbitals &pv,
-        std::set<Abfs::Vector3_Order<int>> &all_R_coor,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &SR_sparse,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> *HR_sparse,
-		const int &current_spin, 
-		const double &sparse_thr)
+    const Parallel_Orbitals& pv,
+    std::set<Abfs::Vector3_Order<int>>& all_R_coor,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>* HR_sparse,
+    const int& current_spin,
+    const double& sparse_thr)
 {
-    ModuleBase::TITLE("sparse_format","cal_HR_dftu");
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu");
+    ModuleBase::TITLE("sparse_format", "cal_HR_dftu");
+    ModuleBase::timer::tick("sparse_format", "cal_HR_dftu");
 
     int total_R_num = all_R_coor.size();
-    int *nonzero_num = new int[total_R_num]();
+    int* nonzero_num = new int[total_R_num]();
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
 
     int count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (auto& R_coor: all_R_coor)
     {
         auto iter = SR_sparse.find(R_coor);
         if (iter != SR_sparse.end())
         {
-            for (auto &row_loop : iter->second)
+            for (auto& row_loop: iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
@@ -36,16 +37,16 @@ void sparse_format::cal_HR_dftu(
 
     Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
 
-    double *HR_tmp = new double[pv.nloc];
-    double *SR_tmp = new double[pv.nloc];
+    double* HR_tmp = new double[pv.nloc];
+    double* SR_tmp = new double[pv.nloc];
 
-    int ir=0;
-    int ic=0;
-    int iic=0;
-    auto &temp_HR_sparse = HR_sparse[current_spin];
+    int ir = 0;
+    int ic = 0;
+    int iic = 0;
+    auto& temp_HR_sparse = HR_sparse[current_spin];
 
     count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (auto& R_coor: all_R_coor)
     {
         if (nonzero_num[count] != 0)
         {
@@ -55,10 +56,10 @@ void sparse_format::cal_HR_dftu(
             auto iter = SR_sparse.find(R_coor);
             if (iter != SR_sparse.end())
             {
-                for (auto &row_loop : iter->second)
+                for (auto& row_loop: iter->second)
                 {
                     ir = pv.global2local_row(row_loop.first);
-                    for (auto &col_loop : row_loop.second)
+                    for (auto& col_loop: row_loop.second)
                     {
                         ic = pv.global2local_col(col_loop.first);
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -97,7 +98,7 @@ void sparse_format::cal_HR_dftu(
 
                             if (std::abs(HR_tmp[iic]) > sparse_thr)
                             {
-                                double &value = temp_HR_sparse[R_coor][i][j];
+                                double& value = temp_HR_sparse[R_coor][i][j];
                                 value += HR_tmp[iic];
                                 if (std::abs(value) <= sparse_thr)
                                 {
@@ -108,7 +109,6 @@ void sparse_format::cal_HR_dftu(
                     }
                 }
             }
-
         }
 
         count++;
@@ -121,33 +121,32 @@ void sparse_format::cal_HR_dftu(
     HR_tmp = nullptr;
     SR_tmp = nullptr;
 
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu_sparse");
+    ModuleBase::timer::tick("sparse_format", "cal_HR_dftu_sparse");
 
     return;
 }
 
-
 void sparse_format::cal_HR_dftu_soc(
-	    const Parallel_Orbitals &pv,
-        std::set<Abfs::Vector3_Order<int>> &all_R_coor,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> &SR_soc_sparse,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> &HR_soc_sparse,
-		const int &current_spin, 
-		const double &sparse_thr)
+    const Parallel_Orbitals& pv,
+    std::set<Abfs::Vector3_Order<int>>& all_R_coor,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& HR_soc_sparse,
+    const int& current_spin,
+    const double& sparse_thr)
 {
-    ModuleBase::TITLE("sparse_format","cal_HR_dftu_soc");
-    ModuleBase::timer::tick("sparse_format","cal_HR_dftu_soc");
+    ModuleBase::TITLE("sparse_format", "cal_HR_dftu_soc");
+    ModuleBase::timer::tick("sparse_format", "cal_HR_dftu_soc");
 
     int total_R_num = all_R_coor.size();
-    int *nonzero_num = new int[total_R_num]();
+    int* nonzero_num = new int[total_R_num]();
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     int count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (auto& R_coor: all_R_coor)
     {
         auto iter = SR_soc_sparse.find(R_coor);
         if (iter != SR_soc_sparse.end())
         {
-            for (auto &row_loop : iter->second)
+            for (auto& row_loop: iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
@@ -157,15 +156,15 @@ void sparse_format::cal_HR_dftu_soc(
 
     Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
 
-    std::complex<double> *HR_soc_tmp = new std::complex<double>[pv.nloc];
-    std::complex<double> *SR_soc_tmp = new std::complex<double>[pv.nloc];
+    std::complex<double>* HR_soc_tmp = new std::complex<double>[pv.nloc];
+    std::complex<double>* SR_soc_tmp = new std::complex<double>[pv.nloc];
 
-    int ir=0;
-    int ic=0;
-    int iic=0;
+    int ir = 0;
+    int ic = 0;
+    int iic = 0;
 
     count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (auto& R_coor: all_R_coor)
     {
         if (nonzero_num[count] != 0)
         {
@@ -175,10 +174,10 @@ void sparse_format::cal_HR_dftu_soc(
             auto iter = SR_soc_sparse.find(R_coor);
             if (iter != SR_soc_sparse.end())
             {
-                for (auto &row_loop : iter->second)
+                for (auto& row_loop: iter->second)
                 {
                     ir = pv.global2local_row(row_loop.first);
-                    for (auto &col_loop : row_loop.second)
+                    for (auto& col_loop: row_loop.second)
                     {
                         ic = pv.global2local_col(col_loop.first);
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -217,7 +216,7 @@ void sparse_format::cal_HR_dftu_soc(
 
                             if (std::abs(HR_soc_tmp[iic]) > sparse_thr)
                             {
-                                std::complex<double> &value = HR_soc_sparse[R_coor][i][j];
+                                std::complex<double>& value = HR_soc_sparse[R_coor][i][j];
                                 value += HR_soc_tmp[iic];
                                 if (std::abs(value) <= sparse_thr)
                                 {
@@ -228,7 +227,6 @@ void sparse_format::cal_HR_dftu_soc(
                     }
                 }
             }
-
         }
 
         count++;
@@ -241,7 +239,7 @@ void sparse_format::cal_HR_dftu_soc(
     HR_soc_tmp = nullptr;
     SR_soc_tmp = nullptr;
 
-    ModuleBase::timer::tick("sparse_format","calculat_HR_dftu_soc");
+    ModuleBase::timer::tick("sparse_format", "calculat_HR_dftu_soc");
 
     return;
 }

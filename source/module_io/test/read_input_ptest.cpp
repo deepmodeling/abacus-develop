@@ -1,16 +1,16 @@
-#include <cstdio>
-#include <fstream>
+#include "module_io/read_input.h"
+#include "module_parameter/parameter.h"
+#include "source_base/tool_quit.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
-#include "module_io/read_input.h"
-#include "module_parameter/parameter.h"
+#include <cstdio>
+#include <fstream>
 
 // #ifdef __MPI
-#include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
+#include "source_base/parallel_global.h"
 // #endif
 /************************************************
  *  unit test of read_input_test.cpp
@@ -26,7 +26,7 @@
 
 class InputParaTest : public testing::Test
 {
-	protected:
+  protected:
 };
 
 // #ifdef __MPI
@@ -448,7 +448,8 @@ TEST_F(InputParaTest, ParaRead)
 
 // comment out this part of tests, since Parameter is in another directory now, mohan 2025-05-18
 // besides, the following tests will cause strange error in MPI_Finalize()
-// I tried the following modification, it worked well in my own environment, but not in the Github test, Xinyuan 2025-05-25
+// I tried the following modification, it worked well in my own environment, but not in the Github test, Xinyuan
+// 2025-05-25
 /*
 TEST_F(InputParaTest, Check)
 {

@@ -1,10 +1,10 @@
 #include "ORB_read.h"
 
-#include "module_base/math_integral.h"
-#include "module_base/parallel_common.h"
-#include "module_base/timer.h"
-#include "module_base/tool_check.h"
 #include "module_parameter/parameter.h"
+#include "source_base/math_integral.h"
+#include "source_base/parallel_common.h"
+#include "source_base/timer.h"
+#include "source_base/tool_check.h"
 
 #include <algorithm>
 #include <cassert>
@@ -37,30 +37,30 @@ LCAO_Orbitals::~LCAO_Orbitals()
     delete[] Alpha;
 }
 
-std::vector<double> LCAO_Orbitals::cutoffs() const {
+std::vector<double> LCAO_Orbitals::cutoffs() const
+{
     std::vector<double> cutoffs(ntype);
-    for (int it = 0; it < ntype; ++it) {
+    for (int it = 0; it < ntype; ++it)
+    {
         cutoffs[it] = Phi[it].getRcut();
     }
     return cutoffs;
 }
 
-void LCAO_Orbitals::init(
-    std::ofstream& ofs_in,
-    const int& ntype,
-    const std::string& orbital_dir,
-    const std::string* orbital_file,
-    const std::string& descriptor_file,
-    const int& lmax,
-    const double& lcao_ecut_in,
-    const double& lcao_dk_in,
-    const double& lcao_dr_in,
-    const double& lcao_rmax_in,
-    const bool& deepks_setorb,
-    const int& out_mat_r,
-    const bool& force_flag,
-    const int& my_rank
-)
+void LCAO_Orbitals::init(std::ofstream& ofs_in,
+                         const int& ntype,
+                         const std::string& orbital_dir,
+                         const std::string* orbital_file,
+                         const std::string& descriptor_file,
+                         const int& lmax,
+                         const double& lcao_ecut_in,
+                         const double& lcao_dk_in,
+                         const double& lcao_dr_in,
+                         const double& lcao_rmax_in,
+                         const bool& deepks_setorb,
+                         const int& out_mat_r,
+                         const bool& force_flag,
+                         const int& my_rank)
 {
     assert(ntype > 0);
     assert(lmax >= 0);
@@ -89,7 +89,6 @@ void LCAO_Orbitals::init(
     Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
     return;
 }
-
 
 #ifdef __MPI
 // be called in UnitCell.
@@ -232,9 +231,10 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
     // }
 
     //	this->kmesh = static_cast<int> (PI / 0.01 / 4 / this->dk);
-    if (kmesh % 2 == 0) {
+    if (kmesh % 2 == 0)
+    {
         kmesh++;
-}
+    }
     ModuleBase::GlobalFunc::OUT(ofs_in, "kmesh", kmesh);
     //-----------------------------------------------------------------
 

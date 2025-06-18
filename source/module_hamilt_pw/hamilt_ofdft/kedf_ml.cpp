@@ -2,45 +2,43 @@
 
 #include "kedf_ml.h"
 
-#include "npy.hpp"
-#include "module_base/parallel_reduce.h"
-#include "module_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "npy.hpp"
+#include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
 
-void KEDF_ML::set_para(
-    const int nx, 
-    const double dV, 
-    const double nelec, 
-    const double tf_weight, 
-    const double vw_weight, 
-    const double chi_p,
-    const double chi_q,
-    const std::vector<double> &chi_xi,
-    const std::vector<double> &chi_pnl,
-    const std::vector<double> &chi_qnl,
-    const int &nkernel,
-    const std::vector<int> &kernel_type,
-    const std::vector<double> &kernel_scaling,
-    const std::vector<double> &yukawa_alpha,
-    const std::vector<std::string> &kernel_file,
-    const bool &of_ml_gamma,
-    const bool &of_ml_p,
-    const bool &of_ml_q,
-    const bool &of_ml_tanhp,
-    const bool &of_ml_tanhq,
-    const std::vector<int> &of_ml_gammanl,
-    const std::vector<int> &of_ml_pnl,
-    const std::vector<int> &of_ml_qnl,
-    const std::vector<int> &of_ml_xi,
-    const std::vector<int> &of_ml_tanhxi,
-    const std::vector<int> &of_ml_tanhxi_nl,
-    const std::vector<int> &of_ml_tanh_pnl,
-    const std::vector<int> &of_ml_tanh_qnl,
-    const std::vector<int> &of_ml_tanhp_nl,
-    const std::vector<int> &of_ml_tanhq_nl,
-    const std::string device_inpt,
-    ModulePW::PW_Basis *pw_rho
-)
+void KEDF_ML::set_para(const int nx,
+                       const double dV,
+                       const double nelec,
+                       const double tf_weight,
+                       const double vw_weight,
+                       const double chi_p,
+                       const double chi_q,
+                       const std::vector<double>& chi_xi,
+                       const std::vector<double>& chi_pnl,
+                       const std::vector<double>& chi_qnl,
+                       const int& nkernel,
+                       const std::vector<int>& kernel_type,
+                       const std::vector<double>& kernel_scaling,
+                       const std::vector<double>& yukawa_alpha,
+                       const std::vector<std::string>& kernel_file,
+                       const bool& of_ml_gamma,
+                       const bool& of_ml_p,
+                       const bool& of_ml_q,
+                       const bool& of_ml_tanhp,
+                       const bool& of_ml_tanhq,
+                       const std::vector<int>& of_ml_gammanl,
+                       const std::vector<int>& of_ml_pnl,
+                       const std::vector<int>& of_ml_qnl,
+                       const std::vector<int>& of_ml_xi,
+                       const std::vector<int>& of_ml_tanhxi,
+                       const std::vector<int>& of_ml_tanhxi_nl,
+                       const std::vector<int>& of_ml_tanh_pnl,
+                       const std::vector<int>& of_ml_tanh_qnl,
+                       const std::vector<int>& of_ml_tanhp_nl,
+                       const std::vector<int>& of_ml_tanhq_nl,
+                       const std::string device_inpt,
+                       ModulePW::PW_Basis* pw_rho)
 {
     torch::set_default_dtype(caffe2::TypeMeta::fromScalarType(torch::kDouble));
     auto output = torch::get_default_dtype();
@@ -53,23 +51,22 @@ void KEDF_ML::set_para(
     this->dV = dV;
     this->nkernel = nkernel;
 
-    this->init_data(
-        nkernel,
-        of_ml_gamma,
-        of_ml_p,
-        of_ml_q,
-        of_ml_tanhp,
-        of_ml_tanhq,
-        of_ml_gammanl,
-        of_ml_pnl,
-        of_ml_qnl,
-        of_ml_xi,
-        of_ml_tanhxi,
-        of_ml_tanhxi_nl,
-        of_ml_tanh_pnl,
-        of_ml_tanh_qnl,
-        of_ml_tanhp_nl,
-        of_ml_tanhq_nl);
+    this->init_data(nkernel,
+                    of_ml_gamma,
+                    of_ml_p,
+                    of_ml_q,
+                    of_ml_tanhp,
+                    of_ml_tanhq,
+                    of_ml_gammanl,
+                    of_ml_pnl,
+                    of_ml_qnl,
+                    of_ml_xi,
+                    of_ml_tanhxi,
+                    of_ml_tanhxi_nl,
+                    of_ml_tanh_pnl,
+                    of_ml_tanh_qnl,
+                    of_ml_tanhp_nl,
+                    of_ml_tanhq_nl);
 
     std::cout << "ninput = " << ninput << std::endl;
 
@@ -85,11 +82,15 @@ void KEDF_ML::set_para(
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
             for (int i = 0; i < this->ninput; ++i)
             {
-                if (this->descriptor_type[i] == "gamma") feg_inpt[i] = 1.;
+                if (this->descriptor_type[i] == "gamma")
+                    feg_inpt[i] = 1.;
             }
 
-            if (PARAM.inp.of_ml_feg == 1) 
-                this->feg_net_F = torch::softplus(this->nn->forward(feg_inpt)).to(this->device_CPU).contiguous().data_ptr<double>()[0];
+            if (PARAM.inp.of_ml_feg == 1)
+                this->feg_net_F = torch::softplus(this->nn->forward(feg_inpt))
+                                      .to(this->device_CPU)
+                                      .contiguous()
+                                      .data_ptr<double>()[0];
             else
             {
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
@@ -97,8 +98,8 @@ void KEDF_ML::set_para(
 
             std::cout << "feg_net_F = " << this->feg_net_F << std::endl;
         }
-    } 
-    
+    }
+
     if (PARAM.inp.of_kinetic == "ml" || PARAM.inp.of_ml_gene_data == 1)
     {
         this->cal_tool = new ModuleIO::Cal_MLKEDF_Descriptors;
@@ -109,32 +110,46 @@ void KEDF_ML::set_para(
         this->chi_pnl = chi_pnl;
         this->chi_qnl = chi_qnl;
 
-        this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
-                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho);
+        this->cal_tool->set_para(nx,
+                                 nelec,
+                                 tf_weight,
+                                 vw_weight,
+                                 chi_p,
+                                 chi_q,
+                                 chi_xi,
+                                 chi_pnl,
+                                 chi_qnl,
+                                 nkernel,
+                                 kernel_type,
+                                 kernel_scaling,
+                                 yukawa_alpha,
+                                 kernel_file,
+                                 this->dV * pw_rho->nxyz,
+                                 pw_rho);
     }
 }
 
 /**
  * @brief Get the energy of ML KEDF
  * \f[ E_{ML} = c_{TF} * \int{F(\rho) \rho^{5/3} dr} \f]
- * 
+ *
  * @param prho charge density
  * @param pw_rho PW_Basis
  * @return the energy of ML KEDF
  */
-double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
+double KEDF_ML::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
     this->updateInput(prho, pw_rho);
 
     this->NN_forward(prho, pw_rho, false);
-    
+
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
 
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
-        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], 5./3.);
+        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], 5. / 3.);
     }
     std::cout << "energy" << energy << std::endl;
     energy *= this->dV * this->cTF;
@@ -145,17 +160,17 @@ double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
 
 /**
  * @brief Get the potential of ML KEDF, and add it into rpotential
- * 
+ *
  * @param prho charge density
  * @param pw_rho PW_Basis
  * @param rpotential rpotential => rpotential + V_{ML}
  */
-void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
+void KEDF_ML::ml_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
     this->updateInput(prho, pw_rho);
 
     this->NN_forward(prho, pw_rho, true);
-    
+
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
@@ -168,7 +183,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
-        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], 5./3.);
+        energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], 5. / 3.);
     }
     energy *= this->dV * this->cTF;
     this->ml_energy = energy;
@@ -178,14 +193,18 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
 
 /**
  * @brief Generate training data for ML KEDF
- * 
+ *
  * @param prho charge density
  * @param wt KEDF_WT
  * @param tf KEDF_TF
  * @param pw_rho PW_Basis
  * @param veff effective potential
  */
-void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF &tf,  ModulePW::PW_Basis *pw_rho, const double *veff)
+void KEDF_ML::generateTrainData(const double* const* prho,
+                                KEDF_WT& wt,
+                                KEDF_TF& tf,
+                                ModulePW::PW_Basis* pw_rho,
+                                const double* veff)
 {
     // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
@@ -193,7 +212,7 @@ void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF
         this->updateInput(prho, pw_rho);
 
         this->NN_forward(prho, pw_rho, true);
-        
+
         torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
         this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
         torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
@@ -211,24 +230,26 @@ void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF
 
 /**
  * @brief For test
- * 
+ *
  * @param prho charge density
  * @param pw_rho PW_Basis
  */
-void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
+void KEDF_ML::localTest(const double* const* pprho, ModulePW::PW_Basis* pw_rho)
 {
     // for test =====================
-    std::vector<long unsigned int> cshape = {(long unsigned) this->nx};
+    std::vector<long unsigned int> cshape = {(long unsigned)this->nx};
     bool fortran_order = false;
 
     std::vector<double> temp_prho(this->nx);
     this->loadVector("dir_of_input_rho", temp_prho);
-    double ** prho = new double *[1];
+    double** prho = new double*[1];
     prho[0] = new double[this->nx];
-    for (int ir = 0; ir < this->nx; ++ir) prho[0][ir] = temp_prho[ir];
-    for (int ir = 0; ir < this->nx; ++ir) 
+    for (int ir = 0; ir < this->nx; ++ir)
+        prho[0][ir] = temp_prho[ir];
+    for (int ir = 0; ir < this->nx; ++ir)
     {
-        if (prho[0][ir] == 0.){
+        if (prho[0][ir] == 0.)
+        {
             std::cout << "WARNING: rho = 0" << std::endl;
         }
     };
@@ -237,7 +258,7 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     this->updateInput(prho, pw_rho);
 
     this->NN_forward(prho, pw_rho, true);
-    
+
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
@@ -255,7 +276,7 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
 
 /**
  * @brief Set the device for ML KEDF
- * 
+ *
  * @param device_inpt "cpu" or "gpu"
  */
 void KEDF_ML::set_device(std::string device_inpt)
@@ -284,12 +305,12 @@ void KEDF_ML::set_device(std::string device_inpt)
 
 /**
  * @brief Interface to Neural Network forward
- * 
+ *
  * @param prho charge density
  * @param pw_rho PW_Basis
  * @param cal_grad whether to calculate the gradient
  */
-void KEDF_ML::NN_forward(const double * const * prho, ModulePW::PW_Basis *pw_rho, bool cal_grad)
+void KEDF_ML::NN_forward(const double* const* prho, ModulePW::PW_Basis* pw_rho, bool cal_grad)
 {
     ModuleBase::timer::tick("KEDF_ML", "Forward");
 
@@ -298,10 +319,11 @@ void KEDF_ML::NN_forward(const double * const * prho, ModulePW::PW_Basis *pw_rho
     this->nn->set_data(this, this->descriptor_type, this->kernel_index, this->nn->inputs);
     this->nn->inputs.requires_grad_(true);
 
-    this->nn->F = this->nn->forward(this->nn->inputs);    
-    if (this->nn->inputs.grad().numel()) 
+    this->nn->F = this->nn->forward(this->nn->inputs);
+    if (this->nn->inputs.grad().numel())
     {
-        this->nn->inputs.grad().zero_(); // In the first step, inputs.grad() returns an undefined Tensor, so that numel() = 0.
+        this->nn->inputs.grad()
+            .zero_(); // In the first step, inputs.grad() returns an undefined Tensor, so that numel() = 0.
     }
 
     if (PARAM.inp.of_ml_feg != 3)
@@ -326,26 +348,26 @@ void KEDF_ML::NN_forward(const double * const * prho, ModulePW::PW_Basis *pw_rho
     }
 }
 
-void KEDF_ML::loadVector(std::string filename, std::vector<double> &data)
+void KEDF_ML::loadVector(std::string filename, std::vector<double>& data)
 {
-    std::vector<long unsigned int> cshape = {(long unsigned) this->cal_tool->nx};
+    std::vector<long unsigned int> cshape = {(long unsigned)this->cal_tool->nx};
     bool fortran_order = false;
     npy::LoadArrayFromNumpy(filename, cshape, fortran_order, data);
 }
 
-void KEDF_ML::dumpVector(std::string filename, const std::vector<double> &data)
+void KEDF_ML::dumpVector(std::string filename, const std::vector<double>& data)
 {
-    const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape
+    const long unsigned cshape[] = {(long unsigned)this->cal_tool->nx}; // shape
     npy::SaveArrayAsNumpy(filename, false, 1, cshape, data);
 }
 
 /**
  * @brief Dump the torch::Tensor into .npy file
- * 
+ *
  * @param data torch::Tensor
  * @param filename file name
  */
-void KEDF_ML::dumpTensor(std::string filename, const torch::Tensor &data)
+void KEDF_ML::dumpTensor(std::string filename, const torch::Tensor& data)
 {
     std::cout << "Dumping " << filename << std::endl;
     torch::Tensor data_cpu = data.to(this->device_CPU).contiguous();
@@ -356,11 +378,11 @@ void KEDF_ML::dumpTensor(std::string filename, const torch::Tensor &data)
 
 /**
  * @brief Dump the matrix into .npy file
- * 
+ *
  * @param data matrix
  * @param filename file name
  */
-void KEDF_ML::dumpMatrix(std::string filename, const ModuleBase::matrix &data)
+void KEDF_ML::dumpMatrix(std::string filename, const ModuleBase::matrix& data)
 {
     std::cout << "Dumping " << filename << std::endl;
     std::vector<double> v(data.c, data.c + this->nx);
@@ -370,16 +392,16 @@ void KEDF_ML::dumpMatrix(std::string filename, const ModuleBase::matrix &data)
 
 /**
  * @brief Update the desciptors for ML KEDF
- * 
+ *
  * @param prho charge density
  * @param pw_rho PW_Basis
  */
-void KEDF_ML::updateInput(const double * const * prho, ModulePW::PW_Basis *pw_rho)
+void KEDF_ML::updateInput(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
     ModuleBase::timer::tick("KEDF_ML", "updateInput");
     // std::cout << "updata_input" << std::endl;
     if (this->gene_data_label["gamma"][0])
-    {   
+    {
         this->cal_tool->getGamma(prho, this->gamma);
     }
     if (this->gene_data_label["p"][0])
@@ -402,34 +424,44 @@ void KEDF_ML::updateInput(const double * const * prho, ModulePW::PW_Basis *pw_rh
 
     for (int ik = 0; ik < nkernel; ++ik)
     {
-        if (this->gene_data_label["gammanl"][ik]){
+        if (this->gene_data_label["gammanl"][ik])
+        {
             this->cal_tool->getGammanl(ik, this->gamma, pw_rho, this->gammanl[ik]);
         }
-        if (this->gene_data_label["pnl"][ik]){
+        if (this->gene_data_label["pnl"][ik])
+        {
             this->cal_tool->getPnl(ik, this->p, pw_rho, this->pnl[ik]);
         }
-        if (this->gene_data_label["qnl"][ik]){
+        if (this->gene_data_label["qnl"][ik])
+        {
             this->cal_tool->getQnl(ik, this->q, pw_rho, this->qnl[ik]);
         }
-        if (this->gene_data_label["xi"][ik]){
+        if (this->gene_data_label["xi"][ik])
+        {
             this->cal_tool->getXi(this->gamma, this->gammanl[ik], this->xi[ik]);
         }
-        if (this->gene_data_label["tanhxi"][ik]){
+        if (this->gene_data_label["tanhxi"][ik])
+        {
             this->cal_tool->getTanhXi(ik, this->gamma, this->gammanl[ik], this->tanhxi[ik]);
         }
-        if (this->gene_data_label["tanhxi_nl"][ik]){
+        if (this->gene_data_label["tanhxi_nl"][ik])
+        {
             this->cal_tool->getTanhXi_nl(ik, this->tanhxi[ik], pw_rho, this->tanhxi_nl[ik]);
         }
-        if (this->gene_data_label["tanh_pnl"][ik]){
+        if (this->gene_data_label["tanh_pnl"][ik])
+        {
             this->cal_tool->getTanh_Pnl(ik, this->pnl[ik], this->tanh_pnl[ik]);
         }
-        if (this->gene_data_label["tanh_qnl"][ik]){
+        if (this->gene_data_label["tanh_qnl"][ik])
+        {
             this->cal_tool->getTanh_Qnl(ik, this->qnl[ik], this->tanh_qnl[ik]);
         }
-        if (this->gene_data_label["tanhp_nl"][ik]){
+        if (this->gene_data_label["tanhp_nl"][ik])
+        {
             this->cal_tool->getTanhP_nl(ik, this->tanhp, pw_rho, this->tanhp_nl[ik]);
         }
-        if (this->gene_data_label["tanhq_nl"][ik]){
+        if (this->gene_data_label["tanhq_nl"][ik])
+        {
             this->cal_tool->getTanhQ_nl(ik, this->tanhq, pw_rho, this->tanhq_nl[ik]);
         }
     }
@@ -438,11 +470,13 @@ void KEDF_ML::updateInput(const double * const * prho, ModulePW::PW_Basis *pw_rh
 
 /**
  * @brief Return the descriptors for ML KEDF
- * 
- * @param parameter "gamma", "p", "q", "tanhp", "tanhq", "gammanl", "pnl", "qnl", "xi", "tanhxi", "tanhxi_nl", "tanh_pnl", "tanh_qnl", "tanhp_nl", "tanhq_nl"
+ *
+ * @param parameter "gamma", "p", "q", "tanhp", "tanhq", "gammanl", "pnl", "qnl", "xi", "tanhxi", "tanhxi_nl",
+ * "tanh_pnl", "tanh_qnl", "tanhp_nl", "tanhq_nl"
  * @param ikernel kernel index
  */
-torch::Tensor KEDF_ML::get_data(std::string parameter, const int ikernel){
+torch::Tensor KEDF_ML::get_data(std::string parameter, const int ikernel)
+{
 
     if (parameter == "gamma")
     {

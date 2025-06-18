@@ -1,11 +1,11 @@
 #include "density_matrix.h"
 
-#include "module_parameter/parameter.h"
-#include "module_base/libm/libm.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 #include "module_cell/klist.h"
+#include "module_parameter/parameter.h"
+#include "source_base/libm/libm.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 namespace elecstate
 {
@@ -26,7 +26,10 @@ DensityMatrix<TK, TR>::~DensityMatrix()
 }
 
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk)
+DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in,
+                                     const int nspin,
+                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                     const int nk)
     : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nk((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-MK");
@@ -40,7 +43,8 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
 }
 
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nk(1)
+DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin)
+    : _paraV(paraV_in), _nspin(nspin), _kvec_d({ModuleBase::Vector3<double>(0, 0, 0)}), _nk(1)
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-GO");
     this->_DMK.resize(_nspin);
@@ -98,7 +102,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             // calculate kphase and target_mat_ptr
             std::vector<std::complex<double>> kphase_vec(r_size * this->_nk);
             std::vector<double*> target_DMR_mat_vec(r_size);
-            for(int ir = 0; ir < r_size; ++ir)
+            for (int ir = 0; ir < r_size; ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
                 hamilt::BaseMatrix<double>* target_mat = target_ap.find_matrix(r_index);
@@ -110,10 +114,10 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                 }
 #endif
                 target_DMR_mat_vec[ir] = target_mat->get_pointer();
-                for(int ik = 0; ik < this->_nk; ++ik)
+                for (int ik = 0; ik < this->_nk; ++ik)
                 {
-                    if(ik_in >= 0 && ik_in != ik) 
-                    { 
+                    if (ik_in >= 0 && ik_in != ik)
+                    {
                         continue;
                     }
                     // cal k_phase
@@ -130,7 +134,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
             // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
             // step_trace is used when nspin = 4;
             int step_trace[4]{};
-            if(PARAM.inp.nspin == 4)
+            if (PARAM.inp.nspin == 4)
             {
                 const int npol = 2;
                 for (int is = 0; is < npol; is++)
@@ -141,18 +145,19 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                     }
                 }
             }
-            for(int ik = 0; ik < this->_nk; ++ik)
+            for (int ik = 0; ik < this->_nk; ++ik)
             {
-                if(ik_in >= 0 && ik_in != ik) 
-                { 
+                if (ik_in >= 0 && ik_in != ik)
+                {
                     continue;
                 }
 
                 // copy column-major DMK to row-major tmp_DMK_mat (for the purpose of computational efficiency)
-                const std::complex<double>* DMK_mat_ptr = this->_DMK[ik + ik_begin].data() + col_ap * this->_paraV->nrow + row_ap;
-                for(int icol = 0; icol < col_size; ++icol)
+                const std::complex<double>* DMK_mat_ptr
+                    = this->_DMK[ik + ik_begin].data() + col_ap * this->_paraV->nrow + row_ap;
+                for (int icol = 0; icol < col_size; ++icol)
                 {
-                    for(int irow = 0; irow < row_size; ++irow)
+                    for (int irow = 0; irow < row_size; ++irow)
                     {
                         tmp_DMK_mat[irow * col_size + icol] = DMK_mat_ptr[icol * ld_hk + irow];
                     }
@@ -160,36 +165,32 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
 
                 // if nspin != 4, fill DMR
                 // if nspin == 4, fill tmp_DMR
-                for(int ir = 0; ir < r_size; ++ir)
+                for (int ir = 0; ir < r_size; ++ir)
                 {
                     std::complex<double> kphase = kphase_vec[ik * r_size + ir];
-                    if(PARAM.inp.nspin != 4)
+                    if (PARAM.inp.nspin != 4)
                     {
                         double* target_DMR_mat = target_DMR_mat_vec[ir];
-                        for(int i = 0; i < mat_size; i++)
+                        for (int i = 0; i < mat_size; i++)
                         {
-                            target_DMR_mat[i] += kphase.real() * tmp_DMK_mat[i].real() 
-                                    - kphase.imag() * tmp_DMK_mat[i].imag();
+                            target_DMR_mat[i]
+                                += kphase.real() * tmp_DMK_mat[i].real() - kphase.imag() * tmp_DMK_mat[i].imag();
                         }
-                    } else if(PARAM.inp.nspin == 4)
+                    }
+                    else if (PARAM.inp.nspin == 4)
                     {
                         std::complex<double>* tmp_DMR_mat = &tmp_DMR[ir * mat_size];
-                        BlasConnector::axpy(mat_size,
-                                            kphase,
-                                            tmp_DMK_mat.data(),
-                                            1,
-                                            tmp_DMR_mat,
-                                            1);
+                        BlasConnector::axpy(mat_size, kphase, tmp_DMK_mat.data(), 1, tmp_DMR_mat, 1);
                     }
                 }
             }
 
             // if nspin == 4
             // copy tmp_DMR to fill target_DMR
-            if(PARAM.inp.nspin == 4)
+            if (PARAM.inp.nspin == 4)
             {
                 std::complex<double> tmp[4]{};
-                for(int ir = 0; ir < r_size; ++ir)
+                for (int ir = 0; ir < r_size; ++ir)
                 {
                     std::complex<double>* tmp_DMR_mat = &tmp_DMR[ir * mat_size];
                     double* target_DMR_mat = target_DMR_mat_vec[ir];
@@ -222,9 +223,11 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
 
 // calculate DMR from DMK using blas for multi-k calculation
 template <>
-void DensityMatrix<double, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out)const{}
+void DensityMatrix<double, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const
+{
+}
 template <>
-void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out)const
+void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const
 {
     ModuleBase::TITLE("DensityMatrix", "cal_DMR_full");
 
@@ -252,7 +255,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
         // calculate kphase and target_mat_ptr
         std::vector<std::complex<double>> kphase_vec(r_size * this->_nk);
         std::vector<std::complex<double>*> target_DMR_mat_vec(r_size);
-        for(int ir = 0; ir < r_size; ++ir)
+        for (int ir = 0; ir < r_size; ++ir)
         {
             const ModuleBase::Vector3<int> r_index = target_ap.get_R_index(ir);
             hamilt::BaseMatrix<std::complex<double>>* target_mat = target_ap.find_matrix(r_index);
@@ -264,7 +267,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
             }
 #endif
             target_DMR_mat_vec[ir] = target_mat->get_pointer();
-            for(int ik = 0; ik < this->_nk; ++ik)
+            for (int ik = 0; ik < this->_nk; ++ik)
             {
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
@@ -277,28 +280,23 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
         }
 
         std::vector<std::complex<double>> tmp_DMK_mat(mat_size);
-        for(int ik = 0; ik < this->_nk; ++ik)
+        for (int ik = 0; ik < this->_nk; ++ik)
         {
             // copy column-major DMK to row-major tmp_DMK_mat (for the purpose of computational efficiency)
             const std::complex<double>* DMK_mat_ptr = this->_DMK[ik].data() + col_ap * this->_paraV->nrow + row_ap;
-            for(int icol = 0; icol < col_size; ++icol)
+            for (int icol = 0; icol < col_size; ++icol)
             {
-                for(int irow = 0; irow < row_size; ++irow)
+                for (int irow = 0; irow < row_size; ++irow)
                 {
                     tmp_DMK_mat[irow * col_size + icol] = DMK_mat_ptr[icol * ld_hk + irow];
                 }
             }
 
-            for(int ir = 0; ir < r_size; ++ir)
+            for (int ir = 0; ir < r_size; ++ir)
             {
                 std::complex<double> kphase = kphase_vec[ik * r_size + ir];
                 std::complex<double>* target_DMR_mat = target_DMR_mat_vec[ir];
-                BlasConnector::axpy(mat_size,
-                                    kphase,
-                                    tmp_DMK_mat.data(),
-                                    1,
-                                    target_DMR_mat,
-                                    1);
+                BlasConnector::axpy(mat_size, kphase, tmp_DMK_mat.data(), 1, target_DMR_mat, 1);
             }
         }
     }
@@ -372,12 +370,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             DMK_ptr += col_ap * this->_paraV->nrow + row_ap;
             for (int mu = 0; mu < row_size; ++mu)
             {
-                BlasConnector::axpy(col_size,
-                                    kphase,
-                                    DMK_ptr,
-                                    ld_hk,
-                                    target_DMR_ptr,
-                                    1);
+                BlasConnector::axpy(col_size, kphase, DMK_ptr, ld_hk, target_DMR_ptr, 1);
                 DMK_ptr += 1;
                 target_DMR_ptr += col_size;
             }
@@ -398,11 +391,11 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
     else
     {
         ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
-        switch(mode)
+        switch (mode)
         {
         case 0:
             // switch to original density matrix
-            if (this->dmr_tmp_ != nullptr && this->dmr_origin_.size() != 0) 
+            if (this->dmr_tmp_ != nullptr && this->dmr_origin_.size() != 0)
             {
                 this->_DMR[0]->allocate(this->dmr_origin_.data(), false);
                 delete[] this->dmr_tmp_;
@@ -412,7 +405,7 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             break;
         case 1:
             // switch to total magnetization density matrix, dmr_up + dmr_down
-            if(this->dmr_tmp_ == nullptr)
+            if (this->dmr_tmp_ == nullptr)
             {
                 const size_t size = this->_DMR[0]->get_nnr();
                 this->dmr_tmp_ = new TR[size];
@@ -435,7 +428,7 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
             break;
         case 2:
             // switch to magnetization density matrix, dmr_up - dmr_down
-            if(this->dmr_tmp_ == nullptr)
+            if (this->dmr_tmp_ == nullptr)
             {
                 const size_t size = this->_DMR[0]->get_nnr();
                 this->dmr_tmp_ = new TR[size];
@@ -464,8 +457,8 @@ void DensityMatrix<TK, TR>::switch_dmr(const int mode)
 }
 
 // T of HContainer can be double or complex<double>
-template class DensityMatrix<double, double>;               // Gamma-Only case
-template class DensityMatrix<std::complex<double>, double>; // Multi-k case
+template class DensityMatrix<double, double>;                             // Gamma-Only case
+template class DensityMatrix<std::complex<double>, double>;               // Multi-k case
 template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate

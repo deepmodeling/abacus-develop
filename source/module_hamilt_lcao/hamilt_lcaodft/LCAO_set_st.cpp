@@ -1,6 +1,6 @@
-#include "module_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
 
 namespace LCAO_domain
 {
@@ -515,15 +515,17 @@ void build_ST_new(ForceStressArrays& fsr,
                         for (int jj = 0; jj < atom1->nw * npol; ++jj)
                         {
                             const int mu = pv.global2local_row(start1 + jj);
-                            if (mu < 0) {
+                            if (mu < 0)
+                            {
                                 continue;
-}
+                            }
                             for (int kk = 0; kk < atom2->nw * npol; ++kk)
                             {
                                 const int nu = pv.global2local_col(start2 + kk);
-                                if (nu < 0) {
+                                if (nu < 0)
+                                {
                                     continue;
-}
+                                }
                                 ++total_nnr;
                                 ++nnr;
                             } // kk

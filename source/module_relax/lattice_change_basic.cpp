@@ -1,9 +1,9 @@
 #include "lattice_change_basic.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_common.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -20,7 +20,7 @@ double Lattice_Change_Basic::etot_p = 0.0;
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
-void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)
+void Lattice_Change_Basic::setup_gradient(const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
@@ -68,7 +68,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
+void Lattice_Change_Basic::change_lattice(UnitCell& ucell, double* move, double* lat)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -86,15 +86,24 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
-}
-}
-        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0; // transpose
+            }
+        }
+        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix()); // symmetrize (latvec^{-1} *
+                                                                                 // move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
-        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
-        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
-}
-}
+        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix(); // G^{-1}=latvec^T
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0; // transpose back
+            }
+        }
     }
 
     if (ucell.lc[0] != 0)
@@ -160,7 +169,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad)
+void Lattice_Change_Basic::check_converged(const UnitCell& ucell, ModuleBase::matrix& stress, double* grad)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -171,9 +180,10 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i))) {
+            if (stress_ii_max < std::abs(stress(i, i)))
+            {
                 stress_ii_max = std::abs(stress(i, i));
-}
+            }
             for (int j = 0; j < 3; j++)
             {
                 if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))
@@ -212,7 +222,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << " kbar." << std::endl;
             GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
@@ -233,7 +243,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << " kbar." << std::endl;
             GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
@@ -279,7 +289,7 @@ void Lattice_Change_Basic::terminate()
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement)
+void Lattice_Change_Basic::setup_etot(const double& energy_in, const bool judgement)
 {
     if (Lattice_Change_Basic::stress_step == 1)
     {

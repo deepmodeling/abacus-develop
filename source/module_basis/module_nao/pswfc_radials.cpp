@@ -1,13 +1,13 @@
 #include "module_basis/module_nao/pswfc_radials.h"
 
-#include "module_base/math_integral.h"
-#include "module_base/tool_quit.h"
+#include "source_base/math_integral.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <cmath>
 
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs)
