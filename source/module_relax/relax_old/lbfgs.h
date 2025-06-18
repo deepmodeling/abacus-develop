@@ -11,8 +11,8 @@
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
-#include "module_esolver/esolver.h"
-#include "module_esolver/esolver_ks.h"
+#include "source_esolver/esolver.h"
+#include "source_esolver/esolver_ks.h"
 
 /**
  * @class LBFGS

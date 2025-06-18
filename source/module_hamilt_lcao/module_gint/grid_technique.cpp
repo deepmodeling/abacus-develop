@@ -8,7 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hsolver/kernels/cuda/helper_cuda.h"
+#include "source_hsolver/kernels/cuda/helper_cuda.h"
 
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_helper.h"
 

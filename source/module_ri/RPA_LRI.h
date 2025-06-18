@@ -6,7 +6,7 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "module_esolver/esolver_ks_lcao.h"
+#include "source_esolver/esolver_ks_lcao.h"
 #include "LRI_CV.h"
 // #include "module_xc/exx_info.h"
 // #include "module_basis/module_ao/ORB_atomic_lm.h"

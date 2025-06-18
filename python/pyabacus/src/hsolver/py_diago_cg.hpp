@@ -14,7 +14,7 @@
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
 
-#include "module_hsolver/diago_cg.h"
+#include "source_hsolver/diago_cg.h"
 #include "module_base/module_device/memory_op.h"
 
 namespace py = pybind11;

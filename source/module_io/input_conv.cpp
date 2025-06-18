@@ -27,11 +27,11 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
 #ifdef __PEXSI
-#include "module_hsolver/module_pexsi/pexsi_solver.h"
+#include "source_hsolver/module_pexsi/pexsi_solver.h"
 #endif
 #ifdef __MPI
-#include "module_hsolver/diago_elpa.h"
-#include "module_hsolver/diago_elpa_native.h"
+#include "source_hsolver/diago_elpa.h"
+#include "source_hsolver/diago_elpa_native.h"
 #endif
 
 #include "module_base/module_device/device.h"
@@ -39,8 +39,8 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
-#include "module_hsolver/hsolver_lcao.h"
-#include "module_hsolver/hsolver_pw.h"
+#include "source_hsolver/hsolver_lcao.h"
+#include "source_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
 
 #ifdef __LCAO

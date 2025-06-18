@@ -5,7 +5,7 @@
 #undef private
 #define private public
 #define protected public
-#include "module_esolver/esolver_lj.h"
+#include "source_esolver/esolver_lj.h"
 #include "module_md/md_func.h"
 #include "setcell.h"
 

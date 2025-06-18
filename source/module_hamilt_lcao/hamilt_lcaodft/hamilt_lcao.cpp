@@ -20,14 +20,14 @@
 #endif
 
 #ifdef __ELPA
-#include "module_hsolver/diago_elpa.h"
+#include "source_hsolver/diago_elpa.h"
 #endif
 
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hsolver/hsolver_lcao.h"
+#include "source_hsolver/hsolver_lcao.h"
 #include "operator_lcao/dftu_lcao.h"
 #include "operator_lcao/dspin_lcao.h"
 #include "operator_lcao/ekinetic_new.h"

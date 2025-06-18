@@ -4,8 +4,8 @@
 #include "ions_move_methods.h"
 #include "lattice_change_methods.h"
 #include "module_cell/unitcell.h"
-#include "module_esolver/esolver.h"
-#include "module_esolver/esolver_ks.h"
+#include "source_esolver/esolver.h"
+#include "source_esolver/esolver_ks.h"
 
 class Relax_old
 {
