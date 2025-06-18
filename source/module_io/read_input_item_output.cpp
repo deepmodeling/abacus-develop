@@ -515,6 +515,27 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_xc_r");
+        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_xc_r(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
+            // assign non-negative values to para.input.out_xc_r
+            std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_xc_r[0] >= 0)
+            {
+#ifndef USE_LIBXC
+                ModuleBase::WARNING_QUIT("ReadInput", "INPUT out_xc_r is only aviailable with Libxc");
+#endif
+            }
+        };
+        sync_intvec(input.out_xc_r, 2, -1);
+        this->add_item(item);
+    }
+    {
         Input_Item item("if_separate_k");
         item.annotation = "specify whether to write the partial charge densities for all k-points to individual files "
                           "or merge them";
