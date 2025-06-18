@@ -5,7 +5,7 @@
 #undef private
 #define private public
 #define protected public
-#include "module_esolver/esolver_lj.h"
+#include "source_esolver/esolver_lj.h"
 #include "module_md/msst.h"
 #include "setcell.h"
 #define doublethreshold 1e-12

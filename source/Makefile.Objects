@@ -9,9 +9,10 @@
 #
 
 VERSION = ABACUS
-HEADERS = *.h
+HEADERS = source_main/*.h
 
 VPATH=./src_global:\
+./source_main:\
 ./module_basis/module_ao:\
 ./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
@@ -28,11 +29,11 @@ VPATH=./src_global:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_basis/module_pw/module_fft:\
-./module_esolver:\
-./module_hsolver:\
-./module_hsolver/kernels:\
-./module_hsolver/genelpa:\
-./module_hsolver/module_pexsi:\
+./source_esolver:\
+./source_hsolver:\
+./source_hsolver/kernels:\
+./source_hsolver/genelpa:\
+./source_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/module_pot:\
@@ -143,6 +144,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
+    math_erf_complex.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
@@ -535,6 +537,7 @@ OBJS_IO=input_conv.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
+    write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
     ctrl_output_lcao.o\

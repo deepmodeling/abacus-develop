@@ -16,7 +16,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 // #include "module_base/tool_quit.h"
-#include "version.h"
+#include "source_main/version.h"
 
 #include <iostream>
 #include <thread>

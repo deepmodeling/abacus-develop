@@ -57,7 +57,7 @@ For those who are interested in the source code, the following figure shows the 
 |-- module_elecstate            The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
-|-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
+|-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
 |-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
@@ -77,7 +77,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
+|-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.

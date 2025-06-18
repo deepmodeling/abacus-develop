@@ -135,8 +135,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     }
 
                     std::stringstream ssc;
-                    ssc << global_out_dir << "BAND" << ib + 1 << "_K" << k_number << "_SPIN" << spin_index + 1
-                        << "_CHG.cube";
+                    ssc << global_out_dir << "pchgs" << spin_index + 1 << "k" << k_number << "i" << ib + 1
+                        << ".cube";
 
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_band[spin_index].data(),
@@ -182,7 +182,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 #endif
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
+                // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
                 {
@@ -208,7 +208,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                 for (int is = 0; is < nspin; ++is)
                 {
                     std::stringstream ssc;
-                    ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                    ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
 
                     ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell);
                 }

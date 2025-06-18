@@ -236,10 +236,10 @@ static inline const T* VECTOR_TO_PTR(const std::valarray<T>& v)
 // Peize Lin add 2016-07-18
 //==========================================================
 template <typename T>
-std::string TO_STRING(const T& n)
+std::string TO_STRING(const T& t, const int n=20)		// n=20 since LDBL_EPSILON is 1E-16 or 1E-19
 {
     std::stringstream newstr;
-    newstr << n;
+    newstr << std::setprecision(n) << t;
     return newstr.str();
 }
 

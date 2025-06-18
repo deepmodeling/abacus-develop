@@ -149,44 +149,52 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
 
 const std::vector<double> in_built_xc_func_ext_params(const int id)
 {
-	const std::map<int, std::vector<double>> mymap = {
+	switch(id)
+	{
 		// finite temperature XC functionals
-		{XC_LDA_XC_KSDT, 	 {PARAM.inp.xc_temperature * 0.5}},
-		{XC_LDA_XC_CORRKSDT, {PARAM.inp.xc_temperature * 0.5}},
-		{XC_LDA_XC_GDSMFB,   {PARAM.inp.xc_temperature * 0.5}},
-		// hybrid functionals
+		case XC_LDA_XC_KSDT:
+			return {PARAM.inp.xc_temperature * 0.5};
+		case XC_LDA_XC_CORRKSDT:
+			return {PARAM.inp.xc_temperature * 0.5};
+		case XC_LDA_XC_GDSMFB:
+			return {PARAM.inp.xc_temperature * 0.5};
 #ifdef __EXX
-		{XC_HYB_GGA_XC_PBEH,  {GlobalC::exx_info.info_global.hybrid_alpha,
-							   GlobalC::exx_info.info_global.hse_omega, 
-							   GlobalC::exx_info.info_global.hse_omega}},
-		{XC_HYB_GGA_XC_HSE06, {GlobalC::exx_info.info_global.hybrid_alpha,
-							   GlobalC::exx_info.info_global.hse_omega, 
-							   GlobalC::exx_info.info_global.hse_omega}},
+		// hybrid functionals
+		case XC_HYB_GGA_XC_PBEH:
+			return {GlobalC::exx_info.info_global.hybrid_alpha,
+					GlobalC::exx_info.info_global.hse_omega, 
+					GlobalC::exx_info.info_global.hse_omega};
+		case XC_HYB_GGA_XC_HSE06:
+			return {GlobalC::exx_info.info_global.hybrid_alpha,
+					GlobalC::exx_info.info_global.hse_omega, 
+					GlobalC::exx_info.info_global.hse_omega};
 		// short-range of B88_X
-		{XC_GGA_X_ITYH, {PARAM.inp.exx_hse_omega}},
+		case XC_GGA_X_ITYH:
+			return {PARAM.inp.exx_hse_omega};
 		// short-range of LYP_C
-		{XC_GGA_C_LYPR, {0.04918, 0.132, 0.2533, 0.349, 
-						 0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega}},
+		case XC_GGA_C_LYPR:
+			return {0.04918, 0.132, 0.2533, 0.349, 
+					0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega};
 #endif
-	};
-	auto it = mymap.find(id);
-	return (it != mymap.end()) ? it->second : std::vector<double>{};
+		default:
+			return std::vector<double>{};
+	}
 }
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
 	const std::map<int, std::vector<double>> mymap = {
-        {
-			PARAM.inp.xc_exch_ext[0], 
+		{
+			PARAM.inp.xc_exch_ext[0],
 			std::vector<double>(PARAM.inp.xc_exch_ext.begin()+1,
-							    PARAM.inp.xc_exch_ext.end())
+								PARAM.inp.xc_exch_ext.end())
 		},
-        {
-			PARAM.inp.xc_corr_ext[0], 
+		{
+			PARAM.inp.xc_corr_ext[0],
 			std::vector<double>(PARAM.inp.xc_corr_ext.begin()+1,
-            				    PARAM.inp.xc_corr_ext.end())
+								PARAM.inp.xc_corr_ext.end())
 		}
-    };
+ 	};
 	auto it = mymap.find(id);
 	return (it != mymap.end()) ? it->second : std::vector<double>{};
 }

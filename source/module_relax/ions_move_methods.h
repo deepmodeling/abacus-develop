@@ -7,8 +7,8 @@
 #include "ions_move_sd.h"
 #include "bfgs.h"
 #include "lbfgs.h"
-#include "module_esolver/esolver.h"
-#include "module_esolver/esolver_ks.h"
+#include "source_esolver/esolver.h"
+#include "source_esolver/esolver_ks.h"
 
 class Ions_Move_Methods
 {

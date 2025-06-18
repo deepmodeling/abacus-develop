@@ -3,44 +3,39 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 namespace Conv_Coulomb_Pot_K
 {
+	enum class Coulomb_Type{Fock, Erfc};
 	enum class Ccp_Type{		//	parameter:
 		Ccp,					//
 		Hf,						//		"hf_Rcut"
 		Erfc,					//		"hse_omega"
 		Erf};					//		"hse_omega", "hf_Rcut"
 
-	template<typename T> T cal_orbs_ccp(
+	template<typename T> extern T cal_orbs_ccp(
 		const T &orbs,
-		const Ccp_Type &ccp_type,
-		const std::map<std::string,double> &parameter,
-        const double rmesh_times);
+		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const double rmesh_times);
 
   //private:
-	template< typename T > double get_rmesh_proportion(
+	template< typename T > extern double get_rmesh_proportion(
 		const T &orbs,
 		const double psi_threshold);
 
   //private:
-	std::vector<double> cal_psi_ccp(
+	extern std::vector<double> cal_psi_fock_limits(
 		const std::vector<double> & psif);
-	std::vector<double> cal_psi_hf(
+	extern std::vector<double> cal_psi_fock_spencer(
 		const std::vector<double> &psif,
 		const std::vector<double> &k_radial,
 		const double hf_Rcut);
-	std::vector<double> cal_psi_hse(
+	extern std::vector<double> cal_psi_erfc_limits(
 		const std::vector<double> & psif,
 		const std::vector<double> & k_radial,
-		const double hse_omega);
-	// added by jghan, 2024-07-06
-	std::vector<double> cal_psi_erf(
-		const std::vector<double> & psif,
-		const std::vector<double> & k_radial,
-		const double hse_omega,
-		const double hf_Rcut);
+		const double erfc_omega);
 }
 
 #include "conv_coulomb_pot_k.hpp"
