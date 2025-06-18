@@ -55,7 +55,7 @@ std::string get_filename(const std::string& file_type,
     }
     if (iter != -1)
     {
-        file_name << "e" << iter;
+        file_name << "_e" << iter;
     }
     file_name << ".npy";
     return file_name.str();
