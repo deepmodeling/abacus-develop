@@ -6,8 +6,7 @@
 
 namespace Conv_Coulomb_Pot_K
 {
-
-	std::vector<double> cal_psi_ccp(
+	std::vector<double> cal_psi_fock_limits(
 		const std::vector<double> & psif)
 	{
 		std::vector<double> psik2_ccp(psif.size());
@@ -18,7 +17,7 @@ namespace Conv_Coulomb_Pot_K
 
 	// rongshi add 2022-07-27
 	// Sphere truction -- Spencer
-	std::vector<double> cal_psi_hf(
+	std::vector<double> cal_psi_fock_spencer(
 		const std::vector<double> &psif,
 		const std::vector<double> &k_radial,
 		const double hf_Rcut)
@@ -30,29 +29,14 @@ namespace Conv_Coulomb_Pot_K
 	}
 
 
-	std::vector<double> cal_psi_erfc(
+	std::vector<double> cal_psi_erfc_limits(
 		const std::vector<double> & psif,
 		const std::vector<double> & k_radial,
-		const double hse_omega)
+		const double erfc_omega)
 	{
 		std::vector<double> psik2_ccp(psif.size());
 		for( size_t ik=0; ik<psif.size(); ++ik )
-			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1-std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega))); }
-		return psik2_ccp;
-	}
-
-	// added by jghan, 2024-07-06
-	// for using the long-range part of exx = hf - hse(i.e. exx_short-range)
-	std::vector<double> cal_psi_erf(
-		const std::vector<double> & psif,
-		const std::vector<double> & k_radial,
-		const double hse_omega,
-		const double hf_Rcut)
-	{
-		std::vector<double> psik2_ccp(psif.size());
-		for( size_t ik=0; ik<psif.size(); ++ik )
-			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) - std::cos(k_radial[ik] * hf_Rcut) ); }
-			// { psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) ); }
+			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1-std::exp(-(k_radial[ik]*k_radial[ik])/(4*erfc_omega*erfc_omega))); }
 		return psik2_ccp;
 	}
 
@@ -60,23 +44,44 @@ namespace Conv_Coulomb_Pot_K
 	template<>
 	Numerical_Orbital_Lm cal_orbs_ccp<Numerical_Orbital_Lm>(
 		const Numerical_Orbital_Lm &orbs,
-		const Ccp_Type &ccp_type,
-		const std::map<std::string,double> &parameter,
+		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times)
 	{
-		std::vector<double> psik2_ccp;
-		switch(ccp_type)
+		std::vector<double> psik2_ccp(orbs.get_psif().size(), 0.0);
+
+		for(const auto &param_list : coulomb_param)
 		{
-			case Ccp_Type::Ccp:
-				psik2_ccp = cal_psi_ccp( orbs.get_psif() );		break;
-			case Ccp_Type::Hf:
-				psik2_ccp = cal_psi_hf( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hf_Rcut"));      break;
-			case Ccp_Type::Erfc:
-				psik2_ccp = cal_psi_erfc( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hse_omega") );		break;
-			case Ccp_Type::Erf:
-				psik2_ccp = cal_psi_erf( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hse_omega"), parameter.at("hf_Rcut") );	break;
-			default:
-				throw( std::string(__FILE__) + " line " + std::to_string(__LINE__) );		break;
+			switch(param_list.first)
+			{
+				case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
+				{
+					for(const auto &param : param_list.second)
+					{
+						if(param.at("Rcut_type") == "limits")
+							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_limits( orbs.get_psif() ); }
+						else if(param.at("Rcut_type") == "spencer")
+							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_spencer( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("Rcut")) ); }
+						else
+							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+					}
+					break;
+				}
+				case Conv_Coulomb_Pot_K::Coulomb_Type::Erfc:
+				{
+					for(const auto &param : param_list.second)
+					{
+						if(param.at("Rcut_type") == "limits")
+							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_limits( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")) ); }
+						else
+							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+					}
+					break;
+				}
+				default:
+				{
+					throw std::invalid_argument( std::string(__FILE__) + " line " + std::to_string(__LINE__) );
+				}
+			}
 		}
 
 		const double dr = orbs.get_rab().back();

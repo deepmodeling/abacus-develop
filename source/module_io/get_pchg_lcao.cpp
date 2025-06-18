@@ -55,7 +55,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
-    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, gamma only)."
+    std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)."
               << std::endl;
 
     // Determine the mode based on the input parameters
@@ -77,8 +77,8 @@ void IState_Charge::begin(Gint_Gamma& gg,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-    std::cout << " number of electrons = " << nelec << std::endl;
-    std::cout << " number of occupied bands = " << fermi_band << std::endl;
+    GlobalV::ofs_running << " number of electrons = " << nelec << std::endl;
+    GlobalV::ofs_running << " number of occupied bands = " << fermi_band << std::endl;
 
     // Set this->bands_picked_ according to the mode
     select_bands(nbands_istate, out_pchg, nbands, nelec, mode, fermi_band);
@@ -101,7 +101,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
+            //std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
@@ -120,13 +120,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
-            std::cout << " Writing cube files...";
 
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
                 std::stringstream ssc;
-                ssc << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_CHG.cube";
+                ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
+
+                GlobalV::ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
@@ -134,7 +135,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleIO::write_vdata_palgrid(pgrid, rho_save[is].data(), is, nspin, 0, ssc.str(), ef_spin, ucell_in);
             }
 
-            std::cout << " Complete!" << std::endl;
+            //std::cout << " Complete!" << std::endl;
         }
     }
 
@@ -251,7 +252,7 @@ void IState_Charge::begin(Gint_k& gk,
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
                         std::stringstream ssc;
-                        ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                        ssc << global_out_dir << "pchgs" << is + 1 << "k" << ik+1 << "i" << ib + 1 << ".cube";
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,
@@ -292,7 +293,7 @@ void IState_Charge::begin(Gint_k& gk,
                 }
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
+                // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
                 {
@@ -310,7 +311,7 @@ void IState_Charge::begin(Gint_k& gk,
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
-                    ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
+                    ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_vdata_palgrid(pgrid,

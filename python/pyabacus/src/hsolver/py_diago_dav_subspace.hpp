@@ -10,7 +10,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
-#include "module_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_dav_subspace.h"
 
 namespace py = pybind11;
 

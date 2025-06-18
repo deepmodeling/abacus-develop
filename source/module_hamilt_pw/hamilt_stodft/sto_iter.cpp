@@ -9,7 +9,7 @@
 #include "module_elecstate/kernels/elecstate_op.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hsolver/para_linear_transform.h"
+#include "source_hsolver/para_linear_transform.h"
 #include "module_parameter/parameter.h"
 
 template <typename T, typename Device>

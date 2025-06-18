@@ -4,7 +4,7 @@ include Makefile.vars
 # Compiler information 
 #==========================
 
-INCLUDES = -I. -Icommands -I../ -Imodule_base/module_container
+INCLUDES = -I. -Isource_main -Isource_main/commands -Icommands -I../ -Imodule_base/module_container
 
 LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
