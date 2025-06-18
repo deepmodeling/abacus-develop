@@ -49,7 +49,7 @@ void save_npy_d(const int nat,
                 const std::vector<int>& inl2l,
                 const bool deepks_equiv,
                 const std::vector<torch::Tensor>& descriptor,
-                const std::string& out_dir,
+                const std::string& dm_eig_file,
                 const int rank);
 
 // save energy

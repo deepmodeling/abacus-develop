@@ -80,7 +80,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                                 const std::vector<int>& inl2l,
                                 const bool deepks_equiv,
                                 const std::vector<torch::Tensor>& descriptor,
-                                const std::string& out_dir,
+                                const std::string& dm_eig_file,
                                 const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_d");
@@ -107,9 +107,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            std::string file_dm_eig = out_dir + "deepks_dm_eig.npy";
-            // std::string file_dm_eig = "dm_eig.npy";
-            npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
+            npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);
         }
     }
     else
@@ -127,9 +125,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
         if (rank == 0)
         {
-            std::string file_dm_eig = out_dir + "deepks_dm_eig.npy";
-            // std::string file_dm_eig = "dm_eig.npy";
-            npy::SaveArrayAsNumpy(file_dm_eig, false, 2, dshape, npy_des);
+            npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);
         }
     }
     return;

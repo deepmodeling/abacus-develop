@@ -133,13 +133,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                         descriptor,
                                         rank);
 
+        const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_d(nat,
                                    des_per_atom,
                                    inlmax,
                                    inl2l,
                                    PARAM.inp.deepks_equiv,
                                    descriptor,
-                                   PARAM.globalv.global_out_dir,
+                                   file_d,
                                    rank); // libnpy needed
 
         if (PARAM.inp.deepks_scf)
