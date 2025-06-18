@@ -8,7 +8,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
-#include "module_base/abfs-vector3_order.h"
+#include "source_base/abfs-vector3_order.h"
 
 class Gint_k : public Gint {
   public:

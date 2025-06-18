@@ -1,9 +1,9 @@
 #ifndef DIAGODAVID_H
 #define DIAGODAVID_H
 
-#include "module_base/macros.h"   // GetRealType
-#include "module_base/module_device/device.h"   // base_device
-#include "module_base/module_device/memory_op.h"// base_device::memory
+#include "source_base/macros.h"   // GetRealType
+#include "source_base/module_device/device.h"   // base_device
+#include "source_base/module_device/memory_op.h"// base_device::memory
 
 #include "source_hsolver/diag_comm_info.h"
 

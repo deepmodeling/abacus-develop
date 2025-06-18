@@ -1,7 +1,7 @@
 #pragma once
 #include "module_elecstate/module_dm/density_matrix.h"
 #include <numeric>
-#include  "module_base/parallel_reduce.h"
+#include  "source_base/parallel_reduce.h"
 namespace LR_Util
 {
     template<typename TR>

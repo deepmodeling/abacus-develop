@@ -1,6 +1,6 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
 #include <fstream>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:

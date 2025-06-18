@@ -1,7 +1,7 @@
 #ifndef ELECSTATE_TOOLS_H
 #define ELECSTATE_TOOLS_H
 #include "elecstate.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 
 namespace elecstate
 {

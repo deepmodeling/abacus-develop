@@ -39,7 +39,7 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 For those who are interested in the source code, the following figure shows the structure of the source code.
 
 ```text
-|-- module_base                 A basic module including
+|-- source_base                 A basic module including
 |   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
 |   |                           (2) Custom data classes: matrix, vector definitions and related functions;
 |   |                           (3) Parallelization functions: MPI, OpenMP;
@@ -183,7 +183,7 @@ pre-commit install
 
 ## Adding a unit test
 
-We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
+We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `source_base` provides a simple demonstration.
 
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:

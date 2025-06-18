@@ -4,10 +4,10 @@ AddTest(
     TARGET PW_Kernels_UTs
     LIBS parameter ${math_libs} psi device
     SOURCES pw_op_test.cpp
-    ../../../../module_base/tool_quit.cpp ../../../../module_base/global_variable.cpp
-    ../../../../module_base/parallel_global.cpp ../../../../module_base/parallel_reduce.cpp
-    ../../../../module_base/parallel_comm.cpp
-    ../../../../module_base/complexmatrix.cpp ../../../../module_base/matrix.cpp ../../../../module_base/memory.cpp
-    ../../../../module_base/libm/branred.cpp ../../../../module_base/libm/sincos.cpp
-    ../../../../module_base/blas_connector_base.cpp ../../../../module_base/blas_connector_vector.cpp ../../../../module_base/blas_connector_matrix.cpp
+    ../../../../source_base/tool_quit.cpp ../../../../source_base/global_variable.cpp
+    ../../../../source_base/parallel_global.cpp ../../../../source_base/parallel_reduce.cpp
+    ../../../../source_base/parallel_comm.cpp
+    ../../../../source_base/complexmatrix.cpp ../../../../source_base/matrix.cpp ../../../../source_base/memory.cpp
+    ../../../../source_base/libm/branred.cpp ../../../../source_base/libm/sincos.cpp
+    ../../../../source_base/blas_connector_base.cpp ../../../../source_base/blas_connector_vector.cpp ../../../../source_base/blas_connector_matrix.cpp
 )

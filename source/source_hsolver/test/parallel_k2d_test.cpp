@@ -1,7 +1,7 @@
 #ifdef __MPI
 #include "source_hsolver/parallel_k2d.h"
 
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

@@ -1,7 +1,7 @@
 #ifndef POTLOCAL_H
 #define POTLOCAL_H
 
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "pot_base.h"
 
 namespace elecstate

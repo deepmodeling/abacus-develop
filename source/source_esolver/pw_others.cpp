@@ -1,6 +1,6 @@
 #include "esolver_ks_pw.h"
 
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
@@ -19,15 +19,15 @@
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
-#include "module_base/memory.h"
-#include "module_base/module_device/device.h"
+#include "source_base/memory.h"
+#include "source_base/module_device/device.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -39,7 +39,7 @@
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
-#include "module_base/formatter.h"
+#include "source_base/formatter.h"
 
 // mohan add 2025-03-06
 #include "module_io/cal_test.h"

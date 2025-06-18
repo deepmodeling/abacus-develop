@@ -1,9 +1,9 @@
 #include <omp.h>
 
 #include "gint_force_gpu.h"
-#include "module_base/ylm.h"
+#include "source_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 namespace GintKernel
 {
 

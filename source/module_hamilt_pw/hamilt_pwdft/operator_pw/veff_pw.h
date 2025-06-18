@@ -2,11 +2,11 @@
 #define VEFFPW_H
 
 #include "operator_pw.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/veff_op.h"
 
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 namespace hamilt {
 

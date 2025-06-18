@@ -1,8 +1,8 @@
 #ifndef STO_CHE_H
 #define STO_CHE_H
-#include "module_base/math_chebyshev.h"
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/module_container/ATen/kernels/blas.h"
+#include "source_base/math_chebyshev.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device = base_device::DEVICE_CPU>
 class StoChe

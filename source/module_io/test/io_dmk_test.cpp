@@ -3,12 +3,12 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "prepare_unitcell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
 
 #ifdef __MPI
 #include "mpi.h"

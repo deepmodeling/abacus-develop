@@ -1,7 +1,7 @@
 #ifndef MODULE_HSOLVER_BPCG_KERNEL_H
 #define MODULE_HSOLVER_BPCG_KERNEL_H
-#include "module_base/macros.h"
-#include "module_base/module_device/types.h"
+#include "source_base/macros.h"
+#include "source_base/module_device/types.h"
 namespace hsolver
 {
 

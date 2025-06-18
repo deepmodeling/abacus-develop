@@ -1,8 +1,8 @@
 #include "ions_move_basic.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "module_cell/update_cell.h"
 #include "module_cell/print_cell.h"
 int Ions_Move_Basic::dim = 0;

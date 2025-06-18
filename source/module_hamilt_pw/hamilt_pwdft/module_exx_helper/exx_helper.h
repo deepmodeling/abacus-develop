@@ -2,7 +2,7 @@
 // For EXX in PW.
 //
 #include "module_psi/psi.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/op_exx_pw.h"
 

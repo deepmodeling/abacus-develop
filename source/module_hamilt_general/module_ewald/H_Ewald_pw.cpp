@@ -1,11 +1,11 @@
 #include "H_Ewald_pw.h"
 #include "module_parameter/parameter.h"
-#include "module_base/mymath.h" // use heapsort
+#include "source_base/mymath.h" // use heapsort
 #include "module_parameter/parameter.h"
 #include "dnrm2.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/constants.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/constants.h"
+#include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 double H_Ewald_pw::alpha=0.0;

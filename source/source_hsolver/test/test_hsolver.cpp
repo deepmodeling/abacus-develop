@@ -6,7 +6,7 @@
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/hsolver.h"
 
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 // template class hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU>;
 // template class hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>;

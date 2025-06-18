@@ -1,9 +1,9 @@
 #ifndef __PARA_LINEAR_TRANSFORM_H__
 #define __PARA_LINEAR_TRANSFORM_H__
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/module_device/device.h"
-#include "module_base/module_device/memory_op.h"
-#include "module_base/parallel_device.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/device.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/parallel_device.h"
 
 #include <vector>
 #ifdef __MPI

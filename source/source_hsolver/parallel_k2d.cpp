@@ -1,9 +1,9 @@
 #include "parallel_k2d.h"
 
-#include "module_base/parallel_global.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
+#include "source_base/parallel_global.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/timer.h"
+#include "source_base/memory.h"
 
 template <typename TK>
 void Parallel_K2D<TK>::set_para_env(int nks,

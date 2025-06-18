@@ -1,10 +1,10 @@
 #ifndef OCCUPY_H
 #define OCCUPY_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_base/vector3.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
+#include "source_base/vector3.h"
 
 class Occupy
 {

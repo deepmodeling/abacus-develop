@@ -17,10 +17,10 @@
 #include "dist_bcd_matrix.h"
 #include "dist_ccs_matrix.h"
 #include "dist_matrix_transformer.h"
-#include "module_base/lapack_connector.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "module_base/global_variable.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_base/global_variable.h"
 #include "source_hsolver/diago_pexsi.h"
 
 namespace pexsi

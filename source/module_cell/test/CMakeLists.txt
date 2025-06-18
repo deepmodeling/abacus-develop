@@ -85,8 +85,8 @@ add_test(NAME MODULE_CELL_klist_test_para4
 AddTest(
   TARGET MODULE_CELL_ParaKpoints
   LIBS parameter  MPI::MPI_CXX
-  SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp 
-  	../../module_base/parallel_common.cpp ../../module_base/parallel_comm.cpp ../parallel_kpoints.cpp
+  SOURCES parallel_kpoints_test.cpp ../../source_base/global_variable.cpp ../../source_base/parallel_global.cpp 
+  	../../source_base/parallel_common.cpp ../../source_base/parallel_comm.cpp ../parallel_kpoints.cpp
 )
 
 find_program(BASH bash)

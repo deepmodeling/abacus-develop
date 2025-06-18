@@ -1,4 +1,4 @@
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #ifdef __PEXSI
 #include "module_parameter/parameter.h"
 #include "pexsi_solver.h"
@@ -7,7 +7,7 @@
 #include <cstring>
 #include <vector>
 
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "simple_pexsi.h"
 
 extern MPI_Comm DIAG_WORLD;

@@ -1,8 +1,8 @@
 #ifndef SOC_H
 #define SOC_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 
 class Fcoef
 {

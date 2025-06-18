@@ -10,7 +10,7 @@
 #include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "source_hsolver/hsolver_pw.h"
 #undef private
 #undef protected

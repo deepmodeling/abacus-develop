@@ -1,8 +1,8 @@
 #include "ions_move_cg.h"
 
 #include "ions_move_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 using namespace Ions_Move_Basic;
 
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5

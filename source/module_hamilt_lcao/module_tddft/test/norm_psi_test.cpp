@@ -1,11 +1,11 @@
 #include "module_hamilt_lcao/module_tddft/norm_psi.h"
 
-#include "module_base/global_variable.h" // GlobalV::ofs_running
+#include "source_base/global_variable.h" // GlobalV::ofs_running
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "tddft_test.h"
 
 #include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
+#include <source_base/scalapack_connector.h>
 #include <mpi.h>
 
 /************************************************

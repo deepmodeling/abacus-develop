@@ -1,6 +1,6 @@
 #ifdef __EXX
 #include "op_exx_lcao.h"
-#include "module_base/blacs_connector.h"
+#include "source_base/blacs_connector.h"
 
 namespace hamilt
 {

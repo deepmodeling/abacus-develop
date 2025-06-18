@@ -4,8 +4,8 @@
 #include <string>
 
 #include "atom_pseudo.h"
-#include "module_base/matrix.h"
-#include "module_base/realarray.h"
+#include "source_base/matrix.h"
+#include "source_base/realarray.h"
 
 class Pseudopot_upf
 {

@@ -2,13 +2,13 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
-#include "module_base/formatter.h"
+#include "source_base/formatter.h"
 #include "module_io/cif_io.h"
 #include <regex>
 #include <cassert>
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 double deg2rad(double deg) { return deg * M_PI / 180.0; }

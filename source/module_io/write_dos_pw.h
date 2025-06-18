@@ -1,7 +1,7 @@
 #ifndef WRITE_DOS_PW_H
 #define WRITE_DOS_PW_H
 
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/fp_energy.h"

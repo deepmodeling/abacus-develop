@@ -1,6 +1,6 @@
 #include "module_io/to_qo.h"
 #ifdef __MPI
-#include "../module_base/parallel_common.h"
+#include "../source_base/parallel_common.h"
 #endif
 void toQO::read_structures(const UnitCell* p_ucell, 
                            const std::vector<ModuleBase::Vector3<double>>& kvecs_d,

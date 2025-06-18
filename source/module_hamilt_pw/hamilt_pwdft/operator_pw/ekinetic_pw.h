@@ -4,7 +4,7 @@
 #include "operator_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/ekinetic_op.h"
 
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 namespace hamilt {
 

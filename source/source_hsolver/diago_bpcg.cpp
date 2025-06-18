@@ -1,10 +1,10 @@
 #include "source_hsolver/diago_bpcg.h"
 
 #include "diago_iter_assist.h"
-#include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/parallel_comm.h" // different MPI worlds
+#include "source_base/blas_connector.h"
+#include "source_base/global_function.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_comm.h" // different MPI worlds
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
 

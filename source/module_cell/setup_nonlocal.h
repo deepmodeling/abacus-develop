@@ -2,8 +2,8 @@
 #define INFONONLOCAL_H
 
 #include "atom_spec.h"
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
+#include "../source_base/global_function.h"
+#include "../source_base/global_variable.h"
 #include "../module_basis/module_ao/ORB_nonlocal.h"
 #include "../module_basis/module_ao/ORB_read.h"
 class InfoNonlocal

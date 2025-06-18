@@ -3,9 +3,9 @@
 #include "module_parameter/parameter.h"
 #include <iostream>
 
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/tool_quit.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
 
 /**
  * @brief Set the parameters of WT KEDF, and initialize kernel

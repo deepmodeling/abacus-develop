@@ -1,8 +1,8 @@
 #ifndef PSI_H
 #define PSI_H
 
-#include "module_base/module_device/memory_op.h"
-#include "module_base/module_device/types.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_device/types.h"
 
 #include <tuple>
 #include <vector>

@@ -1,7 +1,7 @@
 #ifndef WRITE_DOS_LCAO_H
 #define WRITE_DOS_LCAO_H
 
-#include "module_base/matrix.h" // use matrix
+#include "source_base/matrix.h" // use matrix
 #include "module_cell/klist.h"  // use K_Vectors
 #include "module_psi/psi.h"     // use psi::Psi<T>
 #include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>

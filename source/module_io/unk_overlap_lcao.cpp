@@ -2,7 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "ctime"
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
