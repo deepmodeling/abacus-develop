@@ -3,8 +3,8 @@
 // To setup plane wave for electronic wave functions
 #include "pw_setup.h"
 
-#include "module_base/timer.h"
-#include "module_base/global_variable.h"
+#include "source_base/timer.h"
+#include "source_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"

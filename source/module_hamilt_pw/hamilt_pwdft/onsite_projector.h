@@ -1,7 +1,7 @@
 #ifndef MODULEHAMILTPW_ONSITEPROJECTOR_H
 #define MODULEHAMILTPW_ONSITEPROJECTOR_H
-#include "module_base/module_device/device.h"
-#include "module_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/device.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"

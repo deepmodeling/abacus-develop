@@ -3,7 +3,7 @@
 
 #include <complex>
 #include <module_psi/psi.h>
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 namespace hamilt {
 

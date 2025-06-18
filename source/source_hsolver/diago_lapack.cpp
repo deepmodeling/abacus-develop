@@ -4,10 +4,10 @@
 
 #include "diago_lapack.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/lapack_connector.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
+#include "source_base/global_variable.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 typedef hamilt::MatrixBlock<double> matd;

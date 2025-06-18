@@ -10,11 +10,11 @@
 #else
 #include "xc_funcs.h"
 #endif	// ifdef USE_LIBXC
-#include "module_base/macros.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/vector3.h"
-#include "module_base/matrix.h"
+#include "source_base/macros.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/vector3.h"
+#include "source_base/matrix.h"
 #include "exx_info.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"

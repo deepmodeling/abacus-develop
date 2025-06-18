@@ -1,7 +1,7 @@
 #include "pw_setup.h"
 
 // To get POOL_WORLD
-#include "module_base/parallel_comm.h"
+#include "source_base/parallel_comm.h"
 // Print information 
 #include "module_io/print_info.h"
 

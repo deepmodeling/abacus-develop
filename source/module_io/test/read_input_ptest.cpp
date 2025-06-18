@@ -3,12 +3,12 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #include "module_io/read_input.h"
 #include "module_parameter/parameter.h"
 
 // #ifdef __MPI
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 // #endif

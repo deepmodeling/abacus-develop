@@ -1,7 +1,7 @@
 #include "atom_pair.h"
 #include <complex>
 #include <cassert>
-#include "module_base/blas_connector.h"
+#include "source_base/blas_connector.h"
 
 namespace hamilt
 {

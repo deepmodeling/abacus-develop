@@ -6,8 +6,8 @@
 #include <pybind11/numpy.h>
 
 #include "source_hsolver/diago_dav_subspace.h"
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/module_device/types.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/types.h"
 
 #include "./py_diago_dav_subspace.hpp"
 #include "./py_diago_david.hpp"

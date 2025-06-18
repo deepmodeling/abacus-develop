@@ -1,6 +1,6 @@
 #include "relax_driver.h"
 
-#include "module_base/global_file.h"
+#include "source_base/global_file.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/cif_io.h"
 #include "module_io/json_output/output_info.h"

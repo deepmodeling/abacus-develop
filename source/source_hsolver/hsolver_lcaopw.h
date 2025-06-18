@@ -3,8 +3,8 @@
 
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_base/macros.h"
-#include "module_base/module_device/types.h"
+#include "source_base/macros.h"
+#include "source_base/module_device/types.h"
 namespace hsolver
 {
 

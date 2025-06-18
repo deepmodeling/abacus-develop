@@ -1,15 +1,15 @@
 #include "psi_initializer_atomic.h"
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
 // numerical algorithm support
-#include "module_base/math_integral.h" // for numerical integration
-#include "module_base/math_polyint.h" // for polynomial interpolation
-#include "module_base/math_ylmreal.h" // for real spherical harmonics
-#include "module_base/math_sphbes.h" // for spherical bessel functions
+#include "source_base/math_integral.h" // for numerical integration
+#include "source_base/math_polyint.h" // for polynomial interpolation
+#include "source_base/math_ylmreal.h" // for real spherical harmonics
+#include "source_base/math_sphbes.h" // for spherical bessel functions
 // basic functions support
-#include "module_base/tool_quit.h"
-#include "module_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_base/timer.h"
 // global variables definition
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_parameter/parameter.h"
 // io support
 #include "module_io/write_pao.h"

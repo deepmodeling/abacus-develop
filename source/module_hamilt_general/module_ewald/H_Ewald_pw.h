@@ -1,8 +1,8 @@
 #ifndef H_EWALD_PW_H
 #define H_EWALD_PW_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"

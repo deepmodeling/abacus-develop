@@ -1,4 +1,4 @@
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 #define private public
 #include "module_parameter/parameter.h"
@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 #include <streambuf>
 #ifdef __MPI
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "module_cell/parallel_kpoints.h"
 #include "mpi.h"
 #endif

@@ -5,11 +5,11 @@
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
-#include "module_base/lapack_connector.h"
+#include "source_base/lapack_connector.h"
 #include "matrix_methods.h"
 //#include "line_search.h"
-#include "module_base/matrix.h"
-#include "module_base/matrix3.h"
+#include "source_base/matrix.h"
+#include "source_base/matrix3.h"
 #include "module_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_esolver/esolver_ks.h"

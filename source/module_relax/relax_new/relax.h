@@ -4,8 +4,8 @@
 #define RELAX1_H
 
 #include "line_search.h"
-#include "module_base/matrix.h"
-#include "module_base/matrix3.h"
+#include "source_base/matrix.h"
+#include "source_base/matrix3.h"
 #include "module_cell/unitcell.h"
 
 class Relax

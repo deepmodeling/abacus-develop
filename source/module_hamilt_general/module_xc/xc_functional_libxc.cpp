@@ -2,8 +2,8 @@
 
 #include "xc_functional_libxc.h"
 #include "module_parameter/parameter.h"
-#include "module_base/tool_quit.h"
-#include "module_base/formatter.h"
+#include "source_base/tool_quit.h"
+#include "source_base/formatter.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"		// just for GlobalC::exx_info

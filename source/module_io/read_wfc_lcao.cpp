@@ -1,7 +1,7 @@
 #include "module_io/read_wfc_lcao.h"
 
-#include "module_base/formatter.h"
-#include "module_base/tool_quit.h"
+#include "source_base/formatter.h"
+#include "source_base/tool_quit.h"
 
 #include <cassert>
 #include <fstream>
@@ -9,7 +9,7 @@
 #include <type_traits>
 
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 /*

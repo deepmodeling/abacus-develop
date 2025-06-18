@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "module_base/intarray.h"
-#include "module_base/vector3.h"
+#include "source_base/intarray.h"
+#include "source_base/vector3.h"
 #include "ORB_atomic_lm.h"
 
 class Numerical_Orbital_AtomRelation

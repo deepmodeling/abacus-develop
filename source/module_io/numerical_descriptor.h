@@ -4,10 +4,10 @@
 //==========================================================
 #ifndef NUMERICAL_DESCRIPTOR_H
 #define NUMERICAL_DESCRIPTOR_H
-#include "../module_base/global_function.h"
-#include "../module_base/global_variable.h"
-#include "../module_base/intarray.h"
-#include "../module_base/complexmatrix.h"
+#include "../source_base/global_function.h"
+#include "../source_base/global_variable.h"
+#include "../source_base/intarray.h"
+#include "../source_base/complexmatrix.h"
 #include "bessel_basis.h"
 #include "module_psi/psi.h"
 //==========================================================

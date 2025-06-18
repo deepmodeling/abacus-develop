@@ -142,7 +142,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     return;
 }
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #ifdef __MPI
 
 void Atom_pseudo::bcast_atom_pseudo()

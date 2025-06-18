@@ -6,10 +6,10 @@
 
 #include "vdwd3.h"
 
-#include "module_base/constants.h"
-#include "module_base/element_name.h"
-#include "module_base/global_function.h"
-#include "module_base/timer.h"
+#include "source_base/constants.h"
+#include "source_base/element_name.h"
+#include "source_base/global_function.h"
+#include "source_base/timer.h"
 
 namespace vdw
 {

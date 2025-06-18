@@ -2,8 +2,8 @@
 
 #include "kedf_ml.h"
 
-#include "module_base/parallel_reduce.h"
-#include "module_base/global_function.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/global_function.h"
 
 /**
  * @brief Calculate the Pauli potential of ML KEDF

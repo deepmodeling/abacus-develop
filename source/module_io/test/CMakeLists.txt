@@ -74,11 +74,11 @@ AddTest(
   TARGET MODULE_IO_single_R_test
   LIBS parameter  ${math_libs}
   SOURCES single_R_io_test.cpp ../single_R_io.cpp
-  	../../module_base/global_variable.cpp
-	../../module_base/parallel_reduce.cpp
-	../../module_base/parallel_common.cpp
-	../../module_base/parallel_global.cpp
-  ../../module_base/parallel_comm.cpp
+  	../../source_base/global_variable.cpp
+	../../source_base/parallel_reduce.cpp
+	../../source_base/parallel_common.cpp
+	../../source_base/parallel_global.cpp
+  ../../source_base/parallel_comm.cpp
 )
 
 AddTest(

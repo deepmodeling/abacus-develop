@@ -5,7 +5,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 /************************************************
  *  unit test of read_input_test_item.cpp
  ***********************************************/

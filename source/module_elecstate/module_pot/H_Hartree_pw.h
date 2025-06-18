@@ -1,9 +1,9 @@
 #ifndef HHARTREEPW_H
 #define HHARTREEPW_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis.h"
 

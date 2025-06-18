@@ -7,7 +7,7 @@
 #define INVERSE_MATRIX_HPP
 
 #include "Inverse_Matrix.h"
-#include "module_base/lapack_connector.h"
+#include "source_base/lapack_connector.h"
 
 #include <cassert>
 

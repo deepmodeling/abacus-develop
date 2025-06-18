@@ -1,11 +1,11 @@
 #include "potential_new.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 

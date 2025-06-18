@@ -1,7 +1,7 @@
 #ifndef _ORBUNITTEST_
 #define _ORBUNITTEST_
 
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 #include "module_basis/module_ao/ORB_control.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 

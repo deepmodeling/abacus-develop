@@ -64,8 +64,8 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
-#include "module_base/formatter.h"
-#include "module_base/tool_quit.h"
+#include "source_base/formatter.h"
+#include "source_base/tool_quit.h"
 #include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
 
 // DFT-D3(BJ)

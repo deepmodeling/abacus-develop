@@ -18,8 +18,8 @@
 #include "module_io/berryphase.h"
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
+#include "source_base/mathzone.h"
+#include "source_base/parallel_global.h"
 #include "module_cell/parallel_kpoints.h"
 bool berryphase::berry_phase_flag = false;
 

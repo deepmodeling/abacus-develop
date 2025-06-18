@@ -1,7 +1,7 @@
 #include "module_basis/module_nao/hydrogen_radials.h"
-#include "module_base/global_variable.h"
-#include "module_base/math_integral.h"
-#include "module_base/atom_in.h" // for calculating slater screening constant
+#include "source_base/global_variable.h"
+#include "source_base/math_integral.h"
+#include "source_base/atom_in.h" // for calculating slater screening constant
 #include <map>
 #include <iostream>
 #include <algorithm>

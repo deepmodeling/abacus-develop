@@ -1,9 +1,9 @@
 ///adapted from parallel_orbitals from module_basis/module_ao
 ///deals with the parallelization of atomic basis
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
 
 namespace Test_Deepks
 {

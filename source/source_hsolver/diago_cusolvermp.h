@@ -3,7 +3,7 @@
 
 #ifdef __CUSOLVERMP
 #include "module_hamilt_general/hamilt.h"
-#include "module_base/macros.h"
+#include "source_base/macros.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolvermp.cuh"
 namespace hsolver

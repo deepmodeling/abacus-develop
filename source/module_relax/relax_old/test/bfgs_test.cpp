@@ -2,7 +2,7 @@
 #include "for_test.h"
 #include "module_relax/relax_old/bfgs.h"
 #include "module_cell/unitcell.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/matrix_methods.h"
 

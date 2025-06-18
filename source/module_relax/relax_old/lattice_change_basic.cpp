@@ -1,8 +1,8 @@
 #include "lattice_change_basic.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_common.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
 #include "module_parameter/parameter.h"
 
 int Lattice_Change_Basic::dim = 0;
