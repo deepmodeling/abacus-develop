@@ -1,4 +1,4 @@
-#include "relax.h"
+#include "relax_sync.h"
 
 
 #include "module_base/matrix3.h"

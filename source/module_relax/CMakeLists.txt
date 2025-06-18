@@ -4,12 +4,12 @@ add_library(
 
     relax_driver.cpp
 
-    relax.cpp
+    relax_sync.cpp
     line_search.cpp
     
     bfgs.cpp
     lbfgs.cpp
-    relax_old.cpp
+    relax_nsync.cpp
     bfgs_basic.cpp
     ions_move_basic.cpp
     ions_move_bfgs.cpp

@@ -1,4 +1,4 @@
-#include "relax_old.h"
+#include "relax_nsync.h"
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"

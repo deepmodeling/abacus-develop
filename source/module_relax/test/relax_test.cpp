@@ -3,7 +3,7 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "../relax.h"
+#include "../relax_sync.h"
 #include "module_cell/unitcell.h"
 #include "relax_test.h"
 #include <fstream>

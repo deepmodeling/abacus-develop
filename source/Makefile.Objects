@@ -445,8 +445,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    relax_old.o\
-    relax.o\
+    relax_nsync.o\
+    relax_sync.o\
     bfgs.o\
     lbfgs.o\
     matrix_methods.o\
