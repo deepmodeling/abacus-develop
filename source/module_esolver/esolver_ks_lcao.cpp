@@ -807,33 +807,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         this->pelec->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
         this->pelec->f_en.edeepks_delta = ld.E_delta;
     }
-    if (PARAM.inp.deepks_out_labels >0 && PARAM.inp.deepks_out_freq_elec)
-    {
-        if (iter % PARAM.inp.deepks_out_freq_elec == 0 )
-        {
-            hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
-            LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
-    
-            deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                                               this->kv.get_nks(),
-                                               ucell.nat,
-                                               PARAM.globalv.nlocal,
-                                               this->pelec->ekb,
-                                               this->kv.kvec_d,
-                                               ucell,
-                                               orb_,
-                                               this->gd,
-                                               &(this->pv),
-                                               *(this->psi),
-                                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                               p_ham_deepks,
-                                               iter,
-                                               conv_esolver,
-                                               GlobalV::MY_RANK,
-                                               GlobalV::ofs_running);
-        }
-    }
 #endif
 
     // 3) for delta spin
@@ -897,6 +870,37 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         GlobalC::dftu.initialed_locale = true;
     }
+
+    // 9) for deepks, output labels during electronic steps (after conv_esolver is renewed)
+#ifdef __MLALGO
+    if (PARAM.inp.deepks_out_labels >0 && PARAM.inp.deepks_out_freq_elec)
+    {
+        if (iter % PARAM.inp.deepks_out_freq_elec == 0 )
+        {
+            hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
+            LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+    
+            deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
+                                               this->kv.get_nks(),
+                                               ucell.nat,
+                                               PARAM.globalv.nlocal,
+                                               this->pelec->ekb,
+                                               this->kv.kvec_d,
+                                               ucell,
+                                               orb_,
+                                               this->gd,
+                                               &(this->pv),
+                                               *(this->psi),
+                                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                               p_ham_deepks,
+                                               iter,
+                                               conv_esolver,
+                                               GlobalV::MY_RANK,
+                                               GlobalV::ofs_running);
+        }
+    }
+#endif
 }
 
 template class ESolver_KS_LCAO<double, double>;
