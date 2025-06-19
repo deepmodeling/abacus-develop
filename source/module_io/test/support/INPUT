@@ -274,25 +274,23 @@ vdw_cn_thr_unit                Bohr #unit of cn_thr, Bohr or Angstrom
 vdw_cutoff_period   3 3 3 #periods of periodic structure
 
 #Parameters (14.exx)
-exx_hybrid_alpha               default #
-exx_hse_omega                  0.11 #
+exx_fock_alpha               1 #
+exx_erfc_alpha               0.25 #
+exx_erfc_omega               0.11 #
 exx_separate_loop              1 #0 or 1
 exx_hybrid_step                100 #
 exx_mixing_beta                1.0 #
-exx_lambda                     0.3 #
+exx_fock_lambda              0.3 #
 exx_real_number                default #0 or 1
 exx_pca_threshold              0 #
 exx_c_threshold                0 #
 exx_v_threshold                0 #
 exx_dm_threshold               0 #
-exx_schwarz_threshold          0 #
-exx_cauchy_threshold           0 #
 exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
-exx_cauchy_force_threshold     0 #
-exx_cauchy_stress_threshold    0 #
+exx_c_grad_r_threshold         0 #
+exx_v_grad_r_threshold         0 #
 exx_ccp_rmesh_times            default #
-exx_distribute_type            htime #htime or kmeans1 or kmeans2
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #
