@@ -1263,38 +1263,29 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // exx_hybrid_alpha
-        auto it = find_label("exx_hybrid_alpha", readinput.input_lists);
-        param.input.exx_hybrid_alpha = "default";
+    { // exx_fock_alpha
+        auto it = find_label("exx_fock_alpha", readinput.input_lists);
+        param.input.exx_fock_alpha[0] = "default";
         param.input.dft_functional = "HF";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_alpha, "1");
+        EXPECT_EQ(param.input.exx_fock_alpha[0], "1");
 
-        param.input.exx_hybrid_alpha = "default";
+        param.input.exx_fock_alpha[0] = "default";
         param.input.dft_functional = "PBE0";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_alpha, "0.25");
+        EXPECT_EQ(param.input.exx_fock_alpha[0], "0.25");
 
-        param.input.exx_hybrid_alpha = "default";
+        param.input.exx_fock_alpha[0] = "default";
         param.input.dft_functional = "SCAN0";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_alpha, "0.25");
-
-        param.input.exx_hybrid_alpha = "default";
+        EXPECT_EQ(param.input.exx_fock_alpha[0], "0.25");
+    }
+    { // exx_erfc_alpha
+        auto it = find_label("exx_erfc_alpha", readinput.input_lists);
+        param.input.exx_erfc_alpha[0] = "default";
         param.input.dft_functional = "HSE";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_alpha, "0.25");
-
-        param.input.exx_hybrid_alpha = "default";
-        param.input.dft_functional = "none";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.exx_hybrid_alpha, "0");
-
-        param.input.exx_hybrid_alpha = "-1";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_EQ(param.input.exx_erfc_alpha[0], "0.25");
     }
     { // exx_hybrid_step
         auto it = find_label("exx_hybrid_step", readinput.input_lists);
@@ -1344,14 +1335,6 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(param.input.exx_ccp_rmesh_times, "1");
 
         param.input.exx_ccp_rmesh_times = "0";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // exx_distribute_type
-        auto it = find_label("exx_distribute_type", readinput.input_lists);
-        param.input.exx_distribute_type = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
