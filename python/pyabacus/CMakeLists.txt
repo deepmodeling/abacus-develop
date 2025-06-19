@@ -14,7 +14,7 @@ find_package(pybind11 CONFIG REQUIRED)
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
 set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
-set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/module_hsolver")
+set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
@@ -44,7 +44,7 @@ if(MKLROOT)
 
 # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
 # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
-  if(NOT ENABLE_DEEPKS)
+  if(NOT ENABLE_MLALGO)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
 

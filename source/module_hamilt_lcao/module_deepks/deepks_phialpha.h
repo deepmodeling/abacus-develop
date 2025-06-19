@@ -1,7 +1,7 @@
 #ifndef DEEPKS_PHIALPHA_H
 #define DEEPKS_PHIALPHA_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"

@@ -4,22 +4,22 @@ add_library(
 
     relax_driver.cpp
 
-    relax_new/relax.cpp
-    relax_new/line_search.cpp
+    relax_sync.cpp
+    line_search.cpp
     
-    relax_old/bfgs.cpp
-    relax_old/lbfgs.cpp
-    relax_old/relax_old.cpp
-    relax_old/bfgs_basic.cpp
-    relax_old/ions_move_basic.cpp
-    relax_old/ions_move_bfgs.cpp
-    relax_old/ions_move_cg.cpp
-    relax_old/ions_move_sd.cpp
-    relax_old/ions_move_methods.cpp
-    relax_old/lattice_change_basic.cpp
-    relax_old/lattice_change_cg.cpp
-    relax_old/lattice_change_methods.cpp
-    relax_old/matrix_methods.cpp
+    bfgs.cpp
+    lbfgs.cpp
+    relax_nsync.cpp
+    bfgs_basic.cpp
+    ions_move_basic.cpp
+    ions_move_bfgs.cpp
+    ions_move_cg.cpp
+    ions_move_sd.cpp
+    ions_move_methods.cpp
+    lattice_change_basic.cpp
+    lattice_change_cg.cpp
+    lattice_change_methods.cpp
+    matrix_methods.cpp
 )
 
 if(ENABLE_COVERAGE)
@@ -28,8 +28,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(relax_new/test)
-    add_subdirectory(relax_old/test)
+    add_subdirectory(test)
   endif()
    
 endif()

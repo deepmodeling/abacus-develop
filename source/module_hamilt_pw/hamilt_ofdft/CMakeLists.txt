@@ -16,13 +16,11 @@ if(ENABLE_COVERAGE)
   add_coverage(hamilt_ofdft)
 endif()
 
-if(ENABLE_MLKEDF)
+if(ENABLE_MLALGO)
   list(APPEND hamilt_mlkedf_srcs
       kedf_ml.cpp
       kedf_ml_pot.cpp
       kedf_ml_label.cpp
-      ml_data.cpp
-      ml_data_descriptor.cpp
       ml_tools/nn_of.cpp
   )
 

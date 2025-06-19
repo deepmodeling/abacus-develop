@@ -5,7 +5,7 @@
 #include "module_base/parallel_device.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_hsolver/diago_iter_assist.h"
+#include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_atomic_random.h"

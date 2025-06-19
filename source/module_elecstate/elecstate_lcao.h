@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_ELECSTATE_ELECSTATE_LCAO_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_ELECSTATE_ELECSTATE_LCAO_H
+#ifndef ELECSTATE_LCAO_H
+#define ELECSTATE_LCAO_H
 
 #include "elecstate.h"
 #include "module_elecstate/module_dm/density_matrix.h"

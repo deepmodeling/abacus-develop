@@ -8,8 +8,8 @@
 #include "module_base/module_device/device.h"                  // base_device
 #include "module_base/module_device/memory_op.h"               // memory operations
 #include "module_base/scalapack_connector.h"                   // Cpxgemr2d
-#include "module_esolver/esolver_ks_lcao.h"
-#include "module_esolver/esolver_ks_lcao_tddft.h"
+#include "source_esolver/esolver_ks_lcao.h"
+#include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_psi/psi.h"
 

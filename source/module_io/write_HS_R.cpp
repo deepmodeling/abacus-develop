@@ -46,6 +46,7 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
+
     const int nspin = PARAM.inp.nspin;
 
     if (nspin == 1 || nspin == 4) {
@@ -214,6 +215,21 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::tick("ModuleIO", "output_SR");
+
+    GlobalV::ofs_running << " OUTPUT S(R) BEGINS" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " |                                            "
+        "                        |" << std::endl;
+    GlobalV::ofs_running << " | Print out the overlap matrix S(R) in the CSR format                |" << std::endl;
+    GlobalV::ofs_running << " |                                            "
+        "                        |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
+    std::cout << " The overlap file is saved in " << SR_filename << std::endl;
+    GlobalV::ofs_running << " The overlap file is saved in " << SR_filename << std::endl;
+
 
     LCAO_HS_Arrays HS_Arrays;
 

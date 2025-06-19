@@ -3,7 +3,7 @@
 /// 2. check_descriptor : prints descriptor for checking
 /// 3. cal_descriptor_equiv : calculates descriptor in equivalent version
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_descriptor.h"
 

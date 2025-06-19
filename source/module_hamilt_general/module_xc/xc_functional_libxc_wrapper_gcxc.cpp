@@ -19,7 +19,9 @@ void XC_Functional_Libxc::gcxc_libxc(
         return;
     }
 
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_UNPOLARIZED);
     for(xc_func_type &func : funcs)
     {
         double s,v1,v2;
@@ -44,7 +46,10 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
     const std::array<double,2> rho = {rhoup, rhodw};
     const std::array<double,3> grho = {gdr1.norm2(), gdr1*gdr2, gdr2.norm2()};
 
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        /* func_id = */ func_id, 
+        /* xc_polarized = */ XC_POLARIZED);
+
     for(xc_func_type &func : funcs)
     {
         if( func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)

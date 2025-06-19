@@ -9,9 +9,10 @@
 #
 
 VERSION = ABACUS
-HEADERS = *.h
+HEADERS = source_main/*.h
 
 VPATH=./src_global:\
+./source_main:\
 ./module_basis/module_ao:\
 ./module_basis/module_nao:\
 ./module_cell/module_neighbor:\
@@ -28,11 +29,11 @@ VPATH=./src_global:\
 ./module_md:\
 ./module_basis/module_pw:\
 ./module_basis/module_pw/module_fft:\
-./module_esolver:\
-./module_hsolver:\
-./module_hsolver/kernels:\
-./module_hsolver/genelpa:\
-./module_hsolver/module_pexsi:\
+./source_esolver:\
+./source_hsolver:\
+./source_hsolver/kernels:\
+./source_hsolver/genelpa:\
+./source_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/module_pot:\
@@ -61,8 +62,6 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
-./module_relax/relax_old:\
-./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
 ./module_io/json_output:\
@@ -145,6 +144,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
+    math_erf_complex.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
@@ -192,6 +192,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
+    k_vector_utils.o\
     cell_index.o\
     check_atomic_stru.o\
     update_cell.o\
@@ -201,6 +202,7 @@ OBJS_CELL=atom_pseudo.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
+        deepks_check.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\
@@ -445,8 +447,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    relax_old.o\
-    relax.o\
+    relax_nsync.o\
+    relax_sync.o\
     bfgs.o\
     lbfgs.o\
     matrix_methods.o\
@@ -535,8 +537,10 @@ OBJS_IO=input_conv.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
+    write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
+    ctrl_output_lcao.o\
     para_json.o\
     abacusjson.o\
     general_info.o\

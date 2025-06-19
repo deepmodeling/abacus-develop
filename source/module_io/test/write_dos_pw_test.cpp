@@ -42,7 +42,7 @@ protected:
 TEST_F(DosPWTest,Dos1)
 {
 	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1","DOS1_smear.dat",0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
@@ -90,30 +90,23 @@ TEST_F(DosPWTest,Dos1)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("DOS1_smear.dat");
+		ifs.open("doss1_pw.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
-        EXPECT_THAT(str, testing::HasSubstr("          -5.53      0.0241031    0.000772634"));
-        EXPECT_THAT(str, testing::HasSubstr("          17.19      0.0952359        15.9976"));
+        EXPECT_THAT(str, testing::HasSubstr("           -4.6           0.25        0.28125        1.42515       0.159819"));
+        EXPECT_THAT(str, testing::HasSubstr("             18              0             16              0             16"));
 		ifs.close();
-		remove("DOS1_smear.dat");
-
-		ifs.open("DOS1.dat");
-		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str1, testing::HasSubstr("4801 # number of points"));
-        EXPECT_THAT(str1, testing::HasSubstr("          -5.39        0.03125        0.03125"));
-        EXPECT_THAT(str1, testing::HasSubstr("          -1.25         0.1875        1.90625"));
-		ifs.close();
-		remove("DOS1");
+		remove("doss1_pw.txt");
 #ifdef __MPI
 	}
 #endif
 }
 
+
 TEST_F(DosPWTest,Dos2)
 {
     //is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"DOS1.dat","DOS1_smear.dat",0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
 	dosp.set_isk();
 	dosp.read_wk();
 	dosp.read_istate_info();
@@ -161,21 +154,13 @@ TEST_F(DosPWTest,Dos2)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("DOS1_smear.dat");
-		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str, testing::HasSubstr("4532 # number of points"));
-		EXPECT_THAT(str, testing::HasSubstr("        11.7919        1.31657        12.3979"));
-		EXPECT_THAT(str, testing::HasSubstr("        17.0619        1.25238        15.9258"));
-		ifs.close();
-		remove("DOS1_smear.dat");
-
-		ifs.open("DOS1.dat");
+		ifs.open("doss1_pw.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str1, testing::HasSubstr("4532 # number of points"));
         EXPECT_THAT(str1, testing::HasSubstr("       -5.38811        0.03125        0.03125"));
         EXPECT_THAT(str1, testing::HasSubstr("        3.07189         0.1875        5.46875"));
 		ifs.close();
-		remove("DOS1.dat");
+		remove("doss1_pw.txt");
 #ifdef __MPI
 	}
 #endif

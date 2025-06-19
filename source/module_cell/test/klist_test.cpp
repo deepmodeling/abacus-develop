@@ -593,7 +593,9 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+//    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+    KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
+
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_DOUBLE_EQ(kv->kvec_d[0].x, 0);
@@ -613,9 +615,10 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+//    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+    KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
     EXPECT_TRUE(kv->kd_done);
-    kv->print_klists(GlobalV::ofs_running);
+    KVectorUtils::print_klists(*kv, GlobalV::ofs_running);
     GlobalV::ofs_running.close();
     remove("tmp_klist_2");
 }
@@ -630,7 +633,7 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(KVectorUtils::print_klists(*kv, GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nkstot < nks"));
 }
@@ -648,29 +651,33 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    PARAM.input.final_scf = true;
+//    PARAM.input.final_scf = true;
     kv->kd_done = false;
     kv->kc_done = false;
     // case 1
     kv->k_nkstot = 0;
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     // case 2
     kv->k_nkstot = 1;
     kv->k_kword = "D";
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     // case 3
     kv->k_kword = "C";
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // case 4
     GlobalV::ofs_warning.open("klist_tmp_warning_8");
     kv->k_kword = "arbitrary";
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_8");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -691,12 +698,14 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kc_done = false;
     kv->kd_done = true;
     std::string skpt;
-    PARAM.input.final_scf = false;
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    PARAM.input.final_scf = false;
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     kv->kc_done = true;
     kv->kd_done = false;
-    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
 }
 
@@ -743,7 +752,7 @@ TEST_F(KlistTest, IbzKpoint)
     std::string skpt;
     ModuleSymmetry::Symmetry::symm_flag = 1;
     bool match = true;
-    kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+    KVectorUtils::kvec_ibz_kpoint(*kv, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
     EXPECT_EQ(kv->get_nkstot(), 35);
     GlobalV::ofs_running << skpt << std::endl;
     GlobalV::ofs_running.close();
@@ -768,7 +777,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     std::string skpt;
     ModuleSymmetry::Symmetry::symm_flag = 0;
     bool match = true;
-    kv->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+    KVectorUtils::kvec_ibz_kpoint(*kv, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
     EXPECT_EQ(kv->get_nks(), 260);
     GlobalV::ofs_running << skpt << std::endl;
     GlobalV::ofs_running.close();

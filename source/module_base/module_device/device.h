@@ -32,7 +32,7 @@ namespace information
 
 /**
  * @brief Get the device info object
- * for module_esolver
+ * for source_esolver
  */
 std::string get_device_info(std::string device_flag);
 

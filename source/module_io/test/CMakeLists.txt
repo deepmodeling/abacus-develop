@@ -1,4 +1,4 @@
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
@@ -48,8 +48,8 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_istate_info_test
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp
-  ../cif_io.cpp
+  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../../module_cell/k_vector_utils.cpp
+		../cif_io.cpp
 )
 
 AddTest(
@@ -60,14 +60,14 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_write_dos_pw
-  LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp
+  LIBS parameter  ${math_libs} base device symmetry
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp ../../module_cell/k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  ${math_libs} base device symmetry cell_info 
-  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp
+  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/k_vector_utils.cpp
 )
 
 AddTest(

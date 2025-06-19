@@ -88,8 +88,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                          force,
                                          stress,
                                          force_step,
-                                         stress_step,
-                                         p_esolver); // pengfei Li 2018-05-14
+                                         stress_step); // pengfei Li 2018-05-14
             }
             // print structure
             // changelog 20240509
