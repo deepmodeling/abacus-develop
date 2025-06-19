@@ -531,20 +531,12 @@ struct Input_para
     double exx_c_threshold = 0.0001;             ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                ///< threshold to screen C matrix in exx
     double exx_dm_threshold = 0.0001;            ///< threshold to screen density matrix in exx
-    double exx_schwarz_threshold = 0;            ///< threshold to screen exx using Cauchy-Schwartz inequality
-    double exx_cauchy_threshold = 1e-07;         ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_c_grad_threshold = 0.0001;        ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;           ///< threshold to screen nabla V matrix in exx
-    double exx_c_grad_r_threshold = 0.0001;      ///< threshold to screen nabla C matrix in exx
-    double exx_v_grad_r_threshold = 0.1;         ///< threshold to screen nabla V matrix in exx
-    double exx_cauchy_force_threshold = 1e-07;   ///< threshold to screen exx force using Cauchy-Schwartz
-                                                 ///< inequality
-    double exx_cauchy_stress_threshold = 1e-07;  ///< threshold to screen exx stress using Cauchy-Schwartz
-                                                 ///< inequality
+    double exx_c_grad_r_threshold = 0.0001;      ///< threshold to screen nabla C * R matrix in exx
+    double exx_v_grad_r_threshold = 0.1;         ///< threshold to screen nabla V * R matrix in exx
     std::string exx_ccp_rmesh_times = "default"; ///< how many times larger the radial mesh required for
                                                  ///< calculating Columb potential is to that of atomic orbitals
-    std::string exx_distribute_type = "htime";   ///< distribute type (assuming default as no specific value
-                                                 ///< provided)
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel

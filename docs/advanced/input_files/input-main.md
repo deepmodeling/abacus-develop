@@ -278,13 +278,10 @@
     - [exx\_dm\_threshold](#exx_dm_threshold)
     - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
     - [exx\_v\_grad\_threshold](#exx_v_grad_threshold)
-    - [exx\_schwarz\_threshold](#exx_schwarz_threshold)
-    - [exx\_cauchy\_threshold](#exx_cauchy_threshold)
-    - [exx\_cauchy\_force\_threshold](#exx_cauchy_force_threshold)
-    - [exx\_cauchy\_stress\_threshold](#exx_cauchy_stress_threshold)
+    - [exx\_c\_grad\_r\_threshold](#exx_c_grad_r_threshold)
+    - [exx\_v\_grad\_r\_threshold](#exx_v_grad_r_threshold)
     - [exx\_ccp\_threshold](#exx_ccp_threshold)
     - [exx\_ccp\_rmesh\_times](#exx_ccp_rmesh_times)
-    - [exx\_distribute\_type](#exx_distribute_type)
     - [exx\_opt\_orb\_lmax](#exx_opt_orb_lmax)
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
@@ -2779,7 +2776,7 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 ### exx_fock_alpha
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: fraction of Fock exchange 1/r in hybrid functionals, so that $E_{X} = \alpha E_{X} + (1-\alpha)E_{X,\text{LDA/GGA}}$
+- **Description**: fraction of Fock exchange $\frac{1}{r}$ in hybrid functionals, so that $E_{X} = \alpha E_{X} + (1-\alpha)E_{X,\text{LDA/GGA}}$
 - **Default**:
   - 1: if *[dft_functional](#dft_functional)==hf*
   - 0.25: if *[dft_functional](#dft_functional)==pbe0*
@@ -2793,7 +2790,7 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 ### exx_erfc_alpha
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: fraction of exchange erfc(wr)/r in hybrid functionals, so that $E_{X} = \alpha E_{X}^{\text{SR}} + (1-\alpha)E_{X,\text{LDA/GGA}}^{\text{SR}} + E_{X,\text{LDA/GGA}}^{\text{LR}}$
+- **Description**: fraction of exchange $\frac{\text{erfc}(\omega r)}{r}$ in hybrid functionals, so that $E_{X} = \alpha E_{X}^{\text{SR}} + (1-\alpha)E_{X,\text{LDA/GGA}}^{\text{SR}} + E_{X,\text{LDA/GGA}}^{\text{LR}}$
 - **Default**:
   - 0.25: if *[dft_functional](#dft_functional)==hse*
   - 1: if *[dft_functional](#dft_functional)==cwp22*
@@ -2803,7 +2800,7 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 ### exx_erfc_omega
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: range-separation parameter in exchange, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
+- **Description**: range-separation parameter in exchange, such that $\frac{1}{r}=\frac{\text{erfc}(\omega r)}{r}+\frac{\text{erf}(\omega r)}{r}$
 - **Default**: 0.11
 
 ### exx_separate_loop
@@ -2830,7 +2827,7 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 
 ## Exact Exchange (LCAO in PW)
 
-These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao_in_pw*.
 
 ### exx_fock_lambda
 
@@ -2841,67 +2838,55 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 
 ## Exact Exchange (LCAO)
 
-These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao*.
 
 ### exx_pca_threshold
 
 - **Type**: Real
-- **Description**: To accelerate the evaluation of four-center integrals ($ik|jl$), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$. The size of the ABF (i.e. number of $P_{k}$) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.
+- **Description**: To accelerate the evaluation of four-center integrals ($ik|jl$), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): $\Phi_{i}\Phi_{k}\sim \sum_{a} C^{a}_{ik}P_{a}$. The size of the ABF (i.e. number of $P_{a}$) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
 ### exx_c_threshold
 
 - **Type**: Real
-- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{k}_{ij}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). Smaller components (less than exx_c_threshold) of the $C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
 ### exx_v_threshold
 
 - **Type**: Real
-- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\Sigma_{a,b}C^{a}_{ij}V_{ab}C^{b}_{kl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{k}\sim \sum_{a} C^{a}_{ik}P_{a}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\sum_{a,b}C^{a}_{ik}V_{ab}C^{b}_{jl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
 - **Default**: 1E-1
 
 ### exx_dm_threshold
 
 - **Type**: Real
-- **Description**: The Fock exchange can be expressed as $\Sigma_{k,l}(ik|jl)D_{kl}$ where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
+- **Description**: The Fock exchange can be expressed as $\sum_{k,l}(ik|jl)D_{kl}$ where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
 ### exx_c_grad_threshold
 
 - **Type**: Real
-- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). $\nabla C^{k}_{ij}$ is used in force and stress. Smaller components (less than exx_c_grad_threshold) of the $\nabla C^{k}_{ij}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). $\nabla C^{a}_{ik}$ is used in force. Smaller components (less than exx_c_grad_threshold) of the $\nabla C^{a}_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
 - **Default**: 1E-4
 
 ### exx_v_grad_threshold
 
 - **Type**: Real
-- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{j}\sim C^{k}_{ij}P_{k}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\Sigma_{a,b}C^{a}_{ij}V_{ab}C^{b}_{kl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. $\nabla V_{ab}$ is used in force and stress. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{k}\sim C^{a}_{ik}P_{a}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\sum_{a,b}C^{a}_{ik}V_{ab}C^{b}_{jl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. $\nabla V_{ab}$ is used in force. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
 - **Default**: 1E-1
 
-### exx_schwarz_threshold
+### exx_c_grad_r_threshold
 
 - **Type**: Real
-- **Description**: In practice the four-center integrals are sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each integral before carrying out explicit evaluations. Those that are smaller than exx_schwarz_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-5.  (Currently not used)
-- **Default**: 0
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). $\nabla C^{a}_{ik} * R_{ik}$ is used in stress. Smaller components (less than exx_c_grad_r_threshold) of the $\nabla C^{a}_{ik} * R_{ik}$ matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.
+- **Default**: 1E-4
 
-### exx_cauchy_threshold
-
-- **Type**: Real
-- **Description**: In practice the Fock exchange matrix is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
-- **Default**: 1E-7
-
-### exx_cauchy_force_threshold
+### exx_v_grad_r_threshold
 
 - **Type**: Real
-- **Description**: In practice the Fock exchange matrix in force is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_force_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
-- **Default**: 1E-7
-
-### exx_cauchy_stress_threshold
-
-- **Type**: Real
-- **Description**: In practice the Fock exchange matrix in stress is sparse, and using Cauchy-Schwartz inequality, we can find an upper bound of each matrix element before carrying out explicit evaluations. Those that are smaller than exx_cauchy_stress_threshold will be truncated. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-7.
-- **Default**: 1E-7
+- **Description**: See also the entry [exx_pca_threshold](#exx_pca_threshold). With the approximation $\Phi_{i}\Phi_{k}\sim C^{a}_{ik}P_{a}$, the four-center integral in Fock exchange is expressed as $(ik|jl)=\sum_{a,b}C^{a}_{ik}V_{ab}C^{b}_{jl}$, where $V_{ab}=(P_{a}|P_{b})$ is a double-center integral. $\nabla V_{ab} *R_{ab}$ is used in force and stress. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.
+- **Default**: 1E-1
 
 ### exx_ccp_threshold
 
@@ -2917,15 +2902,6 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
   - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
   - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*
   - 1: else
-
-### exx_distribute_type
-
-- **Type**: String
-- **Description**: When running in parallel, the evaluation of Fock exchange is done by distributing atom pairs on different processes, then gather the results. exx_distribute_type governs the mechanism of distribution. Available options are `htime`, `order`, `kmean1` and `kmeans2`.
-  - `order`: Atom pairs are simply distributed by their orders.
-  - `htime`: The balance in time is achieved on each processor, hence if the memory is sufficient, this is the recommended method.
-  - `kmeans1` ,   `kmeans2`: Two methods where the k-means clustering method is used to reduce memory requirement. They might be necessary for very large systems. (Currently not used)
-- **Default**: `htime`
 
 ### exx_opt_orb_lmax
 
