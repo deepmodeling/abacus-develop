@@ -177,8 +177,8 @@ void Input_Conv::Convert()
 
 
 #ifdef __LCAO
-    Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
-    Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
+    Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_zero_out;
+    Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_zero_out;
 #endif
 
     BFGS_Basic::relax_bfgs_w1 = PARAM.inp.relax_bfgs_w1;

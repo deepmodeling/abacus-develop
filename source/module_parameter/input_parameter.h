@@ -157,7 +157,7 @@ struct Input_para
     double relax_cg_thr = 0.5; ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double force_thr = -1;     ///< threshold of force in unit (Ry/Bohr)
     double force_thr_ev = -1;  ///< threshold of force in unit (eV/Angstrom)
-    double force_thr_ev2 = 0;  ///< invalid force threshold, mohan add 2011-04-17
+    double force_zero_out = 0;  ///< invalid force threshold, mohan add 2011-04-17
     double stress_thr = 0.5;   ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
     double press1 = 0;
     double press2 = 0;

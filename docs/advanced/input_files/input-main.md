@@ -116,7 +116,7 @@
     - [cal\_force](#cal_force)
     - [force\_thr](#force_thr)
     - [force\_thr\_ev](#force_thr_ev)
-    - [force\_thr\_ev2](#force_thr_ev2)
+    - [force\_zero\_out](#force_zero_out)
     - [relax\_bfgs\_w1](#relax_bfgs_w1)
     - [relax\_bfgs\_w2](#relax_bfgs_w2)
     - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
@@ -1485,10 +1485,10 @@ These variables are used to control the geometry relaxation.
 - **Default**: 0.0257112
 - **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
 
-### force_thr_ev2
+### force_zero_out
 
 - **Type**: Real
-- **Description**: The calculated force will be set to 0 when it is smaller than the parameter `force_thr_ev2`.
+- **Description**: The force whose value is smaller than `force_zero_out` will be treated as zero.
 - **Default**: 0.0
 - **Unit**: eV/Angstrom
 
