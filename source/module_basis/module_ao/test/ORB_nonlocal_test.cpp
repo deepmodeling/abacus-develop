@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 #define private public
 #include "module_basis/module_ao/ORB_nonlocal.h"

@@ -1,7 +1,7 @@
-#include "module_base/constants.h"
+#include "source_base/constants.h"
 #include "lr_util.h"
-#include "module_base/lapack_connector.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/lapack_connector.h"
+#include "source_base/scalapack_connector.h"
 namespace LR_Util
 {
     /// =================PHYSICS====================

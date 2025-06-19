@@ -2,7 +2,7 @@
 #define HYDROGEN_RADIALS_H_
 
 #include "module_basis/module_nao/radial_set.h"
-#include "module_base/assoc_laguerre.h"
+#include "source_base/assoc_laguerre.h"
 // include pair container
 #include <utility>
 // include map container

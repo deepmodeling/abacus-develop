@@ -1,7 +1,7 @@
 #include "symmetry.h"
 using namespace ModuleSymmetry;
 
-#include "module_base/libm/libm.h"
+#include "source_base/libm/libm.h"
 #include "module_parameter/parameter.h"
 
 void Symmetry::rho_symmetry( double *rho,

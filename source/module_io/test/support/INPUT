@@ -102,7 +102,7 @@ relax_nmax                     1 #number of ion iteration steps
 out_stru                       0 #output the structure files after each ion step
 force_thr                      0.001 #force threshold, unit: Ry/Bohr
 force_thr_ev                   0.0257112 #force threshold, unit: eV/Angstrom
-force_thr_ev2                  0 #force invalid threshold, unit: eV/Angstrom
+force_zero_out                 0 #force invalid threshold, unit: eV/Angstrom
 relax_cg_thr                   0.5 #threshold for switching from cg to bfgs, unit: eV/Angstrom
 stress_thr                     0.01 #stress threshold
 press1                         0 #target pressure, unit: KBar

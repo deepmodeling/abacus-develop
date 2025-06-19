@@ -2,9 +2,9 @@
 
 #include "module_io/write_proj_band_lcao.h" // projcted band structure
 
-#include "module_base/formatter.h"
-#include "module_base/global_variable.h"
-#include "module_base/tool_title.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_title.h"
 #include "module_elecstate/elecstate_tools.h"
 
 #include "module_elecstate/module_dm/cal_dm_psi.h"
@@ -34,7 +34,7 @@
 #include "module_io/write_vxc.hpp"
 #include "module_io/write_vxc_r.hpp"
 
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -56,7 +56,7 @@
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hsolver/hsolver_lcao.h"
+#include "source_hsolver/hsolver_lcao.h"
 
 // test RDMFT
 #include "module_rdmft/rdmft.h"

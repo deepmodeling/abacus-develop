@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #define private public
 #include "../module_charge/charge_mixing.h"
-#include "module_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/broyden_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"

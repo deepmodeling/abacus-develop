@@ -7,19 +7,19 @@ AddTest(
   TARGET pwdft_soc
   LIBS parameter  ${math_libs}
   SOURCES soc_test.cpp ../soc.cpp
-  	../../../module_base/global_variable.cpp
-  	../../../module_base/global_function.cpp
-	../../../module_base/global_file.cpp
-	../../../module_base/tool_quit.cpp
-	../../../module_base/global_variable.cpp
-	../../../module_base/global_file.cpp
-	../../../module_base/memory.cpp
-	../../../module_base/timer.cpp
-	../../../module_base/blas_connector_base.cpp ../../../module_base/blas_connector_vector.cpp ../../../module_base/blas_connector_matrix.cpp
-	../../../module_base/parallel_global.cpp
-	../../../module_base/parallel_comm.cpp
-	../../../module_base/parallel_common.cpp
-	../../../module_base/parallel_reduce.cpp
+  	../../../source_base/global_variable.cpp
+  	../../../source_base/global_function.cpp
+	../../../source_base/global_file.cpp
+	../../../source_base/tool_quit.cpp
+	../../../source_base/global_variable.cpp
+	../../../source_base/global_file.cpp
+	../../../source_base/memory.cpp
+	../../../source_base/timer.cpp
+	../../../source_base/blas_connector_base.cpp ../../../source_base/blas_connector_vector.cpp ../../../source_base/blas_connector_matrix.cpp
+	../../../source_base/parallel_global.cpp
+	../../../source_base/parallel_comm.cpp
+	../../../source_base/parallel_common.cpp
+	../../../source_base/parallel_reduce.cpp
 )
 
 AddTest(

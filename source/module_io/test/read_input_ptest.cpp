@@ -3,12 +3,12 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #include "module_io/read_input.h"
 #include "module_parameter/parameter.h"
 
 // #ifdef __MPI
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 // #endif
@@ -107,7 +107,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_TRUE(param.inp.symmetry_autoclose);
     EXPECT_EQ(param.inp.cal_force, 0);
     EXPECT_NEAR(param.inp.force_thr, 1.0e-3, 1.0e-7);
-    EXPECT_DOUBLE_EQ(param.inp.force_thr_ev2, 0);
+    EXPECT_DOUBLE_EQ(param.inp.force_zero_out, 0);
     EXPECT_DOUBLE_EQ(param.inp.stress_thr, 1.0e-2);
     EXPECT_DOUBLE_EQ(param.inp.press1, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.press2, 0.0);

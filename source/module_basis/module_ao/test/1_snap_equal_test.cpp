@@ -1,6 +1,6 @@
 #include<gtest/gtest.h>
 #include"ORB_unittest.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 
 //Test whether the 2-center-int results
 // and its derivative from two clases are equal. 

@@ -1,9 +1,9 @@
 #include "../pw_basis.h"
 #include "test_tool.h"
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "mpi.h"
-#include "module_base/global_function.h"
-#include "module_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/constants.h"
 #include "pw_test.h"
 using namespace std;
 

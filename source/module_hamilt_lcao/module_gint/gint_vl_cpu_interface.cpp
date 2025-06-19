@@ -1,7 +1,7 @@
 #include "gint.h"
-#include "module_base/memory.h"
+#include "source_base/memory.h"
 #include "module_parameter/parameter.h"
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 
 void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");

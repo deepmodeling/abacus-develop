@@ -1,15 +1,15 @@
 #include "operator_lcao.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hsolver/hsolver_lcao.h"
+#include "source_hsolver/hsolver_lcao.h"
 
 #include "module_parameter/parameter.h"
 
 #ifdef __ELPA
-#include "module_hsolver/diago_elpa.h"
-#include "module_hsolver/diago_elpa_native.h"
+#include "source_hsolver/diago_elpa.h"
+#include "source_hsolver/diago_elpa_native.h"
 #endif
 
 namespace hamilt {

@@ -118,7 +118,7 @@
     - [cal\_force](#cal_force)
     - [force\_thr](#force_thr)
     - [force\_thr\_ev](#force_thr_ev)
-    - [force\_thr\_ev2](#force_thr_ev2)
+    - [force\_zero\_out](#force_zero_out)
     - [relax\_bfgs\_w1](#relax_bfgs_w1)
     - [relax\_bfgs\_w2](#relax_bfgs_w2)
     - [relax\_bfgs\_rmax](#relax_bfgs_rmax)
@@ -134,6 +134,7 @@
   - [Output Variables](#variables-related-to-output-information)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
+    - [out\_xc\_r](#out_xc_r)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dmk)
     - [out\_dm1](#out_dmr)
@@ -1508,10 +1509,10 @@ These variables are used to control the geometry relaxation.
 - **Default**: 0.0257112
 - **Unit**: eV/Angstrom (0.03889 Ry/Bohr)
 
-### force_thr_ev2
+### force_zero_out
 
 - **Type**: Real
-- **Description**: The calculated force will be set to 0 when it is smaller than the parameter `force_thr_ev2`.
+- **Description**: The force whose value is smaller than `force_zero_out` will be treated as zero.
 - **Default**: 0.0
 - **Unit**: eV/Angstrom
 
@@ -1653,6 +1654,25 @@ These variables are used to control the output of properties.
   In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
 - **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
+
+### out_xc_r
+
+- **Type**: Integer \[Integer\](optional)
+- **Description**: 
+  The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder `OUT.${suffix}`:
+  - 0: rho, amag, sigma, exc
+  - 1: vrho, vsigma
+  - 2: v2rho2, v2rhosigma, v2sigma2
+  - 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
+  - 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4
+  The meaning of the files is presented in [Libxc](https://libxc.gitlab.io/manual/libxc-5.1.x/)
+
+  The second integer controls the precision of the charge density output, if not given, will use `3` as default.
+
+  ---
+  The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+
+- **Default**: -1 3
 
 ### out_pot
 

@@ -12,8 +12,8 @@
  */
 
 
-#include "module_base/vector3.h"
-#include "module_base/cubic_spline.h"
+#include "source_base/vector3.h"
+#include "source_base/cubic_spline.h"
 #include <memory>
 #include <vector>
 #include <complex>

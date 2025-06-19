@@ -1,7 +1,7 @@
 #ifndef PSI_INITIALIZER_NAO_H
 #define PSI_INITIALIZER_NAO_H
-#include "module_base/cubic_spline.h"
-#include "module_base/realarray.h"
+#include "source_base/cubic_spline.h"
+#include "source_base/realarray.h"
 #include "psi_initializer.h"
 
 #include <memory>

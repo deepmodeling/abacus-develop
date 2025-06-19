@@ -6,8 +6,8 @@
 #define EXX_LIP_H
 
 #include "module_hamilt_general/module_xc/exx_info.h"
-#include "module_base/macros.h"
-#include "module_base/matrix.h"
+#include "source_base/macros.h"
+#include "source_base/matrix.h"
 
 #include <vector>
 #include <memory.h>

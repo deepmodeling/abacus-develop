@@ -5,8 +5,8 @@
 // 3. v_xc_meta : which takes rho and tau as input, and v_xc as output
 
 #include "xc_functional.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include "module_parameter/parameter.h"
 
 #ifdef USE_LIBXC

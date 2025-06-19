@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "test_sph.h"
-#include "module_base/array_pool.h"
+#include "source_base/array_pool.h"
 using namespace std;
 
 class gintTest : public ::testing::Test

@@ -1,8 +1,8 @@
 #include "operator_lr_hxc.h"
 #include <vector>
 #include "module_parameter/parameter.h"
-#include "module_base/blas_connector.h"
-#include "module_base/timer.h"
+#include "source_base/blas_connector.h"
+#include "source_base/timer.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_hcontainer.h"
 #include "module_lr/utils/lr_util_print.h"

@@ -1,7 +1,7 @@
 #include "parallel_kpoints.h"
 
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_global.h"
 
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,

@@ -1,6 +1,6 @@
 #include "parallel_grid.h"
 
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "module_parameter/parameter.h"
 Parallel_Grid::Parallel_Grid()
 {

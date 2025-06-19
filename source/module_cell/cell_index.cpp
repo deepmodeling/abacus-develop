@@ -1,7 +1,7 @@
 #include "cell_index.h"
 
-#include "module_base/name_angular.h"
-#include "module_base/tool_quit.h"
+#include "source_base/name_angular.h"
+#include "source_base/tool_quit.h"
 #include <stdexcept>
 
 CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,

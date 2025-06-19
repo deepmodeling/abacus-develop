@@ -1,7 +1,7 @@
 #include "symmetry_rotation.h"
 #include "module_ri/RI_Util.h"
-#include "module_base/blas_connector.h"
-#include "module_base/timer.h"
+#include "source_base/blas_connector.h"
+#include "source_base/timer.h"
 #include <array>
 #include <RI/global/Global_Func-2.h>
 #include <RI/physics/symmetry/Symmetry_Rotation.h>

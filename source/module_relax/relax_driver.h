@@ -4,9 +4,9 @@
 #include "module_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_esolver/esolver_ks.h"
-#include "relax_new/relax.h"
-#include "relax_old/relax_old.h"
-#include "relax_old/bfgs.h"
+#include "relax_sync.h"
+#include "relax_nsync.h"
+#include "bfgs.h"
 class Relax_Driver
 {
 

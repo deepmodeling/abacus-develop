@@ -1,7 +1,7 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
 #include "md_parameter.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 #include <vector>
@@ -157,7 +157,7 @@ struct Input_para
     double relax_cg_thr = 0.5; ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double force_thr = -1;     ///< threshold of force in unit (Ry/Bohr)
     double force_thr_ev = -1;  ///< threshold of force in unit (eV/Angstrom)
-    double force_thr_ev2 = 0;  ///< invalid force threshold, mohan add 2011-04-17
+    double force_zero_out = 0;  ///< invalid force threshold, mohan add 2011-04-17
     double stress_thr = 0.5;   ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
     double press1 = 0;
     double press2 = 0;
@@ -361,6 +361,7 @@ struct Input_para
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
+    std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax

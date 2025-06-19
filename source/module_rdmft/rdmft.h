@@ -8,9 +8,9 @@
 #include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_psi/psi.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"

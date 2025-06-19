@@ -9,7 +9,7 @@
 #include "xc_functional.h"
 #include <stdexcept>
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"

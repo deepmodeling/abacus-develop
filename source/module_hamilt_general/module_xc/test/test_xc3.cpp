@@ -6,7 +6,7 @@
 #include "../xc_functional.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 
 /************************************************
 *  unit test of functionals

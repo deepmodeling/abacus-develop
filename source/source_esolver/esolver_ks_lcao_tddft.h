@@ -2,7 +2,7 @@
 #define ESOLVER_KS_LCAO_TDDFT_H
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
-#include "module_base/scalapack_connector.h" // Cpxgemr2d
+#include "source_base/scalapack_connector.h" // Cpxgemr2d
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_psi/psi.h"
 

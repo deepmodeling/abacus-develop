@@ -17,12 +17,12 @@
 
 #include "deepks_iterate.h"
 #include "deepks_pdm.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/timer.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/timer.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #ifdef __MPI
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 #endif
 
 void DeePKS_domain::read_pdm(bool read_pdm_file,

@@ -1,7 +1,7 @@
 #ifndef __WRITE_VXC_R_H_
 #define __WRITE_VXC_R_H_
 #include "module_parameter/parameter.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"

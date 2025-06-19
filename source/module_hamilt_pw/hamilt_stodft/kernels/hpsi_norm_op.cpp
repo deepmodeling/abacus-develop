@@ -1,6 +1,6 @@
 #include "hpsi_norm_op.h"
 
-#include "module_base/module_device/device.h"
+#include "source_base/module_device/device.h"
 namespace hamilt
 {
 template <typename FPTYPE>

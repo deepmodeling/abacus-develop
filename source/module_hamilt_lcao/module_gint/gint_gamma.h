@@ -6,8 +6,8 @@
 #ifndef GINT_GAMMA_H
 #define GINT_GAMMA_H
 #include "gint.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "grid_technique.h"
 #ifdef _OPENMP
 #include <omp.h>

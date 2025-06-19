@@ -1,9 +1,9 @@
 #include "charge_mixing.h"
 
 #include "module_parameter/parameter.h"
-#include "module_base/module_mixing/broyden_mixing.h"
-#include "module_base/module_mixing/pulay_mixing.h"
-#include "module_base/timer.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/pulay_mixing.h"
+#include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 Charge_Mixing::Charge_Mixing()

@@ -1,8 +1,8 @@
 #include "module_basis/module_nao/sphbes_radials.h"
 
-#include "module_base/math_sphbes.h"
-#include "module_base/parallel_common.h"
-#include "module_base/tool_quit.h"
+#include "source_base/math_sphbes.h"
+#include "source_base/parallel_common.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <functional>

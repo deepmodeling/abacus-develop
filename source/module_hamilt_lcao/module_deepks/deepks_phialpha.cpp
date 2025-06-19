@@ -11,8 +11,8 @@
 #include "deepks_phialpha.h"
 
 #include "deepks_iterate.h"
-#include "module_base/timer.h"
-#include "module_base/vector3.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
 #include "module_parameter/parameter.h"
 
 void DeePKS_domain::allocate_phialpha(const bool& cal_deri,

@@ -5,7 +5,7 @@
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
 // new
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
@@ -997,7 +997,7 @@ void Force_Stress_LCAO<T>::calStressPwPart(UnitCell& ucell,
     return;
 }
 
-#include "module_base/mathzone.h"
+#include "source_base/mathzone.h"
 // do symmetry for total force
 template <typename T>
 void Force_Stress_LCAO<T>::forceSymmetry(const UnitCell& ucell, ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm)

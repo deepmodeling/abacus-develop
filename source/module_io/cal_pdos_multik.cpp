@@ -1,11 +1,11 @@
 #include "cal_pdos_multik.h"
 
-#include "module_base/parallel_reduce.h"
-#include "module_base/blas_connector.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/blas_connector.h"
+#include "source_base/scalapack_connector.h"
 #include "write_orb_info.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
