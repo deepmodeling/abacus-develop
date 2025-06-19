@@ -69,6 +69,7 @@ template <typename T, typename Tdata> class RPA_LRI
 
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 
     // Exx_LRI<double> exx_postSCF_double(info);
     // LRI_CV<Tdata> cv;

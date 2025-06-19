@@ -14,7 +14,6 @@ namespace Conv_Coulomb_Pot_K
 		Hf,						//		"hf_Rcut"
 		Erfc,					//		"hse_omega"
 		Erf};					//		"hse_omega", "hf_Rcut"
-	enum class Coulomb_Method{Center2, Ewald}; // Different methods for constructing the Coulomb matrix.
 
 	template<typename T> extern T cal_orbs_ccp(
 		const T &orbs,

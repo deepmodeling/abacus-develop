@@ -48,18 +48,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
+	const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+		coulomb_param_updated = RI_Util::update_coulomb_param(this->info.coulomb_param, ucell.omega, this->p_kv->get_nkstot_full());
+	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, coulomb_param_updated, this->info.ccp_rmesh_times);
+
 	for( size_t T=0; T!=this->abfs.size(); ++T )
 		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
-	for(const auto &settings_list : this->info.coulomb_settings)
-	{
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
-			coulomb_param_updated = RI_Util::update_coulomb_param(settings_list.second.second, ucell.omega, this->p_kv->get_nkstot_full());
-		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, coulomb_param_updated, this->info.ccp_rmesh_times);
-		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
-															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->info.ccp_rmesh_times );
-	}
+	this->cv.set_orbitals(
+		ucell,
+		orb,
+		this->lcaos, this->abfs, this->abfs_ccp,
+		this->info.kmesh_times, this->info.ccp_rmesh_times );
+
 	ModuleBase::timer::tick("Exx_LRI", "init");
 }
 
@@ -94,40 +95,26 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
-	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
-	for(const auto &settings_list : this->info.coulomb_settings)
-	{
-		std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
-			Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(ucell,
-				list_As_Vs.first, list_As_Vs.second[0],
-				{{"writable_Vws",true}});
-		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell,Vs_temp);
-		Vs = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs, Vs_temp);
-
-		if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
-		{
-			std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
-				dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(ucell,
-					list_As_Vs.first, list_As_Vs.second[0],
-					{{"writable_dVws",true}});
-			this->exx_objs[settings_list.first].cv.dVws = LRI_CV_Tools::get_dCVws(ucell,dVs_temp);
-			dVs = dVs.empty() ? dVs_temp : LRI_CV_Tools::add(dVs, dVs_temp);
-		}
-		
-	}
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
+		Vs = this->cv.cal_Vs(ucell,
+			list_As_Vs.first, list_As_Vs.second[0],
+			{{"writable_Vws",true}});
+	this->cv.Vws = LRI_CV_Tools::get_CVws(ucell,Vs);
 	if (write_cv && GlobalV::MY_RANK == 0)
 		{ LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
-		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
-			dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
-		this->exx_lri.set_dVs(std::move(dVs_order), this->info.V_grad_threshold);
+		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
+			dVs = this->cv.cal_dVs(ucell,
+				list_As_Vs.first, list_As_Vs.second[0],
+				{{"writable_dVws",true}});
+		this->cv.dVws = LRI_CV_Tools::get_dCVws(ucell,dVs);
+		this->exx_lri.set_dVs(std::move(dVs), this->info.V_grad_threshold);
 		if(PARAM.inp.cal_stress)
 		{
-			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs_order);
+			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs);
 			this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
 		}
 	}
@@ -136,47 +123,29 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs;
-	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> dCs;
-	for(const auto &settings_list : this->info.coulomb_settings)
-	{
-		if(settings_list.second.first)
-		{
-			std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
-				std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
-					Cs_dCs = this->exx_objs[settings_list.first].cv.cal_Cs_dCs(
-						ucell,
-						list_As_Cs.first, list_As_Cs.second[0],
-						{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
-						{"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
-			std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs_temp = std::get<0>(Cs_dCs);
-			this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs_temp);
-			Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
-		
-			if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
-			{
-				std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> &dCs_temp = std::get<1>(Cs_dCs);
-				this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell,dCs_temp);
-				dCs = dCs.empty() ? dCs_temp : LRI_CV_Tools::add(dCs, dCs_temp);
-			}
-		}
-	}
+	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
+		Cs_dCs = this->cv.cal_Cs_dCs(
+			ucell,
+			list_As_Cs.first, list_As_Cs.second[0],
+			{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
+			 {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs = std::get<0>(Cs_dCs);
+	this->cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs);
 	if (write_cv && GlobalV::MY_RANK == 0)
 		{ LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
-		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
-			dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
-		this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
+		std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> &dCs = std::get<1>(Cs_dCs);
+		this->cv.dCws = LRI_CV_Tools::get_dCVws(ucell,dCs);
+		this->exx_lri.set_dCs(std::move(dCs), this->info.C_grad_threshold);
 		if(PARAM.inp.cal_stress)
 		{
-			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs_order);
+			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs);
 			this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
 		}
 	}
-	
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_ions");
 }
 

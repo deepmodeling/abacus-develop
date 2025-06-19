@@ -146,14 +146,15 @@ auto LRI_CV<Tdata>::cal_dVs(
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// + "writable_dVws"
--> std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
+-> std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
 {
 	ModuleBase::TITLE("LRI_CV","cal_dVs");
 	const T_func_DPcal_data<std::array<RI::Tensor<Tdata>,3>>
 		func_DPcal_dV = std::bind(
 			&LRI_CV<Tdata>::DPcal_dV, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	return this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_dV);
+	return LRI_CV_Tools::change_order(
+		this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_dV));
 }
 
 template<typename Tdata>
@@ -162,9 +163,7 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// "cal_dC" + "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
--> std::pair<
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
-        std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
+-> std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>, std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_Cs_dCs");
 	const T_func_DPcal_data<std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>
@@ -174,16 +173,16 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
 	std::map<TA,std::map<TAC, std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>>
 		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, std::min(1.0,this->ccp_rmesh_times), func_DPcal_C_dC);
 
-	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
-    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> dCs;
-    for (auto& Cs_dCs_A: Cs_dCs_tmp)
-        for (auto& Cs_dCs_B: Cs_dCs_A.second) {
-            Cs[Cs_dCs_A.first][Cs_dCs_B.first]
-                = std::move(std::get<0>(Cs_dCs_B.second));
-            if (flags.at("cal_dC"))
-                dCs[Cs_dCs_A.first][Cs_dCs_B.first]
-                    = std::move(std::get<1>(Cs_dCs_B.second));
-        }
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs;
+	std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> dCs;
+	for(auto &Cs_dCs_A : Cs_dCs_tmp)
+		for(auto &Cs_dCs_B : Cs_dCs_A.second)
+		{
+			Cs[Cs_dCs_A.first][Cs_dCs_B.first] = std::move(std::get<0>(Cs_dCs_B.second));
+			if(flags.at("cal_dC"))
+				for(int ix=0; ix<3; ++ix)
+					dCs[ix][Cs_dCs_A.first][Cs_dCs_B.first] = std::move(std::get<1>(Cs_dCs_B.second)[ix]);
+		}
 	return std::make_pair(Cs, dCs);
 }
 
