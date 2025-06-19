@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 namespace Conv_Coulomb_Pot_K
@@ -17,7 +16,7 @@ namespace Conv_Coulomb_Pot_K
 
 	template<typename T> extern T cal_orbs_ccp(
 		const T &orbs,
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times);
 
   //private:

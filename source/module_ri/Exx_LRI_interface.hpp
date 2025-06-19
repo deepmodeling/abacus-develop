@@ -254,7 +254,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                             PARAM.inp.nspin,
                             this->exx_spacegroup_symmetry);
 
-                if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
+                if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_ri.exx_symmetry_realspace)
                     { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer(), &this->symrot_); }
                 else
                     { this->cal_exx_elec(Ds, ucell,*dm_in.get_paraV_pointer()); }
@@ -445,7 +445,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), nspin)
                 : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), nspin, this->exx_spacegroup_symmetry);
 
-            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
+            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_ri.exx_symmetry_realspace)
                 { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symrot_); }
             else
                 { this->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer()); }    // restore DM but not Hexx
