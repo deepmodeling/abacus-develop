@@ -515,15 +515,16 @@ struct Input_para
     //  exx
     //  Peize Lin add 2018-06-20
     // ==========================================================
-    std::string exx_hybrid_alpha = "default";    ///< fraction of Fock exchange in hybrid functionals
-    double exx_hse_omega = 0.11;                 ///< range-separation parameter in HSE functional
+    std::vector<std::string> exx_fock_alpha = {"default"};      ///< fraction of Fock exchange 1/r in hybrid functionals
+    std::vector<std::string> exx_fock_lambda = {"default"};     ///< used to compensate for divergence points at G=0 in the
+                                                                ///< evaluation of Fock exchange using lcao_in_pw method
+    std::vector<std::string> exx_erfc_alpha = {"default"};      ///< fraction of exchange erfc(wr)/r in hybrid functionals
+    std::vector<std::string> exx_erfc_omega = {"default"};      ///< range-separation parameter in HSE functional
     bool exx_separate_loop = true;               ///< if 1, a two-step method is employed, else it will start
                                                  ///< with a GGA-Loop, and then Hybrid-Loop
     int exx_hybrid_step = 100;                   ///< the maximal electronic iteration number in
                                                  ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                ///< mixing_beta for outer-loop when exx_separate_loop=1
-    double exx_lambda = 0.3;                     ///< used to compensate for divergence points at G=0 in the
-                                                 ///< evaluation of Fock exchange using lcao_in_pw method
     std::string exx_real_number = "default";     ///< exx calculated in real or complex
     double exx_pca_threshold = 0.0001;           ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;             ///< threshold to screen C matrix in exx
@@ -647,7 +648,7 @@ struct Input_para
     // RDMFT    jghan added on 2024-07-06
     bool rdmft = false;               // rdmft, reduced density matrix funcional theory
     double rdmft_power_alpha = 0.656; // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
-    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
+    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_erfc_omega
 
     // ==============   #Parameters (22.EXX PW) =====================
     // EXX for planewave basis, rhx0820 2025-03-10

@@ -110,6 +110,7 @@ ReadInput::ReadInput(const int& rank)
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
 {
+    ModuleBase::TITLE("ReadInput", "read_parameters");
     // 1. only rank 0 read the input file
     if (this->rank == 0)
     {

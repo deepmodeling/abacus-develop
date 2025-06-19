@@ -170,11 +170,11 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
 					GlobalC::exx_info.info_global.hse_omega};
 		// short-range of B88_X
 		case XC_GGA_X_ITYH:
-			return {PARAM.inp.exx_hse_omega};
+			return {GlobalC::exx_info.info_global.hse_omega};
 		// short-range of LYP_C
 		case XC_GGA_C_LYPR:
 			return {0.04918, 0.132, 0.2533, 0.349, 
-					0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega};
+					0.35/2.29, 2.0/2.29, GlobalC::exx_info.info_global.hse_omega};
 #endif
 		default:
 			return std::vector<double>{};

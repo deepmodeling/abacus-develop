@@ -26,7 +26,6 @@
 #include "module_ri/Exx_LRI.h"
 #include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 // there are some operator reload to print data in different formats
-#include "module_ri/test_code/test_function.h"
 #endif
 
 #include <iostream>

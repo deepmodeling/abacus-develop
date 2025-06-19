@@ -30,7 +30,6 @@
 #include "module_ri/RI_2D_Comm.h"
 #include "module_ri/Exx_LRI.h"
 // there are some operator reload to print data in different formats
-#include "module_ri/test_code/test_function.h"
 #endif
 
 #include <iostream>

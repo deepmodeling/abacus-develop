@@ -262,13 +262,15 @@
     - [block\_up](#block_up)
     - [block\_height](#block_height)
   - [Exact Exchange (Common)](#exact-exchange-common)
-    - [exx\_hybrid\_alpha](#exx_hybrid_alpha)
-    - [exx\_hse\_omega](#exx_hse_omega)
+    - [exx\_fock\_alpha](#exx_fock_alpha)
+    - [exx\_erfc\_alpha](#exx_erfc_alpha)
+    - [exx\_erfc\_omega](#exx_erfc_omega)
     - [exx\_separate\_loop](#exx_separate_loop)
-  - [Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
-    - [exx\_lambda](#exx_lambda)
+  - [Exact Exchange (LCAO in PW)](#exact-exchange-lcao-in-pw)
+    - [exx\_erfc\_lambda](#exx_erfc_lambda)
+  - [Exact Exchange (LCAO)](#exact-exchange-lcao)
     - [exx\_pca\_threshold](#exx_pca_threshold)
     - [exx\_c\_threshold](#exx_c_threshold)
     - [exx\_v\_threshold](#exx_v_threshold)
@@ -2754,18 +2756,34 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 
 **Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*. 
 
-### exx_hybrid_alpha
+### exx_fock_alpha
 
-- **Type**: Real
-- **Description**: fraction of Fock exchange in hybrid functionals, so that $E_{X}=\alpha E_{X}+(1-\alpha)E_{X,\text{LDA/GGA}}$
+- **Type**: Real \[Real...\](optional)
+- **Description**: fraction of Fock exchange 1/r in hybrid functionals, so that $E_{X} = \alpha E_{X} + (1-\alpha)E_{X,\text{LDA/GGA}}$
 - **Default**:
   - 1: if *[dft_functional](#dft_functional)==hf*
-  - 0.25: else
+  - 0.25: if *[dft_functional](#dft_functional)==pbe0*
+  - 0.2: if *[dft_functional](#dft_functional)==b3lyp*
+  - 0.25: if *[dft_functional](#dft_functional)==scan0*
+  - 1: if *[dft_functional](#dft_functional)==muller*
+  - 1: if *[dft_functional](#dft_functional)==power*
+  - 1: if *[dft_functional](#dft_functional)==wp22*
+  - 0: else
 
-### exx_hse_omega
+### exx_erfc_alpha
 
-- **Type**: Real
-- **Description**: range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
+- **Type**: Real \[Real...\](optional)
+- **Description**: fraction of exchange erfc(wr)/r in hybrid functionals, so that $E_{X} = \alpha E_{X}^{\text{SR}} + (1-\alpha)E_{X,\text{LDA/GGA}}^{\text{SR}} + E_{X,\text{LDA/GGA}}^{\text{LR}}$
+- **Default**:
+  - 0.25: if *[dft_functional](#dft_functional)==hse*
+  - 1: if *[dft_functional](#dft_functional)==cwp22*
+  - -1: if *[dft_functional](#dft_functional)==wp22*
+  - 0: else
+
+### exx_erfc_omega
+
+- **Type**: Real \[Real...\](optional)
+- **Description**: range-separation parameter in exchange, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
 - **Default**: 0.11
 
 ### exx_separate_loop
@@ -2775,10 +2793,6 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
   - False: Start with a GGA-Loop, and then Hybrid-Loop, in which EXX Hamiltonian $H_{exx}$ is updated with electronic iterations.
   - True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, $H_{exx}$ is calculated based on density matrix that converges in the inner iteration.
 - **Default**: True
-
-## Exact Exchange (LCAO/LCAO in PW)
-
-These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 
 ### exx_hybrid_step
 
@@ -2794,12 +2808,20 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
-### exx_lambda
+## Exact Exchange (LCAO in PW)
 
-- **Type**: Real
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
+
+### exx_fock_lambda
+
+- **Type**: Real \[Real...\](optional)
 - **Availability**: *[basis_type](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using *lcao_in_pw* method.
 - **Default**: 0.3
+
+## Exact Exchange (LCAO)
+
+These variables are relevant when using hybrid functionals with *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 
 ### exx_pca_threshold
 

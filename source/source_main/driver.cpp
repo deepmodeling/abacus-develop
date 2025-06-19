@@ -109,6 +109,7 @@ void Driver::print_start_info()
 
 void Driver::reading()
 {
+    ModuleBase::TITLE("Driver", "reading");
     ModuleBase::timer::tick("Driver", "reading");
     // temperarily
     GlobalV::MY_RANK = PARAM.globalv.myrank;
