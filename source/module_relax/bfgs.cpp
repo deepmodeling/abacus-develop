@@ -4,6 +4,7 @@
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_cell/update_cell.h"
+#include "module_cell/print_cell.h" // lanshuyue add 2025-06-19 
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
@@ -67,7 +68,10 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     this->DetermineStep(steplength,dpos,maxstep);
     this->UpdatePos(ucell);
     this->CalculateLargestGrad(_force,ucell);
-    this->IsRestrain(dpos);  
+    this->IsRestrain(dpos); 
+   // print out geometry information during bfgs_trad relax 
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+   //	
 }
 
 void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
