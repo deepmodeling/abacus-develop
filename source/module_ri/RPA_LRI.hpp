@@ -23,7 +23,6 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     this->orb_cutoff_ = orb_cutoff;
     this->lcaos = exx_lri_rpa.lcaos;
     this->abfs = exx_lri_rpa.abfs;
-    this->abfs_ccp = exx_lri_rpa.abfs_ccp;
     this->p_kv = &kv_in;
 
     //	this->cv = std::move(exx_lri_rpa.cv);
@@ -44,7 +43,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv(const UnitCell& ucell)
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
 
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs = exx_lri_rpa.cv.cal_Vs(ucell,
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs = exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.cal_Vs(ucell,
                                                                               list_As_Vs.first,
                                                                               list_As_Vs.second[0],
                                                                               {
@@ -57,8 +56,8 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv(const UnitCell& ucell)
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
-              std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 3>>
-        Cs_dCs = exx_lri_rpa.cv.cal_Cs_dCs(ucell,
+              std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
+        Cs_dCs = exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.cal_Cs_dCs(ucell,
                                            list_As_Cs.first,
                                            list_As_Cs.second[0],
                                            {
@@ -331,7 +330,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell &ucell)
     for (int I = 0; I != ucell.nat; I++)
     {
         mu_shift[I] = all_mu;
-        all_mu += exx_lri_rpa.cv.get_index_abfs_size(ucell.iat2it[I]);
+        all_mu += exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.get_index_abfs_size(ucell.iat2it[I]);
     }
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
@@ -344,7 +343,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell &ucell)
     for (auto& Ip: this->Vs_period)
     {
         auto I = Ip.first;
-        size_t mu_num = exx_lri_rpa.cv.get_index_abfs_size(ucell.iat2it[I]);
+        size_t mu_num = exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.get_index_abfs_size(ucell.iat2it[I]);
 
         for (int ik = 0; ik != nks_tot; ik++)
         {
@@ -373,7 +372,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell &ucell)
             {
                 auto iJ = vq_Jp.first;
                 auto& vq_J = vq_Jp.second;
-                size_t nu_num = exx_lri_rpa.cv.get_index_abfs_size(ucell.iat2it[iJ]);
+                size_t nu_num = exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.get_index_abfs_size(ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
                 ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
