@@ -4,7 +4,7 @@
 // #include "module_cell/atom_spec.h"
 #include "base_matrix.h"
 #include "source_base/vector3.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <vector>
 #include <complex>

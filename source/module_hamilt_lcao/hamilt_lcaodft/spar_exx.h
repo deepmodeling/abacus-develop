@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/unitcell.h"
 namespace sparse_format
 {

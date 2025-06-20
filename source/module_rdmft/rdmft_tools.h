@@ -15,7 +15,7 @@
 #include "source_base/blas_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"

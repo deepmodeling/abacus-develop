@@ -4,35 +4,35 @@ AddTest(
   TARGET hcontainer_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
   TARGET hcontainer_complex_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer_complex.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
   TARGET hcontainer_cost_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
   TARGET hcontainer_folding_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_func_folding.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../func_folding.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  ../func_folding.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 AddTest(
   TARGET hcontainer_transfer_test
   LIBS parameter ${math_libs} psi base device
   SOURCES test_transfer.cpp ../func_transfer.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../transfer.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  ../transfer.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
 install(FILES parallel_hcontainer_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -51,7 +51,7 @@ AddTest(
     ../base_matrix.cpp
     ../hcontainer.cpp
     ../atom_pair.cpp
-    ../../../module_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
     ../../../module_io/sparse_matrix.cpp
 )
 
@@ -65,7 +65,7 @@ AddTest(
     ../hcontainer.cpp
     ../atom_pair.cpp
     ../output_hcontainer.cpp
-    ../../../module_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
     ../../../module_io/sparse_matrix.cpp
     ../../../module_io/csr_reader.cpp
     ../../../module_io/file_reader.cpp

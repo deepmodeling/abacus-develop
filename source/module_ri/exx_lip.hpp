@@ -18,7 +18,7 @@
 #include "source_base/parallel_global.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_psi/psi_init.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"

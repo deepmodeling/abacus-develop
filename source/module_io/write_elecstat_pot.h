@@ -1,6 +1,6 @@
 #ifndef POTENTIAL_IO_H
 #define POTENTIAL_IO_H
-#include "module_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_general/module_surchem/surchem.h"

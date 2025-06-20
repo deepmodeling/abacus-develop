@@ -1,7 +1,7 @@
 #ifndef CAL_TEST_H
 #define CAL_TEST_H
-#include "module_basis/module_pw/pw_basis.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 
 namespace Cal_Test
 {

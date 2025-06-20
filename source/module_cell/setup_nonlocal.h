@@ -4,8 +4,8 @@
 #include "atom_spec.h"
 #include "../source_base/global_function.h"
 #include "../source_base/global_variable.h"
-#include "../module_basis/module_ao/ORB_nonlocal.h"
-#include "../module_basis/module_ao/ORB_read.h"
+#include "../source_basis/module_ao/ORB_nonlocal.h"
+#include "../source_basis/module_ao/ORB_read.h"
 class InfoNonlocal
 {
 		public:

@@ -2,7 +2,7 @@
 #define ELECOND_H
 
 #include "source_base/matrix.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate.h"

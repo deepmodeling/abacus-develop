@@ -5,7 +5,7 @@
 
 #include <vector>
 #include "../source_base/element_basis_index.h"
-#include "../module_basis/module_ao/ORB_atomic_lm.h"
+#include "../source_basis/module_ao/ORB_atomic_lm.h"
 
 class LCAO_Orbitals;
 

@@ -4,7 +4,7 @@
 #include "ABFs_Construct-PCA.h"
 #include "source_base/gram_schmidt_orth-inl.h"
 #include "source_base/gram_schmidt_orth.h"
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"             //for ucell
 #include "module_ri/test_code/exx_abfs-construct_orbs-test.h" // Peize Lin test
 

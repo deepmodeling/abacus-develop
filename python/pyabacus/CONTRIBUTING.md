@@ -73,7 +73,7 @@ find_package(pybind11 CONFIG REQUIRED)
 # Set source path
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/source_base")
-set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
+set(NAO_PATH "${ABACUS_SOURCE_DIR}/source_basis/module_nao")
 set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
 set(ENABLE_LCAO ON)
@@ -147,7 +147,7 @@ set(PARAMETER_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/parameter")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_parameter ${PARAMETER_BINARY_DIR})
 # Add orb
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
-add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
+add_subdirectory(${ABACUS_SOURCE_DIR}/source_basis/module_ao ${ORB_BINARY_DIR})
 ```
 - This section sets the position-independent code flag and adds subdirectories for the base, parameter, and orb modules. It specifies the build directories for these modules.
 

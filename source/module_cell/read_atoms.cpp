@@ -15,7 +15,7 @@
 #include "source_base/mathzone.h"
 
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#include "source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 bool unitcell::read_atom_positions(UnitCell& ucell,

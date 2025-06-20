@@ -5,7 +5,7 @@
 #include "module_cell/klist.h"  // use K_Vectors
 #include "module_psi/psi.h"     // use psi::Psi<T>
 #include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>
-#include "module_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
+#include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
 #include "module_elecstate/fp_energy.h" // use elecstate::efermi
 
 

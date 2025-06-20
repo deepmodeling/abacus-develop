@@ -1,7 +1,7 @@
 #ifndef PSI_INITIALIZER_H
 #define PSI_INITIALIZER_H
 // data structure support
-#include "module_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
+#include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h" // for psi data structure

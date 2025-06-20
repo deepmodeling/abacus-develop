@@ -1,7 +1,7 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_psi/psi.h"
 #include "module_elecstate/elecstate.h"
 

@@ -20,10 +20,10 @@ AddTest(
 )
 
 if (USE_CUDA)
-list(APPEND FFT_SRC ../../../module_basis/module_pw/module_fft/fft_cuda.cpp)
+list(APPEND FFT_SRC ../../../source_basis/module_pw/module_fft/fft_cuda.cpp)
 endif()
 if (USE_ROCM)
-list(APPEND FFT_SRC ../../../module_basis/module_pw/module_fft/fft_rocm.cpp)
+list(APPEND FFT_SRC ../../../source_basis/module_pw/module_fft/fft_rocm.cpp)
 endif()
 AddTest(
   TARGET XCTest_GRADCORR
@@ -41,8 +41,8 @@ AddTest(
     ../../../source_base/libm/branred.cpp
     ../../../source_base/libm/sincos.cpp
     ../../../source_base/blas_connector_base.cpp ../../../source_base/blas_connector_vector.cpp ../../../source_base/blas_connector_matrix.cpp
-    ../../../module_basis/module_pw/module_fft/fft_bundle.cpp
-    ../../../module_basis/module_pw/module_fft/fft_cpu.cpp
+    ../../../source_basis/module_pw/module_fft/fft_bundle.cpp
+    ../../../source_basis/module_pw/module_fft/fft_cpu.cpp
     ${FFT_SRC}
 )
 
@@ -79,7 +79,7 @@ AddTest(
     ../../../source_base/timer.cpp
     ../../../source_base/libm/branred.cpp
     ../../../source_base/libm/sincos.cpp
-    ../../../module_basis/module_pw/module_fft/fft_bundle.cpp
-    ../../../module_basis/module_pw/module_fft/fft_cpu.cpp
+    ../../../source_basis/module_pw/module_fft/fft_bundle.cpp
+    ../../../source_basis/module_pw/module_fft/fft_cpu.cpp
     ${FFT_SRC}
 )

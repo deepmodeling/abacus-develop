@@ -6,11 +6,11 @@
 //! Unit cell information
 #include "module_cell/unitcell.h"
 //! Plane wave basis
-#include "module_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis.h"
 //! K points in Brillouin zone
 #include "module_cell/klist.h"
 //! Plane wave basis set for k points
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 
 namespace ModuleESolver
 {

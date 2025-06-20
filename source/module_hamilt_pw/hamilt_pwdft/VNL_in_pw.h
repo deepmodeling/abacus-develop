@@ -10,7 +10,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 #endif
 
 //==========================================================

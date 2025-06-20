@@ -1,7 +1,7 @@
 #include "module_hamilt_lcao/module_tddft/norm_psi.h"
 
 #include "source_base/global_variable.h" // GlobalV::ofs_running
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "tddft_test.h"
 
 #include <gtest/gtest.h>

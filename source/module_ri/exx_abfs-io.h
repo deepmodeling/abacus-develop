@@ -5,7 +5,7 @@
 
 #include <map>
 #include <vector>
-#include "../module_basis/module_ao/ORB_atomic_lm.h"
+#include "../source_basis/module_ao/ORB_atomic_lm.h"
 #include "../source_base/matrix.h"
 #include "../source_base/element_basis_index.h"
 #include "module_cell/klist.h"

@@ -20,7 +20,7 @@
 
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"

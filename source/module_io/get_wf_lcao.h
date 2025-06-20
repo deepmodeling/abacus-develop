@@ -1,7 +1,7 @@
 #ifndef GET_WF_LCAO_H
 #define GET_WF_LCAO_H
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"

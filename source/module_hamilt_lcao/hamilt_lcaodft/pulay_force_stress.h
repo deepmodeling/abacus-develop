@@ -1,5 +1,5 @@
 #pragma once
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"

@@ -13,7 +13,7 @@
 #include "prepare_unitcell.h"
 #include "module_cell/update_cell.h"
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 LCAO_Orbitals::LCAO_Orbitals(){}

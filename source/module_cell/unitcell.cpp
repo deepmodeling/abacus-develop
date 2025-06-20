@@ -19,7 +19,7 @@
 #endif
 
 #ifdef __LCAO
-#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#include "../source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 #include "update_cell.h"

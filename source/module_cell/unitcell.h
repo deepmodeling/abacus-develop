@@ -8,7 +8,7 @@
 #include "module_symmetry/symmetry.h"
 
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
 

@@ -46,7 +46,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |                           (4) Utility functions: timer, random number generator, etc.
 |   |                           (5) Global parameters: input parameters, element names, mathematical and physical constants.
 |   |-- module_container        The container module for storing data and performing operations on them and on different architectures.
-|-- module_basis                Basis means the basis set to expand the wave function.
+|-- source_basis                Basis means the basis set to expand the wave function.
 |   |-- module_ao               Atomic orbital basis set to be refactored.
 |   |-- module_nao              New numerical atomic orbital basis set for two-center integrals in LCAO calculations
 |   `-- module_pw               Data structures and relevant methods for planewave involved calculations

@@ -1,7 +1,7 @@
 #ifndef HAMILT_LCAO_H 
 #define HAMILT_LCAO_H 
 
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/module_dm/density_matrix.h"

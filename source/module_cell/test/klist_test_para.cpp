@@ -11,7 +11,7 @@
 #include <streambuf>
 #define private public
 #include "../klist.h"
-#include "module_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/parallel_kpoints.h"
