@@ -2,12 +2,12 @@
 #include "LCAO_deepks_interface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "source_base/global_variable.h"
-#include "source_base/tool_title.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_parameter/parameter.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_title.h"
 
 template <typename TK, typename TR>
 LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in) : ld(ld_in)
@@ -359,7 +359,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // set the output
             const double sparse_threshold = 1e-10;
             const int precision = 8;
-            const std::string file_hrtot = PARAM.globalv.global_out_dir + (PARAM.inp.deepks_out_labels == 1 ? "deepks_hrtot.csr" : "deepks_hamiltonian_r.csr");
+            const std::string file_hrtot
+                = PARAM.globalv.global_out_dir
+                  + (PARAM.inp.deepks_out_labels == 1 ? "deepks_hrtot.csr" : "deepks_hamiltonian_r.csr");
             hamilt::HContainer<TR>* hR_tot = (p_ham->getHR());
 
             if (rank == 0)
@@ -394,21 +396,21 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                         torch::Tensor vdr_precalc;
                         DeePKS_domain::cal_vdr_precalc(nlocal,
-                                                        lmaxd,
-                                                        inlmax,
-                                                        nat,
-                                                        nks,
-                                                        R_size,
-                                                        inl2l,
-                                                        kvec_d,
-                                                        phialpha,
-                                                        gevdm,
-                                                        inl_index,
-                                                        ucell,
-                                                        orb,
-                                                        *ParaV,
-                                                        GridD,
-                                                        vdr_precalc);
+                                                       lmaxd,
+                                                       inlmax,
+                                                       nat,
+                                                       nks,
+                                                       R_size,
+                                                       inl2l,
+                                                       kvec_d,
+                                                       phialpha,
+                                                       gevdm,
+                                                       inl_index,
+                                                       ucell,
+                                                       orb,
+                                                       *ParaV,
+                                                       GridD,
+                                                       vdr_precalc);
 
                         const std::string file_vdrpre = PARAM.globalv.global_out_dir + "deepks_vdrpre.npy";
                         LCAO_deepks_io::save_tensor2npy<double>(file_vdrpre, vdr_precalc, rank);
@@ -418,16 +420,16 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                         torch::Tensor phialpha_r_out;
                         DeePKS_domain::prepare_phialpha_r(nlocal,
-                                                        lmaxd,
-                                                        inlmax,
-                                                        nat,
-                                                        R_size,
-                                                        phialpha,
-                                                        ucell,
-                                                        orb,
-                                                        *ParaV,
-                                                        GridD,
-                                                        phialpha_r_out);
+                                                          lmaxd,
+                                                          inlmax,
+                                                          nat,
+                                                          R_size,
+                                                          phialpha,
+                                                          ucell,
+                                                          orb,
+                                                          *ParaV,
+                                                          GridD,
+                                                          phialpha_r_out);
                         const std::string file_phialpha_r = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
                         LCAO_deepks_io::save_tensor2npy<double>(file_phialpha_r, phialpha_r_out, rank);
 
@@ -571,7 +573,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         << " = " << std::setprecision(8) << e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
             ofs_running << "  E_delta_NN = " << std::setprecision(8) << E_delta << " Ry"
                         << " = " << std::setprecision(8) << E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
-                        ofs_running << " -----------------------------------------------" << std::endl;
+            ofs_running << " -----------------------------------------------" << std::endl;
         }
         if (PARAM.inp.deepks_out_unittest)
         {
