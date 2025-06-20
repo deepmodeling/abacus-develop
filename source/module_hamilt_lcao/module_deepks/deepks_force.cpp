@@ -1,13 +1,13 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_force.h"
 #include "deepks_iterate.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/timer.h"
-#include "module_base/vector3.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/timer.h"
+#include "source_base/vector3.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 
 template <typename TK>
@@ -260,32 +260,6 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
         }
     }
     ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
-    return;
-}
-
-// prints forces and stress from DeePKS (LCAO)
-void DeePKS_domain::check_f_delta(const int nat, ModuleBase::matrix& f_delta, ModuleBase::matrix& svnl_dalpha)
-{
-    ModuleBase::TITLE("DeePKS_domain", "check_F_delta");
-
-    std::ofstream ofs("F_delta.dat");
-    ofs << std::setprecision(10);
-
-    for (int iat = 0; iat < nat; iat++)
-    {
-        ofs << f_delta(iat, 0) << " " << f_delta(iat, 1) << " " << f_delta(iat, 2) << std::endl;
-    }
-
-    std::ofstream ofs1("stress_delta.dat");
-    ofs1 << std::setprecision(10);
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
-        for (int jpol = 0; jpol < 3; jpol++)
-        {
-            ofs1 << svnl_dalpha(ipol, jpol) << " ";
-        }
-        ofs1 << std::endl;
-    }
     return;
 }
 

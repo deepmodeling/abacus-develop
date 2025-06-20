@@ -1,6 +1,6 @@
 
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 namespace ModuleIO
@@ -11,7 +11,7 @@ void ReadInput::item_ofdft()
         Input_Item item("of_kinetic");
         item.annotation = "kinetic energy functional, such as tf, vw, wt";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-#ifndef __MLKEDF
+#ifndef __MLALGO
             if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ML KEDF is not supported.");

@@ -4,12 +4,12 @@
 #include "../pw_basis_k.h"
 #ifdef __MPI
 #include "test_tool.h"
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 #include "mpi.h"
 #endif
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/module_device/types.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/module_device/types.h"
 #include "pw_test.h"
 #include "gmock/gmock.h"
 

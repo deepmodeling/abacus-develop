@@ -1,12 +1,12 @@
 #ifndef DEEPKS_ORBPRE_H
 #define DEEPKS_ORBPRE_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
-#include "module_base/complexmatrix.h"
-#include "module_base/intarray.h"
-#include "module_base/matrix.h"
-#include "module_base/timer.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/intarray.h"
+#include "source_base/matrix.h"
+#include "source_base/timer.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -41,8 +41,6 @@ void cal_orbital_precalc(const std::vector<TH>& dm_hl,
                          const Parallel_Orbitals& pv,
                          const Grid_Driver& GridD,
                          torch::Tensor& orbital_precalc);
-
-void check_orbpre(const torch::Tensor& orbpre);
 } // namespace DeePKS_domain
 #endif
 #endif

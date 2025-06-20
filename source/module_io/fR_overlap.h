@@ -7,7 +7,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_base/math_lebedev_laikov.h"
+#include "source_base/math_lebedev_laikov.h"
 
 
 template <typename T>

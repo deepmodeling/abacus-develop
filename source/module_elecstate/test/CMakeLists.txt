@@ -4,7 +4,7 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__UT_USE_CUDA)
 remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__ROCM)
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D_OPENMP)
 
 if (ENABLE_MPI)
@@ -57,7 +57,7 @@ AddTest(
     ../occupy.cpp
     ../../module_psi/psi.cpp
     # ../../module_psi/kernels/psi_memory_op.cpp
-    ../../module_base/module_device/memory_op.cpp
+    ../../source_base/module_device/memory_op.cpp
 )
 
 AddTest(

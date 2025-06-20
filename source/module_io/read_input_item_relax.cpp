@@ -1,5 +1,5 @@
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 
@@ -109,9 +109,9 @@ void ReadInput::item_relax()
         this->add_item(item);
     }
     {
-        Input_Item item("force_thr_ev2");
+        Input_Item item("force_zero_out");
         item.annotation = "force invalid threshold, unit: eV/Angstrom";
-        read_sync_double(input.force_thr_ev2);
+        read_sync_double(input.force_zero_out);
         this->add_item(item);
     }
     {

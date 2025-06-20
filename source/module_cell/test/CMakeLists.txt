@@ -1,4 +1,4 @@
-remove_definitions(-D__DEEPKS)
+remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
@@ -68,13 +68,13 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_klist_test
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
+  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp ../k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_klist_test_para1
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp
+  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../../module_io/output.cpp ../k_vector_utils.cpp
 )
 
 add_test(NAME MODULE_CELL_klist_test_para4
@@ -85,8 +85,8 @@ add_test(NAME MODULE_CELL_klist_test_para4
 AddTest(
   TARGET MODULE_CELL_ParaKpoints
   LIBS parameter  MPI::MPI_CXX
-  SOURCES parallel_kpoints_test.cpp ../../module_base/global_variable.cpp ../../module_base/parallel_global.cpp 
-  	../../module_base/parallel_common.cpp ../../module_base/parallel_comm.cpp ../parallel_kpoints.cpp
+  SOURCES parallel_kpoints_test.cpp ../../source_base/global_variable.cpp ../../source_base/parallel_global.cpp 
+  	../../source_base/parallel_common.cpp ../../source_base/parallel_comm.cpp ../parallel_kpoints.cpp
 )
 
 find_program(BASH bash)

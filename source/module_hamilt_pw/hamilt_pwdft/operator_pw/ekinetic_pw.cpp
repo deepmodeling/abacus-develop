@@ -1,9 +1,9 @@
 #include "ekinetic_pw.h"
 
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
-#include "module_base/module_device/device.h"
+#include "source_base/module_device/device.h"
 
 
 namespace hamilt {

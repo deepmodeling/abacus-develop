@@ -4,7 +4,7 @@
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
+#include "source_hsolver/hsolver_pw_sdft.h"
 
 template <typename FPTYPE, typename Device> 
 class Sto_EleCond : protected EleCond<FPTYPE, Device>

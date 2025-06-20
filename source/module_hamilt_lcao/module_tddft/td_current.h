@@ -7,7 +7,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "td_velocity.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #ifdef __LCAO
 //design to calculate current for length gauge

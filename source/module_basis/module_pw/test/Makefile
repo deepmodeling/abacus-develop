@@ -25,7 +25,7 @@ GTEST_DIR = /home/qianrui/gnucompile/g_gtest
 # Compiler information 
 #==========================
 HONG = -D__NORMAL
-INCLUDES = -I. -I../../../ -I../../../module_base/module_container
+INCLUDES = -I. -I../../../ -I../../../source_main -I../../../source_base/module_container
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
 OBJ_DIR = obj
@@ -101,10 +101,11 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread -w
 #==========================
 # Objects
 #==========================
-VPATH=../../../module_base\
-../../../module_base/module_device\
-../../../module_base/module_container/ATen/core\
-../../../module_base/module_container/ATen\
+VPATH=../../../source_main\
+../../../source_base\
+../../../source_base/module_device\
+../../../source_base/module_container/ATen/core\
+../../../source_base/module_container/ATen\
 ../../../module_parameter\
 ../module_fft\
 ../\

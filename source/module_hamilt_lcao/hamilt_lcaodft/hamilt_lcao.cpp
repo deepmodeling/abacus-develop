@@ -1,15 +1,15 @@
 #include "hamilt_lcao.h"
 
-#include "module_base/global_variable.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
+#include "source_base/global_variable.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #include <vector>
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "operator_lcao/deepks_lcao.h"
 #endif
@@ -20,14 +20,14 @@
 #endif
 
 #ifdef __ELPA
-#include "module_hsolver/diago_elpa.h"
+#include "source_hsolver/diago_elpa.h"
 #endif
 
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hsolver/hsolver_lcao.h"
+#include "source_hsolver/hsolver_lcao.h"
 #include "operator_lcao/dftu_lcao.h"
 #include "operator_lcao/dspin_lcao.h"
 #include "operator_lcao/ekinetic_new.h"
@@ -79,7 +79,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
                                elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __DEEPKS
+#ifdef __MLALGO
                                ,
                                LCAO_Deepks<TK>* ld_in
 #endif
@@ -201,7 +201,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
         }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
@@ -326,7 +326,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
             }
         }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,

@@ -1,7 +1,7 @@
 #ifdef __MPI
 #include "dm_trans.h"
-#include "module_base/scalapack_connector.h"
-#include "module_base/tool_title.h"
+#include "source_base/scalapack_connector.h"
+#include "source_base/tool_title.h"
 #include "module_lr/utils/lr_util.h"
 namespace LR
 {

@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_base/module_mixing/broyden_mixing.h"
+#include "source_base/module_mixing/broyden_mixing.h"
 #include "module_ri/Mix_DMk_2D.h"
 #include "module_ri/Mix_Matrix.h"
 

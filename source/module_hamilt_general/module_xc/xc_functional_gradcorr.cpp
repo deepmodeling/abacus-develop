@@ -9,7 +9,7 @@
 //  and gives the spin up and spin down components of the charge.
 
 #include "xc_functional.h"
-#include "module_base/timer.h"
+#include "source_base/timer.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_parameter/parameter.h"
 #include <ATen/core/tensor.h>

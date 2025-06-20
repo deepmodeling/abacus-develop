@@ -2,7 +2,7 @@
 #include <vector>
 #include <stdexcept>
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 #define strvalue item.str_values[0]

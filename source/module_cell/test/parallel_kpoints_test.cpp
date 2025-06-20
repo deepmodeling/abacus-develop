@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "module_base/parallel_global.h"
+#include "source_base/parallel_global.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

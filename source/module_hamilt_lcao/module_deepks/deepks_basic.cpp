@@ -2,11 +2,11 @@
 // including loading of model and calculating gradients
 // as well as subroutines that prints the results for checking
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "deepks_basic.h"
 
-#include "module_base/atom_in.h"
-#include "module_base/timer.h"
+#include "source_base/atom_in.h"
+#include "source_base/timer.h"
 #include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)

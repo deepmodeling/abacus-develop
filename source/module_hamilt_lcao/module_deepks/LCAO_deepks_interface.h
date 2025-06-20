@@ -1,10 +1,10 @@
 #ifndef LCAO_DEEPKS_INTERFACE_H
 #define LCAO_DEEPKS_INTERFACE_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 #include "LCAO_deepks.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 #include <memory>

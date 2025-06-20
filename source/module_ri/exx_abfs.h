@@ -8,9 +8,9 @@ using std::map;
 #include <string>
 
 #include "../module_basis/module_ao/ORB_atomic_lm.h"
-#include "../module_base/element_basis_index.h"
-#include "../module_base/matrix.h"
-#include "../module_base/vector3.h"
+#include "../source_base/element_basis_index.h"
+#include "../source_base/matrix.h"
+#include "../source_base/vector3.h"
 
 class Exx_Abfs
 {

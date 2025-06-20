@@ -1,7 +1,7 @@
 #include "elecstate.h"
-#include "module_base/formatter.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_common.h"
+#include "source_base/formatter.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
 #include "module_elecstate/module_pot/H_Hartree_pw.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
@@ -295,7 +295,7 @@ void print_etot(const Magnetism& magnet,
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");

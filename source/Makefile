@@ -4,7 +4,7 @@ include Makefile.vars
 # Compiler information 
 #==========================
 
-INCLUDES = -I. -Icommands -I../ -Imodule_base/module_container
+INCLUDES = -I. -Isource_main -Isource_main/commands -Icommands -I../ -Isource_base/module_container
 
 LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
@@ -137,11 +137,9 @@ endif
 
 ifdef LIBNPY_DIR
     CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
-    ifeq ($(ENABLE_DEEPKS), ON)
-        HONG += -D__DEEPKS
-    endif
-    ifeq ($(ENABLE_MLKEDF), ON)
-        HONG += -D__MLKEDF
+    ifeq ($(ENABLE_MLALGO), ON)
+        HONG += -D__MLALGO
+        # HONG += -D__MLALGO
     endif
     INCLUDES += $(CNPY_INCLUDE_DIR)
 endif

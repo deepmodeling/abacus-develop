@@ -6,7 +6,8 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
-#include "module_base/abfs-vector3_order.h"
+#include "source_base/abfs-vector3_order.h"
+#include "module_ri/abfs.h"
 
 #include <RI/global/Tensor.h>
 
@@ -14,8 +15,6 @@
 #include <array>
 #include <vector>
 #include <map>
-
-#include "module_ri/abfs.h"
 
 namespace LRI_CV_Tools
 {

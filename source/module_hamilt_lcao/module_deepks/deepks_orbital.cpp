@@ -1,10 +1,10 @@
 #include "module_parameter/parameter.h"
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_orbital.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 template <typename TK, typename TH>
 void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
@@ -54,16 +54,6 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
     }
     ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
     return;
-}
-
-void DeePKS_domain::check_o_delta(ModuleBase::matrix& o_delta)
-{
-    std::ofstream ofs("o_delta.dat");
-    ofs << std::setprecision(10);
-    for (int ik = 0; ik < o_delta.nr; ik++)
-    {
-        ofs << o_delta(ik, 0) << std::endl;
-    }
 }
 
 template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::vector<ModuleBase::matrix>& dm_hl,

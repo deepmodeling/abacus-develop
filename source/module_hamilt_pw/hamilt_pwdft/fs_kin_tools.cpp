@@ -1,6 +1,6 @@
 #include "fs_kin_tools.h"
 
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>

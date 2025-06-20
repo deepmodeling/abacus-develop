@@ -4,11 +4,11 @@
 #endif
 #include "grid_technique.h"
 #include "module_parameter/parameter.h"
-#include "module_base/memory.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/memory.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hsolver/kernels/cuda/helper_cuda.h"
+#include "source_hsolver/kernels/cuda/helper_cuda.h"
 
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_helper.h"
 

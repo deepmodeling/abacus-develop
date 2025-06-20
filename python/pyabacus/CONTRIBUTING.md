@@ -72,9 +72,9 @@ find_package(pybind11 CONFIG REQUIRED)
 ```cmake
 # Set source path
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
-set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
+set(BASE_PATH "${ABACUS_SOURCE_DIR}/source_base")
 set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
-set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/module_hsolver")
+set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
@@ -104,7 +104,7 @@ if(MKLROOT)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
 
-  if(NOT ENABLE_DEEPKS)
+  if(NOT ENABLE_MLALGO)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
 
@@ -131,7 +131,7 @@ endif()
 include_directories(
     ${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
-    ${ABACUS_SOURCE_DIR}/module_base/module_container
+    ${ABACUS_SOURCE_DIR}/source_base/module_container
     )
 ```
 - This section adds the necessary include directories for the project.
@@ -141,7 +141,7 @@ include_directories(
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Add base
 set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
-add_subdirectory(${ABACUS_SOURCE_DIR}/module_base ${BASE_BINARY_DIR})
+add_subdirectory(${ABACUS_SOURCE_DIR}/source_base ${BASE_BINARY_DIR})
 # Add parameter
 set(PARAMETER_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/parameter")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_parameter ${PARAMETER_BINARY_DIR})

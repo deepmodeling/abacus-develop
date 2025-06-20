@@ -8,12 +8,12 @@
 // smart pointer for auto-memory management
 #include <memory>
 // numerical algorithm support
-#include "module_base/spherical_bessel_transformer.h" // for spherical bessel transform
+#include "source_base/spherical_bessel_transformer.h" // for spherical bessel transform
 #ifdef __MPI
 #include <mpi.h>
 #endif
-#include "module_base/macros.h"
-#include "module_base/parallel_global.h"
+#include "source_base/macros.h"
+#include "source_base/parallel_global.h"
 #include "module_cell/klist.h"
 
 #include <type_traits>

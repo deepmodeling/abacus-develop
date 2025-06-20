@@ -8,8 +8,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
 #include "module_io/output_log.h"
 
 #ifdef __MPI

@@ -1,6 +1,6 @@
 #ifndef OPERATORLCAO_H
 #define OPERATORLCAO_H
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 #include "module_hamilt_general/matrixblock.h"
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"

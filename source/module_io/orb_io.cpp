@@ -1,7 +1,7 @@
 #include "module_io/orb_io.h"
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 
 void ModuleIO::read_abacus_orb(std::ifstream& ifs,

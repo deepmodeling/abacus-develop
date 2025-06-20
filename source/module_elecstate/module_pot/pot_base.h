@@ -1,8 +1,8 @@
 #ifndef POTBASE_H
 #define POTBASE_H
 
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_elecstate/module_charge/charge.h"

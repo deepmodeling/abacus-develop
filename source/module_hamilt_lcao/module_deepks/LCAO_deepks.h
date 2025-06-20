@@ -1,9 +1,10 @@
 #ifndef LCAO_DEEPKS_H
 #define LCAO_DEEPKS_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 #include "deepks_basic.h"
+#include "deepks_check.h"
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_fpre.h"
@@ -15,10 +16,10 @@
 #include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
 #include "deepks_vdrpre.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/intarray.h"
-#include "module_base/matrix.h"
-#include "module_base/timer.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/intarray.h"
+#include "source_base/matrix.h"
+#include "source_base/timer.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"

@@ -1,5 +1,5 @@
-#include "module_base/constants.h"
-#include "module_base/tool_quit.h"
+#include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 namespace ModuleIO
@@ -8,55 +8,127 @@ void ReadInput::item_exx()
 {
     // EXX
     {
-        Input_Item item("exx_hybrid_alpha");
-        item.annotation = "fraction of Fock exchange in hybrid functionals";
-        read_sync_string(input.exx_hybrid_alpha);
-		item.reset_value = [](const Input_Item& item, Parameter& para) 
-		{
-			if (para.input.exx_hybrid_alpha == "default")
+        Input_Item item("exx_fock_alpha");
+        item.annotation = "fraction of Fock exchange 1/r in hybrid functionals";
+        item.read_value = [](const Input_Item& item, Parameter& para)
+        {
+            para.input.exx_fock_alpha = item.str_values;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_fock_alpha.size()==1 && para.input.exx_fock_alpha[0]=="default")
             {
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
                 if (dft_functional_lower == "hf")
                 {
-                    para.input.exx_hybrid_alpha = "1";
+                    para.input.exx_fock_alpha = {"1"};
                 }
-                else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
-                         || dft_functional_lower == "scan0")
+                else if (dft_functional_lower == "pbe0" || dft_functional_lower == "scan0")
                 {
-                    para.input.exx_hybrid_alpha = "0.25";
-                }
-                // added by jghan 2024-07-06
-                else if (dft_functional_lower == "muller" || dft_functional_lower == "power" 
-                        || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
-                {
-                    para.input.exx_hybrid_alpha = "1";
+                    para.input.exx_fock_alpha = {"0.25"};
                 }
                 else if (dft_functional_lower == "b3lyp")
                 {
-                    para.input.exx_hybrid_alpha = "0.2";
+                    para.input.exx_fock_alpha = {"0.2"};
+                }
+                else if (dft_functional_lower == "muller" || dft_functional_lower == "power" )
+                {
+                    para.input.exx_fock_alpha = {"1"};
+                }
+                else if (dft_functional_lower == "wp22")
+                {
+                    para.input.exx_fock_alpha = {"1"};
                 }
                 else
-                { // no exx in scf, but will change to non-zero in
-                    // postprocess like rpa
-                    para.input.exx_hybrid_alpha = "0";
+                {   // no exx in scf, but will change to non-zero in postprocess like rpa
+                    para.input.exx_fock_alpha = {};
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const double exx_hybrid_alpha_value = std::stod(para.input.exx_hybrid_alpha);
-            if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "must 0 <= exx_hybrid_alpha <= 1");
-            }
-        };
+        sync_stringvec(input.exx_fock_alpha, para.input.exx_fock_alpha.size(), "");
         this->add_item(item);
     }
     {
-        Input_Item item("exx_hse_omega");
-        item.annotation = "range-separation parameter in HSE functional";
-        read_sync_double(input.exx_hse_omega);
+        Input_Item item("exx_erfc_alpha");
+        item.annotation = "fraction of exchange erfc(wr)/r in hybrid functionals";
+        item.read_value = [](const Input_Item& item, Parameter& para)
+        {
+            para.input.exx_erfc_alpha = item.str_values;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_erfc_alpha.size()==1 &&  para.input.exx_erfc_alpha[0]=="default")
+            {
+                std::string& dft_functional = para.input.dft_functional;
+                std::string dft_functional_lower = dft_functional;
+                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+                if (dft_functional_lower == "hse")
+                {
+                    para.input.exx_erfc_alpha = {"0.25"};
+                }
+                else if (dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_erfc_alpha = {"1"};
+                }
+                else if (dft_functional_lower == "wp22")
+                {
+                    para.input.exx_erfc_alpha = {"-1"};
+                }
+                else
+                { // no exx in scf, but will change to non-zero in postprocess like rpa
+                    para.input.exx_erfc_alpha = {};
+                }
+            }
+        };
+        sync_stringvec(input.exx_erfc_alpha, para.input.exx_erfc_alpha.size(), "");
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_erfc_omega");
+        item.annotation = "range-separation parameter erfc(wr)/r in hybrid functionals";
+        item.read_value = [](const Input_Item& item, Parameter& para)
+        {
+            para.input.exx_erfc_omega = item.str_values;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_erfc_omega.size()==1 &&  para.input.exx_erfc_omega[0]=="default")
+            {
+                std::string& dft_functional = para.input.dft_functional;
+                std::string dft_functional_lower = dft_functional;
+                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+                if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
+                {
+                    para.input.exx_erfc_omega = {"0.11"};
+                }
+                else
+                {
+                    para.input.exx_erfc_omega = {};
+                }
+            }
+        };
+        sync_stringvec(input.exx_erfc_omega, para.input.exx_erfc_omega.size(), "");
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_fock_lambda");
+        item.annotation = "used to compensate for divergence points at G=0 in "
+                          "the evaluation of Fock exchange using "
+                          "lcao_in_pw method";
+        item.read_value = [](const Input_Item& item, Parameter& para)
+        {
+            para.input.exx_fock_lambda = item.str_values;
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) 
+        {
+            if (para.input.exx_fock_lambda.size()==1 &&  para.input.exx_fock_lambda[0]=="default")
+            {
+                para.input.exx_fock_lambda = std::vector<std::string>(para.input.exx_fock_alpha.size(), "0.3");
+            }
+        };
+        sync_stringvec(input.exx_fock_lambda, para.input.exx_fock_lambda.size(), "");
         this->add_item(item);
     }
     {
@@ -71,9 +143,9 @@ void ReadInput::item_exx()
         item.annotation = "the maximal electronic iteration number in the "
                           "evaluation of Fock exchange";
         read_sync_int(input.exx_hybrid_step);
-		item.check_value = [](const Input_Item& item, const Parameter& para) 
-		{
-			if (para.input.exx_hybrid_step <= 0)
+        item.check_value = [](const Input_Item& item, const Parameter& para) 
+        {
+            if (para.input.exx_hybrid_step <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_hybrid_step must > 0");
             }
@@ -84,14 +156,6 @@ void ReadInput::item_exx()
         Input_Item item("exx_mixing_beta");
         item.annotation = "mixing_beta for outer-loop when exx_separate_loop=1";
         read_sync_double(input.exx_mixing_beta);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_lambda");
-        item.annotation = "used to compensate for divergence points at G=0 in "
-                          "the evaluation of Fock exchange using "
-                          "lcao_in_pw method";
-        read_sync_double(input.exx_lambda);
         this->add_item(item);
     }
     {
@@ -138,18 +202,6 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_schwarz_threshold");
-        item.annotation = "threshold to screen exx using Cauchy-Schwartz inequality";
-        read_sync_double(input.exx_schwarz_threshold);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_cauchy_threshold");
-        item.annotation = "threshold to screen exx using Cauchy-Schwartz inequality";
-        read_sync_double(input.exx_cauchy_threshold);
-        this->add_item(item);
-    }
-    {
         Input_Item item("exx_c_grad_threshold");
         item.annotation = "threshold to screen nabla C matrix in exx";
         read_sync_double(input.exx_c_grad_threshold);
@@ -163,26 +215,14 @@ void ReadInput::item_exx()
     }
     {
         Input_Item item("exx_c_grad_r_threshold");
-        item.annotation = "threshold to screen nabla C matrix in exx";
+        item.annotation = "threshold to screen nabla C * R matrix in exx";
         read_sync_double(input.exx_c_grad_r_threshold);
         this->add_item(item);
     }
     {
         Input_Item item("exx_v_grad_r_threshold");
-        item.annotation = "threshold to screen nabla V matrix in exx";
+        item.annotation = "threshold to screen nabla V * R matrix in exx";
         read_sync_double(input.exx_v_grad_r_threshold);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_cauchy_force_threshold");
-        item.annotation = "threshold to screen exx force using Cauchy-Schwartz inequality";
-        read_sync_double(input.exx_cauchy_force_threshold);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_cauchy_stress_threshold");
-        item.annotation = "threshold to screen exx stress using Cauchy-Schwartz inequality";
-        read_sync_double(input.exx_cauchy_stress_threshold);
         this->add_item(item);
     }
     {
@@ -229,21 +269,6 @@ void ReadInput::item_exx()
             if (std::stod(para.input.exx_ccp_rmesh_times) < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ccp_rmesh_times must >= 1");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_distribute_type");
-        item.annotation = "exx_distribute_type";
-        read_sync_string(input.exx_distribute_type);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_distribute_type != "htime" && para.input.exx_distribute_type != "kmeans2"
-                && para.input.exx_distribute_type != "kmeans1" && para.input.exx_distribute_type != "order")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "exx_distribute_type must be htime or "
-                                         "kmeans2 or kmeans1 or order");
             }
         };
         this->add_item(item);

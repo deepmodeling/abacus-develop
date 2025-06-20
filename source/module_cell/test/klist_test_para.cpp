@@ -1,5 +1,5 @@
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
+#include "source_base/mathzone.h"
+#include "source_base/parallel_global.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
@@ -309,7 +309,8 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+//    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+    KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

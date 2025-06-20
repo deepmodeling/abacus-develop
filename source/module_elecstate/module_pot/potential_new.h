@@ -1,7 +1,7 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
-#include "module_base/complexmatrix.h"
+#include "source_base/complexmatrix.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"

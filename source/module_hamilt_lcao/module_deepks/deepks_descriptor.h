@@ -1,10 +1,10 @@
 #ifndef DEEPKS_DESCRIPTOR_H
 #define DEEPKS_DESCRIPTOR_H
 
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
-#include "module_base/intarray.h"
-#include "module_base/timer.h"
+#include "source_base/intarray.h"
+#include "source_base/timer.h"
 #include "module_cell/unitcell.h"
 
 #include <torch/script.h>

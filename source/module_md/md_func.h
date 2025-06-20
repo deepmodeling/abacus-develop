@@ -1,7 +1,7 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
-#include "module_esolver/esolver.h"
+#include "source_esolver/esolver.h"
 
 #ifdef __MPI
 #include <mpi.h> // MPI functions

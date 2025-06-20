@@ -2,8 +2,8 @@
 
 #include "module_parameter/parameter.h"
 #include "ABFs_Construct-PCA.h"
-#include "module_base/gram_schmidt_orth-inl.h"
-#include "module_base/gram_schmidt_orth.h"
+#include "source_base/gram_schmidt_orth-inl.h"
+#include "source_base/gram_schmidt_orth.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"             //for ucell
 #include "module_ri/test_code/exx_abfs-construct_orbs-test.h" // Peize Lin test
@@ -320,7 +320,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 		}
 		else
 		{
-			ModuleBase::WARNING(ModuleBase::GlobalFunc::TO_STRING(__FILE__),
+			ModuleBase::WARNING(std::string(__FILE__),
 				"Element "+ModuleBase::GlobalFunc::TO_STRING(T)+" , all training data (lcao[i]*lcao[j]) are all the same. So PCA randomly choose an abf as the result.");
 			psis_new[T].resize( psis[T].size() );
 			for( size_t L=0; L!=psis[T].size(); ++L )

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "phi_operator.h"
-#include "module_base/blas_connector.h"
-#include "module_base/global_function.h"
+#include "source_base/blas_connector.h"
+#include "source_base/global_function.h"
 
 namespace ModuleGint
 {

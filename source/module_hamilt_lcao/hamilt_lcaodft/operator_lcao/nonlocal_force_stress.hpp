@@ -1,7 +1,7 @@
 #pragma once
 #include "nonlocal_new.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 namespace hamilt
 {

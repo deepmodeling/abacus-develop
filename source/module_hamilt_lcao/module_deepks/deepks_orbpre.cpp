@@ -1,4 +1,4 @@
-#ifdef __DEEPKS
+#ifdef __MLALGO
 
 /// cal_orbital_precalc : orbital_precalc is used for training with orbital label,
 ///                       which equals gevdm * orbital_pdm,
@@ -7,10 +7,10 @@
 #include "deepks_orbpre.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "module_base/blas_connector.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/blas_connector.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
@@ -293,25 +293,6 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);
     ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
     return;
-}
-
-void DeePKS_domain::check_orbpre(const torch::Tensor& orbpre)
-{
-    auto sizes = orbpre.sizes();
-    auto accessor = orbpre.accessor<double, 3>();
-    std::ofstream ofs("orbital_precalc.dat");
-    for (int iknb = 0; iknb < sizes[0]; iknb++)
-    {
-        for (int iat = 0; iat < sizes[1]; iat++)
-        {
-            for (int m = 0; m < sizes[2]; m++)
-            {
-                ofs << accessor[iknb][iat][m] << " ";
-            }
-            ofs << std::endl;
-        }
-        ofs << std::endl;
-    }
 }
 
 template void DeePKS_domain::cal_orbital_precalc<double, ModuleBase::matrix>(

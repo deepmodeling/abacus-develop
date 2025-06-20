@@ -39,7 +39,7 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 For those who are interested in the source code, the following figure shows the structure of the source code.
 
 ```text
-|-- module_base                 A basic module including
+|-- source_base                 A basic module including
 |   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
 |   |                           (2) Custom data classes: matrix, vector definitions and related functions;
 |   |                           (3) Parallelization functions: MPI, OpenMP;
@@ -57,7 +57,7 @@ For those who are interested in the source code, the following figure shows the 
 |-- module_elecstate            The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
-|-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
+|-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
 |-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
@@ -77,7 +77,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
+|-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.
@@ -183,7 +183,7 @@ pre-commit install
 
 ## Adding a unit test
 
-We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
+We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `source_base` provides a simple demonstration.
 
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:

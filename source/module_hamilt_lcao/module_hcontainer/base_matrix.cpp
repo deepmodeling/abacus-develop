@@ -2,7 +2,7 @@
 #include <complex>
 #include <vector>
 
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 
 namespace hamilt
 {
