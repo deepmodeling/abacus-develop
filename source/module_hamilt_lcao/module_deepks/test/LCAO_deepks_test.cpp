@@ -294,6 +294,36 @@ void test_deepks<T>::check_vdpre()
 }
 
 template <typename T>
+void test_deepks<T>::check_vdrpre()
+{
+    std::vector<torch::Tensor> gevdm;
+    torch::Tensor vdrpre;
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
+    // normally use hR to get R_size, here use phialpha[0] only for test case
+    int R_size = DeePKS_domain::get_R_size<double>(*(this->ld.phialpha[0])); 
+    DeePKS_domain::cal_vdr_precalc(PARAM.sys.nlocal,
+                                          this->ld.lmaxd,
+                                          this->ld.inlmax,
+                                          ucell.nat,
+                                          kv.nkstot,
+                                          R_size,
+                                          this->ld.inl2l,
+                                          kv.kvec_d,
+                                          this->ld.phialpha,
+                                          gevdm,
+                                          this->ld.inl_index,
+                                          ucell,
+                                          ORB,
+                                          ParaO,
+                                          Test_Deepks::GridD,
+                                          vdrpre);
+    // vdrpre is large, we only check the main element in Bravo lattice vector (0, 0, 0)
+    torch::Tensor vdrpre_sliced = vdrpre.slice(0, 0, 1, 1).slice(1, 0, 1, 1).slice(2, 0, 1, 1);
+    DeePKS_domain::check_tensor<double>(vdrpre_sliced, "vdr_precalc.dat", 0); // 0 for rank
+    this->compare_with_ref("vdr_precalc.dat", "vdrpre_ref.dat");
+}
+
+template <typename T>
 void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
 {
     DeePKS_domain::load_model("model.ptg", ld.model_deepks);
