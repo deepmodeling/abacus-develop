@@ -64,10 +64,10 @@
 #include <tuple>
 #include <complex>
 #include <memory>
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "source_basis/module_nao/two_center_integrator.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 
 namespace ModuleIO
 {

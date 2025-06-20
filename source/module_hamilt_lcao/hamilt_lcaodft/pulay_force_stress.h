@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_elecstate/module_pot/potential_new.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 #ifndef TGINT_H
 #define TGINT_H

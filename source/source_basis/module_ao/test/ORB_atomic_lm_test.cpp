@@ -132,7 +132,7 @@ void NumericalOrbitalLmTest::SetUp() {
 
     // In normal ABACUS calculation, dk, nk & dr_uniform
     // are retrieved from the LCAO_Orbitals object,
-    // see setupNonlocal() in module_cell/setup_nonlocal.cpp.
+    // see setupNonlocal() in source_cell/setup_nonlocal.cpp.
     // Here we just provide some reasonable values.
     dk_ = 0.01;
     dr_uniform_ = 0.001;

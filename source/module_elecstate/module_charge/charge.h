@@ -6,7 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "module_cell/module_symmetry/symmetry.h"
+#include "source_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/fp_energy.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 

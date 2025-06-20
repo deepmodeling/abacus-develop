@@ -50,7 +50,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- module_ao               Atomic orbital basis set to be refactored.
 |   |-- module_nao              New numerical atomic orbital basis set for two-center integrals in LCAO calculations
 |   `-- module_pw               Data structures and relevant methods for planewave involved calculations
-|-- module_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
+|-- source_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
 |   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
@@ -257,7 +257,7 @@ To add a unit test:
     ./cell_unitcell_test
     ```
 
-    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.
+    under the directory of `build/source/source_cell/test` to run the test `cell_unitcell_test`.
     However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
 
     ```bash

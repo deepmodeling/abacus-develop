@@ -19,14 +19,14 @@ AddTest(
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
     ../../source_base/blas_connector_base.cpp ../../source_base/blas_connector_vector.cpp ../../source_base/blas_connector_matrix.cpp
-    ../../module_cell/update_cell.cpp ../../module_cell/print_cell.cpp  ../../module_cell/bcast_cell.cpp ../../module_io/output.cpp
+    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../module_io/output.cpp
     LIBS parameter ${math_libs} 
 )
 
 list(APPEND cell_source_files
-    ../../module_cell/update_cell.cpp
-    ../../module_cell/bcast_cell.cpp
-    ../../module_cell/print_cell.cpp
+    ../../source_cell/update_cell.cpp
+    ../../source_cell/bcast_cell.cpp
+    ../../source_cell/print_cell.cpp
     ../../module_io/output.cpp
 )
 AddTest(

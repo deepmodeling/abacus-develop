@@ -18,7 +18,7 @@
 #include "exx_info.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 
 #include <map> // added by jghan, 2024-10-10
 

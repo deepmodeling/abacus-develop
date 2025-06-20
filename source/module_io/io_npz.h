@@ -2,7 +2,7 @@
 #define NPZ_IO_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <string>

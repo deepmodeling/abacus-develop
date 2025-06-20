@@ -1,6 +1,6 @@
 #pragma once
 
-#include "module_cell/atom_spec.h"
+#include "source_cell/atom_spec.h"
 #include "source_basis/module_ao/ORB_atomic.h"
 #include "gint_type.h"
 

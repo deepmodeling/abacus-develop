@@ -3,7 +3,7 @@
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/cell_index.h"
+#include "source_cell/cell_index.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_sk.h"

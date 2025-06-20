@@ -1,5 +1,5 @@
 add_subdirectory(source_base)
-add_subdirectory(module_cell)
+add_subdirectory(source_cell)
 add_subdirectory(module_psi)
 add_subdirectory(module_elecstate)
 add_subdirectory(module_hamilt_general)

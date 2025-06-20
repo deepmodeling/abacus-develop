@@ -2,7 +2,7 @@
 #define CHARGE_EXTRA_H
 
 #include "charge.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #ifdef __MPI
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"

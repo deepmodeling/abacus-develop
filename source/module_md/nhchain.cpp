@@ -5,7 +5,7 @@
 #include "mpi.h"
 #endif
 #include "source_base/timer.h"
-#include "module_cell/update_cell.h"
+#include "source_cell/update_cell.h"
 Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

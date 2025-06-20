@@ -85,7 +85,7 @@ void LcaoOrbitalsTest::SetUp() {
 
 void LcaoOrbitalsTest::lcao_read() {
 
-    // see UnitCell::read_atom_species in module_cell/read_atoms.cpp
+    // see UnitCell::read_atom_species in source_cell/read_atoms.cpp
     lcao_.read_in_flag = read_in_flag_;
     lcao_.descriptor_file = descriptor_file_;
     lcao_.orbital_file = orbital_file_;

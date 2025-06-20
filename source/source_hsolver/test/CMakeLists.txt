@@ -6,7 +6,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
     LIBS parameter  ${math_libs} base device MPI::MPI_CXX
-    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../module_cell/parallel_kpoints.cpp
+    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_bpcg

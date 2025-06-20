@@ -51,7 +51,7 @@ VPATH=../../../source_main\
 :../../module_hamilt_pw/hamilt_pwdft\
 :../../source_basis/module_ao\
 :../../module_neighbor\
-:../../module_cell\
+:../../source_cell\
 :../../module_elecstate\
 :../../\
 :../\

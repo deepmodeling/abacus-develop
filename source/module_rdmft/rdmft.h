@@ -12,7 +12,7 @@
 
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "source_basis/module_ao/ORB_read.h"

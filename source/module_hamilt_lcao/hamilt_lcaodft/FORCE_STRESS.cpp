@@ -6,7 +6,7 @@
 #include "module_parameter/parameter.h"
 // new
 #include "source_base/timer.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
 #include "module_elecstate/module_pot/efield.h"           // liuyu add 2022-05-18

@@ -48,7 +48,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_istate_info_test
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../../module_cell/k_vector_utils.cpp
+  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
 		../cif_io.cpp
 )
 
@@ -61,13 +61,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/klist.cpp ../nscf_fermi_surf.cpp ../../module_cell/k_vector_utils.cpp
+  SOURCES write_dos_pw_test.cpp ../cal_dos.cpp ../write_dos_pw.cpp ../output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  ${math_libs} base device symmetry cell_info 
-  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../module_cell/klist.cpp ../../module_cell/parallel_kpoints.cpp ../../module_cell/k_vector_utils.cpp
+  SOURCES print_info_test.cpp ../print_info.cpp ../output.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp
 )
 
 AddTest(
@@ -150,9 +150,9 @@ AddTest(
   ../to_qo_kernel.cpp
   ../to_qo_mpi.cpp
   ../to_qo_structures.cpp
-  ../../module_cell/atom_spec.cpp
-  ../../module_cell/parallel_kpoints.cpp
-  ../../module_cell/test/support/mock_unitcell.cpp
+  ../../source_cell/atom_spec.cpp
+  ../../source_cell/parallel_kpoints.cpp
+  ../../source_cell/test/support/mock_unitcell.cpp
   ../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
   ../orb_io.cpp
 )
@@ -195,7 +195,7 @@ AddTest(
   TARGET MODULE_IO_mulliken_test
   LIBS parameter  base ${math_libs} device
   SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../output_mulliken.cpp
-  ../../module_cell/cell_index.cpp
+  ../../source_cell/cell_index.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../orb_io.cpp
 )

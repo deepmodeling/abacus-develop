@@ -15,7 +15,7 @@
  *    but they are not used in the code.
  *    So, we just test if they can be called without error.
  */
-#include "module_cell/klist.h"
+#include "source_cell/klist.h"
 
 class SpinConstrainTest : public testing::Test
 {

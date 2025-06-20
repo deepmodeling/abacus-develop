@@ -102,7 +102,7 @@ void NumericalNonlocalLmTest::SetUp() {
 
     // In normal ABACUS calculation, dk, nk & dr_uniform 
     // are retrieved from the LCAO_Orbitals object, 
-    // see setupNonlocal() in module_cell/setup_nonlocal.cpp.
+    // see setupNonlocal() in source_cell/setup_nonlocal.cpp.
     // Here we just provide some reasonable values.
     dk_ = 0.01;
     dr_uniform_ = 0.001;
@@ -121,7 +121,7 @@ void NumericalNonlocalLmTest::SetUp() {
 
     std::ifstream ifs(upf_file);
 
-    // see read_pseudo_upf201 in module_cell/read_pp_upf201.cpp
+    // see read_pseudo_upf201 in source_cell/read_pp_upf201.cpp
     // the following code only works for UPF files of version 2.0.1
 
     //----------- read header ------------

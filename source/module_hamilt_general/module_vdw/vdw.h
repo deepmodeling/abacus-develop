@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <vector>
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "vdw_parameters.h"
 #include "vdwd2_parameters.h"
 #include "vdwd3_parameters.h"

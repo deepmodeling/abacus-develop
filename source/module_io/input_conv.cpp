@@ -2,8 +2,8 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/module_symmetry/symmetry.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

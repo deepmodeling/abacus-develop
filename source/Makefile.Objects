@@ -15,9 +15,9 @@ VPATH=./src_global:\
 ./source_main:\
 ./source_basis/module_ao:\
 ./source_basis/module_nao:\
-./module_cell/module_neighbor:\
-./module_cell/module_symmetry:\
-./module_cell:\
+./source_cell/module_neighbor:\
+./source_cell/module_symmetry:\
+./source_cell:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_container/base/core:\

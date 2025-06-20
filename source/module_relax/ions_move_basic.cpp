@@ -3,8 +3,8 @@
 #include "module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "module_cell/update_cell.h"
-#include "module_cell/print_cell.h"
+#include "source_cell/update_cell.h"
+#include "source_cell/print_cell.h"
 int Ions_Move_Basic::dim = 0;
 bool Ions_Move_Basic::converged = false;
 double Ions_Move_Basic::largest_grad = 0.0;

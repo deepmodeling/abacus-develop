@@ -26,7 +26,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"

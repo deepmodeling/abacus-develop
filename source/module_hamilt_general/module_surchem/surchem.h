@@ -7,7 +7,7 @@
 #include "source_base/matrix.h"
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 

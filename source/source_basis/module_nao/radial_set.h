@@ -62,7 +62,7 @@ class RadialSet
     /**
      * @brief Builds from a Numerical_Nonlocal object.
      *
-     * Currently nonlocal projectors are read in module_cell and passed
+     * Currently nonlocal projectors are read in source_cell and passed
      * to Numerical_Nonlocal objects.
      */
     virtual void build(const Numerical_Nonlocal&,     ///< Numerical_Nonlocal object
