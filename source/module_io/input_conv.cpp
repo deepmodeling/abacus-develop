@@ -446,7 +446,6 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = PARAM.inp.exx_hybrid_step;
         GlobalC::exx_info.info_global.mixing_beta_for_loop1 = PARAM.inp.exx_mixing_beta;
-        GlobalC::exx_info.info_global.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(PARAM.inp.exx_real_number);
         GlobalC::exx_info.info_ri.pca_threshold = PARAM.inp.exx_pca_threshold;
@@ -458,6 +457,7 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.C_grad_R_threshold = PARAM.inp.exx_c_grad_r_threshold;
         GlobalC::exx_info.info_ri.V_grad_R_threshold = PARAM.inp.exx_v_grad_r_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
+        GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
 #ifdef __EXX
         Exx_Abfs::Jle::Lmax = PARAM.inp.exx_opt_orb_lmax;

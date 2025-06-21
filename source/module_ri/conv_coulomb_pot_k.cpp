@@ -44,7 +44,7 @@ namespace Conv_Coulomb_Pot_K
 	template<>
 	Numerical_Orbital_Lm cal_orbs_ccp<Numerical_Orbital_Lm>(
 		const Numerical_Orbital_Lm &orbs,
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times)
 	{
 		std::vector<double> psik2_ccp(orbs.get_psif().size(), 0.0);

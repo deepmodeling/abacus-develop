@@ -15,7 +15,6 @@
 #include <array>
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 namespace RI_Util
@@ -63,9 +62,9 @@ namespace RI_Util
         return m_new;
     }
 
-	std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
 	update_coulomb_param(
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double volumn,
 		const int nkstot);
 }

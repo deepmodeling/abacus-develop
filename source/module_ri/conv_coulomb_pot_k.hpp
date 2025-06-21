@@ -11,7 +11,7 @@ namespace Conv_Coulomb_Pot_K
 	template< typename T >
 	std::vector<T> cal_orbs_ccp(
 		const std::vector<T> & orbs,
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times)
 	{
 		std::vector<T> orbs_ccp(orbs.size());
