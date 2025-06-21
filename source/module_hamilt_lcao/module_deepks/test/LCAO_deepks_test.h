@@ -99,6 +99,8 @@ class test_deepks
 
     void check_vdpre();
 
+    void check_vdrpre();
+
     void check_edelta(std::vector<torch::Tensor>& descriptor);
 
     // calculate V_delta

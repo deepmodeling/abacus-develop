@@ -1,4 +1,6 @@
 #!/bin/bash
+COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+
 sum_file(){
 	line=`grep -vc '^$' $1`
 	inc=1
@@ -82,21 +84,40 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
             echo "deepks_oprec $deepks_oprec" >> $1
         fi
         # For deepks_v_delta > 0
-        if ! test -z "$deepks_v_delta" && [ $deepks_v_delta > 0 ]; then
+        if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -gt 0 ]; then
             deepks_h_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_htot.npy`
             echo "deepks_h_label $deepks_h_label" >>$1
             deepks_vdelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_htot.npy OUT.autotest/deepks_hbase.npy`
             echo "deepks_vdelta $deepks_vdelta" >>$1
             # For deepks_v_delta = 1
-            if [ $deepks_v_delta == 1 ]; then
-                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy `
+            if [ $deepks_v_delta -eq 1 ]; then
+                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy`
                 echo "deepks_vdp $deepks_vdp" >> $1
             fi
             # For deepks_v_delta = 2
-            if [ $deepks_v_delta == 2 ]; then
-                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy `
+            if [ $deepks_v_delta -eq 2 ]; then
+                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy`
                 echo "deepks_phialpha $deepks_phialpha" >> $1
-                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
+                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy`
+                echo "deepks_gevdm $deepks_gevdm" >> $1
+            fi
+        fi
+        # For deepks_v_delta < 0
+        if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
+            python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8
+            echo "deepks_hr_label_pass $?" >>$1
+            python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8
+            echo "deepks_vdelta_r_pass $?" >>$1
+            # For deepks_v_delta = -1
+            if [ $deepks_v_delta -eq -1 ]; then
+                deepks_vdrp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdrpre.npy`
+                echo "deepks_vdrp $deepks_vdrp" >> $1
+            fi
+            # For deepks_v_delta = -2
+            if [ $deepks_v_delta -eq -2 ]; then
+                deepks_phialpha_r=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha_r.npy`
+                echo "deepks_phialpha_r $deepks_phialpha_r" >> $1
+                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy`
                 echo "deepks_gevdm $deepks_gevdm" >> $1
             fi
         fi

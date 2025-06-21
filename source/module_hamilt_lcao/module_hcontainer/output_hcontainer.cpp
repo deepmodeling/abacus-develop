@@ -29,7 +29,7 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
 }
 
 template <typename T>
-void Output_HContainer<T>::write()
+void Output_HContainer<T>::write(bool write_empty)
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
     int rx, ry, rz;
@@ -60,6 +60,11 @@ void Output_HContainer<T>::write()
                 {
                     this->write_single_R(ix, iy, iz);
                 }
+                else if (write_empty)
+                {
+                    _ofs << ix << " " << iy << " " << iz << " 0" << std::endl;
+                }
+                
             }
         }
     }
