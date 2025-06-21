@@ -384,7 +384,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // Force Part
             if (PARAM.inp.cal_force)
             {
-                if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_labels == 1 // don't need these when deepks_out_labels == 2
+                // these items are not related to model, so can output without deepks_scf
+                if (PARAM.inp.deepks_out_labels == 1 // don't need these when deepks_out_labels == 2
                     && !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
                 {
                     torch::Tensor gdmx;
@@ -407,7 +408,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // Stress Part
             if (PARAM.inp.cal_stress)
             {
-                if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_labels == 1 // don't need these when deepks_out_labels == 2
+                // these items are not related to model, so can output without deepks_scf
+                if (PARAM.inp.deepks_out_labels == 1 // don't need these when deepks_out_labels == 2
                     && !PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
                     torch::Tensor gdmepsl;
