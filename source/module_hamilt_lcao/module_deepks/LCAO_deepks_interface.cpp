@@ -31,28 +31,19 @@ std::string true_file_type(const std::string& file_type)
     return it != file_type_map.end() ? it->second : file_type;
 }
 
+// global_out_dir/deepks_*.npy for iter=-1 (called in after_scf)
+// global_out_dir/DeePKS_Labels_Elec/*_e*.npy for iter>0 (called during electronic steps)
 std::string get_filename(const std::string& file_type,
                          const int& label_type,
                          const int& iter) 
 {
     std::ostringstream file_name;
-    if (iter == -1)// called in after scf
+    file_name << (iter == -1 ? PARAM.globalv.global_out_dir : PARAM.globalv.global_deepks_label_elec_dir);
+    if (iter == -1) 
     {
-        file_name << PARAM.globalv.global_out_dir;
         file_name << "deepks_";
     }
-    else // called during electronic step
-    {
-        file_name << PARAM.globalv.global_deepks_label_elec_dir;
-    }
-    if (label_type == 2) // for deepks_out_labels == 2
-    {
-        file_name << true_file_type(file_type);
-    }
-    else
-    {
-        file_name << file_type;
-    }
+    file_name << (label_type == 2 ? true_file_type(file_type) : file_type);
     if (iter != -1)
     {
         file_name << "_e" << iter;
@@ -108,6 +99,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const int nspin = PARAM.inp.nspin;
     const int nk = nks / nspin;
 
+    const bool not_first_step = (iter != 1); // not output in the first electronic step, for energy and otot/obase
+    const bool not_last_step = (iter == -1) || !conv_esolver; //not output in the last electronic step
+    const bool is_after_scf = (iter == -1); // called in after_scf, not in electronic steps
+
     // Update DMR in any case of deepks_out_labels/deepks_scf
     DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
 
@@ -133,9 +128,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                         descriptor,
                                         rank);
         
-        if ( iter == -1 || !conv_esolver ) //not output in the last electronic step
+        if ( not_last_step )
         {
-            const int true_iter = (iter == -1) ? iter : iter + 1;
+            const int true_iter = is_after_scf ? iter : iter + 1;
             const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, true_iter);
             LCAO_deepks_io::save_npy_d(nat,
                                     des_per_atom,
@@ -193,7 +188,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             DeePKS_domain::cal_gevdm(nat, inlmax, inl2l, pdm, gevdm);
         }
 
-        if ( iter != 1) //not output in the first electronic step
+        if ( not_first_step)
         {
             // Energy Part
             const std::string file_etot = get_filename("etot", PARAM.inp.deepks_out_labels, iter);
@@ -249,7 +244,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
             // Calculate the bandgap for each k point
             ModuleBase::matrix o_tot(nks, range);
-            if ( iter != 1) //not output in the first electronic step
+            if ( not_first_step)
             {
                 for (int iks = 0; iks < nks; ++iks)
                 {
@@ -355,14 +350,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         }
                     }
                     // save obase and orbital_precalc
-                    if ( iter == -1 || !conv_esolver ) //not output in the last electronic step
+                    if ( not_last_step )
                     {
                         const int true_iter = (iter == -1) ? iter : iter + 1;
                         const std::string file_orbpre = get_filename("orbpre", PARAM.inp.deepks_out_labels, true_iter);
                         LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, rank);                        
                     }
 
-                    if ( iter != 1) //not output in the first electronic step
+                    if ( not_first_step)
                     {
                         if (PARAM.inp.deepks_scf)
                         {
@@ -379,7 +374,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }                                                                 // end deepks_out_labels == 1
         }                                                                     // end deepks_bandgap > 0
         
-        if (iter < 0)// only output when called in after_scf
+        if ( is_after_scf )
         {
             // Force Part
             if (PARAM.inp.cal_force)
@@ -431,7 +426,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
 
 
-            // not add deepks_out_labels = 2 and get_filename for HR yet
+            // not add deepks_out_labels = 2 and deepks_out_freq_elec for HR yet
             // H(R) matrix part, for HR, base will not be calculated since they are HContainer objects
             if (PARAM.inp.deepks_v_delta < 0)
             {
@@ -492,9 +487,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }            
         }
 
-        if ( iter == -1 || !conv_esolver ) //not output in the last electronic step
+        if ( not_last_step )
         {
-            const int true_iter = (iter == -1) ? iter : iter + 1;
+            const int true_iter = is_after_scf ? iter : iter + 1;
             // H(k) matrix part
             if (PARAM.inp.deepks_v_delta > 0)
             {
