@@ -4,7 +4,7 @@
 #include <vector>
 #include <complex>
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/setup_nonlocal.h"
 

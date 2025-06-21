@@ -1,14 +1,14 @@
 #include "module_basis/module_nao/atomic_radials.h"
 
 #include "gtest/gtest.h"
-#include "module_base/spherical_bessel_transformer.h"
+#include "source_base/spherical_bessel_transformer.h"
 
 #ifdef __MPI
 #include <mpi.h>
 #endif
 
-#include "module_base/constants.h"
-#include "module_base/global_variable.h"
+#include "source_base/constants.h"
+#include "source_base/global_variable.h"
 #include "module_basis/module_ao/ORB_atomic.h"
 
 using ModuleBase::SphericalBesselTransformer;

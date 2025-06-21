@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 
-#include "module_base/math_integral.h" // for numerical integration
+#include "source_base/math_integral.h" // for numerical integration
 
 Pseudopot_upf::Pseudopot_upf()
 {

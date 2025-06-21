@@ -13,8 +13,8 @@
 #include "module_ri/exx_abfs-construct_orbs.h"
 #include "module_ri/exx_abfs-io.h"
 #include "module_ri/conv_coulomb_pot_k.h"
-#include "module_base/tool_title.h"
-#include "module_base/timer.h"
+#include "source_base/tool_title.h"
+#include "source_base/timer.h"
 #include "module_ri/serialization_cereal.h"
 #include "module_ri/Mix_DMk_2D.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -48,7 +48,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
-	const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+	const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+
 		coulomb_param_updated = RI_Util::update_coulomb_param(this->info.coulomb_param, ucell.omega, this->p_kv->get_nkstot_full());
 	this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, coulomb_param_updated, this->info.ccp_rmesh_times);
 

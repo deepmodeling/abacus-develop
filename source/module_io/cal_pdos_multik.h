@@ -1,7 +1,7 @@
 #ifndef CAL_PDOS_MULTIK_H
 #define CAL_PDOS_MULTIK_H
 
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_cell/klist.h"  // use K_Vectors
 #include "module_psi/psi.h"     // use psi::Psi<T>
 #include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>

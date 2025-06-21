@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
-#include "module_base/global_function.h"
+#include "source_base/global_function.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_base/global_variable.h"
-#include "module_base/math_integral.h"
+#include "source_base/global_variable.h"
+#include "source_base/math_integral.h"
 #include <fstream>
 #include <iomanip>
 

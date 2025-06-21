@@ -1,6 +1,6 @@
 #include "setup_nonlocal.h"
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #include "module_parameter/parameter.h"
 
 #ifdef __LCAO
@@ -22,7 +22,7 @@ InfoNonlocal::~InfoNonlocal()
     delete[] nproj;
 }
 
-#include "../module_base/complexmatrix.h"
+#include "../source_base/complexmatrix.h"
 void InfoNonlocal::Set_NonLocal(const int& it,
                                 Atom* atom,
                                 int& n_projectors,

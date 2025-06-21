@@ -1,9 +1,9 @@
-#include "module_base/projgen.h"
+#include "source_base/projgen.h"
 #include "gtest/gtest.h"
 
-#include "module_base/math_integral.h"
-#include "module_base/math_sphbes.h"
-#include "module_base/cubic_spline.h"
+#include "source_base/math_integral.h"
+#include "source_base/math_sphbes.h"
+#include "source_base/cubic_spline.h"
 
 #include <numeric>
 #include <cassert>

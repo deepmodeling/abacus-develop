@@ -9,8 +9,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
 
-#include <module_base/complexmatrix.h>
-#include <module_base/matrix.h>
+#include <source_base/complexmatrix.h>
+#include <source_base/matrix.h>
 #include <stdexcept>
 #include <vector>
 

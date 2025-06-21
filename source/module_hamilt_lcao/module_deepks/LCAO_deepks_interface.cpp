@@ -2,8 +2,8 @@
 #include "LCAO_deepks_interface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "module_base/global_variable.h"
-#include "module_base/tool_title.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_title.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"

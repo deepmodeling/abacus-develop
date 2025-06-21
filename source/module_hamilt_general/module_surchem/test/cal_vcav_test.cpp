@@ -1,5 +1,5 @@
 #ifdef __MPI
-#include "../../../module_base/parallel_global.h"
+#include "../../../source_base/parallel_global.h"
 #include "mpi.h"
 #endif
 #include "../../module_xc/xc_functional.h"

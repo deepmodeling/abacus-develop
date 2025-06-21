@@ -3,8 +3,8 @@
 #include "module_parameter/parameter.h"
 #include "gint_rho_gpu.h"
 #include "gint_vl_gpu.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 
 void Gint::gpu_vlocal_interface(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");

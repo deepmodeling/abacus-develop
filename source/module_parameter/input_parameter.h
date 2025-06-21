@@ -1,7 +1,7 @@
 #ifndef INPUT_PARAMETER_H
 #define INPUT_PARAMETER_H
 #include "md_parameter.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <string>
 #include <vector>
@@ -157,7 +157,7 @@ struct Input_para
     double relax_cg_thr = 0.5; ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double force_thr = -1;     ///< threshold of force in unit (Ry/Bohr)
     double force_thr_ev = -1;  ///< threshold of force in unit (eV/Angstrom)
-    double force_thr_ev2 = 0;  ///< invalid force threshold, mohan add 2011-04-17
+    double force_zero_out = 0;  ///< invalid force threshold, mohan add 2011-04-17
     double stress_thr = 0.5;   ///< Pengfei Li 2017-11-01 ///<LiuXh update 20180515
     double press1 = 0;
     double press2 = 0;
@@ -363,6 +363,7 @@ struct Input_para
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
+    std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
@@ -517,34 +518,27 @@ struct Input_para
     //  exx
     //  Peize Lin add 2018-06-20
     // ==========================================================
-    std::string exx_hybrid_alpha = "default";    ///< fraction of Fock exchange in hybrid functionals
-    double exx_hse_omega = 0.11;                 ///< range-separation parameter in HSE functional
+    std::vector<std::string> exx_fock_alpha = {"default"};      ///< fraction of Fock exchange 1/r in hybrid functionals
+    std::vector<std::string> exx_fock_lambda = {"default"};     ///< used to compensate for divergence points at G=0 in the
+                                                                ///< evaluation of Fock exchange using lcao_in_pw method
+    std::vector<std::string> exx_erfc_alpha = {"default"};      ///< fraction of exchange erfc(wr)/r in hybrid functionals
+    std::vector<std::string> exx_erfc_omega = {"default"};      ///< range-separation parameter in HSE functional
     bool exx_separate_loop = true;               ///< if 1, a two-step method is employed, else it will start
                                                  ///< with a GGA-Loop, and then Hybrid-Loop
     int exx_hybrid_step = 100;                   ///< the maximal electronic iteration number in
                                                  ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                ///< mixing_beta for outer-loop when exx_separate_loop=1
-    double exx_lambda = 0.3;                     ///< used to compensate for divergence points at G=0 in the
-                                                 ///< evaluation of Fock exchange using lcao_in_pw method
     std::string exx_real_number = "default";     ///< exx calculated in real or complex
     double exx_pca_threshold = 0.0001;           ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;             ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                ///< threshold to screen C matrix in exx
     double exx_dm_threshold = 0.0001;            ///< threshold to screen density matrix in exx
-    double exx_schwarz_threshold = 0;            ///< threshold to screen exx using Cauchy-Schwartz inequality
-    double exx_cauchy_threshold = 1e-07;         ///< threshold to screen exx using Cauchy-Schwartz inequality
     double exx_c_grad_threshold = 0.0001;        ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;           ///< threshold to screen nabla V matrix in exx
-    double exx_c_grad_r_threshold = 0.0001;      ///< threshold to screen nabla C matrix in exx
-    double exx_v_grad_r_threshold = 0.1;         ///< threshold to screen nabla V matrix in exx
-    double exx_cauchy_force_threshold = 1e-07;   ///< threshold to screen exx force using Cauchy-Schwartz
-                                                 ///< inequality
-    double exx_cauchy_stress_threshold = 1e-07;  ///< threshold to screen exx stress using Cauchy-Schwartz
-                                                 ///< inequality
+    double exx_c_grad_r_threshold = 0.0001;      ///< threshold to screen nabla C * R matrix in exx
+    double exx_v_grad_r_threshold = 0.1;         ///< threshold to screen nabla V * R matrix in exx
     std::string exx_ccp_rmesh_times = "default"; ///< how many times larger the radial mesh required for
                                                  ///< calculating Columb potential is to that of atomic orbitals
-    std::string exx_distribute_type = "htime";   ///< distribute type (assuming default as no specific value
-                                                 ///< provided)
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel
@@ -649,7 +643,7 @@ struct Input_para
     // RDMFT    jghan added on 2024-07-06
     bool rdmft = false;               // rdmft, reduced density matrix funcional theory
     double rdmft_power_alpha = 0.656; // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
-    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
+    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_erfc_omega
 
     // ==============   #Parameters (22.EXX PW) =====================
     // EXX for planewave basis, rhx0820 2025-03-10

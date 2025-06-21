@@ -7,8 +7,8 @@
 #include "xctest.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
-#include "module_base/matrix.h"
-#include "../../../module_base/parallel_reduce.h"
+#include "source_base/matrix.h"
+#include "../../../source_base/parallel_reduce.h"
 
 /************************************************
 *  unit test of functionals

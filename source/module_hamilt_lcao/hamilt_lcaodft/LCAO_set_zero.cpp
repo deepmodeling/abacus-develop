@@ -1,8 +1,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_parameter/parameter.h"
-#include "module_base/timer.h"
-#include "module_base/tool_threading.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
 
 namespace LCAO_domain
 {

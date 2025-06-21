@@ -2,7 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 #include "module_basis/module_nao/radial_collection.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 

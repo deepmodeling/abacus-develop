@@ -3,8 +3,8 @@
 
 #ifdef USE_LIBXC
 
-#include "module_base/matrix.h"
-#include "module_base/vector3.h"
+#include "source_base/matrix.h"
+#include "source_base/vector3.h"
 
 #include <xc.h>
 #include <xc_funcs.h>

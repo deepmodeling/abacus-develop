@@ -210,10 +210,6 @@ fi
 # echo $out_pband
 #-------------------------------
 if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
-	#pbandref=refPBANDS_1
-	#pbandcal=OUT.autotest/PBANDS_1
-	#python3 $COMPARE_SCRIPT $pbandref $pbandcal 8
-	#echo "CompareProjBand_pass $?" >>$1
 	orbref=refOrbital
 	orbcal=OUT.autotest/Orbital
 	python3 $COMPARE_SCRIPT $orbref $orbcal 8

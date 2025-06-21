@@ -690,7 +690,7 @@ void winput::Print(const std::string& fn)
     return;
 }
 
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #ifdef __MPI
 void winput::Bcast()
 {

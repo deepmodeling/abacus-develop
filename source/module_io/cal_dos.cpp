@@ -1,9 +1,9 @@
 #include "cal_dos.h"
 
-#include "module_base/constants.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 
 void ModuleIO::prepare_dos(std::ofstream& ofs_running,

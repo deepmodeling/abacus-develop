@@ -215,7 +215,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
     }
 }
 
-#include "../module_base/complexmatrix.h"
+#include "../source_base/complexmatrix.h"
 double berryphase::stringPhase(const UnitCell& ucell,
                                int index_str,
                                int nbands,

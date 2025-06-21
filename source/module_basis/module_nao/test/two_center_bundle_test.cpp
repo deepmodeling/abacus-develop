@@ -1,8 +1,8 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 
 #include "gtest/gtest.h"
-#include "module_base/ylm.h"
-#include "module_base/global_variable.h"
+#include "source_base/ylm.h"
+#include "source_base/global_variable.h"
 
 #ifdef __MPI
 #include <mpi.h>

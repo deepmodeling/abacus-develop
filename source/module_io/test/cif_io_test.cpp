@@ -2,7 +2,7 @@
 #include "module_io/cif_io.h"
 #include <cmath>
 #include <random>
-#include "module_base/formatter.h"
+#include "source_base/formatter.h"
 #include <fstream>
 
 #ifdef __MPI

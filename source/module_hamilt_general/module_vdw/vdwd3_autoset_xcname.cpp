@@ -44,10 +44,10 @@
 #include <map>
 #include <string>
 #include <cassert>
-#include "module_base/formatter.h"
+#include "source_base/formatter.h"
 #include <iostream>
 #include <regex>
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
 
 const std::map<std::string, std::string> xcname_libxc_xc_ = {

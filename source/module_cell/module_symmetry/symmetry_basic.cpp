@@ -1,5 +1,5 @@
 #include "symmetry.h"
-#include "module_base/mymath.h"
+#include "source_base/mymath.h"
 #include "module_parameter/parameter.h"
 
 bool ModuleSymmetry::test_brav = 0;

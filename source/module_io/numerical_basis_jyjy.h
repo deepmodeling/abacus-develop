@@ -1,9 +1,9 @@
 #ifndef NUMERICAL_BASIS_JYJY_H
 #define NUMERICAL_BASIS_JYJY_H
 
-#include "module_base/complexarray.h"
-#include "module_base/matrix3.h"
-#include "module_base/vector3.h"
+#include "source_base/complexarray.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 
 #include <tuple>
 #include <vector>

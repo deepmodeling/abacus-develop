@@ -2,8 +2,8 @@
 #define CHARGE_MIXING_H
 #include "charge.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_base/module_mixing/mixing.h"
-#include "module_base/module_mixing/plain_mixing.h"
+#include "source_base/module_mixing/mixing.h"
+#include "source_base/module_mixing/plain_mixing.h"
 
 class Charge_Mixing
 {

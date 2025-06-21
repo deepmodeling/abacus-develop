@@ -1,5 +1,5 @@
 #pragma once
-#include "module_esolver/esolver_fp.h"
+#include "source_esolver/esolver_fp.h"
 #include "module_parameter/input_parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/hamilt.h"
@@ -10,7 +10,7 @@
 #include <vector>   //future tensor
 #include <memory>
 
-#include "module_esolver/esolver_ks_lcao.h" //for the move constructor
+#include "source_esolver/esolver_ks_lcao.h" //for the move constructor
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"

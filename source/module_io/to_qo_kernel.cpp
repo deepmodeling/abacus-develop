@@ -1,9 +1,9 @@
-#include "module_base/libm/libm.h"
-#include "module_base/ylm.h"
+#include "source_base/libm/libm.h"
+#include "source_base/ylm.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_io/to_qo.h"
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 // how define QO task, how create QO instance
 toQO::toQO(const std::string& qo_basis,

@@ -1,15 +1,15 @@
 #include "psi_initializer.h"
 
-#include "module_base/memory.h"
+#include "source_base/memory.h"
 // basic functions support
-#include "module_base/timer.h"
-#include "module_base/tool_quit.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 // three global variables definition
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_parameter/parameter.h"
 
 #ifdef __MPI
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 #endif
 
 template <typename T>

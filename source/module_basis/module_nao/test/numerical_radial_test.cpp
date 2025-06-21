@@ -3,13 +3,13 @@
 #include <fftw3.h>
 
 #include "gtest/gtest.h"
-#include "module_base/spherical_bessel_transformer.h"
+#include "source_base/spherical_bessel_transformer.h"
 
 #ifdef __MPI
 #include <mpi.h>
 #endif
 
-#include "module_base/constants.h"
+#include "source_base/constants.h"
 #include "module_basis/module_nao/numerical_radial.h"
 
 using ModuleBase::PI;

@@ -1,6 +1,6 @@
 #ifndef NSCF_BAND_H
 #define NSCF_BAND_H
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "module_cell/klist.h"
 #include "module_cell/parallel_kpoints.h"
 

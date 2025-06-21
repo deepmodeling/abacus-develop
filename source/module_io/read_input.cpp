@@ -8,12 +8,12 @@
 #include <array>
 #include <vector>
 #include <cassert>
-#include "module_base/formatter.h"
-#include "module_base/global_file.h"
-#include "module_base/global_function.h"
-#include "module_base/tool_quit.h"
-#include "module_base/tool_title.h"
-#include "module_base/module_device/device.h"
+#include "source_base/formatter.h"
+#include "source_base/global_file.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
+#include "source_base/module_device/device.h"
 namespace ModuleIO
 {
 
@@ -110,6 +110,7 @@ ReadInput::ReadInput(const int& rank)
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
 {
+    ModuleBase::TITLE("ReadInput", "read_parameters");
     // 1. only rank 0 read the input file
     if (this->rank == 0)
     {
@@ -390,7 +391,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
         {
             ofs << "\n#Parameters (14.vdW Correction)" << std::endl;
         }
-        else if (p_item->label == "exx_hybrid_alpha")
+        else if (p_item->label == "exx_fock_alpha")
         {
             ofs << "\n#Parameters (15.exx)" << std::endl;
         }

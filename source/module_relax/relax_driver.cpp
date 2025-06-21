@@ -1,6 +1,6 @@
 #include "relax_driver.h"
 
-#include "module_base/global_file.h"
+#include "source_base/global_file.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/cif_io.h"
 #include "module_io/json_output/output_info.h"
@@ -88,8 +88,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                          force,
                                          stress,
                                          force_step,
-                                         stress_step,
-                                         p_esolver); // pengfei Li 2018-05-14
+                                         stress_step); // pengfei Li 2018-05-14
             }
             // print structure
             // changelog 20240509

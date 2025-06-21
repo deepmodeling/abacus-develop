@@ -5,8 +5,8 @@
 #include <string>
 #include "module_cell/unitcell.h"
 #include "module_basis/module_nao/two_center_integrator.h"
-#include "module_base/atom_in.h"
-#include "module_base/vector3.h"
+#include "source_base/atom_in.h"
+#include "source_base/vector3.h"
 /*
     Quasiatomic Orbital (QO) transformation and analysis
 

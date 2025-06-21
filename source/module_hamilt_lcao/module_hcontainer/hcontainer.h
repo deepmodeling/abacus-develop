@@ -2,7 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
 
 #include "atom_pair.h"
-#include "module_base/vector3.h"
+#include "source_base/vector3.h"
 #include "module_cell/unitcell.h"
 
 #include <set>

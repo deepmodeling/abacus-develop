@@ -6,7 +6,7 @@
 #ifndef MIDDLE_HAMILT_H
 #define MIDDLE_HAMILT_H
 
-#include "module_base/module_container/ATen/core/tensor.h" // ct::Tensor
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>

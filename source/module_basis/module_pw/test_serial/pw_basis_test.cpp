@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
-#include "module_base/global_function.h"
-#include "module_base/constants.h"
-#include "module_base/matrix3.h"
+#include "source_base/global_function.h"
+#include "source_base/constants.h"
+#include "source_base/matrix3.h"
 
 /************************************************
  *  serial unit test of functions in pw_basis.cpp
