@@ -114,12 +114,12 @@ check_out(){
         #--------------------------------------------------
         # calculated value
         #--------------------------------------------------
-        cal=`grep "$key" result.out | awk '{printf "%.'$ca'f\n",$2}'`
+        cal=`grep -w "$key" result.out | awk '{printf "%.'$ca'f\n",$2}'`
 
         #--------------------------------------------------
         # reference value
         #--------------------------------------------------
-        ref=`grep "$key" result.ref | awk '{printf "%.'$ca'f\n",$2}'`
+        ref=`grep -w "$key" result.ref | awk '{printf "%.'$ca'f\n",$2}'`
 
         #--------------------------------------------------
         # computed the deviation between the calculated
