@@ -15,6 +15,7 @@ struct Exx_Info
         bool cal_exx = false;
 
         std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+
 		// Fock:
 		//		"alpha":		"0"
 		//		"Rcut_type":	"limits" / "spencer"
@@ -51,6 +52,7 @@ struct Exx_Info
     struct Exx_Info_RI
     {
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
+
 
         bool real_number = false;
 
