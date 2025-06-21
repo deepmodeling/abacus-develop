@@ -10,9 +10,9 @@
 bool Exx_Abfs::Jle::generate_matrix = false;
 int Exx_Abfs::Jle::Lmax = 2;
 double Exx_Abfs::Jle::Ecut_exx = 60;
-double Exx_Abfs::Jle::tolerence = 1.0e-12;	
+double Exx_Abfs::Jle::tolerence = 1.0e-12;
 
-void Exx_Abfs::Jle::init_jle(const double kmesh_times, 
+void Exx_Abfs::Jle::init_jle(const double kmesh_times,
 							 const UnitCell& ucell,
 							 const LCAO_Orbitals& orb)
 {
@@ -23,7 +23,7 @@ void Exx_Abfs::Jle::init_jle(const double kmesh_times,
 		jle[T].resize( Lmax+1 );
 		for (int L=0; L <= Lmax ; ++L)
 		{
-			const size_t ecut_number 
+			const size_t ecut_number
 				= static_cast<size_t>( sqrt( Ecut_exx ) * orb.Phi[T].getRcut() / ModuleBase::PI ); // Rydberg Unit.
 
 			jle[T][L].resize( ecut_number );
@@ -35,10 +35,10 @@ void Exx_Abfs::Jle::init_jle(const double kmesh_times,
 			{
 				std::vector<double> jle_r( orb.Phi[T].PhiLN(0,0).getNr() );
 				ModuleBase::Sphbes::Spherical_Bessel(
-					orb.Phi[T].PhiLN(0,0).getNr(), 
-					orb.Phi[T].PhiLN(0,0).getRadial(), 
-					en[E], 
-					L, 
+					orb.Phi[T].PhiLN(0,0).getNr(),
+					orb.Phi[T].PhiLN(0,0).getRadial(),
+					en[E],
+					L,
 					ModuleBase::GlobalFunc::VECTOR_TO_PTR(jle_r));
 				jle[T][L][E].set_orbital_info(
 					orb.Phi[T].PhiLN(0,0).getLabel(),

@@ -29,12 +29,12 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, co
 		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,orb, lcaos, this->kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
-	
+
 	Exx_Abfs::Jle jle;
 	jle.init_jle(this->kmesh_times, ucell , orb);
 
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
-	
+
 	GlobalC::exx_info.info_ri.abfs_Lmax = Exx_Abfs::Jle::Lmax;
 	for( size_t T=0; T!=abfs.size(); ++T ) {
 		GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 );
@@ -70,7 +70,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, co
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | lcaos lcaos >
-	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> 
+	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
 		m_lcaoslcaos_lcaoslcaos.init( 1, ucell,orb, this->kmesh_times, 1 );
@@ -82,7 +82,7 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, co
 		#endif
 		return m_lcaoslcaos_lcaoslcaos.cal_overlap_matrix_all<double>(ucell,index_lcaos, index_lcaos, index_lcaos, index_lcaos);
 	}();
-	
+
 // ofs_mpi<<"memory:\t"<<get_memory(10)<<std::endl;
 
 	// < lcaos lcaos | jys >
@@ -309,10 +309,10 @@ void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, co
 }
 
 // m_big - m_left * m_middle * m_right.T
-RI::Tensor<double> Exx_Opt_Orb::cal_proj( 
-	const RI::Tensor<double> & m_big, 
-	const std::vector<RI::Tensor<double>> & m_left, 
-	const std::vector<std::vector<RI::Tensor<double>>> & m_middle, 
+RI::Tensor<double> Exx_Opt_Orb::cal_proj(
+	const RI::Tensor<double> & m_big,
+	const std::vector<RI::Tensor<double>> & m_left,
+	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
     ModuleBase::TITLE("Exx_Opt_Orb::cal_proj");

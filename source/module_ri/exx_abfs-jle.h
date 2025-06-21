@@ -10,13 +10,13 @@
 class Exx_Abfs::Jle
 {
 public:
-	
+
 	std::vector<
 		std::vector<
 			std::vector<
 				Numerical_Orbital_Lm>>> jle;
 
-	void init_jle(const double kmesh_times, 
+	void init_jle(const double kmesh_times,
 				  const UnitCell& ucell,
 				  const LCAO_Orbitals& orb);
 
