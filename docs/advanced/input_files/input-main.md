@@ -187,6 +187,7 @@
     - [bessel\_nao\_sigma](#bessel_nao_sigma)
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
+    - [deepks\_out\_freq\_elec](#deepks_out_freq_elec)
     - [deepks\_scf](#deepks_scf)
     - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
@@ -2138,6 +2139,13 @@ Warning: this function is not robust enough for the current version. Please try 
   jle.orb
   ```
   This is not needed when `deepks_out_labels` equals 2. 
+- **Default**: 0
+
+### deepks_out_freq_elec
+
+- **Type**: Integer
+- **Availability**: numerical atomic orbital basis
+- **Description**: When `deepks_out_freq_elec` is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per `deepks_out_freq_elec` electronic iterations, with suffix `_e*` to distinguish different steps. Often used with `deepks_out_labels` equals 1.
 - **Default**: 0
 
 ### deepks_scf
