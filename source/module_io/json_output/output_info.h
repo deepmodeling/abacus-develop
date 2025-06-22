@@ -1,9 +1,9 @@
 #ifndef OUTPUT_INFO_H
 #define OUTPUT_INFO_H
 
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_cell/atom_spec.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/module_symmetry/symmetry.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/unitcell.h"
 #include "source_base/matrix.h"
 
 

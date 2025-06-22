@@ -1,4 +1,6 @@
 #!/bin/bash
+COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+
 sum_file(){
 	line=`grep -vc '^$' $1`
 	inc=1
@@ -161,6 +163,23 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
         process_npy "single" "abs" "stot" "" "deepks_s_label" "$1"
         process_npy "single" "delta" "stot" "sbase" "deepks_sdelta" "$1"
         process_npy "single" "abs" "gvepsl" "" "deepks_spre" "$1"
+    fi
+
+    # For deepks_v_delta < 0
+    if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
+        python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8
+        echo "deepks_hr_label_pass $?" >>$1
+        python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8
+        echo "deepks_vdelta_r_pass $?" >>$1
+        # For deepks_v_delta = -1
+        if [ $deepks_v_delta -eq -1 ]; then
+            process_npy "single" "abs" "vdrpre" "" "deepks_vdrp" "$1"
+        fi
+        # For deepks_v_delta = -2
+        if [ $deepks_v_delta -eq -2 ]; then
+            process_npy "single" "abs" "phialpha_r" "" "deepks_phialpha_r" "$1"
+            process_npy "single" "numpy" "gevdm" "" "deepks_gevdm" "$1"
+        fi
     fi
     
     # Process deepks_out_freq_elec > 0

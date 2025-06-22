@@ -1,6 +1,6 @@
 #ifdef __LCAO
 #include "fR_overlap.h"
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/math_integral.h"

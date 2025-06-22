@@ -8,7 +8,7 @@
 #include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
-#include "module_cell/module_symmetry/symmetry.h"
+#include "source_cell/module_symmetry/symmetry.h"
 
 
 #include <iostream>

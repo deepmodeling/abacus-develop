@@ -7,7 +7,7 @@ using std::vector;
 using std::map;
 #include <string>
 
-#include "../module_basis/module_ao/ORB_atomic_lm.h"
+#include "../source_basis/module_ao/ORB_atomic_lm.h"
 #include "../source_base/element_basis_index.h"
 #include "../source_base/matrix.h"
 #include "../source_base/vector3.h"

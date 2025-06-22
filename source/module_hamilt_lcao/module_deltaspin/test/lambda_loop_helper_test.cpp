@@ -2,7 +2,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "module_cell/klist.h"
+#include "source_cell/klist.h"
 /************************************************
  *  unit test of the functions in lambda_loop_helper.cpp
  ***********************************************/

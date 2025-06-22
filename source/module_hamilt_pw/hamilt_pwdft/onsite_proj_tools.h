@@ -2,9 +2,9 @@
 #define MODULEHAMILTPW_ONSITEPROJTOOLS_H
 
 #include "source_base/module_device/device.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_cell/klist.h"
-#include "module_cell/unitcell.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"

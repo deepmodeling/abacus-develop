@@ -7,8 +7,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/ylm.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_basis/module_ao/ORB_read.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Gint_k::distribute_pvdpR_sparseMatrix(

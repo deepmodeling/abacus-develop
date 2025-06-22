@@ -1,9 +1,9 @@
 #ifndef TDEKINETIC_H
 #define TDEKINETIC_H
 #include "source_base/timer.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-#include "module_cell/klist.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "operator_lcao.h"

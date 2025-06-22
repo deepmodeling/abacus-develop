@@ -5,8 +5,8 @@
 #include <cmath>
 
 #include "module_io/cal_pLpR.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-#include "module_basis/module_nao/radial_collection.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_basis/module_nao/radial_collection.h"
 #include "source_base/spherical_bessel_transformer.h"
 #include "source_base/ylm.h"
 

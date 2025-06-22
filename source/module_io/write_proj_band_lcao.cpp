@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "write_orb_info.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 

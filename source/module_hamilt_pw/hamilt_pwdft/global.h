@@ -260,8 +260,8 @@ namespace GlobalC
 //#endif
 } // namespace GlobalC
 
-#include "module_cell/parallel_kpoints.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/parallel_kpoints.h"
+#include "source_cell/unitcell.h"
 namespace GlobalC
 {
 extern Restart restart; // Peize Lin add 2020.04.04

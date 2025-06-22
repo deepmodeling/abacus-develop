@@ -565,7 +565,7 @@ TEST_F(GlobalFunctionTest, ReadValue)
     int tmp_int = 0;
     double tmp_double = 0.0;
     std::string tmp_string;
-    // source/module_cell/read_atoms.cpp line 153:154
+    // source/source_cell/read_atoms.cpp line 153:154
     ModuleBase::GlobalFunc::READ_VALUE(ifs, tmp_int);
     ModuleBase::GlobalFunc::READ_VALUE(ifs, tmp_double);
     ModuleBase::GlobalFunc::READ_VALUE(ifs, tmp_string);

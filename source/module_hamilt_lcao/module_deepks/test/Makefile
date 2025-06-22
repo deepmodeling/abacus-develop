@@ -49,9 +49,9 @@ VPATH=../../../source_main\
 :../../source_base\
 :../../module_io\
 :../../module_hamilt_pw/hamilt_pwdft\
-:../../module_basis/module_ao\
+:../../source_basis/module_ao\
 :../../module_neighbor\
-:../../module_cell\
+:../../source_cell\
 :../../module_elecstate\
 :../../\
 :../\

@@ -35,7 +35,7 @@
 #include "module_io/write_vxc_r.hpp"
 
 #include "source_base/global_function.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"

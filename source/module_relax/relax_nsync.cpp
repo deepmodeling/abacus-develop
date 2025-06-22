@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "module_parameter/parameter.h"
-#include "module_cell/update_cell.h"
+#include "source_cell/update_cell.h"
 void Relax_old::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.

@@ -1,17 +1,16 @@
 #ifndef VBATCH_MATRIX_MUL_CUH
 #define VBATCH_MATRIX_MUL_CUH
+#include "cuda_tools.cuh"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_base/module_device/device.h"
+#include "source_cell/unitcell.h"
+
 #include <assert.h> // for assert
 #include <cublas_v2.h>
 #include <cuda.h> // for CUDA_VERSION
 #include <cuda_runtime.h>
-#include <stdio.h> // for fprintf and stderr
-
-#include "cuda_tools.cuh"
 #include <functional>
-#include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "source_base/module_device/device.h"
-
+#include <stdio.h> // for fprintf and stderr
 
 #define sA(i, j) sA[(j)*slda + (i)]
 #define sB(i, j) sB[(j)*sldb + (i)]
@@ -70,12 +69,10 @@ static __device__ void vbatched_gemm_device(int M,
     // bound is the correction to offs_d in order to not get out of memory bound
     // so bound could be negative value since offs_d could be out of bound
     T* offs_dA = A + blx * BLK_M * LDA + idyA * LDA + idxA;
-    int boundA
-        = (LDA * (M - 1) + K) - (blx * BLK_M * LDA + idyA * LDA + idxA) - 1;
+    int boundA = (LDA * (M - 1) + K) - (blx * BLK_M * LDA + idyA * LDA + idxA) - 1;
 
     T* offs_dB = B + bly * BLK_N * LDB + idyB * LDB + idxB;
-    int boundB
-        = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
+    int boundB = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
 
     int m, n, k, kk;
 
@@ -401,19 +398,19 @@ template <typename T,
           int DIM_XB,
           int DIM_YB>
 void vbatched_gemm_impl(int max_m,
-                               int max_n,
-                               int* m,
-                               int* n,
-                               int* k,
-                               T** global_A_array,
-                               int* global_lda,
-                               T** global_B_array,
-                               int* global_ldb,
-                               T** global_C_array,
-                               int* global_ldc,
-                               int batchCount,
-                               cudaStream_t stream,
-                               T* alpha = nullptr)
+                        int max_n,
+                        int* m,
+                        int* n,
+                        int* k,
+                        T** global_A_array,
+                        int* global_lda,
+                        T** global_B_array,
+                        int* global_ldb,
+                        T** global_C_array,
+                        int* global_ldc,
+                        int batchCount,
+                        cudaStream_t stream,
+                        T* alpha = nullptr)
 {
     // The positions of A and B have been swapped here.
     // This is because the original code is for column-major matrices.
@@ -432,36 +429,24 @@ void vbatched_gemm_impl(int max_m,
 
     for (int i = 0; i < loop_num; ++i)
     {
-        dim3 dimGrid(ceildiv(max_n, BLK_M),
-                     ceildiv(max_m, BLK_N),
-                     max_batch_count);
+        dim3 dimGrid(ceildiv(max_n, BLK_M), ceildiv(max_m, BLK_N), max_batch_count);
         T* alpha_tmp = nullptr;
         if (alpha != nullptr)
         {
             alpha_tmp = alpha + i * max_batch_count;
         }
 
-        vbatched_gemm_kernel<T,
-                             DIM_X,
-                             DIM_Y,
-                             BLK_M,
-                             BLK_N,
-                             BLK_K,
-                             DIM_XA,
-                             DIM_YA,
-                             DIM_XB,
-                             DIM_YB>
-            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(
-                n + i * max_batch_count,
-                m + i * max_batch_count,
-                k + i * max_batch_count,
-                global_B_array + i * max_batch_count,
-                global_ldb + i * max_batch_count,
-                global_A_array + i * max_batch_count,
-                global_lda + i * max_batch_count,
-                global_C_array + i * max_batch_count,
-                global_ldc + i * max_batch_count,
-                alpha_tmp);
+        vbatched_gemm_kernel<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
+            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(n + i * max_batch_count,
+                                                             m + i * max_batch_count,
+                                                             k + i * max_batch_count,
+                                                             global_B_array + i * max_batch_count,
+                                                             global_ldb + i * max_batch_count,
+                                                             global_A_array + i * max_batch_count,
+                                                             global_lda + i * max_batch_count,
+                                                             global_C_array + i * max_batch_count,
+                                                             global_ldc + i * max_batch_count,
+                                                             alpha_tmp);
         checkCudaLastError();
     }
     if (remain_num > 0)
@@ -472,27 +457,17 @@ void vbatched_gemm_impl(int max_m,
         {
             alpha_tmp = alpha + loop_num * max_batch_count;
         }
-        vbatched_gemm_kernel<T,
-                             DIM_X,
-                             DIM_Y,
-                             BLK_M,
-                             BLK_N,
-                             BLK_K,
-                             DIM_XA,
-                             DIM_YA,
-                             DIM_XB,
-                             DIM_YB>
-            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(
-                n + loop_num * max_batch_count,
-                m + loop_num * max_batch_count,
-                k + loop_num * max_batch_count,
-                global_B_array + loop_num * max_batch_count,
-                global_ldb + loop_num * max_batch_count,
-                global_A_array + loop_num * max_batch_count,
-                global_lda + loop_num * max_batch_count,
-                global_C_array + loop_num * max_batch_count,
-                global_ldc + loop_num * max_batch_count,
-                alpha_tmp);
+        vbatched_gemm_kernel<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
+            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(n + loop_num * max_batch_count,
+                                                             m + loop_num * max_batch_count,
+                                                             k + loop_num * max_batch_count,
+                                                             global_B_array + loop_num * max_batch_count,
+                                                             global_ldb + loop_num * max_batch_count,
+                                                             global_A_array + loop_num * max_batch_count,
+                                                             global_lda + loop_num * max_batch_count,
+                                                             global_C_array + loop_num * max_batch_count,
+                                                             global_ldc + loop_num * max_batch_count,
+                                                             alpha_tmp);
         checkCudaLastError();
     }
 }
@@ -527,33 +502,23 @@ void gemm_time_measure(int max_m,
                        double* d_global_C)
 {
     cudaEvent_t start, stop;
-    checkCuda(
-        cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double)));
+    checkCuda(cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double)));
     checkCuda(cudaEventCreate(&start));
     checkCuda(cudaEventCreate(&stop));
     checkCuda(cudaEventRecord(start, stream));
-    vbatched_gemm_impl<T,
-                       DIM_X,
-                       DIM_Y,
-                       BLK_M,
-                       BLK_N,
-                       BLK_K,
-                       DIM_XA,
-                       DIM_YA,
-                       DIM_XB,
-                       DIM_YB>(max_m,
-                               max_n,
-                               m,
-                               n,
-                               k,
-                               global_A_array,
-                               global_lda,
-                               global_B_array,
-                               global_ldb,
-                               global_C_array,
-                               global_ldc,
-                               batchCount,
-                               stream);
+    vbatched_gemm_impl<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>(max_m,
+                                                                                             max_n,
+                                                                                             m,
+                                                                                             n,
+                                                                                             k,
+                                                                                             global_A_array,
+                                                                                             global_lda,
+                                                                                             global_B_array,
+                                                                                             global_ldb,
+                                                                                             global_C_array,
+                                                                                             global_ldc,
+                                                                                             batchCount,
+                                                                                             stream);
     checkCuda(cudaEventRecord(stop, stream));
     cudaError_t cuda_status = cudaGetLastError();
     checkCuda(cudaStreamSynchronize(stream));
@@ -561,10 +526,7 @@ void gemm_time_measure(int max_m,
     checkCuda(cudaEventElapsedTime(&milliseconds, start, stop));
 
     // WARNING !!!!! Here we assume that all m and n are the same
-    checkCuda(cudaMemcpy(h_global_C,
-                         d_global_C,
-                         batchCount * max_m * max_n * sizeof(double),
-                         cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(h_global_C, d_global_C, batchCount * max_m * max_n * sizeof(double), cudaMemcpyDeviceToHost));
     bool check_result = true;
     for (int i = 0; i < batchCount * max_m * max_n; ++i)
     {
@@ -577,21 +539,11 @@ void gemm_time_measure(int max_m,
     if (milliseconds < fast_time && cuda_status == cudaSuccess && check_result)
     {
         fast_time = milliseconds;
-        fastest_algo = vbatched_gemm_impl<T,
-                                          DIM_X,
-                                          DIM_Y,
-                                          BLK_M,
-                                          BLK_N,
-                                          BLK_K,
-                                          DIM_XA,
-                                          DIM_YA,
-                                          DIM_XB,
-                                          DIM_YB>;
+        fastest_algo = vbatched_gemm_impl<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>;
 #ifdef __DEBUG
         std::cout << "found! fastest time: " << fast_time << std::endl;
-        std::cout << DIM_X << "," << DIM_Y << "," << BLK_M << "," << BLK_N
-                  << "," << BLK_K << "," << DIM_XA << "," << DIM_YA << ","
-                  << DIM_XB << "," << DIM_YB << std::endl;
+        std::cout << DIM_X << "," << DIM_Y << "," << BLK_M << "," << BLK_N << "," << BLK_K << "," << DIM_XA << ","
+                  << DIM_YA << "," << DIM_XB << "," << DIM_YB << std::endl;
 #endif
     }
 }

@@ -13,11 +13,11 @@ HEADERS = source_main/*.h
 
 VPATH=./src_global:\
 ./source_main:\
-./module_basis/module_ao:\
-./module_basis/module_nao:\
-./module_cell/module_neighbor:\
-./module_cell/module_symmetry:\
-./module_cell:\
+./source_basis/module_ao:\
+./source_basis/module_nao:\
+./source_cell/module_neighbor:\
+./source_cell/module_symmetry:\
+./source_cell:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_container/base/core:\
@@ -27,8 +27,8 @@ VPATH=./src_global:\
 ./source_base/module_device:\
 ./source_base/module_mixing:\
 ./module_md:\
-./module_basis/module_pw:\
-./module_basis/module_pw/module_fft:\
+./source_basis/module_pw:\
+./source_basis/module_pw/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
 ./source_hsolver/kernels:\

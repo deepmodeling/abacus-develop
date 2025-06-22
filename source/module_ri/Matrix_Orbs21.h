@@ -8,10 +8,10 @@
 
 #include "source_base/element_basis_index.h"
 #include "source_base/vector3.h"
-#include "module_basis/module_ao/ORB_gaunt_table.h"
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include <RI/global/Tensor.h>
 #include <map>
 #include <set>

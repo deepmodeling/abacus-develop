@@ -11,12 +11,12 @@
 #include "source_base/matrix.h"
 
 #include "source_base/parallel_2d.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/unitcell.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"

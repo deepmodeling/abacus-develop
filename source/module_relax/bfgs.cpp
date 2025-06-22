@@ -3,8 +3,8 @@
 #include "source_base/matrix3.h"
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
-#include "module_cell/update_cell.h"
-#include "module_cell/print_cell.h" // lanshuyue add 2025-06-19  
+#include "source_cell/update_cell.h"
+#include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
 
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 

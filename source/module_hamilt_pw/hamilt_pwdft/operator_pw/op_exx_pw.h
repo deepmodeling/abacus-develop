@@ -2,11 +2,11 @@
 #define OPEXXPW_H
 
 #include "source_base/matrix.h"
-#include "module_basis/module_pw/pw_basis.h"
-#include "module_cell/klist.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_cell/klist.h"
 #include "module_psi/psi.h"
 #include "operator_pw.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_base/macros.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/blas_connector.h"

@@ -17,7 +17,7 @@
 #include "source_base/timer.h"
 #include "module_ri/serialization_cereal.h"
 #include "module_ri/Mix_DMk_2D.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <RI/distribute/Distribute_Equally.h>
 #include <RI/global/Map_Operator-3.h>

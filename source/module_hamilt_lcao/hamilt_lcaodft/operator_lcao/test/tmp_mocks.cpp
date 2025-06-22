@@ -1,5 +1,5 @@
 
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 
 // constructor of Atom
 Atom::Atom() {}
@@ -107,7 +107,7 @@ template class hamilt::OperatorLCAO<std::complex<double>, double>;
 template class hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>;
 
 // mock of TwoCenterIntegrator and LCAO_Orbitals
-#include "module_basis/module_nao/two_center_integrator.h"
+#include "source_basis/module_nao/two_center_integrator.h"
 TwoCenterIntegrator::TwoCenterIntegrator() {}
 
 void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
@@ -146,11 +146,11 @@ void TwoCenterIntegrator::snap(
     }
 }
 
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 LCAO_Orbitals::LCAO_Orbitals() { this->Phi = new Numerical_Orbital[1]; }
 LCAO_Orbitals::~LCAO_Orbitals() { delete[] Phi; }
 
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
 void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,

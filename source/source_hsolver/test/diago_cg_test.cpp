@@ -12,7 +12,7 @@
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"
 #include "mpi.h"
-#include "module_basis/module_pw/test/test_tool.h"
+#include "source_basis/module_pw/test/test_tool.h"
 #include <complex>
 
 #include <ATen/core/tensor_map.h>

@@ -6,7 +6,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
 

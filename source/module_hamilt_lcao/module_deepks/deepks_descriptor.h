@@ -5,7 +5,7 @@
 
 #include "source_base/intarray.h"
 #include "source_base/timer.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>

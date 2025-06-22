@@ -4,7 +4,7 @@
 #endif
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
-#include "module_cell/parallel_kpoints.h"
+#include "source_cell/parallel_kpoints.h"
 #include "module_parameter/parameter.h"
 
 template <typename T>

@@ -1,15 +1,15 @@
 add_subdirectory(source_base)
-add_subdirectory(module_cell)
+add_subdirectory(source_cell)
 add_subdirectory(module_psi)
 add_subdirectory(module_elecstate)
 add_subdirectory(module_hamilt_general)
 add_subdirectory(module_hamilt_pw)
 add_subdirectory(module_hamilt_lcao)
 add_subdirectory(source_hsolver)
-add_subdirectory(module_basis/module_ao)
-add_subdirectory(module_basis/module_nao)
+add_subdirectory(source_basis/module_ao)
+add_subdirectory(source_basis/module_nao)
 add_subdirectory(module_md)
-add_subdirectory(module_basis/module_pw)
+add_subdirectory(source_basis/module_pw)
 add_subdirectory(source_esolver)
 add_subdirectory(module_hamilt_lcao/module_gint)
 add_subdirectory(module_io)
@@ -34,7 +34,7 @@ list(APPEND device_srcs
   module_hamilt_pw/hamilt_pwdft/kernels/ekinetic_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/meta_op.cpp
   module_hamilt_pw/hamilt_stodft/kernels/hpsi_norm_op.cpp
-  module_basis/module_pw/kernels/pw_op.cpp
+  source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/dngvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
   module_elecstate/kernels/elecstate_op.cpp
@@ -64,7 +64,7 @@ if(USE_CUDA)
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/meta_op.cu
     module_hamilt_pw/hamilt_stodft/kernels/cuda/hpsi_norm_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/onsite_op.cu
-    module_basis/module_pw/kernels/cuda/pw_op.cu
+    source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/dngvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
     module_elecstate/kernels/cuda/elecstate_op.cu
@@ -91,7 +91,7 @@ if(USE_ROCM)
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/meta_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/onsite_op.hip.cu
     module_hamilt_pw/hamilt_stodft/kernels/rocm/hpsi_norm_op.hip.cu
-    module_basis/module_pw/kernels/rocm/pw_op.hip.cu
+    source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/dngvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
     module_elecstate/kernels/rocm/elecstate_op.hip.cu

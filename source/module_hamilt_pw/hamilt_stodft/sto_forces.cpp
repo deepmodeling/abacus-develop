@@ -1,7 +1,7 @@
 #include "sto_forces.h"
 
 #include "source_base/mathzone.h"
-#include "module_cell/module_symmetry/symmetry.h"
+#include "source_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"

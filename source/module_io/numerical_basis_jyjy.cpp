@@ -2,7 +2,7 @@
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
-#include "module_basis/module_nao/two_center_integrator.h"
+#include "source_basis/module_nao/two_center_integrator.h"
 
 namespace NumericalBasis
 {

@@ -9,8 +9,8 @@
 #include "center2_orb-orb21.h"
 #include "center2_orb.h"
 #include "source_base/vector3.h"
-#include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "module_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 
 #include <map>
 #include <set>

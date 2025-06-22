@@ -3,7 +3,7 @@
 #include "source_base/module_device/device.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/radial_proj.h"
 #include "module_psi/psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_proj_tools.h"

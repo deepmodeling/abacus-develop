@@ -2,8 +2,8 @@
 #define PLANEWAVE_H
 
 #include "source_base/complexmatrix.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_cell/unitcell.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_psi/psi.h"
 

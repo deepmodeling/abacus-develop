@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "module_io/nscf_band.h"
-#include "module_cell/parallel_kpoints.h"
-#include "module_cell/klist.h"
+#include "source_cell/parallel_kpoints.h"
+#include "source_cell/klist.h"
 
 
 /************************************************

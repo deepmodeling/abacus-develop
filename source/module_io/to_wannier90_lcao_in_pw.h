@@ -12,11 +12,11 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
-#include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "module_basis/module_ao/ORB_gaunt_table.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_cell/klist.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/ORB_read.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_psi/psi.h"
 #include "single_R_io.h"
@@ -30,7 +30,7 @@
 #include <vector>
 
 #ifdef __LCAO
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_psi/psi_initializer.h"
 

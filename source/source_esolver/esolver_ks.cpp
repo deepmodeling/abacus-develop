@@ -9,7 +9,7 @@
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 
-#include "module_cell/cal_atoms_info.h"
+#include "source_cell/cal_atoms_info.h"
 #include "module_elecstate/elecstate_print.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "source_hsolver/hsolver.h"

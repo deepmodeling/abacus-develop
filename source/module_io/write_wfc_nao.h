@@ -1,7 +1,7 @@
 #ifndef WRITE_WFC_NAO_H
 #define WRITE_WFC_NAO_H
 #include "source_base/matrix.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_psi/psi.h"
 #include "source_base/vector3.h"
 #include <vector>

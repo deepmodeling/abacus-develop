@@ -2,7 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "source_base/name_angular.h"
-#include "module_cell/atom_spec.h"
+#include "source_cell/atom_spec.h"
 
 void ModuleIO::write_orb_info(const UnitCell* ucell)
 {

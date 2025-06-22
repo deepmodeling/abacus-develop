@@ -8,10 +8,10 @@
 #endif
 
 //! plane wave basis
-#include "module_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis.h"
 
 //! symmetry analysis
-#include "module_cell/module_symmetry/symmetry.h"
+#include "source_cell/module_symmetry/symmetry.h"
 
 //! electronic states
 #include "module_elecstate/elecstate.h"

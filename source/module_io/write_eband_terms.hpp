@@ -4,7 +4,7 @@
 #include "module_io/write_vxc.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 
 namespace ModuleIO
 {

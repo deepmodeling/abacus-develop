@@ -1,23 +1,23 @@
 add_executable(
     test_deepks
     main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp
-    ../../../module_cell/unitcell.cpp
-    ../../../module_cell/update_cell.cpp
-    ../../../module_cell/bcast_cell.cpp
-    ../../../module_cell/atom_spec.cpp
-    ../../../module_cell/atom_pseudo.cpp
-    ../../../module_cell/read_atoms.cpp
-    ../../../module_cell/read_stru.cpp
-    ../../../module_cell/print_cell.cpp
-    ../../../module_cell/read_atom_species.cpp
-    ../../../module_cell/setup_nonlocal.cpp
-    ../../../module_cell/pseudo.cpp
-    ../../../module_cell/read_pp.cpp
-    ../../../module_cell/read_pp_complete.cpp
-    ../../../module_cell/read_pp_upf100.cpp
-    ../../../module_cell/read_pp_upf201.cpp
-    ../../../module_cell/read_pp_vwr.cpp
-    ../../../module_cell/read_pp_blps.cpp
+    ../../../source_cell/unitcell.cpp
+    ../../../source_cell/update_cell.cpp
+    ../../../source_cell/bcast_cell.cpp
+    ../../../source_cell/atom_spec.cpp
+    ../../../source_cell/atom_pseudo.cpp
+    ../../../source_cell/read_atoms.cpp
+    ../../../source_cell/read_stru.cpp
+    ../../../source_cell/print_cell.cpp
+    ../../../source_cell/read_atom_species.cpp
+    ../../../source_cell/setup_nonlocal.cpp
+    ../../../source_cell/pseudo.cpp
+    ../../../source_cell/read_pp.cpp
+    ../../../source_cell/read_pp_complete.cpp
+    ../../../source_cell/read_pp_upf100.cpp
+    ../../../source_cell/read_pp_upf201.cpp
+    ../../../source_cell/read_pp_vwr.cpp
+    ../../../source_cell/read_pp_blps.cpp
     ../../../module_hamilt_pw/hamilt_pwdft/soc.cpp
     ../../../module_io/output.cpp
     ../../../module_io/sparse_matrix.cpp

@@ -35,7 +35,7 @@
  *  - spinconstrain::SpinConstrain::get_iwt()
  *     get the index of orbital with spin component from (itype, iat, orbital_index)
  */
-#include "module_cell/klist.h"
+#include "source_cell/klist.h"
 
 template <typename T>
 class SpinConstrainTest : public testing::Test

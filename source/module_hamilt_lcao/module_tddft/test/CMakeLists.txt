@@ -13,7 +13,7 @@ AddTest(
 AddTest(
   TARGET tddft_band_energy_test
   LIBS parameter ${math_libs} base device tddft_test_lib  
-  SOURCES band_energy_test.cpp ../band_energy.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp
+  SOURCES band_energy_test.cpp ../band_energy.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 AddTest(

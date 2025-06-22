@@ -1,7 +1,7 @@
 #ifndef OUTPUT_SK_H
 #define OUTPUT_SK_H
 
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 namespace ModuleIO

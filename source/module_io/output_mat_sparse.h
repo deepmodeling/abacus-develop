@@ -1,9 +1,9 @@
 #ifndef OUTPUT_MAT_SPARSE_H
 #define OUTPUT_MAT_SPARSE_H
 
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_basis/module_nao/two_center_bundle.h"
-#include "module_cell/klist.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_nao/two_center_bundle.h"
+#include "source_cell/klist.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 

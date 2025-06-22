@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #define private public
 #define protected public
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/propagator.h"
 #include "module_parameter/parameter.h"
 #include "tddft_test.h"

@@ -43,13 +43,13 @@
  * 
  * 0. The calculation of matrix elements involves the two-center-integral calculation,
  *    this is supported by ABACUS built-in class TwoCenterIntegrator.
- *    see: source/module_basis/module_nao/two_center_integrator.h.
+ *    see: source/source_basis/module_nao/two_center_integrator.h.
  *  
  * 1. The interface of it is RadialCollection, which is a collection of radial functions. 
- *    see: source/module_basis/module_nao/radial_collection.h
+ *    see: source/source_basis/module_nao/radial_collection.h
  * 
  * 2. The radial functions are stored in AtomicRadials class,
- *    see: source/module_basis/module_nao/atomic_radials.h
+ *    see: source/source_basis/module_nao/atomic_radials.h
  * 
  * 3. The construction of AtomicRadials involves the filename of orbital, it is stored
  *    in the UnitCell instance
@@ -64,10 +64,10 @@
 #include <tuple>
 #include <complex>
 #include <memory>
-#include "module_cell/unitcell.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/unitcell.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 
 namespace ModuleIO
 {

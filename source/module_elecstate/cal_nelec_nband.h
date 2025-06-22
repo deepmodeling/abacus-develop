@@ -1,7 +1,7 @@
 #ifndef CAL_NELEC_NBAND_H
 #define CAL_NELEC_NBAND_H
 
-#include "module_cell/atom_spec.h"
+#include "source_cell/atom_spec.h"
 
 namespace elecstate {
 

@@ -10,7 +10,7 @@ namespace ModuleBase
 /************************************************************************
 LiaoChen add @ 2010/03/09 to add efficient functions in LCAO calculation
 ************************************************************************/
-// Only used in module_basis/module_ao
+// Only used in source_basis/module_ao
 class Mathzone_Add1
 {
   public:
