@@ -210,40 +210,30 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
 
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>"
-        << std::endl;
+           ">>>>" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Setup plane waves of charge/potential:                          "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | dimensions of FFT grid. The number of FFT grid on each "
-           "processor   |"
-        << std::endl;
+           "processor   |" << std::endl;
     ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
-           "is   |"
-        << std::endl;
+           "is   |" << std::endl;
     ofs << " | different for charege/potential and wave functions. We also set "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | the 'sticks' for the parallel of FFT. The number of plane waves "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | is 'npw' in each processor.                                     "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<"
-        << std::endl;
+           "<<<<" << std::endl;
     ofs << "\n\n";
-    ofs << "\n SETUP THE PLANE WAVE BASIS" << std::endl;
+    ofs << " SETUP THE PLANE WAVE BASIS" << std::endl;
+
 
     double ecut = 4 * PARAM.inp.ecutwfc;
     if (PARAM.inp.nx * PARAM.inp.ny * PARAM.inp.nz > 0)

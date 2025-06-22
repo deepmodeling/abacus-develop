@@ -421,10 +421,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           ucell.atoms,
                           false,
                           nullptr);
-        GlobalV::ofs_running << "\n For reciprocal-space lattice:" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", recip_brav_type);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", recip_brav_name);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
+        GlobalV::ofs_running << "\n For reciprocal-space lattice" << std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", recip_brav_type);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", recip_brav_name);
 
         // the map of bravis lattice from real to reciprocal space
         // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
@@ -466,10 +465,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                               ucell.atoms,
                               false,
                               nullptr);
-            GlobalV::ofs_running << "\n For k vectors:" << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", k_brav_type);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", k_brav_name);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", k_brav_type);
+            GlobalV::ofs_running << "\n For k-vectors" << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", k_brav_type);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", k_brav_name);
         }
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
@@ -780,7 +778,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     }
     ss << table << std::endl;
     skpt = ss.str();
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot_ibz", nkstot_ibz);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of irreducible k-points", nkstot_ibz);
 
     table.clear();
     table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";

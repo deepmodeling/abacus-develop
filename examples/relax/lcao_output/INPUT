@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix          autotest
 	
 nbands			8
-calculation     cell-relax
+calculation     relax #cell-relax
 ecutwfc			10
 scf_nmax		20
 
@@ -20,6 +20,7 @@ mixing_type     broyden
 mixing_beta     0.7
 
 relax_new       0
+relax_method    bfgs
 
 pseudo_dir      ../../../tests/PP_ORB	
 orbital_dir	    ../../../tests/PP_ORB

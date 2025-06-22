@@ -305,7 +305,7 @@ void Symmetry::lattice_type(
 	//----------------------------------------------
     const bool right = Symm_Other::right_hand_sense(v1, v2, v3);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"RIGHT HAND LATTICE",right);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Right-handed lattice",right);
 
 	//-------------------------------------------------
 	// (2) save and copy the original lattice vectors.

@@ -428,7 +428,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 
 	if(test_brav)
 	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ROTATION MATRICES",nop);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Number of rotation matrices",nop);
 	}
 
 	if(PARAM.inp.test_symmetry > 1)

@@ -58,7 +58,19 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     // print into running.log
-    GlobalV::ofs_running<<"\n ----------- Charge Mixing Parameters ------------"<<std::endl;
+    GlobalV::ofs_running << "\n\n";
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+           ">>>>" << std::endl;
+    GlobalV::ofs_running << " |                                                                 "
+           "   |" << std::endl;
+    GlobalV::ofs_running << " | Setup charge mixing parameters                                  "
+           "   |" << std::endl;
+    GlobalV::ofs_running << " |                                                                 "
+           "   |" << std::endl;
+    GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+           "<<<<" << std::endl;
+    GlobalV::ofs_running << "\n\n";
+
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_type", this->mixing_mode);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_beta", this->mixing_beta);
