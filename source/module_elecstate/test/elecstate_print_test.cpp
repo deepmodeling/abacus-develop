@@ -112,48 +112,7 @@ TEST_F(ElecStatePrintTest, PrintFormat)
     std::remove("test.dat");
 }
 
-TEST_F(ElecStatePrintTest, PrintBand)
-{
-    PARAM.input.nspin = 1;
-    PARAM.input.nbands = 2;
-    PARAM.sys.nbands_l = 2;
-    GlobalV::MY_RANK = 0;
 
-    std::ofstream ofs;
-    ofs.open("test.dat", std::ios::out);
-    // print eigenvalues
-    elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0, ofs);
-    ofs.close();
-
-    ifs.open("test.dat", std::ios::in);
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Energy (eV) & Occupations for spin=1 k-point=1"));
-    EXPECT_THAT(str, testing::HasSubstr("1        13.6057       0.100000"));
-    EXPECT_THAT(str, testing::HasSubstr("2        27.2114       0.200000"));
-    ifs.close();
-    std::remove("test.dat");
-}
-
-
-TEST_F(ElecStatePrintTest, PrintBandWarning)
-{
-    elecstate.ekb(0, 0) = 1.0e11;
-    PARAM.input.nspin = 4;
-
-    std::ofstream ofs;
-    ofs.open("test.dat", std::ios::out);
-    testing::internal::CaptureStdout();
-    
-    EXPECT_EXIT(elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0, ofs), 
-      ::testing::ExitedWithCode(1), "");
-
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
-
-    ofs.close();
-
-    std::remove("test.dat");
-}
 
 TEST_F(ElecStatePrintTest, PrintEtot)
 {

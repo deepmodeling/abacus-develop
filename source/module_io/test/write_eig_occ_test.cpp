@@ -98,7 +98,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
    
     // write eigenvalues and occupations
-    ModuleIO::write_eig_occ(ekb, wg, *kv);
+    ModuleIO::write_eig_file(ekb, wg, *kv);
 
     // check the output files
     std::ifstream ifs;

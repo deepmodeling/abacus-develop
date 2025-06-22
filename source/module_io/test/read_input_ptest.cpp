@@ -180,7 +180,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.mixing_gg0, 0.00);
     EXPECT_EQ(param.inp.init_wfc, "atomic");
     EXPECT_EQ(param.inp.mem_saver, 0);
-    EXPECT_EQ(param.inp.printe, 100);
     EXPECT_EQ(param.inp.init_chg, "atomic");
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
     EXPECT_EQ(param.inp.out_freq_elec, 50);
