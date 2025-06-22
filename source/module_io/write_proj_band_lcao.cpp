@@ -21,6 +21,14 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
+    GlobalV::ofs_running << "\n";
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " |          #Print out projected bands (psi in double)#               |" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    GlobalV::ofs_running << "\n";
+
     // get the date pointer of SK
     const double* sk = dynamic_cast<const hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
@@ -100,23 +108,27 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
-            GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
+            GlobalV::ofs_running << " Output projected bands are in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
             out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
-            if (PARAM.inp.nspin == 4) {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
-            } else {
-                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
-}
+            if (PARAM.inp.nspin == 4) 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
+			} 
+			else 
+			{
+				out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
+			}
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << PARAM.inp.nbands << "\" units=\"eV\">"
                 << std::endl;
-            for (int ib = 0; ib < PARAM.inp.nbands; ib++) {
-                out << " " << (pelec->ekb(is * nks, ib)) * ModuleBase::Ry_to_eV;
-}
-            out << std::endl;
+			for (int ib = 0; ib < PARAM.inp.nbands; ib++) 
+			{
+				out << " " << (pelec->ekb(is * nks, ib)) * ModuleBase::Ry_to_eV;
+			}
+			out << std::endl;
             out << "</band_structure>" << std::endl;
 
             for (int i = 0; i < ucell.nat; i++)
@@ -182,11 +194,20 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
+    GlobalV::ofs_running << "\n";
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " |       #Print out projected bands (psi in complex<double>)#         |" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    GlobalV::ofs_running << "\n";
+
     int nspin0 = 1;
-    if (PARAM.inp.nspin == 2) {
-        nspin0 = 2;
-}
-    int nks = 0;
+	if (PARAM.inp.nspin == 2) 
+	{
+		nspin0 = 2;
+	}
+	int nks = 0;
     if (nspin0 == 1)
     {
         nks = kv.get_nkstot();
@@ -292,8 +313,8 @@ void ModuleIO::write_proj_band_lcao(
         if (GlobalV::MY_RANK == 0)
         {
             std::stringstream ps2;
-            ps2 << PARAM.globalv.global_out_dir << "PBANDS_" << is + 1;
-            GlobalV::ofs_running << "\n Output projected bands in file: " << ps2.str() << std::endl;
+            ps2 << PARAM.globalv.global_out_dir << "pbands" << is + 1 << ".xml";
+            GlobalV::ofs_running << " Output projected bands in file: " << ps2.str() << std::endl;
             std::ofstream out(ps2.str().c_str());
 
             out << "<pband>" << std::endl;
