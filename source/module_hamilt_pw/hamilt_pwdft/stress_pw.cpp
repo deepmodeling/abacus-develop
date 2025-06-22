@@ -147,7 +147,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
 
     const bool ry = false;
     const bool screen = PARAM.inp.test_stress;
-    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
+    ModuleIO::print_stress("TOTAL-STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
 
     if (screen)
     {
