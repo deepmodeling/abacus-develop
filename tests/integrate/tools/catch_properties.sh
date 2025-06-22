@@ -358,11 +358,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 $COMPARE_SCRIPT dhrxs1.csr.ref OUT.autotest/dhrxs1.csr 8
+    python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrys1.csr.ref OUT.autotest/dhrys1.csr 8
+    python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrzs1.csr.ref OUT.autotest/dhrzs1.csr 8
+    python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
