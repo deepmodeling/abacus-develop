@@ -1202,17 +1202,17 @@ TEST_F(UcellTestReadStru, ReadLatticeConstantWarning1)
     std::string fn = "./support/STRU_MgO_Warning2";
     std::ifstream ifa(fn.c_str());
     std::ofstream ofs_running;
-    ofs_running.open("read_atom_species.tmp");
+    ofs_running.open("read_atom_species1.tmp");
     ucell->ntype = 2;
     ucell->atoms = new Atom[ucell->ntype];
     ucell->set_atom_flag = true;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("lattice constant <= 0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("Lattice constant <= 0.0"));
     ofs_running.close();
     ifa.close();
-    remove("read_atom_species.tmp");
+    remove("read_atom_species1.tmp");
 }
 
 TEST_F(UcellTestReadStru, ReadLatticeConstantWarning2)

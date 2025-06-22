@@ -100,10 +100,10 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
     std::string test2, s;
     ifs.open("./to_test_arrange.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("longest orb rcut (Bohr) = 1"));
-    EXPECT_THAT(str, testing::HasSubstr("longest nonlocal projector rcut (Bohr) = 2"));
+    EXPECT_THAT(str, testing::HasSubstr("Orbital max radius cutoff (Bohr) = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("Nonlocal proj. max radius cutoff (Bohr) = 2"));
     ifs.close();
-    remove("./to_test_arrange");
+    //remove("./to_test_arrange");
 }
 
 TEST_F(SltkAtomArrangeTest, Search)

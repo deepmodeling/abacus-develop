@@ -201,14 +201,14 @@ TEST_F(UcellTest, ReadCellPP) {
     std::string str((std::istreambuf_iterator<char>(ifs)),
                     std::istreambuf_iterator<char>());
     EXPECT_THAT(str,
-                testing::HasSubstr("Read in pseudopotential file is C.upf"));
-    EXPECT_THAT(str, testing::HasSubstr("pseudopotential type = NC"));
+                testing::HasSubstr("Pseudopotential file = C.upf"));
+    EXPECT_THAT(str, testing::HasSubstr("Pseudopotential type = NC"));
     EXPECT_THAT(str,
-                testing::HasSubstr("exchange-correlation functional = PBE"));
-    EXPECT_THAT(str, testing::HasSubstr("valence electrons = 4"));
+                testing::HasSubstr("Exchange-correlation functional = PBE"));
+    EXPECT_THAT(str, testing::HasSubstr("Valence electrons = 4"));
     EXPECT_THAT(str,
-                testing::HasSubstr("Read in pseudopotential file is H.upf"));
-    EXPECT_THAT(str, testing::HasSubstr("valence electrons = 0"));
+                testing::HasSubstr("Pseudopotential file = H.upf"));
+    EXPECT_THAT(str, testing::HasSubstr("Valence electrons = 0"));
 }
 
 TEST_F(UcellTest, CalMeshx) {
@@ -461,7 +461,7 @@ TEST_F(UcellTest, CalNbandsLCAOINPW)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate::cal_nbands(PARAM.input.nelec, PARAM.sys.nlocal, nelec_spin, PARAM.input.nbands), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("NLOCAL < NBANDS"));
+    EXPECT_THAT(output, testing::HasSubstr("Number of basis (NLOCAL) < Number of electronic states (NBANDS)"));
 }
 
 TEST_F(UcellTest, CalNbandsWarning1)
