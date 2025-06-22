@@ -86,7 +86,6 @@
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
     - [gamma\_only](#gamma_only)
-    - [printe](#printe)
     - [scf\_nmax](#scf_nmax)
     - [scf\_thr](#scf_thr)
     - [scf\_ene\_thr](#scf_ene_thr)
@@ -1252,12 +1251,6 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Default**: 0
 
-### printe
-
-- **Type**: Integer
-- **Description**: Print out energy for each band for every printe step
-- **Default**: `scf_nmax`
-
 ### scf_nmax
 
 - **Type**: Integer
@@ -1771,7 +1764,7 @@ These variables are used to control the output of properties.
 ### out_band
 
 - **Type**: Boolean \[Integer\](optional)
-- **Description**: Whether to output the eigenvalues of Hamiltonian matrix (in eV), optionally output precision can be set by a second parameter, default is 8. The output file names are:
+- **Description**: Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
     - nspin = 1 or 4: `eigs1.txt`;
     - nspin = 2: `eigs1.txt` and `eigs2.txt`;
     - For more information, refer to the [band.md](../elec_properties/band.md)
