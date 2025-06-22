@@ -365,7 +365,8 @@ void Bessel_Basis::readin_C4(
 	if(!ifs)
 	{
 		GlobalV::ofs_warning << " File name : " << name << std::endl;
-		ModuleBase::WARNING_QUIT("Bessel_Basis::readin_C4","Can not find file.");
+        std::string fn = "Cannot find C4 file: " + name;
+		ModuleBase::WARNING_QUIT("Bessel_Basis::readin_C4",fn);
 	}
 
 	if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<FILE>"))
