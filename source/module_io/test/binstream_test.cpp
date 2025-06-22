@@ -60,6 +60,8 @@ TEST_F(BinstreamTest, variable)
 
 	Binstream *p = new Binstream("wfc" , "r");
 	delete p;
+
+	remove("wfc"); // mohan add 2025-06-22
 }
 
 TEST_F(BinstreamTest, array)

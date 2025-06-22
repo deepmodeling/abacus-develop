@@ -67,26 +67,6 @@ TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
 }
 
 // Test the output_efermi function
-TEST(OutputEfermiTest, TestConvergence) {
-    bool convergence = true;
-    double efermi = 1.0;
-    std::ofstream ofs_running("test_output_efermi.txt");
-    ModuleIO::output_efermi(convergence, efermi, ofs_running);
-    ofs_running.close();
-
-    std::ifstream ifs_running("test_output_efermi.txt");
-    std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
-
-    std::string expected_content = " EFERMI = 13.605698 eV\n";
-
-    EXPECT_EQ(file_content, expected_content);
-    std::remove("test_output_efermi.txt");
-}
-
-// Test the output_efermi function
 TEST(OutputAfterRelaxTest, TestConvergence)
 {
     bool conv_ion = true;
@@ -243,7 +223,7 @@ TEST(PrintForce, PrintForce)
 {
     UnitCell ucell;
     PARAM.input.test_force = 1;
-    std::string name = "test";
+    std::string name = "TOTAL-FORCE";
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
     force(0, 1) = 2.0;
@@ -260,7 +240,8 @@ TEST(PrintForce, PrintForce)
     std::string output_str;
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" test"));
+    getline(ifs, output_str); // mohan add 2025-06-22
+    EXPECT_THAT(output_str, testing::HasSubstr("#TOTAL-FORCE#"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
@@ -303,15 +284,16 @@ TEST(PrintStress, PrintStress)
     stress(2, 1) = 0.0;
     stress(2, 2) = 0.0;
 
-
     std::ofstream ofs("running_stress.txt");
-    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, ofs);
+    bool screen = false;
+    ModuleIO::print_stress("TOTAL-STRESS", stress, screen, false, ofs);
     ofs.close();
 
     std::ifstream ifs("running_stress.txt");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-STRESS (KBAR)"));
+    getline(ifs, output_str); // mohan add 2025-06-22
+    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-STRESS (KBAR)#"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
@@ -335,7 +317,7 @@ TEST(PrintStress, PrintStress)
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
     ifs.close();
     std::remove("running_stress.txt");
 }

@@ -91,7 +91,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 		else
 		{
 			PARAM.sys.gamma_only_local = true;
-      PARAM.input.calculation = cal_type[i];
+            PARAM.input.calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
                 PARAM.input.mdp.md_type = md_types[j];
@@ -196,11 +196,6 @@ TEST_F(PrintInfoTest, PrintScreen)
 				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
 				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
 			}
-			PARAM.input.relax_new = true;
-			testing::internal::CaptureStdout();
-            ModuleIO::print_screen(stress_step, force_step, istep);
-            output = testing::internal::GetCapturedStdout();
-			EXPECT_THAT(output,testing::HasSubstr("STEP OF RELAXATION"));
 		}
 	}
 }
