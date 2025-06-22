@@ -559,7 +559,7 @@ bash ${script_dir}/catch_deepks_properties.sh $1
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
 	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
-	nksibz=`grep ' nkstot_ibz ' $running_path | awk '{print $3}'`
+	nksibz=`grep 'Number of irreducible k-points' $running_path | awk '{print $6}'`
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1
