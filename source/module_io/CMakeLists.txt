@@ -9,7 +9,7 @@ list(APPEND objects
     write_dos_pw.cpp
     nscf_band.cpp
     nscf_fermi_surf.cpp
-    write_istate_info.cpp
+    write_eig_occ.cpp
     numerical_basis.cpp
     numerical_basis_jyjy.cpp
     numerical_descriptor.cpp

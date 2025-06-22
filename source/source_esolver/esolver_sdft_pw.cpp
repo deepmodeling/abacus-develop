@@ -8,7 +8,6 @@
 #include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
 
 #include <algorithm>

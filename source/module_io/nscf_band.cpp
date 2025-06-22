@@ -11,7 +11,7 @@
 
 void ModuleIO::nscf_band(
     const int &is,
-    const std::string &out_band_dir, 
+    const std::string &eig_file, 
     const int &nband,
     const double &fermie,
     const int &precision,
@@ -22,17 +22,14 @@ void ModuleIO::nscf_band(
     ModuleBase::timer::tick("ModuleIO", "nscf_band");
 
 	GlobalV::ofs_running << "\n";
-	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-	GlobalV::ofs_running << " |                                            "
-		"                        |" << std::endl;
-	GlobalV::ofs_running << " | Print out the eigenvalues.                 " 
-		"                        |" << std::endl;
-	GlobalV::ofs_running << " |                                            "
-		"                        |" << std::endl;
-	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-		"<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " |                    #Print out the eigenvalues#                     |" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	GlobalV::ofs_running << "\n";
+
+    GlobalV::ofs_running << " Eigenvalues for plot are in file: " << eig_file << std::endl;
 
     // number of k points without spin; 
     // nspin = 1,2, nkstot = nkstot_np * nspin; 
@@ -43,7 +40,7 @@ void ModuleIO::nscf_band(
 #ifdef __MPI
     if(GlobalV::MY_RANK==0)
     {
-        std::ofstream ofs(out_band_dir.c_str());//make the file clear!!
+        std::ofstream ofs(eig_file.c_str());//make the file clear!!
         ofs.close();
     }
 
@@ -71,7 +68,7 @@ void ModuleIO::nscf_band(
             assert( kv.isk[ik_now+is*nks_np] == is );
             if ( GlobalV::RANK_IN_POOL == 0)
             {
-                std::ofstream ofs(out_band_dir.c_str(), std::ios::app);
+                std::ofstream ofs(eig_file.c_str(), std::ios::app);
                 ofs << FmtCore::format("%4d", ik+1);
                 int width = precision + 4;
                 std::string fmtstr = " %." + std::to_string(precision) + "f";
@@ -91,7 +88,7 @@ void ModuleIO::nscf_band(
     std::vector<double> klength;
     klength.resize(nkstot_np);
     klength[0] = 0.0;
-    std::ofstream ofs(out_band_dir.c_str());
+    std::ofstream ofs(eig_file.c_str());
 
     for(int ik=0;ik<nkstot_np;ik++)
     {

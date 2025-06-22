@@ -18,7 +18,7 @@ namespace ModuleIO
  * @param kv klist
  */
 void nscf_band(const int& is,
-               const std::string& out_band_dir,
+               const std::string &eig_file, 
                const int& nband,
                const double& fermie,
                const int& precision,

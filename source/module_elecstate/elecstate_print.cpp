@@ -180,11 +180,15 @@ void print_band(const ModuleBase::matrix& ekb,
 
     if (GlobalV::MY_RANK == 0)
     {
-        if (printe > 0 && ((iter + 1) % printe == 0))
+        if (printe > 0 && ( iter % printe == 0))
         {
+            ofs << " Spin " << klist->isk[ik] + 1 << " k-point " << ik + 1 << std::endl;
             ofs << std::setprecision(6);
-            ofs << " Energy (eV) & Occupations for spin=" << klist->isk[ik] + 1
-                                 << " k-point=" << ik + 1 << std::endl;
+
+            ofs << std::setw(6) << "Index";
+            ofs << std::setw(15) << "Energy(eV)";
+            ofs << std::setw(15) << "Occupation";
+            ofs << std::endl;
             ofs << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {

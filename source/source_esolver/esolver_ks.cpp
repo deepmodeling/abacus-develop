@@ -20,7 +20,7 @@
 // for output log information
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
-#include "module_io/write_istate_info.h"
+#include "module_io/write_eig_occ.h"
 // for jason output information
 #include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
@@ -565,7 +565,7 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
     ESolver_FP::after_all_runners(ucell);
 
     // 2) write eigenvalue information
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
+    ModuleIO::write_eig_occ(this->pelec->ekb, this->pelec->wg, this->kv);
 
     // 3) write band information
     if (PARAM.inp.out_band[0])
@@ -575,7 +575,6 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
         {
             std::stringstream ss2;
             ss2 << PARAM.globalv.global_out_dir << "eigs" << is + 1 << ".txt";
-            GlobalV::ofs_running << "\n Eigenvalues for plot are saved in file: " << ss2.str() << std::endl;
             const double eshift = 0.0;
             ModuleIO::nscf_band(is,
                                 ss2.str(),

@@ -2,7 +2,6 @@
 
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_io/input_conv.h"
-#include "module_io/nscf_band.h"
 #include "module_io/output_log.h"
 
 #include <iostream>

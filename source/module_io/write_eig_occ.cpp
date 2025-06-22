@@ -1,4 +1,4 @@
-#include "write_istate_info.h"
+#include "write_eig_occ.h"
 
 #include "module_parameter/parameter.h"
 #include "source_base/global_function.h"
@@ -10,10 +10,10 @@
 #include <mpi.h> // use MPI_Barrier
 #endif
 
-void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
+void ModuleIO::write_eig_occ(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
-	ModuleBase::TITLE("ModuleIO","write_istate_info");
-	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
+	ModuleBase::TITLE("ModuleIO","write_eig_occ");
+	ModuleBase::timer::tick("ModuleIO", "write_eig_occ");
 
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
@@ -50,7 +50,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 
     // file name to store eigenvalues
     std::string filename = PARAM.globalv.global_out_dir + "eig.txt";
-    GlobalV::ofs_running << " The eigenvalues and occupations are in file: " << filename << std::endl;
+    GlobalV::ofs_running << " Eigenvalues and occupations are in file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
