@@ -148,7 +148,7 @@ void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 
 void ESolver_DP::after_all_runners(UnitCell& ucell)
 {
-    GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
+    GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << dp_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;

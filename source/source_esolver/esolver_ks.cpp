@@ -504,7 +504,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     // pint energy
     elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, 
-    dkin, duration, PARAM.inp.out_band[0], diag_ethr);
+    dkin, duration, diag_ethr);
 
 
 #ifdef __RAPIDJSON

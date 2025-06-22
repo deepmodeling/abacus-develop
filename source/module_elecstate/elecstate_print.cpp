@@ -166,7 +166,6 @@ void print_etot(const Magnetism& magnet,
                 const double& scf_thr,
                 const double& scf_thr_kin,
                 const double& duration,
-                const int printe,
                 const double& pw_diag_thr,
                 const double& avg_iter,
                 const bool print)
@@ -190,8 +189,8 @@ void print_etot(const Magnetism& magnet,
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
 
-    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
-    {
+	if( (iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax )
+	{
         int n_order = std::max(0, Occupy::gaussian_type);
         titles.push_back("E_KohnSham");
         energies_Ry.push_back(elec.f_en.etot);

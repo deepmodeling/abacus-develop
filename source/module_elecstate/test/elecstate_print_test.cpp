@@ -122,13 +122,13 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     double scf_thr = 0.1;
     double scf_thr_kin = 0.0;
     double duration = 2.0;
-    int printe = 1;
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
+    PARAM.input.out_freq_elec = 1;
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
@@ -137,20 +137,23 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     PARAM.input.nspin = 2;
+
     // iteration of different vdw_method
     std::vector<std::string> vdw_methods = {"d2", "d3_0", "d3_bj"};
     for (int i = 0; i < vdw_methods.size(); i++)
     {
         PARAM.input.vdw_method = vdw_methods[i];
-        elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, false);
+        elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, 
+        scf_thr_kin, duration, pw_diag_thr, avg_iter, false);
     }
+
     // iteration of different ks_solver
     std::vector<std::string> ks_solvers = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver"};
     for (int i = 0; i < ks_solvers.size(); i++)
     {
         PARAM.input.ks_solver = ks_solvers[i];
         testing::internal::CaptureStdout();
-        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
+        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
         output = testing::internal::GetCapturedStdout();
         if (PARAM.input.ks_solver == "cg")
         {
@@ -202,10 +205,10 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     double scf_thr = 0.1;
     double scf_thr_kin = 0.0;
     double duration = 2.0;
-    int printe = 0;
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
+    PARAM.input.out_freq_elec = 0;
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
@@ -218,7 +221,9 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     PARAM.input.basis_type = "pw";
     PARAM.input.scf_nmax = 100;
 
-    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
+    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, 
+    pw_diag_thr, avg_iter, print);
+
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -240,13 +245,14 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     double scf_thr = 2.0;
     double scf_thr_kin = 0.0;
     double duration = 2.0;
-    int printe = 1;
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
@@ -254,7 +260,10 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 2;
     GlobalV::MY_RANK = 0;
-    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
+
+    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, 
+    scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+
     delete elecstate.charge;
 }
 
@@ -265,13 +274,14 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     double scf_thr = 0.1;
     double scf_thr_kin = 0.0;
     double duration = 2.0;
-    int printe = 1;
     double pw_diag_thr = 0.1;
     int avg_iter = 2;
     bool print = true;
     elecstate.charge = new Charge;
     elecstate.charge->nrxx = 100;
     elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
     PARAM.input.imp_sol = true;
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
@@ -280,6 +290,9 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.nspin = 4;
     PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;
-    elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
+
+    elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin, 
+    duration, pw_diag_thr, avg_iter, print);
+
     delete elecstate.charge;
 }

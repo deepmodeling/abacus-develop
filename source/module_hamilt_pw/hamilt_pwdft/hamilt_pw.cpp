@@ -400,13 +400,9 @@ void HamiltPW<T, Device>::set_exx_helper(Exx_Helper<T, Device> &exx_helper)
 
 template class HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
-// template HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>,
-// base_device::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
 template class HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
-// template HamiltPW<std::complex<double>, base_device::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>,
-// base_device::DEVICE_GPU> *hamilt);
 #endif
 
 } // namespace hamilt

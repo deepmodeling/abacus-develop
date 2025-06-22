@@ -17,13 +17,13 @@ void output_convergence_after_scf(const bool &convergence, double& energy, std::
 {
     if (convergence)
     {
-        ofs_running << "\n charge density convergence is achieved" << std::endl;
-        ofs_running << " final etot is " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        ofs_running << " #SCF IS CONVERGED#" << std::endl;
+//      ofs_running << " final etot is " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
     else
     {
-        ofs_running << " !! convergence has not been achieved @_@" << std::endl;
-        std::cout << " !! CONVERGENCE HAS NOT BEEN ACHIEVED !!" << std::endl;
+        ofs_running << " !!SCF IS NOT CONVERGED!!" << std::endl;
+        std::cout << " !!SCF IS NOT CONVERGED!!" << std::endl;
     }
 }
 

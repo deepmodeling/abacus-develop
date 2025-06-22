@@ -12,34 +12,15 @@ namespace elecstate {
 void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
-    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>" << std::endl;
-    ofs << " |                                                                 "
-           "   |" << std::endl;
-    ofs << " | Reading pseudopotentials files:                                 "
-           "   |" << std::endl;
-    ofs << " | The pseudopotential file is in UPF format. The 'NC' indicates "
-           "that |" << std::endl;
-    ofs << " | the type of pseudopotential is 'norm conserving'. Functional of "
-           "   |" << std::endl;
-    ofs << " | exchange and correlation is decided by 4 given parameters in "
-           "UPF   |" << std::endl;
-    ofs << " | file.  We also read in the 'core correction' if there exists.   "
-           "   |" << std::endl;
-    ofs << " | Also we can read the valence electrons number and the maximal   "
-           "   |" << std::endl;
-    ofs << " | angular momentum used in this pseudopotential. We also read in "
-           "the |" << std::endl;
-    ofs << " | trail wave function, trail atomic density and "
-           "local-pseudopotential|" << std::endl;
-    ofs << " | on logrithmic grid. The non-local pseudopotential projector is "
-           "also|" << std::endl;
-    ofs << " | read in if there is any.                                        "
-           "   |" << std::endl;
-    ofs << " |                                                                 "
-           "   |" << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<" << std::endl;
+    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs << " |                                                                    |" << std::endl;
+    ofs << " |                 #Read Pseudopotentials Files#                      |" << std::endl;
+    ofs << " | ABACUS supports norm-conserving (NC) pseudopotentials for both     |" << std::endl;
+    ofs << " | plane wave basis and numerical atomic orbital basis sets.          |" << std::endl;
+    ofs << " | In addition, ABACUS supports ultrasoft pseudopotentials (USPP)     |" << std::endl;
+    ofs << " | for plane wave basis set.                                          |" << std::endl;
+    ofs << " |                                                                    |" << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
 
     read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);

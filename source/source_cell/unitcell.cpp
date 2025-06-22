@@ -220,32 +220,19 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
         if (ok) 
         {
             log << "\n\n";
-            log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                   ">>>>>>>>>>>>" << std::endl;
-            log << " |                                                         "
-                   "           |" << std::endl;
-            log << " | Reading atom information from unitcell:                 "
-                   "           |" << std::endl;
-            log << " | From the input file and the structure file we know the "
-                   "number of   |" << std::endl;
-            log << " | different elments in this unitcell, then we list the "
-                   "detail        |" << std::endl;
-            log << " | information for each element, especially the zeta and "
-                   "polar atomic |" << std::endl;
-            log << " | orbital number for each element. The total atom number "
-                   "is counted. |" << std::endl;
-            log << " | We calculate the nearest atom distance for each atom "
-                   "and show the  |" << std::endl;
-            log << " | Cartesian and Direct coordinates for each atom. We list "
-                   "the file   |" << std::endl;
-            log << " | address for atomic orbitals. The volume and the lattice "
-                   "vectors    |" << std::endl;
-            log << " | in real and reciprocal space is also shown.             "
-                   "           |" << std::endl;
-            log << " |                                                         "
-                   "           |" << std::endl;
-            log << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                   "<<<<<<<<<<<<" << std::endl;
+            log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+            log << " |                                                                    |" << std::endl;
+            log << " |                        #Setup Unitcell#                            |" << std::endl;
+            log << " | From the input file and the structure file we know the number of   |" << std::endl;
+            log << " | different elments in this unitcell, then we list the detail        |" << std::endl;
+            log << " | information for each element, especially the zeta and polar atomic |" << std::endl;
+            log << " | orbital number for each element. The total atom number is counted. |" << std::endl;
+            log << " | We calculate the nearest atom distance for each atom and show the  |" << std::endl;
+            log << " | Cartesian and Direct coordinates for each atom. We list the file   |" << std::endl;
+            log << " | address for atomic orbitals. The volume and the lattice vectors    |" << std::endl;
+            log << " | in real and reciprocal space is also shown.                        |" << std::endl;
+            log << " |                                                                    |" << std::endl;
+            log << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
             log << "\n";
 
             log << " READING UNITCELL INFORMATION" << std::endl;
