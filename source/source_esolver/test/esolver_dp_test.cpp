@@ -166,7 +166,7 @@ TEST_F(ESolverDPTest, Postprocess)
     GlobalV::ofs_running.close();
 
     std::string expected_output
-        = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
+        = "\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
           "--------------------------------------------\n\n\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

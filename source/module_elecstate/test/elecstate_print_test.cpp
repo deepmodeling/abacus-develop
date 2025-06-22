@@ -183,7 +183,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD2"));
@@ -227,7 +227,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation is 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_Harris"));
