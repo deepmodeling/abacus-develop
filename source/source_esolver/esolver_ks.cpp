@@ -346,6 +346,10 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         }
     }
 
+    ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+
+
+/*
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
         elecstate::print_band(this->pelec->ekb,
@@ -356,6 +360,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                               iter,
                               GlobalV::ofs_running);
     }
+*/
 
 	//----------------------------------------------------------------
     // 2) compute magnetization, only for LSDA(spin==2)
@@ -565,7 +570,7 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
     ESolver_FP::after_all_runners(ucell);
 
     // 2) write eigenvalue information
-    ModuleIO::write_eig_occ(this->pelec->ekb, this->pelec->wg, this->kv);
+    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv);
 
     // 3) write band information
     if (PARAM.inp.out_band[0])

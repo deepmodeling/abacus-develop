@@ -5,14 +5,6 @@
 
 namespace elecstate
 {
-    void print_band(const ModuleBase::matrix& ekb, 
-                const ModuleBase::matrix& wg,
-                const K_Vectors* klist,
-                const int& ik, 
-                const int& printe, 
-                const int& iter,
-                std::ofstream &ofs);
-
     void print_format(const std::string& name, 
                     const double& value);
     

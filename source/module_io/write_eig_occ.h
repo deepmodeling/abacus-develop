@@ -6,7 +6,11 @@
 
 namespace ModuleIO
 {
-	void write_eig_occ(const ModuleBase::matrix &ekb,
+	void write_eig_iter(const ModuleBase::matrix &ekb,
+		const ModuleBase::matrix &wg,
+		const K_Vectors& kv);
+
+	void write_eig_file(const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg,
 		const K_Vectors& kv);
 }

@@ -149,60 +149,6 @@ void print_scf_iterinfo(const std::string& ks_solver,
     std::cout << buf;
 }
 
-/// @brief function for printing eigenvalues : ekb
-/// @param ik: index of kpoints
-/// @param printe: print energy every 'printe' electron iteration.
-/// @param iter: index of iterations
-void print_band(const ModuleBase::matrix& ekb,
-                const ModuleBase::matrix& wg,
-                const K_Vectors* klist,
-                const int& ik,
-                const int& printe,
-                const int& iter,
-                std::ofstream &ofs)
-{
-    const double largest_eig = 1.0e10;
-
-    // check the band energy.
-    bool wrong = false;
-    for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
-    {
-        if (std::abs(ekb(ik, ib)) > largest_eig)
-        {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
-            wrong = true;
-        }
-    }
-    if (wrong)
-    {
-        ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
-    }
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        if (printe > 0 && ( iter % printe == 0))
-        {
-            ofs << " Spin " << klist->isk[ik] + 1 << " k-point " << ik + 1 << std::endl;
-            ofs << std::setprecision(6);
-
-            ofs << std::setw(6) << "Index";
-            ofs << std::setw(15) << "Energy(eV)";
-            ofs << std::setw(15) << "Occupation";
-            ofs << std::endl;
-            ofs << std::setiosflags(std::ios::showpoint);
-            for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
-            {
-                ofs << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                     << ekb(ik, ib) * ModuleBase::Ry_to_eV;
-                // for the first electron iteration, we don't have the energy
-                // spectrum, so we can't get the occupations.
-                ofs << std::setw(15) << wg(ik, ib);
-                ofs << std::endl;
-            }
-        }
-    }
-    return;
-}
 
 /// @brief print total free energy and other energies
 /// @param ucell: unit cell
