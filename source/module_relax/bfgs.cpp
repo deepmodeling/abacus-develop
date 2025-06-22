@@ -71,7 +71,6 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     this->IsRestrain(dpos); 
    // print out geometry information during bfgs_trad relax 
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
-   //	
 }
 
 void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)

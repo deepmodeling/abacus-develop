@@ -4,6 +4,7 @@
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
+#include "source_cell/print_cell.h" // mohan add 2025-06-19  
 
 void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、force
 {
@@ -64,6 +65,8 @@ void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const dou
     this->update_pos(ucell);
     this->calculate_largest_grad(_force,ucell);
     this->is_restrain(dpos);  
+    // mohan add 2025-06-22
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
 }
 
 void LBFGS::get_pos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
