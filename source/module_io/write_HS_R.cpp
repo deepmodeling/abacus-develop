@@ -34,17 +34,12 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
 
-	GlobalV::ofs_running << "\n WRITE H(R) OR S(R) BEGINS" << std::endl;
-	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-	GlobalV::ofs_running << " |                                            "
-		"                        |" << std::endl;
-	GlobalV::ofs_running << " | Write Hamiltonian matrix H(R) or overlap matrix S(R) in numerical  |" << std::endl; 
-	GlobalV::ofs_running << " | atomic orbitals, where R is the Bravis lattice vector.             |" << std::endl; 
-	GlobalV::ofs_running << " |                                            "
-		"                        |" << std::endl;
-	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " |     #Print out Hamiltonian matrix H(R) or overlap matrix S(R)#     |" << std::endl; 
+	GlobalV::ofs_running << " | Use numerical atomic orbitals basis. Here R is the Bravis lattice  |" << std::endl; 
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
 
     const int nspin = PARAM.inp.nspin;
@@ -145,6 +140,12 @@ void ModuleIO::output_dHR(const int& istep,
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::tick("ModuleIO", "output_dHR");
 
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " |                         #Print out dH/dR#                          |" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
     gint_k.allocate_pvdpR();
 
     const int nspin = PARAM.inp.nspin;
@@ -216,19 +217,14 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::tick("ModuleIO", "output_SR");
 
-    GlobalV::ofs_running << " OUTPUT S(R) BEGINS" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                            "
-        "                        |" << std::endl;
-    GlobalV::ofs_running << " | Print out the overlap matrix S(R) in the CSR format                |" << std::endl;
-    GlobalV::ofs_running << " |                                            "
-        "                        |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " |                 #Print out overlap matrix S(R)#                    |" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
-    std::cout << " The overlap file is saved in " << SR_filename << std::endl;
-    GlobalV::ofs_running << " The overlap file is saved in " << SR_filename << std::endl;
+    std::cout << " Overlap matrix file is in " << SR_filename << std::endl;
+    GlobalV::ofs_running << " Overlap matrix file is in " << SR_filename << std::endl;
 
 
     LCAO_HS_Arrays HS_Arrays;
@@ -286,14 +282,22 @@ void ModuleIO::output_TR(const int istep,
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::tick("ModuleIO", "output_TR");
 
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " |           #Print out kinetic energy term matrix T(R)#              |" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
     std::stringstream sst;
 	if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) 
 	{
-		sst << PARAM.globalv.global_matrix_dir << istep << "_" << TR_filename;
+		sst << PARAM.globalv.global_matrix_dir << TR_filename << "g" << istep;
+        GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
 	} 
 	else 
 	{
         sst << PARAM.globalv.global_out_dir << TR_filename;
+        GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
     }
 
     sparse_format::cal_TR(ucell,

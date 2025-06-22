@@ -24,7 +24,6 @@ void ModuleIO::write_hsk(
         std::ofstream &ofs_running)	
 {
 
-	ofs_running << "\n WRITE H(k) OR S(k) BEGINS" << std::endl;
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	ofs_running << " |                                            "
@@ -35,6 +34,7 @@ void ModuleIO::write_hsk(
 		"                        |" << std::endl;
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
 
 	for (int ik = 0; ik < nks; ++ik)
 	{

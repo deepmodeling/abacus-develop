@@ -400,7 +400,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
         ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
     }
 
-    // out ldos
+    // 2) out ldos
     if (PARAM.inp.out_ldos[0])
     {
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(reinterpret_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec),
@@ -409,7 +409,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                               ucell);
     }
 
-    // 6) print out exchange-correlation potential
+    // 3) print out exchange-correlation potential
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
@@ -437,6 +437,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 #endif
         );
     }
+
     if (PARAM.inp.out_mat_xc2)
     {
         ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
@@ -461,7 +462,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
         );
     }
 
-    // 7) write eband terms
+    // write eband terms
     if (PARAM.inp.out_eband_terms)
     {
         ModuleIO::write_eband_terms<TK, TR>(PARAM.inp.nspin,
