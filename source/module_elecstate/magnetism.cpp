@@ -83,18 +83,18 @@ void Magnetism::compute_mag(const double& omega,
 		for(int i=0;i<3;i++) 
 		{
 			this->tot_mag_nc[i] *= omega/ nxyz;
+            // mohan add 2025-06-21
+			if( abs(this->tot_mag_nc[i]) < 1.0e-16)
+			{
+				this->tot_mag_nc[i] = 0.0;
+			}
 		}
 
 		this->abs_mag *= omega/ nxyz;
 
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total magnetism along x (Bohr mag/cell)",
-                                   this->tot_mag_nc[0]);
-
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"                      y (Bohr mag/cell)",
-                                   this->tot_mag_nc[1]);
-
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"                      z (Bohr mag/cell)",
-                                   this->tot_mag_nc[2]);
+        // mohan update 2025-06-21
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Total magnetism (Bohr mag/cell)",
+                                   this->tot_mag_nc[0], this->tot_mag_nc[1], this->tot_mag_nc[2]);
 
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Absolute magnetism (Bohr mag/cell)",this->abs_mag);
 	}

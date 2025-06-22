@@ -253,17 +253,17 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
         ofs << "calculate energy cutoff from nx, ny, nz:" << std::endl;
     }
 
-    ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for charge/potential (unit:Ry)", ecut);
+    ModuleBase::GlobalFunc::OUT(ofs, "Energy cutoff for charge/potential (Ry)", ecut);
 
-    ModuleBase::GlobalFunc::OUT(ofs, "fft grid for charge/potential", pw_rho->nx, pw_rho->ny, pw_rho->nz);
-    ModuleBase::GlobalFunc::OUT(ofs, "fft grid division", pw_big->bx, pw_big->by, pw_big->bz);
-    ModuleBase::GlobalFunc::OUT(ofs, "big fft grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
-    ModuleBase::GlobalFunc::OUT(ofs, "nbxx", pw_big->nbxx);
-    ModuleBase::GlobalFunc::OUT(ofs, "nrxx", pw_rho->nrxx);
+    ModuleBase::GlobalFunc::OUT(ofs, "FFT grid for charge/potential", pw_rho->nx, pw_rho->ny, pw_rho->nz);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT grids this proc. (nrxx)", pw_rho->nrxx);
+    ModuleBase::GlobalFunc::OUT(ofs, "Division for big FFT grid", pw_big->bx, pw_big->by, pw_big->bz);
+    ModuleBase::GlobalFunc::OUT(ofs, "FFT (big) grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT (big) grids this proc. (nbxx)", pw_big->nbxx);
 
     ofs << "\n SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", pw_rho->npwtot);
-    ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", pw_rho->nstot);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of plane waves", pw_rho->npwtot);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of sticks on FFT x-y plane", pw_rho->nstot);
 
     ofs << "\n PARALLEL PW FOR CHARGE/POTENTIAL" << std::endl;
     ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
@@ -273,13 +273,14 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
         ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_rho->nst_per[i] << std::setw(15)
             << pw_rho->npw_per[i] << std::endl;
     }
-    ofs << " --------------- sum -------------------" << std::endl;
+    ofs << " --------------- SUM -------------------" << std::endl;
     ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << pw_rho->nstot << std::setw(15)
         << pw_rho->npwtot << std::endl;
 
-    ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", pw_rho->ngg);
-    ModuleBase::GlobalFunc::OUT(ofs, "max |g|", pw_rho->gg_uniq[pw_rho->ngg - 1]);
-    ModuleBase::GlobalFunc::OUT(ofs, "min |g|", pw_rho->gg_uniq[0]);
+    ofs << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of |g|", pw_rho->ngg);
+    ModuleBase::GlobalFunc::OUT(ofs, "Max |g|", pw_rho->gg_uniq[pw_rho->ngg - 1]);
+    ModuleBase::GlobalFunc::OUT(ofs, "Min |g|", pw_rho->gg_uniq[0]);
 
     if (PARAM.globalv.double_grid)
     {
@@ -327,40 +328,29 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
 {
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>"
-        << std::endl;
+           ">>>>" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Setup plane waves of wave functions:                            "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | dimensions of FFT grid. The number of FFT grid on each "
-           "processor   |"
-        << std::endl;
+           "processor   |" << std::endl;
     ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
-           "is   |"
-        << std::endl;
+           "is   |" << std::endl;
     ofs << " | different for charege/potential and wave functions. We also set "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | the 'sticks' for the parallel of FFT. The number of plane wave "
-           "of  |"
-        << std::endl;
+           "of  |" << std::endl;
     ofs << " | each k-point is 'npwk[ik]' in each processor                    "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<"
-        << std::endl;
+           "<<<<" << std::endl;
     ofs << "\n\n";
-    ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
+    ofs << "SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
     double ecut = inp.ecutwfc;
     if (std::abs(ecut - pw_wfc.gk_ecut * pw_wfc.tpiba2) > 1e-6)

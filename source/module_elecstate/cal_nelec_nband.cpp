@@ -14,15 +14,15 @@ void cal_nelec(const Atom* atoms, const int& ntype, double& nelec)
         for (int it = 0; it < ntype; it++)
         {
             std::stringstream ss1, ss2;
-            ss1 << "electron number of element " << atoms[it].label;
+            ss1 << "Electron number of element " << atoms[it].label;
             const double nelec_it = atoms[it].ncpp.zv * atoms[it].na;
             nelec += nelec_it;
-            ss2 << "total electron number of element " << atoms[it].label;
+            ss2 << "Total electron number of element " << atoms[it].label;
 
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), atoms[it].ncpp.zv);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
         }
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Autoset the number of electrons", nelec);
     }
     if (PARAM.inp.nelec_delta != 0)
     {
@@ -42,20 +42,22 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     {
         return;
     }
+
     //=======================================
     // calculate number of bands (setup.f90)
     //=======================================
     double occupied_bands = static_cast<double>(nelec / ModuleBase::DEGSPIN);
-    if (PARAM.inp.lspinorb == 1) {
-        occupied_bands = static_cast<double>(nelec);
-    }
+	if (PARAM.inp.lspinorb == 1) 
+	{
+		occupied_bands = static_cast<double>(nelec);
+	}
 
     if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
     {
         occupied_bands = std::floor(occupied_bands) + 1.0; // mohan fix 2012-04-16
     }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "occupied bands", occupied_bands);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Occupied electronic states", occupied_bands);
 
     if (nbands == 0)
     {
@@ -89,8 +91,6 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
         }
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", nbands);
     }
-    // else if ( PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="md" || PARAM.inp.calculation=="relax") //pengfei
-    // 2014-10-13
     else
     {
         if (nbands < occupied_bands) {
@@ -112,7 +112,6 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     }
 
     // mohan add 2010-09-04
-    // std::cout << "nbands(this-> = " <<nbands <<std::endl;
     if (nbands == occupied_bands)
     {
         if (PARAM.inp.smearing_method != "fixed")
@@ -127,16 +126,16 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
     {
         if (nbands > nlocal)
         {
-            ModuleBase::WARNING_QUIT("ElecState::cal_nbandsc", "NLOCAL < NBANDS");
+            ModuleBase::WARNING_QUIT("ElecState::cal_nbands", 
+            "Number of basis (NLOCAL) < Number of electronic states (NBANDS)");
         }
         else
         {
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NLOCAL", nlocal);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", nbands);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of basis (NLOCAL)", nlocal);
         }
     }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", nbands);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of electronic states (NBANDS)", nbands);
 }
 
 }

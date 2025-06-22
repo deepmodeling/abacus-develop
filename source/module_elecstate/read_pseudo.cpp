@@ -13,65 +13,57 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>"
-        << std::endl;
+           ">>>>" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Reading pseudopotentials files:                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | The pseudopotential file is in UPF format. The 'NC' indicates "
-           "that |"
-        << std::endl;
+           "that |" << std::endl;
     ofs << " | the type of pseudopotential is 'norm conserving'. Functional of "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | exchange and correlation is decided by 4 given parameters in "
-           "UPF   |"
-        << std::endl;
+           "UPF   |" << std::endl;
     ofs << " | file.  We also read in the 'core correction' if there exists.   "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | Also we can read the valence electrons number and the maximal   "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " | angular momentum used in this pseudopotential. We also read in "
-           "the |"
-        << std::endl;
+           "the |" << std::endl;
     ofs << " | trail wave function, trail atomic density and "
-           "local-pseudopotential|"
-        << std::endl;
+           "local-pseudopotential|" << std::endl;
     ofs << " | on logrithmic grid. The non-local pseudopotential projector is "
-           "also|"
-        << std::endl;
+           "also|" << std::endl;
     ofs << " | read in if there is any.                                        "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " |                                                                 "
-           "   |"
-        << std::endl;
+           "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<"
-        << std::endl;
+           "<<<<" << std::endl;
     ofs << "\n\n";
 
     read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
 
-    if (GlobalV::MY_RANK == 0) {
-        for (int it = 0; it < ucell.ntype; it++) {
-            Atom* atom = &ucell.atoms[it];
-            if (!(atom->label_orb.empty())) {
+	if (GlobalV::MY_RANK == 0) 
+	{
+		for (int it = 0; it < ucell.ntype; it++) 
+		{
+			Atom* atom = &ucell.atoms[it];
+			if (!(atom->label_orb.empty())) 
+			{
                 ucell.compare_atom_labels(atom->label_orb, atom->ncpp.psd);
             }
         }
 
-        if (PARAM.inp.out_element_info) {
-            for (int i = 0; i < ucell.ntype; i++) {
-                ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label);
+		if (PARAM.inp.out_element_info) 
+		{
+			for (int i = 0; i < ucell.ntype; i++) 
+			{
+				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label);
             }
-            for (int it = 0; it < ucell.ntype; it++) {
-                Atom* atom = &ucell.atoms[it];
+			for (int it = 0; it < ucell.ntype; it++) 
+			{
+				Atom* atom = &ucell.atoms[it];
                 std::stringstream ss;
                 ss << PARAM.globalv.global_out_dir << atom->label << "/"
                    << atom->label << ".NONLOCAL";
@@ -81,7 +73,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
                 ofs << std::setw(10) << atom->label << "\t"
                     << "label" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.pp_type << "\t"
-                    << "pseudopotential type" << std::endl;
+                    << "Pseudopotential type" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.lmax << "\t"
                     << "lmax" << std::endl;
                 ofs << "</HEADER>" << std::endl;
@@ -163,15 +155,20 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     cal_nwfc(ofs,ucell,ucell.atoms);
 
     // Check whether the number of valence is minimum
-    if (GlobalV::MY_RANK == 0) {
-        int abtype = 0;
-        for (int it = 0; it < ucell.ntype; it++) {
-            if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd)
-                != ModuleBase::MinZval.end()) {
-                if (ucell.atoms[it].ncpp.zv
-                    > ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd)) {
+	if (GlobalV::MY_RANK == 0) 
+	{
+		int abtype = 0;
+		for (int it = 0; it < ucell.ntype; it++) 
+		{
+			if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd)
+					!= ModuleBase::MinZval.end()) 
+			{
+				if (ucell.atoms[it].ncpp.zv
+						> ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd)) 
+				{
                     abtype += 1;
-                    if (abtype == 1) {
+					if (abtype == 1) 
+					{
                         std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -196,8 +193,9 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
                 }
             }
         }
-        if (abtype > 0) {
-            std::cout << " Pseudopotentials with additional electrons can "
+		if (abtype > 0) 
+		{
+			std::cout << " Pseudopotentials with additional electrons can "
                          "yield (more) accurate outcomes, but may be "
                          "less efficient."
                       << std::endl;
@@ -282,23 +280,23 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (error_ap)
         {
-            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "error when average the pseudopotential.");
+            ModuleBase::WARNING_QUIT("read_cell_pseudopots", "error when average the pseudopotential.");
         }
 
         if (error == 1)
         {
             std::cout << " Pseudopotential directory now is : " << pp_address << std::endl;
             GlobalV::ofs_warning << " Pseudopotential directory now is : " << pp_address << std::endl;
-            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Couldn't find pseudopotential file.");
+            ModuleBase::WARNING_QUIT("read_cell_pseudopots", "Couldn't find pseudopotential file.");
         }
         else if (error == 2)
         {
-            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Pseudopotential data do not match.");
+            ModuleBase::WARNING_QUIT("read_cell_pseudopots", "Pseudopotential data do not match.");
         }
         else if (error == 3)
         {
             ModuleBase::WARNING_QUIT(
-                "UnitCell::read_cell_pseudopots",
+                "read_cell_pseudopots",
                 "Check the reference states in pseudopotential .vwr file.\n Also the norm of the read in pseudo wave "
                 "functions\n explicitly please check S, P and D channels.\n If the norm of the wave function is \n "
                 "unreasonable large (should be near 1.0), ABACUS would quit. \n The solution is to turn off the wave "
@@ -306,21 +304,22 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
         }
         else if (error == 4)
         {
-            ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "Unknown pseudopotential type.");
+            ModuleBase::WARNING_QUIT("read_cell_pseudopots", "Unknown pseudopotential type.");
         }
 
         if (GlobalV::MY_RANK == 0)
         {
 		    upf.complete_default(ucell.atoms[i].ncpp);
-            log << "\n Read in pseudopotential file is " << ucell.pseudo_fn[i] << std::endl;
-            ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", ucell.atoms[i].ncpp.pp_type);
-            ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", ucell.atoms[i].ncpp.xc_func);
-            ModuleBase::GlobalFunc::OUT(log, "nonlocal core correction", ucell.atoms[i].ncpp.nlcc);
+
+            ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);
+            ModuleBase::GlobalFunc::OUT(log, "Pseudopotential type", ucell.atoms[i].ncpp.pp_type);
+            ModuleBase::GlobalFunc::OUT(log, "Exchange-correlation functional", ucell.atoms[i].ncpp.xc_func);
+            ModuleBase::GlobalFunc::OUT(log, "Nonlocal core correction", ucell.atoms[i].ncpp.nlcc);
             // ModuleBase::GlobalFunc::OUT(log, "spin orbital", ucell.atoms[i].has_so);
-            ModuleBase::GlobalFunc::OUT(log, "valence electrons", ucell.atoms[i].ncpp.zv);
-            ModuleBase::GlobalFunc::OUT(log, "lmax", ucell.atoms[i].ncpp.lmax);
-            ModuleBase::GlobalFunc::OUT(log, "number of zeta", ucell.atoms[i].ncpp.nchi);
-            ModuleBase::GlobalFunc::OUT(log, "number of projectors", ucell.atoms[i].ncpp.nbeta);
+            ModuleBase::GlobalFunc::OUT(log, "Valence electrons", ucell.atoms[i].ncpp.zv);
+            ModuleBase::GlobalFunc::OUT(log, "Lmax", ucell.atoms[i].ncpp.lmax);
+            ModuleBase::GlobalFunc::OUT(log, "Number of zeta", ucell.atoms[i].ncpp.nchi);
+            ModuleBase::GlobalFunc::OUT(log, "Number of projectors", ucell.atoms[i].ncpp.nbeta);
             for (int ib = 0; ib < ucell.atoms[i].ncpp.nbeta; ib++)
             {
                 ModuleBase::GlobalFunc::OUT(log, "L of projector", ucell.atoms[i].ncpp.lll[ib]);
@@ -354,10 +353,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
 void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
 {
-    if (PARAM.inp.test_pseudo_cell) 
-    {
-        ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
-    }
+    ModuleBase::TITLE("elecstate", "print_unitcell_pseudo");
     std::ofstream ofs(fn.c_str());
 
     ucell.print_cell(ofs);

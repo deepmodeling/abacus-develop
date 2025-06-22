@@ -49,11 +49,11 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ofs_in << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
         ofs_in << "\n\n";
 
-        ofs_in << "\n SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
+        ofs_in << "SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
         ofs_in << std::setprecision(3);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "longest orb rcut (Bohr)", rcutmax_Phi);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "longest nonlocal projector rcut (Bohr)", rcutmax_Beta);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "search radius (Bohr)", sr);
+        ModuleBase::GlobalFunc::OUT(ofs_in, "Largest cutoff of orbitals (Bohr)", rcutmax_Phi);
+        ModuleBase::GlobalFunc::OUT(ofs_in, "Largest cutoff of nonlocal projector (Bohr)", rcutmax_Beta);
+        ModuleBase::GlobalFunc::OUT(ofs_in, "Search radius (Bohr)", sr);
 	}
     return sr;
 }

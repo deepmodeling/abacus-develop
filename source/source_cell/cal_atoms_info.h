@@ -66,6 +66,7 @@ class CalAtomsInfo
             nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
         }
         elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
+
         // calculate the number of nbands_local
         para.sys.nbands_l = para.inp.nbands;
         if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel

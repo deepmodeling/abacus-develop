@@ -242,18 +242,18 @@ void kvec_mpi_k(K_Vectors& kv)
     kv.nks = kv.para_k.nks_pool[GlobalV::MY_POOL];
 
     GlobalV::ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "k-point number in this process", kv.nks);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of k-points in this process", kv.nks);
     int nks_minimum = kv.nks;
 
     Parallel_Reduce::gather_min_int_all(GlobalV::NPROC, nks_minimum);
 
     if (nks_minimum == 0)
     {
-        ModuleBase::WARNING_QUIT("K_Vectors::mpi_k()", " nks == 0, some processor have no k point!");
+        ModuleBase::WARNING_QUIT("K_Vectors::mpi_k()", " nks == 0, some processor have no k points!");
     }
     else
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "minimum distributed K point number", nks_minimum);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Minimum distributed k-point number", nks_minimum);
     }
 
     std::vector<int> isk_aux(kv.nkstot);
@@ -783,7 +783,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot_ibz", nkstot_ibz);
 
     table.clear();
-    table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY:\n";
+    table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n", "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz");
     for (int ik = 0; ik < nkstot_ibz; ik++)
     {

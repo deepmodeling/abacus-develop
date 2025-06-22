@@ -28,7 +28,7 @@ namespace unitcell
         // print atom positions
         //----------------------
         std::string table;
-        table += direct? " DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr ).\n", lat0);
+        table += direct? " DIRECT COORDINATES\n": FmtCore::format(" CARTESIAN COORDINATES ( UNIT = %15.8f Bohr )\n", lat0);
         table += FmtCore::format("%5s%19s%19s%19s%8s\n", "atom", "x", "y", "z", "mag");
         for(int it = 0; it < ntype; it++)
         {

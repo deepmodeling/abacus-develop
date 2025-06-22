@@ -11,7 +11,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     ModuleBase::TITLE("Symmetry","analy_sys");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
 
-	ofs_running << "\n\n\n\n";
+	ofs_running << "\n\n";
 	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	ofs_running << " |                                                                    |" << std::endl;
 	ofs_running << " | Performing symmetry analysis:                                      |" << std::endl;
@@ -22,7 +22,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 	ofs_running << " | symmetry analysis on given k-point mesh and the charge density.    |" << std::endl;
 	ofs_running << " |                                                                    |" << std::endl;
 	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-	ofs_running << "\n\n\n\n";
+	ofs_running << "\n\n";
 
     // --------------------------------
     // 1. copy data and allocate memory

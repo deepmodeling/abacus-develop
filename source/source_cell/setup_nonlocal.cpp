@@ -200,7 +200,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
     }
     else
     {
-        //		GlobalV::ofs_running << " open nonLocal pseudopotential file: " << nonlocal_file[it] << std::endl;
+//        GlobalV::ofs_running << " Open nonlocal pseudopotential file: " << nonlocalFile << std::endl;
     }
 
     std::string label;
@@ -241,8 +241,6 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         {
             if (nlmax == atom->ncpp.lll[ic])
             {
-                //			std::cout << " nlmax = " << nlmax << std::endl;
-                //			std::cout << " lchi = " << atom->lll[ic] << std::endl;
                 find_lmax = true;
                 break;
             }
@@ -260,9 +258,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         }
     }
 
-    //	OUT(GlobalV::ofs_running,"Type",it);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "label", label);
-    //	OUT(GlobalV::ofs_running,"ps_type",ps_type);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nlmax", nlmax);
 
     //-------------------------------------------
@@ -272,8 +268,6 @@ void InfoNonlocal::Read_NonLocal(const int& it,
     int nproj_allowed = nlmax + 1;
     ModuleBase::matrix coefficient_D_in(nproj_allowed, nproj_allowed);
     ModuleBase::ComplexMatrix coefficient_D_nc_in(nproj_allowed * 2, nproj_allowed * 2);
-
-    //	OUT(GlobalV::ofs_running,"nproj_allowed",nproj_allowed);
 
     if (my_rank == 0)
     {
@@ -298,8 +292,6 @@ void InfoNonlocal::Read_NonLocal(const int& it,
 
                     ifs >> coefficient_D_in(L1_read, L2_read);
 
-                    //					GlobalV::ofs_running << " L1=" << L1_read << " L2=" << L2_read << " Coef=" <<
-                    // coefficient_D_in(L1_read,L2_read) << std::endl;
                 }
             }
             ModuleBase::GlobalFunc::SCAN_END(ifs, "</DIJ>");
@@ -308,7 +300,6 @@ void InfoNonlocal::Read_NonLocal(const int& it,
 
 #ifdef __MPI
     Parallel_Common::bcast_int(n_projectors); // mohan add 2010-12-20
-//	Parallel_Common::bcast_double(coefficient_D_in.c, coefficient_D_in.nr * coefficient_D_in.nc);
 #endif
 
     Numerical_Nonlocal_Lm* tmpBeta_lm = new Numerical_Nonlocal_Lm[n_projectors];
@@ -347,8 +338,6 @@ void InfoNonlocal::Read_NonLocal(const int& it,
             }
         } // end my_rank==0
 
-        //		OUT(GlobalV::ofs_running,"meshr_ps",meshr_ps);
-
 #ifdef __MPI
         Parallel_Common::bcast_int(meshr_ps);
         Parallel_Common::bcast_int(LfromBeta[p1]);
@@ -377,9 +366,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         Parallel_Common::bcast_double(rab_ps, meshr_ps);
 #endif
 
-        //		OUT(GlobalV::ofs_running,"radial_ps max",radial_ps[meshr_ps-1]);
 
-        //		std::cout << this->kmesh << std::endl;
         tmpBeta_lm[p1].set_NL_proj(label,
                                    it,            // type
                                    LfromBeta[p1], // angular momentum L
@@ -391,9 +378,10 @@ void InfoNonlocal::Read_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info) {
-            tmpBeta_lm[p1].plot(my_rank);
-}
+		if (PARAM.inp.out_element_info) 
+		{
+			tmpBeta_lm[p1].plot(my_rank);
+		}
 
         delete[] radial_ps;
         delete[] rab_ps;
@@ -463,7 +451,8 @@ void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& l
             this->rcutmax_Beta = std::max(this->rcutmax_Beta, this->Beta[it].get_rcut_max());
         }
 
-        log << " max number of nonlocal projetors among all species is " << this->nprojmax << std::endl;
+        ModuleBase::GlobalFunc::OUT(log, "Max number of nonlocal projectors (all elements)", this->nprojmax);
+        
     }
     return;
 }

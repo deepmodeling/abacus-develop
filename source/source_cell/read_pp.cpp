@@ -31,31 +31,24 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, 
         return 1;
     }
 
-    // if(GlobalV::global_pseudo_type=="auto") //zws
 	if (type == "auto")
 	{
 		set_pseudo_type(fn, type);
 	}
 
 	int info = -1;
-	// read in the .UPF type of pseudopotentials
-	// if(GlobalV::global_pseudo_type=="upf")
 	if (type == "upf")
 	{
 		info = read_pseudo_upf(ifs, pp);
 	}
-	// read in the .vwr type of pseudopotentials
-	// else if(GlobalV::global_pseudo_type=="vwr")
 	else if (type == "vwr")
 	{
 		info = read_pseudo_vwr(ifs, pp);
 	}
-	// else if(GlobalV::global_pseudo_type=="upf201")
 	else if (type == "upf201")
 	{
 		info = read_pseudo_upf201(ifs, pp);
 	}
-	// else if(GlobalV::global_pseudo_type=="blps") // sunliang added 2021.7
 	else if (type == "blps")
 	{
 		info = read_pseudo_blps(ifs, pp);
@@ -89,12 +82,10 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //z
 		if ( trim(strversion) == "2.0.1" )
 		{
 			type = "upf201";
-			// GlobalV::global_pseudo_type = "upf201";
 		}
 		else
 		{
 			type = "upf";
-			// GlobalV::global_pseudo_type = "upf";
 		}
 	}
 	return 0;
@@ -194,8 +185,11 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 					ind1 = old_nbeta +1;
 				}
 				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-8) { vion1 = 0.1;
-}
+				if(std::abs(vion1)<1.0e-8) 
+				{ 
+					vion1 = 0.1;
+				}
+
 				//average beta (betar)
 				for(int ir = 0; ir<pp.mesh;ir++)
 				{
@@ -205,15 +199,17 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 							l * sqrt(std::abs(pp.dion(ind1,ind1) / vion1)) *
 							pp.betar(ind1, ir) ) ;
 				}
+
 				//average the dion matrix
 				pp.dion(nb, nb) = vion1;
 				old_nbeta++;	
 			}
 			else
 			{
-				for(int ir = 0; ir<pp.mesh;ir++) {
+				for(int ir = 0; ir<pp.mesh;ir++) 
+				{
 					pp.betar(nb, ir) = pp.betar(old_nbeta, ir);
-}
+				}
 				pp.dion(nb, nb) = pp.dion(old_nbeta, old_nbeta);
 			}
 			pp.lll[nb] = pp.lll[old_nbeta]; //reset the lll index, ignore jjj index
@@ -256,16 +252,22 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 				if(std::abs(pp.jchi[old_nwfc] - pp.lchi[old_nwfc] + 0.5) < 1e-6)
 				{
 					if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]-0.5)>1e-6) 
-					{error++; std::cout<<"warning_quit! error chi function 1 !"<<std::endl; return error;}
-	//					ModuleBase::WARNING_QUIT("average_p", "error chi function 1 !");
+					{
+						error++; 
+						std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
+						return error;
+					}
 					ind = old_nwfc +1;
 					ind1 = old_nwfc;
 				}
 				else
 				{
 					if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]+0.5)>1e-6)
-					{error++; std::cout<<"warning_quit! error chi function 2 !"<<std::endl; return error;}
-	//					ModuleBase::WARNING_QUIT("average_p", "error chi function 2 !");
+					{
+						error++; 
+						std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
+						return error;
+					}
 					ind = old_nwfc;
 					ind1 = old_nwfc +1;
 				}
@@ -277,10 +279,12 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 				}
 				old_nwfc++;
 			}
-			else{
-				for(int ir = 0; ir<pp.mesh;ir++) {
+			else
+			{
+				for(int ir = 0; ir<pp.mesh;ir++) 
+				{
 					pp.chi(nb, ir) = pp.chi(old_nwfc, ir);
-}
+				}
 			}
 			pp.lchi[nb] = pp.lchi[old_nwfc]; //reset lchi index
 		}
@@ -318,8 +322,10 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 					ind1 = nb +1;
 				}
 				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-10) { vion1 = 0.1;
-}
+				if(std::abs(vion1)<1.0e-10) 
+				{ 
+					vion1 = 0.1;
+				}
 				//average beta (betar)
 				const double sqrtDplus = sqrt(std::abs(pp.dion(ind,ind) / vion1));
 				const double sqrtDminus = sqrt(std::abs(pp.dion(ind1,ind1) / vion1));
@@ -353,14 +359,22 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 				if(std::abs(pp.jchi[nb] - pp.lchi[nb] + 0.5) < 1e-6)
 				{
 					if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]-0.5)>1e-6) 
-					{error++; std::cout<<"warning_quit! error chi function 1 !"<<std::endl; return error;}
+					{
+						error++; 
+						std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
+						return error;
+					}
 					ind = nb +1;
 					ind1 = nb;
 				}
 				else
 				{
 					if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]+0.5)>1e-6)
-					{error++; std::cout<<"warning_quit! error chi function 2 !"<<std::endl; return error;}
+					{
+						error++; 
+						std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
+						return error;
+					}
 					ind = nb;
 					ind1 = nb +1;
 				}

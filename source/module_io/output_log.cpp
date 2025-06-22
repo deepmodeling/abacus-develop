@@ -53,8 +53,9 @@ void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_r
 {
     if (convergence && PARAM.inp.out_level != "m")
     {
-        ofs_running << std::setprecision(16);
-        ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
+// mohan comment out 2025-06-22
+//        ofs_running << std::setprecision(16);
+//        ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
 }
 
@@ -217,6 +218,7 @@ void print_force(std::ofstream& ofs_running,
                  const ModuleBase::matrix& force,
                  bool ry)
 {
+    // this is a magic number, mohan note 2025-06-22
     const double output_acc = 1.0e-8;
     double fac = 1.0;
     if (!ry)
@@ -230,7 +232,7 @@ void print_force(std::ofstream& ofs_running,
     std::vector<double> force_z;
     std::string table;
 
-    ofs_running << " " << name << std::endl;
+    ofs_running << "\n #" << name << "#" << std::endl;
 
     std::vector<std::string> titles({"Atoms", "Force_x", "Force_y", "Force_z"});
     int iat = 0;
@@ -291,7 +293,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     std::vector<double> stress_z;
     std::string table;
 
-    ofs << " " << title << std::endl;
+    ofs << "\n #" << title << "#" << std::endl;
 
     std::vector<std::string> titles({"Stress_x", "Stress_y", "Stress_z"});
     for (int i = 0; i < 3; i++)
@@ -316,7 +318,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     ofs << table;
     if (name == "TOTAL-STRESS")
     {
-        ofs << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
+        ofs << " #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit
                              << std::endl;
     }
@@ -325,7 +327,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
         std::cout << table;
         if (name == "TOTAL-STRESS")
         {
-            std::cout << " TOTAL-PRESSURE (DO NOT INCLUDE KINETIC PART OF IONS): " << std::fixed 
+            std::cout << " TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                       << std::setprecision(6) << pressure << unit
                       << std::endl;
         }

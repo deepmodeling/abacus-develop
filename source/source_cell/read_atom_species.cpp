@@ -22,7 +22,7 @@ bool read_atom_species(std::ifstream& ifa,
     //==========================================
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ATOMIC_SPECIES") )
     {    
-        ModuleBase::GlobalFunc::OUT(ofs_running,"ntype",ntype);
+        ModuleBase::GlobalFunc::OUT(ofs_running,"Number of elements",ntype);
         for (int i = 0;i < ntype;i++)
         {
             std::string one_line;
@@ -138,11 +138,11 @@ bool read_lattice_constant(std::ifstream& ifa,
         ModuleBase::GlobalFunc::READ_VALUE(ifa, lat0);
         if(lat0<=0.0)
         {
-            ModuleBase::WARNING_QUIT("read_atom_species","lattice constant <= 0.0");
+            ModuleBase::WARNING_QUIT("read_atom_species","Lattice constant <= 0.0");
         }
         lat0_angstrom = lat0 * 0.529177;
-        ModuleBase::GlobalFunc::OUT(ofs_running,"lattice constant (Bohr)",lat0);
-        ModuleBase::GlobalFunc::OUT(ofs_running,"lattice constant (Angstrom)",lat0_angstrom);
+        ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Bohr)",lat0);
+        ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Angstrom)",lat0_angstrom);
         lat.tpiba  = ModuleBase::TWO_PI / lat0;
         lat.tpiba2 = lat.tpiba * lat.tpiba;
     }

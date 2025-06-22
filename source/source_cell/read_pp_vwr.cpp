@@ -19,7 +19,6 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 	std::cout << " READ IN VWR TYPE PSEUDOPOTENTIALS." << std::endl;
 	GlobalV::ofs_running << " Read in vwr type pseudopotentials " << std::endl;
 
-
 	// --------------------------------------
 	// (1) read in data 
 	// --------------------------------------

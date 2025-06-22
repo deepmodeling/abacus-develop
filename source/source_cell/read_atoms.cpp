@@ -80,7 +80,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                 ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
                 return false;
             }
-            ModuleBase::GlobalFunc::OUT(ofs_running, "atom label", ucell.atoms[it].label);
+            ModuleBase::GlobalFunc::OUT(ofs_running, "Atom label", ucell.atoms[it].label);
 
             bool set_element_mag_zero = false;
             ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.magnet.start_mag[it]);
@@ -132,7 +132,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             ModuleBase::GlobalFunc::READ_VALUE(ifpos, na);
             ucell.atoms[it].na = na;
 
-            ModuleBase::GlobalFunc::OUT(ofs_running,"number of atom for this type",na);
+            ModuleBase::GlobalFunc::OUT(ofs_running,"Number of atoms for this type",na);
 
             ucell.nat += na;
 
@@ -369,7 +369,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         {
                             //use a stringstream to generate string: "concollinear magnetization of element it is:"
                             std::stringstream ss;
-                            ss << "magnetization of element " << it+1;
+                            ss << "Magnetization for this type";
                             if(ia!=0) 
                             {
                                 ss<<" (atom"<<ia+1<<")";
@@ -554,6 +554,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
     ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_running,"TOTAL ATOM NUMBER",ucell.nat);
+    ofs_running << std::endl;
 
     if (ucell.nat == 0)
     {
