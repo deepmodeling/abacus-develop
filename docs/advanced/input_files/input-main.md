@@ -1856,7 +1856,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1_nao.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Unit**: Ry
 - **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr. 
@@ -1865,7 +1865,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1_nao.csr`, `dhrys1_nao.csr`, `dhrzs1_nao.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Unit**: Ry/Bohr
 - **Note**: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
