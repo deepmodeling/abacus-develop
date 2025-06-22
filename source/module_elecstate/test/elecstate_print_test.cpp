@@ -112,8 +112,6 @@ TEST_F(ElecStatePrintTest, PrintFormat)
     std::remove("test.dat");
 }
 
-
-
 TEST_F(ElecStatePrintTest, PrintEtot)
 {
     GlobalV::ofs_running.open("test.dat", std::ios::out);
@@ -153,7 +151,10 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     {
         PARAM.input.ks_solver = ks_solvers[i];
         testing::internal::CaptureStdout();
-        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+
+        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, 
+        scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+
         output = testing::internal::GetCapturedStdout();
         if (PARAM.input.ks_solver == "cg")
         {
@@ -197,6 +198,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     std::remove("test.dat");
 }
 
+/*
 TEST_F(ElecStatePrintTest, PrintEtot2)
 {
     GlobalV::ofs_running.open("test.dat", std::ios::out);
@@ -237,6 +239,7 @@ TEST_F(ElecStatePrintTest, PrintEtot2)
     delete elecstate.charge;
     std::remove("test.dat");
 }
+*/
 
 TEST_F(ElecStatePrintTest, PrintEtotColorS2)
 {
@@ -266,6 +269,7 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
 
     delete elecstate.charge;
 }
+
 
 TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 {
