@@ -443,26 +443,26 @@ void ModuleIO::save_dH_sparse(const int& istep,
 	if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag) 
 	{
 		sshx[0] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rxs1g" << step << ".csr";
+			<< "d"<<fileflag<<"rxs1g" << step << "_nao.csr";
 		sshx[1] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rxs2g" << step << ".csr";
+			<< "d"<<fileflag<<"rxs2g" << step << "_nao.csr";
 		sshy[0] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rys1g" << step << ".csr";
+			<< "d"<<fileflag<<"rys1g" << step << "_nao.csr";
 		sshy[1] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rys2g" << step << ".csr";
+			<< "d"<<fileflag<<"rys2g" << step << "_nao.csr";
 		sshz[0] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rzs1g" << step << ".csr";
+			<< "d"<<fileflag<<"rzs1g" << step << "_nao.csr";
 		sshz[1] << PARAM.globalv.global_matrix_dir
-			<< "d"<<fileflag<<"rzs2g" << step << ".csr";
+			<< "d"<<fileflag<<"rzs2g" << step << "_nao.csr";
 	} 
 	else 
 	{
-		sshx[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs1.csr";
-        sshx[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs2.csr";
-        sshy[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys1.csr";
-        sshy[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys2.csr";
-        sshz[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs1.csr";
-        sshz[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs2.csr";
+		sshx[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs1_nao.csr";
+        sshx[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rxs2_nao.csr";
+        sshy[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys1_nao.csr";
+        sshy[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rys2_nao.csr";
+        sshz[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs1_nao.csr";
+        sshz[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs2_nao.csr";
     }
     std::ofstream g1x[2];
     std::ofstream g1y[2];
