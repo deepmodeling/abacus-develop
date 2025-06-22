@@ -79,18 +79,6 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("printe");
-        item.annotation = "Print out energy for each band for every printe steps";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.printe <= 0) // default is scf_nmax
-            {
-                para.input.printe = para.input.scf_nmax;
-            }
-        };
-        read_sync_int(input.printe);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
         item.read_value = [](const Input_Item& item, Parameter& para) {

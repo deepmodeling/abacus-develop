@@ -425,8 +425,8 @@ void ESolver_OF::print_info(const bool conv_esolver)
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-	if ((PARAM.inp.printe > 0 && 
-				((this->iter_ + 1) % PARAM.inp.printe == 0 || 
+	if ((PARAM.inp.out_band[0] > 0 && 
+				((this->iter_ + 1) % PARAM.inp.out_band[0] == 0 || 
 				 conv_esolver || 
 				 this->iter_ == PARAM.inp.scf_nmax)) || 
 			PARAM.inp.init_chg == "file")

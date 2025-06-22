@@ -331,36 +331,32 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
-	//----------------------------------------------------------------
-	// 1) print out band gap 
-	//----------------------------------------------------------------
-    if (PARAM.inp.out_bandgap)
-    {
-        if (!PARAM.globalv.two_fermi)
-        {
-            this->pelec->cal_bandgap();
-        }
-        else
-        {
-            this->pelec->cal_bandgap_updw();
-        }
-    }
 
-    ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+	if(iter % PARAM.inp.out_freq_elec == 0)
+	{
+		//----------------------------------------------------------------
+		// 1) print out band gap 
+		//----------------------------------------------------------------
+		if (PARAM.inp.out_bandgap)
+		{
+			if (!PARAM.globalv.two_fermi)
+			{
+				this->pelec->cal_bandgap();
+			}
+			else
+			{
+				this->pelec->cal_bandgap_updw();
+			}
+		}
 
-
-/*
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        elecstate::print_band(this->pelec->ekb,
-                              this->pelec->wg,
-                              this->pelec->klist,
-                              ik, 
-                              PARAM.inp.printe, 
-                              iter,
-                              GlobalV::ofs_running);
-    }
-*/
+		//----------------------------------------------------------------
+		// 2) print out eigenvalues and occupations
+		//----------------------------------------------------------------
+		if (PARAM.inp.out_band[0] || iter == PARAM.inp.scf_nmax || conv_esolver)
+		{
+			ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+		}
+	}
 
 	//----------------------------------------------------------------
     // 2) compute magnetization, only for LSDA(spin==2)
@@ -507,7 +503,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     }
 
     // pint energy
-    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
+    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, 
+    dkin, duration, PARAM.inp.out_band[0], diag_ethr);
 
 
 #ifdef __RAPIDJSON

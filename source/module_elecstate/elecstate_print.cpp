@@ -301,7 +301,7 @@ void print_etot(const Magnetism& magnet,
     FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
                    /*nrows=*/titles.size(),
                    /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
-                   /*indents=*/0,
+                   /*indents=*/1,
                    /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
     // print out the titles
     table << titles << energies_Ry << energies_eV;

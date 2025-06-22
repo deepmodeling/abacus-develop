@@ -15,7 +15,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
     ModuleBase::TITLE("ModuleIO","write_eig_iter");
 	ModuleBase::timer::tick("ModuleIO", "write_eig_iter");
 
-	GlobalV::ofs_running << "\n Print out the eigenvalues and occupations" << std::endl;
+	GlobalV::ofs_running << "\n PRINT #EIGENVALUES# AND #OCCUPATIONS#" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
@@ -54,11 +54,15 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     GlobalV::ofs_running << " spin=" << is+1 << " k-point="
                             << kv.ik2iktot[ik] + 1 - is * nkstot_np << std::endl;
 
+                    GlobalV::ofs_running << std::setw(8) << "Index"
+                    << std::setw(18) << "Eigenvalues(eV)"
+                    << std::setw(18) << "Occupations" << std::endl;
+
                     for (int ib = 0; ib < ekb.nc; ib++)
                     {
                         GlobalV::ofs_running << std::setw(8) << ib + 1 
-                                << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << std::setw(15) << wg(ik, ib) << std::endl;
+                                << std::setw(18) << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << std::setw(18) << wg(ik, ib) << std::endl;
                     }
                     GlobalV::ofs_running << std::endl;
                 }

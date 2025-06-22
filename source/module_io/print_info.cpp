@@ -372,34 +372,29 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
 
 void print_screen(const int& stress_step, const int& force_step, const int& istep)
 {
-    std::cout << " -------------------------------------------" << std::endl;
-	GlobalV::ofs_running << "\n -------------------------------------------" << std::endl;
+    std::cout << " ======================================================================" << std::endl;
+    GlobalV::ofs_running << " ======================================================================" << std::endl;
 
-	if(PARAM.inp.calculation=="scf") //add 4 lines 2015-09-06, xiaohui
+	if(PARAM.inp.calculation=="scf")
 	{
-        std::cout << " SELF-CONSISTENT : " << std::endl;
+        std::cout << " SELF-CONSISTENT: " << std::endl;
 		GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
 	}
-	else if(PARAM.inp.calculation=="nscf") //add 4 lines 2015-09-06, xiaohui
+	else if(PARAM.inp.calculation=="nscf")
 	{
-        std::cout << " NONSELF-CONSISTENT : " << std::endl;
+        std::cout << " NONSELF-CONSISTENT: " << std::endl;
 		GlobalV::ofs_running << " NONSELF-CONSISTENT" << std::endl;
 	}
 	else if(PARAM.inp.calculation=="md")
 	{
-        std::cout << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;
-		GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS : " << unsigned(istep) << std::endl;
+        std::cout << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
+		GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
 	}
 	else
 	{
-		if(PARAM.inp.relax_new)
+		if(PARAM.inp.calculation=="relax")
 		{
-			std::cout << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
-			GlobalV::ofs_running << " STEP OF RELAXATION : " << unsigned(istep) << std::endl;
-		}
-		else if(PARAM.inp.calculation=="relax") //pengfei 2014-10-13
-		{
-        	std::cout << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
+        	std::cout << " STEP OF ION RELAXATION: " << unsigned(istep) << std::endl;
 			GlobalV::ofs_running << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
 		}
     	else if(PARAM.inp.calculation=="cell-relax")
@@ -411,8 +406,8 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
     	}
 	}
 
-    std::cout << " -------------------------------------------" << std::endl;
-    GlobalV::ofs_running << " -------------------------------------------" << std::endl;
+    std::cout << " ======================================================================" << std::endl;
+    GlobalV::ofs_running << " ======================================================================" << std::endl;
 }
 
 } // namespace ModuleIO
