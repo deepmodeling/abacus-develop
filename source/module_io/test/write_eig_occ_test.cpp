@@ -11,16 +11,16 @@
 #include "source_cell/parallel_kpoints.h"
 #include "mpi.h"
 #endif
-#include "../write_istate_info.h"
+#include "../write_eig_occ.h"
 #include "for_testing_klist.h"
 
 /************************************************
- *  unit test of write_istate_info
+ *  unit test of write_eig_occ
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - write_istate_info()
+ *   - write_eig_occ()
  *     - print out electronic eigen energies and
  *     - occupation
  */
@@ -98,7 +98,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
    
     // write eigenvalues and occupations
-    ModuleIO::write_istate_info(ekb, wg, *kv);
+    ModuleIO::write_eig_occ(ekb, wg, *kv);
 
     // check the output files
     std::ifstream ifs;
