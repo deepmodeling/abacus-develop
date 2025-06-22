@@ -46,9 +46,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_write_istate_info_test
+  TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  ${math_libs} base device symmetry 
-  SOURCES write_istate_info_test.cpp ../write_istate_info.cpp ../output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_eig_occ_test.cpp ../write_eig_occ.cpp ../output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
 		../cif_io.cpp
 )
 
