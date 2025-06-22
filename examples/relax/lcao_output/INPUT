@@ -5,7 +5,7 @@ suffix          autotest
 nbands			8
 calculation     relax #cell-relax
 ecutwfc			10
-scf_nmax		20
+scf_nmax		2
 
 basis_type		lcao
 relax_nmax      5
