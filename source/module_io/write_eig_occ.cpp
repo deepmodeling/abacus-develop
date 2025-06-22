@@ -15,6 +15,14 @@ void ModuleIO::write_eig_occ(const ModuleBase::matrix &ekb,const ModuleBase::mat
 	ModuleBase::TITLE("ModuleIO","write_eig_occ");
 	ModuleBase::timer::tick("ModuleIO", "write_eig_occ");
 
+	GlobalV::ofs_running << "\n";
+	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " |            #Print out the eigenvalues and occupations#             |" << std::endl;
+	GlobalV::ofs_running << " |                                                                    |" << std::endl;
+	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	GlobalV::ofs_running << "\n";
+
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
 	const int nkstot = kv.get_nkstot();

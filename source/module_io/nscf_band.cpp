@@ -24,7 +24,7 @@ void ModuleIO::nscf_band(
 	GlobalV::ofs_running << "\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
-	GlobalV::ofs_running << " |                    #Print out the eigenvalues#                     |" << std::endl;
+	GlobalV::ofs_running << " |             #Print out the eigenvalues for each spin#              |" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
 	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	GlobalV::ofs_running << "\n";
