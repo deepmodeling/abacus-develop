@@ -50,16 +50,16 @@ void K_Vectors::set(const UnitCell& ucell,
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
-    ofs << "\n\n";
+    ofs << "\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
-    ofs << " | Setup K-points                                                     |" << std::endl;
+    ofs << " |                       #Setup K-points#                             |" << std::endl;
     ofs << " | We setup the k-points according to input parameters.               |" << std::endl;
     ofs << " | The reduced k-points are set according to symmetry operations.     |" << std::endl;
     ofs << " | We treat the spin as another set of k-points.                      |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    ofs << "\n\n";
+    ofs << "\n";
 
     ofs << "\n SETUP K-POINTS" << std::endl;
 

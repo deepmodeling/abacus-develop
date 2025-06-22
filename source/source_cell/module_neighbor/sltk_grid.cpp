@@ -16,22 +16,22 @@ Grid::~Grid()
 
 void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius_in, const bool boundary)
 {
-    ModuleBase::TITLE("SLTK_Grid", "init");
-    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+    ModuleBase::TITLE("Grid", "init");
+    ModuleBase::timer::tick("Grid", "init");
     this->pbc = boundary;
     this->sradius2 = radius_in * radius_in;
     this->sradius = radius_in;
 
-    ModuleBase::GlobalFunc::OUT(ofs_in, "PeriodicBoundary", this->pbc);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "Radius(unit:lat0)", sradius);
+//    ModuleBase::GlobalFunc::OUT(ofs_in, "PeriodicBoundary", this->pbc);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Radius (unit: lattice constant)", sradius);
 
     this->Check_Expand_Condition(ucell);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "glayer", glayerX, glayerY, glayerZ);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "glayer_minus", glayerX_minus, glayerY_minus, glayerZ_minus);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Max number of cells", glayerX, glayerY, glayerZ);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Min number of cells", glayerX_minus, glayerY_minus, glayerZ_minus);
 
     this->setMemberVariables(ofs_in, ucell);
     this->Construct_Adjacent(ucell);
-    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+    ModuleBase::timer::tick("Grid", "init");
 }
 
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
@@ -196,9 +196,9 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
         }
     }
 
-    ofs_in << " RANGE OF ATOMIC COORDINATES (unit: lat0)" << std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "smallest coordinates of atoms", x_min, y_min, z_min);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "largest  coordinates of atoms", x_max, y_max, z_max);
+//    ofs_in << " RANGE OF ATOMIC COORDINATES (unit: lat0)" << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Min coordinates of atoms", x_min, y_min, z_min);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Max coordinates of atoms", x_max, y_max, z_max);
 
     this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
 
@@ -221,7 +221,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
     this->box_nx = glayerX + glayerX_minus;
     this->box_ny = glayerY + glayerY_minus;
     this->box_nz = glayerZ + glayerZ_minus;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "number of needed cells", box_nx, box_ny, box_nz);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Number of needed cells", box_nx, box_ny, box_nz);
 
     atoms_in_box.resize(this->box_nx);
     for (int i = 0; i < this->box_nx; i++)

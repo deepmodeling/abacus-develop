@@ -221,45 +221,32 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
         {
             log << "\n\n";
             log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                   ">>>>>>>>>>>>"
-                << std::endl;
+                   ">>>>>>>>>>>>" << std::endl;
             log << " |                                                         "
-                   "           |"
-                << std::endl;
-            log << " | Reading atom information in unitcell:                   "
-                   "           |"
-                << std::endl;
+                   "           |" << std::endl;
+            log << " | Reading atom information from unitcell:                 "
+                   "           |" << std::endl;
             log << " | From the input file and the structure file we know the "
-                   "number of   |"
-                << std::endl;
+                   "number of   |" << std::endl;
             log << " | different elments in this unitcell, then we list the "
-                   "detail        |"
-                << std::endl;
+                   "detail        |" << std::endl;
             log << " | information for each element, especially the zeta and "
-                   "polar atomic |"
-                << std::endl;
+                   "polar atomic |" << std::endl;
             log << " | orbital number for each element. The total atom number "
-                   "is counted. |"
-                << std::endl;
+                   "is counted. |" << std::endl;
             log << " | We calculate the nearest atom distance for each atom "
-                   "and show the  |"
-                << std::endl;
+                   "and show the  |" << std::endl;
             log << " | Cartesian and Direct coordinates for each atom. We list "
-                   "the file   |"
-                << std::endl;
+                   "the file   |" << std::endl;
             log << " | address for atomic orbitals. The volume and the lattice "
-                   "vectors    |"
-                << std::endl;
+                   "vectors    |" << std::endl;
             log << " | in real and reciprocal space is also shown.             "
-                   "           |"
-                << std::endl;
+                   "           |" << std::endl;
             log << " |                                                         "
-                   "           |"
-                << std::endl;
+                   "           |" << std::endl;
             log << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-                   "<<<<<<<<<<<<"
-                << std::endl;
-            log << "\n\n";
+                   "<<<<<<<<<<<<" << std::endl;
+            log << "\n";
 
             log << " READING UNITCELL INFORMATION" << std::endl;
             //========================
@@ -322,9 +309,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     }
     else
     {
-        log << std::endl;
-        ModuleBase::GlobalFunc::OUT(log, "Volume (Bohr^3)", this->omega);
-        ModuleBase::GlobalFunc::OUT(log, "Volume (A^3)", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
+        ModuleBase::GlobalFunc::OUT(log, "Cell volume (Bohr^3)", this->omega);
+        ModuleBase::GlobalFunc::OUT(log, "Cell volume (A^3)", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
 
     //==========================================================

@@ -40,19 +40,19 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ofs_in << "\n\n";
         ofs_in << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
         ofs_in << " |                                                                    |" << std::endl;
-        ofs_in << " | Search adjacent atoms:                                             |" << std::endl;
+        ofs_in << " |                    #Search Adjacent Atoms#                         |" << std::endl;
         ofs_in << " | Set the adjacent atoms for each atom and set the periodic boundary |" << std::endl;
         ofs_in << " | condition for the atoms on real space FFT grid. For k-dependent    |" << std::endl;
         ofs_in << " | algorithm, we also need to set the sparse H and S matrix element   |" << std::endl;
         ofs_in << " | for each atom.                                                     |" << std::endl;
         ofs_in << " |                                                                    |" << std::endl;
         ofs_in << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-        ofs_in << "\n\n";
+        ofs_in << "\n";
 
-        ofs_in << "SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
+        ofs_in << " SETUP SEARCHING RADIUS" << std::endl;
         ofs_in << std::setprecision(3);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "Largest cutoff of orbitals (Bohr)", rcutmax_Phi);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "Largest cutoff of nonlocal projector (Bohr)", rcutmax_Beta);
+        ModuleBase::GlobalFunc::OUT(ofs_in, "Orbital max radius cutoff (Bohr)", rcutmax_Phi);
+        ModuleBase::GlobalFunc::OUT(ofs_in, "Nonlocal proj. max radius cutoff (Bohr)", rcutmax_Beta);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Search radius (Bohr)", sr);
 	}
     return sr;
@@ -75,8 +75,8 @@ void atom_arrange::search(const bool pbc_flag,
     }
 
     ofs_in << " SEARCH ADJACENT ATOMS" << std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius is (Bohr)", search_radius_bohr);
-    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr)", ucell.lat0);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius (Bohr)", search_radius_bohr);
+//    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr)", ucell.lat0);
 
     assert(ucell.nat > 0);
 

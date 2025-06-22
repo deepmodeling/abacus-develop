@@ -7,7 +7,7 @@ namespace elecstate {
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec)
 {
     ModuleBase::TITLE("UnitCell", "cal_nelec");
-    GlobalV::ofs_running << "\n SETUP THE ELECTRONS NUMBER" << std::endl;
+    //GlobalV::ofs_running << "\n Setup number of electrons" << std::endl;
 
     if (nelec == 0)
     {

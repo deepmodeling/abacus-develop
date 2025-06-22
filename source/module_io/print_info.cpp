@@ -231,7 +231,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
            "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<" << std::endl;
-    ofs << "\n\n";
+    ofs << "\n";
     ofs << " SETUP THE PLANE WAVE BASIS" << std::endl;
 
 
@@ -246,10 +246,10 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ModuleBase::GlobalFunc::OUT(ofs, "Energy cutoff for charge/potential (Ry)", ecut);
 
     ModuleBase::GlobalFunc::OUT(ofs, "FFT grid for charge/potential", pw_rho->nx, pw_rho->ny, pw_rho->nz);
-    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT grids this proc. (nrxx)", pw_rho->nrxx);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT grids this proc.", pw_rho->nrxx);
     ModuleBase::GlobalFunc::OUT(ofs, "Division for big FFT grid", pw_big->bx, pw_big->by, pw_big->bz);
     ModuleBase::GlobalFunc::OUT(ofs, "FFT (big) grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
-    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT (big) grids this proc. (nbxx)", pw_big->nbxx);
+    ModuleBase::GlobalFunc::OUT(ofs, "Number of FFT (big) grids this proc.", pw_big->nbxx);
 
     ofs << "\n SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs, "Number of plane waves", pw_rho->npwtot);
@@ -339,8 +339,8 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
            "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<" << std::endl;
-    ofs << "\n\n";
-    ofs << "SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
+    ofs << "\n";
+    ofs << " SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
     double ecut = inp.ecutwfc;
     if (std::abs(ecut - pw_wfc.gk_ecut * pw_wfc.tpiba2) > 1e-6)

@@ -40,7 +40,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
            "   |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<" << std::endl;
-    ofs << "\n\n";
+    ofs << "\n";
 
     read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
 

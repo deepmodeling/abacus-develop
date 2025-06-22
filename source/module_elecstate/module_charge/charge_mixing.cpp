@@ -58,7 +58,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     // print into running.log
-    GlobalV::ofs_running << "\n\n";
+    //GlobalV::ofs_running << "\n\n";
+    GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
            ">>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                 "
@@ -69,7 +70,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
            "   |" << std::endl;
     GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
            "<<<<" << std::endl;
-    GlobalV::ofs_running << "\n\n";
+    GlobalV::ofs_running << "\n";
 
 
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "mixing_type", this->mixing_mode);

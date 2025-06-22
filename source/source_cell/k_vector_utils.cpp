@@ -541,7 +541,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             nrotkm = 2 * symm.nrotk;
         }
     }
-    else if (kv.get_is_mp()) // only include for mp grid
+    else if (kv.get_is_mp()) // only include for Monkhorst-Pack grid
     {
         nrotkm = 2;
         kgmatrix[0] = ind;
