@@ -192,7 +192,7 @@ void PhiOperator::cal_env_k(
                         iw_lo = trace_lo[iw_start] / npol + lgd / npol * is;
                         for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
                         {
-                            tmp += std::complex<double>(phi[iw], 0.0) * wfc[iw_lo] * kphase;
+                            tmp += std::complex<double>(phi[phi_start_idx + iw], 0.0) * wfc[iw_lo] * kphase;
                         }
                     }
                 }
@@ -201,7 +201,7 @@ void PhiOperator::cal_env_k(
                     iw_lo = trace_lo[iw_start];
                     for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
                     {
-                        tmp += std::complex<double>(phi[iw], 0.0) * wfc[iw_lo] * kphase;
+                        tmp += std::complex<double>(phi[phi_start_idx + iw], 0.0) * wfc[iw_lo] * kphase;
                     }
                 }
                 rho[meshgrids_local_idx_[j]] += tmp.real();
