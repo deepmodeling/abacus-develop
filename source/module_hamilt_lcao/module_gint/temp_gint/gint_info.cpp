@@ -72,7 +72,7 @@ HContainer<T> GintInfo::get_hr(int npol) const
     }
     hr.insert_ijrs(&ijr_info_, *ucell_, npol);
     hr.allocate(nullptr, true);
-    return std::move(hr);
+    return hr;
 }
 
 void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
