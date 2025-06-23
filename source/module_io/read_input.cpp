@@ -8,6 +8,7 @@
 #include <array>
 #include <vector>
 #include <cassert>
+#include <limits>
 #include "module_base/formatter.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -227,7 +228,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     ifs.clear();
     ifs.seekg(0);
 
-    std::string word, word1;
+    std::string word;
     int ierr = 0;
 
     // ifs >> std::setiosflags(ios::uppercase);
@@ -250,19 +251,21 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
                   << " The parameter list always starts with key word "
                      "'INPUT_PARAMETERS'. "
                   << std::endl;
-        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT", 1);
+        ModuleBase::WARNING_QUIT("Input", 
+            "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
     ifs.rdstate();
+    // the `word1` is moved here and is renamed to improve the code-readability
+    std::string word_; // temporary variable to store the keyword read-in
     while (ifs.good())
     {
-        ifs >> word1;
+        ifs >> word_;
         if (ifs.eof()) { break; }
-        word = FmtCore::lower(word1);
-        auto it = std::find_if(input_lists.begin(),
-                               input_lists.end(),
-                               [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
-        if (it != this->input_lists.end())
+        word = FmtCore::lower(word_); // the lowercase of the keyword
+        auto it = std::find_if(input_lists.begin(), input_lists.end(),
+            [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
+        if (it != this->input_lists.end()) // find the keyword
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
@@ -274,17 +277,18 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
             // qianrui delete '/' 2024-07-10, because path has '/' head.
             read_information(ifs, p_item->str_values, "#!");
         }
-        else
+        else // otherwise, it should be a comment or an unrecognized parameter
         {
-            if (word[0] != '#' && word[0] != '/' && word[0] != '!')
+            if (word[0] != '#' && word[0] != '/' && word[0] != '!') // if not recognized
             {
                 std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
                 ModuleBase::WARNING_QUIT("Input",
-                                         "Bad parameter, please check the "
-                                         "input parameters in file INPUT",
-                                         1);
+                    "Bad parameter, please check the input parameters in file INPUT", 1);
             }
-            ifs.ignore(150, '\n');
+            // otherwise, it is a comment. However, ...
+            // but it is not always to be shorter than 150 characters
+            // we can use ignore to skip the rest of the line
+            ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
 
         ifs.rdstate();
