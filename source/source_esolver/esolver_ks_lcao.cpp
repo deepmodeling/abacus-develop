@@ -827,8 +827,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // 5) mix density matrix if mixing_restart + mixing_dmr + not first
-    // don't mix density matrix after the last step of iteration
-    // mixing_restart at every iter
+    // mixing_restart at every iter except the last iter
     if(iter != PARAM.inp.scf_nmax && !conv_esolver)
     {
         if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
