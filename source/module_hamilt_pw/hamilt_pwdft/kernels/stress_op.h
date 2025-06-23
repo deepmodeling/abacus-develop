@@ -5,7 +5,7 @@
 #include "module_psi/psi.h"
 
 #include <complex>
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 namespace hamilt
 {

@@ -5,7 +5,7 @@
 #include "gint_force_gpu.h"
 #include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gint_force.cuh"
-#include "module_base/ylm.h"
+#include "source_base/ylm.h"
 #include "gint_tools.h"
 
 namespace GintKernel

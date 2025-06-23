@@ -2,10 +2,10 @@
 #define GRID_TECHNIQUE_H
 
 #include "grid_meshball.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/unitcell.h"
+#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include "kernels/cuda/gemm_selector.cuh"

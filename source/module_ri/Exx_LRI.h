@@ -8,14 +8,13 @@
 
 #include "LRI_CV.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
-#include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "module_base/matrix.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_base/matrix.h"
 #include <RI/physics/Exx.h>
 
 #include <vector>
 #include <array>
 #include <map>
-#include <unordered_map>
 #include <deque>
 #include <mpi.h>
 
@@ -37,15 +36,6 @@
 		template<typename T>
 		class OperatorLREXX;
 	}
-
-template<typename Tdata>
-class Exx_Obj
-{
-	// match with Conv_Coulomb_Pot_K::Coulomb_Method
-	public:
-		LRI_CV<Tdata> cv;
-		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
-};
 
 template<typename Tdata>
 class Exx_LRI
@@ -95,9 +85,9 @@ private:
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
-	//std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
-	std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
-	//LRI_CV<Tdata> cv;
+	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
+
+	LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;

@@ -1,10 +1,10 @@
 #include "module_hamilt_lcao/module_tddft/band_energy.h"
 
 #include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
+#include <source_base/scalapack_connector.h>
 #include <mpi.h>
 
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "tddft_test.h"
 

@@ -13,11 +13,11 @@
 #include <cassert>
 
 #include "../bessel_basis.h"
-#include "../../module_cell/unitcell.h"
+#include "../../source_cell/unitcell.h"
 #include "../../module_elecstate/magnetism.h"
 
 #ifdef __LCAO
-#include "../../module_cell/setup_nonlocal.h"
+#include "../../source_cell/setup_nonlocal.h"
 #endif
 #include "gtest/gtest.h"
 

@@ -6,9 +6,9 @@
 #ifndef RI_2D_COMM_H
 #define RI_2D_COMM_H
 
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_cell/klist.h"
+#include "source_cell/klist.h"
 
 #include <RI/global/Tensor.h>
 

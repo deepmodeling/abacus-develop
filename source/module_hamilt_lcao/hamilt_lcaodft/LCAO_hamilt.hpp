@@ -3,9 +3,9 @@
 #ifndef LCAO_HAMILT_HPP
 #define LCAO_HAMILT_HPP
 
-#include "module_base/abfs-vector3_order.h"
-#include "module_base/global_variable.h"
-#include "module_base/timer.h"
+#include "source_base/abfs-vector3_order.h"
+#include "source_base/global_variable.h"
+#include "source_base/timer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_exx.h"
 #include "module_ri/RI_2D_Comm.h"
 

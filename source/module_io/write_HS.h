@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-//#include "module_base/global_function.h"
-//#include "module_base/global_variable.h"
-#include "module_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
+//#include "source_base/global_function.h"
+//#include "source_base/global_variable.h"
+#include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
 
 
 // mohan add this file 2010-09-10

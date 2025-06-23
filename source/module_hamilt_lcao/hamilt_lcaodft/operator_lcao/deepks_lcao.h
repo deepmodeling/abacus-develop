@@ -1,8 +1,8 @@
 #ifndef DEEPKSLCAO_H
 #define DEEPKSLCAO_H
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"

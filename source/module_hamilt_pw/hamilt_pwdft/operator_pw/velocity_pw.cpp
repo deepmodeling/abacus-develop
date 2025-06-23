@@ -1,8 +1,8 @@
 #include "velocity_pw.h"
 
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 namespace hamilt
 {
 

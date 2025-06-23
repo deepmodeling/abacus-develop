@@ -1,7 +1,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 
-#include "module_basis/module_nao/numerical_radial.h"
+#include "source_basis/module_nao/numerical_radial.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;

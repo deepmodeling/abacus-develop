@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 namespace Conv_Coulomb_Pot_K
@@ -14,11 +13,10 @@ namespace Conv_Coulomb_Pot_K
 		Hf,						//		"hf_Rcut"
 		Erfc,					//		"hse_omega"
 		Erf};					//		"hse_omega", "hf_Rcut"
-	enum class Coulomb_Method{Center2, Ewald}; // Different methods for constructing the Coulomb matrix.
 
 	template<typename T> extern T cal_orbs_ccp(
 		const T &orbs,
-		const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times);
 
   //private:

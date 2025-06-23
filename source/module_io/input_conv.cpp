@@ -1,9 +1,9 @@
 #include "module_io/input_conv.h"
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_cell/unitcell.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_cell/module_symmetry/symmetry.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -20,7 +20,7 @@
 
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 #include "module_elecstate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
@@ -34,8 +34,8 @@
 #include "source_hsolver/diago_elpa_native.h"
 #endif
 
-#include "module_base/module_device/device.h"
-#include "module_base/timer.h"
+#include "source_base/module_device/device.h"
+#include "source_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_pot/efield.h"
 #include "module_elecstate/module_pot/gatefield.h"
@@ -177,8 +177,8 @@ void Input_Conv::Convert()
 
 
 #ifdef __LCAO
-    Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
-    Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_thr_ev2;
+    Force_Stress_LCAO<double>::force_invalid_threshold_ev = PARAM.inp.force_zero_out;
+    Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = PARAM.inp.force_zero_out;
 #endif
 
     BFGS_Basic::relax_bfgs_w1 = PARAM.inp.relax_bfgs_w1;
@@ -322,47 +322,81 @@ void Input_Conv::Convert()
                    dft_functional_lower.begin(),
                    tolower);
     if (dft_functional_lower == "hf"
-     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
      || dft_functional_lower == "scan0"
-     || dft_functional_lower == "muller" || dft_functional_lower == "power")
+     || dft_functional_lower == "muller" || dft_functional_lower == "power"
+     || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-            {"alpha", "1"},
-            {"Rcut_type", "spencer"},
-            {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
-        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
-    }
-	// use the error function erf(w|r-r'|), exx just has the short-range part
-    else if (dft_functional_lower == "hse"
-          || dft_functional_lower == "cwp22")
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
-        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
-            {"alpha", "1"},
-			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
-            {"Rcut_type", "limits"} }};
-        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
-    }
-	// use the error function erf(w|r-r'|), exx just has the long-range part
-    else if ( dft_functional_lower == "wp22" )
-    {
-        GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
-        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
-            {"alpha", "1"},
-            {"Rcut_type", "spencer"},
-            {"lambda", std::to_string(PARAM.inp.exx_lambda)} }};
-        coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
-            {"alpha", "-1"},
-			{"omega", std::to_string(PARAM.inp.exx_hse_omega)},
-            {"Rcut_type", "limits"} }};
-        GlobalC::exx_info.info_global.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
+
+        GlobalC::exx_info.info_global.hybrid_alpha = 0;
+        std::vector<double> fock_alpha(PARAM.inp.exx_fock_alpha.size());
+        for(std::size_t i=0; i<fock_alpha.size(); ++i)
+        {
+            fock_alpha[i] = std::stod(PARAM.inp.exx_fock_alpha[i]);
+            GlobalC::exx_info.info_global.hybrid_alpha = std::max(std::abs(fock_alpha[i]), GlobalC::exx_info.info_global.hybrid_alpha);
+        }
+        std::vector<double> erfc_alpha(PARAM.inp.exx_erfc_alpha.size());
+        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+        {
+            erfc_alpha[i] = std::stod(PARAM.inp.exx_erfc_alpha[i]);
+            GlobalC::exx_info.info_global.hybrid_alpha = std::max(std::abs(erfc_alpha[i]), GlobalC::exx_info.info_global.hybrid_alpha);
+        }
+        assert(GlobalC::exx_info.info_global.hybrid_alpha>0);
+        for(std::size_t i=0; i<fock_alpha.size(); ++i)
+            { fock_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }
+        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+            { erfc_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }        
+
+        if(!fock_alpha.empty())
+        {
+            if(PARAM.inp.basis_type == "lcao")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock][i] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                        {"Rcut_type", "spencer"} }};
+                }
+            }
+            else if(PARAM.inp.basis_type == "lcao_in_pw")
+            {
+                assert(fock_alpha.size() == PARAM.inp.exx_fock_lambda.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                        {"lambda", PARAM.inp.exx_fock_lambda[i]} }};
+                }
+            }
+            else if(PARAM.inp.basis_type == "pw")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])} }};
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+            }
+        }
+        if(!erfc_alpha.empty())
+        {
+            assert(erfc_alpha.size() == PARAM.inp.exx_erfc_omega.size());
+            GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+            for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                    {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                    {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
+                    {"Rcut_type", "limits"} }};
+            }
+        }
     }
 #ifdef __EXX
     else if (dft_functional_lower == "opt_orb")
@@ -372,8 +406,28 @@ void Input_Conv::Convert()
     }
 #endif
     else
-	{
+    {
         GlobalC::exx_info.info_global.cal_exx = false;
+    }
+
+    // info_global.ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
+    if (dft_functional_lower == "hf"
+     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+     || dft_functional_lower == "scan0"
+     || dft_functional_lower == "muller" || dft_functional_lower == "power")
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
+    // use the error function erf(w|r-r'|), exx just has the short-range part
+    else if (dft_functional_lower == "hse"
+          || dft_functional_lower == "cwp22")
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
+    }
+    // use the error function erf(w|r-r'|), exx just has the long-range part
+    else if ( dft_functional_lower == "wp22" )
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
     }
 
     if (GlobalC::exx_info.info_global.cal_exx
@@ -384,28 +438,26 @@ void Input_Conv::Convert()
         )
     {
         // EXX case, convert all EXX related variables
-        GlobalC::exx_info.info_global.hybrid_alpha = std::stod(PARAM.inp.exx_hybrid_alpha);
-        XC_Functional::set_hybrid_alpha(std::stod(PARAM.inp.exx_hybrid_alpha));
-        GlobalC::exx_info.info_global.hse_omega = PARAM.inp.exx_hse_omega;
+        XC_Functional::set_hybrid_alpha(GlobalC::exx_info.info_global.hybrid_alpha);
+        if(!PARAM.inp.exx_erfc_omega.empty())
+            { GlobalC::exx_info.info_global.hse_omega = std::stod(PARAM.inp.exx_erfc_omega[0]); }
+        if(!PARAM.inp.exx_fock_lambda.empty())
+            { GlobalC::exx_info.info_lip.lambda = std::stod(PARAM.inp.exx_fock_lambda[0]); }
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
         GlobalC::exx_info.info_global.hybrid_step = PARAM.inp.exx_hybrid_step;
         GlobalC::exx_info.info_global.mixing_beta_for_loop1 = PARAM.inp.exx_mixing_beta;
-        GlobalC::exx_info.info_global.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
-        GlobalC::exx_info.info_lip.lambda = PARAM.inp.exx_lambda;
 
         GlobalC::exx_info.info_ri.real_number = std::stoi(PARAM.inp.exx_real_number);
         GlobalC::exx_info.info_ri.pca_threshold = PARAM.inp.exx_pca_threshold;
         GlobalC::exx_info.info_ri.C_threshold = PARAM.inp.exx_c_threshold;
         GlobalC::exx_info.info_ri.V_threshold = PARAM.inp.exx_v_threshold;
         GlobalC::exx_info.info_ri.dm_threshold = PARAM.inp.exx_dm_threshold;
-        GlobalC::exx_info.info_ri.cauchy_threshold = PARAM.inp.exx_cauchy_threshold;
         GlobalC::exx_info.info_ri.C_grad_threshold = PARAM.inp.exx_c_grad_threshold;
         GlobalC::exx_info.info_ri.V_grad_threshold = PARAM.inp.exx_v_grad_threshold;
         GlobalC::exx_info.info_ri.C_grad_R_threshold = PARAM.inp.exx_c_grad_r_threshold;
         GlobalC::exx_info.info_ri.V_grad_R_threshold = PARAM.inp.exx_v_grad_r_threshold;
-        GlobalC::exx_info.info_ri.cauchy_force_threshold = PARAM.inp.exx_cauchy_force_threshold;
-        GlobalC::exx_info.info_ri.cauchy_stress_threshold = PARAM.inp.exx_cauchy_stress_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
+        GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
 #ifdef __EXX
         Exx_Abfs::Jle::Lmax = PARAM.inp.exx_opt_orb_lmax;

@@ -3,8 +3,8 @@
 #include "kedf_ml.h"
 
 #include "npy.hpp"
-#include "module_base/parallel_reduce.h"
-#include "module_base/global_function.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/global_function.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void KEDF_ML::set_para(

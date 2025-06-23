@@ -3,7 +3,7 @@
 
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver
 {

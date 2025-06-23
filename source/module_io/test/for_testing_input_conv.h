@@ -2,8 +2,8 @@
 #define INPUT_CONV_TEST_H
 #define private public
 #include "module_parameter/parameter.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/module_symmetry/symmetry.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"

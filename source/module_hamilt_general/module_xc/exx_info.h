@@ -6,7 +6,6 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 struct Exx_Info
@@ -15,10 +14,8 @@ struct Exx_Info
     {
         bool cal_exx = false;
 
-        std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-            std::pair<bool, 
-                std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, 
-                    std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
+        std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
+
 		// Fock:
 		//		"alpha":		"0"
 		//		"Rcut_type":	"limits" / "spencer"
@@ -37,7 +34,6 @@ struct Exx_Info
 
         bool separate_loop = true;
         size_t hybrid_step = 1;
-        bool exx_symmetry_realspace = true;
     };
     Exx_Info_Global info_global;
 
@@ -55,10 +51,8 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
-        const std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-            std::pair<bool, 
-                std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, 
-                    std::vector<std::map<std::string,std::string>>>>> &coulomb_settings;
+        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
+
 
         bool real_number = false;
 
@@ -67,20 +61,18 @@ struct Exx_Info
         double C_threshold = 0;
         double V_threshold = 0;
         double dm_threshold = 0;
-        double cauchy_threshold = 0;
         double C_grad_threshold = 0;
         double V_grad_threshold = 0;
         double C_grad_R_threshold = 0;
         double V_grad_R_threshold = 0;
-        double cauchy_force_threshold = 0;
-        double cauchy_stress_threshold = 0;
         double ccp_rmesh_times = 10;
+        bool exx_symmetry_realspace = true;
         double kmesh_times = 4;
 
         int abfs_Lmax = 0; // tmp
 
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : coulomb_settings(info_global.coulomb_settings)
+            : coulomb_param(info_global.coulomb_param)
         {
         }
     };

@@ -1,6 +1,6 @@
 #include "module_elecstate/kernels/elecstate_op.h"
 
-#include "module_base/module_device/memory_op.h"
+#include "source_base/module_device/memory_op.h"
 
 #include <complex>
 #include <gtest/gtest.h>

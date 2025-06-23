@@ -7,7 +7,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 
 // for NAO basis
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"

@@ -1,5 +1,5 @@
-#include "module_base/inverse_matrix.h"
-#include "module_base/lapack_connector.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/lapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #include "module_hamilt_general/hamilt.h"
@@ -8,7 +8,7 @@
 #include "../diago_bpcg.h"
 #include "diago_mock.h"
 #include "mpi.h"
-#include "module_basis/module_pw/test/test_tool.h"
+#include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
 #include <complex>

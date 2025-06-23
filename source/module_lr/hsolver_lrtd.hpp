@@ -7,7 +7,7 @@
 #include "source_hsolver/diago_cg.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_print.h"
-#include "module_base/module_container/ATen/core/tensor_map.h"
+#include "source_base/module_container/ATen/core/tensor_map.h"
 
 namespace LR
 {

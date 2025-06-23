@@ -3,8 +3,8 @@
 
 #include <functional>
 
-#include <module_base/macros.h>
-#include <module_base/kernels/math_kernel_op.h>
+#include <source_base/macros.h>
+#include <source_base/kernels/math_kernel_op.h>
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>

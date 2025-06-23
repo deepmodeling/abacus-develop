@@ -1,9 +1,9 @@
-#include "module_base/libm/libm.h"
-#include "module_base/ylm.h"
-#include "module_basis/module_nao/two_center_integrator.h"
+#include "source_base/libm/libm.h"
+#include "source_base/ylm.h"
+#include "source_basis/module_nao/two_center_integrator.h"
 #include "module_io/to_qo.h"
 #ifdef __MPI
-#include "module_base/parallel_common.h"
+#include "source_base/parallel_common.h"
 #endif
 // how define QO task, how create QO instance
 toQO::toQO(const std::string& qo_basis,
@@ -234,7 +234,7 @@ void toQO::build_pswfc(const int ntype,
     // for this method, all processes MIGHT NOT do together, because of possible conflict of reading files
     // in the following build function, the file reading is done by RANK-0, then broadcast to other processes
     // this MPI strategy is done by refactoring PswfcRadials instance. For details, see the impelementation
-    // of build function of PswfcRadials: source/module_basis/module_nao/pswfc_radials.cpp
+    // of build function of PswfcRadials: source/source_basis/module_nao/pswfc_radials.cpp
     ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr, rank);
     ao_->set_transformer(sbt);
     // indexing, all processes can do together. It is also cumbersome to broadcast a std::map of std::tuple

@@ -1,6 +1,6 @@
 #include "source_main/driver.h"
-#include "module_cell/check_atomic_stru.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/check_atomic_stru.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_io/para_json.h"

@@ -1,10 +1,10 @@
 #ifndef DIAGO_BPCG_H_
 #define DIAGO_BPCG_H_
 
-#include "module_base/kernels/math_kernel_op.h"
-#include "module_base/module_device/memory_op.h"
-#include "module_base/module_device/types.h"
-#include "module_base/para_gemm.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_device/types.h"
+#include "source_base/para_gemm.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "source_hsolver/kernels/dngvd_op.h"
@@ -12,7 +12,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
-#include <module_base/macros.h>
+#include <source_base/macros.h>
 
 namespace hsolver {
 
@@ -347,7 +347,7 @@ class DiagoBPCG
     using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
 
     // note: these operators use template parameter base_device::Device_*
-    // defined in module_base/module_device/types.h
+    // defined in source_base/module_device/types.h
     // different from ct_Device!
     using gemm_op = ModuleBase::gemm_op<T, Device>;
 

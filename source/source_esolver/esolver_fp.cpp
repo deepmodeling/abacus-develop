@@ -1,6 +1,6 @@
 #include "esolver_fp.h"
 
-#include "module_base/global_variable.h"
+#include "source_base/global_variable.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/read_pseudo.h"
@@ -17,7 +17,7 @@
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
-#include "module_cell/k_vector_utils.h"
+#include "source_cell/k_vector_utils.h"
 
 #ifdef USE_LIBXC
 #include "module_io/write_libxc_r.h"

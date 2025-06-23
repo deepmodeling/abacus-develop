@@ -4,7 +4,7 @@
 #include "vdw.h"
 #include "vdwd2.h"
 #include "vdwd3.h"
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 
 std::string parse_xcname(const std::string &xc_input,
                          const std::vector<std::string> &xc_psp)

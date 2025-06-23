@@ -239,7 +239,7 @@ TEST(AbacusJsonTest, GeneralInfo)
 }
 
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/ORB_read.h"
 InfoNonlocal::InfoNonlocal()
 {
 }

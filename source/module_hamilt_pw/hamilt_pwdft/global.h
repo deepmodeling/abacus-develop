@@ -1,8 +1,8 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_io/restart.h"
@@ -260,8 +260,8 @@ namespace GlobalC
 //#endif
 } // namespace GlobalC
 
-#include "module_cell/parallel_kpoints.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/parallel_kpoints.h"
+#include "source_cell/unitcell.h"
 namespace GlobalC
 {
 extern Restart restart; // Peize Lin add 2020.04.04

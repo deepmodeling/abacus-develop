@@ -2,7 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "prepare_unitcell.h"
 
@@ -32,8 +32,8 @@ Magnetism::~Magnetism()
     delete[] this->start_mag;
 }
 
-#include "module_cell/klist.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
 void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,

@@ -11,10 +11,10 @@
 #ifdef __MLALGO
 
 #include "deepks_vdelta.h"
-#include "module_base/global_function.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
+#include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 // calculating sum of correction band energies

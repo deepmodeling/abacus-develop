@@ -1,7 +1,7 @@
 #ifndef HSOLVER_DIAGO_PXXXGVX_H
 #define HSOLVER_DIAGO_PXXXGVX_H
 #include <complex>
-#include "module_base/macros.h"
+#include "source_base/macros.h"
 
 namespace hsolver
 {

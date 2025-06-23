@@ -1,8 +1,8 @@
 #include "lattice_change_cg.h"
 
 #include "lattice_change_basic.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 
 // the 'dim' variable is defined in Lattice_Change_Basic
 using namespace Lattice_Change_Basic;

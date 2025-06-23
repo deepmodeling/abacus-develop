@@ -13,9 +13,9 @@ AddTest(
     SOURCES
         psi_initializer_unit_test.cpp
         ../../module_hamilt_pw/hamilt_pwdft/soc.cpp
-        ../../module_cell/atom_spec.cpp
-        ../../module_cell/parallel_kpoints.cpp
-        ../../module_cell/test/support/mock_unitcell.cpp
+        ../../source_cell/atom_spec.cpp
+        ../../source_cell/parallel_kpoints.cpp
+        ../../source_cell/test/support/mock_unitcell.cpp
         ../../module_io/orb_io.cpp
         ../../module_io/write_pao.cpp
         ../../module_io/read_wfc_pw.cpp

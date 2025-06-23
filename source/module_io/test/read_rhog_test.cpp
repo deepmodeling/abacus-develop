@@ -5,7 +5,7 @@
 #undef private
 #include "module_io/rhog_io.h"
 #ifdef __MPI
-#include "module_basis/module_pw/test/test_tool.h"
+#include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
 

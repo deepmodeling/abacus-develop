@@ -9,7 +9,7 @@
 
 #include <map>
 #include "module_parameter/parameter.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "vdw_parameters.h"
 
 namespace vdw

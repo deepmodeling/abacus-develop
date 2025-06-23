@@ -1,6 +1,6 @@
 #include "symmetry_rotation.h"
-#include "module_base/blas_connector.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/blas_connector.h"
+#include "source_base/parallel_reduce.h"
 namespace ModuleSymmetry
 {
     template<typename TR>

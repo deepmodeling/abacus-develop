@@ -1,9 +1,9 @@
 #ifndef DFTU_H
 #define DFTU_H
 
-#include "module_cell/klist.h"
-#include "module_cell/unitcell.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #ifdef __LCAO
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"

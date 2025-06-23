@@ -1,10 +1,10 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/matrix.h"
-#include "module_basis/module_nao/two_center_bundle.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
+#include "source_basis/module_nao/two_center_bundle.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/module_pot/potential_new.h"

@@ -75,6 +75,7 @@ void run_tests(test_deepks<T>& test)
     test.check_orbpre();
 
     test.check_vdpre();
+    test.check_vdrpre();
 
     test.check_edelta(descriptor);
     test.check_e_deltabands();

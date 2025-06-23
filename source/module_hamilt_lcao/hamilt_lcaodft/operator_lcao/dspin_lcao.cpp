@@ -1,10 +1,10 @@
 #include "dspin_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_base/blas_connector.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
-#include "module_base/tool_title.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/blas_connector.h"
+#include "source_base/timer.h"
+#include "source_base/memory.h"
+#include "source_base/tool_title.h"
+#include "source_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 
 template <typename TK, typename TR>

@@ -3,14 +3,14 @@
 
 #include <complex>
 
-#include "module_cell/unitcell.h" // use UnitCell
-#include "module_cell/klist.h" // use K_Vectors
+#include "source_cell/unitcell.h" // use UnitCell
+#include "source_cell/klist.h" // use K_Vectors
 #include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "module_psi/psi.h" // use Psi<TK>
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
-#include "module_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
+#include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k
-#include "module_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
+#include "source_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
 #include "module_rdmft/rdmft.h" // use RDMFT codes
 #ifdef __EXX

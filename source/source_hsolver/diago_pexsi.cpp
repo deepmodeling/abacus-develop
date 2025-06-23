@@ -4,9 +4,9 @@
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
-#include "module_base/global_variable.h"
-#include "module_base/tool_quit.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_quit.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
 typedef hamilt::MatrixBlock<double> matd;

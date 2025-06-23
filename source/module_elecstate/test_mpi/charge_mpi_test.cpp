@@ -1,8 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_base/matrix3.h"
-#include "module_base/parallel_global.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_global.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"

@@ -6,9 +6,9 @@
 #ifndef ELEC_PSI_H
 #define ELEC_PSI_H
 
-#include "module_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "module_base/module_container/ATen/core/tensor_map.h" // TensorMap
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
+#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 namespace module_tddft

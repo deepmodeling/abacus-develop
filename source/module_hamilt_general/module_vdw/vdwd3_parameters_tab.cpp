@@ -4,7 +4,7 @@
 //==========================================================
 
 #include "vdwd3_parameters.h"
-#include "module_base/constants.h"
+#include "source_base/constants.h"
 
 namespace vdw
 {

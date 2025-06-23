@@ -1,9 +1,9 @@
 #ifndef WRITE_HS_R_H
 #define WRITE_HS_R_H
 
-#include "module_base/matrix.h"
-#include "module_basis/module_nao/two_center_bundle.h"
-#include "module_cell/klist.h"
+#include "source_base/matrix.h"
+#include "source_basis/module_nao/two_center_bundle.h"
+#include "source_cell/klist.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "module_cell/atom_spec.h"
-#include "module_basis/module_ao/ORB_atomic.h"
+#include "source_cell/atom_spec.h"
+#include "source_basis/module_ao/ORB_atomic.h"
 #include "gint_type.h"
 
 namespace ModuleGint

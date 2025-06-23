@@ -3,8 +3,8 @@
 #ifdef __MLALGO
 
 #include "deepks_orbital.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/timer.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 
 template <typename TK, typename TH>
 void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,

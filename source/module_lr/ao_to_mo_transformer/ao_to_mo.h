@@ -3,7 +3,7 @@
 #include "module_psi/psi.h"
 #include <vector>
 #ifdef __MPI
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
 #endif
 namespace LR
 {

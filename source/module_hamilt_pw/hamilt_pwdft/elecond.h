@@ -1,10 +1,10 @@
 #ifndef ELECOND_H
 #define ELECOND_H
 
-#include "module_base/matrix.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_cell/klist.h"
-#include "module_cell/unitcell.h"
+#include "source_base/matrix.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"

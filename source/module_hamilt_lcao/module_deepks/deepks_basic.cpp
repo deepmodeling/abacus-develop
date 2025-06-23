@@ -5,8 +5,8 @@
 #ifdef __MLALGO
 #include "deepks_basic.h"
 
-#include "module_base/atom_in.h"
-#include "module_base/timer.h"
+#include "source_base/atom_in.h"
+#include "source_base/timer.h"
 #include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
@@ -137,13 +137,14 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
 
+    const std::string file_d = PARAM.globalv.global_out_dir + "deepks_dm_eig.npy";;
     LCAO_deepks_io::save_npy_d(nat,
                                des_per_atom,
                                inlmax,
                                inl2l,
                                PARAM.inp.deepks_equiv,
                                descriptor,
-                               PARAM.globalv.global_out_dir,
+                               file_d,
                                rank); // libnpy needed
 
     if (rank == 0)

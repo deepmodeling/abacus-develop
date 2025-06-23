@@ -1,11 +1,11 @@
 #ifndef LCAO_DOMAIN_H
 #define LCAO_DOMAIN_H
 
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_base/vector3.h"
-#include "module_basis/module_nao/two_center_bundle.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/vector3.h"
+#include "source_basis/module_nao/two_center_bundle.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"

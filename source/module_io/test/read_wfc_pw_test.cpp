@@ -6,8 +6,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #ifdef __MPI
-#include "module_base/parallel_global.h"
-#include "module_basis/module_pw/test/test_tool.h"
+#include "source_base/parallel_global.h"
+#include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
 

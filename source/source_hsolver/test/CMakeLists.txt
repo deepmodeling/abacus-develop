@@ -6,13 +6,13 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
     LIBS parameter  ${math_libs} base device MPI::MPI_CXX
-    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../module_cell/parallel_kpoints.cpp
+    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_bpcg
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -20,7 +20,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -28,7 +28,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_cg_float
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -36,7 +36,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_dav
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -44,7 +44,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_dav_float
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -53,7 +53,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_cg_real
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -61,7 +61,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_dav_real
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
-            ../../module_basis/module_pw/test/test_tool.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../module_hamilt_general/operator.cpp
             ../../module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
@@ -106,7 +106,7 @@ if (ENABLE_MPI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO_PEXSI
       LIBS parameter  ${math_libs} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} MPI::MPI_CXX base psi device pexsi
-      SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp
+      SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
     )
     endif()
   endif()

@@ -1,10 +1,10 @@
 #ifndef DFTPLUSU_H
 #define DFTPLUSU_H
 #include "dftu.hpp"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/unitcell.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"

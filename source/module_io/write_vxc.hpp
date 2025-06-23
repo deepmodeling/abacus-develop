@@ -1,9 +1,9 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
 #include "module_parameter/parameter.h"
-#include "module_base/parallel_reduce.h"
-#include "module_base/module_container/base/third_party/blas.h"
-#include "module_base/scalapack_connector.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_psi/psi.h"

@@ -1,8 +1,8 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_SPAR_DH_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_SPAR_DH_H
 
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"

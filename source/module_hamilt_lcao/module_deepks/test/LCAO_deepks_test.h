@@ -1,10 +1,10 @@
 #include "klist.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_cell/unitcell.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_basis/module_ao/ORB_read.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 //#include "parallel_orbitals.h"
 
 #include "../LCAO_deepks.h"
@@ -98,6 +98,8 @@ class test_deepks
     void check_orbpre();
 
     void check_vdpre();
+
+    void check_vdrpre();
 
     void check_edelta(std::vector<torch::Tensor>& descriptor);
 

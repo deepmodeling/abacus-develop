@@ -1,6 +1,6 @@
 #ifndef PSI_INITIALIZER_ATOMIC_RANDOM_H
 #define PSI_INITIALIZER_ATOMIC_RANDOM_H
-#include "module_cell/parallel_kpoints.h"
+#include "source_cell/parallel_kpoints.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "psi_initializer_atomic.h"
 

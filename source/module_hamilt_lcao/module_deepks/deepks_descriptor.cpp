@@ -8,10 +8,10 @@
 #include "deepks_descriptor.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "module_base/blas_connector.h"
-#include "module_base/constants.h"
-#include "module_base/libm/libm.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/blas_connector.h"
+#include "source_base/constants.h"
+#include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 

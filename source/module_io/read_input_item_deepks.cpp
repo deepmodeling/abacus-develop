@@ -1,5 +1,5 @@
-#include "module_base/constants.h"
-#include "module_base/tool_quit.h"
+#include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 #include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -11,6 +11,18 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_out_labels");
         item.annotation = ">0 compute descriptor for deepks. 1 used during training, 2 used for label production";
         read_sync_int(input.deepks_out_labels);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("deepks_out_freq_elec");
+        item.annotation = ">0 frequency of electronic iteration to output descriptors and labels for deepks.";
+        read_sync_int(input.deepks_out_freq_elec);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_freq_elec < 0)
+            {
+                para.input.deepks_out_freq_elec = 0;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -48,6 +60,12 @@ void ReadInput::item_deepks()
         Input_Item item("deepks_bandgap");
         item.annotation = ">0 for bandgap label";
         read_sync_int(input.deepks_bandgap);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_bandgap < 0 || para.input.deepks_bandgap > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "deepks_bandgap must be integer in [0, 3]");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -85,9 +103,15 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_v_delta");
-        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for phialpha and grad_evdm ( "
-                          "can save memory )";
+        item.annotation = "!=0 for v_delta/v_delta_R label. when output, 1 for vdpre, 2 for phialpha and grad_evdm (can save memory )"
+                          " -1 for vdrpre, -2 for phialpha_r and gevdm (can save memory)";
         read_sync_int(input.deepks_v_delta);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_v_delta < -2 || para.input.deepks_v_delta > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "deepks_v_delta must be integer in [-2, 2]");
+            }
+        };
         this->add_item(item);
     }
     {

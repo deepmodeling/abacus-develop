@@ -1,9 +1,9 @@
 #include "stress_func.h"
-#include "module_base/math_integral.h"
+#include "source_base/math_integral.h"
 #include "module_parameter/parameter.h"
-#include "module_base/tool_threading.h"
-#include "module_base/timer.h"
-#include "module_base/libm/libm.h"
+#include "source_base/tool_threading.h"
+#include "source_base/timer.h"
+#include "source_base/libm/libm.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 //calculate local pseudopotential stress in PW or VL_dVL stress in LCAO

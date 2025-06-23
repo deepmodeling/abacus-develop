@@ -3,9 +3,9 @@
 
 #ifdef __MLALGO
 #include "LCAO_deepks.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_base/complexmatrix.h"
+#include "source_base/matrix.h"
 
 #include <memory>
 
@@ -30,6 +30,8 @@ class LCAO_Deepks_Interface
     /// @param[in] psid
     /// @param[in] dm
     /// @param[in] p_ham
+    /// @param[in] iter
+    /// @param[in] conv_esolver
     /// @param[in] rank
     void out_deepks_labels(const double& etot,
                            const int& nks,
@@ -44,6 +46,8 @@ class LCAO_Deepks_Interface
                            const psi::Psi<TK>& psid,
                            const elecstate::DensityMatrix<TK, double>* dm,
                            hamilt::HamiltLCAO<TK, TR>* p_ham,
+                           const int& iter,
+                           const bool& conv_esolver, 
                            const int rank,
                            std::ostream& ofs_running);
 

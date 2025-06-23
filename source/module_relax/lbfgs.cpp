@@ -1,9 +1,9 @@
 #include "lbfgs.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/matrix3.h"
+#include "source_base/matrix3.h"
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
-#include "module_cell/update_cell.h"
+#include "source_cell/update_cell.h"
 
 void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、force
 {
