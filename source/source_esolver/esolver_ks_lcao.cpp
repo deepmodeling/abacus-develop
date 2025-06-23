@@ -827,13 +827,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // 5) mix density matrix if mixing_restart + mixing_dmr + not first
+    // don't mix density matrix after the last step of iteration
     // mixing_restart at every iter
-    if (!conv_esolver && PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
+    if(iter != PARAM.inp.scf_nmax && !conv_esolver)
     {
-        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->p_chgmix->mix_dmr(dm);
+        if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
+        {
+            elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            this->p_chgmix->mix_dmr(dm);
+        }
     }
-
     // 6) save charge density
     // Peize Lin add 2020.04.04
     if (GlobalC::restart.info_save.save_charge)
