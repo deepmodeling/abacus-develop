@@ -87,9 +87,8 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
 
 void RadialSet::to_numerical_orbital(Numerical_Orbital& no, const int nk_legacy, const double lcao_dk) const
 {
-    delete[] no.chi();
-
-    no.chi() = new Numerical_Orbital_Lm[nchi_];
+    no.chi().clear();
+    no.chi().resize(nchi_);
     for (int i = 0; i < nchi_; i++)
     {
         chi_[i].to_numerical_orbital_lm(no.chi()[i], nk_legacy, lcao_dk);

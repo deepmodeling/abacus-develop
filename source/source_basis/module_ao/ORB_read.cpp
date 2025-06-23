@@ -419,8 +419,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
     }
 
     // OUT(GlobalV::ofs_running,"Total number of chi(l,n)",total_nchi);
-    delete[] ao[it].phiLN;
-    ao[it].phiLN = new Numerical_Orbital_Lm[total_nchi];
+    ao[it].phiLN.resize(total_nchi);
 
     int meshr = 0; // number of mesh points
     int meshr_read = 0;
