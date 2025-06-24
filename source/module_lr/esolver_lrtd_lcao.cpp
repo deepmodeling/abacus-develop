@@ -241,7 +241,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
         reset_dim_spin2();
     }
-
+#ifdef __OLD_GINT
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
 
@@ -255,7 +255,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 	}
     this->set_gint();
     this->gint_->reset_DMRGint(1);
-
+#else
+    this->gint_info_ = std::move(ks_sol.gint_info_);
+#endif
     // move pw basis
     if (this->pw_rho_flag)
     {
@@ -393,11 +395,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
                          this->ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
+#ifdef __OLD_GINT
     this->set_gint();
     this->gint_->gridt = &this->gt_;
 
     // (3) Periodic condition search for each grid.
-#ifdef __OLD_GINT
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
@@ -453,7 +455,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         &orb);
     this->gint_->initialize_pvpR(ucell, &this->gd, 1); // always use nspin=1 for transition density
 #else
-    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
+    gint_info_.reset(
+        new ModuleGint::GintInfo(
         this->pw_big->nbx,
         this->pw_big->nby,
         this->pw_big->nbz,
@@ -468,8 +471,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_big->nbzp,
         orb.Phi,
         ucell,
-        this->gd);
-    ModuleGint::Gint::set_gint_info(gint_info);
+        this->gd));
+    ModuleGint::Gint::set_gint_info(gint_info_.get());
 #endif
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX

@@ -23,7 +23,6 @@ namespace LR
         ModuleBase::TITLE("OperatorLRHxc", "act");
         const int& sl = ispin_ks[0];
         const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
-        const int& lgd = gint->gridt->lgd;
 
         this->DM_trans->cal_DMR();  //DM_trans->get_DMR_vector() is 2d-block parallized
         // LR_Util::print_DMR(*DM_trans, ucell.nat, "DMR");
@@ -68,9 +67,8 @@ namespace LR
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
         this->gint->cal_gint(&inout_rho);
 #else
-        ModuleGint::cal_gint_rho(this->DM_trans->get_DMR_vector(), 1, rho_trans);
+        ModuleGint::cal_gint_rho(this->DM_trans->get_DMR_vector(), 1, rho_trans, false);
 #endif
-
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
         this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);
@@ -118,7 +116,7 @@ namespace LR
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
                 this->gint->cal_gint(&inout_rho);
 #else
-                ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans);
+                ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans, false);
 #endif
                 // print_grid_nonzero(rho_trans[0], nrxx, 10, "rho_trans");
 

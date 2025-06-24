@@ -92,8 +92,11 @@ class GintInfo
     // map the global index of atomic orbitals to local index
     std::vector<int> trace_lo_;
     
+    // store the information about Numerical orbitals
+    std::vector<Numerical_Orbital> orbs_;
+
     // total num of atomic orbitals on this proc
-    int lgd_;
+    int lgd_ = 0;
 
     #ifdef __CUDA
     public:

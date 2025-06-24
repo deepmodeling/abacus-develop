@@ -94,10 +94,6 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-#ifndef __OLD_GINT
-    // release gint_info
-    ModuleGint::Gint::set_gint_info(nullptr);
-#endif
 }
 
 template <typename TK, typename TR>

@@ -134,7 +134,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // prepare grid in Gint
     LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 #else
-    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
+    gint_info_.reset(
+        new ModuleGint::GintInfo(
         this->pw_big->nbx,
         this->pw_big->nby,
         this->pw_big->nbz,
@@ -149,8 +150,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         this->pw_big->nbzp,
         orb_.Phi,
         ucell,
-        this->gd);
-    ModuleGint::Gint::set_gint_info(gint_info);
+        this->gd));
+    ModuleGint::Gint::set_gint_info(gint_info_.get());
 #endif
 
     // (2)For each atom, calculate the adjacent atoms in different cells

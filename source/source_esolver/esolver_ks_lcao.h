@@ -95,6 +95,11 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     //! Grid integration: used to store some basic information
     Grid_Technique GridT;
 
+#ifndef __OLD_GINT
+    //! GintInfo: used to store some basic infomation about module_gint
+    std::unique_ptr<ModuleGint::GintInfo> gint_info_;
+#endif
+
     //! NAO orbitals: two-center integrations
     TwoCenterBundle two_center_bundle_;
 

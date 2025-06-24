@@ -28,7 +28,8 @@ void cal_gint_vl_metagga(
 void cal_gint_rho(
     const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
-    double **rho);
+    double **rho,
+    bool is_dm_symm = true);
 
 void cal_gint_tau(        
     const std::vector<HContainer<double>*>& dm_vec,

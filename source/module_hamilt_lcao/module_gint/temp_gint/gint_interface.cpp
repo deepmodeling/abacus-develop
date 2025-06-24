@@ -98,17 +98,18 @@ void cal_gint_vl_metagga(
 void cal_gint_rho(
     const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
-    double **rho)
+    double **rho,
+    bool is_dm_symm)
 {
     #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
-        Gint_rho_gpu gint_rho(dm_vec, nspin, rho);
+        Gint_rho_gpu gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     } else
     #endif
     {
-        Gint_rho gint_rho(dm_vec, nspin, rho);
+        Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     }
 }

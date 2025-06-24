@@ -146,19 +146,12 @@ void transfer_dm_2d_to_gint(
 {
     ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
     ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
-    assert(PARAM.inp.nspin == dm_gint.size()
-           && "The size of dm_gint should be equal to the number of spins!");
-    if(PARAM.inp.nspin != 4)
-    {
-        assert(dm.size() == PARAM.inp.nspin);
-    } else
-    {
-        assert(dm.size() == 1);
-    }
 
     if (PARAM.inp.nspin != 4)
     {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        // dm_gint.size() usually equals to PARAM.inp.nspin,
+        // but there is exception within module_lr
+        for (int is = 0; is < dm_gint.size(); is++)
         {
 #ifdef __MPI
             hamilt::transferParallels2Serials(*dm[is], &dm_gint[is]);

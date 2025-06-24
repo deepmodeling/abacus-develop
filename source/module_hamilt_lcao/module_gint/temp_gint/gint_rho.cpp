@@ -46,7 +46,7 @@ void Gint_rho::cal_rho_()
             phi_op.set_phi(phi.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(phi.data(), dm_gint_vec_[is], true, phi_dm.data());
+                phi_op.phi_mul_dm(phi.data(), dm_gint_vec_[is], is_dm_symm_, phi_dm.data());
                 phi_op.phi_dot_phi(phi.data(), phi_dm.data(), rho_[is]);
             }
         }

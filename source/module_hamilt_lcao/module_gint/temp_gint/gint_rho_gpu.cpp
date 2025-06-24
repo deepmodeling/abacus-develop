@@ -72,9 +72,8 @@ void Gint_rho_gpu::cal_rho_()
             phi_op.set_phi(phi.get_device_ptr());
             for(int is = 0; is < nspin_; is++)
             {
-                const bool is_symm = true;
                 phi_op.phi_mul_dm(phi.get_device_ptr(), dm_gint_d_vec_[is].get_device_ptr(), dm_gint_vec_[is],
-                                  is_symm, phi_dm.get_device_ptr());
+                                  is_dm_symm_, phi_dm.get_device_ptr());
                 phi_op.phi_dot_phi(phi.get_device_ptr(), phi_dm.get_device_ptr(), rho_d_vec_[is].get_device_ptr());
             }
        }

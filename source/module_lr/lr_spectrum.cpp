@@ -70,7 +70,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
         this->cal_gint_rho(rho_trans, this->rho_basis.nrxx);
 #else
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho({ DM_trans.get_DMR_vector().at(is) }, 1, rho_trans);
+        ModuleGint::cal_gint_rho({ DM_trans.get_DMR_vector().at(is) }, 1, rho_trans, false);
 #endif
 
         // 3. transition dipole moment
@@ -86,7 +86,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
         }
         LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
     }
-    trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
+    trans_dipole *= (ucell.omega / static_cast<double>(rho_basis.nxyz));   // dv
     trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
     if (this->nspin_x == 1) { trans_dipole *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
     Parallel_Reduce::reduce_all(trans_dipole.x);
@@ -120,7 +120,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         this->cal_gint_rho(rho_trans_real, this->rho_basis.nrxx);
 #else
         ModuleBase::GlobalFunc::ZEROS(rho_trans_real[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_real);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_real, false);
 #endif
         // LR_Util::print_grid_nonzero(rho_trans_real[0], this->rho_basis.nrxx, 10, "rho_trans");
 
@@ -131,7 +131,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         this->cal_gint_rho(rho_trans_imag, this->rho_basis.nrxx);
 #else
         ModuleBase::GlobalFunc::ZEROS(rho_trans_imag[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_imag);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_imag, false);
 #endif
         // LR_Util::print_grid_nonzero(rho_trans_imag[0], this->rho_basis.nrxx, 10, "rho_trans");
 
@@ -150,7 +150,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         LR_Util::_deallocate_2order_nested_ptr(rho_trans_real, 1);
         LR_Util::_deallocate_2order_nested_ptr(rho_trans_imag, 1);
     }
-    trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
+    trans_dipole *= (ucell.omega / static_cast<double>(rho_basis.nxyz));   // dv
     trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
     if (this->nspin_x == 1) { trans_dipole *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
     Parallel_Reduce::reduce_all(trans_dipole.x);

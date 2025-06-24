@@ -41,7 +41,7 @@ GintInfo::GintInfo(
         biggrids_.push_back(std::make_shared<BigGrid>(i));
     }
 
-    // initialize the atoms
+    // initialize the atoms and the numerical orbital
     init_atoms_(ucell_->ntype, ucell_->atoms, Phi);
 
     // initialize trace_lo_ and lgd_
@@ -81,12 +81,14 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
     int iat = 0;
     is_atom_in_proc_.resize(ucell_->nat, false);
     atoms_.resize(ucell_->nat);
+    orbs_.resize(ntype);
 
 // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for(int i = 0; i < ntype; i++)
     {
         const auto& atom = atoms[i];
-        const auto *orb = &Phi[i];
+        orbs_[i] = Phi[i];
+        const auto *orb = &orbs_[i];
 
         // rcut extends to the maximum big grids in x, y, z directions
         Vec3i ext_bgrid = biggrid_info_->max_ext_bgrid_num(atom.Rcut);
