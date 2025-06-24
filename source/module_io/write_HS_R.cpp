@@ -146,8 +146,6 @@ void ModuleIO::output_dHR(const int& istep,
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
-    gint_k.allocate_pvdpR();
-
     const int nspin = PARAM.inp.nspin;
 
     if (nspin == 1 || nspin == 4) 
