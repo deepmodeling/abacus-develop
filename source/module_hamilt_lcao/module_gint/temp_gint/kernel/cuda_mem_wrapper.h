@@ -1,6 +1,6 @@
 #pragma once
 #include <cuda_runtime.h>
-#include "module_base/tool_quit.h"
+#include "source_base/tool_quit.h"
 #include "gint_helper.cuh"
 
 template <typename T>

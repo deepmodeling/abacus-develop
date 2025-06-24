@@ -2,9 +2,9 @@
 
 #include <cuda_runtime.h>
 #include "set_const_mem.cuh"
-#include "module_base/ylm.h"
-#include "module_cell/unitcell.h"
-#include "module_cell/atom_spec.h"
+#include "source_base/ylm.h"
+#include "source_cell/unitcell.h"
+#include "source_cell/atom_spec.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/biggrid_info.h"
 #include "gint_helper.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gemm_selector.cuh"

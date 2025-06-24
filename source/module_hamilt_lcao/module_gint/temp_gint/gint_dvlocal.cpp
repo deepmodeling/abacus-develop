@@ -1,7 +1,7 @@
 #include <map>
 #include "gint_dvlocal.h"
 #include "phi_operator.h"
-#include "module_base/parallel_reduce.h"
+#include "source_base/parallel_reduce.h"
 
 namespace ModuleGint
 {

@@ -1,7 +1,7 @@
 #include "source_base/ylm.h"
 #include "source_base/array_pool.h"
 #include "gint_atom.h"
-#include "module_cell/unitcell.h"
+#include "source_cell/unitcell.h"
 #include "gint_helper.h"
 
 namespace ModuleGint

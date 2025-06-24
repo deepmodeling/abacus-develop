@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_base/matrix.h"
+#include "source_base/matrix.h"
 #include "gint.h"
 #include "gint_info.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/kernel/cuda_mem_wrapper.h"
