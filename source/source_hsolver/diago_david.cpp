@@ -185,9 +185,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // slice index in this piece of code is in C manner. i.e. 0:id stands for [0,id)
     hpsi_func(basis, hpsi, dim, nband);
 
-    this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc, this->scc);
+    this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc);
 
-    this->diag_zhegvx(nbase, nband, this->hcc, this->scc, nbase_x, this->eigenvalue, this->vcc);
+    this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
 
     for (int m = 0; m < nband; m++)
     {
@@ -213,9 +213,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                        unconv.data(),
                        this->eigenvalue);
 
-        this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc, this->scc);
+        this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc);
 
-        this->diag_zhegvx(nbase, nband, this->hcc, this->scc, nbase_x, this->eigenvalue, this->vcc);
+        this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("DiagoDavid", "check_update");
@@ -277,7 +277,6 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               this->hpsi,
                               this->spsi,
                               this->hcc,
-                              this->scc,
                               this->vcc);
                 ModuleBase::timer::tick("DiagoDavid", "last");
             }
@@ -531,8 +530,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                                           const int& notconv,   // number of newly added basis vectors
                                           const T* hpsi,
                                           const T* spsi,
-                                          T* hcc,
-                                          T* scc)
+                                          T* hcc)
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_elem");
@@ -608,7 +606,6 @@ template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
                                              const int& nband,
                                              const T* hcc,
-                                             const T* /*scc*/,
                                              const int& nbase_x,
                                              Real* eigenvalue, // in CPU
                                              T* vcc)
@@ -665,7 +662,6 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
                                          T* hpsi,
                                          T* spsi,
                                          T* hcc,
-                                         T* scc,
                                          T* vcc)
 {
     if (test_david == 1) {
