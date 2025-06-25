@@ -3,7 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
 
 ModuleBase::matrix surchem::v_correction(const UnitCell& cell,

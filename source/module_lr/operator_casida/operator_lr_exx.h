@@ -1,6 +1,6 @@
 #ifdef __EXX
 #pragma once
-#include "module_hamilt_general/operator.h"
+#include "source_hamilt/operator.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_ri/Exx_LRI.h"
 #include "module_lr/utils/lr_util.h"

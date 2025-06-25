@@ -13,7 +13,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
@@ -21,7 +21,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
@@ -29,7 +29,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
@@ -37,7 +37,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
@@ -45,7 +45,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   if(ENABLE_LCAO)
@@ -54,7 +54,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
@@ -62,7 +62,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../module_hamilt_general/operator.cpp
+            ../../source_hamilt/operator.cpp
             ../../source_pw/hamilt_pwdft/operator_pw/operator_pw.cpp
   )
   endif()

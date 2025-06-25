@@ -1,6 +1,6 @@
 #ifndef OPERATORPW_H
 #define OPERATORPW_H
-#include"module_hamilt_general/operator.h"
+#include"source_hamilt/operator.h"
 
 namespace hamilt {
 template <typename T, typename Device = base_device::DEVICE_CPU>

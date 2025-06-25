@@ -4,7 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "source_pw/hamilt_pwdft/global.h"
 

@@ -36,7 +36,7 @@ add_executable(
     ../../../module_hamilt_lcao/module_hcontainer/output_hcontainer.cpp
     ../../../module_hamilt_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
     ../../../module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
-    ../../../module_hamilt_general/operator.cpp
+    ../../../source_hamilt/operator.cpp
 )
 
 target_link_libraries(

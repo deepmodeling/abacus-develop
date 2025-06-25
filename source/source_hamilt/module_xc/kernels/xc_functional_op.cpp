@@ -1,4 +1,4 @@
-#include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
+#include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
 namespace hamilt {
 

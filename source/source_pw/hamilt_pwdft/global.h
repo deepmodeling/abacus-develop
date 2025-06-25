@@ -8,11 +8,11 @@
 #include "module_io/restart.h"
 #include "module_relax/relax_driver.h"
 #ifdef __EXX
-#include "module_hamilt_general/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "module_ri/exx_lip.h"
 #endif
 #include "source_estate/magnetism.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #ifdef __CUDA
 #include "cublas_v2.h"
 #include "cufft.h"

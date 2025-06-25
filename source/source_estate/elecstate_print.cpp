@@ -5,7 +5,7 @@
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_parameter/parameter.h"
 #include "occupy.h"

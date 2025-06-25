@@ -8,7 +8,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/read_wf2rho_pw.h"
 #include "module_io/write_wfc_pw.h"

@@ -2,9 +2,9 @@
 #include "source_esolver/esolver_fp.h"
 #include "module_parameter/input_parameter.h"
 #include "source_cell/unitcell.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_estate/elecstate.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_estate/elecstate_lcao.h"
 
 #include <vector>   //future tensor

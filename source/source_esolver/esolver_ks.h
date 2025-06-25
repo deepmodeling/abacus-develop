@@ -15,7 +15,7 @@
 // for electronic wave functions
 #include "source_psi/psi.h"
 // for Hamiltonian
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 
 namespace ModuleESolver
 {

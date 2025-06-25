@@ -1,5 +1,5 @@
-#ifndef MODULE_HAMILT_GENERAL_MODULE_XC_KERNELS_H_
-#define MODULE_HAMILT_GENERAL_MODULE_XC_KERNELS_H_
+#ifndef source_hamilt_MODULE_XC_KERNELS_H_
+#define source_hamilt_MODULE_XC_KERNELS_H_
 
 #include <complex>
 #include <source_psi/psi.h>
@@ -29,4 +29,4 @@ struct xc_functional_grad_wfc_op {
 };
 
 } // namespace hamilt
-#endif // MODULE_HAMILT_GENERAL_MODULE_XC_KERNELS_H_
+#endif // source_hamilt_MODULE_XC_KERNELS_H_

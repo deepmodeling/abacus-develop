@@ -1,7 +1,7 @@
 #include "symmetry_rho.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_base/parallel_global.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 
 void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, ModuleSymmetry::Symmetry &symm) const

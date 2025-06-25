@@ -1,4 +1,4 @@
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
 
 void surchem::minimize_cg(const UnitCell& ucell,

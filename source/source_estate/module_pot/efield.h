@@ -3,7 +3,7 @@
 
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "module_hamilt_general/module_surchem/surchem.h"
+#include "source_hamilt/module_surchem/surchem.h"
 #include "module_parameter/parameter.h"
 
 namespace elecstate

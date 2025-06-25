@@ -2,7 +2,7 @@
 #include "source_base/lapack_connector.h"
 #include "source_pw/hamilt_pwdft/structure_factor.h"
 #include "source_psi/psi.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_pw/hamilt_pwdft/hamilt_pw.h"
 #include "../diago_iter_assist.h"
 #include "../diago_bpcg.h"

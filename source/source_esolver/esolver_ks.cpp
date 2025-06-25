@@ -11,7 +11,7 @@
 
 #include "source_cell/cal_atoms_info.h"
 #include "source_estate/elecstate_print.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hsolver/hsolver.h"
 #include "module_io/cube_io.h"
 

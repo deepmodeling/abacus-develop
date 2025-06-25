@@ -59,7 +59,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
 |-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
-|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
+|-- source_hamilt       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.

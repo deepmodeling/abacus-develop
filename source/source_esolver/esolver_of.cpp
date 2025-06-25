@@ -7,7 +7,7 @@
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 #include "source_estate/cal_ux.h"

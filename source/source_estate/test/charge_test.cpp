@@ -5,7 +5,7 @@
 #define protected public
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 #include "prepare_unitcell.h"
 // mock functions for UnitCell

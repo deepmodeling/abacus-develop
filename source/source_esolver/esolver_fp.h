@@ -20,7 +20,7 @@
 #include "source_estate/module_charge/charge_extra.h"
 
 //! solvation model
-#include "module_hamilt_general/module_surchem/surchem.h"
+#include "source_hamilt/module_surchem/surchem.h"
 
 //! local pseudopotential
 #include "source_pw/hamilt_pwdft/VL_in_pw.h"

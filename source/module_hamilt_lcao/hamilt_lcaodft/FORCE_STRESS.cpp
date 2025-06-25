@@ -11,8 +11,8 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
 #include "source_estate/module_pot/efield.h"           // liuyu add 2022-05-18
 #include "source_estate/module_pot/gatefield.h"        // liuyu add 2022-09-13
-#include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
-#include "module_hamilt_general/module_vdw/vdw.h"
+#include "source_hamilt/module_surchem/surchem.h" //sunml add 2022-08-10
+#include "source_hamilt/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
 #ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03

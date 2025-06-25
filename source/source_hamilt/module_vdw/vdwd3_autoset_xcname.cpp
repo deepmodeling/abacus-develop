@@ -48,7 +48,7 @@
 #include <iostream>
 #include <regex>
 #include "source_base/tool_quit.h"
-#include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
+#include "source_hamilt/module_vdw/vdwd3_parameters.h"
 
 const std::map<std::string, std::string> xcname_libxc_xc_ = {
     {"XC_LDA_XC_TETER93", "teter93"},

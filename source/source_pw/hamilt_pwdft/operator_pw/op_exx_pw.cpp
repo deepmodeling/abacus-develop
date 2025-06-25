@@ -3,7 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/klist.h"
-#include "module_hamilt_general/operator.h"
+#include "source_hamilt/operator.h"
 #include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
 

@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"

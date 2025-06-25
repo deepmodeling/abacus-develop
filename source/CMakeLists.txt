@@ -2,7 +2,7 @@ add_subdirectory(source_base)
 add_subdirectory(source_cell)
 add_subdirectory(source_psi)
 add_subdirectory(source_estate)
-add_subdirectory(module_hamilt_general)
+add_subdirectory(source_hamilt)
 add_subdirectory(source_pw)
 add_subdirectory(module_hamilt_lcao)
 add_subdirectory(source_hsolver)
@@ -53,7 +53,7 @@ list(APPEND device_srcs
   source_pw/hamilt_pwdft/kernels/wf_op.cpp
   source_pw/hamilt_pwdft/kernels/vnl_op.cpp
   source_base/kernels/math_ylm_op.cpp
-  module_hamilt_general/module_xc/kernels/xc_functional_op.cpp
+  source_hamilt/module_xc/kernels/xc_functional_op.cpp
 )
 
 if(USE_CUDA)
@@ -79,7 +79,7 @@ if(USE_CUDA)
     source_base/kernels/cuda/math_ylm_op.cu
     source_base/kernels/cuda/math_kernel_op.cu
     source_base/kernels/cuda/math_kernel_op_vec.cu
-    module_hamilt_general/module_xc/kernels/cuda/xc_functional_op.cu
+    source_hamilt/module_xc/kernels/cuda/xc_functional_op.cu
   )
 endif()
 
@@ -106,7 +106,7 @@ if(USE_ROCM)
     source_base/kernels/rocm/math_kernel_op.hip.cu
     source_base/kernels/rocm/math_kernel_op_vec.hip.cu
     source_base/kernels/rocm/math_ylm_op.hip.cu
-    module_hamilt_general/module_xc/kernels/rocm/xc_functional_op.hip.cu
+    source_hamilt/module_xc/kernels/rocm/xc_functional_op.hip.cu
   )
 endif()
 

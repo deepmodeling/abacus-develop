@@ -6,11 +6,11 @@
 #include"gmock/gmock.h"
 #include "mpi.h"
 #define private public
-#include "module_hamilt_general/module_vdw/vdwd2_parameters.h"
-#include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
-#include "module_hamilt_general/module_vdw/vdwd2.h"
-#include "module_hamilt_general/module_vdw/vdwd3.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
+#include "source_hamilt/module_vdw/vdwd2_parameters.h"
+#include "source_hamilt/module_vdw/vdwd3_parameters.h"
+#include "source_hamilt/module_vdw/vdwd2.h"
+#include "source_hamilt/module_vdw/vdwd3.h"
+#include "source_hamilt/module_vdw/vdw.h"
 #undef private
 
 /************************************************

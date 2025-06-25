@@ -5,7 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_esolver/esolver_ks_pw.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"

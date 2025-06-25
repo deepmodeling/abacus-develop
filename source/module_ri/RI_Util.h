@@ -6,7 +6,7 @@
 #ifndef RI_UTIL_H
 #define RI_UTIL_H
 
-#include "module_hamilt_general/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>

@@ -5,7 +5,7 @@
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
-#include "module_hamilt_general/module_surchem/surchem.h"
+#include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
 #include "module_parameter/parameter.h"

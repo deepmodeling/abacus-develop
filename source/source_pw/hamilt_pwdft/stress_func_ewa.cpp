@@ -1,5 +1,5 @@
 #include "stress_func.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/libm/libm.h"

@@ -1,5 +1,5 @@
 #include "../hamilt_sdft_pw.h"
-#include "module_hamilt_general/operator.h"
+#include "source_hamilt/operator.h"
 
 #include "gtest/gtest.h"
 #include <vector>

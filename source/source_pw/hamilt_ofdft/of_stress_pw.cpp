@@ -1,7 +1,7 @@
 #include "of_stress_pw.h"
 
 #include "source_base/timer.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
+#include "source_hamilt/module_vdw/vdw.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 

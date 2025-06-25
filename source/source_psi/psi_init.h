@@ -1,6 +1,6 @@
 #ifndef PSI_INIT_H
 #define PSI_INIT_H
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_psi/psi_initializer.h"
 
 namespace psi

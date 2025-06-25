@@ -66,7 +66,7 @@
 #include <algorithm>
 #include "source_base/formatter.h"
 #include "source_base/tool_quit.h"
-#include "module_hamilt_general/module_vdw/vdwd3_parameters.h"
+#include "source_hamilt/module_vdw/vdwd3_parameters.h"
 
 // DFT-D3(BJ)
 const std::pair<const char*, std::vector<double>> bj_data[] = {
@@ -556,7 +556,7 @@ def complete(vdw_method, value):
         out[equilk] = out[k]
     # equivalent? 
     # according to 
-    # abacus-develop/source/module_hamilt_general/module_vdw/vdwd3_parameters.cpp
+    # abacus-develop/source/source_hamilt/module_vdw/vdwd3_parameters.cpp
     # https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html
 
     return out

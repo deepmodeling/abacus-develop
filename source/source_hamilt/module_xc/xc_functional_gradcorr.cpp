@@ -15,7 +15,7 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
-#include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
+#include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"

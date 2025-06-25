@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 #define private public
 #include "source_estate/elecstate.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 
 #include <string>

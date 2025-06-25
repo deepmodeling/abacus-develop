@@ -1,7 +1,7 @@
 #include "elecstate.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 
 #include <cmath>

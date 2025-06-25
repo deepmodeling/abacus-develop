@@ -5,7 +5,7 @@
 #define private public
 #define protected public
 #include "source_estate/elecstate_pw.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_parameter/parameter.h"
 // mock functions for testing

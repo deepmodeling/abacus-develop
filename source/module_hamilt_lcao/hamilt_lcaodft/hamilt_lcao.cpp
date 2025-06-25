@@ -24,7 +24,7 @@
 #endif
 
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"

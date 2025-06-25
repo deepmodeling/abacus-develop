@@ -1,5 +1,5 @@
 #include "xc_kernel.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "module_lr/utils/lr_util.h"
@@ -9,7 +9,7 @@
 #include "module_io/cube_io.h"
 #ifdef USE_LIBXC
 #include <xc.h>
-#include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+#include "source_hamilt/module_xc/xc_functional_libxc.h"
 #endif
 #ifdef _OPENMP
 #include <omp.h>

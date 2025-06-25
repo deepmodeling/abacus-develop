@@ -14,7 +14,7 @@
 #include "source_base/math_integral.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
