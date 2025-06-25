@@ -13,7 +13,7 @@
 // for charge mixing
 #include "source_estate/module_charge/charge_mixing.h"
 // for electronic wave functions
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 // for Hamiltonian
 #include "module_hamilt_general/hamilt.h"
 

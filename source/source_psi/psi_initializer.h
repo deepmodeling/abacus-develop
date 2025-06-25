@@ -4,7 +4,7 @@
 #include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/psi.h" // for psi data structure
+#include "source_psi/psi.h" // for psi data structure
 // smart pointer for auto-memory management
 #include <memory>
 // numerical algorithm support

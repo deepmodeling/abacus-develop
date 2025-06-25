@@ -2,7 +2,7 @@
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_base/scalapack_connector.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/timer.h"
 
 #ifdef __MPI

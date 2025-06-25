@@ -1,7 +1,7 @@
 #ifndef SRC_PW_WF_MULTI_DEVICE_H
 #define SRC_PW_WF_MULTI_DEVICE_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <complex>
 
 namespace hamilt {

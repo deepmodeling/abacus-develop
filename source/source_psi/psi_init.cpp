@@ -7,12 +7,12 @@
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
-#include "module_psi/psi_initializer_atomic.h"
-#include "module_psi/psi_initializer_atomic_random.h"
-#include "module_psi/psi_initializer_file.h"
-#include "module_psi/psi_initializer_nao.h"
-#include "module_psi/psi_initializer_nao_random.h"
-#include "module_psi/psi_initializer_random.h"
+#include "source_psi/psi_initializer_atomic.h"
+#include "source_psi/psi_initializer_atomic_random.h"
+#include "source_psi/psi_initializer_file.h"
+#include "source_psi/psi_initializer_nao.h"
+#include "source_psi/psi_initializer_nao_random.h"
+#include "source_psi/psi_initializer_random.h"
 namespace psi
 {
 

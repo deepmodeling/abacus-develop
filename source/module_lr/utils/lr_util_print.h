@@ -1,6 +1,6 @@
 #pragma once
 #include <ATen/tensor.h>
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif

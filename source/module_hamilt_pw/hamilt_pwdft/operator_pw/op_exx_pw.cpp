@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "source_cell/klist.h"
 #include "module_hamilt_general/operator.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
 
 #include <cmath>

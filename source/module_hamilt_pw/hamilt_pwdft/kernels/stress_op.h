@@ -2,7 +2,7 @@
 #define SRC_PW_STRESS_MULTI_DEVICE_H
 #include "module_parameter/parameter.h"
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 #include <source_base/macros.h>

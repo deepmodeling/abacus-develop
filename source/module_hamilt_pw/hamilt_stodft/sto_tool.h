@@ -4,7 +4,7 @@
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "source_base/module_device/memory_op.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 /**
  * @brief Check if Emin and Emax are converged

@@ -15,7 +15,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07

@@ -1,5 +1,5 @@
 AddTest(
-    TARGET MODULE_PSI_Unittests
+    TARGET source_psi_Unittests
     LIBS parameter ${math_libs} base device 
     SOURCES 
         psi_test.cpp
@@ -8,7 +8,7 @@ AddTest(
 
 if(ENABLE_LCAO)
 AddTest(
-    TARGET MODULE_PSI_initializer_unit_test
+    TARGET source_psi_initializer_unit_test
     LIBS parameter ${math_libs} base device psi psi_initializer planewave 
     SOURCES
         psi_initializer_unit_test.cpp

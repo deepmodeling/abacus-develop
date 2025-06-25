@@ -12,7 +12,7 @@
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_estate/elecstate_tools.h"
 
 

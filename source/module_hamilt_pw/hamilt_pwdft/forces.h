@@ -12,7 +12,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "structure_factor.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>

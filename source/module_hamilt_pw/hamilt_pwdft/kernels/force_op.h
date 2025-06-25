@@ -2,7 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_KERNELS_FORCE_OP_H
 #include "module_parameter/parameter.h"
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 

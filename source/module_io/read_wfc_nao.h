@@ -2,7 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_estate/elecstate.h"
 
 // mohan add 2010-09-09

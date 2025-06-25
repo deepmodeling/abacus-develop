@@ -6,7 +6,7 @@
 #include "source_cell/unitcell.h" // use UnitCell
 #include "source_cell/klist.h" // use K_Vectors
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
-#include "module_psi/psi.h" // use Psi<TK>
+#include "source_psi/psi.h" // use Psi<TK>
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "module_hamilt_lcao/module_gint/gint_k.h" // use Gint_k

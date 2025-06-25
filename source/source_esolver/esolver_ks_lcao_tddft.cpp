@@ -28,7 +28,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "module_parameter/parameter.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"

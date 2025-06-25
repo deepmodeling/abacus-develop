@@ -11,7 +11,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <string>
 #include <vector>

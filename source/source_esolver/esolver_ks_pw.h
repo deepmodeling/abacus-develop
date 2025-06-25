@@ -2,7 +2,7 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
-#include "module_psi/psi_init.h"
+#include "source_psi/psi_init.h"
 #include "module_hamilt_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 

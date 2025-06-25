@@ -2,7 +2,7 @@
 #define MODULE_HAMILT_GENERAL_MODULE_XC_KERNELS_H_
 
 #include <complex>
-#include <module_psi/psi.h>
+#include <source_psi/psi.h>
 #include <source_base/macros.h>
 
 namespace hamilt {

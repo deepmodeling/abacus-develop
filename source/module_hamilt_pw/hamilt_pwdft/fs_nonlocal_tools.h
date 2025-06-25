@@ -8,7 +8,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 

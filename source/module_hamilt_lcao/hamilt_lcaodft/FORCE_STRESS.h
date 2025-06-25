@@ -9,7 +9,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_io/input_conv.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #ifdef __EXX
 #include "module_ri/Exx_LRI_interface.h"
 #endif

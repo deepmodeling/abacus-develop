@@ -4,7 +4,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "sto_che.h"
 #include "sto_func.h"
 #include "sto_wf.h"

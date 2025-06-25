@@ -5,7 +5,7 @@
 #ifndef RDMFT_TOOLS_H
 #define RDMFT_TOOLS_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"

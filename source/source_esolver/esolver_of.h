@@ -10,7 +10,7 @@
 #include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_wt.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_ml.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 namespace ModuleESolver
 {

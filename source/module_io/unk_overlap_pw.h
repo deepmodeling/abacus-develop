@@ -13,7 +13,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 class unkOverlap_pw
 {

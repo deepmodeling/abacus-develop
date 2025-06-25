@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "source_cell/unitcell.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 
 namespace RadialProjection

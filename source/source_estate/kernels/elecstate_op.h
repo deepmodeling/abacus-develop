@@ -4,7 +4,7 @@
 #ifndef source_estate_ELECSTATE_MULTI_DEVICE_H
 #define source_estate_ELECSTATE_MULTI_DEVICE_H
 #include <complex>
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 namespace elecstate{
 

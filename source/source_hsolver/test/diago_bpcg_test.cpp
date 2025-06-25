@@ -1,7 +1,7 @@
 #include "source_base/inverse_matrix.h"
 #include "source_base/lapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "../diago_iter_assist.h"

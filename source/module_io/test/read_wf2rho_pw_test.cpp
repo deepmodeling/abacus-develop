@@ -14,7 +14,7 @@
 #include "module_io/write_wfc_pw.h"
 #include "module_io/filename.h" // mohan add 2025-05-17
 #include "module_parameter/parameter.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #ifdef __MPI
 #include "source_base/parallel_global.h"

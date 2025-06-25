@@ -4,7 +4,7 @@
 #include "source_base/blas_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 namespace elecstate
 {

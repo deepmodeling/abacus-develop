@@ -39,8 +39,8 @@ VPATH=./src_global:\
 ./source_estate/module_pot:\
 ./source_estate/module_charge:\
 ./source_estate/module_dm:\
-./module_psi:\
-./module_psi/kernels:\
+./source_psi:\
+./source_psi/kernels:\
 ./module_hamilt_general:\
 ./module_hamilt_general/module_ewald:\
 ./module_hamilt_general/module_surchem:\

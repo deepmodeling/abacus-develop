@@ -1,7 +1,7 @@
 #ifndef MODULE_BASE_MATH_MULTI_DEVICE_H
 #define MODULE_BASE_MATH_MULTI_DEVICE_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <complex>
 
 namespace ModuleBase {

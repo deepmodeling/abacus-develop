@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 class Structure_Factor
 {

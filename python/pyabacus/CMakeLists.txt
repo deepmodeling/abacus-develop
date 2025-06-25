@@ -15,7 +15,7 @@ set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/source_base")
 set(NAO_PATH "${ABACUS_SOURCE_DIR}/source_basis/module_nao")
 set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
-set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
+set(PSI_PATH "${ABACUS_SOURCE_DIR}/source_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
 

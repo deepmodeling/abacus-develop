@@ -14,7 +14,7 @@
 
 #include "source_base/macros.h"   // GetRealType
 #include "module_hamilt_general/hamilt.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"

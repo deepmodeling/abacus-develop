@@ -9,7 +9,7 @@
 #include "source_base/parallel_reduce.h"
 #include "binstream.h"
 
-#include "module_psi/psi_initializer_nao.h"
+#include "source_psi/psi_initializer_nao.h"
 #ifdef __LCAO
 toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
     const bool &out_wannier_mmn, 

@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/veff_pw.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_pot/potential_new.h"

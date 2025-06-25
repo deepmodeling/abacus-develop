@@ -1,7 +1,7 @@
 #ifndef MODULE_HAMILT_OPERATOR_KERNELS_ONSITE_H
 #define MODULE_HAMILT_OPERATOR_KERNELS_ONSITE_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <complex>
 
 namespace hamilt {

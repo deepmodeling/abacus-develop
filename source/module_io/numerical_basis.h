@@ -18,7 +18,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 //==========================================================
 // CLASS :
 // NAME :  Numerical_Basis

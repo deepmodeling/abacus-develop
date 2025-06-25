@@ -2,7 +2,7 @@
 #define STO_FORCES_H
 
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "sto_wf.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>

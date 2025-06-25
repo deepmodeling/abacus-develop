@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "matrixblock.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "operator.h"
 
 namespace hamilt

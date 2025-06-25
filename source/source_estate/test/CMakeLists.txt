@@ -44,7 +44,7 @@ AddTest(
 AddTest(
   TARGET elecstate_base
   LIBS parameter  ${math_libs} base device 
-  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../module_psi/psi.cpp
+  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
 )
 
 AddTest(
@@ -55,8 +55,8 @@ AddTest(
     ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
-    ../../module_psi/psi.cpp
-    # ../../module_psi/kernels/psi_memory_op.cpp
+    ../../source_psi/psi.cpp
+    # ../../source_psi/kernels/psi_memory_op.cpp
     ../../source_base/module_device/memory_op.cpp
 )
 

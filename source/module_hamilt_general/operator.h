@@ -3,7 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 

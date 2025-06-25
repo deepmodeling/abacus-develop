@@ -1,7 +1,7 @@
 #pragma once
 #include "source_cell/klist.h"
 #include "module_lr/utils/gint_template.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"

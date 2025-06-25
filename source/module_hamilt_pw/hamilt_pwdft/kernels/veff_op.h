@@ -1,7 +1,7 @@
 #ifndef MODULE_HAMILT_VEFF_H
 #define MODULE_HAMILT_VEFF_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <complex>
 
 namespace hamilt {
