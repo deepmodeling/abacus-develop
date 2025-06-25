@@ -142,7 +142,6 @@ DiagoDavid<T, Device>::~DiagoDavid() {
     delmem_complex_op()(this->hpsi);
     delmem_complex_op()(this->spsi);
     delmem_complex_op()(this->hcc);
-    delmem_complex_op()(this->scc);
     delmem_complex_op()(this->vcc);
     delmem_complex_op()(this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->eigenvalue);

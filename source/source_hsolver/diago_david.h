@@ -61,7 +61,7 @@ class DiagoDavid
      * @brief Destructor for the DiagoDavid class.
      * 
      * This destructor releases the dynamically allocated memory used by the class members.
-     * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
+     * It deletes the basis, hpsi, spsi, hcc, vcc, lagrange_matrix, and eigenvalue arrays.
      * 
      */
     ~DiagoDavid();
@@ -170,8 +170,6 @@ class DiagoDavid
 
     T* hcc = nullptr;     /// Hamiltonian on the reduced basis
 
-    T* scc = nullptr;     /// overlap on the reduced basis
-
     T* vcc = nullptr;     /// eigenvectors of hc
 
     T* lagrange_matrix = nullptr;
@@ -228,7 +226,6 @@ class DiagoDavid
      * @param hpsi The output array for the Hamiltonian H times blockvector psi.
      * @param spsi The output array for the overlap matrix S times blockvector psi.
      * @param hcc Pointer to the array where the calculated Hamiltonian matrix elements will be stored.
-     * @param scc Pointer to the array where the calculated overlap matrix elements will be stored.
      */
     void cal_elem(const int& dim,
                   int& nbase,
@@ -236,8 +233,7 @@ class DiagoDavid
                   const int& notconv,
                   const T* hpsi,
                   const T* spsi,
-                  T* hcc,
-                  T* scc);
+                  T* hcc);
 
     /**
      * Refreshes the diagonalization solver by updating the basis and the reduced Hamiltonian.
@@ -252,7 +248,6 @@ class DiagoDavid
      * @param hpsi Pointer to the output array for the updated basis set.
      * @param spsi Pointer to the output array for the updated basis set (nband-th column).
      * @param hcc Pointer to the output array for the updated reduced Hamiltonian.
-     * @param scc Pointer to the output array for the updated overlap matrix.
      * @param vcc Pointer to the output array for the updated eigenvector matrix.
      * 
      */
@@ -266,7 +261,6 @@ class DiagoDavid
                  T* hpsi,
                  T* spsi,
                  T* hcc,
-                 T* scc,
                  T* vcc);
 
     /**
@@ -304,7 +298,6 @@ class DiagoDavid
     void diag_zhegvx(const int& nbase,
                      const int& nband,
                      const T* hcc,
-                     const T* scc,
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc);
