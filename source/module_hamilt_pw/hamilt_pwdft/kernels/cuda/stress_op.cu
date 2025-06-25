@@ -1137,6 +1137,7 @@ template struct cal_multi_dot_op<double, base_device::DEVICE_GPU>;
 template struct cal_multi_dot_op<float, base_device::DEVICE_GPU>;
 
 // CUDA kernel for stress Ewald sincos calculation
+// Fixed: Parallelize over G-vectors instead of atoms to avoid race conditions
 template <typename FPTYPE>
 __global__ void cal_stress_ewa_sincos_kernel(
     const int nat,
@@ -1150,36 +1151,48 @@ __global__ void cal_stress_ewa_sincos_kernel(
 {
     const FPTYPE TWO_PI = 2.0 * M_PI;
 
-    const int iat = blockIdx.y;
-    const int ig_start = blockIdx.x * blockDim.x + threadIdx.x;
-    const int ig_stride = gridDim.x * blockDim.x;
+    // Parallelize over G-vectors (ig) instead of atoms (iat)
+    const int ig = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (iat >= nat) return;
+    if (ig >= npw) return;
 
-    // Load atom information to registers
-    const FPTYPE tau_x = tau[iat * 3 + 0];
-    const FPTYPE tau_y = tau[iat * 3 + 1];
-    const FPTYPE tau_z = tau[iat * 3 + 2];
-    const FPTYPE zv = zv_facts[iat];
+    // Skip G=0 term
+    if (ig == ig_gge0) return;
 
-    // Grid-stride loop over G-vectors
-    for (int ig = ig_start; ig < npw; ig += ig_stride) {
-        // Skip G=0 term
-        if (ig == ig_gge0) continue;
+    // Local accumulation variables for this G-vector
+    FPTYPE local_rhostar_real = 0.0;
+    FPTYPE local_rhostar_imag = 0.0;
 
-        // Calculate phase: 2π * (G · τ)
-        const FPTYPE phase = TWO_PI * (gcar[ig * 3 + 0] * tau_x +
-                                       gcar[ig * 3 + 1] * tau_y +
-                                       gcar[ig * 3 + 2] * tau_z);
+    // Load G-vector components to registers
+    const FPTYPE gcar_x = gcar[ig * 3 + 0];
+    const FPTYPE gcar_y = gcar[ig * 3 + 1];
+    const FPTYPE gcar_z = gcar[ig * 3 + 2];
+
+    // Loop over all atoms for this G-vector (matches CPU implementation)
+    for (int iat = 0; iat < nat; iat++) {
+        // Load atom information to registers
+        const FPTYPE tau_x = tau[iat * 3 + 0];
+        const FPTYPE tau_y = tau[iat * 3 + 1];
+        const FPTYPE tau_z = tau[iat * 3 + 2];
+        const FPTYPE zv = zv_facts[iat];
+
+        // Calculate phase: 2π * (G · τ) - same as CPU implementation
+        const FPTYPE phase = TWO_PI * (gcar_x * tau_x +
+                                       gcar_y * tau_y +
+                                       gcar_z * tau_z);
 
         // Use CUDA intrinsic for sincos
         FPTYPE sinp, cosp;
         sincos(phase, &sinp, &cosp);
 
-        // Atomic add to accumulate structure factor
-        atomicAdd(&rhostar_real[ig], zv * cosp);
-        atomicAdd(&rhostar_imag[ig], zv * sinp);
+        // Accumulate structure factor locally (no race conditions)
+        local_rhostar_real += zv * cosp;
+        local_rhostar_imag += zv * sinp;
     }
+
+    // Store results - each thread writes to unique memory location
+    rhostar_real[ig] = local_rhostar_real;
+    rhostar_imag[ig] = local_rhostar_imag;
 }
 
 // GPU operators
@@ -1195,15 +1208,12 @@ void cal_stress_ewa_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     FPTYPE* rhostar_real,
     FPTYPE* rhostar_imag)
 {
-    // Note: Arrays are already initialized to zero in the calling function
-    // No need to initialize again here to avoid redundant operations
-
-    // Calculate optimal grid configuration for GPU load balancing
+    
+    // Calculate grid configuration for G-vector parallelization
     const int threads_per_block = THREADS_PER_BLOCK;
-    const int max_blocks_per_sm = 32; // Configurable per GPU architecture
-    const int max_blocks_x = std::min(max_blocks_per_sm, (npw + threads_per_block - 1) / threads_per_block);
+    const int num_blocks = (npw + threads_per_block - 1) / threads_per_block;
 
-    dim3 grid(max_blocks_x, nat);
+    dim3 grid(num_blocks);
     dim3 block(threads_per_block);
 
     cal_stress_ewa_sincos_kernel<FPTYPE><<<grid, block>>>(
