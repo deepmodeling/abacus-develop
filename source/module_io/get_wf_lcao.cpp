@@ -112,7 +112,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     #endif
 #else
-        ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, pes_->charge->rho[is]);
+        ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
 #endif
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -189,7 +189,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     #endif
 #else
-        ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, pes_->charge->rho[is]);
+        ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
 #endif
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -341,7 +341,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     #endif
 #else
         ModuleGint::Gint_env_k gint_env(psi->get_pointer(), &para_orb, kv.kvec_c, kv.kvec_d,
-                                        nbands, ik, PARAM.inp.nspin, PARAM.globalv.npol, pes_->charge->rho[ispin]);
+                                        nbands, nlocal, ik, PARAM.inp.nspin, PARAM.globalv.npol, pes_->charge->rho[ispin]);
 #endif
         
         for (int ib = 0; ib < nbands; ++ib)

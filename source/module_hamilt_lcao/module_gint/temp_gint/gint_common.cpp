@@ -167,7 +167,7 @@ void transfer_dm_2d_to_gint(
         HContainer<T> dm_full = gint_info.get_hr<T>(npol);
         hamilt::transferParallels2Serials(*dm[0], &dm_full);
 #else
-        HContainer<T>& dm_full = dm[0];
+        HContainer<T>& dm_full = *(dm[0]);
 #endif
         std::vector<T*> tmp_pointer(4, nullptr);
         for (int iap = 0; iap < dm_full.size_atom_pairs(); iap++)
@@ -220,6 +220,8 @@ int localIndex(int globalindex, int nblk, int nprocs, int& myproc)
 
 template <typename T>
 void wfc_2d_to_gint(const T* wfc_2d,
+                    int nbands,  // needed if MPI is disabled
+                    int nlocal,  // needed if MPI is disabled
                     const Parallel_Orbitals& pv,
                     T* wfc_gint,
                     const GintInfo& gint_info)
@@ -227,11 +229,11 @@ void wfc_2d_to_gint(const T* wfc_2d,
     ModuleBase::TITLE("Gint", "wfc_2d_to_gint");
     ModuleBase::timer::tick("Gint", "wfc_2d_to_gint");
 
-    // dimension related
-    const int nlocal = pv.desc_wfc[2];
-    const int nbands = pv.desc_wfc[3];
-
 #ifdef __MPI
+    // dimension related
+    nlocal = pv.desc_wfc[2];
+    nbands = pv.desc_wfc[3];
+
     const std::vector<int>& trace_lo = gint_info.get_trace_lo();
 
     // MPI and memory related
@@ -303,7 +305,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
     {
         for (int j = 0; j < nlocal; ++j)
         {
-            wfc_k_grid[i * nlocal + j] = psi[0](i, j);
+            wfc_gint[i * nlocal + j] = wfc_2d[i * nlocal + j];
         }
     }
 #endif
@@ -326,11 +328,15 @@ template void transfer_dm_2d_to_gint(
     std::vector<HContainer<std::complex<double>>>& dm_gint);
 template void wfc_2d_to_gint(
     const double* wfc_2d,
+    int nbands,
+    int nlocal,
     const Parallel_Orbitals& pv,
     double* wfc_grid,
     const GintInfo& gint_info);
 template void wfc_2d_to_gint(
     const std::complex<double>* wfc_2d,
+    int nbands,
+    int nlocal,
     const Parallel_Orbitals& pv,
     std::complex<double>* wfc_grid,
     const GintInfo& gint_info);

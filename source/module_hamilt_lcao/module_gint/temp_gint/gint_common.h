@@ -20,5 +20,5 @@ namespace ModuleGint
         std::vector<HContainer<T>>& dm_gint);
 
     template<typename T>
-    void wfc_2d_to_gint(const T* wfc_2d, const Parallel_Orbitals& pv, T* wfc_grid, const GintInfo& gint_info);
+    void wfc_2d_to_gint(const T* wfc_2d, int nbands, int nlocal, const Parallel_Orbitals& pv, T* wfc_grid, const GintInfo& gint_info);
 }

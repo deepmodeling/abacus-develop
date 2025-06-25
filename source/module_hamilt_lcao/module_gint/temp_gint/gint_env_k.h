@@ -18,6 +18,7 @@ class Gint_env_k : public Gint
         const std::vector<Vec3d>& kvec_c,
         const std::vector<Vec3d>& kvec_d,
         const int nbands,
+        const int nlocal,
         const int ik,
         const int nspin,
         const int npol,

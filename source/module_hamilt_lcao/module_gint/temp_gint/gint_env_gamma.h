@@ -16,12 +16,12 @@ class Gint_env_gamma : public Gint
         const double* psid,
         const Parallel_Orbitals* pv,
         const int nbands,
+        const int nlocal,
         double* rho);
 
     void cal_env_band(const int iband);
 
     private:
-
     // output
     double* rho_;
 
