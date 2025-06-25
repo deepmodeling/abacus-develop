@@ -13,7 +13,6 @@ stress_threshold=0.001
 ca=8
 # specify the test cases file
 cases_file=CASES_CPU.txt
-#cases_file=CASES_mylist.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
