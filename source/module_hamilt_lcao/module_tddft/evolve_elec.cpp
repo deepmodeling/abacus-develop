@@ -6,7 +6,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 namespace module_tddft
 {

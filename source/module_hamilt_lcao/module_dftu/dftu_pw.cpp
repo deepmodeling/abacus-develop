@@ -1,5 +1,5 @@
 #include "dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/hamilt_pwdft/onsite_projector.h"
 #include "source_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"

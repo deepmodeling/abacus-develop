@@ -1,7 +1,7 @@
 #ifndef PSI_INITIALIZER_RANDOM_H
 #define PSI_INITIALIZER_RANDOM_H
 
-#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "psi_initializer.h"
 
 /*

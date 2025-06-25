@@ -10,7 +10,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 namespace hamilt
 {

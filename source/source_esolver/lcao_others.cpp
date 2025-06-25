@@ -3,7 +3,7 @@
 #include "source_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 //
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"

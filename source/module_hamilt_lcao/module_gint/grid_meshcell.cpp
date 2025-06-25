@@ -2,7 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "source_base/memory.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 Grid_MeshCell::Grid_MeshCell()
 {

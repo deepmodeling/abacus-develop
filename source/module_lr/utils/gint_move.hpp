@@ -5,7 +5,7 @@
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
 // Here will be  the only place where GlobalCs are used (to be moved) in module_lr
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 template <typename T>
 using D2 = void(*) (T**, size_t);

@@ -4,7 +4,7 @@
 #include "ctime"
 #include "source_base/scalapack_connector.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 unkOverlap_lcao::unkOverlap_lcao()
 {

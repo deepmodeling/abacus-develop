@@ -1,7 +1,7 @@
 #include "pot_xc.h"
 
 #include "source_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 #ifdef USE_LIBXC
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"

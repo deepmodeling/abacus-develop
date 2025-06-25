@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 namespace ModuleIO
 {

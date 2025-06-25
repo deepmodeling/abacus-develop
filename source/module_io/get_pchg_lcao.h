@@ -6,7 +6,7 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "source_psi/psi.h"
 
 #include <source_base/complexmatrix.h>

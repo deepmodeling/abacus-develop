@@ -2,7 +2,7 @@
 
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 Record_adj::Record_adj()
 {

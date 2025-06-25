@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 #include <iostream>
 

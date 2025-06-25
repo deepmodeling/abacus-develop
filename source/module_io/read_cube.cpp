@@ -1,6 +1,6 @@
 #include "module_io/cube_io.h"
 #include <limits>
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include <cstring>  // use std::memcpy
 
 bool ModuleIO::read_vdata_palgrid(

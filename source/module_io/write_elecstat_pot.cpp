@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "write_elecstat_pot.h"

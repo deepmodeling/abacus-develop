@@ -7,7 +7,7 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 void Matrix_Orbs21::init(const int mode, 
                          const UnitCell& ucell,

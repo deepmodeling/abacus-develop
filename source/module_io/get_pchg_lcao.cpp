@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 
 IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)

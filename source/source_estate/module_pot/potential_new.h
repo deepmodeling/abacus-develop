@@ -3,8 +3,8 @@
 
 #include "source_base/complexmatrix.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
-#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "source_pw/hamilt_pwdft/structure_factor.h"
 #include "pot_base.h"
 
 #include <vector>

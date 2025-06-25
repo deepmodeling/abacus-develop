@@ -5,11 +5,11 @@
 #include "source_base/opt_DCsrch.h"
 #include "source_base/opt_TN.hpp"
 #include "source_estate/module_charge/charge.h"
-#include "module_hamilt_pw/hamilt_ofdft/kedf_lkt.h"
-#include "module_hamilt_pw/hamilt_ofdft/kedf_tf.h"
-#include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
-#include "module_hamilt_pw/hamilt_ofdft/kedf_wt.h"
-#include "module_hamilt_pw/hamilt_ofdft/kedf_ml.h"
+#include "source_pw/hamilt_ofdft/kedf_lkt.h"
+#include "source_pw/hamilt_ofdft/kedf_tf.h"
+#include "source_pw/hamilt_ofdft/kedf_vw.h"
+#include "source_pw/hamilt_ofdft/kedf_wt.h"
+#include "source_pw/hamilt_ofdft/kedf_ml.h"
 #include "source_psi/psi.h"
 
 namespace ModuleESolver

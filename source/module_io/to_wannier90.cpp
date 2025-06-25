@@ -5,7 +5,7 @@
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 toWannier90::toWannier90()
 {

@@ -1,7 +1,7 @@
 #include "FORCE_STRESS.h"
 
 #include "module_hamilt_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
 // new

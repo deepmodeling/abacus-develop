@@ -6,7 +6,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"

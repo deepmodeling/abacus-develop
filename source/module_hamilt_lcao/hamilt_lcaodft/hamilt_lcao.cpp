@@ -4,7 +4,7 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #include <vector>

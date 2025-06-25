@@ -5,7 +5,7 @@
 //=======================
 
 #include "RI_2D_Comm.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "source_cell/klist.h"
 
 #include <string>

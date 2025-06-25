@@ -6,7 +6,7 @@
 #include "source_estate/read_pseudo.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
 #include "module_io/json_output/init_info.h"

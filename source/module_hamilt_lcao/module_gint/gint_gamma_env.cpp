@@ -4,7 +4,7 @@
 #include "source_base/ylm.h"
 #include "source_base/array_pool.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 void Gint_Gamma::cal_env(const double* wfc, double* rho,const UnitCell& ucell)
 {

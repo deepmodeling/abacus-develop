@@ -1,7 +1,7 @@
 #include "to_wannier90_pw.h"
 
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
