@@ -1,6 +1,6 @@
 #include <complex>
 
-#include "module_elecstate/elecstate_lcao.h" // use elecstate::ElecState
+#include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "module_hamilt_general/hamilt.h" // use Hamilt<T>  

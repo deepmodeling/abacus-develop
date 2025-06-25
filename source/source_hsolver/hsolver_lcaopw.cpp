@@ -4,12 +4,12 @@
 #include "source_base/parallel_global.h" // for MPI
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_estate/elecstate_tools.h"
 
 
 #ifdef __EXX

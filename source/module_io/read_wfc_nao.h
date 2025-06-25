@@ -3,7 +3,7 @@
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_psi/psi.h"
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 
 // mohan add 2010-09-09
 namespace ModuleIO

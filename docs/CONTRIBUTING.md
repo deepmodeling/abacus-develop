@@ -54,7 +54,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
 |   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
-|-- module_elecstate            The module for defining the electronic state and its operations.
+|-- source_estate            The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
 |-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.

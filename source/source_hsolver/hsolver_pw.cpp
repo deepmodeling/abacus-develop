@@ -3,7 +3,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
@@ -13,7 +13,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_estate/elecstate_tools.h"
 
 
 #include <algorithm>

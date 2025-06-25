@@ -1,6 +1,6 @@
 #ifndef STO_DOS
 #define STO_DOS
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_che.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_func.h"

@@ -52,10 +52,10 @@ list(APPEND depend_files
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_comm.cpp
-  ../../module_elecstate/read_pseudo.cpp
-  ../../module_elecstate/cal_wfc.cpp
-  ../../module_elecstate/cal_nelec_nband.cpp
-  ../../module_elecstate/read_orb.cpp
+  ../../source_estate/read_pseudo.cpp
+  ../../source_estate/cal_wfc.cpp
+  ../../source_estate/cal_nelec_nband.cpp
+  ../../source_estate/read_orb.cpp
 )
 
 AddTest(

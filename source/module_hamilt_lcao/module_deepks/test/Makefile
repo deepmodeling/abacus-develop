@@ -52,7 +52,7 @@ VPATH=../../../source_main\
 :../../source_basis/module_ao\
 :../../module_neighbor\
 :../../source_cell\
-:../../module_elecstate\
+:../../source_estate\
 :../../\
 :../\
 :./\

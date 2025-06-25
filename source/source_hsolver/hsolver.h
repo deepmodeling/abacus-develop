@@ -1,7 +1,7 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
 
 

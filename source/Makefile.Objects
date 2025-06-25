@@ -34,11 +34,11 @@ VPATH=./src_global:\
 ./source_hsolver/kernels:\
 ./source_hsolver/genelpa:\
 ./source_hsolver/module_pexsi:\
-./module_elecstate:\
-./module_elecstate/kernels:\
-./module_elecstate/module_pot:\
-./module_elecstate/module_charge:\
-./module_elecstate/module_dm:\
+./source_estate:\
+./source_estate/kernels:\
+./source_estate/module_pot:\
+./source_estate/module_charge:\
+./source_estate/module_dm:\
 ./module_psi:\
 ./module_psi/kernels:\
 ./module_hamilt_general:\

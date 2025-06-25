@@ -1,5 +1,5 @@
 #include "stress_func.h"
-#include "module_elecstate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/H_Hartree_pw.h"
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

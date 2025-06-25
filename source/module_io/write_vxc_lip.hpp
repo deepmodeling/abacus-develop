@@ -7,7 +7,7 @@
 #include "module_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "module_elecstate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
 #include "module_io/filename.h" // use filename_output function
 #include <type_traits>

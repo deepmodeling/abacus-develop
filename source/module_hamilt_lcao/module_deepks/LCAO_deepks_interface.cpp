@@ -2,7 +2,7 @@
 #include "LCAO_deepks_interface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "module_elecstate/cal_dm.h"
+#include "source_estate/cal_dm.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_parameter/parameter.h"

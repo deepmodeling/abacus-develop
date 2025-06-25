@@ -6,11 +6,11 @@
 #include "module_io/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
-#include "module_elecstate/cal_ux.h"
+#include "source_estate/cal_ux.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------

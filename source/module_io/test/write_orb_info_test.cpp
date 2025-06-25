@@ -6,7 +6,7 @@
 #include "module_io/write_orb_info.h"
 #include "source_cell/unitcell.h"
 #include "prepare_unitcell.h"
-#include "module_elecstate/read_pseudo.h"
+#include "source_estate/read_pseudo.h"
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}

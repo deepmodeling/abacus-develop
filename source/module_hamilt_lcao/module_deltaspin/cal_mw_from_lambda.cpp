@@ -8,13 +8,13 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "module_elecstate/elecstate_pw.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_estate/elecstate_pw.h"
+#include "source_estate/elecstate_tools.h"
 
 #ifdef __LCAO
-#include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/elecstate_tools.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_estate/elecstate_tools.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #endif
 

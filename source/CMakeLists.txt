@@ -1,7 +1,7 @@
 add_subdirectory(source_base)
 add_subdirectory(source_cell)
 add_subdirectory(module_psi)
-add_subdirectory(module_elecstate)
+add_subdirectory(source_estate)
 add_subdirectory(module_hamilt_general)
 add_subdirectory(module_hamilt_pw)
 add_subdirectory(module_hamilt_lcao)
@@ -37,7 +37,7 @@ list(APPEND device_srcs
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/dngvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
-  module_elecstate/kernels/elecstate_op.cpp
+  source_estate/kernels/elecstate_op.cpp
 
   # module_psi/kernels/psi_memory_op.cpp
   # module_psi/kernels/device.cpp
@@ -67,7 +67,7 @@ if(USE_CUDA)
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/dngvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
-    module_elecstate/kernels/cuda/elecstate_op.cu
+    source_estate/kernels/cuda/elecstate_op.cu
 
     # module_psi/kernels/cuda/memory_op.cu
     source_base/module_device/cuda/memory_op.cu
@@ -94,7 +94,7 @@ if(USE_ROCM)
     source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/dngvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
-    module_elecstate/kernels/rocm/elecstate_op.hip.cu
+    source_estate/kernels/rocm/elecstate_op.hip.cu
 
     # module_psi/kernels/rocm/memory_op.hip.cu
     source_base/module_device/rocm/memory_op.hip.cu

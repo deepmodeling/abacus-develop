@@ -3,7 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "module_elecstate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/charge_mixing.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_io/restart.h"
 #include "module_relax/relax_driver.h"
@@ -11,7 +11,7 @@
 #include "module_hamilt_general/module_xc/exx_info.h"
 #include "module_ri/exx_lip.h"
 #endif
-#include "module_elecstate/magnetism.h"
+#include "source_estate/magnetism.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #ifdef __CUDA
 #include "cublas_v2.h"

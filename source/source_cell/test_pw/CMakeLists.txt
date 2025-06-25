@@ -14,9 +14,9 @@ AddTest(
 	../atom_pseudo.cpp ../pseudo.cpp ../read_pp.cpp ../read_pp_complete.cpp ../read_pp_upf201.cpp ../read_pp_upf100.cpp
   ../read_stru.cpp   ../read_atom_species.cpp
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp 
-  ../../module_elecstate/read_pseudo.cpp ../../module_elecstate/cal_nelec_nband.cpp
-  ../../module_elecstate/read_orb.cpp    ../../source_cell/print_cell.cpp
-  ../../module_elecstate/cal_wfc.cpp
+  ../../source_estate/read_pseudo.cpp ../../source_estate/cal_nelec_nband.cpp
+  ../../source_estate/read_orb.cpp    ../../source_cell/print_cell.cpp
+  ../../source_estate/cal_wfc.cpp
 )
 
 find_program(BASH bash)

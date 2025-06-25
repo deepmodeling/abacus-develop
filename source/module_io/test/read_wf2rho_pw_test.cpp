@@ -6,8 +6,8 @@
 #define private public
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/read_wf2rho_pw.h"

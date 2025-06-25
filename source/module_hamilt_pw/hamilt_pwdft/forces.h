@@ -8,7 +8,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "source_base/kernels/math_kernel_op.h"

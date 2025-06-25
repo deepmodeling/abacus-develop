@@ -10,7 +10,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
-#include "module_elecstate/module_charge/charge.h"
+#include "source_estate/module_charge/charge.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"

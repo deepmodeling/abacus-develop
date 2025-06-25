@@ -9,7 +9,7 @@
 #include "spin_constrain.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "module_elecstate/elecstate_lcao.h"
+#include "source_estate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 

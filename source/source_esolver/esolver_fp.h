@@ -14,10 +14,10 @@
 #include "source_cell/module_symmetry/symmetry.h"
 
 //! electronic states
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 
 //! charge extrapolation
-#include "module_elecstate/module_charge/charge_extra.h"
+#include "source_estate/module_charge/charge_extra.h"
 
 //! solvation model
 #include "module_hamilt_general/module_surchem/surchem.h"

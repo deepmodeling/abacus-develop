@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_pw.h"
 
 // This routine computes the contribution to atomic forces due
 // to the dependence of the Q function on the atomic position.

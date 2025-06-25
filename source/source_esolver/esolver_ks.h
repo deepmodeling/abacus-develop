@@ -11,7 +11,7 @@
 // for k-points in Brillouin zone
 #include "source_cell/klist.h"
 // for charge mixing
-#include "module_elecstate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/charge_mixing.h"
 // for electronic wave functions
 #include "module_psi/psi.h"
 // for Hamiltonian

@@ -7,8 +7,8 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_elecstate/occupy.h"
+#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/occupy.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
@@ -18,7 +18,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
 #include "source_base/memory.h"
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_lcaopw.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"

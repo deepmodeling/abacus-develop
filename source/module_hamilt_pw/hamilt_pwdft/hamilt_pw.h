@@ -3,7 +3,7 @@
 
 #include "source_base/macros.h"
 #include "source_cell/klist.h"
-#include "module_elecstate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_esolver/esolver_ks_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"

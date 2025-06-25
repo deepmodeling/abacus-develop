@@ -21,12 +21,12 @@ add_executable(
     ../../../module_hamilt_pw/hamilt_pwdft/soc.cpp
     ../../../module_io/output.cpp
     ../../../module_io/sparse_matrix.cpp
-    ../../../module_elecstate/read_pseudo.cpp
-    ../../../module_elecstate/cal_wfc.cpp
-    ../../../module_elecstate/read_orb.cpp
-    ../../../module_elecstate/cal_nelec_nband.cpp
-    ../../../module_elecstate/module_dm/density_matrix.cpp
-    ../../../module_elecstate/module_dm/density_matrix_io.cpp
+    ../../../source_estate/read_pseudo.cpp
+    ../../../source_estate/cal_wfc.cpp
+    ../../../source_estate/read_orb.cpp
+    ../../../source_estate/cal_nelec_nband.cpp
+    ../../../source_estate/module_dm/density_matrix.cpp
+    ../../../source_estate/module_dm/density_matrix_io.cpp
     ../../../module_hamilt_lcao/module_hcontainer/base_matrix.cpp 
     ../../../module_hamilt_lcao/module_hcontainer/hcontainer.cpp 
     ../../../module_hamilt_lcao/module_hcontainer/atom_pair.cpp

@@ -4,7 +4,7 @@
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/cal_ux.h"
+#include "source_estate/cal_ux.h"
 
 #ifdef USE_LIBXC
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"

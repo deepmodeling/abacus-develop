@@ -5,9 +5,9 @@
 
 #include "rdmft.h"
 #include "module_rdmft/rdmft_tools.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/module_dm/density_matrix.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_charge/symmetry_rho.h"
 
 
 namespace rdmft

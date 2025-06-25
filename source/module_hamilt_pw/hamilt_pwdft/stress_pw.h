@@ -1,7 +1,7 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_STRESS_PW_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_STRESS_PW_H
 
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "stress_func.h"
 
