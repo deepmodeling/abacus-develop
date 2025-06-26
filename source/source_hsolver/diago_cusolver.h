@@ -2,7 +2,7 @@
 #define DIAGOCUSOLVER_H
 
 #include "source_base/macros.h"   // GetRealType
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 // #include "source_hsolver/kernels/cuda/dngvd_op.cu"

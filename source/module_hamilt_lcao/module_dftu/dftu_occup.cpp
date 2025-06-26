@@ -1,7 +1,7 @@
 #include "dftu.h"
 #include "source_base/timer.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #endif

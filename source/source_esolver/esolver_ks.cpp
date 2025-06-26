@@ -5,13 +5,13 @@
 
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 
 #include "source_cell/cal_atoms_info.h"
-#include "module_elecstate/elecstate_print.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_estate/elecstate_print.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hsolver/hsolver.h"
 #include "module_io/cube_io.h"
 

@@ -4,7 +4,7 @@
 #include "esolver_ks_lcao.h"
 #include "source_base/scalapack_connector.h" // Cpxgemr2d
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 namespace ModuleESolver
 {

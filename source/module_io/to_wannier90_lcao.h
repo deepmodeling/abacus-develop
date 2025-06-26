@@ -23,8 +23,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_psi/psi.h"
+#include "source_pw/hamilt_pwdft/global.h"
+#include "source_psi/psi.h"
 #include "single_R_io.h"
 #include "to_wannier90.h"
 

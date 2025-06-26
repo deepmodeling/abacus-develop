@@ -11,8 +11,8 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "module_hamilt_general/operator.h"
-#include "module_elecstate/elecstate.h"
+#include "source_hamilt/operator.h"
+#include "source_estate/elecstate.h"
 
 namespace spinconstrain
 {

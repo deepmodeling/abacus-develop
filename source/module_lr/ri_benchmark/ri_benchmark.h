@@ -1,7 +1,7 @@
 #ifdef __EXX
 #pragma once
 #include "source_cell/unitcell.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #include <RI/global/Tensor.h>
 namespace RI_Benchmark

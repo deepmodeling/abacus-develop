@@ -1,7 +1,7 @@
 #pragma once
 #include <typeinfo>
-#include "module_hamilt_general/hamilt.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_hamilt/hamilt.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/operator_casida/operator_lr_diag.h"
 #include "module_lr/operator_casida/operator_lr_hxc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"

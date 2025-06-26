@@ -5,8 +5,8 @@
 
 #include "rdmft.h"
 #include "module_rdmft/rdmft_tools.h"
-#include "module_psi/psi.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "source_psi/psi.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
 #include "module_ri/RI_2D_Comm.h"

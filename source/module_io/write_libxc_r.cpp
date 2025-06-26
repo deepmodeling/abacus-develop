@@ -6,9 +6,9 @@
 #ifdef USE_LIBXC
 
 #include "write_libxc_r.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_general/module_xc/xc_functional_libxc.h"
-#include "module_elecstate/module_charge/charge.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional_libxc.h"
+#include "source_estate/module_charge/charge.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "module_io/cube_io.h"

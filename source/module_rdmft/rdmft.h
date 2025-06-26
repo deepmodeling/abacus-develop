@@ -6,8 +6,8 @@
 #define RDMFT_H
 
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_psi/psi.h"
+#include "source_pw/hamilt_pwdft/global.h"
+#include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
 #include "source_base/parallel_2d.h"

@@ -8,7 +8,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 AddTest(
@@ -18,7 +18,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 AddTest(
@@ -28,7 +28,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 AddTest(
@@ -38,7 +38,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 AddTest(
@@ -48,7 +48,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 AddTest(
@@ -58,7 +58,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../source_basis/module_ao/parallel_orbitals.cpp 
   ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
-  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  tmp_mocks.cpp ../../../../source_hamilt/operator.cpp
 )
 
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

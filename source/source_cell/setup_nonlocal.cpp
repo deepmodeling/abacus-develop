@@ -4,8 +4,8 @@
 #include "module_parameter/parameter.h"
 
 #ifdef __LCAO
-//#include "../module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_pw/hamilt_pwdft/soc.h"
+//#include "../source_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/soc.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.
 

@@ -7,7 +7,7 @@
 #define RI_UTIL_HPP
 
 #include "RI_Util.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "source_base/global_function.h"
 
 namespace RI_Util

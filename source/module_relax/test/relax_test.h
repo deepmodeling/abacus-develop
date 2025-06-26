@@ -1,4 +1,4 @@
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/hamilt_pwdft/structure_factor.h"
 
 namespace GlobalC
 {

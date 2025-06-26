@@ -11,11 +11,11 @@
 // for k-points in Brillouin zone
 #include "source_cell/klist.h"
 // for charge mixing
-#include "module_elecstate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/charge_mixing.h"
 // for electronic wave functions
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 // for Hamiltonian
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 
 namespace ModuleESolver
 {

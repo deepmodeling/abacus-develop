@@ -3,7 +3,7 @@
 #include "../../source_base/blas_connector.h"
 #include "mpi.h"
 #include "source_base/parallel_reduce.h"
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "source_pw/hamilt_pwdft/hamilt_pw.h"
 
 namespace DIAGOTEST
 {
@@ -445,7 +445,7 @@ void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const 
 }
 
 //Mock function h_psi
-#include "module_hamilt_pw/hamilt_pwdft/operator_pw/operator_pw.h"
+#include "source_pw/hamilt_pwdft/operator_pw/operator_pw.h"
 template<typename T>
 class OperatorMock : public hamilt::Operator<T>
 {

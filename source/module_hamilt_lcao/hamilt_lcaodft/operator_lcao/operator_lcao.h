@@ -1,8 +1,8 @@
 #ifndef OPERATORLCAO_H
 #define OPERATORLCAO_H
 #include "source_base/vector3.h"
-#include "module_hamilt_general/matrixblock.h"
-#include "module_hamilt_general/operator.h"
+#include "source_hamilt/matrixblock.h"
+#include "source_hamilt/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 

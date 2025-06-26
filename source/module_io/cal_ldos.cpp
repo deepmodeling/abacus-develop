@@ -2,7 +2,7 @@
 
 #include "cal_dos.h"
 #include "cube_io.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <type_traits>

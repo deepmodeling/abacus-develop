@@ -48,11 +48,11 @@ include Makefile.Objects
 VPATH=../../../source_main\
 :../../source_base\
 :../../module_io\
-:../../module_hamilt_pw/hamilt_pwdft\
+:../../source_pw/hamilt_pwdft\
 :../../source_basis/module_ao\
 :../../module_neighbor\
 :../../source_cell\
-:../../module_elecstate\
+:../../source_estate\
 :../../\
 :../\
 :./\

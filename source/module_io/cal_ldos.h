@@ -1,8 +1,8 @@
 #ifndef CAL_LDOS_H
 #define CAL_LDOS_H
 
-#include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_estate/elecstate_pw.h"
 
 namespace ModuleIO
 {

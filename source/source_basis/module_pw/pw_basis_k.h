@@ -2,7 +2,7 @@
 #define PWBASISK_H
 
 #include "pw_basis.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/module_device/device.h"
 namespace ModulePW
 {

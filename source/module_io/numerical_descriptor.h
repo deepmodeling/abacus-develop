@@ -9,7 +9,7 @@
 #include "../source_base/intarray.h"
 #include "../source_base/complexmatrix.h"
 #include "bessel_basis.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 //==========================================================
 // CLASS :
 // NAME :  Numerical_Descriptor 

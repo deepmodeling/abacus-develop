@@ -3,15 +3,15 @@
 // DATE : 2024-03-11
 //==========================================================
 #include "module_rdmft/rdmft_tools.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 // used by class Veff_rdmft
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_elecstate/module_pot/H_Hartree_pw.h"
-#include "module_elecstate/module_pot/pot_local.h"
-#include "module_elecstate/module_pot/pot_xc.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/pot_local.h"
+#include "source_estate/module_pot/pot_xc.h"
+#include "source_pw/hamilt_pwdft/structure_factor.h"
 
 #include <iostream>
 #include <cmath>

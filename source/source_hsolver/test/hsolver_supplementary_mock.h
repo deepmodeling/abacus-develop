@@ -1,5 +1,5 @@
 #pragma once
-#include "module_elecstate/elecstate_pw.h"
+#include "source_estate/elecstate_pw.h"
 
 namespace elecstate
 {
@@ -94,7 +94,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 } // namespace elecstate
 
 // mock of Stochastic_WF
-#include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
+#include "source_pw/hamilt_stodft/sto_wf.h"
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
 {

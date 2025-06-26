@@ -6,7 +6,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_relax/ions_move_basic.h"
 

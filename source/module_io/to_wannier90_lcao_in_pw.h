@@ -17,8 +17,8 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_psi/psi.h"
+#include "source_pw/hamilt_pwdft/global.h"
+#include "source_psi/psi.h"
 #include "single_R_io.h"
 #include "to_wannier90.h"
 #include "to_wannier90_pw.h"
@@ -32,7 +32,7 @@
 #ifdef __LCAO
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-#include "module_psi/psi_initializer.h"
+#include "source_psi/psi_initializer.h"
 
 class toWannier90_LCAO_IN_PW : public toWannier90_PW
 {

@@ -5,21 +5,21 @@
 #ifndef RDMFT_TOOLS_H
 #define RDMFT_TOOLS_H
 
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_base/blas_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/parallel_reduce.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_pw/hamilt_pwdft/global.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/density_matrix.h"
 
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"

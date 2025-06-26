@@ -18,10 +18,10 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
-#include "module_elecstate/magnetism.h"
-#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_estate/magnetism.h"
+#include "source_pw/hamilt_pwdft/VL_in_pw.h"
+#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
 #undef private
 bool berryphase::berry_phase_flag = false;

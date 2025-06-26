@@ -9,7 +9,7 @@
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 void Gint_k::distribute_pvdpR_sparseMatrix(
     const int current_spin,

@@ -4,7 +4,7 @@
 /// once the GlobalC::exx_info has been deleted, this include can be gone 
 /// mohan note 2024-07-21
 #ifdef __EXX
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #endif
 
 namespace LCAO_domain

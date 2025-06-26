@@ -1,6 +1,6 @@
 #include "source_base/element_name.h"
 #include "source_base/parallel_comm.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/cube_io.h"
 #include "module_parameter/parameter.h"
 
