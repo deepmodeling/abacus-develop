@@ -453,12 +453,6 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("nbands_istate");
-        item.annotation = "number of bands around Fermi level for get_wf and get_pchg calulation";
-        read_sync_int(input.nbands_istate);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_pchg");
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.read_value

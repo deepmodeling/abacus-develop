@@ -401,7 +401,6 @@ struct Input_para
     bool out_vecpot = false;              ///< output the vector potential or not
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                     ///< rpa calculation
-    int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
     std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
