@@ -6,7 +6,7 @@
 #define private public
 #define protected public
 #include "source_esolver/esolver_lj.h"
-#include "module_md/langevin.h"
+#include "source_md/langevin.h"
 #include "setcell.h"
 #define doublethreshold 1e-12
 

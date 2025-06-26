@@ -6,7 +6,7 @@
 #define private public
 #define protected public
 #include "source_esolver/esolver_lj.h"
-#include "module_md/nhchain.h"
+#include "source_md/nhchain.h"
 #include "setcell.h"
 #define doublethreshold 1e-12
 /************************************************

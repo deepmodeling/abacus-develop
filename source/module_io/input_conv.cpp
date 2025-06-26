@@ -41,7 +41,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "module_md/md_func.h"
+#include "source_md/md_func.h"
 
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c) {
