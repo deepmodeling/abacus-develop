@@ -1,15 +1,10 @@
 #ifndef GET_WF_LCAO_H
 #define GET_WF_LCAO_H
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/klist.h"
-#include "source_estate/elecstate.h"
+
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
-#include "source_psi/psi.h"
+#include "source_estate/elecstate.h"
 
-#include <stdexcept>
 class Get_wf_lcao
 {
   public:
@@ -19,9 +14,7 @@ class Get_wf_lcao
     /// For gamma_only
     void begin(const UnitCell& ucell,
                const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
-               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gg,
@@ -39,9 +32,7 @@ class Get_wf_lcao
     /// tmp, delete after Gint is refactored.
     void begin(const UnitCell& ucell,
                const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
-               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_k& gg,
@@ -62,9 +53,7 @@ class Get_wf_lcao
     /// For multi-k
     void begin(const UnitCell& ucell,
                const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
-               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_k& gk,
@@ -82,9 +71,7 @@ class Get_wf_lcao
     /// tmp, delete after Gint is refactored.
     void begin(const UnitCell& ucell,
                const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* pw_rhod,
                const ModulePW::PW_Basis_K* pw_wfc,
-               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Grid& pgrid,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gk,
@@ -103,12 +90,9 @@ class Get_wf_lcao
     };
 
   private:
+    void prepare_get_wf(std::ofstream& ofs_running);
 
-    void prepare_get_wf(std::ofstream &ofs_running);
-
-    void select_bands(const std::vector<int>& out_wfc_kb,
-                      const int nbands,
-                      const int fermi_band);
+    void select_bands(const std::vector<int>& out_wfc_kb, const int nbands, const int fermi_band);
 
     void set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
                     const int& ik,

@@ -332,9 +332,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         {
             get_wf.begin(ucell,
                          this->psi,
-                         this->pw_rhod,
                          this->pw_wfc,
-                         this->pw_big,
                          this->Pgrid,
                          this->pv,
                          this->GG,
@@ -353,9 +351,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         {
             get_wf.begin(ucell,
                          this->psi,
-                         this->pw_rhod,
                          this->pw_wfc,
-                         this->pw_big,
                          this->Pgrid,
                          this->pv,
                          this->GK,

@@ -3,7 +3,6 @@
 #include "module_io/cube_io.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_pw/hamilt_pwdft/global.h"
 
 Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
     : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
@@ -70,9 +69,9 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
 
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
-            gg.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+            gg.initialize_pvpR(*ucell_in, GridD_in, nspin);
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
-            Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+            Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
             gg.cal_gint(&inout);
 
             // A solution to replace the original implementation of the following code:
@@ -165,9 +164,9 @@ void Get_pchg_lcao::begin(Gint_k& gk,
 
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
-                    gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+                    gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
                     gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                    Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+                    Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                     gk.cal_gint(&inout);
 
                     // Using std::vector to replace the original double** rho_save
@@ -207,9 +206,9 @@ void Get_pchg_lcao::begin(Gint_k& gk,
 
                 DM.init_DMR(GridD_in, ucell_in);
                 DM.cal_DMR();
-                gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+                gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+                Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                 gk.cal_gint(&inout);
 
                 // Using std::vector to replace the original double** rho_save

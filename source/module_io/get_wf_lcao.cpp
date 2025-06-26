@@ -2,13 +2,7 @@
 
 #include "module_io/cube_io.h"
 #include "module_io/write_wfc_pw.h"
-#include "module_io/write_wfc_r.h"
-#include "module_parameter/parameter.h"
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/memory.h"
-#include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -22,9 +16,7 @@ Get_wf_lcao::~Get_wf_lcao()
 // For gamma_only
 void Get_wf_lcao::begin(const UnitCell& ucell,
                         const psi::Psi<double>* psid,
-                        const ModulePW::PW_Basis* pw_rhod,
                         const ModulePW::PW_Basis_K* pw_wfc,
-                        const ModulePW::PW_Basis_Big* pw_big,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
                         Gint_Gamma& gg,
@@ -136,8 +128,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     {
         if (bands_picked_[ib])
         {
-            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
-
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
@@ -226,13 +216,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 // For multi-k
 void Get_wf_lcao::begin(const UnitCell& ucell,
                         const psi::Psi<std::complex<double>>* psi,
-                        const ModulePW::PW_Basis* pw_rhod,
                         const ModulePW::PW_Basis_K* pw_wfc,
-                        const ModulePW::PW_Basis_Big* pw_big,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
                         Gint_k& gk,
-                        const int& out_wf,
+                        const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
                         const std::vector<int>& out_wfc_norm,
@@ -269,7 +257,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
 
-    // if (out_wf || out_wf_r)
+    // if (out_wfc_pw || out_wf_r)
     psi_g.resize(nks, nbands, pw_wfc->npwk_max);
 
     // Set this->bands_picked_
@@ -340,7 +328,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               3,
                                               1);
 
-                // if (out_wf || out_wf_r)
+                // if (out_wfc_pw || out_wf_r)
                 psi_g.fix_k(ik);
                 this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
             }
@@ -355,7 +343,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                            PARAM.globalv.npol,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
-                           out_wf,
+                           out_wfc_pw,
                            PARAM.inp.ecutwfc,
                            global_out_dir,
                            psi_g,
@@ -363,8 +351,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                            pw_wfc,
                            ofs_running);
 
-    std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
+    // Set this->bands_picked_
+    this->select_bands(out_wfc_re_im, nbands, fermi_band);
 
+    // Calculate out_wfc_re_im
     for (int ib = 0; ib < nbands; ++ib)
     {
         if (bands_picked_[ib])
@@ -373,7 +363,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
             for (int ik = 0; ik < nks; ++ik)
             {
                 const int ispin = kv.isk[ik];
-                std::cout << " Processing band " << ib + 1 << ", k-point " << ik << ", spin " << ispin + 1 << std::endl;
 
                 psi_g.fix_k(ik);
 
@@ -431,9 +420,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nbands, const int fermi_band)
 {
     ModuleBase::TITLE("Get_wf_lcao", "select_bands");
-
-    int bands_below = 0;
-    int bands_above = 0;
 
     this->bands_picked_.resize(nbands);
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
@@ -549,7 +535,7 @@ int Get_wf_lcao::set_wfc_grid(const int naroc[2],
                               T** out,
                               const std::vector<int>& trace_lo)
 {
-    ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
+    ModuleBase::TITLE("Get_wf_lcao", "set_wfc_grid");
     if (!out)
     {
         return 0;
@@ -599,8 +585,8 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
                                  T** lowf_grid,
                                  const std::vector<int>& trace_lo)
 {
-    ModuleBase::TITLE(" Local_Orbital_wfc", "wfc_2d_to_grid");
-    ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
+    ModuleBase::TITLE("Get_wf_lcao", "wfc_2d_to_grid");
+    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
 
     // dimension related
     const int nlocal = pv.desc_wfc[2];
@@ -659,7 +645,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
             // this operation will let all processors have the same wfc_grid
         }
     }
-    ModuleBase::timer::tick("Local_Orbital_wfc", "wfc_2d_to_grid");
+    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
 }
 
 template void Get_wf_lcao::wfc_2d_to_grid(const double* lowf_2d,
