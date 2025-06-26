@@ -1,8 +1,8 @@
 etotref -197.1405644417785
 etotperatomref -98.5702822209
-wf1s1k1.cube 22.08506167
-wf2s1k1imag.cube 7.845633773e-07
-wf2s1k1real.cube 2.250475858e-07
+wfi1s1k1.cube 22.08506167
+wfi2s1k1im.cube 7.845633773e-07
+wfi2s1k1re.cube 2.250475858e-07
 pointgroupref T_d
 spacegroupref O_h
 nksibzref 1

@@ -293,11 +293,12 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                            PARAM.inp.nbands,
                            PARAM.inp.nelec,
                            PARAM.inp.nspin,
-                           PARAM.globalv.global_out_dir,
                            &ucell,
                            this->Pgrid,
                            &this->gd,
-                           this->kv);
+                           this->kv,
+                           PARAM.globalv.global_out_dir,
+                           GlobalV::ofs_running);
         }
         else
         {
@@ -312,11 +313,12 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                            PARAM.inp.nbands,
                            PARAM.inp.nelec,
                            PARAM.inp.nspin,
-                           PARAM.globalv.global_out_dir,
                            &ucell,
                            this->Pgrid,
                            &this->gd,
                            this->kv,
+                           PARAM.globalv.global_out_dir,
+                           GlobalV::ofs_running,
                            PARAM.inp.if_separate_k,
                            this->chr.ngmc);
         }
@@ -339,13 +341,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
-                         PARAM.inp.nbands_istate,
                          PARAM.inp.out_wfc_norm,
                          PARAM.inp.out_wfc_re_im,
                          PARAM.inp.nbands,
                          PARAM.inp.nspin,
                          PARAM.globalv.nlocal,
-                         PARAM.globalv.global_out_dir);
+                         PARAM.globalv.global_out_dir,
+                         GlobalV::ofs_running);
         }
         else
         {
@@ -360,13 +362,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.inp.out_wfc_pw,
                          this->kv,
                          PARAM.inp.nelec,
-                         PARAM.inp.nbands_istate,
                          PARAM.inp.out_wfc_norm,
                          PARAM.inp.out_wfc_re_im,
                          PARAM.inp.nbands,
                          PARAM.inp.nspin,
                          PARAM.globalv.nlocal,
-                         PARAM.globalv.global_out_dir);
+                         PARAM.globalv.global_out_dir,
+                         GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }

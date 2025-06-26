@@ -99,7 +99,7 @@ void write_dos_lcao(
         }
     }
 
-    ofs_running << " #DOS CALCULATIONS ENDS# " << std::endl;
+    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
 
     return;
 }

@@ -1,7 +1,7 @@
-wf1s1.cube -11.7665927
-wf1s2.cube -11.76659269
-wf2s1imag.cube 0
-wf2s1real.cube -11.76659269
-wf2s2imag.cube 0
-wf2s2real.cube 3.042711753e-14
+wfi1s1.cube -11.7665927
+wfi1s2.cube -11.76659269
+wfi2s1im.cube 0
+wfi2s1re.cube -11.76659269
+wfi2s2im.cube 0
+wfi2s2re.cube 3.042711753e-14
 totaltimeref 0.36

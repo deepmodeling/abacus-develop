@@ -31,11 +31,12 @@ class Get_pchg_lcao
                const int nbands,
                const double nelec,
                const int nspin,
-               const std::string& global_out_dir,
                const UnitCell* ucell_in,
                const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
-               const K_Vectors& kv);
+               const K_Vectors& kv,
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running);
 
     // For multi-k
     void begin(Gint_k& gk,
@@ -49,15 +50,18 @@ class Get_pchg_lcao
                const int nbands,
                const double nelec,
                const int nspin,
-               const std::string& global_out_dir,
                UnitCell* ucell_in,
                const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv,
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running,
                const bool if_separate_k,
                const int chr_ngmc);
 
   private:
+    void prepare_get_pchg(std::ofstream& ofs_running);
+
     /**
      * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
      *
@@ -103,4 +107,4 @@ class Get_pchg_lcao
     psi::Psi<std::complex<double>>* psi_k = nullptr;
     const Parallel_Orbitals* ParaV;
 };
-#endif
+#endif // GET_PCHG_LCAO_H

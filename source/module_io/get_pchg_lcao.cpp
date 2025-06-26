@@ -29,11 +29,12 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
-                          const std::string& global_out_dir,
                           const UnitCell* ucell_in,
                           const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
-                          const K_Vectors& kv)
+                          const K_Vectors& kv,
+                          const std::string& global_out_dir,
+                          std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
@@ -43,6 +44,8 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    prepare_get_pchg(ofs_running);
 
     // Set this->bands_picked_
     select_bands(out_pchg, nbands, fermi_band);
@@ -88,7 +91,7 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
                 std::stringstream ssc;
                 ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                GlobalV::ofs_running << " Writing cube file " << ssc.str() << std::endl;
+                ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
@@ -113,11 +116,12 @@ void Get_pchg_lcao::begin(Gint_k& gk,
                           const int nbands,
                           const double nelec,
                           const int nspin,
-                          const std::string& global_out_dir,
                           UnitCell* ucell_in,
                           const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv,
+                          const std::string& global_out_dir,
+                          std::ofstream& ofs_running,
                           const bool if_separate_k,
                           const int chr_ngmc)
 {
@@ -126,6 +130,8 @@ void Get_pchg_lcao::begin(Gint_k& gk,
     std::cout << " Calculate |psi(i)|^2 for selected electronic states (multi-k)." << std::endl;
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    prepare_get_pchg(ofs_running);
 
     // Set this->bands_picked_
     select_bands(out_pchg, nbands, fermi_band);
@@ -178,6 +184,8 @@ void Get_pchg_lcao::begin(Gint_k& gk,
                         std::stringstream ssc;
                         ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
 
+                        ofs_running << " Writing cube file " << ssc.str() << std::endl;
+
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,
                                                       rho_save[is].data(),
@@ -229,6 +237,8 @@ void Get_pchg_lcao::begin(Gint_k& gk,
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
+
+                    ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_vdata_palgrid(pgrid,
@@ -442,4 +452,23 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                                 this->ParaV->desc);
     }
 }
-#endif
+#endif // __MPI
+
+void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running)
+{
+    ofs_running << "\n\n";
+    ofs_running << " GET_PCHG CALCULATION BEGINS" << std::endl;
+
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " |  Here we use real-space (r) grid integral technique to calculate   |" << std::endl;
+    ofs_running << " |  the decomposed charge density |psi(i,r)|^2 for each electronic    |" << std::endl;
+    ofs_running << " |  state i. The |psi(i,r)|^2 is printed out using numerical atomic   |" << std::endl;
+    ofs_running << " |  orbitals as basis set.                                            |" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
+    ofs_running << "\n\n";
+
+    ofs_running << std::setprecision(6);
+}

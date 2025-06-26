@@ -28,13 +28,13 @@ class Get_wf_lcao
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
-               const int nbands_istate,
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
-               const std::string& global_out_dir);
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running);
 
     /// tmp, delete after Gint is refactored.
     void begin(const UnitCell& ucell,
@@ -48,13 +48,13 @@ class Get_wf_lcao
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
-               const int nbands_istate,
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
-               const std::string& global_out_dir)
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running)
     {
         throw std::logic_error("gint_k should use with complex psi.");
     };
@@ -71,13 +71,13 @@ class Get_wf_lcao
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
-               const int nbands_istate,
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
-               const std::string& global_out_dir);
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running);
 
     /// tmp, delete after Gint is refactored.
     void begin(const UnitCell& ucell,
@@ -91,26 +91,23 @@ class Get_wf_lcao
                const int& out_wfc_pw,
                const K_Vectors& kv,
                const double nelec,
-               const int nbands_istate,
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
-               const std::string& global_out_dir)
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running)
     {
         throw std::logic_error("gint_gamma should use with real psi.");
     };
 
   private:
 
-    void prepare_get_wf(std::ofstream &ofs_running, const int nelec, int& fermi_band);
+    void prepare_get_wf(std::ofstream &ofs_running);
 
-    void select_bands(const int nbands_istate,
-                      const std::vector<int>& out_wfc_kb,
+    void select_bands(const std::vector<int>& out_wfc_kb,
                       const int nbands,
-                      const double nelec,
-                      const int mode,
                       const int fermi_band);
 
     void set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
@@ -137,9 +134,9 @@ class Get_wf_lcao
                      const std::vector<int>& trace_lo);
     template <typename T>
     void wfc_2d_to_grid(const T* wfc_2d, const Parallel_Orbitals& pv, T** wfc_grid, const std::vector<int>& trace_lo);
-#endif
+#endif // __MPI
 
     std::vector<int> bands_picked_;
     const elecstate::ElecState* pes_ = nullptr;
 };
-#endif
+#endif // GET_WF_LCAO_H

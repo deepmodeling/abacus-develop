@@ -1,14 +1,14 @@
 #include "get_wf_lcao.h"
 
+#include "module_io/cube_io.h"
+#include "module_io/write_wfc_pw.h"
+#include "module_io/write_wfc_r.h"
+#include "module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/cube_io.h"
-#include "module_io/write_wfc_pw.h"
-#include "module_io/write_wfc_r.h"
-#include "module_parameter/parameter.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -31,18 +31,22 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
-                        const int nbands_istate,
                         const std::vector<int>& out_wfc_norm,
                         const std::vector<int>& out_wfc_re_im,
                         const int nbands,
                         const int nspin,
                         const int nlocal,
-                        const std::string& global_out_dir)
+                        const std::string& global_out_dir,
+                        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
-    int fermi_band = 0;
-    prepare_get_wf(GlobalV::ofs_running, nelec, fermi_band);
+    // if ucell is odd, it's correct,
+    // if ucell is even, it's also correct.
+    // +1.0e-8 in case like (2.999999999+1)/2
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    prepare_get_wf(ofs_running);
 
     // allocate grid wave functions for gamma_only
     std::vector<double**> wfc_gamma_grid(nspin);
@@ -63,24 +67,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
     const double mem_size = sizeof(double) * double(gg.gridt->lgd) * double(nbands) * double(nspin) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
-    int mode_norm = 0;
-    const int norm_size = static_cast<int>(out_wfc_norm.size());
-
-    if (nbands_istate > 0 && norm_size == 0)
-    {
-        mode_norm = 1;
-    }
-    else if (norm_size > 0)
-    {
-        // If out_wfc_norm is not empty, set mode to 2
-        mode_norm = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_wfc_norm`!" << std::endl;
-    }
-
-    // Set this->bands_picked_ according to the mode
-    this->select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
+    // Set this->bands_picked_
+    this->select_bands(out_wfc_norm, nbands, fermi_band);
 
     // Calculate out_wfc_norm
     for (int ib = 0; ib < nbands; ++ib)
@@ -115,7 +105,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // pint out information
                 std::stringstream ss_file;
-                ss_file << "wf" << ib + 1 << "s" << is + 1 << ".cube";
+                ss_file << "wfi" << ib + 1 << "s" << is + 1 << ".cube";
 
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
@@ -123,7 +113,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 std::stringstream ss_info;
                 ss_info << "Wave func. " << ib + 1 << " spin " << is + 1 << " saved in";
 
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
+                ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
@@ -138,23 +128,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    int mode_re_im = 0;
-
-    const int re_im_size = static_cast<int>(out_wfc_re_im.size());
-
-    if (nbands_istate > 0 && re_im_size == 0)
-    {
-        mode_re_im = 1;
-    }
-    else if (re_im_size > 0)
-    {
-        // If out_wfc_re_im is not empty, set mode to 2
-        mode_re_im = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_wfc_re_im`!" << std::endl;
-    }
-
-    // Set this->bands_picked_ according to the mode
-    this->select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
+    // Set this->bands_picked_
+    this->select_bands(out_wfc_re_im, nbands, fermi_band);
 
     // Calculate out_wfc_re_im
     for (int ib = 0; ib < nbands; ++ib)
@@ -210,21 +185,32 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // Output real part
                 std::stringstream ss_real;
-                ss_real << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "real.cube";
+                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "re.cube";
                 ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
 
                 // Output imaginary part
                 std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << is + 1 << "imag.cube";
+                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "im.cube";
                 ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
     }
 
-	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-			nbands, nspin, PARAM.globalv.npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			out_wfc_pw, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
+    ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                           GlobalV::MY_POOL,
+                           GlobalV::MY_RANK,
+                           nbands,
+                           nspin,
+                           PARAM.globalv.npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           out_wfc_pw,
+                           PARAM.inp.ecutwfc,
+                           global_out_dir,
+                           psi_g,
+                           kv,
+                           pw_wfc,
+                           ofs_running);
 
     for (int is = 0; is < nspin; ++is)
     {
@@ -249,18 +235,19 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const int& out_wf,
                         const K_Vectors& kv,
                         const double nelec,
-                        const int nbands_istate,
                         const std::vector<int>& out_wfc_norm,
                         const std::vector<int>& out_wfc_re_im,
                         const int nbands,
                         const int nspin,
                         const int nlocal,
-                        const std::string& global_out_dir)
+                        const std::string& global_out_dir,
+                        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
-    int fermi_band = 0;
-    prepare_get_wf(GlobalV::ofs_running, nelec, fermi_band);
+    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    prepare_get_wf(ofs_running);
 
     // allocate grid wave functions for multi-k
     const int nks = kv.get_nks();
@@ -277,7 +264,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     const double mem_size
         = sizeof(std::complex<double>) * double(gk.gridt->lgd) * double(nbands) * double(nks) / 1024.0 / 1024.0;
     ModuleBase::Memory::record("Get_wf_lcao::begin", mem_size);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "On-the-fly memory consumption (MB)", mem_size);
+    ModuleBase::GlobalFunc::OUT(ofs_running, "On-the-fly memory consumption (MB)", mem_size);
 
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
@@ -285,20 +272,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // if (out_wf || out_wf_r)
     psi_g.resize(nks, nbands, pw_wfc->npwk_max);
 
-    int mode_norm = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_wfc_norm.size()) == 0)
-    {
-        mode_norm = 1;
-    }
-    else if (static_cast<int>(out_wfc_norm.size()) > 0)
-    {
-        // If out_wfc_norm is not empty, set mode to 2
-        mode_norm = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_wfc_norm`!" << std::endl;
-    }
-
-    // Set this->bands_picked_ according to the mode
-    this->select_bands(nbands_istate, out_wfc_norm, nbands, nelec, mode_norm, fermi_band);
+    // Set this->bands_picked_
+    this->select_bands(out_wfc_norm, nbands, fermi_band);
 
     // Calculate out_wfc_norm
     for (int ib = 0; ib < nbands; ++ib)
@@ -342,7 +317,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // pint out information
                 std::stringstream ss_file;
-                ss_file << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << ".cube";
+                ss_file << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << ".cube";
 
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
@@ -350,7 +325,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 std::stringstream ss_info;
                 ss_info << "Wave func. " << ib + 1 << " spin " << ispin + 1 << " k-point " << ik0 + 1 << " saved in";
 
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss_info.str(), ss_file.str());
+                ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
@@ -372,10 +347,21 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-	ModuleIO::write_wfc_pw(GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::MY_RANK, 
-			nbands, nspin, PARAM.globalv.npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
-			out_wf, PARAM.inp.ecutwfc, global_out_dir,psi_g, kv, pw_wfc, GlobalV::ofs_running);
+    ModuleIO::write_wfc_pw(GlobalV::KPAR,
+                           GlobalV::MY_POOL,
+                           GlobalV::MY_RANK,
+                           nbands,
+                           nspin,
+                           PARAM.globalv.npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           out_wf,
+                           PARAM.inp.ecutwfc,
+                           global_out_dir,
+                           psi_g,
+                           kv,
+                           pw_wfc,
+                           ofs_running);
 
     std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
 
@@ -417,14 +403,14 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // Output real part
                 std::stringstream ss_real;
-                ss_real << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "real.cube";
+                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "re.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
                 ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell));
 
                 // Output imaginary part
                 std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "imag.cube";
+                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "im.cube";
                 ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell));
             }
         }
@@ -442,12 +428,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     return;
 }
 
-void Get_wf_lcao::select_bands(const int nbands_istate,
-                               const std::vector<int>& out_wfc_kb,
-                               const int nbands,
-                               const double nelec,
-                               const int mode,
-                               const int fermi_band)
+void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nbands, const int fermi_band)
 {
     ModuleBase::TITLE("Get_wf_lcao", "select_bands");
 
@@ -457,100 +438,73 @@ void Get_wf_lcao::select_bands(const int nbands_istate,
     this->bands_picked_.resize(nbands);
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
-    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
-    if (mode == 1)
+    // Select bands directly using parameter `out_wfc_norm` or `out_wfc_re_im`
+    // Check if length of out_wfc_kb is valid
+    if (static_cast<int>(out_wfc_kb.size()) > nbands)
     {
-        bands_below = nbands_istate;
-        bands_above = nbands_istate;
-
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of states below Fermi energy", bands_below);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of states above Fermi energy", bands_above);
-
-        for (int ib = 0; ib < nbands; ++ib)
+        ModuleBase::WARNING_QUIT("Get_wf_lcao::select_bands",
+                                 "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the INPUT "
+                                 "file exceeds `nbands`!");
+    }
+    // Check if all elements in out_wfc_kb are 0 or 1
+    for (int value: out_wfc_kb)
+    {
+        if (value != 0 && value != 1)
         {
-            if (ib >= fermi_band - bands_below)
-            {
-                if (ib < fermi_band + bands_above)
-                {
-                    bands_picked_[ib] = 1;
-                }
-            }
+            ModuleBase::WARNING_QUIT(
+                "Get_wf_lcao::select_bands",
+                "The elements of `out_wfc_norm` or `out_wfc_re_im` must be either 0 or 1. Invalid values found!");
         }
     }
-    // mode = 2: select bands directly using parameter `out_wfc_norm` or `out_wfc_re_im`
-    else if (mode == 2)
-    {
-        // Check if length of out_wfc_kb is valid
-        if (static_cast<int>(out_wfc_kb.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT("Get_wf_lcao::select_bands",
-                                     "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the INPUT "
-                                     "file exceeds `nbands`!");
-        }
-        // Check if all elements in out_wfc_kb are 0 or 1
-        for (int value: out_wfc_kb)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "Get_wf_lcao::select_bands",
-                    "The elements of `out_wfc_norm` or `out_wfc_re_im` must be either 0 or 1. Invalid values found!");
-            }
-        }
-        // Fill bands_picked_ with values from out_wfc_kb
-        // Remaining bands are already set to 0
-        const int length = std::min(static_cast<int>(out_wfc_kb.size()), nbands);
-        std::copy(out_wfc_kb.begin(), out_wfc_kb.begin() + length, bands_picked_.begin());
+    // Fill bands_picked_ with values from out_wfc_kb
+    // Remaining bands are already set to 0
+    const int length = std::min(static_cast<int>(out_wfc_kb.size()), nbands);
+    std::copy(out_wfc_kb.begin(), out_wfc_kb.begin() + length, bands_picked_.begin());
 
-        // Check if there are selected bands below the Fermi surface
-        bool has_below = false;
+    // Check if there are selected bands below the Fermi surface
+    bool has_below = false;
+    for (int i = 0; i + 1 <= fermi_band; ++i)
+    {
+        if (bands_picked_[i] == 1)
+        {
+            has_below = true;
+            break;
+        }
+    }
+    if (has_below)
+    {
+        std::cout << " Plot wave functions below the Fermi surface: band ";
         for (int i = 0; i + 1 <= fermi_band; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                has_below = true;
-                break;
+                std::cout << i + 1 << " ";
             }
         }
-        if (has_below)
-        {
-            std::cout << " Plot wave functions below the Fermi surface: band ";
-            for (int i = 0; i + 1 <= fermi_band; ++i)
-            {
-                if (bands_picked_[i] == 1)
-                {
-                    std::cout << i + 1 << " ";
-                }
-            }
-            std::cout << std::endl;
-        }
+        std::cout << std::endl;
+    }
 
-        // Check if there are selected bands above the Fermi surface
-        bool has_above = false;
+    // Check if there are selected bands above the Fermi surface
+    bool has_above = false;
+    for (int i = fermi_band; i < nbands; ++i)
+    {
+        if (bands_picked_[i] == 1)
+        {
+            has_above = true;
+            break;
+        }
+    }
+    if (has_above)
+    {
+        std::cout << " Plot wave functions above the Fermi surface: band ";
         for (int i = fermi_band; i < nbands; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                has_above = true;
-                break;
+                std::cout << i + 1 << " ";
             }
         }
-        if (has_above)
-        {
-            std::cout << " Plot wave functions above the Fermi surface: band ";
-            for (int i = fermi_band; i < nbands; ++i)
-            {
-                if (bands_picked_[i] == 1)
-                {
-                    std::cout << i + 1 << " ";
-                }
-            }
-            std::cout << std::endl;
-        }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Get_wf_lcao::select_bands", "Invalid mode! Please check the code.");
+        std::cout << std::endl;
     }
 }
 
@@ -718,38 +672,23 @@ template void Get_wf_lcao::wfc_2d_to_grid(const std::complex<double>* lowf_2d,
                                           const std::vector<int>& trace_lo);
 #endif
 
-void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running, const int nelec, int& fermi_band)
+void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
 {
     ofs_running << "\n\n";
-    ofs_running << " GET_WF CALCULATIONS BEGINS" << std::endl;
+    ofs_running << " GET_WF CALCULATION BEGINS" << std::endl;
 
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                << std::endl;
-    ofs_running << " |                                            "
-                   "                        |"
-                << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
     ofs_running << " | Here we use real-space (r) grid integral technique to calculate    |" << std::endl;
     ofs_running << " | the electronic wave function psi(i,r) for each electronic state i. |" << std::endl;
-    ofs_running << " | The |psi(i, r)|, Re[psi(i, r)], Im[psi(i, r)] are printed out      |" << std::endl;
-    ofs_running << " | using numerical atomic orbitals as basis set.                      |" << std::endl;
-    ofs_running << " |                                            "
-                   "                        |"
-                << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                   ">>>>>>>>>>>>>>>>>>>>>>>>>"
-                << std::endl;
+    ofs_running << " | The |psi(i,r)|, Re[psi(i,r)], Im[psi(i,r)] are printed out using   |" << std::endl;
+    ofs_running << " | numerical atomic orbitals as basis set.                            |" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     ofs_running << "\n\n";
 
     ofs_running << std::setprecision(6);
-
-    // if ucell is odd, it's correct,
-    // if ucell is even, it's also correct.
-    // +1.0e-8 in case like (2.999999999+1)/2
-    fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "Number of electrons", nelec);
-    ModuleBase::GlobalFunc::OUT(ofs_running, "Number of occupied bands", fermi_band);
 }
 
 int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc)
