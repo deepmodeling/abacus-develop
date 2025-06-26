@@ -3,8 +3,8 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_elecstate/read_pseudo.h"
-#include "module_hamilt_general/module_xc/exx_info.h"
+#include "source_estate/read_pseudo.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 Magnetism::Magnetism()
 {

@@ -4,7 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"

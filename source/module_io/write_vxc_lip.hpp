@@ -3,11 +3,11 @@
 #include "module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
-#include "module_hamilt_pw/hamilt_pwdft/operator_pw/veff_pw.h"
-#include "module_psi/psi.h"
+#include "source_pw/hamilt_pwdft/operator_pw/veff_pw.h"
+#include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "module_elecstate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "module_io/write_HS.h"
 #include "module_io/filename.h" // use filename_output function
 #include <type_traits>

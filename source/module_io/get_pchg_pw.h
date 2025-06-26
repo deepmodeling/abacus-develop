@@ -7,11 +7,11 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
-#include "module_elecstate/elecstate.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_psi/psi.h"
+#include "source_estate/elecstate.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_psi/psi.h"
 
 #include <string>
 #include <vector>

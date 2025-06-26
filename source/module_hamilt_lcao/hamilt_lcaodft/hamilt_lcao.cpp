@@ -4,7 +4,7 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #include <vector>
@@ -23,8 +23,8 @@
 #include "source_hsolver/diago_elpa.h"
 #endif
 
-#include "module_elecstate/module_pot/H_TDDFT_pw.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"

@@ -3,10 +3,10 @@
 
 #include "source_base/matrix.h" // use matrix
 #include "source_cell/klist.h"  // use K_Vectors
-#include "module_psi/psi.h"     // use psi::Psi<T>
-#include "module_hamilt_general/hamilt.h" // use hamilt::Hamilt<T>
+#include "source_psi/psi.h"     // use psi::Psi<T>
+#include "source_hamilt/hamilt.h" // use hamilt::Hamilt<T>
 #include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
-#include "module_elecstate/fp_energy.h" // use elecstate::efermi
+#include "source_estate/fp_energy.h" // use elecstate::efermi
 
 
 namespace ModuleIO

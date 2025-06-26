@@ -9,7 +9,7 @@
 #include "source_base/tool_threading.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 void Gint_k::allocate_pvdpR(void)
 {

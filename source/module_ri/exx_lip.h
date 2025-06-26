@@ -5,7 +5,7 @@
 #ifndef EXX_LIP_H
 #define EXX_LIP_H
 
-#include "module_hamilt_general/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "source_base/macros.h"
 #include "source_base/matrix.h"
 

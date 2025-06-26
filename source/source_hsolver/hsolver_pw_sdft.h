@@ -1,8 +1,8 @@
 #ifndef HSOLVERPW_SDFT_H
 #define HSOLVERPW_SDFT_H
 #include "hsolver_pw.h"
-#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
+#include "source_pw/hamilt_stodft/hamilt_sdft_pw.h"
+#include "source_pw/hamilt_stodft/sto_iter.h"
 namespace hsolver
 {
 template <typename T, typename Device = base_device::DEVICE_CPU>

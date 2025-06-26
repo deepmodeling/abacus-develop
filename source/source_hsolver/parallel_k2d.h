@@ -3,11 +3,11 @@
 
 #include "source_base/parallel_2d.h"
 #include "source_cell/parallel_kpoints.h"
-#include "module_hamilt_general/matrixblock.h"
+#include "source_hamilt/matrixblock.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "module_hamilt_general/hamilt.h"
+#include "source_hamilt/hamilt.h"
 
 /***
  * This is a class to realize k-points parallelism in LCAO code.

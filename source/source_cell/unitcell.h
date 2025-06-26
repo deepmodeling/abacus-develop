@@ -3,7 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "module_elecstate/magnetism.h"
+#include "source_estate/magnetism.h"
 #include "module_io/output.h"
 #include "module_symmetry/symmetry.h"
 

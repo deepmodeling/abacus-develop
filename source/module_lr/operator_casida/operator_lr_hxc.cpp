@@ -9,7 +9,7 @@
 // #include "module_hamilt_lcao/hamilt_lcaodft/DM_gamma_2d_to_grid.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_lr/ao_to_mo_transformer/ao_to_mo.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 inline double conj(double a) { return a; }

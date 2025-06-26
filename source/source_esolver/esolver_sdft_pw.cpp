@@ -2,11 +2,11 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_dos.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_elecond.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
+#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_pw/hamilt_stodft/sto_dos.h"
+#include "source_pw/hamilt_stodft/sto_elecond.h"
+#include "source_pw/hamilt_stodft/sto_forces.h"
+#include "source_pw/hamilt_stodft/sto_stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 

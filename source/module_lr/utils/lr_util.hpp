@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 namespace LR_Util
 {
     /// =================PHYSICS====================

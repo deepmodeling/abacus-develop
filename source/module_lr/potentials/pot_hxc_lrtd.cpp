@@ -1,12 +1,12 @@
 #include "pot_hxc_lrtd.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_base/timer.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include <set>
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_xc.hpp"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
+#include "source_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {

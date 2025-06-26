@@ -11,7 +11,7 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "write_wfc_r.h"
 
 #include <cstdlib>

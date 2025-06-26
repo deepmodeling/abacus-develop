@@ -12,7 +12,7 @@
 
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
-#include "module_elecstate/elecstate_lcao.h"
+#include "source_estate/elecstate_lcao.h"
 
 #include <sys/time.h>
 #include <stdexcept>

@@ -1,8 +1,8 @@
 #ifndef HSOLVERPW_H
 #define HSOLVERPW_H
 
-#include "module_elecstate/elecstate.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_estate/elecstate.h"
+#include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include <unordered_map>

@@ -3,8 +3,8 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_base/macros.h"
-#include "module_hamilt_general/hamilt.h"
-#include "module_psi/psi.h"
+#include "source_hamilt/hamilt.h"
+#include "source_psi/psi.h"
 
 namespace hsolver
 {

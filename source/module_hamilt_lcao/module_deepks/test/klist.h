@@ -1,4 +1,4 @@
-///klist : adapted from klist from module_hamilt_pw/hamilt_pwdft
+///klist : adapted from klist from source_pw/hamilt_pwdft
 ///deals with k point sampling
 
 #include "source_base/vector3.h"

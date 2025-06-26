@@ -5,9 +5,9 @@
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_estate/elecstate_tools.h"
 
-#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
@@ -36,12 +36,12 @@
 
 #include "source_base/global_function.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_elecstate/cal_ux.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_elecstate/occupy.h"
+#include "source_estate/cal_ux.h"
+#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 
 #include <memory>
@@ -54,7 +54,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------
-#include "module_elecstate/elecstate_lcao.h"
+#include "source_estate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 

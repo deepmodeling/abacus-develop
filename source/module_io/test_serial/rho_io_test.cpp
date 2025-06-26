@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 #include "module_io/cube_io.h"
 #include "prepare_unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()

@@ -7,9 +7,9 @@
 #include "source_base/memory.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
-#include "module_elecstate/magnetism.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_estate/magnetism.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 #include <cmath>
 #include <complex>

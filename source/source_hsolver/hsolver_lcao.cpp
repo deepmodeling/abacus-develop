@@ -25,12 +25,12 @@
 #endif
 
 #include "source_base/global_variable.h"
-#include "module_elecstate/elecstate_tools.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
-#include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 #include "module_parameter/parameter.h"
 

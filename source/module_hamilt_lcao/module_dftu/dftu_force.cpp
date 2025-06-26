@@ -10,10 +10,10 @@
 #include "source_base/inverse_matrix.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/magnetism.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_estate/magnetism.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_pw/hamilt_pwdft/global.h"
 
 #include <cmath>
 #include <complex>

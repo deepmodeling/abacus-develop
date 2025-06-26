@@ -7,7 +7,7 @@
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <torch/script.h>

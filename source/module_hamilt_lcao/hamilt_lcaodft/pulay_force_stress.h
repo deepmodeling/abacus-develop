@@ -1,9 +1,9 @@
 #pragma once
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/module_pot/potential_new.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 #ifndef TGINT_H

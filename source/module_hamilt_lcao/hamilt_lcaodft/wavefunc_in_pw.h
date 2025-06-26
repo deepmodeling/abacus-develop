@@ -7,7 +7,7 @@
 #include "source_base/realarray.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/hamilt_pwdft/structure_factor.h"
 
 //---------------------------------------------------
 // FUNCTION: expand the local basis sets into plane

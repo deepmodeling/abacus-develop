@@ -5,7 +5,7 @@
 #include "source_base/matrix.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/parallel_2d.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <ATen/core/tensor.h>
 #include "source_basis/module_pw/pw_basis.h"
 

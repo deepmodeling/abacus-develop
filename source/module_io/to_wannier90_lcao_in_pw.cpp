@@ -1,7 +1,7 @@
 #include "to_wannier90_lcao_in_pw.h"
 
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "source_pw/hamilt_pwdft/global.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
@@ -9,7 +9,7 @@
 #include "source_base/parallel_reduce.h"
 #include "binstream.h"
 
-#include "module_psi/psi_initializer_nao.h"
+#include "source_psi/psi_initializer_nao.h"
 #ifdef __LCAO
 toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
     const bool &out_wannier_mmn, 

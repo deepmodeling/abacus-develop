@@ -1,8 +1,8 @@
 #ifndef HSOLVERLCAO_H
 #define HSOLVERLCAO_H
 
-#include "module_elecstate/elecstate.h"
-#include "module_hamilt_general/hamilt.h"
+#include "source_estate/elecstate.h"
+#include "source_hamilt/hamilt.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver

@@ -14,19 +14,19 @@
 #include "source_cell/module_symmetry/symmetry.h"
 
 //! electronic states
-#include "module_elecstate/elecstate.h"
+#include "source_estate/elecstate.h"
 
 //! charge extrapolation
-#include "module_elecstate/module_charge/charge_extra.h"
+#include "source_estate/module_charge/charge_extra.h"
 
 //! solvation model
-#include "module_hamilt_general/module_surchem/surchem.h"
+#include "source_hamilt/module_surchem/surchem.h"
 
 //! local pseudopotential
-#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
+#include "source_pw/hamilt_pwdft/VL_in_pw.h"
 
 //! structure factor related to plane wave basis
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/hamilt_pwdft/structure_factor.h"
 
 #include <fstream>
 

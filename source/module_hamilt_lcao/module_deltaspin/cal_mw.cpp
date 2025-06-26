@@ -5,11 +5,11 @@
 #include "source_base/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/hamilt_pwdft/onsite_projector.h"
 #include "spin_constrain.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "module_elecstate/elecstate_lcao.h"
+#include "source_estate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 

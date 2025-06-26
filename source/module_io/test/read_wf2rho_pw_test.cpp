@@ -6,15 +6,15 @@
 #define private public
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/read_wf2rho_pw.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/filename.h" // mohan add 2025-05-17
 #include "module_parameter/parameter.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 
 #ifdef __MPI
 #include "source_base/parallel_global.h"

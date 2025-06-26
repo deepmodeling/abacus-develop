@@ -6,7 +6,7 @@
 #include "source_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include "module_io/write_HS.h"
 #include "module_io/filename.h" // use filename_output function
 

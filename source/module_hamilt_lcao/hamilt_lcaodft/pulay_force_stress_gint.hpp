@@ -1,7 +1,7 @@
 #pragma once
 #include "pulay_force_stress.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 namespace PulayForceStress

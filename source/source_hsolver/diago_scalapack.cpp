@@ -14,7 +14,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/scalapack_connector.h"
-#include "module_hamilt_general/matrixblock.h"
+#include "source_hamilt/matrixblock.h"
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;

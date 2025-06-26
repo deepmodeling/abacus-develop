@@ -222,8 +222,8 @@ test:
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd module_hamilt_pw/hamilt_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
-	@ cp module_hamilt_pw/hamilt_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
+	@ cd source_pw/hamilt_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
+	@ cp source_pw/hamilt_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
@@ -239,4 +239,4 @@ ${OBJ_DIR}/%.o:%.cpp
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
 	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
-	@ cd module_hamilt_pw/hamilt_pwdft; make clean
+	@ cd source_pw/hamilt_pwdft; make clean
