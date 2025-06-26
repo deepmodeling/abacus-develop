@@ -19,7 +19,7 @@ AddTest(
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
     ../../source_base/blas_connector_base.cpp ../../source_base/blas_connector_vector.cpp ../../source_base/blas_connector_matrix.cpp
-    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../module_io/output.cpp
+    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_io/output.cpp
     LIBS parameter ${math_libs} 
 )
 
@@ -27,7 +27,7 @@ list(APPEND cell_source_files
     ../../source_cell/update_cell.cpp
     ../../source_cell/bcast_cell.cpp
     ../../source_cell/print_cell.cpp
-    ../../module_io/output.cpp
+    ../../source_io/output.cpp
 )
 AddTest(
   TARGET lattice_change_methods_test
@@ -47,7 +47,7 @@ AddTest(
   SOURCES lattice_change_cg_test.cpp 
           ../lattice_change_cg.cpp 
           ../lattice_change_basic.cpp
-          ../../module_io/orb_io.cpp
+          ../../source_io/orb_io.cpp
 )
 
 AddTest(
@@ -76,7 +76,7 @@ AddTest(
           ../ions_move_bfgs.cpp 
           ../ions_move_basic.cpp 
           ../bfgs_basic.cpp
-          ../../module_io/orb_io.cpp
+          ../../source_io/orb_io.cpp
           ${cell_source_files}
 )
 
@@ -86,7 +86,7 @@ AddTest(
   SOURCES ions_move_cg_test.cpp 
           ../ions_move_cg.cpp 
           ../ions_move_basic.cpp
-          ../../module_io/orb_io.cpp
+          ../../source_io/orb_io.cpp
           ${cell_source_files}
 )
 

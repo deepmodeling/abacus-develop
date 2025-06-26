@@ -13,7 +13,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "source_lcao/hamilt_lcaodft/pulay_force_stress.h"
-#include "module_io/write_HS.h"
+#include "source_io/write_HS.h"
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,

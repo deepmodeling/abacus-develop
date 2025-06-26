@@ -5,7 +5,7 @@
 #include "source_pw/hamilt_pwdft/fs_nonlocal_tools.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_pw/hamilt_pwdft/structure_factor.h"
-#include "module_io/output_log.h"
+#include "source_io/output_log.h"
 #include "module_parameter/parameter.h"
 
 template <typename FPTYPE, typename Device>

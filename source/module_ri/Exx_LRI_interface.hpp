@@ -10,8 +10,8 @@
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
-#include "module_io/csr_reader.h"
-#include "module_io/write_HS_sparse.h"
+#include "source_io/csr_reader.h"
+#include "source_io/write_HS_sparse.h"
 #include "source_estate/elecstate_lcao.h"
 
 #include <sys/time.h>

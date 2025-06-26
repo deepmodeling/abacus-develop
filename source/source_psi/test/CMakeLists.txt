@@ -16,11 +16,11 @@ AddTest(
         ../../source_cell/atom_spec.cpp
         ../../source_cell/parallel_kpoints.cpp
         ../../source_cell/test/support/mock_unitcell.cpp
-        ../../module_io/orb_io.cpp
-        ../../module_io/write_pao.cpp
-        ../../module_io/read_wfc_pw.cpp
-        ../../module_io/binstream.cpp
-        ../../module_io/filename.cpp
+        ../../source_io/orb_io.cpp
+        ../../source_io/write_pao.cpp
+        ../../source_io/read_wfc_pw.cpp
+        ../../source_io/binstream.cpp
+        ../../source_io/filename.cpp
 )
 endif()
 

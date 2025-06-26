@@ -2,7 +2,7 @@
 
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/output_log.h"
+#include "source_io/output_log.h"
 #include "module_parameter/parameter.h"
 // new
 #include "source_base/timer.h"

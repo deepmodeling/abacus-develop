@@ -7,20 +7,20 @@
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/cif_io.h"
-#include "module_io/cube_io.h"
-#include "module_io/json_output/init_info.h"
-#include "module_io/json_output/output_info.h"
-#include "module_io/output_log.h"
-#include "module_io/print_info.h"
-#include "module_io/rhog_io.h"
-#include "module_io/write_elecstat_pot.h"
-#include "module_io/write_elf.h"
+#include "source_io/cif_io.h"
+#include "source_io/cube_io.h"
+#include "source_io/json_output/init_info.h"
+#include "source_io/json_output/output_info.h"
+#include "source_io/output_log.h"
+#include "source_io/print_info.h"
+#include "source_io/rhog_io.h"
+#include "source_io/write_elecstat_pot.h"
+#include "source_io/write_elf.h"
 #include "module_parameter/parameter.h"
 #include "source_cell/k_vector_utils.h"
 
 #ifdef USE_LIBXC
-#include "module_io/write_libxc_r.h"
+#include "source_io/write_libxc_r.h"
 #endif
 
 namespace ModuleESolver

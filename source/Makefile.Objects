@@ -63,8 +63,8 @@ VPATH=./src_global:\
 ./source_lcao/module_gint:\
 ./source_relax:\
 ./source_hamilt/module_vdw:\
-./module_io:\
-./module_io/json_output:\
+./source_io:\
+./source_io/json_output:\
 ./src_ri:\
 ./module_ri:\
 ./module_parameter:\

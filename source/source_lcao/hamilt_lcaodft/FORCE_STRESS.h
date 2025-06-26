@@ -8,7 +8,7 @@
 #include "source_pw/hamilt_pwdft/forces.h"
 #include "source_pw/hamilt_pwdft/stress_func.h"
 #include "source_pw/hamilt_pwdft/structure_factor.h"
-#include "module_io/input_conv.h"
+#include "source_io/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
 #include "module_ri/Exx_LRI_interface.h"

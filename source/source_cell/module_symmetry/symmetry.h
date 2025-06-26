@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"
 #include "source_base/constants.h"
-#include "module_io/output.h"
+#include "source_io/output.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry

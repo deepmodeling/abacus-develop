@@ -44,10 +44,10 @@ list(APPEND depend_files
   ../../source_cell/module_neighbor/sltk_atom.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp
   ../../source_cell/module_neighbor/sltk_grid_driver.cpp
-  ../../module_io/output.cpp
-  ../../module_io/output_log.cpp
-  ../../module_io/print_info.cpp
-  ../../module_io/cif_io.cpp
+  ../../source_io/output.cpp
+  ../../source_io/output_log.cpp
+  ../../source_io/print_info.cpp
+  ../../source_io/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
@@ -96,7 +96,7 @@ AddTest(
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
-  ../../module_io/output.cpp
+  ../../source_io/output.cpp
   ${depend_files}
 )
 
@@ -107,7 +107,7 @@ AddTest(
   ../md_base.cpp
   ../msst.cpp
   ../../source_cell/update_cell.cpp
-  ../../module_io/output.cpp
+  ../../source_io/output.cpp
   ${depend_files}
 )
 

@@ -304,7 +304,7 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
     ofs << " ELECTRONIC      PART OF STRESS: " << virial_scalar * unit_transform << " kbar" << std::endl;
     ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar" << std::endl;
 
-    // one should use 'print_stress' function in ../source/module_io/output_log.cpp
+    // one should use 'print_stress' function in ../source/source_io/output_log.cpp
 /*
     ofs.unsetf(std::ios::fixed);
     ofs << std::setprecision(8) << std::endl;
