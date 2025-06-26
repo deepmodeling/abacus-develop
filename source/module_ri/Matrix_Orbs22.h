@@ -10,7 +10,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/ORB_gaunt_table.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb22.h"
+#include "source_lcao/hamilt_lcaodft/center2_orb-orb22.h"
 #include "source_cell/unitcell.h"
 
 #include <RI/global/Tensor.h>

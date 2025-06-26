@@ -4,8 +4,8 @@
 #include "source_pw/hamilt_pwdft/onsite_projector.h"
 #include "source_pw/hamilt_pwdft/kernels/force_op.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,

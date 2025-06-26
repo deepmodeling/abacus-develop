@@ -11,8 +11,8 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/hamilt_pwdft/elecond.h"
 #include "source_pw/hamilt_pwdft/forces.h"
 #include "source_pw/hamilt_pwdft/hamilt_pw.h"
@@ -21,23 +21,23 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/kernels/dngvd_op.h"
-#include "module_io/berryphase.h"
-#include "module_io/cal_ldos.h"
-#include "module_io/get_pchg_pw.h"
-#include "module_io/get_wf_pw.h"
-#include "module_io/numerical_basis.h"
-#include "module_io/numerical_descriptor.h"
-#include "module_io/to_wannier90_pw.h"
-#include "module_io/winput.h"
-#include "module_io/write_dos_pw.h"
-#include "module_io/write_wfc_pw.h"
-#include "module_io/write_wfc_r.h"
+#include "source_io/berryphase.h"
+#include "source_io/cal_ldos.h"
+#include "source_io/get_pchg_pw.h"
+#include "source_io/get_wf_pw.h"
+#include "source_io/numerical_basis.h"
+#include "source_io/numerical_descriptor.h"
+#include "source_io/to_wannier90_pw.h"
+#include "source_io/winput.h"
+#include "source_io/write_dos_pw.h"
+#include "source_io/write_wfc_pw.h"
+#include "source_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 
 #include <iostream>
 
 #ifdef __MLALGO
-#include "module_io/write_mlkedf_descriptors.h"
+#include "source_io/write_mlkedf_descriptors.h"
 #endif
 
 #include <ATen/kernels/blas.h>

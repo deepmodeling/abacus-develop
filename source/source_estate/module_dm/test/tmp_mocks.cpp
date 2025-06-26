@@ -107,7 +107,7 @@ Grid_Driver::~Grid_Driver()
 }
 
 // mock Record_adj
-#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/hamilt_lcaodft/record_adj.h"
 Record_adj::Record_adj()
 {
 }

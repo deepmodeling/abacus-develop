@@ -21,8 +21,8 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "module_io/output_log.h"
-#include "module_io/cif_io.h"
+#include "source_io/output_log.h"
+#include "source_io/cif_io.h"
 
 #include <iomanip>
 #include <sstream>

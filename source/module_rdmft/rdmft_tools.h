@@ -9,8 +9,8 @@
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_base/blas_connector.h"
 #include "source_base/scalapack_connector.h"
@@ -21,9 +21,9 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 
 
 #ifdef __EXX

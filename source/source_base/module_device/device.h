@@ -38,13 +38,13 @@ std::string get_device_info(std::string device_flag);
 
 /**
  * @brief Get the device kpar object
- * for module_io GlobalV::KPAR
+ * for source_io GlobalV::KPAR
  */
 int get_device_kpar(const int& kpar, const int& bndpar);
 
 /**
  * @brief Get the device flag object
- * for module_io PARAM.inp.device
+ * for source_io PARAM.inp.device
  */
 std::string get_device_flag(const std::string& device,
                             const std::string& basis_type);

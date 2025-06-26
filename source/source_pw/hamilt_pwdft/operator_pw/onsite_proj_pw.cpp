@@ -4,8 +4,8 @@
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/hamilt_pwdft/onsite_projector.h"
 #include "source_pw/hamilt_pwdft/kernels/onsite_op.h"
 

@@ -3,7 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/ORB_control.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
+#include "source_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 
 #include "gtest/gtest.h"
 //#include "mock_center2.h"

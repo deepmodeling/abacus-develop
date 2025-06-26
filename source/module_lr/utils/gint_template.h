@@ -1,6 +1,6 @@
 #pragma once
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
 namespace LR
 {
     template <typename T> struct TGint;

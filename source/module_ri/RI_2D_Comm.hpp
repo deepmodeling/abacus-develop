@@ -11,7 +11,7 @@
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_parameter/parameter.h"
 #include <RI/global/Global_Func-2.h>
 
