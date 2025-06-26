@@ -97,7 +97,7 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     const double fact_v = rescaling / (ucell.omega * ModuleBase::Ry_to_eV);
 
     dp_potential *= fact_e;
-    GlobalV::ofs_running << " final etot is " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
+    GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
     for (int i = 0; i < ucell.nat; ++i)
