@@ -3,9 +3,9 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_gint/gint.h"
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
 #include "source_pw/hamilt_pwdft/parallel_grid.h"
 #include "source_psi/psi.h"
 

@@ -2,10 +2,10 @@
 
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/spar_dh.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/spar_st.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+#include "source_lcao/hamilt_lcaodft/spar_dh.h"
+#include "source_lcao/hamilt_lcaodft/spar_hsr.h"
+#include "source_lcao/hamilt_lcaodft/spar_st.h"
 #include "write_HS_sparse.h"
 
 // if 'binary=true', output binary file.

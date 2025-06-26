@@ -5,7 +5,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint_k.h"
 
 namespace ModuleIO
 {

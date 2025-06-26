@@ -9,7 +9,7 @@ if(ENABLE_ASAN)
     )
     add_test(
         NAME 09_DeePKS_test1_with_asan
-        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_hamilt_lcao/module_deepks/test/test_deepks
+        COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/source_lcao/module_deepks/test/test_deepks
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/09_DeePKS
     )
 
@@ -22,7 +22,7 @@ else()
     # TODO: I will rewrite the unit tests and remove 604 to module_deepks/test/
     add_test(
        NAME 09_DeePKS_test1
-       COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/module_hamilt_lcao/module_deepks/test/test_deepks
+       COMMAND ${BASH} Autotest1.sh -a ${CMAKE_CURRENT_BINARY_DIR}/../../source/source_lcao/module_deepks/test/test_deepks
        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/09_DeePKS
     )
 endif()

@@ -13,14 +13,14 @@
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"

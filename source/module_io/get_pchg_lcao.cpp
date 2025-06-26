@@ -8,7 +8,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_gint/gint.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/cube_io.h"
 

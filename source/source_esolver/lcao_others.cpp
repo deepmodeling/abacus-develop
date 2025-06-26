@@ -1,8 +1,8 @@
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_esolver/esolver_ks_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/hamilt_pwdft/global.h"
 //
 #include "source_base/timer.h"
@@ -16,16 +16,16 @@
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"

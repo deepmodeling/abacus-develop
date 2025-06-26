@@ -3,7 +3,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_cell/klist.h"
 /************************************************
  *  unit test of DensityMatrix constructor

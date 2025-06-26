@@ -18,13 +18,13 @@
 #include "module_ri/exx_abfs-jle.h"
 #endif
 
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/module_tddft/evolve_elec.h"
+#include "source_lcao/module_tddft/td_velocity.h"
 #endif
 #ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"

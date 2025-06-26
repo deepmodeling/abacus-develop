@@ -19,10 +19,10 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
+#include "source_lcao/hamilt_lcaodft/center2_orb-orb11.h"
+#include "source_lcao/hamilt_lcaodft/center2_orb-orb21.h"
+#include "source_lcao/hamilt_lcaodft/center2_orb.h"
+#include "source_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "single_R_io.h"
@@ -40,8 +40,8 @@
 #include "fR_overlap.h"
 #include "source_base/abfs-vector3_order.h"
 #include "source_base/math_lebedev_laikov.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_gint/grid_technique.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
 
 class Coordinate_3D
 {

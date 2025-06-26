@@ -7,7 +7,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 void ModuleIO::cal_pdos(
 		const psi::Psi<double>* psi,

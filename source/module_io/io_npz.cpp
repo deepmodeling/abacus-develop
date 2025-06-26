@@ -7,7 +7,7 @@
 
 #ifdef __MPI
 #include <mpi.h>
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #endif
 
 #ifdef __USECNPY

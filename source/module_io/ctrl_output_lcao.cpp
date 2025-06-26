@@ -2,7 +2,7 @@
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "module_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_hamilt/hamilt.h" // use Hamilt<T>  
 
 // functions
@@ -13,15 +13,15 @@
 #include "module_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 #include "module_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 
 #include "module_io/output_mulliken.h" // use cal_mag()
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "source_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
 #include "module_io/cal_pLpR.h" // use AngularMomentumCalculator()
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
+#include "source_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
 #include "module_io/berryphase.h" // use berryphase
 #include "module_io/to_wannier90_lcao.h" // use toWannier90_LCAO
 #include "module_io/to_wannier90_lcao_in_pw.h" // use toWannier90_LCAO_IN_PW
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 #ifdef __EXX
 #include "module_ri/Exx_LRI_interface.h" // use EXX codes

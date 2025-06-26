@@ -37,8 +37,8 @@ list(APPEND depend_files
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
   ../parallel_orbitals.cpp
-  ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
-  ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
+  ../../../source_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
+  ../../../source_lcao/hamilt_lcaodft/center2_orb.cpp
   )
 
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)

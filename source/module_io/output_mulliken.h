@@ -8,7 +8,7 @@
 #include "module_io/output_dmk.h"
 #include "module_io/output_sk.h"
 #include "source_base/formatter.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 
 #include <map>
 #include <vector>

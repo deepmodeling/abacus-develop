@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#include "source_lcao/module_tddft/td_velocity.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "single_R_io.h"
 

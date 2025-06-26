@@ -8,8 +8,8 @@
 #include "source_estate/elecstate_tools.h"
 
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cal_ldos.h"
 #include "module_io/cube_io.h"
@@ -29,7 +29,7 @@
 #include "module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_vxc.hpp"
 #include "module_io/write_vxc_r.hpp"
@@ -39,23 +39,23 @@
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 
 #include <memory>
 
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 //-----force& stress-------------------
-#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 
 // test RDMFT
