@@ -351,7 +351,11 @@ if(USE_CUDA)
   # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(TARGET ${ABACUS_BIN_NAME}
                PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
+  if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 12.9)
+    target_link_libraries(${ABACUS_BIN_NAME} cudart)
+  else ()
+    target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
+  endif ()
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
