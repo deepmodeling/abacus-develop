@@ -76,7 +76,7 @@ void Get_pchg_lcao::begin(Gint_Gamma& gg,
             Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
             gg.cal_gint(&inout);
 #else
-            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
 #endif
 
             // A solution to replace the original implementation of the following code:
@@ -175,7 +175,7 @@ void Get_pchg_lcao::begin(Gint_k& gk,
                     Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                     gk.cal_gint(&inout);
 #else
-                    ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+                    ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
 #endif
                 
 
@@ -222,7 +222,7 @@ void Get_pchg_lcao::begin(Gint_k& gk,
                 Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                 gk.cal_gint(&inout);
 #else
-                ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
+                ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
 #endif
                 // Using std::vector to replace the original double** rho_save
                 std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
