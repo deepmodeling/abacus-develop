@@ -1,18 +1,10 @@
-#ifndef ISTATE_CHARGE_H
-#define ISTATE_CHARGE_H
-#include "source_basis/module_pw/pw_basis.h"
-#include "source_cell/klist.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_gint/gint.h"
+#ifndef GET_PCHG_LCAO_H
+#define GET_PCHG_LCAO_H
+
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
-#include "source_psi/psi.h"
-
-#include <source_base/complexmatrix.h>
-#include <source_base/matrix.h>
-#include <stdexcept>
-#include <vector>
+#include "source_cell/klist.h"
+#include "source_estate/module_dm/density_matrix.h"
 
 /**
  * @brief Manages the computation of the charge densities for different bands (band-decomposed charge densities).
@@ -21,13 +13,13 @@
  * charge state computation process, offering functionality to
  * calculate and plot the decomposed charge density for specified bands.
  */
-class IState_Charge
+class Get_pchg_lcao
 {
   public:
-    IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
-    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
+    Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
+    Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
 
-    ~IState_Charge();
+    ~Get_pchg_lcao();
 
     // For gamma_only
     void begin(Gint_Gamma& gg,
@@ -35,26 +27,16 @@ class IState_Charge
                const ModuleBase::matrix& wg,
                const std::vector<double>& ef_all_spin,
                const int rhopw_nrxx,
-               const int rhopw_nplane,
-               const int rhopw_startz_current,
-               const int rhopw_nx,
-               const int rhopw_ny,
-               const int rhopw_nz,
-               const int bigpw_bz,
-               const int bigpw_nbz,
-               const bool gamma_only_local,
-               const int nbands_istate,
                const std::vector<int>& out_pchg,
                const int nbands,
                const double nelec,
                const int nspin,
-               const int nlocal,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_warning,
                const UnitCell* ucell_in,
                const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
-               const K_Vectors& kv);
+               const K_Vectors& kv,
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running);
 
     // For multi-k
     void begin(Gint_k& gk,
@@ -64,47 +46,30 @@ class IState_Charge
                const std::vector<double>& ef_all_spin,
                const ModulePW::PW_Basis* rho_pw,
                const int rhopw_nrxx,
-               const int rhopw_nplane,
-               const int rhopw_startz_current,
-               const int rhopw_nx,
-               const int rhopw_ny,
-               const int rhopw_nz,
-               const int bigpw_bz,
-               const int bigpw_nbz,
-               const bool gamma_only_local,
-               const int nbands_istate,
                const std::vector<int>& out_pchg,
                const int nbands,
                const double nelec,
                const int nspin,
-               const int nlocal,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_warning,
                UnitCell* ucell_in,
                const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv,
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running,
                const bool if_separate_k,
-               Parallel_Grid* Pgrid,
-               const int ngmc);
+               const int chr_ngmc);
 
   private:
+    void prepare_get_pchg(std::ofstream& ofs_running);
+
     /**
      * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
      *
-     * @param nbands_istate INPUT parameter nbands_istate.
      * @param out_pchg INPUT parameter out_pchg, vector.
      * @param nbands INPUT parameter nbands.
-     * @param nelec Total number of electrons.
-     * @param mode Selected mode.
      * @param fermi_band Calculated Fermi band.
      */
-    void select_bands(const int nbands_istate,
-                      const std::vector<int>& out_pchg,
-                      const int nbands,
-                      const double nelec,
-                      const int mode,
-                      const int fermi_band);
+    void select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band);
 
 #ifdef __MPI
     /**
@@ -116,7 +81,6 @@ class IState_Charge
      * @param ib Band index.
      * @param nspin Number of spin channels.
      * @param nelec Total number of electrons.
-     * @param nlocal Number of local orbitals.
      * @param wg Weight matrix for bands and spins (k-points).
      * @param DM Density matrix to be calculated.
      * @param kv K-vectors.
@@ -124,7 +88,6 @@ class IState_Charge
     void idmatrix(const int& ib,
                   const int nspin,
                   const double& nelec,
-                  const int nlocal,
                   const ModuleBase::matrix& wg,
                   elecstate::DensityMatrix<double, double>& DM,
                   const K_Vectors& kv);
@@ -133,7 +96,6 @@ class IState_Charge
     void idmatrix(const int& ib,
                   const int nspin,
                   const double& nelec,
-                  const int nlocal,
                   const ModuleBase::matrix& wg,
                   elecstate::DensityMatrix<std::complex<double>, double>& DM,
                   const K_Vectors& kv,
@@ -141,8 +103,8 @@ class IState_Charge
 
 #endif
     std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma=nullptr;
-    psi::Psi<std::complex<double>>* psi_k=nullptr;
+    psi::Psi<double>* psi_gamma = nullptr;
+    psi::Psi<std::complex<double>>* psi_k = nullptr;
     const Parallel_Orbitals* ParaV;
 };
-#endif
+#endif // GET_PCHG_LCAO_H

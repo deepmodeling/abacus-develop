@@ -14,3 +14,5 @@ kpoint_file		KPT
 read_file_dir 	./
 pseudo_dir	    ../../PP_ORB
 orbital_dir	    ../../PP_ORB
+
+out_pchg        4*1

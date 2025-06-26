@@ -143,7 +143,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 }
 
                 std::stringstream ss_file;
-                ss_file << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
+                ss_file << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
 
                 ModuleIO::write_vdata_palgrid(pgrid,
                                               rho_band_norm[spin_index].data(),
@@ -211,7 +211,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 }
 
                 std::stringstream ss_real;
-                ss_real << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "real.cube";
+                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "re.cube";
 
                 ModuleIO::write_vdata_palgrid(pgrid,
                                               rho_band_re[spin_index].data(),
@@ -226,7 +226,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               true); // reduce_all_pool is true
 
                 std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wf" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "imag.cube";
+                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "im.cube";
 
                 ModuleIO::write_vdata_palgrid(pgrid,
                                               rho_band_im[spin_index].data(),

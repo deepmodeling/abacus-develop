@@ -1,88 +1,54 @@
 #include "get_pchg_lcao.h"
 
-#include "source_base/blas_connector.h"
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
-#include "source_base/parallel_common.h"
-#include "source_base/scalapack_connector.h"
+#include "module_io/cube_io.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/cube_io.h"
 
-IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
     : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
 {
 }
 
-IState_Charge::IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
     : psi_k(psi_k_in), ParaV(ParaV_in)
 {
 }
 
-IState_Charge::~IState_Charge()
+Get_pchg_lcao::~Get_pchg_lcao()
 {
 }
 
 // For gamma_only
-void IState_Charge::begin(Gint_Gamma& gg,
+void Get_pchg_lcao::begin(Gint_Gamma& gg,
                           double** rho,
                           const ModuleBase::matrix& wg,
                           const std::vector<double>& ef_all_spin,
                           const int rhopw_nrxx,
-                          const int rhopw_nplane,
-                          const int rhopw_startz_current,
-                          const int rhopw_nx,
-                          const int rhopw_ny,
-                          const int rhopw_nz,
-                          const int bigpw_bz,
-                          const int bigpw_nbz,
-                          const bool gamma_only_local,
-                          const int nbands_istate,
                           const std::vector<int>& out_pchg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
-                          const int nlocal,
-                          const std::string& global_out_dir,
-                          std::ofstream& ofs_warning,
                           const UnitCell* ucell_in,
                           const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
-                          const K_Vectors& kv)
+                          const K_Vectors& kv,
+                          const std::string& global_out_dir,
+                          std::ofstream& ofs_running)
 {
-    ModuleBase::TITLE("IState_Charge", "begin");
+    ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
-    std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)."
-              << std::endl;
-
-    // Determine the mode based on the input parameters
-    int mode = 0;
-    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
-    if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
-    {
-        mode = 1;
-    }
-    // mode = 2: select bands directly using parameter `out_pchg`
-    else if (static_cast<int>(out_pchg.size()) > 0)
-    {
-        // If out_pchg is not empty, set mode to 2
-        mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
-    }
+    std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)." << std::endl;
 
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-    GlobalV::ofs_running << " number of electrons = " << nelec << std::endl;
-    GlobalV::ofs_running << " number of occupied bands = " << fermi_band << std::endl;
 
-    // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_pchg, nbands, nelec, mode, fermi_band);
+    prepare_get_pchg(ofs_running);
+
+    // Set this->bands_picked_
+    select_bands(out_pchg, nbands, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
@@ -92,9 +58,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
             elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv);
+            this->idmatrix(ib, nspin, nelec, wg, DM, kv);
 #else
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
             for (int is = 0; is < nspin; ++is)
@@ -102,14 +68,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            //std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
-
             DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
 #ifdef __OLD_GINT
-            gg.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+            gg.initialize_pvpR(*ucell_in, GridD_in, nspin);
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
-            Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+            Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
             gg.cal_gint(&inout);
 #else
             ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
@@ -125,22 +89,19 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
-
             for (int is = 0; is < nspin; ++is)
             {
                 // ssc should be inside the inner loop to reset the string stream each time
                 std::stringstream ssc;
-                ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
+                ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                GlobalV::ofs_running << " Writing cube file " << ssc.str() << std::endl;
+                ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
                 double ef_spin = ef_all_spin[is];
                 ModuleIO::write_vdata_palgrid(pgrid, rho_save[is].data(), is, nspin, 0, ssc.str(), ef_spin, ucell_in);
             }
-
-            //std::cout << " Complete!" << std::endl;
         }
     }
 
@@ -148,63 +109,36 @@ void IState_Charge::begin(Gint_Gamma& gg,
 }
 
 // For multi-k
-void IState_Charge::begin(Gint_k& gk,
+void Get_pchg_lcao::begin(Gint_k& gk,
                           double** rho,
                           std::complex<double>** rhog,
                           const ModuleBase::matrix& wg,
                           const std::vector<double>& ef_all_spin,
                           const ModulePW::PW_Basis* rho_pw,
                           const int rhopw_nrxx,
-                          const int rhopw_nplane,
-                          const int rhopw_startz_current,
-                          const int rhopw_nx,
-                          const int rhopw_ny,
-                          const int rhopw_nz,
-                          const int bigpw_bz,
-                          const int bigpw_nbz,
-                          const bool gamma_only_local,
-                          const int nbands_istate,
                           const std::vector<int>& out_pchg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
-                          const int nlocal,
-                          const std::string& global_out_dir,
-                          std::ofstream& ofs_warning,
                           UnitCell* ucell_in,
                           const Parallel_Grid& pgrid,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv,
+                          const std::string& global_out_dir,
+                          std::ofstream& ofs_running,
                           const bool if_separate_k,
-                          Parallel_Grid* Pgrid,
-                          const int ngmc)
+                          const int chr_ngmc)
 {
-    ModuleBase::TITLE("IState_Charge", "begin");
+    ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
-    std::cout << " Calculate |psi(i)|^2 for selected bands (band-decomposed charge densities, multi-k)." << std::endl;
-
-    int mode = 0;
-    if (nbands_istate > 0 && static_cast<int>(out_pchg.size()) == 0)
-    {
-        mode = 1;
-    }
-    else if (static_cast<int>(out_pchg.size()) > 0)
-    {
-        // If out_pchg is not empty, set mode to 2
-        mode = 2;
-        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_pchg`!" << std::endl;
-    }
-    else
-    {
-        mode = 3;
-    }
+    std::cout << " Calculate |psi(i)|^2 for selected electronic states (multi-k)." << std::endl;
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-    std::cout << " number of electrons = " << nelec << std::endl;
-    std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
-    // Set this->bands_picked_ according to the mode
-    select_bands(nbands_istate, out_pchg, nbands, nelec, mode, fermi_band);
+    prepare_get_pchg(ofs_running);
+
+    // Set this->bands_picked_
+    select_bands(out_pchg, nbands, fermi_band);
 
     for (int ib = 0; ib < nbands; ++ib)
     {
@@ -218,9 +152,9 @@ void IState_Charge::begin(Gint_k& gk,
                                                                       kv.get_nks() / nspin_dm);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);
+            this->idmatrix(ib, nspin, nelec, wg, DM, kv, if_separate_k);
 #else
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
             // If contribution from different k-points need to be output separately
             if (if_separate_k)
@@ -233,15 +167,12 @@ void IState_Charge::begin(Gint_k& gk,
                         ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                     }
 
-                    std::cout << " Performing grid integral over real space grid for band " << ib + 1 << ", k-point "
-                              << ik + 1 << "..." << std::endl;
-
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
 #ifdef __OLD_GINT
-                    gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+                    gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
                     gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                    Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+                    Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                     gk.cal_gint(&inout);
 #else
                     ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
@@ -256,13 +187,13 @@ void IState_Charge::begin(Gint_k& gk,
                         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                     }
 
-                    std::cout << " Writing cube files...";
-
                     for (int is = 0; is < nspin; ++is)
                     {
                         // ssc should be inside the inner loop to reset the string stream each time
                         std::stringstream ssc;
-                        ssc << global_out_dir << "pchgs" << is + 1 << "k" << ik+1 << "i" << ib + 1 << ".cube";
+                        ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
+
+                        ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_vdata_palgrid(pgrid,
@@ -274,8 +205,6 @@ void IState_Charge::begin(Gint_k& gk,
                                                       ef_spin,
                                                       ucell_in);
                     }
-
-                    std::cout << " Complete!" << std::endl;
                 }
             }
             else
@@ -285,14 +214,12 @@ void IState_Charge::begin(Gint_k& gk,
                     ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                 }
 
-                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
-
                 DM.init_DMR(GridD_in, ucell_in);
                 DM.cal_DMR();
 #ifdef __OLD_GINT
-                gk.initialize_pvpR(*ucell_in, GridD_in, PARAM.inp.nspin);
+                gk.initialize_pvpR(*ucell_in, GridD_in, nspin);
                 gk.transfer_DM2DtoGrid(DM.get_DMR_vector());
-                Gint_inout inout(rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
+                Gint_inout inout(rho, Gint_Tools::job_type::rho, nspin);
                 gk.cal_gint(&inout);
 #else
                 ModuleGint::cal_gint_rho(DM.get_DMR_vector(), PARAM.inp.nspin, rho);
@@ -306,7 +233,6 @@ void IState_Charge::begin(Gint_k& gk,
                 }
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
                 for (int is = 0; is < nspin; ++is)
                 {
@@ -315,16 +241,16 @@ void IState_Charge::begin(Gint_k& gk,
                     {
                         rho_save_pointers[i] = rho_save[i].data();
                     }
-                    srho.begin(is, rho_save_pointers.data(), rhog, ngmc, nullptr, rho_pw, ucell_in->symm);
+                    srho.begin(is, rho_save_pointers.data(), rhog, chr_ngmc, nullptr, rho_pw, ucell_in->symm);
                 }
-
-                std::cout << " Writing cube files...";
 
                 for (int is = 0; is < nspin; ++is)
                 {
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
-                    ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
+                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
+
+                    ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_vdata_palgrid(pgrid,
@@ -336,8 +262,6 @@ void IState_Charge::begin(Gint_k& gk,
                                                   ef_spin,
                                                   ucell_in);
                 }
-
-                std::cout << " Complete!" << std::endl;
             }
         }
     }
@@ -345,14 +269,9 @@ void IState_Charge::begin(Gint_k& gk,
     return;
 }
 
-void IState_Charge::select_bands(const int nbands_istate,
-                                 const std::vector<int>& out_pchg,
-                                 const int nbands,
-                                 const double nelec,
-                                 const int mode,
-                                 const int fermi_band)
+void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band)
 {
-    ModuleBase::TITLE("IState_Charge", "select_bands");
+    ModuleBase::TITLE("Get_pchg_lcao", "select_bands");
 
     int bands_below = 0;
     int bands_above = 0;
@@ -360,115 +279,84 @@ void IState_Charge::select_bands(const int nbands_istate,
     this->bands_picked_.resize(nbands);
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
-    // mode = 1: select bands below and above the Fermi surface using parameter `nbands_istate`
-    if (mode == 1)
+    // Select bands directly using parameter `out_pchg`
+    // Check if length of out_pchg is valid
+    if (static_cast<int>(out_pchg.size()) > nbands)
     {
-        bands_below = nbands_istate;
-        bands_above = nbands_istate;
-
-        std::cout << " Plot band-decomposed charge densities below the Fermi surface with " << bands_below << " bands."
-                  << std::endl;
-
-        std::cout << " Plot band-decomposed charge densities above the Fermi surface with " << bands_above << " bands."
-                  << std::endl;
-
-        for (int ib = 0; ib < nbands; ++ib)
+        ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
+                                 "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
+    }
+    // Check if all elements in out_pchg are 0 or 1
+    for (int value: out_pchg)
+    {
+        if (value != 0 && value != 1)
         {
-            if (ib >= fermi_band - bands_below)
-            {
-                if (ib < fermi_band + bands_above)
-                {
-                    bands_picked_[ib] = 1;
-                }
-            }
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
+                                     "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
         }
     }
-    // mode = 2: select bands directly using parameter `out_pchg`
-    else if (mode == 2)
-    {
-        // Check if length of out_pchg is valid
-        if (static_cast<int>(out_pchg.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
-                                     "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
-        }
-        // Check if all elements in out_pchg are 0 or 1
-        for (int value: out_pchg)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
-                                         "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
-            }
-        }
-        // Fill bands_picked_ with values from out_pchg
-        // Remaining bands are already set to 0
-        const int length = std::min(static_cast<int>(out_pchg.size()), nbands);
-        std::copy(out_pchg.begin(), out_pchg.begin() + length, bands_picked_.begin());
+    // Fill bands_picked_ with values from out_pchg
+    // Remaining bands are already set to 0
+    const int length = std::min(static_cast<int>(out_pchg.size()), nbands);
+    std::copy(out_pchg.begin(), out_pchg.begin() + length, bands_picked_.begin());
 
-        // Check if there are selected bands below the Fermi surface
-        bool has_below = false;
+    // Check if there are selected bands below the Fermi surface
+    bool has_below = false;
+    for (int i = 0; i + 1 <= fermi_band; ++i)
+    {
+        if (bands_picked_[i] == 1)
+        {
+            has_below = true;
+            break;
+        }
+    }
+    if (has_below)
+    {
+        std::cout << " Plot band-decomposed charge densities below the Fermi surface: band ";
         for (int i = 0; i + 1 <= fermi_band; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                has_below = true;
-                break;
+                std::cout << i + 1 << " ";
             }
         }
-        if (has_below)
-        {
-            std::cout << " Plot band-decomposed charge densities below the Fermi surface: band ";
-            for (int i = 0; i + 1 <= fermi_band; ++i)
-            {
-                if (bands_picked_[i] == 1)
-                {
-                    std::cout << i + 1 << " ";
-                }
-            }
-            std::cout << std::endl;
-        }
+        std::cout << std::endl;
+    }
 
-        // Check if there are selected bands above the Fermi surface
-        bool has_above = false;
+    // Check if there are selected bands above the Fermi surface
+    bool has_above = false;
+    for (int i = fermi_band; i < nbands; ++i)
+    {
+        if (bands_picked_[i] == 1)
+        {
+            has_above = true;
+            break;
+        }
+    }
+    if (has_above)
+    {
+        std::cout << " Plot band-decomposed charge densities above the Fermi surface: band ";
         for (int i = fermi_band; i < nbands; ++i)
         {
             if (bands_picked_[i] == 1)
             {
-                has_above = true;
-                break;
+                std::cout << i + 1 << " ";
             }
         }
-        if (has_above)
-        {
-            std::cout << " Plot band-decomposed charge densities above the Fermi surface: band ";
-            for (int i = fermi_band; i < nbands; ++i)
-            {
-                if (bands_picked_[i] == 1)
-                {
-                    std::cout << i + 1 << " ";
-                }
-            }
-            std::cout << std::endl;
-        }
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("IState_Charge::select_bands", "Invalid mode! Please check the code.");
+        std::cout << std::endl;
     }
 }
 
 #ifdef __MPI
 // For gamma_only
-void IState_Charge::idmatrix(const int& ib,
+void Get_pchg_lcao::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
-                             const int nlocal,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<double, double>& DM,
                              const K_Vectors& kv)
 {
-    ModuleBase::TITLE("IState_Charge", "idmatrix");
+    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == nspin);
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
@@ -511,16 +399,15 @@ void IState_Charge::idmatrix(const int& ib,
 }
 
 // For multi-k
-void IState_Charge::idmatrix(const int& ib,
+void Get_pchg_lcao::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
-                             const int nlocal,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<std::complex<double>, double>& DM,
                              const K_Vectors& kv,
                              const bool if_separate_k)
 {
-    ModuleBase::TITLE("IState_Charge", "idmatrix");
+    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
@@ -577,4 +464,23 @@ void IState_Charge::idmatrix(const int& ib,
                                 this->ParaV->desc);
     }
 }
-#endif
+#endif // __MPI
+
+void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running)
+{
+    ofs_running << "\n\n";
+    ofs_running << " GET_PCHG CALCULATION BEGINS" << std::endl;
+
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " |  Here we use real-space (r) grid integral technique to calculate   |" << std::endl;
+    ofs_running << " |  the decomposed charge density |psi(i,r)|^2 for each electronic    |" << std::endl;
+    ofs_running << " |  state i. The |psi(i,r)|^2 is printed out using numerical atomic   |" << std::endl;
+    ofs_running << " |  orbitals as basis set.                                            |" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
+    ofs_running << "\n\n";
+
+    ofs_running << std::setprecision(6);
+}

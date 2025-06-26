@@ -263,7 +263,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
     ofs.close();
 #ifdef __MPI
-    // printf(" CHGDEN >>> Complete header writting by rank %d\n", irank);
+    // printf(" CHGDEN >>> Complete header writing by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header
     // printf(" CHGDEN >>> rank %d ready for continue writing...\n", irank);
@@ -284,7 +284,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
         ofs.close();
 #ifdef __MPI
-        // printf(" CHGDEN >>> Complete header of Miller indices writting by rank %d\n", irank);
+        // printf(" CHGDEN >>> Complete header of Miller indices writing by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of miller indices
 #endif
@@ -306,7 +306,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
             }
             ofs.close();
 #ifdef __MPI
-            // printf(" CHGDEN >>> Complete Miller indices writting by rank %d\n", irank);
+            // printf(" CHGDEN >>> Complete Miller indices writing by rank %d\n", irank);
         }
         MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the miller indices
     }
@@ -337,7 +337,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
             ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
             ofs.close();
 #ifdef __MPI
-            // printf(" CHGDEN >>> Complete header of rho(G) values writting by rank %d\n", irank);
+            // printf(" CHGDEN >>> Complete header of rho(G) values writing by rank %d\n", irank);
         }
         MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of rho(G)
 #endif
@@ -358,7 +358,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                 // assert(std::abs(sum_check) > 1.0e-10); // check if the sum of rho(G) is valid
                 ofs.close();
 #ifdef __MPI
-                // printf(" CHGDEN >>> Complete rho(G) values writting by rank %d\n", irank);
+                // printf(" CHGDEN >>> Complete rho(G) values writing by rank %d\n", irank);
             }
             MPI_Barrier(POOL_WORLD); // wait for the current rank to finish writing the rho(G) values
         }

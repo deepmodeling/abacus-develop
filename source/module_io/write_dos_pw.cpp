@@ -75,5 +75,5 @@ void ModuleIO::write_dos_pw(
         }
     }
 
-    ofs_running << " #DOS CALCULATIONS ENDS# " << std::endl;
+    ofs_running << " #DOS CALCULATION ENDS# " << std::endl;
 }

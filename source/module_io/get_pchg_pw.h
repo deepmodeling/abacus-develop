@@ -2,19 +2,6 @@
 #define GET_PCHG_PW_H
 
 #include "cube_io.h"
-#include "source_base/module_device/device.h"
-#include "source_base/tool_quit.h"
-#include "source_basis/module_pw/pw_basis.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/unitcell.h"
-#include "source_estate/elecstate.h"
-#include "source_estate/module_charge/charge.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
-#include "source_psi/psi.h"
-
-#include <string>
-#include <vector>
 
 namespace ModuleIO
 {
@@ -22,11 +9,8 @@ template <typename Device>
 void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nbands,
                  const int nspin,
-                 const int nx,
-                 const int ny,
-                 const int nz,
                  const int nxyz,
-                 const int ngmc,
+                 const int chr_ngmc,
                  UnitCell* ucell,
                  const psi::Psi<std::complex<double>>* psi,
                  const ModulePW::PW_Basis* pw_rhod,
@@ -38,7 +22,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                  const K_Vectors& kv,
                  const int kpar,
                  const int my_pool,
-                 const Charge* chg) // Charge class is needed for the charge density reduce
+                 const Charge* chr) // Charge class is needed for the charge density reduce
 {
     // Get necessary parameters from kv
     const int nks = kv.get_nks();       // current process pool k-point count
@@ -135,8 +119,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     }
 
                     std::stringstream ssc;
-                    ssc << global_out_dir << "pchgs" << spin_index + 1 << "k" << k_number << "i" << ib + 1
-                        << ".cube";
+                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
 
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_band[spin_index].data(),
@@ -172,11 +155,11 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
 #ifdef __MPI
                 // Reduce the charge density across all pools if kpar > 1
-                if (kpar > 1 && chg != nullptr)
+                if (kpar > 1 && chr != nullptr)
                 {
                     for (int is = 0; is < nspin; ++is)
                     {
-                        chg->reduce_diff_pools(rho_band[is].data());
+                        chr->reduce_diff_pools(rho_band[is].data());
                     }
                 }
 #endif
@@ -193,7 +176,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                         rho_save_pointers[s] = rho_band[s].data();
                     }
 
-                    std::vector<std::vector<std::complex<double>>> rhog(nspin, std::vector<std::complex<double>>(ngmc));
+                    std::vector<std::vector<std::complex<double>>> rhog(nspin,
+                                                                        std::vector<std::complex<double>>(chr_ngmc));
 
                     // Convert vector of vectors to vector of pointers
                     std::vector<std::complex<double>*> rhog_pointers(nspin);
@@ -202,13 +186,19 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                         rhog_pointers[s] = rhog[s].data();
                     }
 
-                    srho.begin(is, rho_save_pointers.data(), rhog_pointers.data(), ngmc, nullptr, pw_rhod, ucell->symm);
+                    srho.begin(is,
+                               rho_save_pointers.data(),
+                               rhog_pointers.data(),
+                               chr_ngmc,
+                               nullptr,
+                               pw_rhod,
+                               ucell->symm);
                 }
 
                 for (int is = 0; is < nspin; ++is)
                 {
                     std::stringstream ssc;
-                    ssc << global_out_dir << "pchgs" << is + 1 << "i" << ib + 1 << ".cube";
+                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
                     ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell);
                 }

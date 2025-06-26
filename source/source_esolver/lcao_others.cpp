@@ -1,13 +1,10 @@
-#include "source_estate/cal_ux.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_esolver/esolver_ks_lcao.h"
+#include "source_estate/cal_ux.h"
+#include "source_estate/module_charge/symmetry_rho.h"
 #include "source_pw/hamilt_pwdft/global.h"
 //
-#include "source_base/timer.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_io/berryphase.h"
 #include "module_io/get_pchg_lcao.h"
 #include "module_io/get_wf_lcao.h"
@@ -15,20 +12,21 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
+#include "source_base/timer.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #ifdef __MLALGO
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "source_base/formatter.h"
-#include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
-
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
+#include "source_base/formatter.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -197,13 +195,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // init wfc from file
     if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
-					this->pv, 
-					*(this->psi), 
-					this->pelec,
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
-					PARAM.inp.nspin))
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
+                                    this->pv,
+                                    *(this->psi),
+                                    this->pelec,
+                                    this->pelec->klist->ik2iktot,
+                                    this->pelec->klist->get_nkstot(),
+                                    PARAM.inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
@@ -303,67 +301,46 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        IState_Charge chr_i(this->psi, &(this->pv));
+        Get_pchg_lcao get_pchg(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            chr_i.begin(this->GG,
-                      this->chr.rho,
-                      this->pelec->wg,
-                      this->pelec->eferm.get_all_ef(),
-                      this->pw_rhod->nrxx,
-                      this->pw_rhod->nplane,
-                      this->pw_rhod->startz_current,
-                      this->pw_rhod->nx,
-                      this->pw_rhod->ny,
-                      this->pw_rhod->nz,
-                      this->pw_big->bz,
-                      this->pw_big->nbz,
-                      PARAM.globalv.gamma_only_local,
-                      PARAM.inp.nbands_istate,
-                      PARAM.inp.out_pchg,
-                      PARAM.inp.nbands,
-                      PARAM.inp.nelec,
-                      PARAM.inp.nspin,
-                      PARAM.globalv.nlocal,
-                      PARAM.globalv.global_out_dir,
-                      GlobalV::ofs_warning,
-                      &ucell,
-                      this->Pgrid,
-                      &this->gd,
-                      this->kv);
+            get_pchg.begin(this->GG,
+                           this->chr.rho,
+                           this->pelec->wg,
+                           this->pelec->eferm.get_all_ef(),
+                           this->pw_rhod->nrxx,
+                           PARAM.inp.out_pchg,
+                           PARAM.inp.nbands,
+                           PARAM.inp.nelec,
+                           PARAM.inp.nspin,
+                           &ucell,
+                           this->Pgrid,
+                           &this->gd,
+                           this->kv,
+                           PARAM.globalv.global_out_dir,
+                           GlobalV::ofs_running);
         }
         else
         {
-            chr_i.begin(this->GK,
-                      this->chr.rho,
-                      this->chr.rhog,
-                      this->pelec->wg,
-                      this->pelec->eferm.get_all_ef(),
-                      this->pw_rhod,
-                      this->pw_rhod->nrxx,
-                      this->pw_rhod->nplane,
-                      this->pw_rhod->startz_current,
-                      this->pw_rhod->nx,
-                      this->pw_rhod->ny,
-                      this->pw_rhod->nz,
-                      this->pw_big->bz,
-                      this->pw_big->nbz,
-                      PARAM.globalv.gamma_only_local,
-                      PARAM.inp.nbands_istate,
-                      PARAM.inp.out_pchg,
-                      PARAM.inp.nbands,
-                      PARAM.inp.nelec,
-                      PARAM.inp.nspin,
-                      PARAM.globalv.nlocal,
-                      PARAM.globalv.global_out_dir,
-                      GlobalV::ofs_warning,
-                      &ucell,
-                      this->Pgrid,
-                      &this->gd,
-                      this->kv,
-                      PARAM.inp.if_separate_k,
-                      &this->Pgrid,
-                      this->chr.ngmc);
+            get_pchg.begin(this->GK,
+                           this->chr.rho,
+                           this->chr.rhog,
+                           this->pelec->wg,
+                           this->pelec->eferm.get_all_ef(),
+                           this->pw_rhod,
+                           this->pw_rhod->nrxx,
+                           PARAM.inp.out_pchg,
+                           PARAM.inp.nbands,
+                           PARAM.inp.nelec,
+                           PARAM.inp.nspin,
+                           &ucell,
+                           this->Pgrid,
+                           &this->gd,
+                           this->kv,
+                           PARAM.globalv.global_out_dir,
+                           GlobalV::ofs_running,
+                           PARAM.inp.if_separate_k,
+                           this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }
@@ -374,44 +351,40 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (PARAM.globalv.gamma_only_local)
         {
             get_wf.begin(ucell,
-                      this->psi,
-                      this->pw_rhod,
-                      this->pw_wfc,
-                      this->pw_big,
-                      this->Pgrid,
-                      this->pv,
-                      this->GG,
-                      PARAM.inp.out_wfc_pw,
-                      this->kv,
-                      PARAM.inp.nelec,
-                      PARAM.inp.nbands_istate,
-                      PARAM.inp.out_wfc_norm,
-                      PARAM.inp.out_wfc_re_im,
-                      PARAM.inp.nbands,
-                      PARAM.inp.nspin,
-                      PARAM.globalv.nlocal,
-                      PARAM.globalv.global_out_dir);
+                         this->psi,
+                         this->pw_wfc,
+                         this->Pgrid,
+                         this->pv,
+                         this->GG,
+                         PARAM.inp.out_wfc_pw,
+                         this->kv,
+                         PARAM.inp.nelec,
+                         PARAM.inp.out_wfc_norm,
+                         PARAM.inp.out_wfc_re_im,
+                         PARAM.inp.nbands,
+                         PARAM.inp.nspin,
+                         PARAM.globalv.nlocal,
+                         PARAM.globalv.global_out_dir,
+                         GlobalV::ofs_running);
         }
         else
         {
             get_wf.begin(ucell,
-                      this->psi,
-                      this->pw_rhod,
-                      this->pw_wfc,
-                      this->pw_big,
-                      this->Pgrid,
-                      this->pv,
-                      this->GK,
-                      PARAM.inp.out_wfc_pw,
-                      this->kv,
-                      PARAM.inp.nelec,
-                      PARAM.inp.nbands_istate,
-                      PARAM.inp.out_wfc_norm,
-                      PARAM.inp.out_wfc_re_im,
-                      PARAM.inp.nbands,
-                      PARAM.inp.nspin,
-                      PARAM.globalv.nlocal,
-                      PARAM.globalv.global_out_dir);
+                         this->psi,
+                         this->pw_wfc,
+                         this->Pgrid,
+                         this->pv,
+                         this->GK,
+                         PARAM.inp.out_wfc_pw,
+                         this->kv,
+                         PARAM.inp.nelec,
+                         PARAM.inp.out_wfc_norm,
+                         PARAM.inp.out_wfc_re_im,
+                         PARAM.inp.nbands,
+                         PARAM.inp.nspin,
+                         PARAM.globalv.nlocal,
+                         PARAM.globalv.global_out_dir,
+                         GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }

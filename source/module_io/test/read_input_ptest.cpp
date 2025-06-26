@@ -50,7 +50,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.ntype, 1);
     EXPECT_EQ(param.inp.nbands, 8);
     EXPECT_EQ(param.inp.nbands_sto, 256);
-    EXPECT_EQ(param.inp.nbands_istate, 5);
     EXPECT_EQ(param.inp.out_pchg.size(), 0);
     EXPECT_EQ(param.inp.out_wfc_norm.size(), 0);
     EXPECT_EQ(param.inp.out_wfc_re_im.size(), 0);
