@@ -1,4 +1,4 @@
-#include "module_relax/lattice_change_methods.h"
+#include "source_relax/lattice_change_methods.h"
 
 #include "for_test.h"
 #include "gtest/gtest.h"

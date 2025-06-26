@@ -20,10 +20,10 @@
 #include "module_io/berryphase.h"
 #include "module_io/restart.h"
 #include "module_md/md_func.h"
-#include "module_relax/bfgs_basic.h"
-#include "module_relax/ions_move_basic.h"
-#include "module_relax/ions_move_cg.h"
-#include "module_relax/lattice_change_basic.h"
+#include "source_relax/bfgs_basic.h"
+#include "source_relax/ions_move_basic.h"
+#include "source_relax/ions_move_cg.h"
+#include "source_relax/lattice_change_basic.h"
 #ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
 #endif

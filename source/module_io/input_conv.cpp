@@ -9,8 +9,8 @@
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_io/berryphase.h"
 #include "module_parameter/parameter.h"
-#include "module_relax/ions_move_basic.h"
-#include "module_relax/lattice_change_basic.h"
+#include "source_relax/ions_move_basic.h"
+#include "source_relax/lattice_change_basic.h"
 
 #include <algorithm>
 

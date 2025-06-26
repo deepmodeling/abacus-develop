@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include "for_test.h"
-#include "module_relax/bfgs.h"
+#include "source_relax/bfgs.h"
 #include "source_cell/unitcell.h"
 #include "source_base/matrix.h"
-#include "module_relax/ions_move_basic.h"
-#include "module_relax/matrix_methods.h"
+#include "source_relax/ions_move_basic.h"
+#include "source_relax/matrix_methods.h"
 
 class BFGSTest : public ::testing::Test {
 protected:

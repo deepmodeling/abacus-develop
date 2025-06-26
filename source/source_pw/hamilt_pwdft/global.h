@@ -6,7 +6,7 @@
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_io/restart.h"
-#include "module_relax/relax_driver.h"
+#include "source_relax/relax_driver.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #include "module_ri/exx_lip.h"
