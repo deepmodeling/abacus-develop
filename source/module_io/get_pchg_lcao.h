@@ -13,13 +13,13 @@
  * charge state computation process, offering functionality to
  * calculate and plot the decomposed charge density for specified bands.
  */
-class IState_Charge
+class Get_pchg_lcao
 {
   public:
-    IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
-    IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
+    Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
+    Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
 
-    ~IState_Charge();
+    ~Get_pchg_lcao();
 
     // For gamma_only
     void begin(Gint_Gamma& gg,

@@ -5,22 +5,22 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_pw/hamilt_pwdft/global.h"
 
-IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
     : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
 {
 }
 
-IState_Charge::IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
     : psi_k(psi_k_in), ParaV(ParaV_in)
 {
 }
 
-IState_Charge::~IState_Charge()
+Get_pchg_lcao::~Get_pchg_lcao()
 {
 }
 
 // For gamma_only
-void IState_Charge::begin(Gint_Gamma& gg,
+void Get_pchg_lcao::begin(Gint_Gamma& gg,
                           double** rho,
                           const ModuleBase::matrix& wg,
                           const std::vector<double>& ef_all_spin,
@@ -35,7 +35,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv)
 {
-    ModuleBase::TITLE("IState_Charge", "begin");
+    ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
     std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)." << std::endl;
 
@@ -57,7 +57,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, wg, DM, kv);
 #else
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
             for (int is = 0; is < nspin; ++is)
@@ -102,7 +102,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 }
 
 // For multi-k
-void IState_Charge::begin(Gint_k& gk,
+void Get_pchg_lcao::begin(Gint_k& gk,
                           double** rho,
                           std::complex<double>** rhog,
                           const ModuleBase::matrix& wg,
@@ -121,7 +121,7 @@ void IState_Charge::begin(Gint_k& gk,
                           const bool if_separate_k,
                           const int chr_ngmc)
 {
-    ModuleBase::TITLE("IState_Charge", "begin");
+    ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
     std::cout << " Calculate |psi(i)|^2 for selected electronic states (multi-k)." << std::endl;
 
@@ -144,7 +144,7 @@ void IState_Charge::begin(Gint_k& gk,
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, wg, DM, kv, if_separate_k);
 #else
-            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
             // If contribution from different k-points need to be output separately
             if (if_separate_k)
@@ -247,9 +247,9 @@ void IState_Charge::begin(Gint_k& gk,
     return;
 }
 
-void IState_Charge::select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band)
+void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band)
 {
-    ModuleBase::TITLE("IState_Charge", "select_bands");
+    ModuleBase::TITLE("Get_pchg_lcao", "select_bands");
 
     int bands_below = 0;
     int bands_above = 0;
@@ -261,7 +261,7 @@ void IState_Charge::select_bands(const std::vector<int>& out_pchg, const int nba
     // Check if length of out_pchg is valid
     if (static_cast<int>(out_pchg.size()) > nbands)
     {
-        ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
+        ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
                                  "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
     }
     // Check if all elements in out_pchg are 0 or 1
@@ -269,7 +269,7 @@ void IState_Charge::select_bands(const std::vector<int>& out_pchg, const int nba
     {
         if (value != 0 && value != 1)
         {
-            ModuleBase::WARNING_QUIT("IState_Charge::select_bands",
+            ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
                                      "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
         }
     }
@@ -327,14 +327,14 @@ void IState_Charge::select_bands(const std::vector<int>& out_pchg, const int nba
 
 #ifdef __MPI
 // For gamma_only
-void IState_Charge::idmatrix(const int& ib,
+void Get_pchg_lcao::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<double, double>& DM,
                              const K_Vectors& kv)
 {
-    ModuleBase::TITLE("IState_Charge", "idmatrix");
+    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == nspin);
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
@@ -377,7 +377,7 @@ void IState_Charge::idmatrix(const int& ib,
 }
 
 // For multi-k
-void IState_Charge::idmatrix(const int& ib,
+void Get_pchg_lcao::idmatrix(const int& ib,
                              const int nspin,
                              const double& nelec,
                              const ModuleBase::matrix& wg,
@@ -385,7 +385,7 @@ void IState_Charge::idmatrix(const int& ib,
                              const K_Vectors& kv,
                              const bool if_separate_k)
 {
-    ModuleBase::TITLE("IState_Charge", "idmatrix");
+    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
