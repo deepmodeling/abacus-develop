@@ -2,13 +2,13 @@
 if(ENABLE_LCAO)
 
 list(APPEND objects
-    gint.cpp
+    gint_old.cpp
     gint_gamma_env.cpp
     gint_gamma_vl.cpp
-    gint_fvl.cpp
-    gint_rho.cpp
-    gint_tau.cpp
-    gint_vl.cpp
+    gint_fvl_old.cpp
+    gint_rho_old.cpp
+    gint_tau_old.cpp
+    gint_vl_old.cpp
     gint_k_env.cpp
     gint_k_sparse1.cpp
     gint_k_pvpr.cpp

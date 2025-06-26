@@ -61,6 +61,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
+./module_hamilt_lcao/module_gint/temp_gint:\
 ./module_relax:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
@@ -273,13 +274,13 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_others.o\
       esolver_dm2rho.o\
 
-OBJS_GINT=gint.o\
+OBJS_GINT=gint_old.o\
       gint_gamma_env.o\
       gint_gamma_vl.o\
-      gint_fvl.o\
-      gint_rho.o\
-      gint_tau.o\
-      gint_vl.o\
+      gint_fvl_old.o\
+      gint_rho_old.o\
+      gint_tau_old.o\
+      gint_vl_old.o\
       gint_k_env.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
@@ -298,6 +299,30 @@ OBJS_GINT=gint.o\
       cal_ddpsir_ylm.o\
       mult_psi_dmr.o\
       init_orb.o\
+      batch_biggrid.o\
+      big_grid.o\
+      biggrid_info.o\
+      divide_info.o\
+      gint_atom.o\
+      gint_common.o\
+      gint_dvlocal.o\
+      gint_env_gamma.o\
+      gint_env_k.o\
+      gint_fvl_meta.o\
+      gint_fvl.o\
+      gint_info.o\
+      gint_interface.o\
+      gint_rho.o\
+      gint_tau.o\
+      gint_vl_metagga_nspin4.o\
+      gint_vl_metagga.o\
+      gint_vl_nspin4.o\
+      gint_vl.o\
+      gint.o\
+      localcell_info.o\
+      phi_operator.o\
+      set_ddphi.o\
+      unitcell_info.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hamilt_sdft_pw.o\
