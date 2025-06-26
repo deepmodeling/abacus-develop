@@ -1,18 +1,10 @@
-#ifndef ISTATE_CHARGE_H
-#define ISTATE_CHARGE_H
-#include "module_hamilt_lcao/module_gint/gint.h"
+#ifndef GET_PCHG_LCAO_H
+#define GET_PCHG_LCAO_H
+
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_psi/psi.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
-
-#include <source_base/complexmatrix.h>
-#include <source_base/matrix.h>
-#include <stdexcept>
-#include <vector>
 
 /**
  * @brief Manages the computation of the charge densities for different bands (band-decomposed charge densities).
