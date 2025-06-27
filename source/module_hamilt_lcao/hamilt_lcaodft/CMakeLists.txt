@@ -13,6 +13,7 @@ if(ENABLE_LCAO)
         operator_lcao/nonlocal_new.cpp
         operator_lcao/td_ekinetic_lcao.cpp
         operator_lcao/td_nonlocal_lcao.cpp
+        operator_lcao/td_pot_hybrid.cpp
         operator_lcao/dspin_lcao.cpp
         operator_lcao/dftu_lcao.cpp
         pulay_force_stress_center2.cpp
