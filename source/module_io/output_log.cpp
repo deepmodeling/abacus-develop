@@ -346,5 +346,17 @@ void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std
 //    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
 //                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
+void write_head_td(std::ofstream& ofs, const int& istep, const int& estep, const int& iter, const std::string& basisname)
+{
+    ofs << "\n";
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
+    ofs << " --> IONIC RELAXATION STEP=" << std::setw(6) << istep+1
+        << " ELECTRON PROPAGATION STEP=" << std::setw(6) << estep
+        << "  ELECTRONIC ITERATION STEP=" << std::setw(6) << iter << "\n"; 
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
+
+//    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+//                << "  ELEC=" << std::setw(4) << estep << "  iter=" << std::setw(4)  << iter << "--------------------------------\n";
+}
 
 }// namespace ModuleIO
