@@ -182,6 +182,13 @@ class DensityMatrix
     void cal_DMR(const int ik_in = -1);
 
     /**
+     * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gague tddft
+     * if ik_in < 0, calculate all k-points
+     * if ik_in >= 0, calculate only one k-point without summing over k-points
+     */
+    void cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in = -1);
+
+    /**
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
      * the stored dm(k) has been used to calculate the passin DMR
      * @param dmR_out pointer of HContainer object to store the calculated complex DMR
