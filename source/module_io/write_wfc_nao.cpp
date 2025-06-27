@@ -269,7 +269,7 @@ void write_wfc_nao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = filename_output(PARAM.globalv.global_out_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
+            std::string fn = filename_output(PARAM.globalv.global_wfc_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
               out_type,out_app_flag,gamma_only,istep);
 
             bool append_flag = (istep > 0 && out_app_flag);

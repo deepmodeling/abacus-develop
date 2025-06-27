@@ -158,6 +158,10 @@ void ReadInput::item_system()
             {
                 para.input.symmetry = "0";
             }
+            if (para.input.esolver_type == "tddft")
+            {
+                para.input.symmetry = "-1";
+            }
             if (para.input.qo_switch)
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
