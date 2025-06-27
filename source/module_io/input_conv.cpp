@@ -24,7 +24,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#include "module_hamilt_lcao/module_tddft/td_info.h"
 #endif
 #ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
@@ -57,24 +57,25 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
-    {
-        TD_Velocity::tddft_velocity = true;
-    } else {
-        TD_Velocity::tddft_velocity = false;
-    }
     if (PARAM.inp.out_mat_hs2 == 1)
     {
-        TD_Velocity::out_mat_R = true;
+        TD_info::out_mat_R = true;
     } else {
-        TD_Velocity::out_mat_R = false;
+        TD_info::out_mat_R = false;
     }
     parse_expression(PARAM.inp.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = PARAM.inp.td_tstart;
     elecstate::H_TDDFT_pw::tend = PARAM.inp.td_tend;
+    if(PARAM.inp.td_dt!=-1.0)
+    {
+        elecstate::H_TDDFT_pw::dt = PARAM.inp.td_dt / ModuleBase::AU_to_FS;
+    }
+    else
+    {
+        elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / PARAM.inp.estep_per_md / ModuleBase::AU_to_FS;
+    }
 
-    elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / ModuleBase::AU_to_FS;
     elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
 
     // space domain parameters
@@ -247,10 +248,10 @@ void Input_Conv::Convert()
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    TD_Velocity::out_current = PARAM.inp.out_current;
-    TD_Velocity::out_current_k = PARAM.inp.out_current_k;
-    TD_Velocity::out_vecpot = PARAM.inp.out_vecpot;
-    TD_Velocity::init_vecpot_file = PARAM.inp.init_vecpot_file;
+    TD_info::out_current = PARAM.inp.out_current;
+    TD_info::out_current_k = PARAM.inp.out_current_k;
+    TD_info::out_vecpot = PARAM.inp.out_vecpot;
+    TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
     read_td_efield();
 #endif // __LCAO
 
