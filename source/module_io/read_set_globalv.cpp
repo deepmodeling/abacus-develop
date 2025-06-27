@@ -93,6 +93,11 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_matrix_dir = sys.global_out_dir + "matrix/";
     sys.global_matrix_dir = to_dir(sys.global_matrix_dir);
 
+    /// get the global output directory
+    sys.global_wfc_dir = sys.global_out_dir + "WFC/";
+    sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
+
+
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
     sys.global_mlkedf_descriptor_dir = to_dir(sys.global_mlkedf_descriptor_dir);
