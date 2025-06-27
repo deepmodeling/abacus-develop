@@ -102,7 +102,7 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
                                              current_spin,
                                              sparse_thr,
                                              *(p_ham_lcao->getHR()),
-                                             TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin]);
+                                             TD_info::td_vel_op->HR_sparse_td_vel[current_spin]);
         }
         else
         {
@@ -336,7 +336,7 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
         }
         if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
-            for (auto& R_loop: TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin])
+            for (auto& R_loop: TD_info::td_vel_op->HR_sparse_td_vel[current_spin])
             {
                 for (auto& row_loop: R_loop.second)
                 {
