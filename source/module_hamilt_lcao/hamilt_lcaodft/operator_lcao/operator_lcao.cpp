@@ -202,7 +202,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
 
         break;
     }
-    case calculation_type::lcao_tddft_velocity: {
+    case calculation_type::lcao_tddft_periodic: {
         if (!this->hr_done) {
             // in cal_type=lcao_fixed, HR should be updated by each sub-chain
             // nodes
