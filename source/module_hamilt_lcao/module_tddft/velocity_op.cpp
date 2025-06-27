@@ -1,5 +1,4 @@
 #include "velocity_op.h"
-#ifdef __LCAO
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
@@ -531,4 +530,3 @@ void Velocity_op<TR>::cal_grad_IJR(const int& iat1,
 }
 template class Velocity_op<double>;
 template class Velocity_op<std::complex<double>>;
-#endif // __LCAO
