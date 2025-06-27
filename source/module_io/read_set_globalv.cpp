@@ -149,6 +149,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_readin_dir);
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
+    Parallel_Common::bcast_string(sys.global_wfc_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }
