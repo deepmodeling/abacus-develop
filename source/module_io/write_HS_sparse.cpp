@@ -50,10 +50,10 @@ void ModuleIO::save_HSR_sparse(const int& istep,
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
                 if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1) {
                     auto iter
-                        = TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].find(
+                        = TD_info::td_vel_op->HR_sparse_td_vel[ispin].find(
                             R_coor);
                     if (iter
-                        != TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin]
+                        != TD_info::td_vel_op->HR_sparse_td_vel[ispin]
                                .end()) {
                         for (auto& row_loop: iter->second) {
                             H_nonzero_num[ispin][count]
@@ -256,7 +256,7 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                 if (PARAM.inp.nspin != 4) {
                     if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1) {
                         output_single_R(g1[ispin],
-                                        TD_Velocity::td_vel_op
+                                        TD_info::td_vel_op
                                             ->HR_sparse_td_vel[ispin][R_coor],
                                         sparse_thr,
                                         binary,
