@@ -107,7 +107,7 @@ TEST_F(GlobalFile,closelog)
 TEST_F(GlobalFile,closealllog)
 {
 		/* 
-		For module_io/input.cpp:line3578 close_log() is a void function,
+		For source_io/input.cpp:line3578 close_log() is a void function,
 		All its contents is calling close_all_log() in source_base/global_file.cpp
 		For Input::close_log() what is left to test are the validities of parameters
 		GlobalV::MY_RANK and this->out_alllog.

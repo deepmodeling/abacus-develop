@@ -3,10 +3,10 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_io/para_json.h"
-#include "module_io/print_info.h"
-#include "module_io/winput.h"
-#include "module_md/run_md.h"
+#include "source_io/para_json.h"
+#include "source_io/print_info.h"
+#include "source_io/winput.h"
+#include "source_md/run_md.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS

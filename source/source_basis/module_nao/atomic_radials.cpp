@@ -5,7 +5,7 @@
 #include "source_base/tool_quit.h"
 
 // FIXME: should update with pyabacus
-// #include "module_io/orb_io.h"
+// #include "source_io/orb_io.h"
 
 #include "source_base/projgen.h"
 

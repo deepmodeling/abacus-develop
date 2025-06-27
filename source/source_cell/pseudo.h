@@ -2,7 +2,7 @@
 #define PSEUDO_H
 
 #include "source_base/global_function.h"
-#include "module_io/output.h"
+#include "source_io/output.h"
 
 //-----------------------------------------
 // read in pseudopotentials

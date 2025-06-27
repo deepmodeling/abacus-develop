@@ -3,8 +3,8 @@
 
 #include "elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
 
 #include <vector>
 

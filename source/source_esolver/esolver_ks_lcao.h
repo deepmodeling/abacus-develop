@@ -4,20 +4,20 @@
 #include "esolver_ks.h"
 
 // for adjacent atoms
-#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/hamilt_lcaodft/record_adj.h"
 
 // for NAO basis
 #include "source_basis/module_nao/two_center_bundle.h"
 
 // for grid integration
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_lcao/module_gint/temp_gint/gint.h"
-#include "module_hamilt_lcao/module_gint/temp_gint/gint_info.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/temp_gint/gint.h"
+#include "source_lcao/module_gint/temp_gint/gint_info.h"
 
 // for DeePKS
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
 
 // for EXX

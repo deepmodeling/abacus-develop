@@ -8,7 +8,7 @@
 #include "source_base/spherical_bessel_transformer.h"
 
 // FIXME: should update with pyabacus
-// #include "module_io/orb_io.h"
+// #include "source_io/orb_io.h"
 
 RadialSet::~RadialSet()
 {

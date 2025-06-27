@@ -14,9 +14,9 @@
 #include "source_estate/magnetism.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_io/cube_io.h"
-#include "module_io/rhog_io.h"
-#include "module_io/read_wf2rho_pw.h"
+#include "source_io/cube_io.h"
+#include "source_io/rhog_io.h"
+#include "source_io/read_wf2rho_pw.h"
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
                       const UnitCell& ucell,

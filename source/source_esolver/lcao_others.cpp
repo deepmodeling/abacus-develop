@@ -1,39 +1,39 @@
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_pw/hamilt_pwdft/global.h"
 //
-#include "module_io/berryphase.h"
-#include "module_io/get_pchg_lcao.h"
-#include "module_io/get_wf_lcao.h"
-#include "module_io/to_wannier90_lcao.h"
-#include "module_io/to_wannier90_lcao_in_pw.h"
-#include "module_io/write_HS_R.h"
+#include "source_io/berryphase.h"
+#include "source_io/get_pchg_lcao.h"
+#include "source_io/get_wf_lcao.h"
+#include "source_io/to_wannier90_lcao.h"
+#include "source_io/to_wannier90_lcao_in_pw.h"
+#include "source_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_io/read_wfc_nao.h"
-#include "module_io/write_elecstat_pot.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_io/read_wfc_nao.h"
+#include "source_io/write_elecstat_pot.h"
 #include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
-#include "module_io/restart_exx_csr.h"
+#include "source_io/restart_exx_csr.h"
 #endif
 
 // mohan add 2025-03-06
-#include "module_io/cal_test.h"
+#include "source_io/cal_test.h"
 
 namespace ModuleESolver
 {

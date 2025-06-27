@@ -4,12 +4,12 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/read_pseudo.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_io/cube_io.h"
-#include "module_io/io_npz.h"
-#include "module_io/print_info.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_io/cube_io.h"
+#include "source_io/io_npz.h"
+#include "source_io/print_info.h"
 
 namespace ModuleESolver
 {
