@@ -63,6 +63,7 @@ class cal_r_overlap_R
   private:
     void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);
     void construct_orbs_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb);
+    void construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;
@@ -75,6 +76,7 @@ class cal_r_overlap_R
 
     Numerical_Orbital_Lm orb_r;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orbs;
+    std::vector<std::vector<Numerical_Orbital_Lm>> orbs_nonlocal;
 
     std::map<
         size_t,
@@ -85,6 +87,16 @@ class cal_r_overlap_R
         size_t,
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>>
         center2_orb21_r;
+
+    std::map<
+        size_t,
+        std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb11>>>>>
+        center2_orb11_nonlocal;
+
+    std::map<
+        size_t,
+        std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>
+        center2_orb21_r_nonlocal;
 
     const Parallel_Orbitals* ParaV;
 };
