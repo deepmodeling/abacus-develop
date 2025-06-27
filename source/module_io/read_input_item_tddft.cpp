@@ -28,9 +28,9 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
-        Input_Item item("td_force_dt");
-        item.annotation = "time of force change";
-        read_sync_double(input.td_force_dt);
+        Input_Item item("td_dt");
+        item.annotation = "time step of propagation";
+        read_sync_double(input.td_dt);
         this->add_item(item);
     }
     {

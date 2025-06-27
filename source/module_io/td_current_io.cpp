@@ -10,7 +10,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/module_tddft/td_current.h"
 #include "module_hamilt_lcao/module_tddft/td_info.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
