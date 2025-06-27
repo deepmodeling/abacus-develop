@@ -33,6 +33,30 @@ class cal_r_overlap_R
     bool binary = false;
 
     void init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    void init_nonlocal(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    ModuleBase::Vector3<double> get_psi_r_psi(
+      const ModuleBase::Vector3<double>& R1,
+      const int& T1,
+      const int& L1,
+      const int& m1,
+      const int& N1,
+      const ModuleBase::Vector3<double>& R2,
+      const int& T2,
+      const int& L2,
+      const int& m2,
+      const int& N2
+    );
+    void get_psi_r_beta(
+      const UnitCell& ucell,
+      std::vector<std::vector<double>>& nlm,
+      const ModuleBase::Vector3<double>& R1,
+      const int& T1,
+      const int& L1,
+      const int& m1,
+      const int& N1,
+      const ModuleBase::Vector3<double>& R2,
+      const int& T2
+    );
     void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep);
     void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
