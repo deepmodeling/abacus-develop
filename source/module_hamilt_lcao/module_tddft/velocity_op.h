@@ -9,7 +9,6 @@
 #include "source_base/vector3.h"
 #include "module_io/cal_r_overlap_R.h"
 
-#ifdef __LCAO
 //design to calculate velocity operator
 template <typename TR>
 class Velocity_op
@@ -77,5 +76,4 @@ class Velocity_op
 };
 
 
-#endif // __LCAO
 #endif // TD_CURRENT_H
