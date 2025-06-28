@@ -6,8 +6,6 @@
 
 namespace ModuleBase
 {
-int IntArray::arrayCount = 0;
-
 void IntArrayAlloc()
 {
 	std::cout << "\n Allocation error for IntArray " << std::endl;
@@ -23,7 +21,6 @@ IntArray::IntArray(const int d1,const int d2)
 	size = bound1 * bound2;
 	ptr = new int[size];zero_out();
 	assert( ptr != nullptr);
-	++arrayCount;
 }
 
 IntArray::IntArray(const int d1,const int d2,const int d3)
@@ -37,7 +34,6 @@ IntArray::IntArray(const int d1,const int d2,const int d3)
 	size = bound1 * bound2 * bound3 ;	//* sizeof(float);
 	ptr = new int[size];zero_out();
 	assert(ptr != nullptr);
-	++arrayCount;
 }
 
 IntArray::IntArray(const int d1,const int d2,const int d3,const int d4)
@@ -52,7 +48,6 @@ IntArray::IntArray(const int d1,const int d2,const int d3,const int d4)
 	size = bound1 * bound2 * bound3 * bound4 ;	//* sizeof(float);
 	ptr = new int[size];zero_out();
 	assert(ptr != nullptr);
-	++arrayCount;
 }
 
 IntArray::IntArray(const int d1,const int d2,const int d3,
@@ -68,7 +63,6 @@ IntArray::IntArray(const int d1,const int d2,const int d3,
 	size = bound1 * bound2 * bound3 * bound4 * bound5;
 	ptr = new int[size];zero_out();
 	assert(ptr != nullptr);
-	++arrayCount;
 }
 
 IntArray::IntArray(const int d1,const int d2,const int d3,
@@ -85,7 +79,6 @@ IntArray::IntArray(const int d1,const int d2,const int d3,
     size = bound1 * bound2 * bound3 * bound4 * bound5 * bound6;
 	ptr = new int[size];zero_out();
 	assert(ptr != nullptr);
-	++arrayCount;
 }
 
 //********************************

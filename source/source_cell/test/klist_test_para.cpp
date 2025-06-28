@@ -22,7 +22,7 @@
 #include "source_pw/hamilt_pwdft/VL_in_pw.h"
 #include "source_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "source_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_io/berryphase.h"
+#include "source_io/berryphase.h"
 #undef private
 bool berryphase::berry_phase_flag = false;
 

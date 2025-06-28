@@ -1,39 +1,39 @@
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_pw/hamilt_pwdft/global.h"
 //
-#include "module_io/berryphase.h"
-#include "module_io/get_pchg_lcao.h"
-#include "module_io/get_wf_lcao.h"
-#include "module_io/to_wannier90_lcao.h"
-#include "module_io/to_wannier90_lcao_in_pw.h"
-#include "module_io/write_HS_R.h"
+#include "source_io/berryphase.h"
+#include "source_io/get_pchg_lcao.h"
+#include "source_io/get_wf_lcao.h"
+#include "source_io/to_wannier90_lcao.h"
+#include "source_io/to_wannier90_lcao_in_pw.h"
+#include "source_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #ifdef __MLALGO
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_io/read_wfc_nao.h"
-#include "module_io/write_elecstat_pot.h"
+#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_io/read_wfc_nao.h"
+#include "source_io/write_elecstat_pot.h"
 #include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
-#include "module_io/restart_exx_csr.h"
+#include "source_io/restart_exx_csr.h"
 #endif
 
 // mohan add 2025-03-06
-#include "module_io/cal_test.h"
+#include "source_io/cal_test.h"
 
 namespace ModuleESolver
 {
@@ -91,6 +91,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     // (3) Periodic condition search for each grid.
+#ifdef __OLD_GINT
     double dr_uniform = 0.001;
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
@@ -98,7 +99,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     std::vector<std::vector<double>> d2psi_u;
 
     Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
-
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
@@ -122,12 +122,35 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                              dpsi_u,
                              d2psi_u,
                              PARAM.inp.nstream);
+        
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
     dpsi_u.shrink_to_fit();
     d2psi_u.clear();
     d2psi_u.shrink_to_fit();
+    // prepare grid in Gint
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
+#else
+    gint_info_.reset(
+        new ModuleGint::GintInfo(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb_.Phi,
+        ucell,
+        this->gd));
+    ModuleGint::Gint::set_gint_info(gint_info_.get());
+#endif
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
@@ -183,9 +206,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "read wfc nao failed");
         }
     }
-
-    // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)

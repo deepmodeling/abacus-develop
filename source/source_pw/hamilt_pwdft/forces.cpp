@@ -2,7 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/output_log.h"
+#include "source_io/output_log.h"
 // new
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"

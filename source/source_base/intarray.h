@@ -48,17 +48,30 @@ class IntArray
     void create(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6);
 
     /**
-     * @brief Equal an IntArray to another one
+     * @brief copy assignment
      *
      * @param right
      * @return const IntArray&
      */
-    const IntArray &operator=(const IntArray &right)
+    IntArray &operator=(const IntArray &other)
     {
-        assert( this->size == right.size );
-        for (int i = 0;i < size;i++) ptr[i] = right.ptr[i];
-        return *this;// enables x = y = z;
-    };
+        if(this != &other)
+        {
+            delete[] ptr;
+            size = other.size;
+            dim = other.dim;
+            bound1 = other.bound1;
+            bound2 = other.bound2;
+            bound3 = other.bound3;
+            bound4 = other.bound4;
+            bound5 = other.bound5;
+            bound6 = other.bound6;
+            ptr = new int[size];
+            for (int i = 0;i < size;i++)
+            { ptr[i] = other.ptr[i]; }
+        }
+        return *this;
+    }
 
     /**
      * @brief Equal all elements of an IntArray to an
@@ -71,7 +84,7 @@ class IntArray
     {
         for (int i = 0;i < size;i++) ptr[i] = right;
         return *this;// enables x = y = z;
-    };
+    }
 
     /**
      * @brief Access elements by using operator "()"
@@ -85,14 +98,14 @@ class IntArray
         assert( d1 < bound1 );
         assert( d2 < bound2 );
         return ptr[ d1 * bound2 + d2 ];
-    };
+    }
     int &operator()(const int d1, const int d2, const int d3)
     {
         assert( d1 < bound1 );
         assert( d2 < bound2 );
         assert( d3 < bound3 );
         return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
-    };
+    }
     int &operator()(const int d1, const int d2, const int d3, const int d4)
     {
         assert( d1 < bound1 );
@@ -100,7 +113,7 @@ class IntArray
         assert( d3 < bound3 );
         assert( d4 < bound4 );
         return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
-    };
+    }
     int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5)
     {
         assert( d1 < bound1 );
@@ -109,7 +122,7 @@ class IntArray
         assert( d4 < bound4 );
         assert( d5 < bound5 );
         return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
-    };
+    }
     int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6)
     {
         assert( d1 < bound1 );
@@ -119,7 +132,7 @@ class IntArray
         assert( d5 < bound5 );
         assert( d6 < bound6 );
         return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
-    };
+    }
 
     /**
      * @brief Access elements by using "()" through pointer
@@ -134,14 +147,14 @@ class IntArray
         assert( d1 < bound1 );
         assert( d2 < bound2 );
         return ptr[ d1 * bound2 + d2 ];
-    };
+    }
     const int &operator()(const int d1, const int d2, const int d3) const
     {
         assert( d1 < bound1 );
         assert( d2 < bound2 );
         assert( d3 < bound3 );
         return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
-    };
+    }
     const int &operator()(const int d1, const int d2, const int d3, const int d4) const
     {
         assert( d1 < bound1 );
@@ -149,7 +162,7 @@ class IntArray
         assert( d3 < bound3 );
         assert( d4 < bound4 );
         return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
-    };
+    }
     const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5) const
     {
         assert( d1 < bound1 );
@@ -158,7 +171,7 @@ class IntArray
         assert( d4 < bound4 );
         assert( d5 < bound5 );
         return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
-    };
+    }
     const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6) const
     {
         assert( d1 < bound1 );
@@ -168,7 +181,7 @@ class IntArray
         assert( d5 < bound5 );
         assert( d6 < bound6 );
         return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
-    };
+    }
 
     /**
      * @brief Set all elements of an IntArray to zero
@@ -209,16 +222,6 @@ class IntArray
         return bound6;
     }
 
-    /**
-     * @brief Get the Array Count object
-     *
-     * @return int
-     */
-    static int getArrayCount(void)
-    {
-        return arrayCount;
-    }
-
   private:
     int size=0;
     int dim=0;
@@ -228,7 +231,6 @@ class IntArray
     int bound4=0; 
     int bound5=0; 
     int bound6=0;
-    static int arrayCount;
     void freemem();
 };
 } // namespace ModuleBase

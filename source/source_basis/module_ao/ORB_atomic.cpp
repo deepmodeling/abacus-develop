@@ -7,8 +7,6 @@ Numerical_Orbital::Numerical_Orbital()
 {
     // make std::pair of new and delete
     // question remains
-    this->nchi = nullptr;
-    this->phiLN = new Numerical_Orbital_Lm[1];
     this->rcut = 0.0;
     this->max_nchi = 0;
     this->type = 0;
@@ -16,8 +14,6 @@ Numerical_Orbital::Numerical_Orbital()
 
 Numerical_Orbital::~Numerical_Orbital()
 {
-    delete[] nchi;
-    delete[] phiLN;
 }
 
 void Numerical_Orbital::set_orbital_info(const int& type_in,
@@ -34,8 +30,7 @@ void Numerical_Orbital::set_orbital_info(const int& type_in,
     this->lmax = lmax_in;
 
     // (2) set nchi and total nchi.
-    delete[] this->nchi;
-    this->nchi = new int[this->lmax + 1];
+    this->nchi.resize(this->lmax + 1);
     for (int i = 0; i < this->lmax + 1; i++)
     {
         this->nchi[i] = nchi_in[i];

@@ -12,8 +12,6 @@
  *     - construct an int array (2 to 6 dimensions)
  *   - Creat 
  *     - create an int array (2 to 6 dimensions)
- *   - GetArrayCount
- *     - get the total number of int array created
  *   - GetSize
  *     - get the total size of an int array
  *   - GetDim
@@ -50,14 +48,6 @@ protected:
 	int count1;
 	const int zero = 0;
 };
-
-TEST_F(IntArrayTest,GetArrayCount)
-{
-	count0 = ModuleBase::IntArray::getArrayCount();
-	ModuleBase::IntArray c3, c4;
-	count1 = ModuleBase::IntArray::getArrayCount();
-	EXPECT_EQ((count1-count0),2);
-}
 
 TEST_F(IntArrayTest,Construct)
 {

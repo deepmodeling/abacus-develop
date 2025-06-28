@@ -4,12 +4,12 @@
 #include "source_base/timer.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_gint/grid_technique.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
-#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <vector>
 
@@ -34,7 +34,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
@@ -71,7 +71,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
 
-#ifndef __NEW_GINT 
+#ifdef __OLD_GINT 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
@@ -139,7 +139,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
@@ -152,7 +152,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-#ifndef __NEW_GINT
+#ifdef __OLD_GINT
         Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_gamma->cal_gint(&inout1);
 #else

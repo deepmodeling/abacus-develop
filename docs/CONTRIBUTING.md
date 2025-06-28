@@ -64,7 +64,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.
 |   |-- module_xc               The module for calculating the exchange-correlation energy and potential.
-|-- module_hamilt_lcao          The module for defining the Hamiltonian in LCAO calculations.
+|-- source_lcao          The module for defining the Hamiltonian in LCAO calculations.
 |   |-- hamilt_lcaodft          The module for defining the Hamiltonian in LCAO-DFT calculations.
 |   |   |-- operator_lcao       The module for defining the operators in LCAO-DFT calculations.
 |   |-- module_deepks           The module for defining the Hamiltonian in DeepKS calculations.
@@ -79,10 +79,10 @@ For those who are interested in the source code, the following figure shows the 
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
 |-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
-|-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
-|-- module_md                   The module for performing molecular dynamics.
+|-- source_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
+|-- source_md                   The module for performing molecular dynamics.
 |-- source_psi                  The module for defining the wave function and its operations.
-|-- module_relax                The module for performing structural optimization.
+|-- source_relax                The module for performing structural optimization.
 |   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
 |   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
 |-- module_ri                   The module for performing RI calculations.
@@ -101,7 +101,7 @@ For comments that need to be shown in documents, these formats should be used --
 
 A helpful VS Code extension -- [Doxygen Documentation Generator](https://marketplace.visualstudio.com/items?itemName=cschlosser.doxdocgen), can help you formating comments.
 
-An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abacus-develop/blob/deepks/source/module_hamilt_lcao/module_deepks/LCAO_deepks.h), the effects can be seen on [readthedocs page](https://abacus-deepks.readthedocs.io/en/latest/DeePKS_API/classLCAO__Descriptor.html#exhale-class-classLCAO-Descriptor)
+An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abacus-develop/blob/deepks/source/source_lcao/module_deepks/LCAO_deepks.h), the effects can be seen on [readthedocs page](https://abacus-deepks.readthedocs.io/en/latest/DeePKS_API/classLCAO__Descriptor.html#exhale-class-classLCAO-Descriptor)
 
 - Tips
   - Only comments in .h file will be visible in generated  by Doxygen + Sphinx;

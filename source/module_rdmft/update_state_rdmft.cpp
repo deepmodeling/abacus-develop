@@ -8,6 +8,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_charge/symmetry_rho.h"
+#include "source_lcao/module_gint/temp_gint/gint_interface.h"
 
 
 namespace rdmft
@@ -105,10 +106,13 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
         {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
-
+#ifdef __OLD_GINT
         GG->transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
         Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GG->cal_gint(&inout);
+#else
+        ModuleGint::cal_gint_rho(DM_gamma_only.get_DMR_vector(), nspin, charge->rho);
+#endif
 
         if (XC_Functional::get_ked_flag())
         {
@@ -136,9 +140,13 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
+#ifdef __OLD_GINT
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
         Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GK->cal_gint(&inout);
+#else
+        ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, charge->rho);
+#endif
 
         if (XC_Functional::get_ked_flag())
         {

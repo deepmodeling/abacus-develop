@@ -11,12 +11,13 @@
 #include <memory>
 
 #include "source_esolver/esolver_ks_lcao.h" //for the move constructor
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "source_lcao/module_gint/gint_gamma.h"
+#include "source_lcao/module_gint/gint_k.h"
+#include "source_lcao/module_gint/grid_technique.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/potentials/pot_hxc_lrtd.h"
 #include "module_lr/hamilt_casida.h"
+#include "source_lcao/module_gint/temp_gint/gint_info.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "module_ri/Exx_LRI.h"
@@ -93,6 +94,9 @@ namespace LR
         Gint_Gamma gint_g_;
         Gint_k gint_k_;
         typename TGint<T>::type* gint_ = nullptr;
+        #ifndef __OLD_GINT
+        std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
+        #endif
         void set_gint();
 
         /// @brief variables for parallel distribution of KS orbitals

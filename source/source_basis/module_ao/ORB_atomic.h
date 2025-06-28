@@ -66,7 +66,6 @@ public:
 	
 	const inline Numerical_Orbital_Lm& PhiLN( const int &L, const int &N)const
 	{ 	
-		assert(this->phiLN != nullptr);
 		return this->phiLN[ this->find_chi(L, N) ];
 	}
 	
@@ -98,7 +97,7 @@ public:
 		NOAR.set_position(R1_in, R2_in);
 	}
 
-	Numerical_Orbital_Lm*& chi() { return this->phiLN; }
+	std::vector<Numerical_Orbital_Lm>& chi() { return this->phiLN; }
 				
 private:
 	
@@ -115,13 +114,13 @@ private:
 	
 	int type;
 	int lmax;
-	int* nchi;
+	std::vector<int> nchi;
 	int total_nchi;
 	int max_nchi;
 	ModuleBase::IntArray find_chi;
 	double rcut;
 
-	Numerical_Orbital_Lm* phiLN;// length: total_nchi (only store radial function )
+	std::vector<Numerical_Orbital_Lm> phiLN;// length: total_nchi (only store radial function )
 
 	//==========================================================
 	// Keep the old interface
