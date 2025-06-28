@@ -194,6 +194,7 @@ void ReadInput::create_directory(const Parameter& param)
     ModuleBase::Global_File::make_dir_out(param.input.suffix,
                                           param.input.calculation,
                                           out_dir,
+                                          param.input.out_wfc_lcao,
                                           this->rank,
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
@@ -372,7 +373,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
         {
             ofs << "\n#Parameters (8.DeepKS)" << std::endl;
         }
-        else if (p_item->label == "td_force_dt")
+        else if (p_item->label == "td_dt")
         {
             ofs << "\n#Parameters (9.rt-tddft)" << std::endl;
         }
