@@ -2,9 +2,9 @@
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
 
 namespace elecstate
 {

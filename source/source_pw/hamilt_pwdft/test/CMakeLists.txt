@@ -33,7 +33,7 @@ AddTest(
 	LIBS parameter ${math_libs} base device planewave 
 	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
 	../../../source_cell/unitcell.cpp
-	../../../module_io/output.cpp
+	../../../source_io/output.cpp
 	../../../source_cell/update_cell.cpp
 	../../../source_cell/bcast_cell.cpp
 	../../../source_cell/print_cell.cpp

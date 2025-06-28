@@ -3,7 +3,7 @@
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
 #include "source_base/scalapack_connector.h" // Cpxgemr2d
-#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/hamilt_lcaodft/record_adj.h"
 #include "source_psi/psi.h"
 #include "module_hamilt_lcao/module_tddft/velocity_op.h"
 #include "module_hamilt_lcao/module_tddft/td_info.h"

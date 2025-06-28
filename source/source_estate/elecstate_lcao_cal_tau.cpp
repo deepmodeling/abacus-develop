@@ -1,5 +1,5 @@
 #include "elecstate_lcao.h"
-#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include "source_base/timer.h"
 

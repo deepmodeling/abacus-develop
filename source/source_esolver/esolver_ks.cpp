@@ -7,23 +7,23 @@
 #include "source_base/global_variable.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu.h"
 
 #include "source_cell/cal_atoms_info.h"
 #include "source_estate/elecstate_print.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hsolver/hsolver.h"
-#include "module_io/cube_io.h"
+#include "source_io/cube_io.h"
 
 // for NSCF calculations of band structures
-#include "module_io/nscf_band.h"
+#include "source_io/nscf_band.h"
 // for output log information
-#include "module_io/output_log.h"
-#include "module_io/print_info.h"
-#include "module_io/write_eig_occ.h"
+#include "source_io/output_log.h"
+#include "source_io/print_info.h"
+#include "source_io/write_eig_occ.h"
 // for jason output information
-#include "module_io/json_output/init_info.h"
-#include "module_io/json_output/output_info.h"
+#include "source_io/json_output/init_info.h"
+#include "source_io/json_output/output_info.h"
 
 
 

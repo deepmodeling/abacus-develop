@@ -3,7 +3,7 @@
 // To get POOL_WORLD
 #include "source_base/parallel_comm.h"
 // Print information 
-#include "module_io/print_info.h"
+#include "source_io/print_info.h"
 
 void ModuleESolver::pw_setup(const Input_para& inp,
 		const UnitCell& ucell, 

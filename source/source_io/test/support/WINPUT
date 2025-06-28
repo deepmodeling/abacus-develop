@@ -1,0 +1,70 @@
+WANNIER_PARAMETERS
+#Parameters (General)
+target                         test #
+wlmr_dir                       ./ #
+rcut                           10 #
+before_iter                    0 #
+after_iter                     0 #
+begin_stop_flag                0 #
+end_flag                       0 #
+#Parameters (Build Wannier Functions)
+wf_type                        V #
+build_wf                       0 #
+imp_pao                        0 #
+b_out_wf                       0 #
+b_fftwan                       0 #
+b_plot_build                   0 #
+b_plot_atomic                  0 #
+#Parameters (Select trial wave functions)
+trial                          atomic #
+bs                             2.5 #
+bp                             2 #
+px                             2 #
+g1                             3 #
+g2                             3 #
+#Parameters (Select bands)
+bloch_begin                    0 #
+bloch_end                      0 #
+#Parameters (Spheri & recon)
+no_center                      0 #
+sph_proj                       0 #
+sph_type                       0 #
+b_recon                        0 #
+speed_mode                     1 #
+recon_wanq                     0 #
+b_mix_wf                       0 #
+mix_wf                         0 #
+#Parameters (Multi-center spheri)
+b_near_atom                    0 #
+range0                         0 #
+range1                         0 #
+#Parameters (Select L, atom)
+L_start                        0 #
+L_end                          2 #
+atom_start                     0 #
+atom_end                       1 #
+#Parameters (Truncation)
+trunc_ao                       6 #
+trunc_wlmr                     14 #
+trunc_wan                      6 #
+fermi_t                        1 #
+clm2_lowest                    1e-07 #
+#Parameters (Plot wave functions)
+plot_wanq                      0 #
+plot_option                    (110) #
+n_unitcell                     2 #
+#Parameters (out_all || out_chg)
+out_all                        0 #
+out_chg                        0 #
+compare_atomic                 0 #
+#Parameters (Other functions: bands & dos)
+cal_bands                      0 #
+cal_bands2                     0 #
+charge_type                    planewave #
+cal_dos                        0 #
+out_spillage                   0 #
+spillage_outdir                ./ #
+#Parameters (Uniform mesh)
+mesh                           999 #
+dr                             0.01 #
+sum_lm                         0 #

@@ -12,7 +12,7 @@
 #include "source_estate/module_pot/pot_local.h"
 #include "source_estate/module_pot/pot_xc.h"
 #include "source_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <iostream>
 #include <cmath>

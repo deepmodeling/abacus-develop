@@ -12,7 +12,7 @@
 #include "source_base/global_variable.h"
 #include "module_parameter/parameter.h"
 // io support
-#include "module_io/write_pao.h"
+#include "source_io/write_pao.h"
 
 // free function, compared with common radial function normalization, it does not multiply r to function
 // due to pswfc is already multiplied by r

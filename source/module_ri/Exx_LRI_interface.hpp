@@ -5,13 +5,13 @@
 #include "Exx_LRI_interface.h"
 #include "module_ri/exx_abfs-jle.h"
 #include "module_ri/exx_opt_orb.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
-#include "module_io/csr_reader.h"
-#include "module_io/write_HS_sparse.h"
+#include "source_io/csr_reader.h"
+#include "source_io/write_HS_sparse.h"
 #include "source_estate/elecstate_lcao.h"
 
 #include <sys/time.h>

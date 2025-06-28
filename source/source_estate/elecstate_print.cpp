@@ -6,7 +6,7 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "module_parameter/parameter.h"
 #include "occupy.h"
 namespace elecstate

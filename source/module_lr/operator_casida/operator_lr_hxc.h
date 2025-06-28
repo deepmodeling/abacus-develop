@@ -2,7 +2,7 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
 #include "module_lr/utils/gint_template.h"
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "source_lcao/module_gint/grid_technique.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/potentials/pot_hxc_lrtd.h"
 #include "module_lr/utils/lr_util.h"

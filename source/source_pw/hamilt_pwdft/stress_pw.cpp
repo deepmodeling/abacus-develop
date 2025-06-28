@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/output_log.h"
+#include "source_io/output_log.h"
 
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,

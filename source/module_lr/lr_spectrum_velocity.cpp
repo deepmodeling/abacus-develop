@@ -3,7 +3,7 @@
 #include "module_lr/utils/lr_util_hcontainer.h"
 #include "math.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 namespace LR
 {
     /// get the velocity matrix v(R)
