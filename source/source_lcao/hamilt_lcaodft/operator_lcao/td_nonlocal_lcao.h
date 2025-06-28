@@ -4,9 +4,9 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/module_tddft/td_info.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_tddft/td_info.h"
 
 #include <unordered_map>
 

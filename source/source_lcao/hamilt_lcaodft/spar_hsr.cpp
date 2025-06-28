@@ -1,7 +1,7 @@
 #include "spar_hsr.h"
 
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/module_tddft/td_info.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_tddft/td_info.h"
 #include "module_parameter/parameter.h"
 #include "spar_dh.h"
 #include "spar_exx.h"

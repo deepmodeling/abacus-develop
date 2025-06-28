@@ -1,7 +1,7 @@
 #include "velocity_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
+#include "source_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #include <omp.h>

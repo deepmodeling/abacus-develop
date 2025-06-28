@@ -4,9 +4,9 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
+#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #ifdef _OPENMP
 #include <unordered_set>

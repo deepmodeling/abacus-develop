@@ -1,6 +1,6 @@
 #include "td_info.h"
 #include "source_base/libm/libm.h"
-#include "module_hamilt_lcao/module_tddft/td_info.h"
+#include "source_lcao/module_tddft/td_info.h"
 template<typename TR>
 void TD_info::folding_HR_td(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,

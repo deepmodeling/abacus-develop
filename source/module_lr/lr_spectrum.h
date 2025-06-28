@@ -5,7 +5,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "module_hamilt_lcao/module_tddft/velocity_op.h"
+#include "source_lcao/module_tddft/velocity_op.h"
 namespace LR
 {
     template<typename T>

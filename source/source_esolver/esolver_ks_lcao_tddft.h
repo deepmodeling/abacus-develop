@@ -5,8 +5,8 @@
 #include "source_base/scalapack_connector.h" // Cpxgemr2d
 #include "source_lcao/hamilt_lcaodft/record_adj.h"
 #include "source_psi/psi.h"
-#include "module_hamilt_lcao/module_tddft/velocity_op.h"
-#include "module_hamilt_lcao/module_tddft/td_info.h"
+#include "source_lcao/module_tddft/velocity_op.h"
+#include "source_lcao/module_tddft/td_info.h"
 
 namespace ModuleESolver
 {

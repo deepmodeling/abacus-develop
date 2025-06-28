@@ -2,11 +2,11 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "module_io/write_wfc_nao.h"
+#include "source_io/write_wfc_nao.h"
 
 #include "write_wfc_nao.h"
 #include "source_base/scalapack_connector.h"
-#include "module_io/filename.h"
+#include "source_io/filename.h"
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 {

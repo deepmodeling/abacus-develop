@@ -1,4 +1,4 @@
-#include "module_io/input_conv.h"
+#include "source_io/input_conv.h"
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -7,10 +7,10 @@
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/hamilt_pwdft/global.h"
-#include "module_io/berryphase.h"
+#include "source_io/berryphase.h"
 #include "module_parameter/parameter.h"
-#include "module_relax/ions_move_basic.h"
-#include "module_relax/lattice_change_basic.h"
+#include "source_relax/ions_move_basic.h"
+#include "source_relax/lattice_change_basic.h"
 
 #include <algorithm>
 
@@ -18,13 +18,13 @@
 #include "module_ri/exx_abfs-jle.h"
 #endif
 
-#include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/module_tddft/evolve_elec.h"
-#include "module_hamilt_lcao/module_tddft/td_info.h"
+#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/module_tddft/evolve_elec.h"
+#include "source_lcao/module_tddft/td_info.h"
 #endif
 #ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
@@ -41,7 +41,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "module_md/md_func.h"
+#include "source_md/md_func.h"
 
 #ifdef __LCAO
 std::vector<double> Input_Conv::convert_units(std::string params, double c) {
