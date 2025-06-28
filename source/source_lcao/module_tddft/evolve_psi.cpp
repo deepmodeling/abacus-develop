@@ -7,7 +7,7 @@
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
 #include "source_base/scalapack_connector.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "norm_psi.h"
@@ -76,7 +76,7 @@ void evolve_psi(const int nband,
         /// @brief compute U_operator
         /// @input Stmp, Htmp, print_matrix
         /// @output U_operator
-        Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+        Propagator prop(propagator, pv, PARAM.inp.td_dt);
         prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
     }
 
@@ -93,7 +93,7 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
-        solve_propagation(pv, nband, nlocal, PARAM.mdp.md_dt / ModuleBase::AU_to_FS, Stmp, Htmp, psi_k_laststep, psi_k);
+        solve_propagation(pv, nband, nlocal,  PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

@@ -3,14 +3,14 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #include <vector>
 
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "operator_lcao/deepks_lcao.h"
 #endif
 
@@ -25,8 +25,8 @@
 
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "operator_lcao/dftu_lcao.h"
 #include "operator_lcao/dspin_lcao.h"
@@ -38,6 +38,7 @@
 #include "operator_lcao/overlap_new.h"
 #include "operator_lcao/td_ekinetic_lcao.h"
 #include "operator_lcao/td_nonlocal_lcao.h"
+#include "operator_lcao/td_pot_hybrid.h"
 #include "operator_lcao/veff_lcao.h"
 
 namespace hamilt
@@ -344,12 +345,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         }
 #endif
         // TDDFT_velocity_gauge
-        if (TD_Velocity::tddft_velocity)
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
-            if (!TD_Velocity::init_vecpot_file)
-            {
-                elecstate::H_TDDFT_pw::update_At();
-            }
             Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->hR,
                                                                              this->kv,
@@ -359,9 +356,26 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                              two_center_bundle.overlap_orb.get());
             this->getOperator()->add(td_ekinetic);
 
-            Operator<TK>* td_nonlocal
-                = new TDNonlocal<OperatorLCAO<TK, TR>>(this->hsk, this->kv->kvec_d, this->hR, &ucell, orb, &grid_d);
+            Operator<TK>* td_nonlocal = new TDNonlocal<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                             this->kv->kvec_d,
+                                                                             this->hR,
+                                                                             &ucell,
+                                                                             orb,
+                                                                             &grid_d);
             this->getOperator()->add(td_nonlocal);
+        }
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        {
+            Operator<TK>* td_pot_hybrid = new TD_pot_hybrid<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                           this->kv,
+                                                                           this->hR,
+                                                                           this->sR,
+                                                                           orb,
+                                                                           &ucell,
+                                                                           orb.cutoffs(),
+                                                                           &grid_d,
+                                                                           two_center_bundle.kinetic_orb.get());
+            this->getOperator()->add(td_pot_hybrid);
         }
         if (PARAM.inp.dft_plus_u)
         {
