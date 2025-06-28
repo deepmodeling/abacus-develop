@@ -18,26 +18,26 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::constr
 {
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs( files_abfs.size() );
 	for( size_t T=0; T!=files_abfs.size(); ++T )
-		abfs[T] = construct_abfs_T( 
+		abfs[T] = construct_abfs_T(
 			files_abfs[T],
 			T,
 			static_cast<int>(orbs.get_kmesh() * kmesh_times) | 1,			// Nk must be odd
 //			orbs.get_dk() / kmesh_times,
 			orbs.get_dk(),								// Peize Lin change 2017-04-16
-			orbs.get_dr_uniform() );		
-	
+			orbs.get_dr_uniform() );
+
 	return abfs;
 }
 
-std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::construct_abfs( 
+std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::construct_abfs(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> & abfs_pre,
 	const LCAO_Orbitals &orbs,
 	const std::vector<std::string> &files_abfs,
 	const double kmesh_times )
 {
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> 
+	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		&&abfs = construct_abfs( orbs, files_abfs, kmesh_times );
-			
+
 	assert( abfs.size() == abfs_pre.size() );
 	for( size_t T=0; T!=abfs.size(); ++T )
 	{
@@ -47,12 +47,12 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::constr
 		{
 			abfs[T][L].insert( abfs[T][L].begin(), abfs_pre[T][L].begin(), abfs_pre[T][L].end() );
 		}
-	}	
-	
+	}
+
 	return abfs;
 }
 
-std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T( 
+std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	const std::string & file_name,
 	const int &T,
 	const int &nk,
@@ -65,20 +65,20 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	size_t meshr;
 	double dr;
 	std::map<size_t,std::map<size_t,std::vector<double>>> psis;
-	
+
 	/*----------------------
 	  1.read abfs
 	----------------------*/
 	std::string word;
-	
+
 	std::ifstream ifs( file_name.c_str() );
 	if(!ifs)
-		throw std::runtime_error(" Can't find the abfs ORBITAL file.");	
-	
+		throw std::runtime_error(" Can't find the abfs ORBITAL file.");
+
 	while( ifs.good() )
 	{
 		ifs >> word;
-		
+
 		if( "Element"==word )
 		{
 			ModuleBase::GlobalFunc::READ_VALUE( ifs, label );
@@ -86,7 +86,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		else if ( "Lmax"==word )
 		{
 			ModuleBase::GlobalFunc::READ_VALUE( ifs, L_size );
-			
+
 			if( L_size>=9 )
 			{
 				std::stringstream ss;
@@ -133,12 +133,12 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		else if ( "END"==word )
 		{
 			break;
-		}		
+		}
 	}
-	
+
 	ModuleBase::CHECK_NAME(ifs, "Mesh");
 	ifs >> meshr;
-	
+
 	ModuleBase::CHECK_NAME(ifs, "dr");
 	ifs >> dr;
 
@@ -149,21 +149,21 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		{
 			std::string s_L, s_N;
 			ifs >> s_L >> s_N;
-			
+
 			size_t T,L,N;
 			ifs >> T >> L >> N;
-			
+
 			psis[L][N].resize(meshr);
 			for(int ir=0; ir!=meshr; ir++)
 			{
 				ifs >> psis[L][N][ir];
-			}		
+			}
 		}
 
 	}
 	ifs.close();
 
-	 
+
 	/*----------------------
 	  2.check L,N orbital
 	----------------------*/
@@ -183,12 +183,12 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				throw std::domain_error(ss.str());
 			}
 
-			
+
 	/*----------------------
 	  3.rab, radial
-	----------------------*/		
+	----------------------*/
 	if(meshr%2==0)	++meshr;
-	
+
 	std::vector<double> rab(meshr);
 	std::vector<double> radial(meshr);
 	for( int ir=0; ir!=meshr; ++ir )
@@ -197,12 +197,12 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		radial[ir] = ir*dr; //mohan 2010-04-19
 	}
 
-	
+
 	/*----------------------
 	  4.normalize psi
 	----------------------*/
 	for( size_t L=0; L<=L_size; ++L )
-	{	
+	{
 		for( size_t N=0; N!=N_size[L]; ++N )
 		{
 			std::vector<double> psir(meshr);
@@ -213,7 +213,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				psir[ir] = psis[L][N][ir] * radial[ir];
 				inner[ir] = psir[ir] * psir[ir];
 			}
-			double unit = 0.0;	
+			double unit = 0.0;
 			ModuleBase::Integral::Simpson_Integral(meshr, ModuleBase::GlobalFunc::VECTOR_TO_PTR(inner), ModuleBase::GlobalFunc::VECTOR_TO_PTR(rab), unit);
 			for( int ir=0; ir!=meshr; ++ir )
 			{
@@ -222,10 +222,10 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		}
 	}
 
-	
+
 	/*----------------------
 	  5.construct abfs
-	----------------------*/	
+	----------------------*/
 	std::vector<std::vector<Numerical_Orbital_Lm>> abfs_T;
 
 	abfs_T.resize(L_size+1);
@@ -248,9 +248,9 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				dk,
 				dr_uniform,
 				false,
-				true, PARAM.inp.cal_force);		
+				true, PARAM.inp.cal_force);
 		}
 	}
-	
+
 	return abfs_T;
 }

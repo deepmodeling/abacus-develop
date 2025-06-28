@@ -18,14 +18,14 @@ class LCAO_Orbitals;
 class Exx_Abfs::IO
 {
 public:
-		
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs( 
+
+	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs(
 		const LCAO_Orbitals &orbs,
 		const std::vector<std::string> &files_abfs,
-		const double kmesh_times=1 );				// close dK, keep Kcut	
-		
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs( 
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_pre, 	
+		const double kmesh_times=1 );				// close dK, keep Kcut
+
+	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_pre,
 		const LCAO_Orbitals &orbs,
 		const std::vector<std::string> &files_abfs,
 		const double kmesh_times=1 );				// close dK, keep Kcut

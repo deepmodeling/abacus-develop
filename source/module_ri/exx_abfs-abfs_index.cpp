@@ -29,9 +29,9 @@ ModuleBase::Element_Basis_Index::Range
 		range[T].resize( orb[T].size() );
 		for( size_t L=0; L!=range[T].size(); ++L )
 		{
-			range[T][L].N = orb[T][L].size();	
-			range[T][L].M = 2*L+1;	
-		}			
+			range[T][L].N = orb[T][L].size();
+			range[T][L].M = 2*L+1;
+		}
 	}
 	return range;
 }

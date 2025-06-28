@@ -12,33 +12,33 @@
 class Exx_Abfs::Construct_Orbs
 {
 public:
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> change_orbs( 
+	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> change_orbs(
 		const LCAO_Orbitals &orb_in,
 		const double kmesh_times );
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> change_orbs( 
+	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> change_orbs(
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in,
 		const double kmesh_times );
 
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom( 
+	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom(
 		const UnitCell &ucell,
         const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const double kmesh_times_mot,
 		const double times_threshold=0);
-		
+
 	static void print_orbs_size(
 		const UnitCell& ucell,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
-		std::ostream &os);		
-		
+		std::ostream &os);
+
 private:
-	static std::vector<std::vector<std::vector<std::vector<double>>>> psi_mult_psi( 
+	static std::vector<std::vector<std::vector<std::vector<double>>>> psi_mult_psi(
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos );
-		
-	static std::vector<std::vector<std::vector<std::vector<double>>>> psir_mult_psir( 
+
+	static std::vector<std::vector<std::vector<std::vector<double>>>> psir_mult_psir(
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos );
-		
-	static std::vector<std::vector<std::vector<std::vector<double>>>> orth( 
+
+	static std::vector<std::vector<std::vector<std::vector<double>>>> orth(
 		const std::vector<std::vector<std::vector<std::vector<double>>>> &psis,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const double norm_threshold = std::numeric_limits<double>::min() );
@@ -50,16 +50,16 @@ private:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		const double kmesh_times_mot,
 		const double times_threshold );
-		
-	static std::vector<std::vector<std::vector<std::vector<double>>>> div_r( 
+
+	static std::vector<std::vector<std::vector<std::vector<double>>>> div_r(
 		const std::vector<std::vector<std::vector<std::vector<double>>>> &psirs,
-		const std::vector<double> &r_radial );		
-		
+		const std::vector<double> &r_radial );
+
 	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orbital(
 		const std::vector<std::vector<std::vector<std::vector<double>>>> &psis,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs_info,
-		const double kmesh_times);		
-		
+		const double kmesh_times);
+
 	static std::vector<std::vector<std::vector<std::vector<double>>>> get_psi(
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs );
 };

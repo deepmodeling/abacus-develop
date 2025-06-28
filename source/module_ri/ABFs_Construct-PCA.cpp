@@ -32,14 +32,14 @@ namespace PCA
 		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, work.data(), &lwork, &info);
 	}
 
-	RI::Tensor<double> get_sub_matrix( 
+	RI::Tensor<double> get_sub_matrix(
 		const RI::Tensor<double> & m,		// size: (lcaos, lcaos, abfs)
 		const std::size_t & T,
 		const std::size_t & L,
 		const ModuleBase::Element_Basis_Index::Range & range,
 		const ModuleBase::Element_Basis_Index::IndexLNM & index )
 	{
-		ModuleBase::TITLE("ABFs_Construct::PCA::get_sub_matrix");		
+		ModuleBase::TITLE("ABFs_Construct::PCA::get_sub_matrix");
 		assert(m.shape.size() == 3);
 		RI::Tensor<double> m_sub({ m.shape[0], m.shape[1], range[T][L].N });
 		for (std::size_t ir=0; ir!=m.shape[0]; ++ir) {
@@ -74,12 +74,12 @@ namespace PCA
 	std::vector<std::vector<std::pair<std::vector<double>, RI::Tensor<double>>>> cal_PCA(
 		const UnitCell &ucell,
         const LCAO_Orbitals& orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 		const double kmesh_times )
 	{
 		ModuleBase::TITLE("ABFs_Construct::PCA::cal_PCA");
-		
+
 		const ModuleBase::Element_Basis_Index::Range
 			range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
 		const ModuleBase::Element_Basis_Index::IndexLNM
@@ -107,27 +107,27 @@ namespace PCA
 		m_abfslcaos_lcaos.init_radial_table(delta_R);
 
 		GlobalC::exx_info.info_ri.abfs_Lmax = Lmax_bak;
-		
+
 		std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> eig(abfs.size());
 		for( std::size_t T=0; T!=abfs.size(); ++T )
 		{
-			const RI::Tensor<double> A = m_abfslcaos_lcaos.cal_overlap_matrix<double>(  
-				T, 
-				T, 
+			const RI::Tensor<double> A = m_abfslcaos_lcaos.cal_overlap_matrix<double>(
+				T,
+				T,
 				ModuleBase::Vector3<double>{0,0,0},
-				ModuleBase::Vector3<double>{0,0,0},  
-				index_abfs, 
+				ModuleBase::Vector3<double>{0,0,0},
+				index_abfs,
 				index_lcaos,
 				index_lcaos,
 				Matrix_Orbs21::Matrix_Order::A2BA1);
-			
+
 			eig[T].resize(abfs[T].size());
 			for( std::size_t L=0; L!=abfs[T].size(); ++L )
 			{
 				const RI::Tensor<double> A_sub = get_sub_matrix( A, T, L, range_abfs, index_abfs );
 				RI::Tensor<double> mm = A_sub.transpose() * A_sub;
 				std::vector<double> eig_value(mm.shape[0]);
-				
+
 				int info=1;
 
 				tensor_dsyev('V', 'L', mm, eig_value.data(), info);
@@ -158,7 +158,7 @@ namespace PCA
 				eig[T][L] = std::make_pair( eig_value, mm );
 			}
 		}
-		
+
 		return eig;
 	}
 

@@ -12,7 +12,7 @@ class LCAO_Orbitals;
 class Exx_Abfs::Abfs_Index
 {
 public:
-	static ModuleBase::Element_Basis_Index::Range construct_range( const LCAO_Orbitals &orb );	
+	static ModuleBase::Element_Basis_Index::Range construct_range( const LCAO_Orbitals &orb );
 	static ModuleBase::Element_Basis_Index::Range construct_range( const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb );
 };
 
