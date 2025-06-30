@@ -8,8 +8,8 @@
 
 #include "LRI_CV_Tools.h"
 #include "Inverse_Matrix.h"
-#include "../source_base/mathzone.h"
-#include "../source_pw/hamilt_pwdft/global.h"
+#include "../../source_base/mathzone.h"
+#include "../../source_pw/hamilt_pwdft/global.h"
 
 template<typename Tdata>
 RI::Tensor<Tdata>

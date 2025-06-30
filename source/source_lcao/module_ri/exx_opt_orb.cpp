@@ -11,8 +11,8 @@
 #include "source_lcao/module_ri/Matrix_Orbs22.h"
 #include "source_lcao/module_ri/LRI_CV_Tools.h"
 
-#include "../source_lcao/module_ri/test_code/element_basis_index-test.h"
-#include "../source_lcao/module_ri/test_code/test_function.h"
+#include "../../source_lcao/module_ri/test_code/element_basis_index-test.h"
+#include "../../source_lcao/module_ri/test_code/test_function.h"
 #include <sched.h>
 
 void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, const LCAO_Orbitals& orb) const
