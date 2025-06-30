@@ -83,9 +83,7 @@ For those who are interested in the source code, the following figure shows the 
 |-- source_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- source_md                   The module for performing molecular dynamics.
 |-- source_psi                  The module for defining the wave function and its operations.
-|-- source_relax                The module for performing structural optimization.
-|   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
-|   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
+`-- source_relax                The module for performing structural optimization, optimized for cell and ion simultaneously.
 ```
 
 ## Submitting an Issue
