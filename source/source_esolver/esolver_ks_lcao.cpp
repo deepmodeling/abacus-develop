@@ -59,7 +59,7 @@
 #include "source_hsolver/hsolver_lcao.h"
 
 // test RDMFT
-#include "module_rdmft/rdmft.h"
+#include "source_lcao/module_rdmft/rdmft.h"
 
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 

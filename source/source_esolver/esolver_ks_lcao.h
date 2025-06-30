@@ -27,7 +27,7 @@
 #endif
 
 // for RDMFT
-#include "module_rdmft/rdmft.h"
+#include "source_lcao/module_rdmft/rdmft.h"
 
 #include <memory>
 

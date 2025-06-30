@@ -4,7 +4,7 @@
 //==========================================================
 
 #include "rdmft.h"
-#include "module_rdmft/rdmft_tools.h"
+#include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_charge/symmetry_rho.h"

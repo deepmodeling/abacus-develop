@@ -27,7 +27,7 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
 #include "source_lcao/module_ri/RPA_LRI.h" // use RPA code
 #endif
-#include "module_rdmft/rdmft.h" // use RDMFT codes
+#include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_io/to_qo.h" // use toQO
 
 namespace ModuleIO

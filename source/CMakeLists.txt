@@ -19,7 +19,7 @@ add_subdirectory(module_parameter)
 add_subdirectory(module_lr)
 
 # add by jghan
-add_subdirectory(module_rdmft)
+add_subdirectory(source_lcao/module_rdmft)
 
 add_library(
     driver

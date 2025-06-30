@@ -2,7 +2,7 @@
 // Author: Jingang Han
 // DATE : 2024-03-11
 //==========================================================
-#include "module_rdmft/rdmft_tools.h"
+#include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_pw/hamilt_pwdft/global.h"
 // used by class Veff_rdmft
 #include "source_base/tool_title.h"
