@@ -1,14 +1,18 @@
 # Extracting Wave Functions
 
-ABACUS is able to output electron wave functions in both PW and LCAO basis calculations. One can find the examples in [examples/wfc](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/wfc).
+ABACUS is able to output electron wave functions in both PW and LCAO basis calculations. One can find the examples in [examples/11_wfc](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/11_wfc).
 
-## wave function in G space
-For the wave function in G space, one only needs to do a ground-state energy calculation with one additional keyword in the INPUT file: '***[out_wfc_pw](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-pw)***' for PW basis calculation, and '***[out_wfc_lcao](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-lcao)***' for LCAO basis calculation.
-In the PW basis case, the wave function is output in a file called `WAVEFUNC${k}.txt`, where `${k}` is the index of K point. \
-In the LCAO basis case, several `WFC_NAO_K${k}.dat` files will be output in multi-k calculation and `WFC_NAO_GAMMA1.dat` in gamma-only calculation. 
+## Wave Function in G-Space
 
-## wave function in real space
+To output wave functions in G-space, add one of the following keywords to the `INPUT` file while performing SCF calculation:
+- **PW basis**: Set [`out_wfc_pw`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-pw) to `1`. Output file format: `wfs[spin]k[kpoint]_pw.txt`, where `[spin]` is the spin channel index, and `[kpoint]` the k-point index.
 
-One can also choose to output real-space wave function in PW basis calculation with the key word ***[out_wfc_norm](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-norm)***.
+- **LCAO basis**: Set [`out_wfc_lcao`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-lcao) to `1`.  
+  - **Multi-k calculations**: Generates multiple files `wfs[spin]k[kpoint]_nao.txt`.
+  - **Gamma-only calculations**: `wfs[spin]_nao.txt` instead.
 
-Notice: when the ***[basis_type](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#basis_type)*** is `lcao`, only `get_wf` ***[calculation](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#calculation)*** is effective. An example is [examples/wfc/lcao_ienvelope_Si2](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/wfc/lcao_ienvelope_Si2). 
+## Wave Function in Real Space
+
+One can also choose to output real-space wave functions with the keyword [`out_wfc_norm`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-norm) or [`out_wfc_re_im`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-re-im).
+
+Notice: When the [`basis_type`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#basis-type) is `lcao`, only `get_wf` [`calculation`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#calculation) is effective. An example is [examples/11_wfc/lcao_ienvelope_Si2](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/11_wfc/lcao_ienvelope_Si2).

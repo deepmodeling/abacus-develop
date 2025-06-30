@@ -19,7 +19,7 @@ std::string filename_output(
 			const int istep)
 {
     // output filename = "{PARAM.globalv.global_out_dir}/property{s}{spin index}
-    // {k(optinal)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
+    // {k(optional)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
     // + {".txt"/".dat"}"
 
 	std::set<std::string> valid_properties = {"wf", "chg", "hk", "sk", "tk", "vxc"};

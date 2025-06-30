@@ -1,18 +1,18 @@
 INPUT_PARAMETERS
-#Parameters     (General)
+#Parameters (General)
 pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
 calculation                     scf    
 nbands                          8
-#Parameters (Methos)
+#Parameters (Methods)
 basis_type                      lcao
 symmetry                        0       
 #Parameters (Accuracy)
-ecutwfc                          60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
+ecutwfc                         60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                         1.0e-7  // about iteration
-scf_nmax			100
+scf_nmax                        100
 #Parameters (File)
-out_wfc_lcao                         1
+out_wfc_lcao                    1
 
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.

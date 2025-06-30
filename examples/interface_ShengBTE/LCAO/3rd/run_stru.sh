@@ -9,7 +9,7 @@ cd SCF-$stru
 pwd
 cat > INPUT <<EOF
 INPUT_PARAMETERS
-#Parameters     (General)
+#Parameters (General)
 suffix          DIA-50-$stru
 calculation     scf
 esolver_type    ksdft
