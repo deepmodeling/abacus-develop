@@ -23,8 +23,8 @@
 #include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 #ifdef __EXX
-#include "module_ri/Exx_LRI.h"
-#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 // there are some operator reload to print data in different formats
 #endif
 

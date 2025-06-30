@@ -8,7 +8,7 @@
 #include "source_io/write_HS_sparse.h"
 #ifdef __EXX
 #include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/RI_2D_Comm.h"
 #endif
 
 #ifndef TGINT_H

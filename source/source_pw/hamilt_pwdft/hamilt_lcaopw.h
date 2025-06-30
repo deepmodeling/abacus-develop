@@ -3,7 +3,7 @@
 
 #include "source_pw/hamilt_pwdft/hamilt_pw.h"
 #ifdef __EXX
-#include "module_ri/exx_lip.h"
+#include "source_lcao/module_ri/exx_lip.h"
 #endif
 
 namespace hamilt

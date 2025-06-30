@@ -9,7 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
 #include "module_parameter/parameter.h"

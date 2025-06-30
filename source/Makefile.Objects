@@ -67,7 +67,7 @@ VPATH=./src_global:\
 ./source_io:\
 ./source_io/json_output:\
 ./src_ri:\
-./module_ri:\
+./source_lcao/module_ri:\
 ./module_parameter:\
 ./module_lr:\
 ./module_lr/ao_to_mo_transformer:\

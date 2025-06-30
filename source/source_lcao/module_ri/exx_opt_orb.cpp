@@ -6,13 +6,13 @@
 #include "exx_abfs-construct_orbs.h"
 #include "exx_abfs-jle.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "module_ri/Matrix_Orbs11.h"
-#include "module_ri/Matrix_Orbs21.h"
-#include "module_ri/Matrix_Orbs22.h"
-#include "module_ri/LRI_CV_Tools.h"
+#include "source_lcao/module_ri/Matrix_Orbs11.h"
+#include "source_lcao/module_ri/Matrix_Orbs21.h"
+#include "source_lcao/module_ri/Matrix_Orbs22.h"
+#include "source_lcao/module_ri/LRI_CV_Tools.h"
 
-#include "../module_ri/test_code/element_basis_index-test.h"
-#include "../module_ri/test_code/test_function.h"
+#include "../source_lcao/module_ri/test_code/element_basis_index-test.h"
+#include "../source_lcao/module_ri/test_code/test_function.h"
 #include <sched.h>
 
 void Exx_Opt_Orb::generate_matrix(const K_Vectors &kv, const UnitCell& ucell, const LCAO_Orbitals& orb) const

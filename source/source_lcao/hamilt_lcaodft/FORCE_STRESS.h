@@ -11,7 +11,7 @@
 #include "source_io/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
-#include "module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
 #include "force_stress_arrays.h"
 #include "source_lcao/module_gint/gint_gamma.h"

@@ -10,13 +10,13 @@
 #include "Exx_LRI.h"
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
-#include "module_ri/exx_abfs-construct_orbs.h"
-#include "module_ri/exx_abfs-io.h"
-#include "module_ri/conv_coulomb_pot_k.h"
+#include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
+#include "source_lcao/module_ri/exx_abfs-io.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "module_ri/serialization_cereal.h"
-#include "module_ri/Mix_DMk_2D.h"
+#include "source_lcao/module_ri/serialization_cereal.h"
+#include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <RI/distribute/Distribute_Equally.h>

@@ -1,5 +1,5 @@
 #include "symmetry_rotation.h"
-#include "module_ri/RI_Util.h"
+#include "source_lcao/module_ri/RI_Util.h"
 #include "source_base/blas_connector.h"
 #include "source_base/timer.h"
 #include <array>

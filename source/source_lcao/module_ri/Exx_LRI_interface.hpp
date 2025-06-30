@@ -3,8 +3,8 @@
 #include "module_parameter/parameter.h"
 
 #include "Exx_LRI_interface.h"
-#include "module_ri/exx_abfs-jle.h"
-#include "module_ri/exx_opt_orb.h"
+#include "source_lcao/module_ri/exx_abfs-jle.h"
+#include "source_lcao/module_ri/exx_opt_orb.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"

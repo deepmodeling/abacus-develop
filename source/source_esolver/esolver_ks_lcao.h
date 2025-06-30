@@ -22,8 +22,8 @@
 
 // for EXX
 #ifdef __EXX
-#include "module_ri/Exx_LRI_interface.h"
-#include "module_ri/Mix_DMk_2D.h"
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/Mix_DMk_2D.h"
 #endif
 
 // for RDMFT

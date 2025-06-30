@@ -1,8 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_base/module_mixing/broyden_mixing.h"
-#include "module_ri/Mix_DMk_2D.h"
-#include "module_ri/Mix_Matrix.h"
+#include "source_lcao/module_ri/Mix_DMk_2D.h"
+#include "source_lcao/module_ri/Mix_Matrix.h"
 
 /************************************************
  *  unit test of charge_mixing.cpp & Mix_DMk_2D.cpp

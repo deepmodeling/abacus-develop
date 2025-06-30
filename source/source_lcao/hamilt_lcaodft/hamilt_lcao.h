@@ -19,7 +19,7 @@
 #endif
 
 #ifdef __EXX
-#include "module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/Exx_LRI.h"
 #endif
 namespace hamilt
 {
