@@ -71,7 +71,8 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- module_dftu             The module for defining the Hamiltonian in DFT+U calculations.
 |   |-- module_gint             The module for performing grid integral in LCAO calculations.
 |   |-- module_hcontainer       The module for storing the Hamiltonian matrix in LCAO calculations.
-|   `-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
+|   |-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
+|   `-- module_ri                The module for performing RI calculations.
 |-- source_pw            The module for defining the Hamiltonian in PW calculations.
 |   |-- hamilt_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
@@ -85,7 +86,6 @@ For those who are interested in the source code, the following figure shows the 
 |-- source_relax                The module for performing structural optimization.
 |   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
 |   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
-|-- source_lcao/module_ri                   The module for performing RI calculations.
 ```
 
 ## Submitting an Issue
