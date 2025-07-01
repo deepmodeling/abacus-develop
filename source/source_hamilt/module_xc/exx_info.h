@@ -53,7 +53,7 @@ struct Exx_Info
     {
         std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
             std::pair<bool, 
-                std::_map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
                     std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
         bool real_number = false;
