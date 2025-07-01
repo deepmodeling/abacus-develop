@@ -330,7 +330,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell &ucell)
     for (int I = 0; I != ucell.nat; I++)
     {
         mu_shift[I] = all_mu;
-        all_mu += exx_lri_rpa.cv.get_index_abfs_size(ucell.iat2it[I]);
+        all_mu += exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.get_index_abfs_size(ucell.iat2it[I]);
     }
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
