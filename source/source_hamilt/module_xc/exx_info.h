@@ -52,7 +52,10 @@ struct Exx_Info
     struct Exx_Info_RI
     {
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
-
+                std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Method, 
+            std::pair<bool, 
+                std::unordered_map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+                    std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
         bool real_number = false;
 
