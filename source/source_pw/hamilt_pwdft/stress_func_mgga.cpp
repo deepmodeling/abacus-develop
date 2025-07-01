@@ -16,7 +16,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
                                               const Charge* const chr,
                                               K_Vectors* p_kv,
                                               ModulePW::PW_Basis_K* wfc_basis,
-                                              const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                              const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
 	if (PARAM.inp.nspin == 4) 
 	{

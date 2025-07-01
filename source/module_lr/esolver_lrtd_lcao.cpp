@@ -36,12 +36,12 @@ void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<
 template<>
 void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to complex<double>");
+    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to std::complex<double>");
 }
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move complex<double> to double");
+    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
 template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }

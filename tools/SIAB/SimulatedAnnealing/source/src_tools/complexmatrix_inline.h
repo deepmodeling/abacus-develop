@@ -26,7 +26,7 @@ inline ComplexMatrix::ComplexMatrix(int nrows, int ncols)
 // zero out the ComplexMatrix
 inline void ComplexMatrix::zero_out(void)
 {
-//	for (int i=0; i<size; i++) c[i] = complex<double>(0.0,0.0);
+//	for (int i=0; i<size; i++) c[i] = std::complex<double>(0.0,0.0);
 	memset ( c, 0, size*sizeof(complex<double>) );		// Peize Lin update 2015-12-08
 }
 
@@ -44,7 +44,7 @@ inline void ComplexMatrix::init(const int nrows,const int ncols)
 	this->nc = ncols;
 	this->size = nr * nc;
 //	std::set_new_handler( need_more_memory );
-	this->c = new complex<double>[size];
+	this->c = new std::complex<double>[size];
 	assert(c != 0);
 	this->zero_out();
 }//mohan the principle:as simple as possible:modify inline 2007-10-13
@@ -85,8 +85,8 @@ inline void ComplexMatrix::set_as_identity_matrix()
 	{
 		for(int j=0; j<nc; j++)
 		{
-			if(i==j) c[nc * i + j] = complex<double>(1.0, 0.0);  
-			else c[nc * i + j] = complex<double>(0.0, 0.0); 
+			if(i==j) c[nc * i + j] = std::complex<double>(1.0, 0.0);  
+			else c[nc * i + j] = std::complex<double>(0.0, 0.0); 
 		}
 	}
 */
@@ -95,7 +95,7 @@ inline void ComplexMatrix::set_as_identity_matrix()
 	const int nrc_min = min(nr,nc);
 	for( int i=0; i<nrc_min; ++i)
 	{
-		c[nc*i+i] = complex<double>(1.0,0.0);
+		c[nc*i+i] = std::complex<double>(1.0,0.0);
 	}
 	return;
 }
@@ -129,7 +129,7 @@ inline ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 	{
 		for (int j = 0;j < m2.nc;j++)
 		{
-			z = complex<double>(0,0);
+			z = std::complex<double>(0,0);
 			for (int k = 0;k < m1.nc;k++)
 			{
 				z += m1(i, k) * m2(k, j);
@@ -177,7 +177,7 @@ inline ComplexMatrix multiply_special(const char Symmetry, const char Side, cons
 }
 
 // Scale a ComplexMatrix
-inline ComplexMatrix operator*(const complex<double> &c,const ComplexMatrix &m)
+inline ComplexMatrix operator*(const std::complex<double> &c,const ComplexMatrix &m)
 {
 	ComplexMatrix sm(m);
 	for (int i=0 ;i<m.size; i++) sm.c[i] *= c;
@@ -185,7 +185,7 @@ inline ComplexMatrix operator*(const complex<double> &c,const ComplexMatrix &m)
 }
 
 // ComplexMatrix scalar
-inline ComplexMatrix operator*(const ComplexMatrix &m,const complex<double> &c)
+inline ComplexMatrix operator*(const ComplexMatrix &m,const std::complex<double> &c)
 {
 	ComplexMatrix sm(m);
 	for (int i = 0;i < m.size;i++) sm.c[i] *= c;
@@ -274,7 +274,7 @@ inline ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix &m)
 	return *this;
 }
 
-inline ComplexMatrix& ComplexMatrix::operator*=(const complex<double> &s)
+inline ComplexMatrix& ComplexMatrix::operator*=(const std::complex<double> &s)
 {
 	for (int i = 0;i < this->size;i++) c[i] *= s;
 	return *this;
@@ -295,7 +295,7 @@ inline ComplexMatrix& ComplexMatrix::operator-=(const ComplexMatrix &m)
 }
 
 // Returns trace of ComplexMatrix
-inline complex<double> trace(const ComplexMatrix &m)
+inline std::complex<double> trace(const ComplexMatrix &m)
 {
 	complex<double> tr=complex<double>(0,0);
 	assert(m.nr == m.nc);
@@ -304,7 +304,7 @@ inline complex<double> trace(const ComplexMatrix &m)
 }
 
 // Do mout += s*min
-inline void scale_accumulate(const complex<double> &s,
+inline void scale_accumulate(const std::complex<double> &s,
                       const ComplexMatrix &min,
                       ComplexMatrix &mout)
 {
@@ -319,7 +319,7 @@ inline void scale_accumulate(const complex<double> &s,
 
 // Do mout[i] += s*min[i]
 inline void scale_accumulate(const int &nmat,
-                      const complex<double> &s,
+                      const std::complex<double> &s,
                       ComplexMatrix **min,
                       ComplexMatrix **mout)
 {
@@ -332,9 +332,9 @@ inline void scale_accumulate(const int &nmat,
 }
 
 // Do mout = s1*m1 + s2*m2
-inline void scaled_sum(const complex<double> &s1,
+inline void scaled_sum(const std::complex<double> &s1,
                 const ComplexMatrix &m1,
-                const complex<double> &s2,
+                const std::complex<double> &s2,
                 const ComplexMatrix &m2,
                 ComplexMatrix &mout)
 {
@@ -352,9 +352,9 @@ inline void scaled_sum(const complex<double> &s1,
 
 // Does mout[i] = s1*m1[i] + s2*m2[i]
 inline void scaled_sum(const int &nmat,
-                const complex<double> &s1,
+                const std::complex<double> &s1,
                 ComplexMatrix **m1,
-                const complex<double> &s2,
+                const std::complex<double> &s2,
                 ComplexMatrix **m2,
                 ComplexMatrix **mout)
 {

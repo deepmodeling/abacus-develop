@@ -53,7 +53,7 @@ TEST_F(PWTEST,test2_3)
     GT = latvec.Inverse();
 	G  = GT.Transpose();
 	GGT = G * GT;
-    complex<double> *tmp = new complex<double> [nx*ny*nz];
+    std::complex<double> *tmp = new std::complex<double> [nx*ny*nz];
     if(rank_in_pool == 0)
     {
         for(int ix = 0 ; ix < nx ; ++ix)
@@ -90,7 +90,7 @@ TEST_F(PWTEST,test2_3)
                 int iy = ixy % ny;
                 ModuleBase::Vector3<double> real_r(ix, iy, iz);
                 double phase_im = -delta_g * real_r;
-                complex<double> phase(0,ModuleBase::TWO_PI * phase_im);
+                std::complex<double> phase(0,ModuleBase::TWO_PI * phase_im);
                 tmp[ixy * nz + iz] *= exp(phase);
             }
         }
@@ -99,8 +99,8 @@ TEST_F(PWTEST,test2_3)
     MPI_Bcast(tmp,2*nx*ny*nz,MPI_DOUBLE,0,POOL_WORLD);
 #endif
     
-    complex<double> * rhog = new complex<double> [npw];
-    complex<double> * rhogout = new complex<double> [npw];
+    std::complex<double> * rhog = new std::complex<double> [npw];
+    std::complex<double> * rhogout = new std::complex<double> [npw];
     for(int ig = 0 ; ig < npw ; ++ig)
     {
         rhog[ig] = 1.0/(pwtest.gg[ig]+1);

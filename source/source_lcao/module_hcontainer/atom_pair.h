@@ -272,7 +272,7 @@ class AtomPair
     void add_to_array(std::complex<T>* target_array, const std::complex<T>& kphase) const;
     /**
      * @brief Add this->value[current_R] * kphase to an array.
-     * for non-collinear spin case only (T = complex<double> or complex<float>)
+     * for non-collinear spin case only (T = std::complex<double> or complex<float>)
      */
     void add_to_array(T* target_array, const T& kphase) const;
 

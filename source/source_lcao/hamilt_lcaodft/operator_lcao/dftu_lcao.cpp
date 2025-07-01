@@ -490,7 +490,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
             index[3] = m2 * m_size + m1 + m_size2 * 3;
             vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
             vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
-            // vu should be complex<double> type, but here we use double type for test
+            // vu should be std::complex<double> type, but here we use double type for test
             vu[index[1]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
             vu[index[2]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
         }

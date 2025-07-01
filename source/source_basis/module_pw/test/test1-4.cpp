@@ -66,9 +66,9 @@ TEST_F(PWTEST,test1_4)
     GT = latvec.Inverse();
 	G  = GT.Transpose();
 	GGT = G * GT;
-    complex<double> *tmp = new complex<double> [nx*ny*nz];
-    complex<double> * rhor = new complex<double> [nrxx];
-    complex<double> * rhogr = new complex<double> [nmaxgr];
+    std::complex<double> *tmp = new std::complex<double> [nx*ny*nz];
+    std::complex<double> * rhor = new std::complex<double> [nrxx];
+    std::complex<double> * rhogr = new std::complex<double> [nmaxgr];
 #ifdef __ENABLE_FLOAT_FFTW
     complex<float> * rhofr = new complex<float> [nrxx];
     complex<float> * rhofgr = new complex<float> [nmaxgr];
@@ -112,7 +112,7 @@ TEST_F(PWTEST,test1_4)
                     int iy = ixy % ny;
                     ModuleBase::Vector3<double> real_r(ix, iy, iz);
                     double phase_im = -delta_g * real_r;
-                    complex<double> phase(0,ModuleBase::TWO_PI * phase_im);
+                    std::complex<double> phase(0,ModuleBase::TWO_PI * phase_im);
                     tmp[ixy * nz + iz] *= exp(phase);
                 }
             }
@@ -120,8 +120,8 @@ TEST_F(PWTEST,test1_4)
 #ifdef __MPI
         MPI_Bcast(tmp,2*nx*ny*nz,MPI_DOUBLE,0,POOL_WORLD);
 #endif
-        complex<double> * rhog = new complex<double> [npwk];
-        complex<double> * rhogout = new complex<double> [npwk];
+        std::complex<double> * rhog = new std::complex<double> [npwk];
+        std::complex<double> * rhogout = new std::complex<double> [npwk];
 #ifdef __ENABLE_FLOAT_FFTW
         complex<float> * rhofg = new complex<float> [npwk];
         complex<float> * rhofgout = new complex<float> [npwk];

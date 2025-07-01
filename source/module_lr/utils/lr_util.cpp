@@ -132,7 +132,7 @@ namespace LR_Util
 
     void diag_lapack(const int& n, std::complex<double>* mat, double* eig)
     {
-        ModuleBase::TITLE("LR_Util", "diag_lapack<complex<double>>");
+        ModuleBase::TITLE("LR_Util", "diag_lapack <std::complex<double>>");
         int lwork = 2 * n;
         std::complex<double>* work2 = new std::complex<double>[lwork];
         double* rwork = new double[3 * n - 2];
@@ -167,7 +167,7 @@ namespace LR_Util
 
     void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig)
     {
-        ModuleBase::TITLE("LR_Util", "diag_lapack_nh<complex<double>>");
+        ModuleBase::TITLE("LR_Util", "diag_lapack_nh <std::complex<double>>");
         int lwork = 2 * n;
         std::vector<std::complex<double>> work2(lwork);
         std::vector<double> rwork(3 * n - 2);

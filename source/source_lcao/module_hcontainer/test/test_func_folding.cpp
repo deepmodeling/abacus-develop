@@ -41,7 +41,7 @@ class FoldingTest : public ::testing::Test
     UnitCell ucell;
 };
 
-// using TEST_F to test folding_HR with complex<double> HR and complex<double> hk
+// using TEST_F to test folding_HR with std::complex<double> HR and std::complex<double> hk
 TEST_F(FoldingTest, folding_HR_cd2cd)
 {
     hamilt::HContainer<std::complex<double>>* HR;
@@ -88,7 +88,7 @@ TEST_F(FoldingTest, folding_HR_cd2cd)
     delete HR;
 }
 
-// using TEST_F to test folding_HR with double HR and complex<double> hk
+// using TEST_F to test folding_HR with double HR and std::complex<double> hk
 TEST_F(FoldingTest, folding_HR_d2cd)
 {
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();

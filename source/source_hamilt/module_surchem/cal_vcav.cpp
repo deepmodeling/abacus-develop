@@ -39,7 +39,7 @@ void lapl_rho(const double& tpiba2,
 
 // calculates first derivative of the shape function in realspace
 // exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )/n
-void shape_gradn(const complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime)
+void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime)
 {
 
     double *ps_totn_real = new double[rho_basis->nrxx];
@@ -61,7 +61,7 @@ void shape_gradn(const complex<double>* ps_totn, const ModulePW::PW_Basis* rho_b
 
 void surchem::createcavity(const UnitCell& ucell,
                            const ModulePW::PW_Basis* rho_basis,
-                           const complex<double>* ps_totn,
+                           const std::complex<double>* ps_totn,
                            double* vwork)
 {
     ModuleBase::Vector3<double> *nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
@@ -131,7 +131,7 @@ void surchem::createcavity(const UnitCell& ucell,
 
     //  packs the real array into a complex one
     //  to G space
-    complex<double> *inv_gn = new complex<double>[rho_basis->npw];
+    std::complex<double> *inv_gn = new std::complex<double>[rho_basis->npw];
     rho_basis->real2recip(sqrt_nablan_2, inv_gn);
     
     // \nabla(1 / |\nabla n|), ggn in real space
@@ -164,7 +164,7 @@ void surchem::createcavity(const UnitCell& ucell,
 
 ModuleBase::matrix surchem::cal_vcav(const UnitCell& ucell,
                                      const ModulePW::PW_Basis* rho_basis,
-                                     complex<double>* ps_totn,
+                                     std::complex<double>* ps_totn,
                                      int nspin)
 {
     ModuleBase::TITLE("surchem", "cal_vcav");
