@@ -17,8 +17,8 @@
 #include "source_estate/module_dm/cal_edm_tddft.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/occupy.h"
-#include "source_lcao/module_tddft/evolve_elec.h"
-#include "source_lcao/module_tddft/td_velocity.h"
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_lcao/module_rt/td_velocity.h"
 #include "source_pw/hamilt_pwdft/global.h"
 #include "source_io/print_info.h"
 
@@ -95,7 +95,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2rho_single(UnitCell& ucell,
     {
         if (istep >= 1)
         {
-            module_tddft::Evolve_elec<Device>::solve_psi(istep,
+            module_rt::Evolve_elec<Device>::solve_psi(istep,
                                                          PARAM.inp.nbands,
                                                          PARAM.globalv.nlocal,
                                                          kv.get_nks(),
@@ -117,7 +117,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2rho_single(UnitCell& ucell,
     }
     else if (istep >= 2)
     {
-        module_tddft::Evolve_elec<Device>::solve_psi(istep,
+        module_rt::Evolve_elec<Device>::solve_psi(istep,
                                                      PARAM.inp.nbands,
                                                      PARAM.globalv.nlocal,
                                                      kv.get_nks(),

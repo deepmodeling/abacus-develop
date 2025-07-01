@@ -55,7 +55,7 @@ VPATH=./src_global:\
 ./source_pw/hamilt_stodft/kernels:\
 ./source_lcao/module_hcontainer:\
 ./source_lcao/hamilt_lcaodft:\
-./source_lcao/module_tddft:\
+./source_lcao/module_rt:\
 ./source_lcao/module_deepks:\
 ./source_lcao/module_dftu:\
 ./source_lcao/module_deltaspin:\
