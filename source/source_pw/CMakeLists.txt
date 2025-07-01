@@ -1,3 +1,3 @@
 add_subdirectory(hamilt_pwdft)
 add_subdirectory(module_ofdft)
-add_subdirectory(hamilt_stodft)
+add_subdirectory(module_stodft)

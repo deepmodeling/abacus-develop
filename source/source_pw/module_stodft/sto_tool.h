@@ -1,8 +1,8 @@
 #ifndef STO_TOOL_H
 #define STO_TOOL_H
 #include "source_cell/klist.h"
-#include "source_pw/hamilt_stodft/hamilt_sdft_pw.h"
-#include "source_pw/hamilt_stodft/sto_wf.h"
+#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_wf.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_psi/psi.h"
 

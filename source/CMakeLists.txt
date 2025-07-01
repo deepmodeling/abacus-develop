@@ -33,7 +33,7 @@ list(APPEND device_srcs
   source_pw/hamilt_pwdft/kernels/veff_op.cpp
   source_pw/hamilt_pwdft/kernels/ekinetic_op.cpp
   source_pw/hamilt_pwdft/kernels/meta_op.cpp
-  source_pw/hamilt_stodft/kernels/hpsi_norm_op.cpp
+  source_pw/module_stodft/kernels/hpsi_norm_op.cpp
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/dngvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
@@ -62,7 +62,7 @@ if(USE_CUDA)
     source_pw/hamilt_pwdft/kernels/cuda/veff_op.cu
     source_pw/hamilt_pwdft/kernels/cuda/ekinetic_op.cu
     source_pw/hamilt_pwdft/kernels/cuda/meta_op.cu
-    source_pw/hamilt_stodft/kernels/cuda/hpsi_norm_op.cu
+    source_pw/module_stodft/kernels/cuda/hpsi_norm_op.cu
     source_pw/hamilt_pwdft/kernels/cuda/onsite_op.cu
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/dngvd_op.cu
@@ -90,7 +90,7 @@ if(USE_ROCM)
     source_pw/hamilt_pwdft/kernels/rocm/ekinetic_op.hip.cu
     source_pw/hamilt_pwdft/kernels/rocm/meta_op.hip.cu
     source_pw/hamilt_pwdft/kernels/rocm/onsite_op.hip.cu
-    source_pw/hamilt_stodft/kernels/rocm/hpsi_norm_op.hip.cu
+    source_pw/module_stodft/kernels/rocm/hpsi_norm_op.hip.cu
     source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/dngvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu

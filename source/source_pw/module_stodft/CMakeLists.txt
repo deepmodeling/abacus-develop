@@ -12,13 +12,13 @@ list(APPEND hamilt_stodft_srcs
 )
 
 add_library(
-    hamilt_stodft
+    module_stodft
     OBJECT
     ${hamilt_stodft_srcs}
 )
 
 if(ENABLE_COVERAGE)
-  add_coverage(hamilt_stodft)
+  add_coverage(module_stodft)
 endif()
 
 if(BUILD_TESTING)
