@@ -6,8 +6,6 @@
 #include "source_io/cal_mlkedf_descriptors.h"
 
 #include <vector>
-#include "source_pw/hamilt_ofdft/kedf_wt.h"
-#include "source_pw/hamilt_ofdft/kedf_tf.h"
 #include "./ml_tools/nn_of.h"
 
 class KEDF_ML
@@ -65,7 +63,7 @@ public:
     // double diffLinhard(double eta, double vw_weight);
 
     // output all parameters
-    void generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF &tf, ModulePW::PW_Basis *pw_rho, const double *veff);
+    void generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff);
     void localTest(const double * const *prho, ModulePW::PW_Basis *pw_rho);
 
     // interface to NN
