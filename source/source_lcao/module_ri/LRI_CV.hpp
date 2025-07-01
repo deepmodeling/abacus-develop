@@ -146,7 +146,7 @@ auto LRI_CV<Tdata>::cal_dVs(
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// + "writable_dVws"
--> sstd::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
+-> std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_dVs");
 	const T_func_DPcal_data<std::array<RI::Tensor<Tdata>,3>>
