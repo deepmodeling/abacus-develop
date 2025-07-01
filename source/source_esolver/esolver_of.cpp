@@ -14,7 +14,7 @@
 //-----force-------------------
 #include "source_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
-#include "source_pw/hamilt_ofdft/of_stress_pw.h"
+#include "source_pw/module_ofdft/of_stress_pw.h"
 
 namespace ModuleESolver
 {

@@ -736,7 +736,7 @@ target_link_libraries(
   elecstate
   hamilt_general
   hamilt_pwdft
-  hamilt_ofdft
+  module_ofdft
   hamilt_stodft
   psi
   psi_initializer

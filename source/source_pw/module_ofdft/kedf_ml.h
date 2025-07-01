@@ -6,8 +6,8 @@
 #include "source_io/cal_mlkedf_descriptors.h"
 
 #include <vector>
-#include "source_pw/hamilt_ofdft/kedf_wt.h"
-#include "source_pw/hamilt_ofdft/kedf_tf.h"
+#include "source_pw/module_ofdft/kedf_wt.h"
+#include "source_pw/module_ofdft/kedf_tf.h"
 #include "./ml_tools/nn_of.h"
 
 class KEDF_ML
