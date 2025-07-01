@@ -95,7 +95,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
-	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;Add commentMore actions
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
 	for(const auto &settings_list : this->info.coulomb_settings)
 	{
@@ -168,7 +168,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
-		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>Add commentMore actions
+		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
 		this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
 		if(PARAM.inp.cal_stress)

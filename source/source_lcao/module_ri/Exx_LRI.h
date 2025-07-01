@@ -94,7 +94,7 @@ private:
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
-	//std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;Add commentMore actions
+	//std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
 	//LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
