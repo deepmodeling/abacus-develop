@@ -75,7 +75,7 @@ struct Exx_Info
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
+    Exx_Info() : info_lip(this->info_global)
     {
     }
 };
