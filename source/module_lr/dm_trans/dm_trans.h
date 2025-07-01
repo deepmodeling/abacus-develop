@@ -1,10 +1,10 @@
 #pragma once
 // use tensor or basematrix in the future
 #include <ATen/core/tensor.h>
-#include "module_psi/psi.h"
+#include "source_psi/psi.h"
 #include <vector>
 #ifdef __MPI
-#include "module_base/parallel_2d.h"
+#include "source_base/parallel_2d.h"
 #endif
 namespace LR
 {

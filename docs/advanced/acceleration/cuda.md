@@ -12,7 +12,7 @@ In ABACUS, we provide the option to use GPU devices to accelerate performance. T
 
 - **Parallel strategy**: K point parallel.
 
-Unlike PW basis, only the grid integration module (module_gint) and the diagonalization of the Hamiltonian matrix (module_hsolver) have been implemented with GPU acceleration under LCAO basis.
+Unlike PW basis, only the grid integration module (module_gint) and the diagonalization of the Hamiltonian matrix (source_hsolver) have been implemented with GPU acceleration under LCAO basis.
 
 ## Required hardware/software
 

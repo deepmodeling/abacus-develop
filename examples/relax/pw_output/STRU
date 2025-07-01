@@ -18,4 +18,4 @@ Si 			#Name of element
 0.0			#Magnetic for this element.
 2			#Number of atoms
 0.00 0.00 0.00 0 0 0	#x,y,z, move_x, move_y, move_z
-0.25 0.25 0.25 0 0 0
+0.27 0.243 0.233 1 1 1

@@ -12,10 +12,10 @@ find_package(pybind11 CONFIG REQUIRED)
 
 # set source path
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
-set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
-set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
-set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/module_hsolver")
-set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
+set(BASE_PATH "${ABACUS_SOURCE_DIR}/source_base")
+set(NAO_PATH "${ABACUS_SOURCE_DIR}/source_basis/module_nao")
+set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
+set(PSI_PATH "${ABACUS_SOURCE_DIR}/source_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
 
@@ -69,20 +69,20 @@ endif()
 include_directories(
     ${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
-    ${ABACUS_SOURCE_DIR}/module_base/module_container
+    ${ABACUS_SOURCE_DIR}/source_base/module_container
     )
 
 # add basic libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # add base
 set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
-add_subdirectory(${ABACUS_SOURCE_DIR}/module_base ${BASE_BINARY_DIR})
+add_subdirectory(${ABACUS_SOURCE_DIR}/source_base ${BASE_BINARY_DIR})
 # add parameter
 set(PARAMETER_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/parameter")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_parameter ${PARAMETER_BINARY_DIR})
 # add orb
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
-add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
+add_subdirectory(${ABACUS_SOURCE_DIR}/source_basis/module_ao ${ORB_BINARY_DIR})
 # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # set RPATH

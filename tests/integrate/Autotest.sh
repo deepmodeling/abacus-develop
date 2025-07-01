@@ -13,7 +13,6 @@ stress_threshold=0.001
 ca=8
 # specify the test cases file
 cases_file=CASES_CPU.txt
-#cases_file=CASES_mylist.txt
 # regex of case name
 case='^[^#].*_.*$'
 # enable AddressSanitizer
@@ -114,12 +113,12 @@ check_out(){
         #--------------------------------------------------
         # calculated value
         #--------------------------------------------------
-        cal=`grep "$key" result.out | awk '{printf "%.'$ca'f\n",$2}'`
+        cal=`grep -w "$key" result.out | awk '{printf "%.'$ca'f\n",$2}'`
 
         #--------------------------------------------------
         # reference value
         #--------------------------------------------------
-        ref=`grep "$key" result.ref | awk '{printf "%.'$ca'f\n",$2}'`
+        ref=`grep -w "$key" result.ref | awk '{printf "%.'$ca'f\n",$2}'`
 
         #--------------------------------------------------
         # computed the deviation between the calculated

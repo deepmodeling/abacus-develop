@@ -31,7 +31,6 @@ exx_pca_threshold			1E-3
 exx_c_threshold 			1E-3
 exx_v_threshold 			1
 exx_dm_threshold 			1E-3
-exx_cauchy_threshold		1E-4
 exx_ccp_rmesh_times			2
 exx_separate_loop			1
 exx_hybrid_step				2

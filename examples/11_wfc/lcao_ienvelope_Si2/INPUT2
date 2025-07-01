@@ -1,14 +1,14 @@
 INPUT_PARAMETERS
-#Parameters     (General)
+#Parameters (General)
 pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
 calculation                     get_wf
 nbands                          8
-#Parameters (Methos)
+#Parameters (Methods)
 basis_type                      lcao
 symmetry                        0       
 #Parameters (Accuracy)
 ecutwfc                         50
 #Parameters (File)
-init_wfc			file
-out_wfc_r			1
+init_wfc                        file
+out_wfc_norm                    4*1
