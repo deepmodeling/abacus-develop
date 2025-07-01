@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-#Parameters     (General)
+#Parameters (General)
 suffix          DIA-50
 
 calculation     scf

@@ -7,7 +7,6 @@
 #include "source_io/output_log.h"
 #include "source_io/print_info.h"
 #include "source_io/read_exit_file.h"
-#include "source_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 

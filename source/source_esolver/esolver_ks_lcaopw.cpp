@@ -31,7 +31,6 @@
 #include "source_io/to_wannier90_pw.h"
 #include "source_io/winput.h"
 #include "source_io/write_elecstat_pot.h"
-#include "source_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 
 #include <ATen/kernels/blas.h>

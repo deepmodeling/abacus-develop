@@ -7,7 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_lcao/hamilt_lcaodft/spar_exx.h"
-#include "module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/RI_2D_Comm.h"
 
 #include <RI/global/Global_Func-2.h>
 #include <RI/ri/Cell_Nearest.h>

@@ -1,7 +1,7 @@
 #ifndef EXX_INFO_H
 #define EXX_INFO_H
 
-#include "module_ri/conv_coulomb_pot_k.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "xc_functional.h"
 
 #include <vector>

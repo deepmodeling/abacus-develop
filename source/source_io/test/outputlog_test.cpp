@@ -36,10 +36,10 @@ TEST(OutputConvergenceAfterSCFTest, TestConvergence) {
     std::string file_content = ss.str();
     ifs_running.close();
 
-    std::string expected_content = " #SCF IS CONVERGED#\n";
+    std::string expected_content = " #SCF IS CONVERGED#\n #TOTAL ENERGY# 27.211396 eV\n";
 
     EXPECT_EQ(file_content, expected_content);
-     std::remove("test_output_convergence.txt");
+    //std::remove("test_output_convergence.txt");
 }
 
 TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
@@ -62,7 +62,7 @@ TEST(OutputConvergenceAfterSCFTest, TestNotConvergence) {
 
     EXPECT_EQ(file_content, expected_content);
     EXPECT_EQ(screen_output, expected_content_screen);
-    std::remove("test_output_convergence_noconvergence.txt");
+    //std::remove("test_output_convergence_noconvergence.txt");
 }
 
 // Test the output_efermi function

@@ -19,6 +19,7 @@ void output_convergence_after_scf(const bool &convergence, double& energy, std::
     {
         ofs_running << " #SCF IS CONVERGED#" << std::endl;
 //      ofs_running << " final etot is " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << energy * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
     else
     {

@@ -20,7 +20,7 @@
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
-#include "module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/Exx_LRI.h"
 #endif
 namespace LR
 {

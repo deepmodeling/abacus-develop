@@ -1,16 +1,16 @@
-These examples show how to output the wavefunction in G space.
-For PW basis:
-	- set 'out_wfc_pw' to '1'
-The wave function is output in a file called 'WAVEFUNC1.txt'
+These examples demonstrate how to output wave functions in G-space and real space.
 
-For LCAO basis:
-	- set 'out_wfc_lcao' to '1'
-Several `WFC_NAO_K#.txt` files will be output in multi-k calculation and 
-`WFC_NAO_GAMMA1.txt` in gamma-only calculation.
+For Plane-Wave (PW) Basis:
+	- Set `out_wfc_pw = 1`.
+The wave functions will be output to a series of files named `wfs[spin]k[kpoint]_pw.txt`.
 
+For LCAO Basis:
+	- Set `out_wfc_lcao = 1`.
+In multi-k calculations, multiple files named `wfs[spin]k[kpoint]_nao.txt` will be generated.
+In gamma-only calculations, `wfs[spin]_nao.txt` instead.
 
-For the wave functions in Real Space:
-	- set 'out_wfc_r' to '1'
-The wave function is output in files OUT.${suffix}/wfc_realspace/wfc_realspace_$K_$B, 
-where $K and $B is the index of k point and band respectively.
-Note, it is only used in planewave basis and get_wf calculation in localized orbitals set
+For Wave Functions in Real Space:
+	- Set either `out_wfc_norm` or `out_wfc_re_im` to a space-separated string of 0s and 1s.
+    - E.g.: `1 0 0 0 0 1 1 1 1 1 0`, or `1 4*0 5*1 0` for short.
+The wave functions will be output to files named `wfi[state]s[spin]k[kpoint][re/im].cube`.
+Note, it is only supported for PW basis and `get_wf` calculation under LCAO basis.

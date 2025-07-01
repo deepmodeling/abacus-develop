@@ -67,7 +67,7 @@ VPATH=./src_global:\
 ./source_io:\
 ./source_io/json_output:\
 ./src_ri:\
-./module_ri:\
+./source_lcao/module_ri:\
 ./module_parameter:\
 ./module_lr:\
 ./module_lr/ao_to_mo_transformer:\
@@ -75,7 +75,7 @@ VPATH=./src_global:\
 ./module_lr/operator_casida:\
 ./module_lr/potentials:\
 ./module_lr/utils:\
-./module_rdmft:\
+./source_lcao/module_rdmft:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -561,7 +561,6 @@ OBJS_IO=input_conv.o\
     write_elf.o\
     write_dipole.o\
     td_current_io.o\
-    write_wfc_r.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\

@@ -12,9 +12,9 @@
 #include "source_lcao/module_gint/gint_k.h" // use Gint_k
 #include "source_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "source_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
-#include "module_rdmft/rdmft.h" // use RDMFT codes
+#include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #ifdef __EXX
-#include "module_ri/Exx_LRI_interface.h" // use EXX codes
+#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
 #endif
 
 namespace ModuleIO

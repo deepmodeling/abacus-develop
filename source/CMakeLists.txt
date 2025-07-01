@@ -14,12 +14,12 @@ add_subdirectory(source_esolver)
 add_subdirectory(source_lcao/module_gint)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)
-add_subdirectory(module_ri)
+add_subdirectory(source_lcao/module_ri)
 add_subdirectory(module_parameter)
 add_subdirectory(module_lr)
 
 # add by jghan
-add_subdirectory(module_rdmft)
+add_subdirectory(source_lcao/module_rdmft)
 
 add_library(
     driver

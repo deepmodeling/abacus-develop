@@ -24,10 +24,10 @@
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 #ifdef __EXX
-#include "module_ri/Exx_LRI_interface.h" // use EXX codes
-#include "module_ri/RPA_LRI.h" // use RPA code
+#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
+#include "source_lcao/module_ri/RPA_LRI.h" // use RPA code
 #endif
-#include "module_rdmft/rdmft.h" // use RDMFT codes
+#include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #include "source_io/to_qo.h" // use toQO
 
 namespace ModuleIO

@@ -77,7 +77,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     }
 
     lj_potential /= 2.0;
-    GlobalV::ofs_running << " final etot is " << std::setprecision(11) << lj_potential * ModuleBase::Ry_to_eV << " eV"
+    GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << lj_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
     // Post treatment for virial
