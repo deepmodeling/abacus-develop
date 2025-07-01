@@ -3,9 +3,9 @@
 
 #include "charge.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #ifdef __MPI
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #endif
 
 /**

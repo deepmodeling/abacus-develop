@@ -8,7 +8,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/fp_energy.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 
 //a forward declaration of UnitCell
 class UnitCell;

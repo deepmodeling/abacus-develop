@@ -4,7 +4,7 @@
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_rt/evolve_elec.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/input_conv.h"
 #include "module_parameter/parameter.h"
 

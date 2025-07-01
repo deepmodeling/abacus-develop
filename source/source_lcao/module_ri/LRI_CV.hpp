@@ -12,7 +12,7 @@
 #include "RI_Util.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
-#include "../../source_pw/hamilt_pwdft/global.h"
+#include "../../source_pw/module_pwdft/global.h"
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 

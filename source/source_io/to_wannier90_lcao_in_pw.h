@@ -17,7 +17,7 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "single_R_io.h"
 #include "to_wannier90.h"

@@ -3,7 +3,7 @@
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 //
 #include "source_io/berryphase.h"
 #include "source_io/get_pchg_lcao.h"

@@ -5,7 +5,7 @@
 #ifdef USE_LIBXC
 
 #include "xc_functional_libxc.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include <array>
 
 //tau_xc and tau_xc_spin: interface for calling xc_mgga_exc_vxc from LIBXC

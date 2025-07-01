@@ -1,7 +1,7 @@
 #include "gint_k.h"
 #include "source_base/timer.h"
 #include "source_base/ylm.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/array_pool.h"
 
 // This function utilizes the cache more effectively than calling the ddot function, thus performing faster.

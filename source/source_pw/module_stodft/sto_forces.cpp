@@ -5,10 +5,10 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/output_log.h"
 #include "module_parameter/parameter.h"
-#include "source_pw/hamilt_pwdft/fs_nonlocal_tools.h"
+#include "source_pw/module_pwdft/fs_nonlocal_tools.h"
 
 // new
 #include "source_base/math_integral.h"

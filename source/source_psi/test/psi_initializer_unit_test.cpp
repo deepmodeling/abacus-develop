@@ -8,7 +8,7 @@
 #include "../psi_initializer_nao.h"
 #include "../psi_initializer_nao_random.h"
 #include "../psi_initializer_random.h"
-#include "source_pw/hamilt_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
 #include "source_cell/klist.h"
 
 /*

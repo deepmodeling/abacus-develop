@@ -1,7 +1,7 @@
 #include "source_base/timer.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 namespace LCAO_domain

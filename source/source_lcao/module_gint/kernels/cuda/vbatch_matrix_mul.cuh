@@ -1,7 +1,7 @@
 #ifndef VBATCH_MATRIX_MUL_CUH
 #define VBATCH_MATRIX_MUL_CUH
 #include "cuda_tools.cuh"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/module_device/device.h"
 #include "source_cell/unitcell.h"
 

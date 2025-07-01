@@ -2,7 +2,7 @@
 #define STOELECOND_H
 
 #include "source_hamilt/hamilt.h"
-#include "source_pw/hamilt_pwdft/elecond.h"
+#include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_stodft/sto_wf.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
 

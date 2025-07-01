@@ -9,7 +9,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/read_wf2rho_pw.h"
 #include "source_io/write_wfc_pw.h"
 #include "source_io/filename.h" // mohan add 2025-05-17

@@ -1,7 +1,7 @@
 #ifndef HAMILTSDFTPW_H
 #define HAMILTSDFTPW_H
 
-#include "source_pw/hamilt_pwdft/hamilt_pw.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
 
 namespace hamilt
 {

@@ -8,8 +8,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 
 class surchem
 {

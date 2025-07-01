@@ -1,5 +1,5 @@
 #include "symmetry_rho.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_global.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 

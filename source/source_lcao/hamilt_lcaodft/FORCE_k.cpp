@@ -10,7 +10,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "source_lcao/hamilt_lcaodft/pulay_force_stress.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/write_HS.h"
 #include "module_parameter/parameter.h"
 

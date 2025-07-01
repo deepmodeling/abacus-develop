@@ -6,7 +6,7 @@
 #include <set>
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_xc.hpp"
-#include "source_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
+#include "source_pw/module_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {
