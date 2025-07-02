@@ -13,7 +13,7 @@
 
 #include <RI/global/Global_Func-1.h>
 #include <RI/global/Map_Operator.h>
-#include "../../source_pw/hamilt_pwdft/global.h"
+#include "../../source_pw/module_pwdft/global.h"
 
 template <typename Tdata>
 RI::Tensor<Tdata> LRI_CV_Tools::cal_I(const RI::Tensor<Tdata>& m) {

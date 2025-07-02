@@ -6,7 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/berryphase.h"
 #include "module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"

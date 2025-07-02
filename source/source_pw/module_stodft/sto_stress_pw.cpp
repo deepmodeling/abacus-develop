@@ -1,10 +1,10 @@
 #include "sto_stress_pw.h"
 
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/fs_kin_tools.h"
-#include "source_pw/hamilt_pwdft/fs_nonlocal_tools.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/fs_kin_tools.h"
+#include "source_pw/module_pwdft/fs_nonlocal_tools.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_io/output_log.h"
 #include "module_parameter/parameter.h"
 

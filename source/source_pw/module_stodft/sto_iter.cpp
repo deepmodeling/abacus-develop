@@ -8,7 +8,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_estate/occupy.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_hsolver/para_linear_transform.h"
 #include "module_parameter/parameter.h"
 

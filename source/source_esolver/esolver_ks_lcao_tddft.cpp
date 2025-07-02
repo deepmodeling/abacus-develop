@@ -19,7 +19,7 @@
 #include "source_estate/occupy.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_velocity.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 
 //-----HSolver ElecState Hamilt--------

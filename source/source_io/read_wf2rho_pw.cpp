@@ -2,7 +2,7 @@
 
 #include "read_wfc_pw.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "module_parameter/parameter.h"
 #include "source_estate/kernels/elecstate_op.h"

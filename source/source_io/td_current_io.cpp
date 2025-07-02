@@ -12,7 +12,7 @@
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "source_lcao/module_rt/td_current.h"
 #include "source_lcao/module_rt/td_velocity.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "module_parameter/parameter.h"
 
 #ifdef __LCAO

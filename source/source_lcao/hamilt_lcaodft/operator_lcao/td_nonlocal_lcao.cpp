@@ -7,7 +7,7 @@
 #include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #include <omp.h>

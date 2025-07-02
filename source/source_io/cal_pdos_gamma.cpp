@@ -6,7 +6,7 @@
 #include "write_orb_info.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 void ModuleIO::cal_pdos(

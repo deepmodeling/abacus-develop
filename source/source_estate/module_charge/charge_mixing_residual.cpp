@@ -2,7 +2,7 @@
 
 #include "module_parameter/parameter.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)

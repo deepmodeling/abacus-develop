@@ -6,7 +6,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 namespace module_rt
 {

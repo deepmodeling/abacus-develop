@@ -8,7 +8,7 @@
 #include "source_base/array_pool.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 void Gint::cal_meshball_rho(const int na_grid,
                             const int*const block_index,

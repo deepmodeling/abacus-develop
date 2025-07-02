@@ -2,7 +2,7 @@
 #include "../../source_base/constants.h"
 #include "module_parameter/parameter.h"
 #include "../../source_basis/module_ao/ORB_atomic_lm.h"
-#include "../../source_pw/hamilt_pwdft/global.h"
+#include "../../source_pw/module_pwdft/global.h"
 
 namespace Conv_Coulomb_Pot_K
 {

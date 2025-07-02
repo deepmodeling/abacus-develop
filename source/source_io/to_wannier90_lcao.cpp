@@ -9,7 +9,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/scalapack_connector.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 #include <fstream>
 #include <functional>

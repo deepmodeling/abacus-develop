@@ -75,7 +75,7 @@ For those who are interested in the source code, the following figure shows the 
 |   `-- module_ri               The module for performing RI calculations.
 |-- source_pw            The module for defining the Hamiltonian in PW calculations.
 |   |-- module_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
-|   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
+|   |-- module_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- module_stodft           The module for defining the Hamiltonian in STODFT calculations.
 |-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW

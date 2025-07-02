@@ -11,9 +11,9 @@
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/hamilt_pwdft/VL_in_pw.h"
-#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/berryphase.h"
 
 bool berryphase::berry_phase_flag=0;

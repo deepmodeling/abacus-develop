@@ -17,7 +17,7 @@
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/parallel_reduce.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 

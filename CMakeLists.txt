@@ -735,7 +735,7 @@ target_link_libraries(
   hsolver
   elecstate
   hamilt_general
-  hamilt_pwdft
+  module_pwdft
   module_ofdft
   module_stodft
   psi
