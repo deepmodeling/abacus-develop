@@ -31,11 +31,16 @@ namespace Conv_Coulomb_Pot_K
 	extern std::vector<double> cal_psi_fock_spencer(
 		const std::vector<double> &psif,
 		const std::vector<double> &k_radial,
-		const double hf_Rcut);
+		const double rcut);
 	extern std::vector<double> cal_psi_erfc_limits(
 		const std::vector<double> & psif,
 		const std::vector<double> & k_radial,
 		const double erfc_omega);
+	extern std::vector<double> cal_psi_erfc_spencer(
+		const std::vector<double> & psif,
+		const std::vector<double> & k_radial,
+		const double erfc_omega,
+		const double rcut);
 }
 
 #include "conv_coulomb_pot_k.hpp"
