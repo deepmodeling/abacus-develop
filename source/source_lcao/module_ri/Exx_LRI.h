@@ -38,6 +38,15 @@
 	}
 
 template<typename Tdata>
+class Exx_Obj
+{
+	// match with Conv_Coulomb_Pot_K::Coulomb_Method
+	public:
+		LRI_CV<Tdata> cv;
+		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
+};
+
+template<typename Tdata>
 class Exx_LRI
 {
 private:
@@ -85,9 +94,9 @@ private:
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
-
-	LRI_CV<Tdata> cv;
+	//std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
+	//LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
