@@ -104,7 +104,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 				list_As_Vs.first, list_As_Vs.second[0],
 				{{"writable_Vws",true}});
 		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell,Vs_temp);
-		Vs = LRI_CV_Tools::add(Vs, Vs_temp);
+		Vs = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs, Vs_temp);
 
 		if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 		{
@@ -113,9 +113,8 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 					list_As_Vs.first, list_As_Vs.second[0],
 					{{"writable_dVws",true}});
 			this->exx_objs[settings_list.first].cv.dVws = LRI_CV_Tools::get_dCVws(ucell,dVs_temp);
-			dVs = LRI_CV_Tools::add(dVs, dVs_temp);
+			dVs = dVs.empty() ? dVs_temp : LRI_CV_Tools::add(dVs, dVs_temp);
 		}
-		
 	}
 	if (write_cv && GlobalV::MY_RANK == 0)
 		{ LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
@@ -152,13 +151,13 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 						{"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 			std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs_temp = std::get<0>(Cs_dCs);
 			this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs_temp);
-			Cs = LRI_CV_Tools::add(Cs, Cs_temp);
-		
+			Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
+
 			if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 			{
 				std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> &dCs_temp = std::get<1>(Cs_dCs);
 				this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell,dCs_temp);
-				dCs = LRI_CV_Tools::add(dCs, dCs_temp);
+				dCs = dCs.empty() ? dCs_temp : LRI_CV_Tools::add(dCs, dCs_temp);
 			}
 		}
 	}
