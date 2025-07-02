@@ -7,6 +7,7 @@
 #define RI_UTIL_H
 
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_cell/klist.h"
 
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>
