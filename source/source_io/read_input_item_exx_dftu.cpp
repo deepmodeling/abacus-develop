@@ -205,6 +205,8 @@ void ReadInput::item_exx()
             }
         };
         this->add_item(item);
+    }
+    {
         Input_Item item("exx_singularity_correction");
         item.annotation = "set the scheme of Coulomb singularity correction";
         read_sync_string(input.exx_singularity_correction);
