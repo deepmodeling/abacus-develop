@@ -8,13 +8,13 @@ list(APPEND hamilt_ofdft_srcs
 )
 
 add_library(
-    hamilt_ofdft
+    module_ofdft
     OBJECT
     ${hamilt_ofdft_srcs}
 )
 
 if(ENABLE_COVERAGE)
-  add_coverage(hamilt_ofdft)
+  add_coverage(module_ofdft)
 endif()
 
 if(ENABLE_MLALGO)

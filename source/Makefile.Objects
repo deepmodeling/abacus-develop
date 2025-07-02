@@ -47,7 +47,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/hamilt_pwdft:\
-./source_pw/hamilt_ofdft:\
+./source_pw/module_ofdft:\
 ./source_pw/hamilt_stodft:\
 ./source_pw/hamilt_pwdft/operator_pw:\
 ./source_pw/hamilt_pwdft/kernels:\
