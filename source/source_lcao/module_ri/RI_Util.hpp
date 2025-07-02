@@ -71,7 +71,7 @@ namespace RI_Util
 	update_coulomb_param(
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const UnitCell &ucell,
-		const K_Vectors *p_kv);
+		const K_Vectors *p_kv)
 	{
 		std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
 		for(auto &param_list : coulomb_param_updated)
