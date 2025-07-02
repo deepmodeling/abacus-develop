@@ -1307,6 +1307,23 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_real_number, "0");
     }
+    { // exx_singluarity_correction
+        auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "HF";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "spencer");
+
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "PBE0";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "spencer");
+
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "HSE";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "limits");
+    }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);
         param.input.exx_ccp_rmesh_times = "default";
