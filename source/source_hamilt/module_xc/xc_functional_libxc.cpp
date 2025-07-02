@@ -182,8 +182,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_PBEOP );
-			double parameter_lcpbe[3] = { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
-			xc_func_set_ext_params(&funcs.back(), parameter_lcpbe);
+			return { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
 		}
         else if( id == XC_HYB_GGA_XC_LC_WPBE ) // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
 		{
@@ -191,10 +190,9 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LC_WPBE );	
-			double parameter_lcwpbe[3] = { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+			return { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
 				std::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.4
-			xc_func_set_ext_params(&funcs.back(), parameter_lcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBE ) // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
 		{
@@ -202,10 +200,9 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBE );	
-			double parameter_lrcwpbe[3] = { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
-				td::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: -1.0
+			return { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+				std::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: -1.0
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.3
-			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbe);
 		}
         else if( id == XC_HYB_GGA_XC_LRC_WPBEH ) // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
 		{
@@ -213,10 +210,9 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // and 20.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_LRC_WPBEH );	
-			double parameter_lrcwpbeh[3] = { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
-				td::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: -0.8
+			return { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 1.0
+				std::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: -0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.2
-			xc_func_set_ext_params(&funcs.back(), parameter_lrcwpbeh);
 		}
         else if( id == XC_HYB_GGA_XC_CAM_PBEH ) // CAM hybrid screened exchange PBE version
 		{
@@ -224,10 +220,9 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // and 100.0% short-range and 20.0% long-range exact exchange,
             // using the error function kernel.
 			add_func( XC_HYB_GGA_XC_CAM_PBEH);	
-			double parameter_campbeh[3] = { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
-				td::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: 0.8
+			return { std::stod(PARAM.inp.exx_fock_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of Hartree-Fock exchange: 0.2
+				std::stod(PARAM.inp.exx_erfc_alpha[0]) * GlobalC::exx_info.info_global.hybrid_alpha,  //Fraction of short-range exact exchange: 0.8
 				GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.7
-			xc_func_set_ext_params(&funcs.back(), parameter_campbeh);
 		}
 #endif
 		default:
