@@ -94,7 +94,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 } // namespace elecstate
 
 // mock of Stochastic_WF
-#include "source_pw/hamilt_stodft/sto_wf.h"
+#include "source_pw/module_stodft/sto_wf.h"
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
 {

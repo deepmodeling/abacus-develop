@@ -1,10 +1,10 @@
 #ifndef STO_DOS
 #define STO_DOS
 #include "source_estate/elecstate.h"
-#include "source_pw/hamilt_stodft/hamilt_sdft_pw.h"
-#include "source_pw/hamilt_stodft/sto_che.h"
-#include "source_pw/hamilt_stodft/sto_func.h"
-#include "source_pw/hamilt_stodft/sto_wf.h"
+#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_che.h"
+#include "source_pw/module_stodft/sto_func.h"
+#include "source_pw/module_stodft/sto_wf.h"
 
 template <typename FPTYPE, typename Device>
 class Sto_DOS

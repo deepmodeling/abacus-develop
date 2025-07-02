@@ -3,7 +3,7 @@
 
 #include "source_hamilt/hamilt.h"
 #include "source_pw/hamilt_pwdft/elecond.h"
-#include "source_pw/hamilt_stodft/sto_wf.h"
+#include "source_pw/module_stodft/sto_wf.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
 
 template <typename FPTYPE, typename Device> 

@@ -48,11 +48,11 @@ VPATH=./src_global:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/hamilt_pwdft:\
 ./source_pw/module_ofdft:\
-./source_pw/hamilt_stodft:\
+./source_pw/module_stodft:\
 ./source_pw/hamilt_pwdft/operator_pw:\
 ./source_pw/hamilt_pwdft/kernels:\
 ./source_pw/hamilt_pwdft/module_exx_helper:\
-./source_pw/hamilt_stodft/kernels:\
+./source_pw/module_stodft/kernels:\
 ./source_lcao/module_hcontainer:\
 ./source_lcao/hamilt_lcaodft:\
 ./source_lcao/module_rt:\

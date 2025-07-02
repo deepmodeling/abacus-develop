@@ -1,4 +1,4 @@
-#include "source_pw/hamilt_stodft/kernels/hpsi_norm_op.h"
+#include "source_pw/module_stodft/kernels/hpsi_norm_op.h"
 
 #include <thrust/complex.h>
 

@@ -737,7 +737,7 @@ target_link_libraries(
   hamilt_general
   hamilt_pwdft
   module_ofdft
-  hamilt_stodft
+  module_stodft
   psi
   psi_initializer
   psi_overall_init
