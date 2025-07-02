@@ -176,6 +176,35 @@ void ReadInput::item_exx()
             }
         };
         this->add_item(item);
+        Input_Item item("exx_singularity_correction");
+        item.annotation = "set the scheme of Coulomb singularity correction";
+        read_sync_string(input.exx_singularity_correction);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.exx_singularity_correction == "default")
+            {  
+                std::string& dft_functional = para.input.dft_functional;
+                std::string dft_functional_lower = dft_functional;
+                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+                if (dft_functional_lower == "hf"
+                    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+                    || dft_functional_lower == "scan0"
+                    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+                    || dft_functional_lower == "wp22" 
+                    || dft_functional_lower == "lc_pbe"
+                    || dft_functional_lower == "lc_wpbe" 
+                    || dft_functional_lower == "lrc_wpbe"
+                    || dft_functional_lower == "lrc_wpbeh"
+                    || dft_functional_lower == "cam_pbeh")
+                {
+                    para.input.exx_singularity_correction = "spencer";
+                }
+                else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_singularity_correction = "limits";
+                }
+            }
+        };
+        this->add_item(item);
     }
     {
         Input_Item item("exx_pca_threshold");

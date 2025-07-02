@@ -322,10 +322,15 @@ void Input_Conv::Convert()
                    dft_functional_lower.begin(),
                    tolower);
     if (dft_functional_lower == "hf"
-     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
-     || dft_functional_lower == "scan0"
-     || dft_functional_lower == "muller" || dft_functional_lower == "power"
-     || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
+    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
+    || dft_functional_lower == "scan0"
+    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" 
+    || dft_functional_lower == "lc_pbe"
+    || dft_functional_lower == "lc_wpbe" 
+    || dft_functional_lower == "lrc_wpbe"
+    || dft_functional_lower == "lrc_wpbeh"
+    || dft_functional_lower == "cam_pbeh")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
 
@@ -358,7 +363,7 @@ void Input_Conv::Convert()
                 {
                     coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock][i] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"Rcut_type", "spencer"} }};
+                        {"Rcut_type", PARAM.inp.exx_singularity_correction} }};
                 }
                 GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
             }
@@ -399,7 +404,7 @@ void Input_Conv::Convert()
                     coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
                         {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
-                        {"Rcut_type", "limits"} }};
+                        {"Rcut_type", PARAM.inp.exx_singularity_correction} }};
                 }
                 GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
             }
