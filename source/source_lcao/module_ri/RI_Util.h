@@ -20,7 +20,7 @@
 namespace RI_Util
 {
 	inline extern std::array<int,3>
-	get_Born_vonKarmen_period();
+	get_Born_vonKarmen_period(const K_Vectors &kv);
 
 	template<typename Tcell, size_t Ndim>
 	extern std::vector<std::array<Tcell,Ndim>>
@@ -65,8 +65,8 @@ namespace RI_Util
 	std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
 	update_coulomb_param(
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
-		const double volumn,
-		const int nkstot);
+		const UnitCell &ucell,
+		const K_Vectors *p_kv);
 }
 
 #include "RI_Util.hpp"

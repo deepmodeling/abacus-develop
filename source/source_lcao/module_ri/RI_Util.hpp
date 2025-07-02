@@ -70,8 +70,8 @@ namespace RI_Util
 	inline std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
 	update_coulomb_param(
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
-		const double volumn,
-		const int nkstot)
+		const UnitCell &ucell,
+		const K_Vectors *p_kv);
 	{
 		std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
 		for(auto &param_list : coulomb_param_updated)
@@ -82,8 +82,16 @@ namespace RI_Util
 				{
 					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
 					const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
-					const double Rcut = std::pow(0.75 * nkstot/nspin0 * volumn / (ModuleBase::PI), 1.0/3.0);
+					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_full()/nspin0 * ucell.omega / (ModuleBase::PI), 1.0/3.0);
 					param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
+				}
+                else if(param.at("Rcut_type") == "revised_spencer")
+				{
+					const double bvk_a1 = ucell.a1.norm() * p_kv->nmp[0];
+                    const double bvk_a2 = ucell.a2.norm() * p_kv->nmp[1];
+                    const double bvk_a3 = ucell.a3.norm() * p_kv->nmp[2];
+                    const double Rcut = 0.5 * std::min({bvk_a1, bvk_a2, bvk_a3});
+                    param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
 				}
 			}
 		}
