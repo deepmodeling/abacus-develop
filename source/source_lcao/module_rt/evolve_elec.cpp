@@ -118,7 +118,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 #ifdef __MPI
                     // Access the rank of the calling process in the communicator
                     int myid = 0;
-                    int root_proc = 0;
+                    const int root_proc = 0;
                     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
                     // Gather psi to the root process
@@ -204,10 +204,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 syncmem_double_d2h_op()(&(ekb(ik, 0)), ekb_tensor.data<double>(), nband);
 
 #ifdef __MPI
-                int myid = 0;
-                MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-                int root_proc = 0;
-
+                const int root_proc = 0;
                 if (use_lapack)
                 {
                     // Synchronize ekb to all MPI processes
