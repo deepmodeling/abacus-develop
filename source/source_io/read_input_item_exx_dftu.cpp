@@ -112,7 +112,7 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_erfc_omega = {"0.11"};
                 }
-                if (dft_functional_lower == "lc_pbe")
+                else if (dft_functional_lower == "lc_pbe")
                 {
                     para.input.exx_erfc_omega = {"0.33"};
                 }
