@@ -5,9 +5,9 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/matrix.h"
-#include "source_pw/hamilt_pwdft/forces.h"
-#include "source_pw/hamilt_pwdft/stress_func.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/stress_func.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_io/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX

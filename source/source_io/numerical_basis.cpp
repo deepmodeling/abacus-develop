@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/numerical_basis_jyjy.h"
 #include "winput.h"
 

@@ -1,5 +1,5 @@
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"

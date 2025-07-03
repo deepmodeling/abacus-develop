@@ -13,7 +13,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/magnetism.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 #include <cmath>
 #include <complex>

@@ -8,7 +8,7 @@
 #include "source_base/lapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;

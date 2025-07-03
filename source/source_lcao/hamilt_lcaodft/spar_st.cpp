@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "force_stress_arrays.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "source_pw/hamilt_pwdft/global.h" // only for INPUT
+#include "source_pw/module_pwdft/global.h" // only for INPUT
 #include "spar_dh.h"
 #include "spar_hsr.h"
 

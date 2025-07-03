@@ -6,8 +6,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_tddft/snap_psibeta_half_tddft.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
+#include "source_pw/module_pwdft/global.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #include <omp.h>
@@ -171,7 +171,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
                     // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
                     // and <psi|rexp(-iAr)|beta> as well if current are needed
-                    module_tddft::snap_psibeta_half_tddft(orb_,
+                    module_rt::snap_psibeta_half_tddft(orb_,
                                                           this->ucell->infoNL,
                                                           nlm,
                                                           tau1 * this->ucell->lat0,

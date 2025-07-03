@@ -11,7 +11,7 @@
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #ifdef __MPI
 #include <mpi.h>

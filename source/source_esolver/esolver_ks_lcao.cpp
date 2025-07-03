@@ -41,7 +41,7 @@
 #include "source_estate/occupy.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 
 #include <memory>

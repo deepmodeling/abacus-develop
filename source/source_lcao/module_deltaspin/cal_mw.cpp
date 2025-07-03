@@ -5,7 +5,7 @@
 #include "source_base/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_projector.h"
 #include "spin_constrain.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO

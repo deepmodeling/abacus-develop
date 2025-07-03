@@ -11,7 +11,7 @@
 #include "source_base/vector3.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
 #include "source_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "source_base/lapack_connector.h"
@@ -21,7 +21,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_psi/psi_init.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 
