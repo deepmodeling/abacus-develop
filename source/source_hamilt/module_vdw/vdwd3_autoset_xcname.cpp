@@ -229,7 +229,7 @@ const std::map<std::string, std::string> xcname_libxc_xc_ = {
     {"XC_HYB_GGA_XC_WHPBE0", "whpbe0"},
     {"XC_HYB_GGA_XC_LC_BLYP_EA", "lc_blyp_ea"},
     {"XC_HYB_GGA_XC_LC_BOP", "lc_bop"},
-    {"XC_HYB_GGA_XC_LC_PBEOP", "lc_pbeop"},
+    {"XC_HYB_GGA_XC_LC_PBEOP", "lc_pbe"},
     {"XC_HYB_GGA_XC_LC_BLYPR", "lc_blypr"},
     {"XC_HYB_GGA_XC_MCAM_B3LYP", "mcam_b3lyp"},
     {"XC_MGGA_XC_VCML_RVV10", "vcml_rvv10"},
