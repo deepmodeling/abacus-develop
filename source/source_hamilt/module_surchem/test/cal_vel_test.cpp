@@ -125,7 +125,7 @@ TEST_F(cal_vel_test, eps_pot)
         eprime[i] = 1;
     }
 
-    complex<double>* phi = new complex<double>[npw];
+    std::complex<double>* phi = new std::complex<double>[npw];
     phi[0] = {2.116e-05, -9.528e-05};
     phi[1] = {1.608e-04, -1.958e-06};
     phi[2] = {1.500e-05, 7.303e-05};
@@ -205,8 +205,8 @@ TEST_F(cal_vel_test, cal_vel)
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
 
-    complex<double>* TOTN = new complex<double>[npw];
-    complex<double>* PS_TOTN = new complex<double>[npw];
+    std::complex<double>* TOTN = new std::complex<double>[npw];
+    std::complex<double>* PS_TOTN = new std::complex<double>[npw];
 
     for (int i = 0; i < npw; i++)
     {

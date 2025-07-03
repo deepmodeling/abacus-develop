@@ -79,8 +79,8 @@ const double PI = 3.1415926535897;
 const double TWO_PI = 2.0 * PI;
 const double FOUR_PI = 4.0 * PI;
 const double SQRT_INVERSE_FOUR_PI = sqrt(1.0/FOUR_PI);
-const complex<double> IMAG_UNIT = complex<double>(0, 1.0);
-const complex<double> NEG_IMAG_UNIT = complex<double>(0,-1.0);
+const std::complex<double> IMAG_UNIT = std::complex<double>(0, 1.0);
+const std::complex<double> NEG_IMAG_UNIT = std::complex<double>(0,-1.0);
 const double PI_HALF = PI / 2.0;
 const double SQRT2 = 1.41421356237309504880;
 

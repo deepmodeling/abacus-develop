@@ -21,7 +21,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     Structure_Factor* p_sf,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>, Device>* d_psi_in = nullptr);
+                    const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:
     // call the vdw stress
@@ -42,7 +42,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     ModulePW::PW_Basis* rho_basis,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const K_Vectors* p_kv,
-                    const psi::Psi<complex<FPTYPE>, Device>* d_psi_in,
+                    const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in,
                     const UnitCell& ucell); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;

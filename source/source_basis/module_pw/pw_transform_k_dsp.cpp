@@ -40,7 +40,7 @@ void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    // copy the in into the auxr with complex<double>
+    // copy the in into the auxr with std::complex<double>
     memcpy(auxr, in, this->nrxx * 2 * 8);
 
     // 3d fft

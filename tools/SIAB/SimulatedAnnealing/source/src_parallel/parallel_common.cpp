@@ -30,7 +30,7 @@ void Parallel_Common::bcast_complex_double(complex<double> &object)
 	double b = object.imag();
 	Parallel_Common::bcast_double(a);
 	Parallel_Common::bcast_double(b);
-	object = complex<double>( a, b);
+	object = std::complex<double>( a, b);
 	return;
 }
 
@@ -50,7 +50,7 @@ void Parallel_Common::bcast_complex_double(complex<double> *object, const int n)
 
 	for(int i=0; i<n; i++)
 	{
-		object[i] = complex<double>( a[i], b[i]);
+		object[i] = std::complex<double>( a[i], b[i]);
 	}
 	delete[] a;
 	delete[] b;

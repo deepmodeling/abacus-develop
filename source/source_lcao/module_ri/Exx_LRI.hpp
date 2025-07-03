@@ -54,7 +54,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	for(const auto &settings_list : this->info.coulomb_settings)
 	{
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
-			coulomb_param_updated = RI_Util::update_coulomb_param(settings_list.second.second, ucell, this->p_kv);
+		coulomb_param_updated = RI_Util::update_coulomb_param(settings_list.second.second, ucell, this->p_kv); 
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, coulomb_param_updated, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,

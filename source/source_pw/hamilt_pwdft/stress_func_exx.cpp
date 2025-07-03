@@ -7,7 +7,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            ModulePW::PW_Basis* rhopw,
                                            ModulePW::PW_Basis_K* wfcpw,
                                            const K_Vectors *p_kv,
-                                           const psi::Psi<complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell)
+                                           const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell)
 {
     double nqs_half1 = 0.5 * p_kv->nmp[0];
     double nqs_half2 = 0.5 * p_kv->nmp[1];

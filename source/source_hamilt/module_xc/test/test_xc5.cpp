@@ -53,12 +53,12 @@ class XCTest_VXC : public XCTest
             chr.rho[1] = new double[5];
             chr.rho[2] = new double[5];
             chr.rho[3] = new double[5];
-            chr.rhog = new complex<double>*[2];
-            chr.rhog[0] = new complex<double>[5];
-            chr.rhog[1] = new complex<double>[5];
+            chr.rhog = new std::complex<double>*[2];
+            chr.rhog[0] = new std::complex<double>[5];
+            chr.rhog[1] = new std::complex<double>[5];
 
             chr.rho_core = new double[5];
-            chr.rhog_core = new complex<double>[5];
+            chr.rhog_core = new std::complex<double>[5];
 
             for(int i=0;i<5;i++)
             {
@@ -151,12 +151,12 @@ class XCTest_VXC_Libxc : public XCTest
             chr.rho[1] = new double[5];
             chr.rho[2] = new double[5];
             chr.rho[3] = new double[5];
-            chr.rhog = new complex<double>*[2];
-            chr.rhog[0] = new complex<double>[5];
-            chr.rhog[1] = new complex<double>[5];
+            chr.rhog = new std::complex<double>*[2];
+            chr.rhog[0] = new std::complex<double>[5];
+            chr.rhog[1] = new std::complex<double>[5];
 
             chr.rho_core = new double[5];
-            chr.rhog_core = new complex<double>[5];
+            chr.rhog_core = new std::complex<double>[5];
 
             for(int i=0;i<5;i++)
             {
@@ -247,12 +247,12 @@ class XCTest_VXC_meta : public XCTest
             chr.rho = new double*[2];
             chr.rho[0] = new double[5];
             chr.rho[1] = new double[5];
-            chr.rhog = new complex<double>*[2];
-            chr.rhog[0] = new complex<double>[5];
-            chr.rhog[1] = new complex<double>[5];
+            chr.rhog = new std::complex<double>*[2];
+            chr.rhog[0] = new std::complex<double>[5];
+            chr.rhog[1] = new std::complex<double>[5];
 
             chr.rho_core = new double[5];
-            chr.rhog_core = new complex<double>[5];
+            chr.rhog_core = new std::complex<double>[5];
 
             for(int i=0;i<5;i++)
             {

@@ -14,7 +14,7 @@ MPI_Datatype mpicomplex;
 MPI_Op myOp;
 MPI_Comm POOL_WORLD;
 
-void Parallel_Global::myProd(complex<double> *in,complex<double> *inout,int *len,MPI_Datatype *dptr)
+void Parallel_Global::myProd(complex<double> *in, std::complex<double> *inout,int *len,MPI_Datatype *dptr)
 {
 	for(int i=0;i<*len;i++)
 	{

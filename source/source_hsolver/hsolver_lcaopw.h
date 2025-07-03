@@ -15,7 +15,7 @@ class HSolverLIP
   private:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
-    // otherwise return the real type of T(complex<float>, complex<double>)
+    // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
 
   public:

@@ -16,7 +16,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const Structure_Factor* p_sf,
                                           const pseudopot_cell_vnl& nlpp,
                                           const UnitCell& ucell_in,
-                                          const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                          const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_nl");
     if (nlpp.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)

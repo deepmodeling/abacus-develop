@@ -67,7 +67,7 @@ class Stress_Func
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const UnitCell& ucell_in,
-                    const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
+                    const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
     void stress_har(const UnitCell& ucell,
@@ -143,7 +143,7 @@ class Stress_Func
                      const Charge* const chr,
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
-                     const psi::Psi<complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
+                     const psi::Psi <std::complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
 
     // 7) the stress from the non-local pseudopotentials
     /**
@@ -162,7 +162,7 @@ class Stress_Func
                    K_Vectors* p_kv,
                    ModuleSymmetry::Symmetry* p_symm,
                    ModulePW::PW_Basis_K* wfc_basis,
-                   const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                   const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                    const pseudopot_cell_vnl& nlpp_in,
                    const UnitCell& ucell_in); // nonlocal part in PW basis
     // 8) the stress from the DFT+U and DeltaSpin calculations
@@ -180,7 +180,7 @@ class Stress_Func
                        const ModuleBase::matrix& wg,
                        const ModulePW::PW_Basis_K* wfc_basis,
                        const UnitCell& ucell_in,
-                       const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                       const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                        ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
