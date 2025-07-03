@@ -47,10 +47,7 @@ ESolver_OF::~ESolver_OF()
     delete[] this->task_;
     delete this->ptemp_rho_;
 
-    delete this->tf_;
-    delete this->vw_;
-    delete this->wt_;
-    delete this->lkt_;
+    delete this->kedf_manager_;
 
     delete this->opt_cg_;
     delete this->opt_tn_;
@@ -142,7 +139,8 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
-    this->init_kedf(inp);
+    this->kedf_manager_ = new KEDF_Manager();
+    this->kedf_manager_->init(inp, this->pw_rho, this->dV_, this->nelec_[0]);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize optimization methods
@@ -158,11 +156,6 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
-
-#ifdef __MLALGO
-    // for ML KEDF test
-    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
-#endif
 
     bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
 #ifdef __MPI
@@ -228,7 +221,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         this->init_elecstate(ucell);
 
         // Initialize KEDF
-        this->init_kedf(PARAM.inp);
+        this->kedf_manager_->init(PARAM.inp, this->pw_rho, this->dV_, this->nelec_[0]);
 
         // Initialize optimization methods
         this->init_opt();
@@ -320,9 +313,10 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     elecstate::cal_ux(ucell);
 
     this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
-    this->kinetic_potential(this->chr.rho,
-                            this->pphi_,
-                            this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+    this->kedf_manager_->get_potential(this->chr.rho,
+                                       this->pphi_,
+                                       this->pw_rho,
+                                       this->pelec->pot->get_effective_v()); // KEDF potential
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         const double* vr_eff = this->pelec->pot->get_effective_v(is);
@@ -497,7 +491,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->kinetic_energy_density(this->chr.rho, this->pphi_, this->chr.kin_r);
+        this->kedf_manager_->get_energy_density(this->chr.rho, this->pphi_, this->pw_rho, this->chr.kin_r);
     }
 
     //------------------------------------------------------------------
@@ -514,29 +508,15 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
 
 #ifdef __MLALGO
     //------------------------------------------------------------------
-    // Check the positivity of Pauli energy
-    //------------------------------------------------------------------
-    if (this->of_kinetic_ == "ml")
-    {
-        this->tf_->get_energy(this->chr.rho);
-
-        std::cout << "ML Term = " << this->ml_->ml_energy 
-                  << " Ry, TF Term = " << this->tf_->tf_energy 
-                  << " Ry." << std::endl;
-
-        if (this->ml_->ml_energy >= this->tf_->tf_energy)
-        {
-            std::cout << "WARNING: ML >= TF" << std::endl;
-        }
-    }
-
-    //------------------------------------------------------------------
     // Generate data if needed
     //------------------------------------------------------------------
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
-        this->kinetic_potential(this->chr.rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+    this->kedf_manager_->get_potential(this->chr.rho,
+                                       this->pphi_,
+                                       this->pw_rho,
+                                       this->pelec->pot->get_effective_v()); // KEDF potential
         
         const double* vr_eff = this->pelec->pot->get_effective_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -544,12 +524,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
             this->pdEdphi_[0][ir] = vr_eff[ir];
         }
         this->pelec->eferm.set_efval(0, this->cal_mu(this->pphi_[0], this->pdEdphi_[0], this->nelec_[0]));
-        // === temporary ===
-        // assert(GlobalV::of_kinetic == "wt" || GlobalV::of_kinetic == "ml");
-        // =================
+
         std::cout << "Generating Training data..." << std::endl;
         std::cout << "mu = " << this->pelec->eferm.get_efval(0) << std::endl;
-        this->ml_->generateTrainData(this->chr.rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
+        this->kedf_manager_->generate_ml_target(this->chr.rho, this->pw_rho, vr_eff);
     }
 #endif
 
@@ -573,7 +551,7 @@ void ESolver_OF::after_all_runners(UnitCell& ucell)
 double ESolver_OF::cal_energy()
 {
     this->pelec->cal_energies(2);
-    double kinetic_energy = this->kinetic_energy(); // kinetic energy
+    double kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
     double pseudopot_energy = 0.;                   // electron-ion interaction energy
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -609,7 +587,11 @@ void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
-    this->kinetic_stress(kinetic_stress_);
+    this->kedf_manager_->get_stress(this->pelec->omega,
+                                    this->chr.rho,
+                                    this->pphi_,
+                                    this->pw_rho,
+                                    kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
     ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, this->locpp, &sf, &kv);

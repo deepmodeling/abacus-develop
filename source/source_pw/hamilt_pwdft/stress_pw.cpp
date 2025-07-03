@@ -15,7 +15,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            Structure_Factor* p_sf,
                                            K_Vectors* p_kv,
                                            ModulePW::PW_Basis_K* wfc_basis,
-                                           const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
+                                           const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
     ModuleBase::timer::tick("Stress_PW", "cal_stress");

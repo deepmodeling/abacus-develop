@@ -369,7 +369,7 @@ double FR_overlap<T>::Polynomial_Interpolation(
     return y;
 }
 
-// T of FR_overlap can be double or complex<double>
+// T of FR_overlap can be double or std::complex<double>
 template class FR_overlap<double>;
 template class FR_overlap<std::complex<double>>;
 

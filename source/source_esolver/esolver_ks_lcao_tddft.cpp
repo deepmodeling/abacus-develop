@@ -282,8 +282,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
             if (td_htype == 1)
             {
                 this->p_hamilt->updateHk(ik);
-                hamilt::MatrixBlock<complex<double>> h_mat;
-                hamilt::MatrixBlock<complex<double>> s_mat;
+                hamilt::MatrixBlock <std::complex<double>> h_mat;
+                hamilt::MatrixBlock <std::complex<double>> s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
 
                 if (use_tensor && use_lapack)

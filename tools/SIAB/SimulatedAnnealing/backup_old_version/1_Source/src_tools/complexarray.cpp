@@ -25,7 +25,7 @@ ComplexArray::ComplexArray(const int d1,const int d2,const int d3)
 
 	size = bound1 * bound2 * bound3 ;	//* sizeof(float);
 
-	ptr = new complex<double>[size]();
+	ptr = new std::complex<double>[size]();
 	assert(ptr != 0);
 
 	++arrayCount;
@@ -43,7 +43,7 @@ ComplexArray::ComplexArray(const int d1,const int d2,const int d3,const int d4)
 
 	size = bound1 * bound2 * bound3 * bound4 ;	//* sizeof(float);
 
-	ptr = new complex<double>[size]();
+	ptr = new std::complex<double>[size]();
 	assert(ptr != 0);
 
 	++arrayCount;
@@ -78,7 +78,7 @@ void ComplexArray::create(const int d1,const int d2,const int d3,const int d4)
 	bound4 = d4;
 
 	delete [] ptr;
-	ptr = new complex<double>[size]();
+	ptr = new std::complex<double>[size]();
 	assert(ptr != 0);
 }
 
@@ -95,7 +95,7 @@ void ComplexArray::create(const int d1,const int d2,const int d3)
 	bound4 = 1;
 
 	delete [] ptr;
-	ptr = new complex<double>[size]();
+	ptr = new std::complex<double>[size]();
 	assert(ptr != 0);
 }
 
@@ -105,7 +105,7 @@ const ComplexArray &ComplexArray::operator=(const ComplexArray &right)
 	return *this;// enables x = y = z;
 }
 
-const ComplexArray &ComplexArray::operator=(const complex<double> &right)
+const ComplexArray &ComplexArray::operator=(const std::complex<double> &right)
 {
 	for (int i = 0;i < size;i++) ptr[i] = right;
 	return *this;// enables x = y = z;
@@ -117,7 +117,7 @@ const ComplexArray &ComplexArray::operator=(const complex<double> &right)
 // const reference return create an cvakue
 //
 //********************************************************
-const complex<double> &ComplexArray::operator()
+const std::complex<double> &ComplexArray::operator()
 (const int ind1,const int ind2,const int ind3)const
 {
 	const int ind = (ind1 * bound2 + ind2) * bound3 + ind3 ;
@@ -131,7 +131,7 @@ const complex<double> &ComplexArray::operator()
 // const reference return creates an cvakue
 //
 //********************************************************
-const complex<double> &ComplexArray::operator()
+const std::complex<double> &ComplexArray::operator()
 (const int ind1,const int ind2,const int ind3,const int ind4)const
 {
 	const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;

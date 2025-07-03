@@ -19,7 +19,7 @@ class HamiltPW : public Hamilt<T, Device>
   private:
     // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
-    // otherwise return the real type of T(complex<float>, complex<double>)
+    // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
   public:
     HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl* nlpp,const UnitCell* ucell);

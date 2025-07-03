@@ -39,13 +39,13 @@ extern "C"
 
 	void zpotrf_( const char* uplo,
 				const int* n,
-				const complex<double> *A,
+				const std::complex<double> *A,
 				const int* lda,
 				const int* infp);
 
 	void zpotri_( const char* uplo,
 				const int* n,
-				const complex<double> *A,
+				const std::complex<double> *A,
 				const int* lda,
 				const int* infp);
 
@@ -66,10 +66,10 @@ extern "C"
 	//========================================================================
 	void zgesv_(const int* n,
 				const int* nrhs,
-				const complex<double> *A,
+				const std::complex<double> *A,
 				const int *lda,
 				const int *ipiv,
-				const complex<double> *B,
+				const std::complex<double> *B,
 				const int* ldb,
 				int* info
 				);
@@ -93,12 +93,12 @@ extern "C"
                 const char* jobz,
                 const char* uplo,
                 const int* n,
-                complex<double>* a,
+                std::complex<double>* a,
                 const int* lda,
-                complex<double>* b,
+                std::complex<double>* b,
                 const int* ldb,
                 double* w,
-                complex<double>* work,
+                std::complex<double>* work,
                 int* lwork,
                 double* rwork,
                 int* info	);
@@ -180,9 +180,9 @@ extern "C"
 				 const char* range,	
 				 const char* uplo,
 				 const int* N,
-				 complex<double> *A,
+				 std::complex<double> *A,
 				 const int* LDA,
-				 complex<double> *B,
+				 std::complex<double> *B,
 				 const int* LDB,
 				 const double* vl,
 				 const double* vu,
@@ -191,9 +191,9 @@ extern "C"
 				 const double* abstol,
 				 const int* m,
 				 double* w,
-				 complex<double> *z,
+				 std::complex<double> *z,
 				 const int *LDZ,
-				 complex<double> *work,
+				 std::complex<double> *work,
 				 const int* lwork,
 				 double* rwork,
 				 int* iwork,
@@ -214,7 +214,7 @@ private:
 	static inline
 	complex<double>* transpose(const ComplexMatrix& a, const int n, const int lda)
 	{	
-		complex<double>* aux = new complex<double>[lda*n];
+		complex<double>* aux = new std::complex<double>[lda*n];
 		for(int i = 0; i < n; ++i)
 		{	for(int j = 0; j < lda; ++j)
 			{	
@@ -226,7 +226,7 @@ private:
 
 	// Transpose the fortran-form real-complex array to the complex matrix.
 	static inline
-	void transpose(const complex<double>* aux, ComplexMatrix& a, const int n, const int lda)
+	void transpose(const std::complex<double>* aux, ComplexMatrix& a, const int n, const int lda)
 	{	for(int i = 0; i < n; ++i)
 		{	for(int j = 0; j < lda; ++j)
 			{	
@@ -307,7 +307,7 @@ public:
                 ComplexMatrix& b,
                 const int ldb,
                 double* w,
-                complex<double>* work,
+                std::complex<double>* work,
                 int lwork,
                 double* rwork,
                 int info	)
@@ -372,7 +372,7 @@ public:
 				 double* w,
 				 ComplexMatrix& z,
 				 const int ldz,
-				 complex<double>* work,
+				 std::complex<double>* work,
 				 const int lwork,
 				 double* rwork,
 				 int* iwork,

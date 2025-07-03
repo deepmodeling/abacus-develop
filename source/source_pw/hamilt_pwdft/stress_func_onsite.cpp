@@ -11,7 +11,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
                                             const ModuleBase::matrix& wg,
                                             const ModulePW::PW_Basis_K* wfc_basis,
                                             const UnitCell& ucell_in,
-                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                                            const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                                             ModuleSymmetry::Symmetry* p_symm)
 {
     ModuleBase::TITLE("Stress", "stress_onsite");

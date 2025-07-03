@@ -240,7 +240,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         LapackConnector::zgetrf(nlocal, nlocal, Sinv, nlocal, IPIV, &INFO);
         LapackConnector::zgetri(nlocal, Sinv, nlocal, IPIV, work, lwork, &INFO);
         // I just use ModuleBase::ComplexMatrix temporarily, and will change it
-        // to complex<double>*
+        // to std::complex<double>*
         ModuleBase::ComplexMatrix tmp_dmk_base(nlocal, nlocal);
         for (int i = 0; i < nlocal; i++)
         {

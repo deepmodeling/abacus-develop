@@ -94,7 +94,7 @@ class Forces
                       const ModuleBase::matrix& wg,
                       const ModulePW::PW_Basis_K* wfc_basis,
                       const UnitCell& ucell_in,
-                      const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
+                      const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& v_current,

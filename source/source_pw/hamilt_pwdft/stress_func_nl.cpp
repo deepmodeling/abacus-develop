@@ -17,7 +17,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                             K_Vectors* p_kv,
                                             ModuleSymmetry::Symmetry* p_symm,
                                             ModulePW::PW_Basis_K* wfc_basis,
-                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in,
+                                            const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
                                             const pseudopot_cell_vnl& nlpp_in,
                                             const UnitCell& ucell_in)
 {

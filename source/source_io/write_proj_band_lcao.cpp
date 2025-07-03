@@ -197,7 +197,7 @@ void ModuleIO::write_proj_band_lcao(
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |       #Print out projected bands (psi in complex<double>)#         |" << std::endl;
+    GlobalV::ofs_running << " |       #Print out projected bands (psi in std::complex<double>)#         |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     GlobalV::ofs_running << "\n";

@@ -4,12 +4,7 @@
 #include "esolver_fp.h"
 #include "source_base/opt_DCsrch.h"
 #include "source_base/opt_TN.hpp"
-#include "source_estate/module_charge/charge.h"
-#include "source_pw/hamilt_ofdft/kedf_lkt.h"
-#include "source_pw/hamilt_ofdft/kedf_tf.h"
-#include "source_pw/hamilt_ofdft/kedf_vw.h"
-#include "source_pw/hamilt_ofdft/kedf_wt.h"
-#include "source_pw/hamilt_ofdft/kedf_ml.h"
+#include "source_pw/hamilt_ofdft/kedf_manager.h"
 #include "source_psi/psi.h"
 
 namespace ModuleESolver
@@ -35,13 +30,7 @@ class ESolver_OF : public ESolver_FP
   private:
     // ======================= variables ==========================
     // ---------- the kinetic energy density functionals ----------
-    KEDF_TF* tf_ = nullptr;
-    KEDF_vW* vw_ = nullptr;
-    KEDF_WT* wt_ = nullptr;
-    KEDF_LKT* lkt_ = nullptr;
-#ifdef __MLALGO
-    KEDF_ML* ml_ = nullptr;
-#endif
+    KEDF_Manager* kedf_manager_ = nullptr; // KEDF manager, which will be initialized in before_all_runners
 
     // ----------------- the optimization methods ------------------
     ModuleBase::Opt_CG* opt_cg_ = nullptr;
@@ -119,13 +108,6 @@ class ESolver_OF : public ESolver_FP
         innerproduct *= dV;
         return innerproduct;
     }
-
-    // ---------------------- interfaces to KEDF ------------------------
-    void init_kedf(const Input_para& inp);
-    void kinetic_potential(double** prho, double** pphi, ModuleBase::matrix& rpot);
-    double kinetic_energy();
-    void kinetic_energy_density(double** prho, double** pphi, double** rtau);
-    void kinetic_stress(ModuleBase::matrix& kinetic_stress);
 
     // ---------------------- interfaces to optimization methods --------
     void init_opt();

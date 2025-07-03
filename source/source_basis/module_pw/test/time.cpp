@@ -112,33 +112,33 @@ int main(int argc, char **argv)
         double * vr4 = new double[nrxx];
         double * vpsi1 = new double[nrxx];
         double * vpsi2 = new double[nrxx];
-        complex<double>* vpsic1 = new complex<double>[nrxx];
-        complex<double>* vpsic2 = new complex<double>[nrxx];
+        std::complex<double>* vpsic1 = new std::complex<double>[nrxx];
+        std::complex<double>* vpsic2 = new std::complex<double>[nrxx];
         for(int i = 0 ; i < nrxx ; ++i) 
         {
             vr4[i] = vr3[i] = vr2[i] = vr1[i] = rand()/double(RAND_MAX);
         }
 
-        complex<double> *psi = new complex<double> [npw*nbands];
-        complex<double> *psi2 = new complex<double> [npw*nbands];
-        complex<double> *psi3 = new complex<double> [npw_half1*nbands];
-        complex<double> *psi4 = new complex<double> [npw_half2*nbands];
-        complex<double> *psiout = new complex<double> [npw*nbands];
-        complex<double> *psiout2 = new complex<double> [npw*nbands];
-        complex<double> *psiout3 = new complex<double> [npw_half1*nbands];
-        complex<double> *psiout4 = new complex<double> [npw_half2*nbands];
+        std::complex<double> *psi = new std::complex<double> [npw*nbands];
+        std::complex<double> *psi2 = new std::complex<double> [npw*nbands];
+        std::complex<double> *psi3 = new std::complex<double> [npw_half1*nbands];
+        std::complex<double> *psi4 = new std::complex<double> [npw_half2*nbands];
+        std::complex<double> *psiout = new std::complex<double> [npw*nbands];
+        std::complex<double> *psiout2 = new std::complex<double> [npw*nbands];
+        std::complex<double> *psiout3 = new std::complex<double> [npw_half1*nbands];
+        std::complex<double> *psiout4 = new std::complex<double> [npw_half2*nbands];
         for(int i = 0 ; i < npw*nbands ; ++i) 
         {
-            psi2[i] = psi[i] = complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
+            psi2[i] = psi[i] = std::complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
         }
 
         for(int i = 0 ; i < npw_half1 * nbands ; ++i) 
         {
-            psi3[i] = complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
+            psi3[i] = std::complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
         }
         for(int i = 0 ; i < npw_half2 * nbands ; ++i) 
         {
-            psi4[i] = complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
+            psi4[i] = std::complex<double>(rand()/double(RAND_MAX), rand()/double(RAND_MAX));
         }
 
 
@@ -146,8 +146,8 @@ int main(int argc, char **argv)
         start=MPI_Wtime();
         for(int i = 0 ; i < nbands ; ++i)
         {
-            complex<double> * tmp = psi;
-            complex<double> * tmpout = psiout;
+            std::complex<double> * tmp = psi;
+            std::complex<double> * tmpout = psiout;
             pwtest1.recip2real(tmp, vpsic1);
             for(int j = 0 ; j < nrxx ; ++j) vpsic1[j]*=vr1[j];
             pwtest1.real2recip(vpsic1,tmpout);
@@ -162,8 +162,8 @@ int main(int argc, char **argv)
         start=MPI_Wtime();
         for(int i = 0 ; i < nbands ; ++i)
         {
-            complex<double> * tmp = psi2;
-            complex<double> * tmpout = psiout2;
+            std::complex<double> * tmp = psi2;
+            std::complex<double> * tmpout = psiout2;
             pwtest2.recip2real(tmp, vpsic2);
             for(int j = 0 ; j < nrxx ; ++j) vpsic2[j]*=vr2[j];
             pwtest2.real2recip(vpsic2,tmpout);
@@ -178,8 +178,8 @@ int main(int argc, char **argv)
         start=MPI_Wtime();
         for(int i = 0 ; i < nbands ; ++i)
         {
-            complex<double> * tmp = psi3;
-            complex<double> * tmpout = psiout3;
+            std::complex<double> * tmp = psi3;
+            std::complex<double> * tmpout = psiout3;
             pwtest3.recip2real(tmp, vpsi1);
             for(int j = 0 ; j < nrxx ; ++j) vpsi1[j]*=vr3[j];
             pwtest3.real2recip(vpsi1,tmpout);
@@ -194,8 +194,8 @@ int main(int argc, char **argv)
         start=MPI_Wtime();
         for(int i = 0 ; i < nbands ; ++i)
         {
-            complex<double> * tmp = psi4;
-            complex<double> * tmpout = psiout4;
+            std::complex<double> * tmp = psi4;
+            std::complex<double> * tmpout = psiout4;
             pwtest4.recip2real(tmp, vpsi2);
             for(int j = 0 ; j < nrxx ; ++j) vpsi2[j]*=vr4[j];
             pwtest4.real2recip(vpsi2,tmpout);

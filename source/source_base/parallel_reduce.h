@@ -8,7 +8,7 @@
 #include <cassert>
 #include <complex>
 
-using std::complex;
+// using std::complex;
 
 namespace Parallel_Reduce
 {

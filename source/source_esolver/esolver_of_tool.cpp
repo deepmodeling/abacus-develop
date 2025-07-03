@@ -142,7 +142,10 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kinetic_potential(this->ptemp_rho_->rho, temp_phi, vr_eff);
+    this->kedf_manager_->get_potential(this->ptemp_rho_->rho,
+                                       temp_phi,
+                                       this->pw_rho,
+                                       vr_eff); // KEDF potential
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
         dEdtemp_phi[this->tn_spin_flag_][i] = vr_eff(this->tn_spin_flag_, i);
@@ -179,7 +182,10 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kinetic_potential(temp_rho->rho, ptemp_phi, vr_eff);
+    this->kedf_manager_->get_potential(temp_rho->rho,
+                                       ptemp_phi,
+                                       this->pw_rho,
+                                       vr_eff); // KEDF potential
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -366,7 +372,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             temp_energy = this->pelec->f_en.etot;
             double kinetic_energy = 0.;
             double pseudopot_energy = 0.;
-            kinetic_energy = this->kinetic_energy();
+            kinetic_energy = this->kedf_manager_->get_energy();
             pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(),
                                                    this->ptemp_rho_->rho[0],
                                                    this->pw_rho->nrxx,
@@ -443,34 +449,9 @@ void ESolver_OF::print_info(const bool conv_esolver)
         energies_Ry.push_back(this->pelec->f_en.e_local_pp);
         titles.push_back("E_Ewald");
         energies_Ry.push_back(this->pelec->f_en.ewald_energy);
-        if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
-        {
-            titles.push_back("TF KEDF");
-            energies_Ry.push_back(this->tf_->tf_energy);
-        }
-        if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-            || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
-        {
-            titles.push_back("vW KEDF");
-            energies_Ry.push_back(this->vw_->vw_energy);
-        }
-        if (this->of_kinetic_ == "wt")
-        {
-            titles.push_back("WT KEDF");
-            energies_Ry.push_back(this->wt_->wt_energy);
-        }
-        if (this->of_kinetic_ == "lkt")
-        {
-            titles.push_back("LKT KEDF");
-            energies_Ry.push_back(this->lkt_->lkt_energy);
-        }
-#ifdef __MLALGO
-        if (this->of_kinetic_ == "ml")
-        {
-            titles.push_back("MPN KEDF");
-            energies_Ry.push_back(this->ml_->ml_energy);
-        }
-#endif
+
+        this->kedf_manager_->record_energy(titles, energies_Ry);
+        
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
