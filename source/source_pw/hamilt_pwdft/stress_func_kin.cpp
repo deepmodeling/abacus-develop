@@ -12,7 +12,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              K_Vectors* p_kv,
                                              ModulePW::PW_Basis_K* wfc_basis,
                                              const UnitCell& ucell_in,
-                                             const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                             const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Stress","stress_kin");
 	ModuleBase::timer::tick("Stress","stress_kin");

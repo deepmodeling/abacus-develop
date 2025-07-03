@@ -4,8 +4,8 @@
 void surchem::minimize_cg(const UnitCell& ucell,
                           const ModulePW::PW_Basis* rho_basis,
                           double* d_eps,
-                          const complex<double>* tot_N,
-                          complex<double>* phi,
+                          const std::complex<double>* tot_N,
+                          std::complex<double>* phi,
                           int& ncgsol)
 {
     // parameters of CG method
@@ -19,17 +19,17 @@ void surchem::minimize_cg(const UnitCell& ucell,
     int i = 0;
     ModuleBase::GlobalFunc::ZEROS(phi, rho_basis->npw);
     // malloc vectors in G space
-    complex<double> *resid = new complex<double>[rho_basis->npw];
-    complex<double> *z = new complex<double>[rho_basis->npw];
-    complex<double> *lp = new complex<double>[rho_basis->npw];
-    complex<double> *gsqu = new complex<double>[rho_basis->npw];
-    complex<double> *d = new complex<double>[rho_basis->npw];
+    std::complex<double> *resid = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *z = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *lp = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *gsqu = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *d = new std::complex<double>[rho_basis->npw];
 
-    complex<double> *gradphi_x = new complex<double>[rho_basis->npw];
-    complex<double> *gradphi_y = new complex<double>[rho_basis->npw];
-    complex<double> *gradphi_z = new complex<double>[rho_basis->npw];
+    std::complex<double> *gradphi_x = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *gradphi_y = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *gradphi_z = new std::complex<double>[rho_basis->npw];
 
-    complex<double> *phi_work = new complex<double>[rho_basis->npw];
+    std::complex<double> *phi_work = new std::complex<double>[rho_basis->npw];
 
     ModuleBase::GlobalFunc::ZEROS(resid, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(z, rho_basis->npw);
@@ -163,13 +163,13 @@ void surchem::minimize_cg(const UnitCell& ucell,
 
 void surchem::Leps2(const UnitCell& ucell,
                     const ModulePW::PW_Basis* rho_basis,
-                    complex<double>* phi,
+                    std::complex<double>* phi,
                     double* epsilon,            // epsilon from shapefunc, dim=nrxx
-                    complex<double>* gradphi_x, // dim=ngmc
-                    complex<double>* gradphi_y,
-                    complex<double>* gradphi_z,
-                    complex<double>* phi_work,
-                    complex<double>* lp)
+                    std::complex<double>* gradphi_x, // dim=ngmc
+                    std::complex<double>* gradphi_y,
+                    std::complex<double>* gradphi_z,
+                    std::complex<double>* phi_work,
+                    std::complex<double>* lp)
 {
     ModuleBase::Vector3<double> *grad_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
@@ -185,7 +185,7 @@ void surchem::Leps2(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
 
     std::vector<double> grad_grad_phi(rho_basis->nrxx,0);
-    complex<double> *grad_grad_phi_G = new complex<double>[rho_basis->npw];
+    std::complex<double> *grad_grad_phi_G = new std::complex<double>[rho_basis->npw];
     ModuleBase::Vector3<double> *tmp_vector3 = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
     // x

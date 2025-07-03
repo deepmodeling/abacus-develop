@@ -219,7 +219,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::tick("Forces", "ftable");
 
-    elecstate::DensityMatrix<complex<double>, double>* dm
+    elecstate::DensityMatrix <std::complex<double>, double>* dm
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
     this->allocate(ucell,

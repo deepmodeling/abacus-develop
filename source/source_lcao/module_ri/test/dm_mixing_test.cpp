@@ -126,7 +126,7 @@ TEST_F(DM_Mixing_Test, Mix_Matrix)
             EXPECT_DOUBLE_EQ(data_out_vector[i * nc + j], (1 - mixing_beta) * mix_data_vector[0][i * nc + j] + mixing_beta * mix_data_vector[1][i * nc + j]);
         }
     }
-    //vector<complex<double>>
+    //vector <std::complex<double>>
     Mix_Matrix<std::vector<std::complex<double>>> mix_vector_complex;
     mix_vector_complex.init(nullptr);
     mix_vector_complex.mixing_beta = mixing_beta;

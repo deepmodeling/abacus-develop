@@ -185,7 +185,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
  * @param pw_rho PW_Basis
  * @param veff effective potential
  */
-void KEDF_ML::generateTrainData(const double * const *prho, KEDF_WT &wt, KEDF_TF &tf,  ModulePW::PW_Basis *pw_rho, const double *veff)
+void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
 {
     // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")

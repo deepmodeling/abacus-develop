@@ -47,8 +47,8 @@ TEST_F(PWTEST,test_other)
     pwktest.setuptransform();
     pwktest.collect_local_pw();
     const int nrxx = pwktest.nrxx;
-    complex<double> * rhor1 = new complex<double> [nrxx];
-    complex<double> * rhor2 = new complex<double> [nrxx];
+    std::complex<double> * rhor1 = new std::complex<double> [nrxx];
+    std::complex<double> * rhor2 = new std::complex<double> [nrxx];
 #ifdef __ENABLE_FLOAT_FFTW
     complex<float> * rhofr1 = new complex<float> [nrxx];
     complex<float> * rhofr2 = new complex<float> [nrxx];
@@ -57,8 +57,8 @@ TEST_F(PWTEST,test_other)
     for(int ik = 0; ik < nks; ++ik)
     {
         const int npwk = pwktest.npwk[ik];
-        complex<double> * rhog1 = new complex<double> [npwk];
-        complex<double> * rhog2 = new complex<double> [npwk];
+        std::complex<double> * rhog1 = new std::complex<double> [npwk];
+        std::complex<double> * rhog2 = new std::complex<double> [npwk];
 #ifdef __ENABLE_FLOAT_FFTW
         complex<float> * rhofg1 = new complex<float> [npwk];
         complex<float> * rhofg2 = new complex<float> [npwk];

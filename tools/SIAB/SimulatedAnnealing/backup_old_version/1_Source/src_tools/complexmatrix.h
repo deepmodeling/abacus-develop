@@ -36,7 +36,7 @@ public:
 	{
 		return c[nc * i + j];//mohan modify in-line 2007-10-1
 	}
-	const complex<double> &operator()(const int i,const int j)const
+	const std::complex<double> &operator()(const int i,const int j)const
 	{
 		return c[nc * i + j];//mohan modify in-line 2007-10-13
 	}
@@ -44,12 +44,12 @@ public:
 	friend ComplexMatrix operator+(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 	friend ComplexMatrix operator-(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 	friend ComplexMatrix operator*(const ComplexMatrix &m1,  const ComplexMatrix &m2);
-	friend ComplexMatrix operator*(const complex<double> &s, const ComplexMatrix &m);
-	friend ComplexMatrix operator*(const ComplexMatrix &m,   const complex<double> &s);
+	friend ComplexMatrix operator*(const std::complex<double> &s, const ComplexMatrix &m);
+	friend ComplexMatrix operator*(const ComplexMatrix &m,   const std::complex<double> &s);
 	friend ComplexMatrix operator*(const double &s,          const ComplexMatrix &m);
 	friend ComplexMatrix operator*(const ComplexMatrix &m,   const double &s);
 	ComplexMatrix& operator=(const ComplexMatrix &m);
-	ComplexMatrix& operator*=(const complex<double> &s);
+	ComplexMatrix& operator*=(const std::complex<double> &s);
 	ComplexMatrix& operator+=(const ComplexMatrix &m);
 	ComplexMatrix& operator-=(const ComplexMatrix &m);
 
@@ -78,28 +78,28 @@ double abs2(const int nmat, ComplexMatrix **m);
 ComplexMatrix transpose(const ComplexMatrix &m, const bool &conjugate);
 
 void scale_accumulate(
-		const complex<double> &s, 
+		const std::complex<double> &s, 
 		const ComplexMatrix &min, 
 		ComplexMatrix &mout);
 
 void scale_accumulate(
 		const int &nmat, 
-		const complex<double> &s, 
+		const std::complex<double> &s, 
 		ComplexMatrix **min, 
 		ComplexMatrix **mout);
 
 void scaled_sum(
-		const complex<double> &s1, 
+		const std::complex<double> &s1, 
 		const ComplexMatrix &m1, 
-		const complex<double> &s2, 
+		const std::complex<double> &s2, 
 		const ComplexMatrix &m2, 
 		ComplexMatrix &mout);
 
 void scaled_sum(
 		const int &nmat,
-		const complex<double> &s1, 
+		const std::complex<double> &s1, 
 		ComplexMatrix **m1, 
-		const complex<double> &s2,
+		const std::complex<double> &s2,
 		ComplexMatrix **m2, 
 		ComplexMatrix **mout);
 #endif

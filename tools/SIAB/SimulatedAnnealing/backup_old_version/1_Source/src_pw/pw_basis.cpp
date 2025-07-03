@@ -24,9 +24,9 @@ PW_Basis::PW_Basis()
 
     psi3d = new ComplexMatrix[1];
     ylm = new matrix[1];
-    Jlq = new complex<double>[1];
+    Jlq = new std::complex<double>[1];
 
-	save = new complex<double>[1];
+	save = new std::complex<double>[1];
 	posmu = new int[1];
 	posnu = new int[1];
 }
@@ -370,13 +370,13 @@ void PW_Basis::setup_structure_factor(void)
 {
     TITLE("PW_Basis","setup_structure_factor");
     timer::tick("PW_Basis","setup_struc_factor");
-    complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
-    complex<double> x;
+    std::complex<double> ci_tpi = NEG_IMAG_UNIT * TWO_PI;
+    std::complex<double> x;
 
-    this->strucFac = new complex<double>*[NTYPE];
+    this->strucFac = new std::complex<double>*[NTYPE];
     for (int it=0; it<NTYPE; it++)
     {
-        this->strucFac[it] = new complex<double>[ngmw];
+        this->strucFac[it] = new std::complex<double>[ngmw];
         ZEROS( strucFac[it], ngmw);
     }
 
@@ -401,7 +401,7 @@ void PW_Basis::setup_structure_factor(void)
                 sum_cos += cos( theta );
                 sum_sin += sin( theta );
             }
-            this->strucFac[it][ig] = complex<double>( sum_cos, -sum_sin );
+            this->strucFac[it][ig] = std::complex<double>( sum_cos, -sum_sin );
 
             double tmpx = strucFac[it][ig].real() ;
             double tmpy = strucFac[it][ig].imag() ;
@@ -460,8 +460,8 @@ complex<double>* PW_Basis::get_sk(const int ik, const int it, const int ia)const
     const double arg = (CARKX[ik] * CARPOSX[it][ia]
                         + CARKY[ik] * CARPOSY[it][ia]
                         + CARKZ[ik] * CARPOSZ[it][ia] ) * TWO_PI;
-    const complex<double> kphase = complex <double> ( cos(arg),  -sin(arg) );
-    complex<double> *sk = new complex<double>[ this->ngk[ik] ];
+    const std::complex<double> kphase = complex <double> ( cos(arg),  -sin(arg) );
+    std::complex<double> *sk = new std::complex<double>[ this->ngk[ik] ];
     const int iat = this->itia2iat[it][ia];
 
     for (int ig=0; ig< this->ngk[ik]; ig++)
@@ -581,7 +581,7 @@ void PW_Basis::allocate_psi1d(const int &il)
 	delete[] posnu;
 
 	const int dim = nwfc2 * nwfc2;
-	save = new complex<double>[dim];
+	save = new std::complex<double>[dim];
 	posmu = new int[dim];
 	posnu = new int[dim];
 	ZEROS(save, dim);
@@ -657,7 +657,7 @@ void PW_Basis::calculate_psi3d(const int &ilevel, const int &ik)
         const int l  = mz.Level[ilevel].wayd[iw].L;
         const int n  = mz.Level[ilevel].wayd[iw].N;
         const int m  = mz.Level[ilevel].wayd[iw].m;
-        complex<double> lphase = pow(IMAG_UNIT, l);
+        std::complex<double> lphase = pow(IMAG_UNIT, l);
 
         // get flq from psi1d for each k point
         for (int ig=0; ig<npw; ig++)
@@ -666,7 +666,7 @@ void PW_Basis::calculate_psi3d(const int &ilevel, const int &ik)
         }
 
         // get the structure wave functions for each k point.
-        complex<double> *sk = this->get_sk(ik, it, ia);
+        std::complex<double> *sk = this->get_sk(ik, it, ia);
 
         const int lm = l*l+m;
         for (int ig=0; ig<npw; ig++)
@@ -685,7 +685,7 @@ void PW_Basis::calculate_psi3d(const int &ilevel, const int &ik)
 
 complex<double> PW_Basis::calculateS(const int &iw, const int &iw2, const int &ik)
 {
-    complex<double> overlap = 0.0;
+    std::complex<double> overlap = 0.0;
     for (int ig=0; ig<ngk[ik]; ig++)
     {
         overlap += conj(this->psi3d[ik](iw, ig)) * this->psi3d[ik](iw2, ig);
@@ -789,8 +789,8 @@ void PW_Basis::update_psi3d( const int &il, const int &ic, const int &ik)
         gk[ig] = this->get_1qvec_cartesian(ik, ig);
     }
     double *flq = new double[npw];
-    complex<double> *sk = new complex<double>[1];
-    complex<double> *samepart = new complex<double>[npw];
+    std::complex<double> *sk = new std::complex<double>[1];
+    std::complex<double> *samepart = new std::complex<double>[npw];
     for (int iw=0; iw<this->nwfc2; iw++)
     {
         const int ic1 = mz.Level[il].wayd[iw].ic;
@@ -802,7 +802,7 @@ void PW_Basis::update_psi3d( const int &il, const int &ic, const int &ik)
             const int l  = mz.Level[il].wayd[iw].L;
             const int n  = mz.Level[il].wayd[iw].N;
             const int m  = mz.Level[il].wayd[iw].m;
-            complex<double> lphase = pow(IMAG_UNIT, l);
+            std::complex<double> lphase = pow(IMAG_UNIT, l);
 
             // a small trick: get the structure wave functions for each k point.
             if (it==it_old && ia==ia_old)
@@ -918,11 +918,11 @@ void PW_Basis::calculate_Jlq(const int &ik, const int &iw, const int &ie)
 
     // generate 3d Jlq.
     delete[] Jlq;
-    Jlq = new complex<double>[npw];
-    complex<double> *sk = this->get_sk(ik, it, ia);
+    Jlq = new std::complex<double>[npw];
+    std::complex<double> *sk = this->get_sk(ik, it, ia);
 
     const int lm = l*l+m;
-    complex<double> lphase = pow(IMAG_UNIT, l);
+    std::complex<double> lphase = pow(IMAG_UNIT, l);
     for (int ig=0; ig<npw; ig++)
     {
         Jlq[ig] = lphase * sk[ig] * ylm[ik](lm, ig) * flq[ig];
@@ -941,7 +941,7 @@ void PW_Basis::calculate_Jlq(const int &ik, const int &iw, const int &ie)
 complex<double> PW_Basis::calculate_Jlq_Phi(const int &ik, const int &mu)
 {
 	const int npw = this->ngk[ik];
-	complex<double> overlap = complex<double>(0,0);
+	complex<double> overlap = std::complex<double>(0,0);
 	for(int ig=0; ig<npw; ig++)
 	{
 		overlap += conj(Jlq[ig]) * psi3d[ik](mu,ig);

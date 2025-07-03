@@ -47,14 +47,14 @@ public:
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_Vws"
-	inline std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
+	inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
 	cal_dVs(
 		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_dVws"
-	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
-	          std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
+	std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
+              std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
 	cal_Cs_dCs(
 		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,

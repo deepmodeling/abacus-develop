@@ -31,7 +31,7 @@ const_nums<float>::const_nums()
     this->neg_one[0] = -1.0;
 }
 
-// Specialized templates to support std:: complex<double>types
+// Specialized templates to support std:: std::complex<double>types
 template <>
 const_nums<std::complex<double>>::const_nums()
 {

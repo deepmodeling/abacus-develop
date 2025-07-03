@@ -51,8 +51,10 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
-        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
-
+        std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
+            std::pair<bool, 
+                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+                    std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
         bool real_number = false;
 
@@ -70,15 +72,10 @@ struct Exx_Info
         double kmesh_times = 4;
 
         int abfs_Lmax = 0; // tmp
-
-        Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : coulomb_param(info_global.coulomb_param)
-        {
-        }
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
+    Exx_Info() : info_lip(this->info_global)
     {
     }
 };

@@ -12,7 +12,7 @@ void surchem::force_cor_one(const UnitCell& cell,
     //delta phi multiply by the derivative of nuclear charge density with respect to the positions
     std::complex<double> *N = new std::complex<double>[rho_basis->npw];
     std::complex<double> *vloc_at = new std::complex<double>[rho_basis->npw];
-    std::complex<double> *delta_phi_g = new complex<double>[rho_basis->npw];
+    std::complex<double> *delta_phi_g = new std::complex<double>[rho_basis->npw];
     //ModuleBase::GlobalFunc::ZEROS(delta_phi_g, rho_basis->npw);
 
     rho_basis->real2recip(this->delta_phi, delta_phi_g);
@@ -28,7 +28,7 @@ void surchem::force_cor_one(const UnitCell& cell,
         {
             for (int ig = 0; ig < rho_basis->npw; ig++)
             {   
-                complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
+                std::complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
                 //vloc for each atom
                 vloc_at[ig] = vloc(it, rho_basis->ig2igg[ig]) * phase;
                 if(rho_basis->ig_gge0 == ig)
@@ -72,15 +72,15 @@ void surchem::force_cor_one(const UnitCell& cell,
 void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
    
-    complex<double> *n_pseudo = new complex<double>[rho_basis->npw];
+    std::complex<double> *n_pseudo = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(n_pseudo,rho_basis->npw);
 
     // this->gauss_charge(cell, pwb, n_pseudo);
 
     double *Vcav_sum =  new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(Vcav_sum, rho_basis->nrxx);
-    std::complex<double> *Vcav_g = new complex<double>[rho_basis->npw];
-    std::complex<double> *Vel_g = new complex<double>[rho_basis->npw];
+    std::complex<double> *Vcav_g = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *Vel_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(Vcav_g, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(Vel_g, rho_basis->npw);
     for(int is=0; is<PARAM.inp.nspin; is++)
@@ -110,7 +110,7 @@ void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_
                 // G^2
                 double gg = rho_basis->gg[ig];
                 gg = gg * cell.tpiba2;
-                complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
+                std::complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
 
                 n_pseudo[ig].real((this->GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv)
                                   * phase.real() * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));

@@ -14,7 +14,7 @@ namespace hsolver
 /**
  * @brief Parallel do the generalized eigenvalue problem
  * 
- * @tparam T double or complex<double> or float or complex<float>
+ * @tparam T double or std::complex<double> or float or complex<float>
  * @param H the hermitian matrix H.
  * @param S the overlap matrix S.
  * @param lda the leading dimension of H and S

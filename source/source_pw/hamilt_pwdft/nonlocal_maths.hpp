@@ -66,7 +66,7 @@ class Nonlocal_maths
     /// calculate the derivate of the sperical bessel function for projections
     void cal_ylm_deri(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm_deri);
     /// calculate the (-i)^l factors
-    std::vector<complex<FPTYPE>> cal_pref(int it, const int nh);
+    std::vector <std::complex<FPTYPE>> cal_pref(int it, const int nh);
     /// calculate the vkb matrix for this atom
     /// vkb = sum_lm (-i)^l * ylm(g^) * vq(g^) * sk(g^)
     void cal_vkb(int it,
@@ -74,9 +74,9 @@ class Nonlocal_maths
                  int npw,
                  const FPTYPE* vq_in,
                  const FPTYPE* ylm_in,
-                 const complex<FPTYPE>* sk_in,
-                 const complex<FPTYPE>* pref_in,
-                 complex<FPTYPE>* vkb_out);
+                 const std::complex<FPTYPE>* sk_in,
+                 const std::complex<FPTYPE>* pref_in,
+                 std::complex<FPTYPE>* vkb_out);
     /// calculate the dvkb matrix for this atom
     void cal_vkb_deri(int it,
                       int ia,
@@ -87,10 +87,10 @@ class Nonlocal_maths
                       const FPTYPE* vq_deri_in,
                       const FPTYPE* ylm_in,
                       const FPTYPE* ylm_deri_in,
-                      const complex<FPTYPE>* sk_in,
-                      const complex<FPTYPE>* pref_in,
+                      const std::complex<FPTYPE>* sk_in,
+                      const std::complex<FPTYPE>* pref_in,
                       const FPTYPE* gk_in,
-                      complex<FPTYPE>* vkb_out);
+                      std::complex<FPTYPE>* vkb_out);
 
     /// calculate the ptr used in vkb_op
     void prepare_vkb_ptr(int nbeta,

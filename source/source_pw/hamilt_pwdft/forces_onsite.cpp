@@ -12,7 +12,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
                                           const ModuleBase::matrix& wg,
                                           const ModulePW::PW_Basis_K* wfc_basis,
                                           const UnitCell& ucell_in,
-                                          const psi::Psi<complex<FPTYPE>, Device>* psi_in)
+                                          const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_onsite");
     if(psi_in == nullptr || wfc_basis == nullptr)

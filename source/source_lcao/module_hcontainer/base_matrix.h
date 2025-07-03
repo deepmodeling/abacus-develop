@@ -10,7 +10,7 @@ namespace hamilt
 /**
  * class: BaseMatrix
  * used to store a matrix for atom-pair local Hamiltonian with specific R-index
- * T can be double or complex<double>
+ * T can be double or std::complex<double>
  * It has two ways to arrange data:
  * 1. allocate data itself
  * 2. only access data but be arranged by other class

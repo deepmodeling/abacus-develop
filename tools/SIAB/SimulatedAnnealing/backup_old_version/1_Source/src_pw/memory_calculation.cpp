@@ -41,12 +41,12 @@ void Memory::calculation(void)
 
 		cout << "\n S matrix dim = " << nwfc2 * nwfc2;
 		
-//		complex<double>* haha = new complex<double>[PW.npwx];
+//		complex<double>* haha = new std::complex<double>[PW.npwx];
 //		ZEROS(haha, PW.npwx);
 
 		ComplexMatrix haha(3,PW.npwx);
 	
-		complex<double> sum = complex<double>(0,0);
+		complex<double> sum = std::complex<double>(0,0);
 		for(int t=0; t<nwfc2*nwfc2; t++)
 		{
 			timer::tick("Memory","test");

@@ -109,7 +109,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // autoset nbands in ElecState before basis_init (for Psi 2d division)
     if (this->pelec == nullptr)
     {
-        // TK stands for double and complex<double>?
+        // TK stands for double and std::complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
                                                        &(this->kv),
                                                        this->kv.get_nks(),

@@ -855,7 +855,7 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& uc
     }
 }
 
-// T of HContainer can be double or complex<double>
+// T of HContainer can be double or std::complex<double>
 template class HContainer<double>;
 template class HContainer<std::complex<double>>;
 

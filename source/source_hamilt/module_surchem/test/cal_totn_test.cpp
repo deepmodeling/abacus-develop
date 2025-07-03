@@ -68,10 +68,10 @@ TEST_F(cal_totn_test, cal_totn)
 
     const int npw = pwtest.npw;
     const int nrxx = pwtest.nrxx;
-    complex<double>* N = new complex<double>[npw];
+    std::complex<double>* N = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(N, npw);
-    complex<double>* TOTN = new complex<double>[npw];
-    complex<double>* Porter_g = new complex<double>[npw];
+    std::complex<double>* TOTN = new std::complex<double>[npw];
+    std::complex<double>* Porter_g = new std::complex<double>[npw];
     double* vloc = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
 
@@ -137,8 +137,8 @@ TEST_F(cal_totn_test, induced_charge)
 
     double fac;
     fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (ucell.tpiba2 * pwtest.gg[0]);
-    complex<double> delta_phi{-2.0347933860e-05, 4.5900395826e-07};
-    complex<double> induced_charge;
+    std::complex<double> delta_phi{-2.0347933860e-05, 4.5900395826e-07};
+    std::complex<double> induced_charge;
     induced_charge = -delta_phi / fac;
 
     EXPECT_NEAR(induced_charge.real(), 6.2646421140e-05, 1e-9);

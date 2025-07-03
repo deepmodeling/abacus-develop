@@ -19,8 +19,8 @@ namespace ModulePW
  *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
  *
  *          This function tranform f'(r) to c(k,g).
- * @param in: (nplane,ny,nx), complex<double> data
- * @param out: (nz, ns),  complex<double> data
+ * @param in: (nplane,ny,nx), std::complex<double> data
+ * @param out: (nz, ns),  std::complex<double> data
  */
 template <typename FPTYPE>
 void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
@@ -85,7 +85,7 @@ void PW_Basis_K::real2recip(const std::complex<FPTYPE>* in,
  *
  *          This function tranform f'(r) to c(k,g).
  * @param in: (nplane,ny,nx), double data
- * @param out: (nz, ns),  complex<double> data
+ * @param out: (nz, ns),  std::complex<double> data
  */
 template <typename FPTYPE>
 void PW_Basis_K::real2recip(const FPTYPE* in,
@@ -158,8 +158,8 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
  *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
  *
  *          This function tranform c(k,g) to f'(r).
- * @param in: (nz,ns), complex<double>
- * @param out: (nplane, ny, nx), complex<double>
+ * @param in: (nz,ns), std::complex<double>
+ * @param out: (nplane, ny, nx), std::complex<double>
  */
 template <typename FPTYPE>
 void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
@@ -221,7 +221,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
  *          c(k,g)=\int dr*f'(k,r)*exp(-ig*r)
  *
  *          This function tranform c(k,g) to f'(r).
- * @param in: (nz,ns), complex<double>
+ * @param in: (nz,ns), std::complex<double>
  * @param out: (nplane, ny, nx), double
  */
 template <typename FPTYPE>

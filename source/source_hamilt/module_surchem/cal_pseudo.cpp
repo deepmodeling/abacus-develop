@@ -6,7 +6,7 @@
 void surchem::gauss_charge(const UnitCell& cell,
                            const Parallel_Grid& pgrid,
                            const ModulePW::PW_Basis* rho_basis,
-                           complex<double>* N,
+                           std::complex<double>* N,
                            Structure_Factor* sf)
 {
     sf->setup_structure_factor(&cell, pgrid, rho_basis); // call strucFac(ntype,ngmc)
@@ -39,11 +39,11 @@ void surchem::gauss_charge(const UnitCell& cell,
 void surchem::cal_pseudo(const UnitCell& cell,
                          const Parallel_Grid& pgrid,
                          const ModulePW::PW_Basis* rho_basis,
-                         const complex<double>* Porter_g,
-                         complex<double>* PS_TOTN,
+                         const std::complex<double>* Porter_g,
+                         std::complex<double>* PS_TOTN,
                          Structure_Factor* sf)
 {
-    complex<double>* N = new complex<double>[rho_basis->npw];
+    std::complex<double>* N = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(N, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN, rho_basis->npw);
 
