@@ -279,6 +279,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(std::stod(param.inp.exx_fock_alpha[0]), 1);
     EXPECT_DOUBLE_EQ(std::stod(param.inp.exx_erfc_alpha[0]), 0.25);
     EXPECT_EQ(param.inp.exx_real_number, "1");
+    EXPECT_EQ(param.inp.exx_singularity_correction, "limits");
     EXPECT_DOUBLE_EQ(std::stod(param.inp.exx_erfc_omega[0]), 0.11);
     EXPECT_TRUE(param.inp.exx_separate_loop);
     EXPECT_EQ(param.inp.exx_hybrid_step, 100);
