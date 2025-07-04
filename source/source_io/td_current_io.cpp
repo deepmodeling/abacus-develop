@@ -13,7 +13,7 @@
 #include "source_lcao/module_rt/td_current.h"
 #include "source_lcao/module_rt/td_velocity.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
 

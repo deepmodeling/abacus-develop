@@ -8,7 +8,7 @@
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/berryphase.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"
 

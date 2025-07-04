@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../xc_functional.h"
 #include "../exx_info.h"

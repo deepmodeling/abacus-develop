@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi_initializer_atomic.h"
 #include "source_psi/psi_initializer_atomic_random.h"
 #include "source_psi/psi_initializer_file.h"

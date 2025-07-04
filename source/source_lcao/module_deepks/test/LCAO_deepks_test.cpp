@@ -1,6 +1,6 @@
 #include "LCAO_deepks_test.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>

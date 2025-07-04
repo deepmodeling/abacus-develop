@@ -1,7 +1,7 @@
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "mpi.h"
 #include "string.h"

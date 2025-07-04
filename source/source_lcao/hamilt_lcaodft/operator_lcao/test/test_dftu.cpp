@@ -3,7 +3,7 @@
 
 // mock of DFTU
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../dftu_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"

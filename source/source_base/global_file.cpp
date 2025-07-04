@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <sstream>
 #include "global_function.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"

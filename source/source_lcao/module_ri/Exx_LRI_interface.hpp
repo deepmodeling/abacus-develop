@@ -1,6 +1,6 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"

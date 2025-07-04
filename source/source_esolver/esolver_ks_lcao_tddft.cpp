@@ -27,7 +27,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 
 //-----force& stress-------------------

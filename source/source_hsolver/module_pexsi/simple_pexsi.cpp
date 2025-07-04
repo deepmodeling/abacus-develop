@@ -1,6 +1,6 @@
 // use PEXSI to solve a Kohn-Sham equation
 // the H and S matrices are given by 2D block cyclic distribution
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // the Density Matrix and Energy Density Matrix calculated by PEXSI are transformed to 2D block cyclic distribution
 // #include "mpi.h"
 #ifdef __PEXSI

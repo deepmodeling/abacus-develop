@@ -1,6 +1,6 @@
 #include "hamilt_pw.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

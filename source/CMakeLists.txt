@@ -15,7 +15,7 @@ add_subdirectory(source_lcao/module_gint)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
-add_subdirectory(module_parameter)
+add_subdirectory(source_io/module_parameter)
 add_subdirectory(module_lr)
 
 # add by jghan

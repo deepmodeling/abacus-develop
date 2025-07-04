@@ -12,7 +12,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // calculates orbital_precalc[nks,NAt,NDscrpt] = gevdm * orbital_pdm;
 // orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;

@@ -1,6 +1,6 @@
 #include "read_wfc_pw.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "binstream.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

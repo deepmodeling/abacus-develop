@@ -5,7 +5,7 @@
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __ELPA
 #include "source_hsolver/diago_elpa.h"

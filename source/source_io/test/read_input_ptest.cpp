@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 #include "source_base/tool_quit.h"
 #include "source_io/read_input.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // #ifdef __MPI
 #include "source_base/parallel_global.h"

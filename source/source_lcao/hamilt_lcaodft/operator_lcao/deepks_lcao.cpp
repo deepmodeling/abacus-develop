@@ -5,7 +5,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif

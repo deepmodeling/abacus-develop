@@ -2,7 +2,7 @@
 #define PW_SETUP_H
 
 //! Input parameters
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 //! Unit cell information
 #include "source_cell/unitcell.h"
 //! Plane wave basis

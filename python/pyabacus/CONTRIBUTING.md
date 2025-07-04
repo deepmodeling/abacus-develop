@@ -144,7 +144,7 @@ set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
 add_subdirectory(${ABACUS_SOURCE_DIR}/source_base ${BASE_BINARY_DIR})
 # Add parameter
 set(PARAMETER_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/parameter")
-add_subdirectory(${ABACUS_SOURCE_DIR}/module_parameter ${PARAMETER_BINARY_DIR})
+add_subdirectory(${ABACUS_SOURCE_DIR}/source_io/module_parameter ${PARAMETER_BINARY_DIR})
 # Add orb
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/source_basis/module_ao ${ORB_BINARY_DIR})

@@ -1,6 +1,6 @@
 #include "gint.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #if ((defined __CUDA))
 #include "gint_force_gpu.h"
 #include "gint_rho_gpu.h"

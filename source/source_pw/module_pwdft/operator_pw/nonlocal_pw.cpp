@@ -1,6 +1,6 @@
 #include "nonlocal_pw.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"

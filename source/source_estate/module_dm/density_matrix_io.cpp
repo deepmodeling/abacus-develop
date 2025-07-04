@@ -1,6 +1,6 @@
 #include "density_matrix.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"

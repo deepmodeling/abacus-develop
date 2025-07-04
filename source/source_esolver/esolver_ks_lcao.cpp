@@ -26,7 +26,7 @@
 #include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS.h"
 #include "source_io/write_elecstat_pot.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"

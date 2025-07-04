@@ -7,7 +7,7 @@
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "sto_tool.h"
 
 #include <chrono>

@@ -1,6 +1,6 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/scalapack_connector.h"

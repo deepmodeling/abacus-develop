@@ -1,7 +1,7 @@
 #include "FORCE.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_base/memory.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 template<>
 elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecstate::ElecState* pelec,
     const psi::Psi<double>& psi,

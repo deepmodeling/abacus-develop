@@ -3,7 +3,7 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
