@@ -280,6 +280,7 @@ exx_hybrid_step                100 #
 exx_mixing_beta                1.0 #
 exx_fock_lambda              0.3 #
 exx_real_number                default #0 or 1
+exx_singularity_correction     default #spencer or revised_spencer
 exx_pca_threshold              0 #
 exx_c_threshold                0 #
 exx_v_threshold                0 #

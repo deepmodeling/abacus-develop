@@ -51,11 +51,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	for( size_t T=0; T!=this->abfs.size(); ++T )
 		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
-	for(const auto &settings_list : this->info.coulomb_settings)
+	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
+	
+	for(const auto &settings_list : this->coulomb_settings)
 	{
-		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
-			coulomb_param_updated = RI_Util::update_coulomb_param(settings_list.second.second, ucell.omega, this->p_kv->get_nkstot_full());
-		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, coulomb_param_updated, this->info.ccp_rmesh_times);
+		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->info.ccp_rmesh_times );
@@ -97,7 +97,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
-	for(const auto &settings_list : this->info.coulomb_settings)
+	for(const auto &settings_list : this->coulomb_settings)
 	{
 		std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 			Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(ucell,
@@ -138,7 +138,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> dCs;
-	for(const auto &settings_list : this->info.coulomb_settings)
+	for(const auto &settings_list : this->coulomb_settings)
 	{
 		if(settings_list.second.first)
 		{
