@@ -2802,7 +2802,7 @@ The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw
 ### exx_erfc_omega
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: Range-separation parameter in HSE functional, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
+- **Description**: Range-separation parameter in exchange, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
 - **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_separate_loop
