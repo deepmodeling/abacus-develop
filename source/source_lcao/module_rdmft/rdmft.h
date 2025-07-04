@@ -18,7 +18,7 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
-#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 

@@ -18,9 +18,9 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "source_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
 #endif
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/dftu_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_operator_lcao/nonlocal_new.h"
 
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)

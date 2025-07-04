@@ -15,7 +15,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #endif
 
 template <>

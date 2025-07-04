@@ -11,7 +11,7 @@
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)

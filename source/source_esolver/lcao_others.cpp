@@ -19,8 +19,8 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_io/read_wfc_nao.h"
 #include "source_io/write_elecstat_pot.h"

@@ -13,7 +13,7 @@
 #include "source_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 #include "source_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 
 #include "source_io/output_mulliken.h" // use cal_mag()
-#include "source_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
+#include "source_lcao/module_operator_lcao/ekinetic_new.h" // use hamilt::EkineticNew
 #include "source_io/cal_pLpR.h" // use AngularMomentumCalculator()
 #include "source_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
 #include "source_io/berryphase.h" // use berryphase

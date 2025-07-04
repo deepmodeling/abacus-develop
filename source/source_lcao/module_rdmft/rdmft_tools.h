@@ -23,7 +23,7 @@
 
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 
 
 #ifdef __EXX

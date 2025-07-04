@@ -6,7 +6,7 @@
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 #include "source_lcao/module_ri/exx_opt_orb.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
