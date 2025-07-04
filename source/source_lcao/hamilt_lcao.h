@@ -7,7 +7,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"

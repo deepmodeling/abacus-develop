@@ -1,5 +1,5 @@
 #include "source_base/timer.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"

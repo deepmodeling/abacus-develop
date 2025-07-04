@@ -3,9 +3,9 @@
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "source_lcao/hamilt_lcaodft/force_stress_arrays.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/LCAO_HS_arrays.hpp"
+#include "source_lcao/force_stress_arrays.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_pw/module_pwdft/global.h"
 #include <vector>
 

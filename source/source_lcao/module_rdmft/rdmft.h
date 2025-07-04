@@ -20,7 +20,7 @@
 
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"

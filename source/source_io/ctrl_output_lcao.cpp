@@ -2,7 +2,7 @@
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_hamilt/hamilt.h" // use Hamilt<T>  
 
 // functions

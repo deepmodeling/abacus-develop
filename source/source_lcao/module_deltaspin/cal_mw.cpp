@@ -10,7 +10,7 @@
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 
 template <>

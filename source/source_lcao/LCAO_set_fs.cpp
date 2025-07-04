@@ -1,4 +1,4 @@
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/LCAO_domain.h"
 
 namespace LCAO_domain
 {

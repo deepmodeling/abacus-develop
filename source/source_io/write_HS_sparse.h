@@ -4,7 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 
 #include <string>
 

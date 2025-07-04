@@ -4,7 +4,7 @@
 #include "source_hamilt/matrixblock.h"
 #include "source_hamilt/operator.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 
 namespace hamilt {
 

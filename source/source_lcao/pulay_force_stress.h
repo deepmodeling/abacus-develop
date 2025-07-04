@@ -5,7 +5,7 @@
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/hamilt_lcaodft/stress_tools.h"
+#include "source_lcao/stress_tools.h"
 #ifndef TGINT_H
 #define TGINT_H
 template <typename T>

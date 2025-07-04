@@ -13,7 +13,7 @@
 #include "source_base/vector3.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
-#include "source_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
+#include "source_lcao/wavefunc_in_pw.h"
 #include "source_base/lapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_io/module_parameter/parameter.h"

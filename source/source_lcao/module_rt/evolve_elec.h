@@ -10,7 +10,7 @@
 #include "source_base/scalapack_connector.h"                   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------

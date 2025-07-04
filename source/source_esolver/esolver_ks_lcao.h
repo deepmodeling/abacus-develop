@@ -4,7 +4,7 @@
 #include "esolver_ks.h"
 
 // for adjacent atoms
-#include "source_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/record_adj.h"
 
 // for NAO basis
 #include "source_basis/module_nao/two_center_bundle.h"

@@ -8,7 +8,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "source_lcao/hamilt_lcaodft/force_stress_arrays.h"
+#include "source_lcao/force_stress_arrays.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"

@@ -11,12 +11,12 @@
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "operator_lcao/deepks_lcao.h"
+#include "module_operator_lcao/deepks_lcao.h"
 #endif
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
-#include "operator_lcao/op_exx_lcao.h"
+#include "module_operator_lcao/op_exx_lcao.h"
 #endif
 
 #ifdef __ELPA
@@ -28,17 +28,17 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "operator_lcao/dftu_lcao.h"
-#include "operator_lcao/dspin_lcao.h"
-#include "operator_lcao/ekinetic_new.h"
-#include "operator_lcao/meta_lcao.h"
-#include "operator_lcao/nonlocal_new.h"
-#include "operator_lcao/op_dftu_lcao.h"
-#include "operator_lcao/op_exx_lcao.h"
-#include "operator_lcao/overlap_new.h"
-#include "operator_lcao/td_ekinetic_lcao.h"
-#include "operator_lcao/td_nonlocal_lcao.h"
-#include "operator_lcao/veff_lcao.h"
+#include "module_operator_lcao/dftu_lcao.h"
+#include "module_operator_lcao/dspin_lcao.h"
+#include "module_operator_lcao/ekinetic_new.h"
+#include "module_operator_lcao/meta_lcao.h"
+#include "module_operator_lcao/nonlocal_new.h"
+#include "module_operator_lcao/op_dftu_lcao.h"
+#include "module_operator_lcao/op_exx_lcao.h"
+#include "module_operator_lcao/overlap_new.h"
+#include "module_operator_lcao/td_ekinetic_lcao.h"
+#include "module_operator_lcao/td_nonlocal_lcao.h"
+#include "module_operator_lcao/veff_lcao.h"
 
 namespace hamilt
 {

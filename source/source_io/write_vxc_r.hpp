@@ -4,7 +4,7 @@
 #include "source_base/scalapack_connector.h"
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
-#include "source_lcao/hamilt_lcaodft/spar_hsr.h"
+#include "source_lcao/spar_hsr.h"
 #include "source_io/write_HS_sparse.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"

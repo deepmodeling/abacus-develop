@@ -7,7 +7,7 @@
 #include "module_lr/hsolver_lrtd.hpp"
 #include "module_lr/lr_spectrum.h"
 #include <memory>
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_io/read_wfc_nao.h"
 #include "source_io/cube_io.h"
 #include "source_io/print_info.h"

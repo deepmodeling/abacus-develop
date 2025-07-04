@@ -5,7 +5,7 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 #undef private
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 #include "source_lcao/module_operator_lcao/deepks_lcao.h"
 namespace Test_Deepks
 {

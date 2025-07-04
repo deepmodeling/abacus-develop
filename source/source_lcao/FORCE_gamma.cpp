@@ -11,8 +11,8 @@
 #endif
 #include "source_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "source_lcao/hamilt_lcaodft/pulay_force_stress.h"
+#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/pulay_force_stress.h"
 #include "source_io/write_HS.h"
 
 template <>

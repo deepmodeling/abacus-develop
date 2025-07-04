@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 
-#include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 namespace sparse_format
@@ -25,6 +25,6 @@ void cal_HR_exx(const UnitCell& ucell,
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs);
 
 }
-#include "source_lcao/hamilt_lcaodft/LCAO_hamilt.hpp"
+#include "source_lcao/LCAO_hamilt.hpp"
 #endif
 #endif

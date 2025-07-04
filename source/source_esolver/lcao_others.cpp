@@ -1,4 +1,4 @@
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/cal_ux.h"
@@ -18,7 +18,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"

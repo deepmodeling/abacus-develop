@@ -54,7 +54,7 @@ VPATH=./src_global:\
 ./source_pw/module_pwdft/module_exx_helper:\
 ./source_pw/module_stodft/kernels:\
 ./source_lcao/module_hcontainer:\
-./source_lcao/hamilt_lcaodft:\
+./source_lcao:\
 ./source_lcao/module_rt:\
 ./source_lcao/module_deepks:\
 ./source_lcao/module_dftu:\

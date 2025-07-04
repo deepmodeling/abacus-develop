@@ -1,7 +1,7 @@
 #ifndef SPARSE_FORMAT_HSR_H
 #define SPARSE_FORMAT_HSR_H
 
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 namespace sparse_format
 {
