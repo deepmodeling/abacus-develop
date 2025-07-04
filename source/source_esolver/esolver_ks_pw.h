@@ -1,10 +1,10 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "source_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
+#include "source_pw/module_pwdft/operator_pw/velocity_pw.h"
 #include "source_psi/psi_init.h"
-#include "source_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
+#include "source_pw/module_pwdft/global.h"
 
 #include <memory>
 #include <source_base/macros.h>

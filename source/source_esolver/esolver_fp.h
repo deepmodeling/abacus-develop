@@ -23,10 +23,10 @@
 #include "source_hamilt/module_surchem/surchem.h"
 
 //! local pseudopotential
-#include "source_pw/hamilt_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
 
 //! structure factor related to plane wave basis
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 
 #include <fstream>
 

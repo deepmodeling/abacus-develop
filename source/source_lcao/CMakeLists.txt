@@ -1,5 +1,5 @@
 add_subdirectory(hamilt_lcaodft)
-add_subdirectory(module_tddft)
+add_subdirectory(module_rt)
 add_subdirectory(module_deepks)
 add_subdirectory(module_dftu)
 add_subdirectory(module_hcontainer)

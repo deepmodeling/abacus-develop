@@ -3,7 +3,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "spin_constrain.h"
-#include "source_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/hsolver_lcao.h"

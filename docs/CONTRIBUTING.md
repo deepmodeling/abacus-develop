@@ -54,30 +54,30 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
 |   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
-|-- source_estate            The module for defining the electronic state and its operations.
+|-- source_estate               The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
 |-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
-|-- source_hamilt       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
+|-- source_hamilt               The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.
 |   |-- module_xc               The module for calculating the exchange-correlation energy and potential.
-|-- source_lcao          The module for defining the Hamiltonian in LCAO calculations.
+|-- source_lcao                 The module for defining the Hamiltonian in LCAO calculations.
 |   |-- hamilt_lcaodft          The module for defining the Hamiltonian in LCAO-DFT calculations.
 |   |   |-- operator_lcao       The module for defining the operators in LCAO-DFT calculations.
 |   |-- module_deepks           The module for defining the Hamiltonian in DeepKS calculations.
 |   |-- module_dftu             The module for defining the Hamiltonian in DFT+U calculations.
 |   |-- module_gint             The module for performing grid integral in LCAO calculations.
 |   |-- module_hcontainer       The module for storing the Hamiltonian matrix in LCAO calculations.
-|   |-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
+|   |-- module_rt               The module for defining the Hamiltonian in TDDFT calculations.
 |   `-- module_ri               The module for performing RI calculations.
-|-- source_pw            The module for defining the Hamiltonian in PW calculations.
-|   |-- hamilt_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
-|   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
+|-- source_pw                   The module for defining the Hamiltonian in PW calculations.
+|   |-- module_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
+|   |-- module_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
-|   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
+|   `-- module_stodft           The module for defining the Hamiltonian in STODFT calculations.
 |-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- source_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.

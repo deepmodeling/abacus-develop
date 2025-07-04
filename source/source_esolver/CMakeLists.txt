@@ -29,8 +29,8 @@ add_library(
     esolver
     OBJECT
     ${objects}
-        ../source_pw/hamilt_pwdft/module_exx_helper/exx_helper.cpp
-        ../source_pw/hamilt_pwdft/module_exx_helper/exx_helper.h
+        ../source_pw/module_pwdft/module_exx_helper/exx_helper.cpp
+        ../source_pw/module_pwdft/module_exx_helper/exx_helper.h
 )
 
 if(ENABLE_COVERAGE)

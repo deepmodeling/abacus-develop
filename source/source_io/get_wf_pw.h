@@ -9,7 +9,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_psi/psi.h"
 
 #include <string>

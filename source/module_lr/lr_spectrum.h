@@ -5,7 +5,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "source_lcao/module_tddft/td_current.h"
+#include "source_lcao/module_rt/td_current.h"
 namespace LR
 {
     template<typename T>

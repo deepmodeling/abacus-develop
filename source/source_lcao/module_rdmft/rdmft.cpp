@@ -6,7 +6,7 @@
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
 

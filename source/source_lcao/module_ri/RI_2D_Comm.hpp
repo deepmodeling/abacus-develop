@@ -8,7 +8,7 @@
 
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_domain.h"

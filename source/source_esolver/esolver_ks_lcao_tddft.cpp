@@ -1,11 +1,11 @@
 #include "esolver_ks_lcao_tddft.h"
 
+#include "source_estate/elecstate_tools.h"
 #include "source_io/cal_r_overlap_R.h"
 #include "source_io/dipole_io.h"
 #include "source_io/td_current_io.h"
 #include "source_io/write_HS.h"
 #include "source_io/write_HS_R.h"
-#include "source_estate/elecstate_tools.h"
 
 //--------------temporary----------------------------
 #include "source_base/blas_connector.h"
@@ -17,17 +17,17 @@
 #include "source_estate/module_dm/cal_edm_tddft.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/occupy.h"
-#include "source_lcao/module_tddft/evolve_elec.h"
-#include "source_lcao/module_tddft/td_velocity.h"
-#include "source_pw/hamilt_pwdft/global.h"
 #include "source_io/print_info.h"
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_lcao/module_rt/td_velocity.h"
+#include "source_pw/module_pwdft/global.h"
 
 //-----HSolver ElecState Hamilt--------
+#include "module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "module_parameter/parameter.h"
+#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "source_psi/psi.h"
 
 //-----force& stress-------------------
@@ -87,52 +87,52 @@ void ESolver_KS_LCAO_TDDFT<Device>::before_all_runners(UnitCell& ucell, const In
 
 template <typename Device>
 void ESolver_KS_LCAO_TDDFT<Device>::hamilt2rho_single(UnitCell& ucell,
-                                                          const int istep,
-                                                          const int iter,
-                                                          const double ethr)
+                                                      const int istep,
+                                                      const int iter,
+                                                      const double ethr)
 {
     if (PARAM.inp.init_wfc == "file")
     {
         if (istep >= 1)
         {
-            module_tddft::Evolve_elec<Device>::solve_psi(istep,
-                                                         PARAM.inp.nbands,
-                                                         PARAM.globalv.nlocal,
-                                                         kv.get_nks(),
-                                                         this->p_hamilt,
-                                                         this->pv,
-                                                         this->psi,
-                                                         this->psi_laststep,
-                                                         this->Hk_laststep,
-                                                         this->Sk_laststep,
-                                                         this->pelec->ekb,
-                                                         GlobalV::ofs_running,
-                                                         td_htype,
-                                                         PARAM.inp.propagator,
-                                                         use_tensor,
-                                                         use_lapack);
+            module_rt::Evolve_elec<Device>::solve_psi(istep,
+                                                      PARAM.inp.nbands,
+                                                      PARAM.globalv.nlocal,
+                                                      kv.get_nks(),
+                                                      this->p_hamilt,
+                                                      this->pv,
+                                                      this->psi,
+                                                      this->psi_laststep,
+                                                      this->Hk_laststep,
+                                                      this->Sk_laststep,
+                                                      this->pelec->ekb,
+                                                      GlobalV::ofs_running,
+                                                      td_htype,
+                                                      PARAM.inp.propagator,
+                                                      use_tensor,
+                                                      use_lapack);
             this->weight_dm_rho();
         }
         this->weight_dm_rho();
     }
     else if (istep >= 2)
     {
-        module_tddft::Evolve_elec<Device>::solve_psi(istep,
-                                                     PARAM.inp.nbands,
-                                                     PARAM.globalv.nlocal,
-                                                     kv.get_nks(),
-                                                     this->p_hamilt,
-                                                     this->pv,
-                                                     this->psi,
-                                                     this->psi_laststep,
-                                                     this->Hk_laststep,
-                                                     this->Sk_laststep,
-                                                     this->pelec->ekb,
-                                                     GlobalV::ofs_running,
-                                                     td_htype,
-                                                     PARAM.inp.propagator,
-                                                     use_tensor,
-                                                     use_lapack);
+        module_rt::Evolve_elec<Device>::solve_psi(istep,
+                                                  PARAM.inp.nbands,
+                                                  PARAM.globalv.nlocal,
+                                                  kv.get_nks(),
+                                                  this->p_hamilt,
+                                                  this->pv,
+                                                  this->psi,
+                                                  this->psi_laststep,
+                                                  this->Hk_laststep,
+                                                  this->Sk_laststep,
+                                                  this->pelec->ekb,
+                                                  GlobalV::ofs_running,
+                                                  td_htype,
+                                                  PARAM.inp.propagator,
+                                                  use_tensor,
+                                                  use_lapack);
         this->weight_dm_rho();
     }
     else
@@ -163,18 +163,14 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2rho_single(UnitCell& ucell,
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(
-		UnitCell& ucell, 
-		const int istep, 
-		int& iter,
-		bool& conv_esolver)
+void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
-        GlobalV::ofs_running << " ---------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << " occupations of electrons" << std::endl;
+        GlobalV::ofs_running << " ----------------------------------------------------------" << std::endl;
+        GlobalV::ofs_running << " Occupations of electrons" << std::endl;
+        GlobalV::ofs_running << " ----------------------------------------------------------" << std::endl;
         GlobalV::ofs_running << " k-point  state   occupation" << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         GlobalV::ofs_running << std::left;
@@ -183,23 +179,21 @@ void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(
         {
             for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
-                GlobalV::ofs_running << " " << std::setw(9) 
-                 << ik+1 << std::setw(8) << ib + 1 
-                 << std::setw(12) << this->pelec->wg(ik, ib) << std::endl;
+                GlobalV::ofs_running << " " << std::setw(9) << ik + 1 << std::setw(8) << ib + 1 << std::setw(12)
+                                     << this->pelec->wg(ik, ib) << std::endl;
             }
         }
-        GlobalV::ofs_running << " ---------------------------------------------------------"
-                             << std::endl;
+        GlobalV::ofs_running << " ----------------------------------------------------------" << std::endl;
     }
 
     ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, 
-		const int istep, 
-		const int iter, 
-		const bool conv_esolver)
+void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
+                                               const int istep,
+                                               const int iter,
+                                               const bool conv_esolver)
 {
     // Calculate new potential according to new Charge Density
     if (!conv_esolver)
@@ -234,7 +228,6 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
             nrow_tmp = nlocal;
 #endif
             this->psi_laststep = new psi::Psi<std::complex<double>>(kv.get_nks(), ncol_tmp, nrow_tmp, kv.ngk, true);
-
         }
 
         // allocate memory for Hk_laststep and Sk_laststep
@@ -282,8 +275,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
             if (td_htype == 1)
             {
                 this->p_hamilt->updateHk(ik);
-                hamilt::MatrixBlock <std::complex<double>> h_mat;
-                hamilt::MatrixBlock <std::complex<double>> s_mat;
+                hamilt::MatrixBlock<std::complex<double>> h_mat;
+                hamilt::MatrixBlock<std::complex<double>> s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
 
                 if (use_tensor && use_lapack)
@@ -323,31 +316,31 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
     }
 
     // print "eigen value" for tddft
-// it seems uncessary to print out E_ii because the band energies are printed
-/*
-    if (conv_esolver)
-    {
-        GlobalV::ofs_running << "----------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << " Print E=<psi_i|H|psi_i> " << std::endl;
-        GlobalV::ofs_running << " k-point  state    energy (eV)" << std::endl;
-        GlobalV::ofs_running << "----------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
-
-        for (int ik = 0; ik < kv.get_nks(); ik++)
+    // it seems unnecessary to print out E_ii because the band energies are printed
+    /*
+        if (conv_esolver)
         {
-            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+            GlobalV::ofs_running << "----------------------------------------------------------"
+                                 << std::endl;
+            GlobalV::ofs_running << " Print E=<psi_i|H|psi_i> " << std::endl;
+            GlobalV::ofs_running << " k-point  state    energy (eV)" << std::endl;
+            GlobalV::ofs_running << "----------------------------------------------------------"
+                                 << std::endl;
+            GlobalV::ofs_running << std::setprecision(6);
+            GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
+
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
-                GlobalV::ofs_running << " " << std::setw(7) << ik + 1 
-                                     << std::setw(7) << ib + 1 
-                                     << std::setw(10) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV 
-                                     << std::endl;
+                for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+                {
+                    GlobalV::ofs_running << " " << std::setw(7) << ik + 1
+                                         << std::setw(7) << ib + 1
+                                         << std::setw(10) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                         << std::endl;
+                }
             }
         }
-    }
-*/
+    */
 }
 
 template <typename Device>
@@ -365,16 +358,11 @@ void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep, 
         {
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
-            ModuleIO::write_dipole(ucell,
-                                   this->chr.rho_save[is],
-                                   this->chr.rhopw,
-                                   is,
-                                   istep,
-                                   ss_dipole.str());
+            ModuleIO::write_dipole(ucell, this->chr.rho_save[is], this->chr.rhopw, is, istep, ss_dipole.str());
         }
     }
 
-     // (2) write current information
+    // (2) write current information
     if (TD_Velocity::out_current == true)
     {
         elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
@@ -391,7 +379,6 @@ void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep, 
                                 orb_,
                                 this->RA);
     }
-
 
     ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
 }
@@ -410,7 +397,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::weight_dm_rho()
     }
 
     // calculate Eband energy
-    elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
+    elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
     // calculate the density matrix
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");

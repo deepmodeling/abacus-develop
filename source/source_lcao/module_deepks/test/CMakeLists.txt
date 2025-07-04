@@ -18,7 +18,7 @@ add_executable(
     ../../../source_cell/read_pp_upf201.cpp
     ../../../source_cell/read_pp_vwr.cpp
     ../../../source_cell/read_pp_blps.cpp
-    ../../../source_pw/hamilt_pwdft/soc.cpp
+    ../../../source_pw/module_pwdft/soc.cpp
     ../../../source_io/output.cpp
     ../../../source_io/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
