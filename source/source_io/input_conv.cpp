@@ -362,15 +362,13 @@ void Input_Conv::Convert()
         {
             if(PARAM.inp.basis_type == "lcao")
             {
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-                coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"Rcut_type", PARAM.inp.exx_singularity_correction} }};
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
-                GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
             }
             else if(PARAM.inp.basis_type == "lcao_in_pw")
             {
@@ -402,16 +400,14 @@ void Input_Conv::Convert()
             assert(erfc_alpha.size() == PARAM.inp.exx_erfc_omega.size());
             if(PARAM.inp.basis_type == "lcao")
             {
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-                coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
                 for(std::size_t i=0; i<erfc_alpha.size(); ++i)
                 {
-                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
                         {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
-                        {"Rcut_type", PARAM.inp.exx_singularity_correction} }};
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
-                GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
             }
         }
     }

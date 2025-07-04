@@ -84,12 +84,12 @@ namespace Conv_Coulomb_Pot_K
 				{
 					for(const auto &param : param_list.second)
 					{
-						if(param.at("Rcut_type") == "limits")
+						if(param.at("singularity_correction") == "limits")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_limits( orbs.get_psif() ); }
-						else if(param.at("Rcut_type") == "spencer" || param.at("Rcut_type") == "revised_spencer")
+						else if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "revised_spencer")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_spencer( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("Rcut")) ); }
 						else
-							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+							{ throw std::invalid_argument( "singularity_correction = " + param.at("singularity_correction") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
 					}
 					break;
 				}
@@ -97,12 +97,12 @@ namespace Conv_Coulomb_Pot_K
 				{
 					for(const auto &param : param_list.second)
 					{
-						if(param.at("Rcut_type") == "limits")
+						if(param.at("singularity_correction") == "limits")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_limits( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")) ); }
-						else if(param.at("Rcut_type") == "spencer" || param.at("Rcut_type") == "revised_spencer")
+						else if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "revised_spencer")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_spencer( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")), std::stod(param.at("Rcut")) ); }
 						else
-							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+							{ throw std::invalid_argument( "singularity_correction = " + param.at("singularity_correction") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
 					}
 					break;
 				}
