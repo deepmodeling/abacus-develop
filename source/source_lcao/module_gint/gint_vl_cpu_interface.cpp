@@ -1,6 +1,6 @@
 #include "gint.h"
 #include "source_base/memory.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 
 void Gint::gint_kernel_vlocal(Gint_inout* inout) {

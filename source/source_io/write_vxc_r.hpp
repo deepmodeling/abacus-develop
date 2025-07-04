@@ -1,6 +1,6 @@
 #ifndef __WRITE_VXC_R_H_
 #define __WRITE_VXC_R_H_
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/scalapack_connector.h"
 #include "source_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"

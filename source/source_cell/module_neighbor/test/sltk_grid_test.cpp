@@ -4,7 +4,7 @@
 #define private public
 #include "../sltk_grid.h"
 #include "prepare_unitcell.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_cell/read_stru.h"
 #ifdef __LCAO

@@ -1,6 +1,6 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_nelec_nband.h"
 class CalAtomsInfo
 {

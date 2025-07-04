@@ -5,7 +5,7 @@
 #include "source_base/memory.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_reduce.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename TK, typename TR>
 hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_in,

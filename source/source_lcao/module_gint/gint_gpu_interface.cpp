@@ -1,6 +1,6 @@
 #include "gint.h"
 #include "gint_force_gpu.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "gint_rho_gpu.h"
 #include "gint_vl_gpu.h"
 #include "source_base/memory.h"

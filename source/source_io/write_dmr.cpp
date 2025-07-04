@@ -1,6 +1,6 @@
 #include "write_dmr.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
 #include "source_pw/module_pwdft/global.h"

@@ -2,7 +2,7 @@
 #include "pulay_force_stress.h"
 #include "source_lcao/hamilt_lcaodft/stress_tools.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_gint/temp_gint/gint_interface.h"
 namespace PulayForceStress
 {

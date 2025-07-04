@@ -11,7 +11,7 @@
 #include "source_io/to_wannier90_lcao.h"
 #include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS_R.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"

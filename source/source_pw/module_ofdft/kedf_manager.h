@@ -1,7 +1,7 @@
 #ifndef KEDF_MANAGER_H
 #define KEDF_MANAGER_H
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/elecstate.h"
 #include "source_pw/module_ofdft/kedf_lkt.h"

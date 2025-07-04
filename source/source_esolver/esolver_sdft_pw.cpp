@@ -8,7 +8,7 @@
 #include "source_pw/module_stodft/sto_forces.h"
 #include "source_pw/module_stodft/sto_stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <fstream>

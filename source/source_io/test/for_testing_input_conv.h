@@ -1,7 +1,7 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"

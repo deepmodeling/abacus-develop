@@ -1,6 +1,6 @@
 #include "lr_spectrum.h"
 #include "module_lr/utils/lr_util.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "module_lr/dm_trans/dm_trans.h"
 #include "source_base/parallel_reduce.h"
 #include "module_lr/utils/lr_util.h"

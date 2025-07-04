@@ -1,6 +1,6 @@
 #include "gint_interface.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "gint_vl.h"
 #include "gint_vl_metagga.h"
 #include "gint_vl_nspin4.h"

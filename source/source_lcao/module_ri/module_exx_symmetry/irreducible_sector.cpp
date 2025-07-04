@@ -1,5 +1,5 @@
 #include "source_lcao/module_ri/module_exx_symmetry/irreducible_sector.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 namespace ModuleSymmetry
 {
     TC Irreducible_Sector::rotate_R(const Symmetry& symm,

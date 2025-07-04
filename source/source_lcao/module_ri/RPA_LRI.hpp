@@ -12,7 +12,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)

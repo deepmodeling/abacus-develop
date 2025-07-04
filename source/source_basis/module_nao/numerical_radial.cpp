@@ -11,7 +11,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
 #include "source_base/spherical_bessel_transformer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 using ModuleBase::PI;
 

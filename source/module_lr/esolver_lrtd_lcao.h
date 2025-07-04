@@ -1,6 +1,6 @@
 #pragma once
 #include "source_esolver/esolver_fp.h"
-#include "module_parameter/input_parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/hamilt.h"
 #include "source_estate/elecstate.h"

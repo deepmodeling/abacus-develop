@@ -1,6 +1,6 @@
 #include "write_HS_R.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "source_lcao/hamilt_lcaodft/spar_dh.h"

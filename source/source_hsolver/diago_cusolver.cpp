@@ -4,7 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <memory>
 #include <type_traits>

@@ -11,7 +11,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void DeePKS_domain::prepare_phialpha_r(const int nlocal,
                                        const int lmaxd,

@@ -1,6 +1,6 @@
 /**
  * @file esolver_dp.cpp
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
  * @brief Implementation of ESolver_DP class for DeePMD method.
  *
  * This file contains the implementation of the ESolver_DP class, which is used for solving the energy and forces in a

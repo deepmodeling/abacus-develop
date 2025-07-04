@@ -23,7 +23,7 @@
 #include "source_pw/module_pwdft/global.h"
 
 //-----HSolver ElecState Hamilt--------
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"

@@ -16,7 +16,7 @@
 #include "source_io/rhog_io.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_io/write_elf.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/k_vector_utils.h"
 
 #ifdef USE_LIBXC

@@ -3,7 +3,7 @@
 #include "xc_functional_libxc.h"
 #include "xc_functional.h"
 #include "source_estate/module_charge/charge.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // converting rho (abacus=>libxc)
 std::vector<double> XC_Functional_Libxc::convert_rho(

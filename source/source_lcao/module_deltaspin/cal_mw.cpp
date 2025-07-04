@@ -7,7 +7,7 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/onsite_projector.h"
 #include "spin_constrain.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"

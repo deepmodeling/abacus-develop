@@ -1,6 +1,6 @@
 #include "diago_elpa.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "genelpa/elpa_solver.h"
 #include "source_base/blacs_connector.h"
 #include "source_base/global_variable.h"

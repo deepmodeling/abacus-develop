@@ -12,7 +12,7 @@
 #include "source_lcao/hamilt_lcaodft/pulay_force_stress.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/write_HS.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <map>
 #include <unordered_map>

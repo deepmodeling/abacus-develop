@@ -7,7 +7,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <map>
 

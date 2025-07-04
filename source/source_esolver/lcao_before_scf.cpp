@@ -14,7 +14,7 @@
 #include "source_io/to_wannier90_lcao.h"
 #include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS_R.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_tools.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"

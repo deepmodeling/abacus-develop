@@ -4,7 +4,7 @@
 #include "source_cell/klist.h"
 #include "source_io/read_wfc_pw.h"
 #include "source_io/filename.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_initializer_file<T>::initialize(const Structure_Factor* sf,

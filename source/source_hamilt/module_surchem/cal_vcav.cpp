@@ -1,6 +1,6 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
 
 void lapl_rho(const double& tpiba2,

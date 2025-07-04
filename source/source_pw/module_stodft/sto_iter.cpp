@@ -10,7 +10,7 @@
 #include "source_estate/occupy.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_hsolver/para_linear_transform.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T, typename Device>
 Stochastic_Iter<T, Device>::Stochastic_Iter()

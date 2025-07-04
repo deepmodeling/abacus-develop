@@ -1,5 +1,5 @@
 #pragma once
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_cg.h"

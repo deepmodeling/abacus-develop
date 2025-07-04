@@ -7,7 +7,7 @@
 #include "xc_functional.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"

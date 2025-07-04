@@ -10,7 +10,7 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/cal_pLpR.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"

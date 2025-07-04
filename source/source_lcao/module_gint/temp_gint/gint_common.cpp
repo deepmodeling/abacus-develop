@@ -1,7 +1,7 @@
 #include "gint_common.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "source_base/blacs_connector.h"

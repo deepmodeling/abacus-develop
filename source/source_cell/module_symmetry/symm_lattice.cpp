@@ -1,7 +1,7 @@
 #include "symmetry.h"
 using namespace ModuleSymmetry;
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 //---------------------------------------------------
 // The lattice will be transformed to a 'standard

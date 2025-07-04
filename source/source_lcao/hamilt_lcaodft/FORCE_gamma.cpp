@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
 #include "source_lcao/module_deepks/LCAO_deepks_io.h"

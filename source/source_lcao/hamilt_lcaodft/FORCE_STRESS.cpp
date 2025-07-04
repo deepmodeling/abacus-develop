@@ -3,7 +3,7 @@
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/output_log.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // new
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -13,7 +13,7 @@
 #include "source_estate/module_pot/gatefield.h"        // liuyu add 2022-09-13
 #include "source_hamilt/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "source_hamilt/module_vdw/vdw.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "source_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
