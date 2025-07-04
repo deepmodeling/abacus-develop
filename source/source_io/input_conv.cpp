@@ -366,7 +366,7 @@ void Input_Conv::Convert()
                 coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock][i] = {{
+                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
                         {"Rcut_type", PARAM.inp.exx_singularity_correction} }};
                 }
