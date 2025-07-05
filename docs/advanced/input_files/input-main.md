@@ -215,6 +215,8 @@
     - [of\_wt\_rho0](#of_wt_rho0)
     - [of\_hold\_rho0](#of_hold_rho0)
     - [of\_lkt\_a](#of_lkt_a)
+    - [of\_xwm\_rho\_ref](#of_xwm_rho_ref)
+    - [of\_xwm\_kappa](#of_xwm_kappa)
     - [of\_read\_kernel](#of_read_kernel)
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
@@ -2277,6 +2279,7 @@ Warning: this function is not robust enough for the current version. Please try 
   - **vw**: von Weizsäcker.
   - **tf+**: TF $\rm{\lambda}$ vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
   - **lkt**: Luo-Karasiev-Trickey.
+  - **xwm**: Xu-Wang-Ma
 
   Machine learning (ML) based functionals:
   - **ml**: ML-based KEDF allows for greater flexibility, enabling users to set related ML model parameters themselves. see [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft).
@@ -2323,14 +2326,14 @@ Warning: this function is not robust enough for the current version. Please try 
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
+- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt, xwm`
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
+- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt, xwm`
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
@@ -2371,6 +2374,20 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: OFDFT with `of_kinetic=lkt`
 - **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
+
+### of_xwm_rho_ref
+
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=xwm`
+- **Description**: Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
+- **Default**: 0.0
+
+### of_xwm_kappa
+
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=xwm`
+- **Description**: Parameter $\kappa$ for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
+- **Default**: 0.0
 
 ### of_read_kernel
 

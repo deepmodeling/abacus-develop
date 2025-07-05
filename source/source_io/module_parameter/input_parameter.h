@@ -206,6 +206,8 @@ struct Input_para
                                                  ///< filled from file of_kernel_file, not from
                                                  ///< formula. Only usable for WT KEDF.
     std::string of_kernel_file = "WTkernel.txt"; ///< The name of WT kernel file.
+    double of_xwm_kappa = 0.0;                   ///< The parameter kappa of XWM KEDF
+    double of_xwm_rho_ref = 0.0;                 ///< The reference density of XWM KEDF
 
     // ML KEDF, sunliang added on 2022-11-07
     bool of_ml_gene_data = false; ///< Generate training data or not
