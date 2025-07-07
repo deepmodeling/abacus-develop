@@ -92,16 +92,6 @@ namespace RI_Util
                     const double bvk_a3 = ucell.a3.norm() * p_kv->nmp[2];
                     const double Rcut = 0.5 * std::min({bvk_a1, bvk_a2, bvk_a3});
                     param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
-					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_full()/nspin0 * ucell.omega / (ModuleBase::PI), 1.0/3.0);
-					param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
-				}
-                else if(param.at("singularity_correction") == "revised_spencer")
-				{
-					const double bvk_a1 = ucell.a1.norm() * p_kv->nmp[0];
-                    const double bvk_a2 = ucell.a2.norm() * p_kv->nmp[1];
-                    const double bvk_a3 = ucell.a3.norm() * p_kv->nmp[2];
-                    const double Rcut = 0.5 * std::min({bvk_a1, bvk_a2, bvk_a3});
-                    param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
 				}
 			}
 		}
