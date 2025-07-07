@@ -124,10 +124,10 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 	fact = 1.0;
 
     //GlobalV::ofs_running << "\n pwb.gstart = " << pwb.gstart << std::endl;
-
+    const int ig0 = rho_basis->ig_gge0;
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if(ig == rho_basis->ig_gge0) 
+        if(ig == ig0) 
         { 
             continue;
         }

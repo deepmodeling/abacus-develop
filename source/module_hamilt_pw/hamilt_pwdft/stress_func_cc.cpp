@@ -159,8 +159,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
 				const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
-				if(norm_g < 1e-4) { 	continue;
-}
+				if(norm_g < 1e-4) { 	continue;}
 				for (int l = 0; l < 3; l++)
 				{
 					for (int m = 0;m< 3;m++)

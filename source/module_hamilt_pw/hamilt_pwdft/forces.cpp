@@ -472,13 +472,17 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
                      * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
-
+    const int ig0 = rho_basis->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if (rho_basis->gg[ig] !=0)
+        if (ig== ig0)
+        {
+            continue; // skip G=0
+        }
+        else
         {
             aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
                     / (rho_basis->gg[ig] * ucell.tpiba2);
