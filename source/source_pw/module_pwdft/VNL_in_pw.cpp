@@ -724,7 +724,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
 
         double* jl = new double[kkbeta];
         double* aux = new double[kkbeta];
-        #ifdef __SUNWAY
+        #ifdef __SW
         for (int ib = 0; ib < nbeta; ib++)
         {
             int flag = 0;
