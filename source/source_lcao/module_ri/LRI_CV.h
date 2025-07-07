@@ -40,7 +40,9 @@ public:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 		const double &kmesh_times,
-		const double &ccp_rmesh_times_in);
+		ORB_gaunt_table& MGT,
+        const bool& init_MGT,
+        const bool& init_C);
 	inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 	cal_Vs(
 		const UnitCell &ucell,
@@ -64,13 +66,13 @@ public:
 	size_t get_index_abfs_size(const size_t &iat){return this->index_abfs[iat].count_size; }
 
 private:
-    std::vector<double> orb_cutoff_;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 	ModuleBase::Element_Basis_Index::IndexLNM index_lcaos;
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
-	double ccp_rmesh_times;
+	std::vector<double> lcaos_rcut;
+    std::vector<double> abfs_ccp_rcut;
 
 public:
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Vws;
@@ -92,15 +94,19 @@ private:
 		const int it1,
 		const Abfs::Vector3_Order<double> &R,
 		const std::map<std::string,bool> &flags)>;
+	using T_func_cal_Rcut = std::function<double(const int it0, const int it1)>;
 	template<typename Tresult>
 	std::map<TA,std::map<TAC,Tresult>>
 	cal_datas(
 		const UnitCell &ucell,
-		const std::vector<TA> &list_A0,
-		const std::vector<TAC> &list_A1,
-		const std::map<std::string,bool> &flags,
-		const double &rmesh_times,
-		const T_func_DPcal_data<Tresult> &func_DPcal_data);
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        const std::map<std::string, bool>& flags,
+        const T_func_cal_Rcut& func_cal_Rcut,
+        const T_func_DPcal_data<Tresult>& func_DPcal_data);
+
+    inline double cal_V_Rcut(const int it0, const int it1);
+    inline double cal_C_Rcut(const int it0, const int it1);
 
 	inline RI::Tensor<Tdata>
 	DPcal_V(

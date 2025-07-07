@@ -27,16 +27,19 @@ class Matrix_Orbs22
               const UnitCell& ucell,
               const LCAO_Orbitals& orb,
               const double kmesh_times,  // extend Kcut, keep dK
-              const double rmesh_times); // extend Rcut, keep dR
+              const double rmax,
+              int& Lmax); // extend Rcut, keep dR
 
     void init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B1,
-                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B2);
+                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& ,
+                     const ORB_gaunt_table& MGT);
     void init_radial(const LCAO_Orbitals& orb_A1,
                      const LCAO_Orbitals& orb_A2,
                      const LCAO_Orbitals& orb_B1,
-                     const LCAO_Orbitals& orb_B2);
+                     const LCAO_Orbitals& orb_B2,
+                     const ORB_gaunt_table& MGT);
 
     void init_radial_table();
     void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
@@ -101,7 +104,6 @@ class Matrix_Orbs22
 
   private:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
-    ORB_gaunt_table MGT;
     const double lcao_dr_ = 0.01;
     double* lat0 = nullptr;                                                                      // restore ucell.lat0
     std::map<

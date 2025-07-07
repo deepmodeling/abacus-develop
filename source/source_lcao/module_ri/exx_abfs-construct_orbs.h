@@ -4,10 +4,11 @@
 #include "exx_abfs.h"
 
 #include <limits>
+#include <algorithm>
 #include "source_cell/unitcell.h"
 #include "../../source_basis/module_ao/ORB_atomic_lm.h"
 
-	class LCAO_Orbitals;
+class LCAO_Orbitals;
 
 class Exx_Abfs::Construct_Orbs
 {
@@ -30,8 +31,33 @@ public:
 		const UnitCell& ucell,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 		std::ostream &os);		
-		
-private:
+
+    // get the max number of orbitals among all elements
+    // static int get_nmax_total(const
+    // std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb_in); get
+    // number of orbitals for each element static std::map<int, int>
+    // get_nw(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+    // &orb_in);
+
+    // get multipole of orbitals for each element and angular moment
+    static std::vector<std::vector<std::vector<double>>> get_multipole(
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
+            orb_in);
+
+    static std::vector<double> get_Rcut(
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
+            orb_in);
+    static inline double get_Rmax(const std::vector<double>& rcut) {
+        return *std::max_element(rcut.begin(), rcut.end());
+    }
+    static inline double get_Rmax(
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>&
+            orb_in) {
+        std::vector<double> rcut = get_Rcut(orb_in);
+        return get_Rmax(rcut);
+    }
+
+  private:
 	static std::vector<std::vector<std::vector<std::vector<double>>>> psi_mult_psi( 
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos );
 		

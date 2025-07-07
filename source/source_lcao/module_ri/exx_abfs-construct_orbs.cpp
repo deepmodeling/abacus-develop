@@ -12,7 +12,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	const LCAO_Orbitals &orbs_in,
 	const double kmesh_times )
 {
-	ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::change_orbs");
+    ModuleBase::TITLE("Exx_Abfs::Construct_Orbs::change_orbs");
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> orbs;
 	orbs.resize( orbs_in.get_ntype() );
@@ -120,9 +120,9 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 		#error "TEST_EXX_LCAO"
 	#endif
 
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		abfs_same_atom_pca = orbital( abfs_same_atom_pca_psi, orbs, 1 );
-	return abfs_same_atom_pca;
+    return abfs_same_atom_pca;
 }
 
 /*
@@ -445,38 +445,38 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 {
 	std::vector<std::vector<std::vector<std::vector<double>>>> orbs_psi( orbs.get_ntype() );
 	for( int T=0; T!=orbs.get_ntype(); ++T )
-	{
-		orbs_psi[T].resize( orbs.Phi[T].getLmax()+1 );
-		for( int L=0; L<=orbs.Phi[T].getLmax(); ++L )
-		{
-			orbs_psi[T][L].resize( orbs.Phi[T].getNchi(L) );
-			for( int N=0; N!=orbs.Phi[T].getNchi(L); ++N )
-			{
-				orbs_psi[T][L][N] = orbs.Phi[T].PhiLN(L,N).get_psi();
-			}
-		}
-	}
-	return orbs_psi;
+    {
+        orbs_psi[T].resize( orbs.Phi[T].getLmax()+1 );
+        for( int L=0; L<=orbs.Phi[T].getLmax(); ++L )
+        {
+            orbs_psi[T][L].resize( orbs.Phi[T].getNchi(L) );
+            for( int N=0; N!=orbs.Phi[T].getNchi(L); ++N )
+            {
+                orbs_psi[T][L][N] = orbs.Phi[T].PhiLN(L,N).get_psi();
+            }
+        }
+    }
+    return orbs_psi;
 }
 */
 
 /*
 template<>
 inline const Numerical_Orbital_Lm &Exx_Abfs::Construct_Orbs::get_orbital(
-	const LCAO_Orbitals &orbs,
-	const size_t T, const size_t L, const size_t N)
+    const LCAO_Orbitals &orbs,
+    const size_t T, const size_t L, const size_t N)
 {
-	return orbs.Phi[T].PhiLN(L,N);
+    return orbs.Phi[T].PhiLN(L,N);
 }
 */
 
 /*
 template<>
 inline const Numerical_Orbital_Lm &Exx_Abfs::Construct_Orbs::get_orbital(
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
-	const size_t T, const size_t L, const size_t N)
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
+    const size_t T, const size_t L, const size_t N)
 {
-	return orbs[T][L][N];
+    return orbs[T][L][N];
 }
 */
 
@@ -500,4 +500,52 @@ void Exx_Abfs::Construct_Orbs::print_orbs_size(
 		}
 		os<<std::endl;
 	}
+}
+
+std::vector<std::vector<std::vector<double>>> Exx_Abfs::Construct_Orbs::get_multipole(
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
+{
+    std::vector<std::vector<std::vector<double>>> multipole;
+    multipole.resize(orb_in.size());
+    for (size_t T = 0; T != orb_in.size(); ++T)
+    {
+        multipole[T].resize(orb_in[T].size());
+        for (size_t L = 0; L != orb_in[T].size(); ++L)
+        {
+            multipole[T][L].resize(orb_in[T][L].size());
+            for (size_t N = 0; N != orb_in[T][L].size(); ++N)
+            {
+                const Numerical_Orbital_Lm& orb_lm = orb_in[T][L][N];
+                const int nr = orb_lm.getNr();
+                double* integrated_func = new double[nr];
+                for (size_t ir = 0; ir != nr; ++ir)
+                    integrated_func[ir] = orb_lm.getPsi(ir) * std::pow(orb_lm.getRadial(ir), 2 + L) / (2 * L + 1);
+
+                ModuleBase::Integral::Simpson_Integral(nr, integrated_func, orb_lm.getRab(), multipole[T][L][N]);
+            }
+        }
+    }
+
+    return multipole;
+}
+
+std::vector<double> Exx_Abfs::Construct_Orbs::get_Rcut(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
+{
+    std::vector<double> Rcut(orb_in.size());
+    for (size_t T = 0; T != orb_in.size(); ++T)
+    {
+        double rmax = std::numeric_limits<double>::min();
+        for (size_t L = 0; L != orb_in[T].size(); ++L)
+        {
+            for (size_t N = 0; N != orb_in[T][L].size(); ++N)
+            {
+                const double rcut = orb_in[T][L][N].getRcut();
+                if (rcut > rmax)
+                    rmax = rcut;
+            }
+        }
+        Rcut[T] = rmax;
+    }
+
+    return Rcut;
 }

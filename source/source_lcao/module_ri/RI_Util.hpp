@@ -140,7 +140,7 @@ namespace RI_Util
 		}
 		if (!coulomb_param_ewald.empty())
 		{
-			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald] = std::make_pair(true, coulomb_param_ewald);
+			coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald] = std::make_pair(false, coulomb_param_ewald);
 		}
 
 		return coulomb_settings;
