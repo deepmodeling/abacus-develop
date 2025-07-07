@@ -18,7 +18,7 @@ add_executable(
     ../../../source_cell/read_pp_upf201.cpp
     ../../../source_cell/read_pp_vwr.cpp
     ../../../source_cell/read_pp_blps.cpp
-    ../../../source_pw/hamilt_pwdft/soc.cpp
+    ../../../source_pw/module_pwdft/soc.cpp
     ../../../source_io/output.cpp
     ../../../source_io/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
@@ -34,8 +34,8 @@ add_executable(
     ../../../source_lcao/module_hcontainer/func_folding.cpp
     ../../../source_lcao/module_hcontainer/transfer.cpp
     ../../../source_lcao/module_hcontainer/output_hcontainer.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/deepks_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
 )
 

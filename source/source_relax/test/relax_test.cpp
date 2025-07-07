@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include <iomanip>
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../relax_sync.h"
 #include "source_cell/unitcell.h"

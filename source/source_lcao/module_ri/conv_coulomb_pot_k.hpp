@@ -1,6 +1,7 @@
 #ifndef CONV_COULOMB_POT_K_HPP
 #define CONV_COULOMB_POT_K_HPP
 
+#include "source_base/math_erf_complex.h"
 #include "conv_coulomb_pot_k.h"
 #include <cmath>
 #include <cassert>

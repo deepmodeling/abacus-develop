@@ -29,7 +29,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/magnetism.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <vector>
 

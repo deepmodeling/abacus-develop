@@ -33,14 +33,14 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
 		}
 	}
 
-    complex<double>* porter_g = new complex<double>[rho_basis->npw];
+    std::complex<double>* porter_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);
 
     rho_basis->real2recip(porter, porter_g);
 
-    complex<double>* n = new complex<double>[rho_basis->npw];
-    complex<double>* total_n = new complex<double>[rho_basis->npw];
-    complex<double>* ps_totn = new complex<double>[rho_basis->npw];
+    std::complex<double>* n = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* total_n = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* ps_totn = new std::complex<double>[rho_basis->npw];
 
     cal_totn(cell, rho_basis, porter_g, n, total_n, vlocal);
 

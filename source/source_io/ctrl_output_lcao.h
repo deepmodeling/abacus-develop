@@ -7,11 +7,11 @@
 #include "source_cell/klist.h" // use K_Vectors
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "source_lcao/module_gint/gint_k.h" // use Gint_k
 #include "source_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
-#include "source_pw/hamilt_pwdft/structure_factor.h" // use Structure_Factor 
+#include "source_pw/module_pwdft/structure_factor.h" // use Structure_Factor 
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes

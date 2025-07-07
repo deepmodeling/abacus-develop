@@ -1,6 +1,6 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
 
 void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
@@ -18,7 +18,7 @@ void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis
 
 void eps_pot(const double* PS_TOTN_real,
              const double& tpiba,
-             const complex<double>* phi,
+             const std::complex<double>* phi,
              const ModulePW::PW_Basis* rho_basis,
              double* d_eps,
              double* vwork)
@@ -56,8 +56,8 @@ void eps_pot(const double* PS_TOTN_real,
 
 ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
                                     const ModulePW::PW_Basis* rho_basis,
-                                    complex<double>* TOTN,
-                                    complex<double>* PS_TOTN,
+                                    std::complex<double>* TOTN,
+                                    std::complex<double>* PS_TOTN,
                                     int nspin)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
@@ -66,7 +66,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     rho_basis->recip2real(TOTN, TOTN_real);
 
     // -4pi * TOTN(G)
-    complex<double> *B = new complex<double>[rho_basis->npw];
+    std::complex<double> *B = new std::complex<double>[rho_basis->npw];
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
         B[ig] = -4.0 * ModuleBase::PI * TOTN[ig];
@@ -81,8 +81,8 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     double *epsilon0 = new double[rho_basis->nrxx];
     cal_epsilon(rho_basis, PS_TOTN_real, epsilon, epsilon0);
 
-    complex<double> *Sol_phi = new complex<double>[rho_basis->npw];
-    complex<double> *Sol_phi0 = new complex<double>[rho_basis->npw];
+    std::complex<double> *Sol_phi = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *Sol_phi0 = new std::complex<double>[rho_basis->npw];
     int ncgsol = 0;
 
     double *tmp_Vel = new double[rho_basis->nrxx];

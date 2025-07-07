@@ -6,7 +6,7 @@
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
 #include "source_hamilt/hamilt.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/kernels/dngvd_op.h"
 #include "source_hsolver/para_linear_transform.h"
 
@@ -28,7 +28,7 @@ class DiagoBPCG
   private:
     // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
-    // otherwise return the real type of T(complex<float>, complex<double>)
+    // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
   // Column major psi in this class
   public:

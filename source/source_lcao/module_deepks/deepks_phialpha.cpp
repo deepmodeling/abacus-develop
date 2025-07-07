@@ -13,7 +13,7 @@
 #include "deepks_iterate.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       const UnitCell& ucell,

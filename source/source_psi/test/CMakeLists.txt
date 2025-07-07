@@ -12,7 +12,7 @@ AddTest(
     LIBS parameter ${math_libs} base device psi psi_initializer planewave 
     SOURCES
         psi_initializer_unit_test.cpp
-        ../../source_pw/hamilt_pwdft/soc.cpp
+        ../../source_pw/module_pwdft/soc.cpp
         ../../source_cell/atom_spec.cpp
         ../../source_cell/parallel_kpoints.cpp
         ../../source_cell/test/support/mock_unitcell.cpp

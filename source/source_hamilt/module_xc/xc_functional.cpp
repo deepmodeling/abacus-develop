@@ -1,6 +1,6 @@
 #include "xc_functional.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 
 #ifdef USE_LIBXC
@@ -29,9 +29,10 @@ void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
 method. */
-    if (ucell.atoms[0].ncpp.xc_func == "HF"
-        || ucell.atoms[0].ncpp.xc_func == "PBE0"
-        || ucell.atoms[0].ncpp.xc_func == "HSE") {
+    if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "HSE" 
+        || ucell.atoms[0].ncpp.xc_func == "PBE0"|| ucell.atoms[0].ncpp.xc_func == "LC_PBE" 
+        || ucell.atoms[0].ncpp.xc_func == "LC_WPBE" || ucell.atoms[0].ncpp.xc_func == "LRC_WPBEH" 
+        || ucell.atoms[0].ncpp.xc_func == "CAM_PBEH") {
         XC_Functional::set_xc_type("pbe");
     }
     else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
@@ -149,6 +150,36 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 5;
         use_libxc = true;
 	}
+    else if( xc_func == "LC_PBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LC_WPBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LC_WPBE);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LRC_WPBE")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LRC_WPBE);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "LRC_WPBEH")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_LRC_WPBEH);
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "CAM_PBEH")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_CAM_PBEH);
+        func_type = 4;
+        use_libxc = true;
+    }
 #endif
     else if( xc_func == "HF")
     {
@@ -271,9 +302,11 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
-        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22")
+        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
+        xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
+        xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, or HSE, LIBXC is required");
+        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...) or CAM_PBEH LIBXC is required");
     }
     use_libxc = false;
 #endif

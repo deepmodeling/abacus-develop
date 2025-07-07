@@ -1,7 +1,7 @@
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_cell/parallel_kpoints.h"
 
@@ -19,9 +19,9 @@
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/hamilt_pwdft/VL_in_pw.h"
-#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/berryphase.h"
 #undef private
 bool berryphase::berry_phase_flag = false;

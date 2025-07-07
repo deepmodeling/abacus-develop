@@ -54,7 +54,7 @@ public:
 	//==================
 	// member function:
 	//==================
-	//set all elements to be complex<double> {0.0,0.0}
+	//set all elements to be std::complex<double> {0.0,0.0}
 	void zero_out(void);
 	//set to be a unit matrix,
 	void set_as_identity_matrix(void);

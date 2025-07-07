@@ -7,14 +7,14 @@
 #include "module_lr/hsolver_lrtd.hpp"
 #include "module_lr/lr_spectrum.h"
 #include <memory>
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_io/read_wfc_nao.h"
 #include "source_io/cube_io.h"
 #include "source_io/print_info.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
 #include "source_base/scalapack_connector.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "module_lr/ri_benchmark/ri_benchmark.h"
 #include "module_lr/operator_casida/operator_lr_diag.h" // for precondition
 
@@ -36,12 +36,12 @@ void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<
 template<>
 void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to complex<double>");
+    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to std::complex<double>");
 }
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move complex<double> to double");
+    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
 template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }

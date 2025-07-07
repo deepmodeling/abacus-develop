@@ -1,6 +1,6 @@
 // Refactored according to diago_scalapack
 // This code will be futher refactored to remove the dependency of psi and hamilt
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "diago_lapack.h"
 
@@ -8,7 +8,7 @@
 #include "source_base/lapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;

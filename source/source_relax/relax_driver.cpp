@@ -1,13 +1,13 @@
 #include "relax_driver.h"
 
 #include "source_base/global_file.h"
-#include "source_pw/hamilt_pwdft/global.h" // use chr.
+#include "source_pw/module_pwdft/global.h" // use chr.
 #include "source_io/cif_io.h"
 #include "source_io/json_output/output_info.h"
 #include "source_io/output_log.h"
 #include "source_io/print_info.h"
 #include "source_io/read_exit_file.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)

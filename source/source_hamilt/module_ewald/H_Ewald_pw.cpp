@@ -1,12 +1,12 @@
 #include "H_Ewald_pw.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/mymath.h" // use heapsort
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "dnrm2.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/constants.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 double H_Ewald_pw::alpha=0.0;
 int H_Ewald_pw::mxr = 200;

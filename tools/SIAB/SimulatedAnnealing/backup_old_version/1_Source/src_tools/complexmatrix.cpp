@@ -21,7 +21,7 @@ ComplexMatrix::ComplexMatrix(int nrows, int ncols)
 // zero out the ComplexMatrix
 void ComplexMatrix::zero_out(void)
 {
-	for (int i=0; i<size; i++) c[i] = complex<double>(0.0,0.0);
+	for (int i=0; i<size; i++) c[i] = std::complex<double>(0.0,0.0);
 }
 
 /*
@@ -38,7 +38,7 @@ void ComplexMatrix::init(const int nrows,const int ncols)
 	this->nc = ncols;
 	this->size = nr * nc;
 //	std::set_new_handler( need_more_memory );
-	this->c = new complex<double>[size];
+	this->c = new std::complex<double>[size];
 	assert(c != 0);
 	this->zero_out();
 }//mohan the principle:as simple as possible:modify inline 2007-10-13
@@ -79,8 +79,8 @@ void ComplexMatrix::set_as_identity_matrix()
 	{
 		for(int j=0; j<nc; j++)
 		{
-			if(i==j) c[nc * i + j] = complex<double>(1.0, 0.0);  
-			else c[nc * i + j] = complex<double>(0.0, 0.0); 
+			if(i==j) c[nc * i + j] = std::complex<double>(1.0, 0.0);  
+			else c[nc * i + j] = std::complex<double>(0.0, 0.0); 
 		}
 	}
 	return;
@@ -114,7 +114,7 @@ ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 	{
 		for (int j = 0;j < m2.nc;j++)
 		{
-			z = complex<double>(0,0);
+			z = std::complex<double>(0,0);
 			for (int k = 0;k < m1.nc;k++)
 			{
 				z += m1(i, k) * m2(k, j);
@@ -126,7 +126,7 @@ ComplexMatrix operator*(const ComplexMatrix &m1, const ComplexMatrix &m2)
 }
 
 // Scale a ComplexMatrix
-ComplexMatrix operator*(const complex<double> &c,const ComplexMatrix &m)
+ComplexMatrix operator*(const std::complex<double> &c,const ComplexMatrix &m)
 {
 	ComplexMatrix sm(m);
 	for (int i=0 ;i<m.size; i++) sm.c[i] *= c;
@@ -134,7 +134,7 @@ ComplexMatrix operator*(const complex<double> &c,const ComplexMatrix &m)
 }
 
 // ComplexMatrix scalar
-ComplexMatrix operator*(const ComplexMatrix &m,const complex<double> &c)
+ComplexMatrix operator*(const ComplexMatrix &m,const std::complex<double> &c)
 {
 	ComplexMatrix sm(m);
 	for (int i = 0;i < m.size;i++) sm.c[i] *= c;
@@ -173,7 +173,7 @@ ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix &m)
 	return *this;
 }
 
-ComplexMatrix& ComplexMatrix::operator*=(const complex<double> &s)
+ComplexMatrix& ComplexMatrix::operator*=(const std::complex<double> &s)
 {
 	for (int i = 0;i < this->size;i++) c[i] *= s;
 	return *this;
@@ -203,7 +203,7 @@ complex<double> trace(const ComplexMatrix &m)
 }
 
 // Do mout += s*min
-void scale_accumulate(const complex<double> &s,
+void scale_accumulate(const std::complex<double> &s,
                       const ComplexMatrix &min,
                       ComplexMatrix &mout)
 {
@@ -218,7 +218,7 @@ void scale_accumulate(const complex<double> &s,
 
 // Do mout[i] += s*min[i]
 void scale_accumulate(const int &nmat,
-                      const complex<double> &s,
+                      const std::complex<double> &s,
                       ComplexMatrix **min,
                       ComplexMatrix **mout)
 {
@@ -231,9 +231,9 @@ void scale_accumulate(const int &nmat,
 }
 
 // Do mout = s1*m1 + s2*m2
-void scaled_sum(const complex<double> &s1,
+void scaled_sum(const std::complex<double> &s1,
                 const ComplexMatrix &m1,
-                const complex<double> &s2,
+                const std::complex<double> &s2,
                 const ComplexMatrix &m2,
                 ComplexMatrix &mout)
 {
@@ -251,9 +251,9 @@ void scaled_sum(const complex<double> &s1,
 
 // Does mout[i] = s1*m1[i] + s2*m2[i]
 void scaled_sum(const int &nmat,
-                const complex<double> &s1,
+                const std::complex<double> &s1,
                 ComplexMatrix **m1,
-                const complex<double> &s2,
+                const std::complex<double> &s2,
                 ComplexMatrix **m2,
                 ComplexMatrix **mout)
 {

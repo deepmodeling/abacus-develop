@@ -1,10 +1,10 @@
 #include "charge_mixing.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/module_mixing/pulay_mixing.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 Charge_Mixing::Charge_Mixing()
 {

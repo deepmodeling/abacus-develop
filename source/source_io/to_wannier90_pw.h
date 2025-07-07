@@ -16,7 +16,7 @@
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/klist.h"
-#include "source_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
+#include "source_lcao/wavefunc_in_pw.h"
 #include "source_psi/psi.h"
 
 class toWannier90_PW : public toWannier90

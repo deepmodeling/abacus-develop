@@ -7,7 +7,7 @@ void Inverse_Matrix::init(const int &dim_in)
     this->dim = dim_in;
     this->e = new double[dim];
     this->lwork = 2*dim;
-    this->work2 = new complex<double>[lwork];
+    this->work2 = new std::complex<double>[lwork];
     this->rwork = new double[3*dim-2];
     this->info = 0;
     this->A.create(dim, dim);

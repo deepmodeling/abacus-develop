@@ -106,7 +106,7 @@ VPATH=../../../source_main\
 ../../../source_base/module_device\
 ../../../source_base/module_container/ATen/core\
 ../../../source_base/module_container/ATen\
-../../../module_parameter\
+../../../source_io/module_parameter\
 ../module_fft\
 ../\
 

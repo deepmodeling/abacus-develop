@@ -3,7 +3,7 @@
 
 #ifdef __MLALGO
 #include "LCAO_deepks.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 

@@ -17,7 +17,7 @@ namespace hamilt
  * ----------------------------------------
  *   <Psi_{mu_I,0}|H|Psi_{nu_J,R}>
  * ----------------------------------------
- * template T can be double or complex<double>
+ * template T can be double or std::complex<double>
  *
  * examples for using this class:
  * 1. initialize a HContainer

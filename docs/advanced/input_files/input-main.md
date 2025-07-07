@@ -215,6 +215,8 @@
     - [of\_wt\_rho0](#of_wt_rho0)
     - [of\_hold\_rho0](#of_hold_rho0)
     - [of\_lkt\_a](#of_lkt_a)
+    - [of\_xwm\_rho\_ref](#of_xwm_rho_ref)
+    - [of\_xwm\_kappa](#of_xwm_kappa)
     - [of\_read\_kernel](#of_read_kernel)
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
@@ -2277,6 +2279,7 @@ Warning: this function is not robust enough for the current version. Please try 
   - **vw**: von Weizsäcker.
   - **tf+**: TF $\rm{\lambda}$ vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
   - **lkt**: Luo-Karasiev-Trickey.
+  - **xwm**: Xu-Wang-Ma
 
   Machine learning (ML) based functionals:
   - **ml**: ML-based KEDF allows for greater flexibility, enabling users to set related ML model parameters themselves. see [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft).
@@ -2323,14 +2326,14 @@ Warning: this function is not robust enough for the current version. Please try 
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt`
+- **Availability**: OFDFT with `of_kinetic=tf, tf+, wt, xwm`
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt`
+- **Availability**: OFDFT with `of_kinetic=vw, tf+, wt, lkt, xwm`
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
@@ -2371,6 +2374,20 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: OFDFT with `of_kinetic=lkt`
 - **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
+
+### of_xwm_rho_ref
+
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=xwm`
+- **Description**: Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
+- **Default**: 0.0
+
+### of_xwm_kappa
+
+- **Type**: Real
+- **Availability**: OFDFT with `of_kinetic=xwm`
+- **Description**: Parameter $\kappa$ for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
+- **Default**: 0.0
 
 ### of_read_kernel
 
@@ -2769,37 +2786,41 @@ Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under ac
 
 The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw*. For basis specific parameters, see the sections *[Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)* and *[Exact Exchange (PW)](#exact-exchange-pw)*.
 
-**Availablity**: *[dft_functional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*. 
+#### Hybrid Functional Parameters {#hybrid_func_params}
+|[dft_functional](#dft_functional)|[exx_fock_alpha](#exx_fock_alpha)|[exx_erfc_alpha](#exx_erfc_alpha)|[exx_erfc_omega](#exx_erfc_omega)|
+|:-:|:-:|:-:|:-:|
+|hf|1|0|0|
+|lc_pbe|1|-1|0.33|
+|lc_wpbe|1|-1|0.4|
+|lrc_wpbe|1|-1|0.3|
+|lrc_wpbeh|1|-0.8|0.2|
+|pbe0|0.25|0|0|
+|hse|0.0|0.25|0.11|
+|scan0|0.25|0|0|
+|cam_pbeh|0.2|0.8|0.7|
+|b3lyp|0.2|0|0|
+|muller|1|0|0|
+|power|1|0|0|
+|wp22|1|-1|0.11|
+|cwp22|0|1|0.11|
 
 ### exx_fock_alpha
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: Fraction of Fock exchange 1/r in hybrid functionals, so that $E_{X} = \alpha E_{X} + (1-\alpha)E_{X,\text{LDA/GGA}}$
-- **Default**:
-  - 1: if *[dft_functional](#dft_functional)==hf*
-  - 0.25: if *[dft_functional](#dft_functional)==pbe0*
-  - 0.2: if *[dft_functional](#dft_functional)==b3lyp*
-  - 0.25: if *[dft_functional](#dft_functional)==scan0*
-  - 1: if *[dft_functional](#dft_functional)==muller*
-  - 1: if *[dft_functional](#dft_functional)==power*
-  - 1: if *[dft_functional](#dft_functional)==wp22*
-  - 0: else
+- **Description**: Fraction of full-ranged Fock exchange 1/r ($\alpha$) in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_erfc_alpha
 
 - **Type**: Real \[Real...\](optional)
-- **Description**: Fraction of exchange erfc(wr)/r in hybrid functionals, so that $E_{X} = \alpha E_{X}^{\text{SR}} + (1-\alpha)E_{X,\text{LDA/GGA}}^{\text{SR}} + E_{X,\text{LDA/GGA}}^{\text{LR}}$
-- **Default**:
-  - 0.25: if *[dft_functional](#dft_functional)==hse*
-  - 1: if *[dft_functional](#dft_functional)==cwp22*
-  - -1: if *[dft_functional](#dft_functional)==wp22*
-  - 0: else
+- **Description**: Fraction of short-ranged Fock exchange erfc(wr)/r ($\beta$) in range-separated hybrid funtionals, so that $E_{X} = \alpha E_{X}^\text{HF-LR}+(\alpha+\beta) E_{X}^\text{HF-SR}+(1-\alpha)E_{X}^\text{KS-LR}+[1-(\alpha+\beta)]E_{X}^\text{KS-SR}$.
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_erfc_omega
 
 - **Type**: Real \[Real...\](optional)
 - **Description**: Range-separation parameter in exchange, such that $1/r=\text{erfc}(\omega r)/r+\text{erf}(\omega r)/r$
-- **Default**: 0.11
+- **Default**: see [hybrid_func_params](#hybrid_func_params)
 
 ### exx_separate_loop
 
@@ -2933,6 +2954,15 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only
   - False: else
+
+### exx_singularity_correction
+
+- **Type**: String
+- **Description**:
+  - spencer: see Phys. Rev. B 77, 193110 (2008).
+  - revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021).
+  Set the scheme of Coulomb singularity correction.
+- **Default**: default
 
 ### rpa_ccp_rmesh_times
 

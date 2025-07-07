@@ -7,7 +7,7 @@
 #ifndef VDWD3_PARAMETERS_H
 #define VDWD3_PARAMETERS_H
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "vdw_parameters.h"
 
 namespace vdw

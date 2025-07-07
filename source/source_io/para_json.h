@@ -3,7 +3,7 @@
 
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/atom_spec.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/unitcell.h"
 namespace Json
 {

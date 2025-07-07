@@ -1,6 +1,6 @@
 // wenfei 2022-1-5
 // This file contains constructor and destructor of the class LCAO_deepks,
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // as well as subroutines for initializing and releasing relevant data structures
 
 // Other than the constructor and the destructor, it contains 3 types of subroutines:
@@ -14,7 +14,7 @@
 
 #include "LCAO_deepks.h"
 #include "deepks_iterate.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 // Constructor of the class
 template <typename T>

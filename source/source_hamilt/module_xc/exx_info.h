@@ -18,14 +18,14 @@ struct Exx_Info
 
 		// Fock:
 		//		"alpha":		"0"
-		//		"Rcut_type":	"limits" / "spencer"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
 		//		"lambda":		"0.3"
-		//		//"Rcut"
+        //      "Rcut"
 		// Erfc:
 		//		"alpha":		"0"
 		//		"omega":		"0.11"
-		//		"Rcut_type":	"limits"
-		//		//"Rcut"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
+        //      "Rcut"
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
         double hybrid_alpha = 0.25;
@@ -52,7 +52,6 @@ struct Exx_Info
     struct Exx_Info_RI
     {
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
-
 
         bool real_number = false;
 

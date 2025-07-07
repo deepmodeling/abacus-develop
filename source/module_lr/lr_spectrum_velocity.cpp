@@ -2,7 +2,7 @@
 #include "module_lr/dm_trans/dm_trans.h"
 #include "module_lr/utils/lr_util_hcontainer.h"
 #include "math.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 namespace LR
 {

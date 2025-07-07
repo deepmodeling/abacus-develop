@@ -1,8 +1,8 @@
 #include "conv_coulomb_pot_k.h"
 #include "../../source_base/constants.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "../../source_basis/module_ao/ORB_atomic_lm.h"
-#include "../../source_pw/hamilt_pwdft/global.h"
+#include "../../source_pw/module_pwdft/global.h"
 
 namespace Conv_Coulomb_Pot_K
 {
@@ -20,11 +20,11 @@ namespace Conv_Coulomb_Pot_K
 	std::vector<double> cal_psi_fock_spencer(
 		const std::vector<double> &psif,
 		const std::vector<double> &k_radial,
-		const double hf_Rcut)
+		const double rcut)
 	{
 		std::vector<double> psik2_ccp(psif.size());
 		for (size_t ik = 0; ik < psif.size(); ++ik)
-			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1 - std::cos(k_radial[ik] * hf_Rcut)); }
+			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1 - std::cos(k_radial[ik] * rcut)); }
 		return psik2_ccp;
 	}
 
@@ -37,6 +37,33 @@ namespace Conv_Coulomb_Pot_K
 		std::vector<double> psik2_ccp(psif.size());
 		for( size_t ik=0; ik<psif.size(); ++ik )
 			{ psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1-std::exp(-(k_radial[ik]*k_radial[ik])/(4*erfc_omega*erfc_omega))); }
+		return psik2_ccp;
+	}
+
+	std::vector<double> cal_psi_erfc_spencer(
+								const std::vector<double>& psif,
+                                const std::vector<double>& k_radial,
+                                const double erfc_omega,
+                                const double rcut)
+	{
+		double eps = 1e-14;
+		std::vector<double> psik2_ccp(psif.size());
+		for (size_t ik = 0; ik < psif.size(); ++ik)
+		{
+	        double temp0 = std::cos(k_radial[ik] * rcut) * std::erfc(erfc_omega * rcut);
+	        double temp1 = std::exp(-(k_radial[ik] * k_radial[ik]) / (4 * erfc_omega * erfc_omega));
+			std::complex<double> temp2 = std::complex<double>(0, 0);
+			std::complex<double> temp3 = std::complex<double>(0, 0);
+			if (temp1 >= eps)
+			{
+	            temp2 = ModuleBase::ErrorFunc::erf(0.5 * (ModuleBase::IMAG_UNIT * k_radial[ik] + 2 * erfc_omega * erfc_omega * rcut)
+													/ erfc_omega);
+				temp3 = ModuleBase::NEG_IMAG_UNIT
+	                    * ModuleBase::ErrorFunc::erfi(0.5 * k_radial[ik] / erfc_omega + ModuleBase::IMAG_UNIT * erfc_omega * rcut);
+			}
+	        std::complex<double> fock_part = -0.5 * (-2 + 2 * temp0 + temp1 * (temp2 + temp3));
+        	psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * fock_part.real();
+		}
 		return psik2_ccp;
 	}
 
@@ -57,12 +84,12 @@ namespace Conv_Coulomb_Pot_K
 				{
 					for(const auto &param : param_list.second)
 					{
-						if(param.at("Rcut_type") == "limits")
+						if(param.at("singularity_correction") == "limits")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_limits( orbs.get_psif() ); }
-						else if(param.at("Rcut_type") == "spencer")
+						else if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "revised_spencer")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_fock_spencer( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("Rcut")) ); }
 						else
-							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+							{ throw std::invalid_argument( "singularity_correction = " + param.at("singularity_correction") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
 					}
 					break;
 				}
@@ -70,10 +97,12 @@ namespace Conv_Coulomb_Pot_K
 				{
 					for(const auto &param : param_list.second)
 					{
-						if(param.at("Rcut_type") == "limits")
+						if(param.at("singularity_correction") == "limits")
 							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_limits( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")) ); }
+						else if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "revised_spencer")
+							{ psik2_ccp = psik2_ccp + std::stod(param.at("alpha")) * cal_psi_erfc_spencer( orbs.get_psif(), orbs.get_k_radial(), std::stod(param.at("omega")), std::stod(param.at("Rcut")) ); }
 						else
-							{ throw std::invalid_argument( "Rcut_type = " + param.at("Rcut_type") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
+							{ throw std::invalid_argument( "singularity_correction = " + param.at("singularity_correction") + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__) ); }
 					}
 					break;
 				}

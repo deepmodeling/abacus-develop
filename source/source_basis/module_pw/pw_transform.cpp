@@ -18,8 +18,8 @@ namespace ModulePW
  * @brief transform real space to reciprocal space
  * @details c(g)=\int dr*f(r)*exp(-ig*r)
  *          Here we calculate c(g)
- * @param in: (nplane,ny,nx), complex<double> data
- * @param out: (nz, ns),  complex<double> data
+ * @param in: (nplane,ny,nx), std::complex<double> data
+ * @param out: (nz, ns),  std::complex<double> data
  */
 template <typename FPTYPE>
 void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
@@ -73,7 +73,7 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
  * @details c(g)=\int dr*f(r)*exp(-ig*r)
  *          Here we calculate c(g)
  * @param in: (nplane,ny,nx), double data
- * @param out: (nz, ns),  complex<double> data
+ * @param out: (nz, ns),  std::complex<double> data
  */
 template <typename FPTYPE>
 void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
@@ -139,8 +139,8 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
  * @brief transform reciprocal space to real space
  * @details f(r)=1/V * \sum_{g} c(g)*exp(ig*r)
  *          Here we calculate f(r)
- * @param in: (nz,ns), complex<double>
- * @param out: (nplane, ny, nx), complex<double>
+ * @param in: (nz,ns), std::complex<double>
+ * @param out: (nplane, ny, nx), std::complex<double>
  */
 template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
@@ -198,7 +198,7 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
  * @brief transform reciprocal space to real space
  * @details f(r)=1/V * \sum_{g} c(g)*exp(ig*r)
  *          Here we calculate f(r)
- * @param in: (nz,ns), complex<double>
+ * @param in: (nz,ns), std::complex<double>
  * @param out: (nplane, ny, nx), double
  */
 template <typename FPTYPE>

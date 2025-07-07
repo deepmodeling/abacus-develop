@@ -1,5 +1,5 @@
 #include "symmetry.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 using namespace ModuleSymmetry;
 

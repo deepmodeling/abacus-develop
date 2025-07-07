@@ -6,8 +6,8 @@
 #define protected public
 #include "source_estate/elecstate_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_pw/hamilt_pwdft/VL_in_pw.h"
-#include "module_parameter/parameter.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_io/module_parameter/parameter.h"
 // mock functions for testing
 int XC_Functional::func_type = 1;
 namespace elecstate

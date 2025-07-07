@@ -3,7 +3,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #include "source_base/module_device/device.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
 #include "esolver_gets.h"
@@ -19,7 +19,7 @@ extern "C"
 #include "esolver_dp.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
-#include "module_parameter/md_parameter.h"
+#include "source_io/module_parameter/md_parameter.h"
 
 #include <stdexcept>
 

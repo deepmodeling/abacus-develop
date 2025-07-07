@@ -1,12 +1,12 @@
 #include "LCAO_deepks_test.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>
 #undef private
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.h"
+#include "source_lcao/hs_matrix_k.hpp"
+#include "source_lcao/module_operator_lcao/deepks_lcao.h"
 namespace Test_Deepks
 {
 Grid_Driver GridD(PARAM.input.test_deconstructor, PARAM.input.test_grid);

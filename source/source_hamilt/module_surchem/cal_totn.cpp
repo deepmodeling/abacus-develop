@@ -2,13 +2,13 @@
 
 void surchem::cal_totn(const UnitCell& cell,
                        const ModulePW::PW_Basis* rho_basis,
-                       const complex<double>* Porter_g,
-                       complex<double>* N,
-                       complex<double>* TOTN,
+                       const std::complex<double>* Porter_g,
+                       std::complex<double>* N,
+                       std::complex<double>* TOTN,
                        const double* vlocal)
 {
     // vloc to N
-    complex<double> *vloc_g = new complex<double>[rho_basis->npw];
+    std::complex<double> *vloc_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(vloc_g, rho_basis->npw);
 
     rho_basis->real2recip(vlocal, vloc_g);  // now n is vloc in Recispace
@@ -35,8 +35,8 @@ void surchem::cal_totn(const UnitCell& cell,
 
 void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const
 {
-    std::complex<double> *delta_phig = new complex<double>[rho_basis->npw];
-    std::complex<double> *induced_rhog = new complex<double>[rho_basis->npw];
+    std::complex<double> *delta_phig = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *induced_rhog = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(induced_rhog, rho_basis->npw);
     rho_basis->real2recip(delta_phi, delta_phig);
     for (int ig = 0; ig < rho_basis->npw; ig++)

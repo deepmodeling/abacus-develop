@@ -43,7 +43,7 @@ public:
     double ggwfc2;					// ggwav=wfact*ggpsi, default value: wfact=4.0
 	double ggchg;					
     
-    complex<double>** strucFac;			// StrucFac [ntype,ngmax]
+    std::complex<double>** strucFac;			// StrucFac [ntype,ngmax]
 
     int ngmw;						//(= ngmax) / num. of G vectors within ggfft
 	int ngmw_g;

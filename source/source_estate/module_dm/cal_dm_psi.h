@@ -9,7 +9,7 @@ namespace elecstate
     // for Gamma-Only case where DMK is double
     void cal_dm_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<double>& wfc, elecstate::DensityMatrix<double, double>& DM);
 
-    // for Multi-k case where DMK is complex<double>
+    // for Multi-k case where DMK is std::complex<double>
     void cal_dm_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>& wfc, elecstate::DensityMatrix<std::complex<double>, double>& DM);
 
     // for Gamma-Only case with MPI

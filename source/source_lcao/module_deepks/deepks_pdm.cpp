@@ -1,6 +1,6 @@
 // wenfei 2022-1-11
 // This file contains subroutines for calculating pdm,
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // which is defind as sum_mu,nu rho_mu,nu (<chi_mu|alpha><alpha|chi_nu>);
 // as well as gdmx, which is the gradient of pdm, defined as
 // sum_mu,nu rho_mu,nu d/dX(<chi_mu|alpha><alpha|chi_nu>)

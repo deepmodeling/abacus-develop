@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_io/cube_io.h"
 #include "prepare_unitcell.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
@@ -39,7 +39,7 @@ Parallel_Grid::~Parallel_Grid() {}
 
 
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 
 /***************************************************************

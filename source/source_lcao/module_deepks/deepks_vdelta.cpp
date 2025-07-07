@@ -1,6 +1,6 @@
 // This file contains subroutines related to V_delta, which is the deepks contribution to Hamiltonian
 // defined as |alpha>V(D)<alpha|
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // as well as subroutines for printing them for checking
 // It also contains subroutine related to calculating e_delta_bands, which is basically
 // tr (rho * V_delta)
@@ -15,7 +15,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 // calculating sum of correction band energies
 template <typename TK>

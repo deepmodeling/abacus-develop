@@ -21,7 +21,11 @@ void ReadInput::item_exx()
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-                if (dft_functional_lower == "hf")
+                if (dft_functional_lower == "hf" ||
+                    dft_functional_lower == "lc_pbe" || dft_functional_lower == "lc_wpbe" ||
+                    dft_functional_lower == "lrc_wpbe" || dft_functional_lower == "lrc_wpbeh" ||
+                    dft_functional_lower == "muller" || dft_functional_lower == "power"      // added by jghan 2024-07-06
+                    || dft_functional_lower == "wp22" )
                 {
                     para.input.exx_fock_alpha = {"1"};
                 }
@@ -33,13 +37,9 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_fock_alpha = {"0.2"};
                 }
-                else if (dft_functional_lower == "muller" || dft_functional_lower == "power" )
+                else if (dft_functional_lower == "cam_pbeh")
                 {
-                    para.input.exx_fock_alpha = {"1"};
-                }
-                else if (dft_functional_lower == "wp22")
-                {
-                    para.input.exx_fock_alpha = {"1"};
+                    para.input.exx_fock_alpha = {"0.2"};
                 }
                 else
                 {   // no exx in scf, but will change to non-zero in postprocess like rpa
@@ -68,11 +68,20 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_erfc_alpha = {"0.25"};
                 }
+                else if (dft_functional_lower == "lrc_wpbeh")
+                {
+                    para.input.exx_erfc_alpha = {"-0.8"};
+                }
+                else if (dft_functional_lower == "cam_pbeh")
+                {
+                    para.input.exx_erfc_alpha = {"0.8"};
+                }
                 else if (dft_functional_lower == "cwp22")
                 {
                     para.input.exx_erfc_alpha = {"1"};
                 }
-                else if (dft_functional_lower == "wp22")
+                else if (dft_functional_lower == "lc_pbe" || dft_functional_lower == "lc_wpbe" ||
+                    dft_functional_lower == "lrc_wpbe" || dft_functional_lower == "wp22")
                 {
                     para.input.exx_erfc_alpha = {"-1"};
                 }
@@ -102,6 +111,26 @@ void ReadInput::item_exx()
                 if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
                 {
                     para.input.exx_erfc_omega = {"0.11"};
+                }
+                else if (dft_functional_lower == "lc_pbe")
+                {
+                    para.input.exx_erfc_omega = {"0.33"};
+                }
+                else if (dft_functional_lower == "lc_wpbe")
+                {
+                    para.input.exx_erfc_omega = {"0.4"};
+                }
+                else if (dft_functional_lower == "lrc_wpbe")
+                {
+                    para.input.exx_erfc_omega = {"0.3"};
+                }
+                else if (dft_functional_lower == "lrc_wpbeh")
+                {
+                    para.input.exx_erfc_omega = {"0.2"};
+                }
+                else if (dft_functional_lower == "cam_pbeh")
+                {
+                    para.input.exx_erfc_omega = {"0.7"};
                 }
                 else
                 {
@@ -172,6 +201,37 @@ void ReadInput::item_exx()
                 else
                 {
                     para.input.exx_real_number = "0";
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_singularity_correction");
+        item.annotation = "set the scheme of Coulomb singularity correction";
+        read_sync_string(input.exx_singularity_correction);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.exx_singularity_correction == "default")
+            {  
+                std::string& dft_functional = para.input.dft_functional;
+                std::string dft_functional_lower = dft_functional;
+                std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
+                if (dft_functional_lower == "hf"
+                    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+                    || dft_functional_lower == "scan0"
+                    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+                    || dft_functional_lower == "wp22" 
+                    || dft_functional_lower == "lc_pbe"
+                    || dft_functional_lower == "lc_wpbe" 
+                    || dft_functional_lower == "lrc_wpbe"
+                    || dft_functional_lower == "lrc_wpbeh"
+                    || dft_functional_lower == "cam_pbeh")
+                {
+                    para.input.exx_singularity_correction = "spencer";
+                }
+                else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_singularity_correction = "limits";
                 }
             }
         };

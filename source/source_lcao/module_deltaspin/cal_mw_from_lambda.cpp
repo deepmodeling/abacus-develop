@@ -1,9 +1,9 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "spin_constrain.h"
-#include "source_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -15,7 +15,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #endif
 
 template <>

@@ -4,7 +4,7 @@
 
 #define private public
 #define protected public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "hsolver_supplementary_mock.h"

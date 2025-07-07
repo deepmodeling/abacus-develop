@@ -1,7 +1,7 @@
 #pragma once
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_estate/module_charge/charge.h"
 #define CREF(x) const std::vector<double>& x = x##_;
 #define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_;

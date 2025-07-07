@@ -6,7 +6,7 @@
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/cif_io.h"
 #include "source_io/cube_io.h"
 #include "source_io/json_output/init_info.h"
@@ -16,7 +16,7 @@
 #include "source_io/rhog_io.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_io/write_elf.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/k_vector_utils.h"
 
 #ifdef USE_LIBXC

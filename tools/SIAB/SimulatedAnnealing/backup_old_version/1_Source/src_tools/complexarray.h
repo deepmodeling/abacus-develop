@@ -25,13 +25,13 @@ public:
 	void create(const int d1,const int d2,const int d3,const int d4);
 
 	const ComplexArray &operator=(const ComplexArray &right);
-	const ComplexArray &operator=(const complex<double> &right);
+	const ComplexArray &operator=(const std::complex<double> &right);
 
 	complex<double> &operator()(const int d1,const int d2,const int d3);
 	complex<double> &operator()(const int d1,const int d2,const int d3,const int d4);
 
-	const complex<double> &operator()(const int d1,const int d2,const int d3)const;
-	const complex<double> &operator()(const int d1,const int d2,const int d3,const int d4)const;
+	const std::complex<double> &operator()(const int d1,const int d2,const int d3)const;
+	const std::complex<double> &operator()(const int d1,const int d2,const int d3,const int d4)const;
 
 	void zero_out(void);
 

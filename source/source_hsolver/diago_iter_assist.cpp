@@ -1,5 +1,5 @@
 #include "diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/blas_connector.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"

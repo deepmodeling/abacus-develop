@@ -1,11 +1,11 @@
 //=======================
 // AUTHOR : Peize Lin
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // DATE :   2022-08-17
 //=======================
 
 #include "RI_2D_Comm.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
 
 #include <string>

@@ -1,6 +1,6 @@
 #include "dftu.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_estate/magnetism.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 #include <cmath>
 #include <complex>
