@@ -478,8 +478,11 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
-                   / (rho_basis->gg[ig] * ucell.tpiba2);
+        if (rho_basis->gg[ig] !=0)
+        {
+            aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
+                    / (rho_basis->gg[ig] * ucell.tpiba2);
+        }
     }
 
     // set pos rho_basis->ig_gge0 to zero
