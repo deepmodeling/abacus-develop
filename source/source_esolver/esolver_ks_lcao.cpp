@@ -26,10 +26,10 @@
 #include "source_io/to_wannier90_lcao_in_pw.h"
 #include "source_io/write_HS.h"
 #include "source_io/write_elecstat_pot.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 #include "source_io/write_eband_terms.hpp"
 #include "source_io/write_vxc.hpp"
 #include "source_io/write_vxc_r.hpp"
@@ -39,7 +39,7 @@
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
+#include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
@@ -51,11 +51,11 @@
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 //-----force& stress-------------------
-#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 
 // test RDMFT

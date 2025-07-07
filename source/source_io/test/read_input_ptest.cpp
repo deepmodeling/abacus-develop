@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 #include "source_base/tool_quit.h"
 #include "source_io/read_input.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // #ifdef __MPI
 #include "source_base/parallel_global.h"
@@ -366,6 +366,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.of_full_pw_dim, 0);
     EXPECT_FALSE(param.inp.of_read_kernel);
     EXPECT_EQ(param.inp.of_kernel_file, "WTkernel.txt");
+    EXPECT_DOUBLE_EQ(param.inp.of_xwm_kappa, 1.);
+    EXPECT_DOUBLE_EQ(param.inp.of_xwm_rho_ref, 1.);
     EXPECT_EQ(param.inp.device, "cpu");
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
     EXPECT_DOUBLE_EQ(param.globalv.hubbard_u[0], 0);

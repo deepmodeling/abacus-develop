@@ -2,7 +2,7 @@
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/para_json.h"
 #include "source_io/print_info.h"
 #include "source_io/winput.h"

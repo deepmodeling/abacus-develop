@@ -1,6 +1,6 @@
 #include "surchem.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,

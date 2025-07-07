@@ -1,6 +1,6 @@
 #include "output_info.h"
 #include "../para_json.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "abacusjson.h"
 
 

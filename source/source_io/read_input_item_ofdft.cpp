@@ -18,10 +18,10 @@ void ReadInput::item_ofdft()
             }
 #endif
             if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt"
-                && para.input.of_kinetic != "lkt" && para.input.of_kinetic != "tf+" 
+                && para.input.of_kinetic != "xwm" && para.input.of_kinetic != "lkt" && para.input.of_kinetic != "tf+" 
                 && para.input.of_kinetic != "ml" && para.input.of_kinetic != "mpn" && para.input.of_kinetic != "cpn5")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, lkt, ml, mpn, or cpn5");
+                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, xwm, lkt, ml, mpn, or cpn5");
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -207,6 +207,18 @@ void ReadInput::item_ofdft()
         Input_Item item("of_kernel_file");
         item.annotation = "The name of WT kernel file.";
         read_sync_string(input.of_kernel_file);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("of_xwm_kappa");
+        item.annotation = "The parameter kappa of XWM KEDF";
+        read_sync_double(input.of_xwm_kappa);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("of_xwm_rho_ref");
+        item.annotation = "The reference density of XWM KEDF";
+        read_sync_double(input.of_xwm_rho_ref);
         this->add_item(item);
     }
     {

@@ -1,10 +1,10 @@
 #ifdef __LCAO
 #include "dftu.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 

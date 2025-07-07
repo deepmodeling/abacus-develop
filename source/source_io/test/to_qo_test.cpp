@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "source_io/to_qo.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 
 #ifdef __MPI

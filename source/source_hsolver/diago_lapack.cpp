@@ -1,6 +1,6 @@
 // Refactored according to diago_scalapack
 // This code will be futher refactored to remove the dependency of psi and hamilt
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "diago_lapack.h"
 

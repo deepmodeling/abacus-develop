@@ -5,7 +5,7 @@
 #ifndef RDMFT_H
 #define RDMFT_H
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
@@ -18,9 +18,9 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
-#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include "source_lcao/hs_matrix_k.hpp"
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"

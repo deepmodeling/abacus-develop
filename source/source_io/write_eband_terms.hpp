@@ -2,8 +2,8 @@
 #define WRITE_EBAND_TERMS_HPP
  
 #include "source_io/write_vxc.hpp"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/ekinetic_new.h"
+#include "source_lcao/module_operator_lcao/nonlocal_new.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
 namespace ModuleIO

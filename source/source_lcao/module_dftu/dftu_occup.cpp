@@ -1,9 +1,9 @@
 #include "dftu.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/global.h"
 #ifdef __LCAO
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #endif
 #include "source_base/scalapack_connector.h"
 

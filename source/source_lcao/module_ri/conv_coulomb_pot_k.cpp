@@ -1,6 +1,6 @@
 #include "conv_coulomb_pot_k.h"
 #include "../../source_base/constants.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "../../source_basis/module_ao/ORB_atomic_lm.h"
 #include "../../source_pw/module_pwdft/global.h"
 

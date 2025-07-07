@@ -2,7 +2,7 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "sto_tool.h"
 template <typename FPTYPE, typename Device>
 Sto_DOS<FPTYPE, Device>::~Sto_DOS()

@@ -8,7 +8,7 @@
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/berryphase.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"
 
@@ -22,7 +22,7 @@
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_velocity.h"
 #endif

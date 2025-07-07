@@ -10,7 +10,7 @@
 #include "source_estate/elecstate.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/hamilt_lcaodft/force_stress_arrays.h" // mohan add 2024-06-15
+#include "source_lcao/force_stress_arrays.h" // mohan add 2024-06-15
 #endif
 
 #include <string>

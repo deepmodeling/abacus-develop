@@ -4,7 +4,7 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 
 namespace ModuleESolver

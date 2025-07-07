@@ -34,8 +34,8 @@ add_executable(
     ../../../source_lcao/module_hcontainer/func_folding.cpp
     ../../../source_lcao/module_hcontainer/transfer.cpp
     ../../../source_lcao/module_hcontainer/output_hcontainer.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/deepks_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
 )
 

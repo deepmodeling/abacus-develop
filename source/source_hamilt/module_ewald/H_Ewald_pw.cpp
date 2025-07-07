@@ -1,7 +1,7 @@
 #include "H_Ewald_pw.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/mymath.h" // use heapsort
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "dnrm2.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/constants.h"

@@ -1,7 +1,7 @@
 #ifdef __MPI
 #include "../../../source_base/parallel_global.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "mpi.h"
 #endif

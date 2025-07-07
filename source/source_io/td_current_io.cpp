@@ -9,11 +9,11 @@
 #include "source_base/vector3.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
+#include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_rt/td_current.h"
 #include "source_lcao/module_rt/td_velocity.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
 

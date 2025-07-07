@@ -1,7 +1,7 @@
 #include "bfgs.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_base/matrix3.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  

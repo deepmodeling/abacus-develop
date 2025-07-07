@@ -10,11 +10,11 @@
 
 #ifdef __EXX
 #include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
-#include "source_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
+#include "source_lcao/module_operator_lcao/ekinetic_new.h"
+#include "source_lcao/module_operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/veff_lcao.h"
 
 namespace rdmft
 {

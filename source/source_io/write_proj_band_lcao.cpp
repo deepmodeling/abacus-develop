@@ -1,13 +1,13 @@
 #include "write_proj_band_lcao.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "write_orb_info.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 template<>
 void ModuleIO::write_proj_band_lcao(

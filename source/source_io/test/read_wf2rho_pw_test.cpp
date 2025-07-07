@@ -13,7 +13,7 @@
 #include "source_io/read_wf2rho_pw.h"
 #include "source_io/write_wfc_pw.h"
 #include "source_io/filename.h" // mohan add 2025-05-17
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 
 #ifdef __MPI

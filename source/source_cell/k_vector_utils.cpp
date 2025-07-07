@@ -10,7 +10,7 @@
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace KVectorUtils
 {

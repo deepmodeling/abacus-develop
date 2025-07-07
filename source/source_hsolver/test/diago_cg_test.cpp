@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/inverse_matrix.h"
 #include "source_base/lapack_connector.h"

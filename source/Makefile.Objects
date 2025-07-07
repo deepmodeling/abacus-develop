@@ -54,12 +54,12 @@ VPATH=./src_global:\
 ./source_pw/module_pwdft/module_exx_helper:\
 ./source_pw/module_stodft/kernels:\
 ./source_lcao/module_hcontainer:\
-./source_lcao/hamilt_lcaodft:\
+./source_lcao:\
 ./source_lcao/module_rt:\
 ./source_lcao/module_deepks:\
 ./source_lcao/module_dftu:\
 ./source_lcao/module_deltaspin:\
-./source_lcao/hamilt_lcaodft/operator_lcao:\
+./source_lcao/module_operator_lcao:\
 ./source_lcao/module_gint:\
 ./source_lcao/module_gint/temp_gint:\
 ./source_relax:\
@@ -68,7 +68,7 @@ VPATH=./src_global:\
 ./source_io/json_output:\
 ./src_ri:\
 ./source_lcao/module_ri:\
-./module_parameter:\
+./source_io/module_parameter:\
 ./module_lr:\
 ./module_lr/ao_to_mo_transformer:\
 ./module_lr/dm_trans:\
@@ -345,6 +345,7 @@ OBJS_HAMILT=hamilt_pw.o\
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\
     kedf_wt.o\
+    kedf_xwm.o\
     kedf_lkt.o\
     kedf_manager.o\
 

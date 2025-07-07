@@ -1,7 +1,7 @@
 #include "sto_wf.h"
 
 #include "source_base/memory.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
 #include <ctime>

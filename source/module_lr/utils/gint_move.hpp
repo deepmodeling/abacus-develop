@@ -1,6 +1,6 @@
 #include "lr_util.h"
 #include "source_lcao/module_gint/gint_gamma.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/module_gint/grid_technique.h"
 

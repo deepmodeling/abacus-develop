@@ -2,7 +2,7 @@
 #include "../filename.h"
 
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../binstream.h"
 #include "source_base/global_variable.h"

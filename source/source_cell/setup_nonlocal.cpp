@@ -1,7 +1,7 @@
 #include "setup_nonlocal.h"
 
 #include "source_base/parallel_common.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
 //#include "../source_pw/module_pwdft/global.h"

@@ -1,12 +1,12 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 #include "source_lcao/module_ri/exx_opt_orb.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 

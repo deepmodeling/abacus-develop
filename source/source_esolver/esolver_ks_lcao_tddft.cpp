@@ -23,15 +23,15 @@
 #include "source_pw/module_pwdft/global.h"
 
 //-----HSolver ElecState Hamilt--------
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_psi/psi.h"
 
 //-----force& stress-------------------
-#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/FORCE_STRESS.h"
 
 //---------------------------------------------------
 

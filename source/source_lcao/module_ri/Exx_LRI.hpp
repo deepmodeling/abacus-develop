@@ -1,6 +1,6 @@
 //=======================
 // AUTHOR : Peize Lin
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // DATE :   2022-08-17
 //=======================
 
@@ -56,6 +56,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	bool init_MGT = true;
 	for(const auto &settings_list : this->coulomb_settings)
 	{
+		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,

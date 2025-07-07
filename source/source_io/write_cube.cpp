@@ -2,7 +2,7 @@
 #include "source_base/parallel_comm.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/cube_io.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <vector>
 

@@ -7,7 +7,7 @@
 #include "source_io/output_log.h"
 #include "source_io/print_info.h"
 #include "source_io/read_exit_file.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)

@@ -5,7 +5,7 @@
 #include "grid_technique.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
+#include "source_lcao/LCAO_HS_arrays.hpp"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "source_base/abfs-vector3_order.h"

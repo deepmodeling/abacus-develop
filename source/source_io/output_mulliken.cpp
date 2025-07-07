@@ -1,6 +1,6 @@
 #include "source_io/output_mulliken.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
 #include "source_base/name_angular.h"
 #include "source_base/scalapack_connector.h"

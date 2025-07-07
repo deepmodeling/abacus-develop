@@ -1,7 +1,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_base/global_function.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"

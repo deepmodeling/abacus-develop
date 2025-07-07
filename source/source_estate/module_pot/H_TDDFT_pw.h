@@ -2,7 +2,7 @@
 #define H_TDDFT_PW_H
 
 #include "source_io/input_conv.h"
-#include "module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
+#include "source_io/module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
 #include "pot_base.h"
 
 namespace elecstate

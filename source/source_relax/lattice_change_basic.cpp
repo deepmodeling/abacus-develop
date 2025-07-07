@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
