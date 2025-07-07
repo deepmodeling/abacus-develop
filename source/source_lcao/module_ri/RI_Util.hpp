@@ -72,15 +72,12 @@ namespace RI_Util
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const UnitCell &ucell,
 		const K_Vectors *p_kv)
-		const UnitCell &ucell,
-		const K_Vectors *p_kv)
 	{
 		std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_updated = coulomb_param;
 		for(auto &param_list : coulomb_param_updated)
 		{
 			for(auto &param : param_list.second)
 			{
-				if(param.at("singularity_correction") == "spencer")
 				if(param.at("singularity_correction") == "spencer")
 				{
 					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
