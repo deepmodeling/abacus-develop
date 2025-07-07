@@ -1,0 +1,3 @@
+add_subdirectory(module_pwdft)
+add_subdirectory(module_ofdft)
+add_subdirectory(module_stodft)

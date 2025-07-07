@@ -55,7 +55,7 @@ void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
 //				PRINTCM("Sinv",step1.data[istr].Sinv[ik]);
 //			}
 
-                complex<double> *sum = new complex<double>[nbands];
+                std::complex<double> *sum = new std::complex<double>[nbands];
                 for (int iw=0; iw<nwfc_all; iw++)
                 {
                     for (int ie=0; ie<ne; ie++)
@@ -68,7 +68,7 @@ void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
                             const int Nmu = step1.wayd[mu].N;
                             const int iw00 = step1.wayd[mu].iw00;
 
-                            complex<double> first_part = complex<double>(0,0);
+                            std::complex<double> first_part = std::complex<double>(0,0);
 							if(USEPW)
 							{
 								const int Mmu = step1.wayd[mu].m;
@@ -121,7 +121,7 @@ void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
             	{
             		for(int ie=0; ie<ne; ie++)
             		{
-            			complex<double> sum = complex<double>(0,0);
+            			complex<double> sum = std::complex<double>(0,0);
             			for(int mu=0; mu<nwfc2; mu++)
             			{
             				const int Tmu = step1.wayd[mu].type;
@@ -131,7 +131,7 @@ void Orthogonal::start(SpillageStep &step1, SpillageStep &step2)
 
             				for(int nu=0; nu<nwfc2; nu++)
             				{
-            					complex<double> first_part = complex<double>(0,0);
+            					complex<double> first_part = std::complex<double>(0,0);
 
             					for(int iemu=0; iemu<ne; iemu++)
             					{

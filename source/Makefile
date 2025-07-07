@@ -4,7 +4,7 @@ include Makefile.vars
 # Compiler information 
 #==========================
 
-INCLUDES = -I. -Icommands -I../ -Imodule_base/module_container
+INCLUDES = -I. -Isource_main -Isource_main/commands -Icommands -I../ -Isource_base/module_container
 
 LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
@@ -137,11 +137,9 @@ endif
 
 ifdef LIBNPY_DIR
     CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
-    ifeq ($(ENABLE_DEEPKS), ON)
-        HONG += -D__DEEPKS
-    endif
-    ifeq ($(ENABLE_MLKEDF), ON)
-        HONG += -D__MLKEDF
+    ifeq ($(ENABLE_MLALGO), ON)
+        HONG += -D__MLALGO
+        # HONG += -D__MLALGO
     endif
     INCLUDES += $(CNPY_INCLUDE_DIR)
 endif
@@ -224,8 +222,8 @@ test:
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
 	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ cd module_hamilt_pw/hamilt_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
-	@ cp module_hamilt_pw/hamilt_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
+	@ cd source_pw/module_pwdft; $(MAKE) CXX=${CXX} GPU=${GPU} DEBUG=$(DEBUG) FFTW_DIR=$(FFTW_DIR) OPENBLAS_LIB_DIR=$(OPENBLAS_LIB_DIR) ${PWTAG}
+	@ cp source_pw/module_pwdft/${VERSION}-PW.x $(BIN_DIR)/${VERSION}-PW.x
 
 $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 	${CXX} ${OPTS} ${OPTS_MPI} $(FP_OBJS) ${PDIAG_OBJS} ${LIBS} -o  $(BIN_DIR)/${VERSION}.$(suffix)
@@ -241,4 +239,4 @@ ${OBJ_DIR}/%.o:%.cpp
 clean:
 	@ if [ -d $(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
 	@ if [ -d $(BIN_DIR) ]; then rm -rf $(BIN_DIR); fi
-	@ cd module_hamilt_pw/hamilt_pwdft; make clean
+	@ cd source_pw/module_pwdft; make clean

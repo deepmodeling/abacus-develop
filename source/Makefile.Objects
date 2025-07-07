@@ -9,73 +9,73 @@
 #
 
 VERSION = ABACUS
-HEADERS = *.h
+HEADERS = source_main/*.h
 
 VPATH=./src_global:\
-./module_basis/module_ao:\
-./module_basis/module_nao:\
-./module_cell/module_neighbor:\
-./module_cell/module_symmetry:\
-./module_cell:\
-./module_base:\
-./module_base/kernels:\
-./module_base/module_container/base/core:\
-./module_base/module_container/ATen/core:\
-./module_base/module_container/ATen/kernels:\
-./module_base/module_container/ATen/ops:\
-./module_base/module_device:\
-./module_base/module_mixing:\
-./module_md:\
-./module_basis/module_pw:\
-./module_basis/module_pw/module_fft:\
-./module_esolver:\
-./module_hsolver:\
-./module_hsolver/kernels:\
-./module_hsolver/genelpa:\
-./module_hsolver/module_pexsi:\
-./module_elecstate:\
-./module_elecstate/kernels:\
-./module_elecstate/module_pot:\
-./module_elecstate/module_charge:\
-./module_elecstate/module_dm:\
-./module_psi:\
-./module_psi/kernels:\
-./module_hamilt_general:\
-./module_hamilt_general/module_ewald:\
-./module_hamilt_general/module_surchem:\
-./module_hamilt_general/module_xc:\
-./module_hamilt_general/module_xc/kernels:\
-./module_hamilt_pw/hamilt_pwdft:\
-./module_hamilt_pw/hamilt_ofdft:\
-./module_hamilt_pw/hamilt_stodft:\
-./module_hamilt_pw/hamilt_pwdft/operator_pw:\
-./module_hamilt_pw/hamilt_pwdft/kernels:\
-./module_hamilt_pw/hamilt_pwdft/module_exx_helper:\
-./module_hamilt_pw/hamilt_stodft/kernels:\
-./module_hamilt_lcao/module_hcontainer:\
-./module_hamilt_lcao/hamilt_lcaodft:\
-./module_hamilt_lcao/module_tddft:\
-./module_hamilt_lcao/module_deepks:\
-./module_hamilt_lcao/module_dftu:\
-./module_hamilt_lcao/module_deltaspin:\
-./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
-./module_hamilt_lcao/module_gint:\
-./module_relax:\
-./module_relax/relax_old:\
-./module_relax/relax_new:\
-./module_hamilt_general/module_vdw:\
-./module_io:\
-./module_io/json_output:\
+./source_main:\
+./source_basis/module_ao:\
+./source_basis/module_nao:\
+./source_cell/module_neighbor:\
+./source_cell/module_symmetry:\
+./source_cell:\
+./source_base:\
+./source_base/kernels:\
+./source_base/module_container/base/core:\
+./source_base/module_container/ATen/core:\
+./source_base/module_container/ATen/kernels:\
+./source_base/module_container/ATen/ops:\
+./source_base/module_device:\
+./source_base/module_mixing:\
+./source_md:\
+./source_basis/module_pw:\
+./source_basis/module_pw/module_fft:\
+./source_esolver:\
+./source_hsolver:\
+./source_hsolver/kernels:\
+./source_hsolver/genelpa:\
+./source_hsolver/module_pexsi:\
+./source_estate:\
+./source_estate/kernels:\
+./source_estate/module_pot:\
+./source_estate/module_charge:\
+./source_estate/module_dm:\
+./source_psi:\
+./source_psi/kernels:\
+./source_hamilt:\
+./source_hamilt/module_ewald:\
+./source_hamilt/module_surchem:\
+./source_hamilt/module_xc:\
+./source_hamilt/module_xc/kernels:\
+./source_pw/module_pwdft:\
+./source_pw/module_ofdft:\
+./source_pw/module_stodft:\
+./source_pw/module_pwdft/operator_pw:\
+./source_pw/module_pwdft/kernels:\
+./source_pw/module_pwdft/module_exx_helper:\
+./source_pw/module_stodft/kernels:\
+./source_lcao/module_hcontainer:\
+./source_lcao:\
+./source_lcao/module_rt:\
+./source_lcao/module_deepks:\
+./source_lcao/module_dftu:\
+./source_lcao/module_deltaspin:\
+./source_lcao/module_operator_lcao:\
+./source_lcao/module_gint:\
+./source_lcao/module_gint/temp_gint:\
+./source_relax:\
+./source_hamilt/module_vdw:\
+./source_io:\
+./source_io/json_output:\
 ./src_ri:\
-./module_ri:\
-./module_parameter:\
+./source_lcao/module_ri:\
+./source_io/module_parameter:\
 ./module_lr:\
 ./module_lr/ao_to_mo_transformer:\
 ./module_lr/dm_trans:\
 ./module_lr/operator_casida:\
 ./module_lr/potentials:\
 ./module_lr/utils:\
-./module_rdmft:\
+./source_lcao/module_rdmft:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -145,6 +145,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
+    math_erf_complex.o\
     math_ylmreal.o\
     math_bspline.o\
     math_chebyshev.o\
@@ -192,6 +193,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
+    k_vector_utils.o\
     cell_index.o\
     check_atomic_stru.o\
     update_cell.o\
@@ -201,6 +203,7 @@ OBJS_CELL=atom_pseudo.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
+        deepks_check.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\
@@ -271,13 +274,13 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_others.o\
       esolver_dm2rho.o\
 
-OBJS_GINT=gint.o\
+OBJS_GINT=gint_old.o\
       gint_gamma_env.o\
       gint_gamma_vl.o\
-      gint_fvl.o\
-      gint_rho.o\
-      gint_tau.o\
-      gint_vl.o\
+      gint_fvl_old.o\
+      gint_rho_old.o\
+      gint_tau_old.o\
+      gint_vl_old.o\
       gint_k_env.o\
       gint_k_sparse1.o\
       gint_k_pvpr.o\
@@ -296,6 +299,30 @@ OBJS_GINT=gint.o\
       cal_ddpsir_ylm.o\
       mult_psi_dmr.o\
       init_orb.o\
+      batch_biggrid.o\
+      big_grid.o\
+      biggrid_info.o\
+      divide_info.o\
+      gint_atom.o\
+      gint_common.o\
+      gint_dvlocal.o\
+      gint_env_gamma.o\
+      gint_env_k.o\
+      gint_fvl_meta.o\
+      gint_fvl.o\
+      gint_info.o\
+      gint_interface.o\
+      gint_rho.o\
+      gint_tau.o\
+      gint_vl_metagga_nspin4.o\
+      gint_vl_metagga.o\
+      gint_vl_nspin4.o\
+      gint_vl.o\
+      gint.o\
+      localcell_info.o\
+      phi_operator.o\
+      set_ddphi.o\
+      unitcell_info.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hamilt_sdft_pw.o\
@@ -318,7 +345,9 @@ OBJS_HAMILT=hamilt_pw.o\
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\
     kedf_wt.o\
+    kedf_xwm.o\
     kedf_lkt.o\
+    kedf_manager.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\
@@ -445,8 +474,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
     lattice_change_methods.o\
-    relax_old.o\
-    relax.o\
+    relax_nsync.o\
+    relax_sync.o\
     bfgs.o\
     lbfgs.o\
     matrix_methods.o\
@@ -534,7 +563,7 @@ OBJS_IO=input_conv.o\
     write_elf.o\
     write_dipole.o\
     td_current_io.o\
-    write_wfc_r.o\
+    write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
     ctrl_output_lcao.o\
@@ -568,7 +597,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
       write_dos_lcao.o\
       write_proj_band_lcao.o\
-      write_istate_info.o\
+      write_eig_occ.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
       io_dmk.o\

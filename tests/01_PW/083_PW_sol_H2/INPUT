@@ -13,8 +13,8 @@ ecutwfc			20
 scf_nmax	    50
 
 #Parameters (Solvation Model)
-imp_sol                 1
-eb_k                    80
-tau                     0.000010798
-sigma_k                 0.6
-nc_k                    0.00037
+imp_sol         1
+eb_k            80
+tau             0.000010798
+sigma_k         0.6
+nc_k            0.00037

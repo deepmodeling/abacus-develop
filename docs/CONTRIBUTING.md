@@ -39,53 +39,51 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 For those who are interested in the source code, the following figure shows the structure of the source code.
 
 ```text
-|-- module_base                 A basic module including
+|-- source_base                 A basic module including
 |   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
 |   |                           (2) Custom data classes: matrix, vector definitions and related functions;
 |   |                           (3) Parallelization functions: MPI, OpenMP;
 |   |                           (4) Utility functions: timer, random number generator, etc.
 |   |                           (5) Global parameters: input parameters, element names, mathematical and physical constants.
 |   |-- module_container        The container module for storing data and performing operations on them and on different architectures.
-|-- module_basis                Basis means the basis set to expand the wave function.
+|-- source_basis                Basis means the basis set to expand the wave function.
 |   |-- module_ao               Atomic orbital basis set to be refactored.
 |   |-- module_nao              New numerical atomic orbital basis set for two-center integrals in LCAO calculations
 |   `-- module_pw               Data structures and relevant methods for planewave involved calculations
-|-- module_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
+|-- source_cell                 The module for defining the unit cell and its operations, and reading pseudopotentials.
 |   |-- module_neighbor         The module for finding the neighbors of each atom in the unit cell.
 |   |-- module_paw              The module for performing PAW calculations.
 |   |-- module_symmetry         The module for finding the symmetry operations of the unit cell.
-|-- module_elecstate            The module for defining the electronic state and its operations.
+|-- source_estate               The module for defining the electronic state and its operations.
 |   |-- module_charge           The module for calculating the charge density, charge mixing
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
-|-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
+|-- source_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
-|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
+|-- source_hamilt               The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.
 |   |-- module_xc               The module for calculating the exchange-correlation energy and potential.
-|-- module_hamilt_lcao          The module for defining the Hamiltonian in LCAO calculations.
+|-- source_lcao                 The module for defining the Hamiltonian in LCAO calculations.
 |   |-- hamilt_lcaodft          The module for defining the Hamiltonian in LCAO-DFT calculations.
 |   |   |-- operator_lcao       The module for defining the operators in LCAO-DFT calculations.
 |   |-- module_deepks           The module for defining the Hamiltonian in DeepKS calculations.
 |   |-- module_dftu             The module for defining the Hamiltonian in DFT+U calculations.
 |   |-- module_gint             The module for performing grid integral in LCAO calculations.
 |   |-- module_hcontainer       The module for storing the Hamiltonian matrix in LCAO calculations.
-|   `-- module_tddft            The module for defining the Hamiltonian in TDDFT calculations.
-|-- module_hamilt_pw            The module for defining the Hamiltonian in PW calculations.
-|   |-- hamilt_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
-|   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
+|   |-- module_rt               The module for defining the Hamiltonian in TDDFT calculations.
+|   `-- module_ri               The module for performing RI calculations.
+|-- source_pw                   The module for defining the Hamiltonian in PW calculations.
+|   |-- module_ofdft            The module for defining the Hamiltonian in OFDFT calculations.
+|   |-- module_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
-|   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
+|   `-- module_stodft           The module for defining the Hamiltonian in STODFT calculations.
+|-- source_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
-|-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
-|-- module_md                   The module for performing molecular dynamics.
-|-- module_psi                  The module for defining the wave function and its operations.
-|-- module_relax                The module for performing structural optimization.
-|   |-- relax_new               The module for performing structural optimization with new algorithm, optimized for cell and ion simultaneously.
-|   `-- relax_old               The module for performing structural optimization with old algorithm, optimized for cell and ion separately.
-|-- module_ri                   The module for performing RI calculations.
+|-- source_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
+|-- source_md                   The module for performing molecular dynamics.
+|-- source_psi                  The module for defining the wave function and its operations.
+`-- source_relax                The module for performing structural optimization, optimized for cell and ion simultaneously.
 ```
 
 ## Submitting an Issue
@@ -101,7 +99,7 @@ For comments that need to be shown in documents, these formats should be used --
 
 A helpful VS Code extension -- [Doxygen Documentation Generator](https://marketplace.visualstudio.com/items?itemName=cschlosser.doxdocgen), can help you formating comments.
 
-An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abacus-develop/blob/deepks/source/module_hamilt_lcao/module_deepks/LCAO_deepks.h), the effects can be seen on [readthedocs page](https://abacus-deepks.readthedocs.io/en/latest/DeePKS_API/classLCAO__Descriptor.html#exhale-class-classLCAO-Descriptor)
+An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abacus-develop/blob/deepks/source/source_lcao/module_deepks/LCAO_deepks.h), the effects can be seen on [readthedocs page](https://abacus-deepks.readthedocs.io/en/latest/DeePKS_API/classLCAO__Descriptor.html#exhale-class-classLCAO-Descriptor)
 
 - Tips
   - Only comments in .h file will be visible in generated  by Doxygen + Sphinx;
@@ -183,7 +181,7 @@ pre-commit install
 
 ## Adding a unit test
 
-We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
+We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `source_base` provides a simple demonstration.
 
 - Add a folder named `test` under the module.
 - Append the content below to `CMakeLists.txt` of the module:
@@ -257,7 +255,7 @@ To add a unit test:
     ./cell_unitcell_test
     ```
 
-    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.
+    under the directory of `build/source/source_cell/test` to run the test `cell_unitcell_test`.
     However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
 
     ```bash

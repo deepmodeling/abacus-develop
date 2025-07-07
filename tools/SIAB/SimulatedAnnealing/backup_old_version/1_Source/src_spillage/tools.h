@@ -84,8 +84,8 @@ extern int OPTIMIZE_METHOD;// mohan add 2010-04-14
 extern const double PI; // mohan add 2010-04-16
 extern const double TWO_PI; // mohan add 2010-06-14
 extern const double FOUR_PI;
-extern const complex<double> IMAG_UNIT;
-extern const complex<double> NEG_IMAG_UNIT;//mohan add 2010-06-14
+extern const std::complex<double> IMAG_UNIT;
+extern const std::complex<double> NEG_IMAG_UNIT;//mohan add 2010-06-14
 extern const double SQRT_INVERSE_FOUR_PI;
 extern const double PI_HALF;
 extern const double SQRT2;

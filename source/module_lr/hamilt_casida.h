@@ -1,15 +1,15 @@
 #pragma once
 #include <typeinfo>
-#include "module_hamilt_general/hamilt.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+#include "source_hamilt/hamilt.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/operator_casida/operator_lr_diag.h"
 #include "module_lr/operator_casida/operator_lr_hxc.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_lr/dm_trans/dm_trans.h"
 #ifdef __EXX
 #include "module_lr/operator_casida/operator_lr_exx.h"
 #include "module_lr/ri_benchmark/operator_ri_hartree.h"
-#include "module_ri/LRI_CV_Tools.h"
+#include "source_lcao/module_ri/LRI_CV_Tools.h"
 #endif
 namespace LR
 {

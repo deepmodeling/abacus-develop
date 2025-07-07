@@ -210,10 +210,6 @@ fi
 # echo $out_pband
 #-------------------------------
 if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
-	#pbandref=refPBANDS_1
-	#pbandcal=OUT.autotest/PBANDS_1
-	#python3 $COMPARE_SCRIPT $pbandref $pbandcal 8
-	#echo "CompareProjBand_pass $?" >>$1
 	orbref=refOrbital
 	orbcal=OUT.autotest/Orbital
 	python3 $COMPARE_SCRIPT $orbref $orbcal 8
@@ -362,11 +358,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 $COMPARE_SCRIPT dhrxs1.csr.ref OUT.autotest/dhrxs1.csr 8
+    python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrys1.csr.ref OUT.autotest/dhrys1.csr 8
+    python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrzs1.csr.ref OUT.autotest/dhrzs1.csr 8
+    python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
@@ -563,7 +559,7 @@ bash ${script_dir}/catch_deepks_properties.sh $1
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
 	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
-	nksibz=`grep ' nkstot_ibz ' $running_path | awk '{print $3}'`
+	nksibz=`grep 'Number of irreducible k-points' $running_path | awk '{print $6}'`
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1

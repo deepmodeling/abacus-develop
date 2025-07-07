@@ -60,7 +60,7 @@ def _index_map(ntype, natom, lmax, nzeta=None):
 
                                   0, 1, -1, 2, -2, 3, -3, ..., l, -l
                     
-                    (see module_base/ylm.cpp and module_base/math_ylmreal.cpp
+                    (see source_base/ylm.cpp and source_base/math_ylmreal.cpp
                     for details)
 
                     '''

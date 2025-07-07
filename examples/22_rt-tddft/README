@@ -1,0 +1,7 @@
+These examples show how to do a real-time tddft calculation.
+One can set 'calculation' to be 'md' and 'esolver_type' to be 'tddft' to do TDDFT calculation.
+
+A time-dependent E-field can be applied by setting 'td_vext' to '1'.
+- For non-periodic system, you could set 'stype' to '0' to do length gauge calculation, which would be faster.
+- For periodic system, you could set 'stype' to '1' to do velocity gauge calculation.
+Velocity gauge has not been fully tested yet, so be careful about its results.

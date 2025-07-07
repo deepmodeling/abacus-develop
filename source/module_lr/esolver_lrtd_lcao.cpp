@@ -7,14 +7,14 @@
 #include "module_lr/hsolver_lrtd.hpp"
 #include "module_lr/lr_spectrum.h"
 #include <memory>
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "module_io/read_wfc_nao.h"
-#include "module_io/cube_io.h"
-#include "module_io/print_info.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_lcao/hamilt_lcao.h"
+#include "source_io/read_wfc_nao.h"
+#include "source_io/cube_io.h"
+#include "source_io/print_info.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
-#include "module_base/scalapack_connector.h"
-#include "module_parameter/parameter.h"
+#include "source_base/scalapack_connector.h"
+#include "source_io/module_parameter/parameter.h"
 #include "module_lr/ri_benchmark/ri_benchmark.h"
 #include "module_lr/operator_casida/operator_lr_diag.h" // for precondition
 
@@ -36,12 +36,12 @@ void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<
 template<>
 void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to complex<double>");
+    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to std::complex<double>");
 }
 template<>
 void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move complex<double> to double");
+    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
 template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }
@@ -241,7 +241,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
         this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
         reset_dim_spin2();
     }
-
+#ifdef __OLD_GINT
     //grid integration
     this->gt_ = std::move(ks_sol.GridT);
 
@@ -255,7 +255,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 	}
     this->set_gint();
     this->gint_->reset_DMRGint(1);
-
+#else
+    this->gint_info_ = std::move(ks_sol.gint_info_);
+#endif
     // move pw basis
     if (this->pw_rho_flag)
     {
@@ -393,6 +395,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
                          this->ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
+#ifdef __OLD_GINT
     this->set_gint();
     this->gint_->gridt = &this->gt_;
 
@@ -451,7 +454,26 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         &ucell,
         &orb);
     this->gint_->initialize_pvpR(ucell, &this->gd, 1); // always use nspin=1 for transition density
-
+#else
+    gint_info_.reset(
+        new ModuleGint::GintInfo(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb.Phi,
+        ucell,
+        this->gd));
+    ModuleGint::Gint::set_gint_info(gint_info_.get());
+#endif
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
     if ((xc_kernel == "hf" || xc_kernel == "hse") && this->input.lr_solver != "spectrum")

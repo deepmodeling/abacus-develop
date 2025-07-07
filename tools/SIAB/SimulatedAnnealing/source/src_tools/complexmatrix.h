@@ -36,7 +36,7 @@ public:
 	{
 		return c[nc * i + j];//mohan modify in-line 2007-10-1
 	}
-	const complex<double> &operator()(const int i,const int j)const
+	const std::complex<double> &operator()(const int i,const int j)const
 	{
 		return c[nc * i + j];//mohan modify in-line 2007-10-13
 	}
@@ -45,12 +45,12 @@ public:
 	friend ComplexMatrix operator-(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 	friend ComplexMatrix operator*(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 	friend ComplexMatrix multiply_special(const char Symmetry, const char Side, const char Uplo, const ComplexMatrix &m1, const ComplexMatrix &m2);
-	friend ComplexMatrix operator*(const complex<double> &s, const ComplexMatrix &m);
-	friend ComplexMatrix operator*(const ComplexMatrix &m,   const complex<double> &s);
+	friend ComplexMatrix operator*(const std::complex<double> &s, const ComplexMatrix &m);
+	friend ComplexMatrix operator*(const ComplexMatrix &m,   const std::complex<double> &s);
 	friend ComplexMatrix operator*(const double &s,          const ComplexMatrix &m);
 	friend ComplexMatrix operator*(const ComplexMatrix &m,   const double &s);
 	inline ComplexMatrix& operator=(const ComplexMatrix &m);
-	inline ComplexMatrix& operator*=(const complex<double> &s);
+	inline ComplexMatrix& operator*=(const std::complex<double> &s);
 	inline ComplexMatrix& operator+=(const ComplexMatrix &m);
 	inline ComplexMatrix& operator-=(const ComplexMatrix &m);
 
@@ -73,7 +73,7 @@ private:
 	inline void init(const int nrows,const int ncols);
 };
 
-inline complex<double> trace(const ComplexMatrix &m);
+inline std::complex<double> trace(const ComplexMatrix &m);
 // mohan add 2008-7-1
 inline double abs2_row(const ComplexMatrix &m,const int ir);
 // mohan add 2008-7-1
@@ -85,28 +85,28 @@ inline double abs2_triangle_matrix( const char Uplo, ComplexMatrix &m);
 inline ComplexMatrix transpose(const ComplexMatrix &m, const bool &conjugate);
 
 inline void scale_accumulate(
-		const complex<double> &s, 
+		const std::complex<double> &s, 
 		const ComplexMatrix &min, 
 		ComplexMatrix &mout);
 
 inline void scale_accumulate(
 		const int &nmat, 
-		const complex<double> &s, 
+		const std::complex<double> &s, 
 		ComplexMatrix **min, 
 		ComplexMatrix **mout);
 
 inline void scaled_sum(
-		const complex<double> &s1, 
+		const std::complex<double> &s1, 
 		const ComplexMatrix &m1, 
-		const complex<double> &s2, 
+		const std::complex<double> &s2, 
 		const ComplexMatrix &m2, 
 		ComplexMatrix &mout);
 
 inline void scaled_sum(
 		const int &nmat,
-		const complex<double> &s1, 
+		const std::complex<double> &s1, 
 		ComplexMatrix **m1, 
-		const complex<double> &s2,
+		const std::complex<double> &s2,
 		ComplexMatrix **m2, 
 		ComplexMatrix **mout);
 		

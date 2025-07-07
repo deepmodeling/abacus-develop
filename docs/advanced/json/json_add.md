@@ -145,7 +145,7 @@ AbacusJson::add_json({"Json","key6","key7",3}, "cp2k", false);
 
 The current code structure of JSON functionality in Abacus is roughly as follows:
 
-- source/module_io
+- source/source_io
   - para_json.cpp: Contains JSON generation and output interfaces directly called by the device in Abacus.
   - json_output/: Contains the functionality encapsulation class `abacusjson.cpp` of RapidJSON in Abacus and code classes for parameter generation in various JSON modules.
     - test: Code testing files in `json_output`.
@@ -160,7 +160,7 @@ In Abacus JSON addition, the following principles need to be followed:
 
 3. Use classes as function parameters as much as possible instead of using global classes for obtained parameters. (For example, in `gen_general_info`, `Input`)
 
-4. After adding parameters, supplement test code in `module_io/json_output/test`.
+4. After adding parameters, supplement test code in `source_io/json_output/test`.
 
 For the current JSON file, there are two JSON modules: `init` and `general_info`,  `output_info`.
 Taking `general_info` as an example, the code to be added is as follows:

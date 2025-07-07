@@ -310,7 +310,7 @@ void ReadData::OverlapSq1q2(ifstream &ifs)
 					// local copy
 					for(int id=0; id<ndata; id++)
 					{
-						this->Sq1q2[iknow].ptr[id + startdata] = complex<double> (buffera[id], bufferb[id]);
+						this->Sq1q2[iknow].ptr[id + startdata] = std::complex<double> (buffera[id], bufferb[id]);
 					}
 			//		ofs_running << "\n local data copy ";
 				}
@@ -336,7 +336,7 @@ void ReadData::OverlapSq1q2(ifstream &ifs)
 					
 					for(int id=0; id<ndata; id++)
 					{
-						this->Sq1q2[iknow].ptr[id + startdata] = complex<double> (buffera[id], bufferb[id]);
+						this->Sq1q2[iknow].ptr[id + startdata] = std::complex<double> (buffera[id], bufferb[id]);
 					}
 			//		ofs_running << "\n receive data end" << endl;
 				}
@@ -362,7 +362,7 @@ void ReadData::OverlapSq1q2(ifstream &ifs)
 			for (int i = 0; i < Sq1q2[ik].getSize(); i++)
 			{
 				ifs >> a >> b;
-				Sq1q2[ik].ptr[i] = complex<double>(a,b);
+				Sq1q2[ik].ptr[i] = std::complex<double>(a,b);
 			}
 		}
 	}
@@ -454,7 +454,7 @@ void ReadData::OverlapQ(ifstream &ifs)
 					// local copy
 					for(int id=0; id<ndata; id++)
 					{
-						this->Qin.ptr[id + startdata] = complex<double> (buffera[id], bufferb[id]);
+						this->Qin.ptr[id + startdata] = std::complex<double> (buffera[id], bufferb[id]);
 					}
 					//ofs_running << "\n local data copy ";
 				}
@@ -479,7 +479,7 @@ void ReadData::OverlapQ(ifstream &ifs)
 					MPI_Recv(bufferb, ndata, MPI_DOUBLE, 0, ik, MPI_COMM_WORLD, &ierror);
 					for(int id=0; id<ndata; id++)
 					{
-						this->Qin.ptr[id + startdata] = complex<double> (buffera[id], bufferb[id]);
+						this->Qin.ptr[id + startdata] = std::complex<double> (buffera[id], bufferb[id]);
 					}
 					//ofs_running << "\n receive data end" << endl;
 				}
@@ -497,7 +497,7 @@ void ReadData::OverlapQ(ifstream &ifs)
 		for(int i=0; i<Qin.getSize(); i++)
 		{
 			ifs >> a >> b;
-			this->Qin.ptr[i] = complex<double>( a, b );
+			this->Qin.ptr[i] = std::complex<double>( a, b );
 		}
 #endif
 	}
@@ -550,7 +550,7 @@ void ReadData::OverlapSinv(const string &name)
 			{
 				double a,b;
 				ifs >> a >> b;
-				Sinv(i,j,k) = complex<double>(a,b);
+				Sinv(i,j,k) = std::complex<double>(a,b);
 			}
 		}
 	}

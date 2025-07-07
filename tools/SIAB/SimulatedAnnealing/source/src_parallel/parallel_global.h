@@ -12,14 +12,14 @@
 extern MPI_Comm POOL_WORLD;
 #endif
 
-//void myProd(complex<double> *in,complex<double> *inout,int *len,MPI_Datatype *dptr);
+//void myProd(complex<double> *in, std::complex<double> *inout,int *len,MPI_Datatype *dptr);
 
 namespace Parallel_Global
 {
 	void read_pal_param(int argc, char **argv);
 
 #ifdef __MPI
-	void myProd(complex<double> *in,complex<double> *inout,int *len,MPI_Datatype *dptr);
+	void myProd(complex<double> *in, std::complex<double> *inout,int *len,MPI_Datatype *dptr);
 #endif
 }
 

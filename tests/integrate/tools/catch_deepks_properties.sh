@@ -1,4 +1,6 @@
 #!/bin/bash
+COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+
 sum_file(){
 	line=`grep -vc '^$' $1`
 	inc=1
@@ -24,85 +26,165 @@ get_input_key_value(){
 	echo $value
 }
 
+# General function to process npy files
+process_npy() {
+    local mode=$1
+    local op=$2
+    local file_prefix=$3
+    local base_prefix=$4
+    local output_name=$5
+    
+    local total="0"
+    local file_pattern=""
+    local base_pattern=""
+    
+    # Determine file pattern based on mode
+    if [ "$mode" = "multi" ]; then
+        # multi mode: multiple files with _e* suffix from different electronic steps
+        file_pattern="OUT.autotest/DeePKS_Labels_Elec/${file_prefix}_e*.npy"
+        base_pattern="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}_e*.npy"
+    elif [ "$mode" = "single" ];then
+        # single mode: single file
+        file_pattern="OUT.autotest/deepks_${file_prefix}.npy"
+        base_pattern="OUT.autotest/deepks_${base_prefix}.npy"
+    fi
+    
+    # Process files
+    for file in $file_pattern; do
+        if [ ! -f "$file" ]; then
+            continue
+        fi
+        
+        # Get step number for multi mode
+        local step=""
+        if [ "$mode" = "multi" ]; then
+            step=$(basename "$file" | grep -oP 'e\d+')
+        fi
+        
+        # Get corresponding base file
+        local base_file=""
+        if [ "$mode" = "multi" ]; then
+            base_file="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}_${step}.npy"
+        else
+            base_file=$base_pattern
+        fi
+        
+        # Calculate value based on operation
+        if [ "$op" = "abs" ]; then
+            val=$(python3 ../tools/get_sum_abs.py "$file")
+        elif [ "$op" = "delta" ] && [ -f "$base_file" ]; then
+            val=$(python3 ../tools/get_sum_delta.py "$file" "$base_file")
+        elif [ "$op" = "numpy" ]; then
+            val=$(python3 ../tools/get_sum_numpy.py "$file")
+        else
+            val=0
+        fi
+        
+		if [ "$mode" = "multi" ]; then
+			#echo "total: $total, val: $val"
+         	total=$(echo "$total + $val" | bc)
+		else
+			total=$val
+		fi
+    done
+    
+    echo "$output_name $total" >>$6
+}
+
+# Process a group of label outputs
+process_many_npys() {
+    local mode=$1
+    local suffix=$2
+    local output_file=$3
+    
+    # energy 
+    process_npy "$mode" "abs" "etot" "" "deepks_e_label$suffix" "$output_file"
+    process_npy "$mode" "delta" "etot" "ebase" "deepks_edelta$suffix" "$output_file"
+    
+    # For deepks_bandgap = 1
+    if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
+        process_npy "$mode" "abs" "otot" "" "deepks_o_label$suffix" "$output_file"
+        process_npy "$mode" "delta" "otot" "obase" "deepks_odelta$suffix" "$output_file"
+        process_npy "$mode" "numpy" "orbpre" "" "deepks_oprec$suffix" "$output_file"
+    fi
+    
+    # For deepks_v_delta > 0
+    if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -gt 0 ]; then
+        process_npy "$mode" "abs" "htot" "" "deepks_h_label$suffix" "$output_file"
+        process_npy "$mode" "delta" "htot" "hbase" "deepks_vdelta$suffix" "$output_file"
+        
+        if [ $deepks_v_delta == 1 ]; then
+            process_npy "$mode" "abs" "vdpre" "" "deepks_vdp$suffix" "$output_file"
+        elif [ $deepks_v_delta == 2 ]; then
+            process_npy "$mode" "abs" "phialpha" "" "deepks_phialpha$suffix" "$output_file"
+            process_npy "$mode" "numpy" "gevdm" "" "deepks_gevdm$suffix" "$output_file"
+        fi
+    fi
+}
+
+# Main script
 has_force=$(get_input_key_value "cal_force" "INPUT")
 has_stress=$(get_input_key_value "cal_stress" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
 deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
 deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
 deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
+deepks_out_freq_elec=$(get_input_key_value "deepks_out_freq_elec" "INPUT")
 
 #---------------------------------------------------------------------------
-# Test for deepks_scf = 1
+# Test for descriptor
 #---------------------------------------------------------------------------
 if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
-	sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
-	total_des=`sum_file des_tmp.txt 5`
-	rm des_tmp.txt
-	echo "deepks_desc $total_des" >>$1
-	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
-		deepks_dm_eig=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_dm_eig.npy`
-	    echo "deepks_dm_eig $deepks_dm_eig" >>$1
-	fi
+    # Process descriptor data
+    sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
+    total_des=$(sum_file des_tmp.txt 5)
+    rm des_tmp.txt
+    echo "deepks_desc $total_des" >>$1
+    
+    process_npy "single" "abs" "dm_eig" "" "deepks_dm_eig" "$1"
 fi
 
 #---------------------------------------------------------------------------
-# Test for deepks_out_labels = 1 (requires deepks_scf = 1)
+# Test for deepks_out_labels = 1 and deepks_out_freq_elec > 0
 #---------------------------------------------------------------------------
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
-	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
-		deepks_e_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_etot.npy`
-	    echo "deepks_e_label $deepks_e_label" >>$1
-        deepks_edelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_etot.npy OUT.autotest/deepks_ebase.npy`
-        echo "deepks_edelta $deepks_edelta" >>$1
-        # For cal_force = 1
-        if ! test -z "$has_force" && [ $has_force == 1 ]; then
-            deepks_f_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_ftot.npy`
-            echo "deepks_f_label $deepks_f_label" >>$1
-            deepks_fdelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_ftot.npy OUT.autotest/deepks_fbase.npy`
-            echo "deepks_fdelta $deepks_fdelta" >>$1
-            deepks_fpre=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_gradvx.npy`
-            echo "deepks_fpre $deepks_fpre" >>$1
+    process_many_npys "single" "" "$1"
+
+	# force and stress not considered in deepks_out_freq_elec > 0, so not in process_many_npys
+    # For cal_force = 1
+    if ! test -z "$has_force" && [ $has_force == 1 ]; then
+        process_npy "single" "abs" "ftot" "" "deepks_f_label" "$1"
+        process_npy "single" "delta" "ftot" "fbase" "deepks_fdelta" "$1"
+        process_npy "single" "abs" "gradvx" "" "deepks_fpre" "$1"
+    fi
+    
+    # For cal_stress = 1
+    if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+        process_npy "single" "abs" "stot" "" "deepks_s_label" "$1"
+        process_npy "single" "delta" "stot" "sbase" "deepks_sdelta" "$1"
+        process_npy "single" "abs" "gvepsl" "" "deepks_spre" "$1"
+    fi
+
+    # For deepks_v_delta < 0
+    if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
+        python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8
+        echo "deepks_hr_label_pass $?" >>$1
+        python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8
+        echo "deepks_vdelta_r_pass $?" >>$1
+        # For deepks_v_delta = -1
+        if [ $deepks_v_delta -eq -1 ]; then
+            process_npy "single" "abs" "vdrpre" "" "deepks_vdrp" "$1"
         fi
-        # For cal_stress = 1
-        if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-            deepks_s_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_stot.npy`
-            echo "deepks_s_label $deepks_s_label" >>$1
-            deepks_sdelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_stot.npy OUT.autotest/deepks_sbase.npy`
-            echo "deepks_sdelta $deepks_sdelta" >>$1
-            deepks_spre=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_gvepsl.npy`
-            echo "deepks_spre $deepks_spre" >>$1
+        # For deepks_v_delta = -2
+        if [ $deepks_v_delta -eq -2 ]; then
+            process_npy "single" "abs" "phialpha_r" "" "deepks_phialpha_r" "$1"
+            process_npy "single" "numpy" "gevdm" "" "deepks_gevdm" "$1"
         fi
-        # For deepks_bandgap = 1
-        if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
-            deepks_o_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_otot.npy`
-            echo "deepks_o_label $deepks_o_label" >>$1
-            deepks_odelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_otot.npy OUT.autotest/deepks_obase.npy`
-            echo "deepks_odelta $deepks_odelta" >>$1
-            deepks_oprec=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_orbpre.npy`
-            echo "deepks_oprec $deepks_oprec" >> $1
-        fi
-        # For deepks_v_delta > 0
-        if ! test -z "$deepks_v_delta" && [ $deepks_v_delta > 0 ]; then
-            deepks_h_label=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_htot.npy`
-            echo "deepks_h_label $deepks_h_label" >>$1
-            deepks_vdelta=`python3 ../tools/get_sum_delta.py OUT.autotest/deepks_htot.npy OUT.autotest/deepks_hbase.npy`
-            echo "deepks_vdelta $deepks_vdelta" >>$1
-            # For deepks_v_delta = 1
-            if [ $deepks_v_delta == 1 ]; then
-                deepks_vdp=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_vdpre.npy `
-                echo "deepks_vdp $deepks_vdp" >> $1
-            fi
-            # For deepks_v_delta = 2
-            if [ $deepks_v_delta == 2 ]; then
-                deepks_phialpha=`python3 ../tools/get_sum_abs.py OUT.autotest/deepks_phialpha.npy `
-                echo "deepks_phialpha $deepks_phialpha" >> $1
-                deepks_gevdm=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
-                echo "deepks_gevdm $deepks_gevdm" >> $1
-            fi
-        fi
-    else
-        echo "Warning: deepks_out_labels = 1 requires deepks_scf = 1"
-        exit 1
+    fi
+    
+    # Process deepks_out_freq_elec > 0
+    if [ ! -z "$deepks_out_freq_elec" ] && [ $deepks_out_freq_elec -gt 0 ]; then
+        process_many_npys "multi" "_elec" "$1"
     fi
 fi
 
@@ -110,28 +192,24 @@ fi
 # Test for deepks_out_labels = 2
 #---------------------------------------------------------------------------
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 2 ]; then
-	deepks_atom=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_atom.npy `
-	echo "deepks_atom $deepks_atom" >> $1
-	deepks_box=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_box.npy `
-	echo "deepks_box $deepks_box" >> $1
-	deepks_energy=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_energy.npy `
-	echo "deepks_energy $deepks_energy" >> $1
-	if ! test -z "$has_force" && [ $has_force == 1 ]; then
-	    deepks_force=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_force.npy `
-		echo "deepks_force $deepks_force" >> $1
-	fi
-	if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-	    deepks_stress=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_stress.npy `
-		echo "deepks_stress $deepks_stress" >> $1
-	fi
-	if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
-	    deepks_orbital=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_orbital.npy `
-		echo "deepks_orbital $deepks_orbital" >> $1
-	fi
-	if ! test -z "$deepks_v_delta" && [[ $deepks_v_delta -gt 0 ]]; then
-	    deepks_hamiltonian=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_hamiltonian.npy `
-		echo "deepks_hamiltonian $deepks_hamiltonian" >> $1
-		deepks_overlap=`python3 ../tools/get_sum_numpy.py OUT.autotest/deepks_overlap.npy `
-		echo "deepks_overlap $deepks_overlap" >> $1
-	fi
+    process_npy "single" "numpy" "atom" "" "deepks_atom" "$1"
+    process_npy "single" "numpy" "box" "" "deepks_box" "$1"
+    process_npy "single" "numpy" "energy" "" "deepks_energy" "$1"
+    
+    if ! test -z "$has_force" && [ $has_force == 1 ]; then
+        process_npy "single" "numpy" "force" "" "deepks_force" "$1"
+    fi
+    
+    if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+        process_npy "single" "numpy" "stress" "" "deepks_stress" "$1"
+    fi
+    
+    if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
+        process_npy "single" "numpy" "orbital" "" "deepks_orbital" "$1"
+    fi
+    
+    if ! test -z "$deepks_v_delta" && [[ $deepks_v_delta -gt 0 ]]; then
+        process_npy "single" "numpy" "hamiltonian" "" "deepks_hamiltonian" "$1"
+        process_npy "single" "numpy" "overlap" "" "deepks_overlap" "$1"
+    fi
 fi
