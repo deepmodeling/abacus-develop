@@ -9,6 +9,7 @@
 #include "LRI_CV.h"
 #include "LRI_CV_Tools.h"
 #include "exx_abfs-abfs_index.h"
+#include "exx_abfs-construct_orbs.h"
 #include "RI_Util.h"
 #include "../../source_base/tool_title.h"
 #include "../../source_base/timer.h"
@@ -43,16 +44,22 @@ void LRI_CV<Tdata>::set_orbitals(
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 	const double &kmesh_times,
-	const double &ccp_rmesh_times_in)
+	ORB_gaunt_table& MGT,
+    const bool& init_MGT,
+    const bool& init_C)
 {
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
-	this->orb_cutoff_ = orb.cutoffs();
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
 	this->abfs_ccp = abfs_ccp_in;
-	this->ccp_rmesh_times = ccp_rmesh_times_in;
+
+	this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos);
+    this->abfs_ccp_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs_ccp);
+    const double lcaos_rmax = Exx_Abfs::Construct_Orbs::get_Rmax(this->lcaos);
+    const double abfs_ccp_rmax
+        = Exx_Abfs::Construct_Orbs::get_Rmax(this->abfs_ccp);
 
 	const ModuleBase::Element_Basis_Index::Range
 		range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
@@ -62,27 +69,50 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	this->m_abfs_abfs.init( 2, ucell,orb, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
-	this->m_abfs_abfs.init_radial( this->abfs_ccp, this->abfs );
-	this->m_abfs_abfs.init_radial_table();
+    int Lmax_v = std::numeric_limits<double>::min();
+    this->m_abfs_abfs.init(2, ucell, orb, kmesh_times, lcaos_rmax + abfs_ccp_rmax, Lmax_v);
+    int Lmax_c = std::numeric_limits<double>::min();
+    if (init_C)
+        this->m_abfslcaos_lcaos.init(1, ucell, orb, kmesh_times, lcaos_rmax, Lmax_c);
+    int Lmax = std::max(Lmax_v, Lmax_c);
 
-	this->m_abfslcaos_lcaos.init( 1, ucell , orb, kmesh_times, 1 );
-	this->m_abfslcaos_lcaos.init_radial( this->abfs_ccp, this->lcaos, this->lcaos );
-	this->m_abfslcaos_lcaos.init_radial_table();
+    if (init_MGT) {
+        MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+    }
+
+    this->m_abfs_abfs.init_radial(this->abfs_ccp, this->abfs, MGT);
+    this->m_abfs_abfs.init_radial_table();
+    if (init_C) {
+        this->m_abfslcaos_lcaos.init_radial(this->abfs_ccp,
+                                            this->lcaos,
+                                            this->lcaos,
+                                            MGT);
+        this->m_abfslcaos_lcaos.init_radial_table();
+    }
 
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 }
 
+template <typename Tdata>
+double LRI_CV<Tdata>::cal_V_Rcut(const int it0, const int it1) {
+    return this->abfs_ccp_rcut[it0] + this->lcaos_rcut[it1];
+}
 
+template <typename Tdata>
+double LRI_CV<Tdata>::cal_C_Rcut(const int it0, const int it1) {
+    return std::min(this->abfs_ccp_rcut[it0], this->lcaos_rcut[it0])
+           + this->lcaos_rcut[it1];
+}
 
 template<typename Tdata> template<typename Tresult>
 auto LRI_CV<Tdata>::cal_datas(
 	const UnitCell &ucell,
-	const std::vector<TA> &list_A0,
-	const std::vector<TAC> &list_A1,
-	const std::map<std::string,bool> &flags,
-	const double &rmesh_times,
-	const T_func_DPcal_data<Tresult> &func_DPcal_data)
+    const std::vector<TA>& list_A0,
+    const std::vector<TAC>& list_A1,
+    const std::map<std::string, bool>& flags,
+    const T_func_cal_Rcut& func_cal_Rcut,
+    const T_func_DPcal_data<Tresult>& func_DPcal_data)
 -> std::map<TA,std::map<TAC,Tresult>>
 {
 	ModuleBase::TITLE("LRI_CV","cal_datas");
@@ -104,9 +134,8 @@ auto LRI_CV<Tdata>::cal_datas(
 			const int ia1 = ucell.iat2ia[iat1];
 			const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
 			const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
-			const double Rcut = std::min(
-				orb_cutoff_[it0] * rmesh_times + orb_cutoff_[it1],
-				orb_cutoff_[it1] * rmesh_times + orb_cutoff_[it0]);
+			const double Rcut
+                = std::min(func_cal_Rcut(it0, it1), func_cal_Rcut(it1, it0));
 			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
 			if( R_delta.norm()*ucell.lat0 < Rcut )
 			{
@@ -137,7 +166,12 @@ auto LRI_CV<Tdata>::cal_Vs(
 		func_DPcal_V = std::bind(
 			&LRI_CV<Tdata>::DPcal_V, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	return this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_V);
+	const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_V_Rcut,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2);
+	
+	return this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_V);
 }
 
 template<typename Tdata>
@@ -153,7 +187,13 @@ auto LRI_CV<Tdata>::cal_dVs(
 		func_DPcal_dV = std::bind(
 			&LRI_CV<Tdata>::DPcal_dV, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-		return this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_dV);
+	
+	const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_V_Rcut,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2);
+
+	return this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_dV);
 }
 
 template<typename Tdata>
@@ -171,8 +211,13 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
 		func_DPcal_C_dC = std::bind(
 			&LRI_CV<Tdata>::DPcal_C_dC, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    const T_func_cal_Rcut func_cal_Rcut = std::bind(&LRI_CV<Tdata>::cal_C_Rcut,
+                                                    this,
+                                                    std::placeholders::_1,
+                                                    std::placeholders::_2);
+	
 	std::map<TA,std::map<TAC, std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>>
-		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, std::min(1.0,this->ccp_rmesh_times), func_DPcal_C_dC);
+		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, func_cal_Rcut, func_DPcal_C_dC);
 
 	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> dCs;

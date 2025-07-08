@@ -13,11 +13,12 @@ void Matrix_Orbs21::init(const int mode,
                          const UnitCell& ucell,
                          const LCAO_Orbitals& orb, 
                          const double kmesh_times, 
-                         const double rmesh_times)
+                         const double rmax,
+                         int& Lmax)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init");
     ModuleBase::timer::tick("Matrix_Orbs21", "init");
-    int Lmax_used, Lmax;
+    int Lmax_used;
 
     const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
@@ -30,7 +31,7 @@ void Matrix_Orbs21::init(const int mode,
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
     const int kmesh = orb.get_kmesh() * kmesh_times + 1;
-    int Rmesh = static_cast<int>(orb.get_Rmax() * rmesh_times / dr) + 4;
+    int Rmesh = static_cast<int>(rmax / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(3,
@@ -49,15 +50,17 @@ void Matrix_Orbs21::init(const int mode,
     //=========================================
     // (3) make Gaunt coefficients table
     //=========================================
-    this->MGT.init_Gaunt_CH(2 * Lmax + 1); // why +1
-    this->MGT.init_Gaunt(2 * Lmax + 1);
+    // this->MGT.init_Gaunt_CH(2 * Lmax + 1); // why +1
+    // this->MGT.init_Gaunt(2 * Lmax + 1);
+    Lmax = 2 * Lmax + 1;
 
     ModuleBase::timer::tick("Matrix_Orbs21", "init");
 }
 
 void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                                 const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
-                                const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B)
+                                const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
+                                const ORB_gaunt_table& MGT)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial");
@@ -84,7 +87,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                           orb_A2[TA][LA2][NA2],
                                                                           orb_B[TB][LB][NB],
                                                                           psb_,
-                                                                          this->MGT)));
+                                                                          MGT)));
                                 }
                             }
                         }
@@ -98,7 +101,8 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
 
 void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
                                 const LCAO_Orbitals& orb_A2,
-                                const LCAO_Orbitals& orb_B)
+                                const LCAO_Orbitals& orb_B,
+                                const ORB_gaunt_table& MGT)
 {
     ModuleBase::TITLE("Matrix_Orbs21", "init_radial");
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial");
@@ -125,7 +129,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
                                                                           orb_A2.Phi[TA].PhiLN(LA2, NA2),
                                                                           orb_B.Phi[TB].PhiLN(LB, NB),
                                                                           psb_,
-                                                                          this->MGT)));
+                                                                          MGT)));
                                 }
                             }
                         }
@@ -139,7 +143,7 @@ void Matrix_Orbs21::init_radial(const std::vector<std::vector<std::vector<Numeri
 
 void Matrix_Orbs21::init_radial_table()
 {
-    ModuleBase::TITLE("Matrix_Orbs21", "init_radial");
+    ModuleBase::TITLE("Matrix_Orbs21", "init_radial_table");
     ModuleBase::timer::tick("Matrix_Orbs21", "init_radial_table");
     for (auto& coA: center2_orb21_s) 
     {
