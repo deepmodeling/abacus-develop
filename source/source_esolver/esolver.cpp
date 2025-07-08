@@ -6,6 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
+#include "esolver_double_xc.h"
 #include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
@@ -203,13 +204,24 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
         if (PARAM.globalv.gamma_only_local)
         {
-            return new ESolver_KS_LCAO<double, double>();
+            if (PARAM.inp.deepks_out_base != "none")
+            {
+                return new ESolver_DoubleXC<double, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<double, double>();
+            }
         }
         else if (PARAM.inp.nspin < 4)
         {
             if (PARAM.inp.dm_to_rho)
             {
                 return new ESolver_DM2rho<std::complex<double>, double>();
+            }
+            else if (PARAM.inp.deepks_out_base != "none")
+            {
+                return new ESolver_DoubleXC<std::complex<double>, double>();
             }
             else
             {
@@ -221,6 +233,10 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
             if (PARAM.inp.dm_to_rho)
             {
                 return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+            }
+            else if (PARAM.inp.deepks_out_base != "none")
+            {
+                return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
             }
             else
             {

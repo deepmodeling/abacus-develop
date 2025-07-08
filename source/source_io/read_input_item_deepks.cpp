@@ -26,6 +26,18 @@ void ReadInput::item_deepks()
         this->add_item(item);
     }
     {
+        Input_Item item("deepks_out_base");
+        item.annotation = "base functional for output files, with dft_functional as target functional";
+        read_sync_string(input.deepks_out_base);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.deepks_out_labels == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_base, please set deepks_out_labels > 0 ");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("deepks_scf");
         item.annotation = ">0 add V_delta to Hamiltonian";
         read_sync_bool(input.deepks_scf);

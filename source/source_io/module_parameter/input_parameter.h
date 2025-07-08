@@ -267,6 +267,8 @@ struct Input_para
                                        ///< descriptors for training, wenfei 2022-1-12
     int deepks_out_freq_elec = 0;      ///< (need libnpy) frequency of electronic iteration to output
                                        ///< descriptors and labels, default is 0, which means no output until convergence
+    std::string deepks_out_base = "none"; ///< (need libnpy) base functional for output files, with dft_functional as target functional
+                                       ///  default is "none", which means no base functional
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
     int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
