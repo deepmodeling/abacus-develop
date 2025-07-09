@@ -226,23 +226,11 @@ TEST_F(MSST_test, print_md)
     std::ifstream ifs("running_msst.log");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " ELECTRONIC      PART OF STRESS: 0.2461 kbar"
-        ));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " IONIC (KINETIC) PART OF STRESS: 0.830154 kbar"
-        ));
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
     getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " MD PRESSURE (ELECTRONS+IONS)  : 1.07625 kbar"
-        ));
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
     getline(ifs, output_str);    
     getline(ifs, output_str);
     EXPECT_THAT(

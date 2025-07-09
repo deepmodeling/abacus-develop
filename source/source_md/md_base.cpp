@@ -184,15 +184,15 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
               << std::endl;
 
     // running_log output
-    
+    ofs.unsetf(std::ios::fixed);
+    ofs << std::setprecision(8);
+
     if (cal_stress)
     {
         MD_func::print_stress(ofs, virial, stress);
-	ofs << std::endl;
+	    ofs << std::endl;
     }
 
-    ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8);
     ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
     ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
