@@ -28,11 +28,11 @@ TD_info::TD_info(const UnitCell* ucell_in)
     if(PARAM.inp.mdp.md_restart)
     {
         std::stringstream ssc;
-        ssc << PARAM.globalv.global_readin_dir << "Restart_td.dat";
+        ssc << PARAM.globalv.global_readin_dir << "Restart_td.txt";
         std::ifstream file(ssc.str().c_str());
         if (!file)
         {
-            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.dat!");
+            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.txt!");
         }
         file >> estep_shift;
         //std::cout<<"estep_shift"<<estep_shift<<std::endl;
@@ -164,10 +164,10 @@ void TD_info::out_restart_info(const int nstep,
     if (GlobalV::MY_RANK == 0)
     {
         // open file
-        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.dat";
+        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.txt";
         std::ofstream outFile(outdir);
         if (!outFile) {
-            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.dat!");
+            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.txt!");
         }
         // write data
         outFile << nstep << std::endl;

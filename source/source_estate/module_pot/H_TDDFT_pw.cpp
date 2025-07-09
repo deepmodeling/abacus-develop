@@ -45,7 +45,7 @@ double H_TDDFT_pw::lcut2;
 // velocity gauge
 ModuleBase::Vector3<double> H_TDDFT_pw::At;
 ModuleBase::Vector3<double> H_TDDFT_pw::At_laststep;
-// hybrid gague
+// hybrid gauge
 ModuleBase::Vector3<double> H_TDDFT_pw::Et;
 // time domain parameters
 
@@ -85,12 +85,12 @@ std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
 {
     std::stringstream ssc;
-    ssc << file_dir << "Restart_td.dat";
+    ssc << file_dir << "Restart_td.txt";
     std::ifstream file(ssc.str().c_str());
 
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_td.dat!");
+        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_td.txt!");
     }
 
     file >> istep;
@@ -104,7 +104,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
-    // skip if not length gague
+    // skip if not length gauge
     if (stype != 0)
     {
         return;

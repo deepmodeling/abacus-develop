@@ -279,7 +279,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& uce
 #endif
                 target_DMR_mat_vec[ir] = target_mat->get_pointer();
                 double arg_td = 0.0;
-                //cal tddft phase for hybrid gague
+                //cal tddft phase for hybrid gauge
                 ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
                 arg_td = At * dtau * ucell.lat0;
                 for(int ik = 0; ik < this->_nk; ++ik)

@@ -182,7 +182,7 @@ class DensityMatrix
     void cal_DMR(const int ik_in = -1);
 
     /**
-     * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gague tddft
+     * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */

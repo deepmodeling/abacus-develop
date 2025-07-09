@@ -58,7 +58,7 @@ class TD_info
     }
 
 
-    // folding HR to hk, for hybrid gague
+    // folding HR to hk, for hybrid gauge
     template<typename TR>
     void folding_HR_td(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,

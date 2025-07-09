@@ -295,7 +295,6 @@ exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #
 
 #Parameters (16.tddft)
-td_force_dt                    0.02 #time of force change
 td_vext                        0 #add extern potential or not
 td_vext_dire                   1 #extern potential direction
 td_propagator                     0 # method of propagator
