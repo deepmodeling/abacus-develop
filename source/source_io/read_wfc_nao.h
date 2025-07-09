@@ -44,8 +44,8 @@ bool read_wfc_nao(
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int nstep = -1,
-    const int skip_band = 0);
+    const int skip_band = 0,
+    const int nstep = -1);
 
 } // namespace ModuleIO
 

@@ -131,7 +131,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 
 	// Act
 	ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			&(pelec), ik2iktot, nkstot, nspin, nstep, skip_band);
+			&(pelec), ik2iktot, nkstot, nspin, skip_band, nstep);
 
     // Assert
     EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);

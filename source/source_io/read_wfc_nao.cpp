@@ -30,8 +30,8 @@ bool ModuleIO::read_wfc_nao(
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int nstep,
-    const int skip_band)
+    const int skip_band,
+    const int nstep)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");

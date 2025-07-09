@@ -104,6 +104,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
                     this->pelec->klist->ik2iktot,
                     this->pelec->klist->get_nkstot(),
 					PARAM.inp.nspin,
+                    0,
                     TD_info::estep_shift))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
