@@ -21,7 +21,7 @@ void folding_HR_td(const hamilt::HContainer<TR>& hR,
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
 
             //new
-            //cal tddft phase for hybrid gague
+            //cal tddft phase for hybrid gauge
             const int iat1 = tmp.get_atom_i();
             const int iat2 = tmp.get_atom_j();
             ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat2, r_index);

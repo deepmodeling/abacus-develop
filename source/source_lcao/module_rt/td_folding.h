@@ -4,7 +4,7 @@
 #include "source_base/abfs-vector3_order.h"
 
 namespace module_rt{
-// folding HR to hk, for hybrid gague
+// folding HR to hk, for hybrid gauge
 template<typename TR>
 void folding_HR_td(const hamilt::HContainer<TR>& hR,
             std::complex<double>* hk,

@@ -238,7 +238,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::init_td()
 template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
-    //std::cout<<"hybrid gague" <<std::endl;
+    //std::cout<<"hybrid gauge" <<std::endl;
     this->cart_At = TD_info::cart_At;
     //std::cout<<"At: "<< TD_info::td_vel_op->cart_At[0] <<" "<<TD_info::td_vel_op->cart_At[1]<<" "<<TD_info::td_vel_op->cart_At[2]<<" "<<std::endl;
     Et = elecstate::H_TDDFT_pw::Et;
