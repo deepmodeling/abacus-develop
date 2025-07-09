@@ -28,12 +28,6 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
-        Input_Item item("td_dt");
-        item.annotation = "time step of propagation";
-        read_sync_double(input.td_dt);
-        this->add_item(item);
-    }
-    {
         Input_Item item("td_vext");
         item.annotation = "add extern potential or not";
         read_sync_bool(input.td_vext);
