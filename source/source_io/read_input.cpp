@@ -189,11 +189,17 @@ void ReadInput::create_directory(const Parameter& param)
     {
         out_dir = true;
     }
+    bool out_wfc_dir = false;
+    if (param.input.out_wfc_lcao && !param.input.out_app_flag)
+    {
+        out_wfc_dir = true;
+    }
     // NOTE: "make_dir_out" must be called by all processes!!!
     //       Maybe it is not good, because only rank 0 can create the directory.
     ModuleBase::Global_File::make_dir_out(param.input.suffix,
                                           param.input.calculation,
                                           out_dir,
+                                          out_wfc_dir,
                                           this->rank,
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
@@ -372,7 +378,7 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
         {
             ofs << "\n#Parameters (8.DeepKS)" << std::endl;
         }
-        else if (p_item->label == "td_force_dt")
+        else if (p_item->label == "td_dt")
         {
             ofs << "\n#Parameters (9.rt-tddft)" << std::endl;
         }

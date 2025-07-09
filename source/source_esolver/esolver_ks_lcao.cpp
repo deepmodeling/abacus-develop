@@ -161,7 +161,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 5) read psi from file
-    if (PARAM.inp.init_wfc == "file")
+    if (PARAM.inp.init_wfc == "file"&& PARAM.inp.esolver_type != "tddft")
 	{
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
 					this->pv, 

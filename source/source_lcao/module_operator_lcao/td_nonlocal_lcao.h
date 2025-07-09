@@ -6,7 +6,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_rt/td_velocity.h"
+#include "source_lcao/module_rt/td_info.h"
 
 #include <unordered_map>
 
@@ -78,7 +78,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void initialize_HR_tmp(const Parallel_Orbitals* paraV);
     /// @brief init vector potential for td_nonlocal term
-    void init_td();
+    void update_td();
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * nearest neighbor atoms don't need to be calculated again

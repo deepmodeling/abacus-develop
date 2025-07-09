@@ -5,7 +5,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "source_lcao/module_rt/td_current.h"
+#include "source_lcao/module_rt/velocity_op.h"
 namespace LR
 {
     template<typename T>
@@ -52,8 +52,8 @@ namespace LR
         /// calculate the transition dipole of all states in length gauge
         void cal_transition_dipoles_length();
         /// calculate the transition dipole of state S in velocity gauge: $i(\sum_{iak}X^S_{iak}<ik|v|ak>)/\Omega_S$
-        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_R(const int istate, const TD_current& vR);
-        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_k(const int istate, const TD_current& vR);
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_R(const int istate, const Velocity_op<std::complex<double>>& vR);
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_k(const int istate, const Velocity_op<std::complex<double>>& vR);
         /// calculate the transition dipole of all states in velocity gauge
         void cal_transition_dipoles_velocity();
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);

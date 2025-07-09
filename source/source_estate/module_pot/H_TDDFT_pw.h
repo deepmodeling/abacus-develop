@@ -72,6 +72,8 @@ class H_TDDFT_pw : public PotBase
 
     // velocity gauge, vector magnetic potential
     static ModuleBase::Vector3<double> At;
+    static ModuleBase::Vector3<double> At_laststep;
+    static ModuleBase::Vector3<double> Et;
 
     // time domain parameters
 
@@ -144,7 +146,7 @@ class H_TDDFT_pw : public PotBase
     static double cal_v_time_Gauss(const bool last);
     static double cal_v_time_trapezoid(const bool last);
     static double cal_v_time_trigonometric(const bool last);
-    static double cal_v_time_heaviside();
+    static double cal_v_time_heaviside(const bool last);
     // double cal_v_time_HHG();
 
     // get ncut number for At integral
@@ -156,3 +158,4 @@ class H_TDDFT_pw : public PotBase
 } // namespace elecstate
 
 #endif
+

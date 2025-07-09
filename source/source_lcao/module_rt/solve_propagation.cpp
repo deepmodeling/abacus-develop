@@ -4,6 +4,7 @@
 
 #include "source_base/lapack_connector.h"
 #include "source_base/scalapack_connector.h"
+#include "source_pw/module_pwdft/global.h"
 
 namespace module_rt
 {
@@ -25,14 +26,16 @@ void solve_propagation(const Parallel_Orbitals* pv,
     std::complex<double>* operator_B = new std::complex<double>[pv->nloc];
     ModuleBase::GlobalFunc::ZEROS(operator_B, pv->nloc);
     BlasConnector::copy(pv->nloc, Htmp, 1, operator_B, 1);
+
+    const double dt_au = dt / ModuleBase::AU_to_FS;
     
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (2) compute operator_A & operator_B by GEADD
     // operator_A = Stmp + i*para * Htmp;   beta2 = para = 0.25 * dt
     // operator_B = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * dt
     std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta1 = {0.0, -0.25 * dt};
-    std::complex<double> beta2 = {0.0, 0.25 * dt};
+    std::complex<double> beta1 = {0.0, -0.25 * dt_au};
+    std::complex<double> beta2 = {0.0, 0.25 * dt_au};
 
     ScalapackConnector::geadd('N',
                               nlocal,

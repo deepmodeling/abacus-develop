@@ -5,6 +5,7 @@ calculation        md
 esolver_type       tddft
 md_type            nve
 md_nstep           2
+estep_per_md       1 
 md_dt              0.05
 md_tfirst          0
 
