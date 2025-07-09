@@ -184,6 +184,19 @@ TEST_F(FIREtest, PrintMD)
     std::ifstream ifs("running_fire.log");
     std::string output_str;
 
+    // Line 6
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.2461 kbar"));
+
+    // Line 7
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.838539 kbar"));
+
+    // Line 5
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.08464 kbar"));
+    
+    getline(ifs, output_str);
     // Line 1
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
@@ -209,17 +222,7 @@ TEST_F(FIREtest, PrintMD)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
 
-    // Line 5
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
-
-    // Line 6
-    getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
-
-    // Line 7
-    getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
 
     // Line 8
 	getline(ifs, output_str);
