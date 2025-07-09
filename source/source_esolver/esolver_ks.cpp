@@ -57,23 +57,23 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     classname = "ESolver_KS";
     basisname = "";
 
-    scf_thr = PARAM.inp.scf_thr;
-    scf_ene_thr = PARAM.inp.scf_ene_thr;
-    maxniter = PARAM.inp.scf_nmax;
+    scf_thr = inp.scf_thr;
+    scf_ene_thr = inp.scf_ene_thr;
+    maxniter = inp.scf_nmax;
     niter = maxniter;
     drho = 0.0;
 
-    std::string fft_device = PARAM.inp.device;
+    std::string fft_device = inp.device;
 
     // Fast Fourier Transform
     // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(PARAM.inp.basis_type == "lcao")
+    if(inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
-    std::string fft_precision = PARAM.inp.precision;
+    std::string fft_precision = inp.precision;
 #ifdef __ENABLE_FLOAT_FFTW
-    if (PARAM.inp.cal_cond && PARAM.inp.esolver_type == "sdft")
+    if (inp.cal_cond && inp.esolver_type == "sdft")
     {
         fft_precision = "mixing";
     }
@@ -83,7 +83,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12
-    tmp->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
+    tmp->setbxyz(inp.bx, inp.by, inp.bz);
 
     ///----------------------------------------------------------
     /// charge mixing
@@ -92,7 +92,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
 
     // cell_factor
-    this->ppcell.cell_factor = PARAM.inp.cell_factor;
+    this->ppcell.cell_factor = inp.cell_factor;
 
 
     //! 3) it has been established that
@@ -103,16 +103,16 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 4) setup the charge mixing parameters
-    p_chgmix->set_mixing(PARAM.inp.mixing_mode,
-                         PARAM.inp.mixing_beta,
-                         PARAM.inp.mixing_ndim,
-                         PARAM.inp.mixing_gg0,
-                         PARAM.inp.mixing_tau,
-                         PARAM.inp.mixing_beta_mag,
-                         PARAM.inp.mixing_gg0_mag,
-                         PARAM.inp.mixing_gg0_min,
-                         PARAM.inp.mixing_angle,
-                         PARAM.inp.mixing_dmr,
+    p_chgmix->set_mixing(inp.mixing_mode,
+                         inp.mixing_beta,
+                         inp.mixing_ndim,
+                         inp.mixing_gg0,
+                         inp.mixing_tau,
+                         inp.mixing_beta_mag,
+                         inp.mixing_gg0_mag,
+                         inp.mixing_gg0_min,
+                         inp.mixing_angle,
+                         inp.mixing_dmr,
                          ucell.omega,
                          ucell.tpiba);
 
@@ -127,7 +127,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     }
 
     //! 6) Setup the k points according to symmetry.
-    this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 7) print information
