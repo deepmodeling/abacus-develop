@@ -58,7 +58,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         if (TD_info::td_vel_op == nullptr)
         {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
+            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gague infos is null!");
         }
         for (int dir = 0; dir < 3; dir++)
         {
@@ -250,12 +250,12 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                 double arg_td = 0.0;
                 if(elecstate::H_TDDFT_pw::stype == 2)
                 {
-                    //cal tddft phase for hybrid gauge
+                    //cal tddft phase for hybrid gague
                     const int iat1 = tmp_ap_real.get_atom_i();
                     const int iat2 = tmp_ap_real.get_atom_j();
                     ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
                     double& tmp_lat0 = ucell.lat0;
-                    arg_td = TD_info::td_vel_op->cart_At * dtau * tmp_lat0;
+                    arg_td = TD_info::cart_At * dtau * tmp_lat0;
                 }
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
@@ -320,12 +320,12 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                     if(elecstate::H_TDDFT_pw::stype == 2)
                     {
                         //new
-                        //cal tddft phase for mixing gauge
+                        //cal tddft phase for mixing gague
                         const int iat1 = tmp_ap_real.get_atom_i();
                         const int iat2 = tmp_ap_real.get_atom_j();
                         ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
                         double& tmp_lat0 = ucell.lat0;
-                        arg_td = TD_info::td_vel_op->cart_At * dtau * tmp_lat0;
+                        arg_td = TD_info::cart_At * dtau * tmp_lat0;
                     }
                     const double arg = (DM_real.get_kvec_d()[ik] * dR) * ModuleBase::TWO_PI + arg_td;
                     double sinp, cosp;
@@ -424,7 +424,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     {
         if (TD_info::td_vel_op == nullptr)
         {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
+            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gague infos is null!");
         }
         for (int dir = 0; dir < 3; dir++)
         {

@@ -375,6 +375,8 @@
     - [out\_wannier\_unk](#out_wannier_unk)
     - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
   - [rt-TDDFT: Real-time time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [estep\_per\_md](#estep_per_md)
+    - [td\_dt](#td_dt)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
     - [td\_propagator](#td_propagator)
@@ -3687,6 +3689,18 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## TDDFT: time dependent density functional theory
 
+### estep_per_md
+
+- **Type**: Integer
+- **Description**: The number of electron propagation steps between two ionic steps.
+- **Default**: 1
+
+### td_dt
+
+- **Type**: Real
+- **Description**: The time step used in electron propagation. Setting td_dt will reset the md_dt value to td_dt * estep_per_md.
+- **Default**: md_dt/estep_per_md
+
 ### td_edm
 
 - **Type**: Integer
@@ -3739,6 +3753,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   Type of electric field in space domain
   - 0: length gauge.
   - 1: velocity gauge.
+  - 2: hybrid gauge.
 - **Default**: 0
 
 ### td_ttype

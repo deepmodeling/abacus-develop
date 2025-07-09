@@ -227,7 +227,7 @@ template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::update_td()
 {
     //std::cout<<"velocity"<<std::endl;
-    this->cart_At = TD_info::td_vel_op->cart_At;
+    this->cart_At = TD_info::cart_At;
 }
 
 template <typename TK, typename TR>

@@ -39,7 +39,7 @@ class TD_info
     static int estep_shift;
 
     /// @brief Store the vector potential for tddft calculation
-    ModuleBase::Vector3<double> cart_At;
+    static ModuleBase::Vector3<double> cart_At;
 
     /// @brief calculate the At in cartesian coordinate
     void cal_cart_At(const ModuleBase::Vector3<double>& At);
@@ -56,15 +56,6 @@ class TD_info
     {
         return this->current_term[i];
     }
-
-
-    // folding HR to hk, for hybrid gauge
-    template<typename TR>
-    void folding_HR_td(const hamilt::HContainer<TR>& hR,
-                std::complex<double>* hk,
-                const ModuleBase::Vector3<double>& kvec_d_in,
-                const int ncol,
-                const int hk_type);
 
     int get_istep()
     {

@@ -8,6 +8,7 @@
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include <vector>
 #include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/td_folding.h"
 
 template <typename TK, typename TR>
 hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hsk_in,
@@ -231,7 +232,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            TD_info::td_vel_op->folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1);
+            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1, ucell, TD_info::cart_At);
         }
         else
         {
@@ -243,7 +244,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            TD_info::td_vel_op->folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
+            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0, ucell, TD_info::cart_At);
         }
         else
         {

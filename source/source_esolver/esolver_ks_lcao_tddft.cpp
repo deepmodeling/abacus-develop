@@ -144,9 +144,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         {
             elecstate::H_TDDFT_pw::update_At();
             td_p->cal_cart_At(elecstate::H_TDDFT_pw::At);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", td_p->cart_At[0]);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", td_p->cart_At[1]);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", td_p->cart_At[2]);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", TD_info::cart_At[0]);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", TD_info::cart_At[1]);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", TD_info::cart_At[2]);
         }
 
         if(estep!=0)
@@ -588,7 +588,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, this->psi[0], *(_pes->DM));
     if(PARAM.inp.td_stype == 2)
     {
-        _pes->DM->cal_DMR_td(ucell, td_p->cart_At);
+        _pes->DM->cal_DMR_td(ucell, TD_info::cart_At);
     }
     else
     {

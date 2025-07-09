@@ -1,11 +1,14 @@
-#include "td_info.h"
+#include "td_folding.h"
 #include "source_base/libm/libm.h"
+namespace module_rt{
 template<typename TR>
-void TD_info::folding_HR_td(const hamilt::HContainer<TR>& hR,
+void folding_HR_td(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const int ncol,
-                const int hk_type)
+                const int hk_type,
+                const UnitCell& ucell,
+                const ModuleBase::Vector3<double>& cart_At)
 {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -18,11 +21,11 @@ void TD_info::folding_HR_td(const hamilt::HContainer<TR>& hR,
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
 
             //new
-            //cal tddft phase for hybrid gauge
+            //cal tddft phase for hybrid gague
             const int iat1 = tmp.get_atom_i();
             const int iat2 = tmp.get_atom_j();
-            ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat2, r_index);
-            const double arg_td = cart_At * dtau * ucell->lat0;
+            ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
+            const double arg_td = cart_At * dtau * ucell.lat0;
             //new
 
             // cal k_phase
@@ -39,14 +42,19 @@ void TD_info::folding_HR_td(const hamilt::HContainer<TR>& hR,
     }
 }
 template
-void TD_info::folding_HR_td<double>(const hamilt::HContainer<double>& hR,
+void folding_HR_td<double>(const hamilt::HContainer<double>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const int ncol,
-                const int hk_type);
+                const int hk_type,
+                const UnitCell& ucell,
+                const ModuleBase::Vector3<double>& At);
 template
-void TD_info::folding_HR_td<std::complex<double>>(const hamilt::HContainer<std::complex<double>>& hR,
+void folding_HR_td<std::complex<double>>(const hamilt::HContainer<std::complex<double>>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const int ncol,
-                const int hk_type);
+                const int hk_type,
+                const UnitCell& ucell,
+                const ModuleBase::Vector3<double>& At);
+}// namespace module_rt

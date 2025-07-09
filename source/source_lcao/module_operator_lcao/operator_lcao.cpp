@@ -13,6 +13,7 @@
 #endif
 
 #include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/td_folding.h"
 
 namespace hamilt {
 
@@ -268,7 +269,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int nrow = this->hsk->get_pv()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            TD_info::td_vel_op->folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
         }
         else
         {
@@ -280,7 +281,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            TD_info::td_vel_op->folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
         }
         else
         {

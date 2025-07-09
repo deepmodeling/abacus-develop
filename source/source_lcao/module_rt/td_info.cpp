@@ -15,6 +15,7 @@ TD_info* TD_info::td_vel_op = nullptr;
 int TD_info::estep_shift = 0;
 int TD_info::istep = -1;
 int TD_info::max_istep = -1;
+ModuleBase::Vector3<double> TD_info::cart_At;
 std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
 
 TD_info::TD_info(const UnitCell* ucell_in)
@@ -28,11 +29,11 @@ TD_info::TD_info(const UnitCell* ucell_in)
     if(PARAM.inp.mdp.md_restart)
     {
         std::stringstream ssc;
-        ssc << PARAM.globalv.global_readin_dir << "Restart_td.txt";
+        ssc << PARAM.globalv.global_readin_dir << "Restart_td.dat";
         std::ifstream file(ssc.str().c_str());
         if (!file)
         {
-            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.txt!");
+            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.dat!");
         }
         file >> estep_shift;
         //std::cout<<"estep_shift"<<estep_shift<<std::endl;
@@ -92,12 +93,12 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
     istep++;
     if (init_vecpot_file)
     {
-        this->cart_At = At_from_file[istep > max_istep ? max_istep : istep];
+        cart_At = At_from_file[istep > max_istep ? max_istep : istep];
     }
     else
     {
         // transfrom into atomic unit
-        this->cart_At = At / 2.0;
+        cart_At = At / 2.0;
     }
     // output the vector potential if needed
     if (out_vecpot == true)
@@ -164,10 +165,10 @@ void TD_info::out_restart_info(const int nstep,
     if (GlobalV::MY_RANK == 0)
     {
         // open file
-        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.txt";
+        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.dat";
         std::ofstream outFile(outdir);
         if (!outFile) {
-            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.txt!");
+            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.dat!");
         }
         // write data
         outFile << nstep << std::endl;
