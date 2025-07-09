@@ -11,7 +11,7 @@ void folding_HR_td(const hamilt::HContainer<TR>& hR,
             const ModuleBase::Vector3<double>& kvec_d_in,
             const int ncol,
             const int hk_type,
-            const UnitCell& ucell,
+            const UnitCell* ucell,
             const ModuleBase::Vector3<double>& At);
 }// namespace module_rt
 
