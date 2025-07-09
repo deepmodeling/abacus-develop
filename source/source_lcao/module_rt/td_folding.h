@@ -1,5 +1,7 @@
 #ifndef TD_FOLDING_H
 #define TD_FOLDING_H
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_base/abfs-vector3_order.h"
 
 namespace module_rt{
 // folding HR to hk, for hybrid gague
@@ -12,3 +14,5 @@ void folding_HR_td(const hamilt::HContainer<TR>& hR,
             const UnitCell& ucell,
             const ModuleBase::Vector3<double>& At);
 }// namespace module_rt
+
+#endif
