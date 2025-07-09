@@ -462,7 +462,7 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
+    	}' OUT.autotest/WFC/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
 		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
