@@ -60,12 +60,6 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ESolver_FP::before_all_runners(ucell, inp);
 
     // save necessary parameters
-    this->of_kinetic_ = inp.of_kinetic;
-    this->of_method_ = inp.of_method;
-    this->of_conv_ = inp.of_conv;
-    this->of_tole_ = inp.of_tole;
-    this->of_tolp_ = inp.of_tolp;
-    this->max_iter_ = inp.scf_nmax;
     this->dV_ = ucell.omega / this->pw_rho->nxyz;
     this->bound_cal_potential_
         = std::bind(&ESolver_OF::cal_potential, this, std::placeholders::_1, std::placeholders::_2, std::ref(ucell));
@@ -422,7 +416,7 @@ void ESolver_OF::update_rho()
 }
 
 /**
- * @brief Check convergence, return ture if converge or iter >= max_iter_,
+ * @brief Check convergence, return ture if converge or iter >= PARAM.inp.scf_nmax,
  * and print the necessary information
  *
  * @return exit or not
@@ -434,7 +428,7 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
 
-    if (this->normdLdphi_ < this->of_tolp_)
+    if (this->normdLdphi_ < PARAM.inp.of_tolp)
     {
         potConv = true;
     }
@@ -444,23 +438,23 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
         potHold = true;
     }
 
-    if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
-        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
+    if (this->iter_ >= 3 && std::abs(this->energy_current_ - this->energy_last_) < PARAM.inp.of_tole
+        && std::abs(this->energy_current_ - this->energy_llast_) < PARAM.inp.of_tole)
     {
         energyConv = true;
     }
 
-    conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
-                         || (this->of_conv_ == "both" && potConv && energyConv);
+    conv_esolver = (PARAM.inp.of_conv == "energy" && energyConv) || (PARAM.inp.of_conv == "potential" && potConv)
+                         || (PARAM.inp.of_conv == "both" && potConv && energyConv);
 
     this->print_info(conv_esolver);
 
-    if (conv_esolver || this->iter_ >= this->max_iter_)
+    if (conv_esolver || this->iter_ >= PARAM.inp.scf_nmax)
     {
         return true;
     }
     // ============ temporary solution of potential convergence ===========
-    else if (this->of_conv_ == "potential" && potHold)
+    else if (PARAM.inp.of_conv == "potential" && potHold)
     {
         GlobalV::ofs_warning << "ESolver_OF WARNING: "
                              << "The convergence of potential has not been reached, but the norm of potential nearly "

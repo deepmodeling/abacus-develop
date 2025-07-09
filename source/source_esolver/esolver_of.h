@@ -38,14 +38,6 @@ class ESolver_OF : public ESolver_FP
     ModuleBase::Opt_DCsrch* opt_dcsrch_ = nullptr;
     ModuleBase::Opt_CG* opt_cg_mag_ = nullptr; // for spin2 case, under testing
 
-    // ----------------- necessary parameters from INPUT ------------
-    std::string of_kinetic_ = "wt";  // Kinetic energy functional, such as TF, VW, WT
-    std::string of_method_ = "tn";   // optimization method, include cg1, cg2, tn (default), bfgs
-    std::string of_conv_ = "energy"; // select the convergence criterion, potential, energy (default), or both
-    double of_tole_ = 2e-6; // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
-    double of_tolp_ = 1e-5; // tolerance of potential for determining the convergence, default=1e-5 in a.u.
-    int max_iter_ = 50;     // scf_nmax
-
     // ------------------ parameters from other module --------------
     double dV_ = 0;           // volume of one grid point in real space
     double* nelec_ = nullptr; // number of electrons with each spin

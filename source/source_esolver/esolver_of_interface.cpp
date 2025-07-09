@@ -16,7 +16,7 @@ void ESolver_OF::init_opt()
         this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
     }
 
-    if (this->of_method_ == "tn")
+    if (PARAM.inp.of_method == "tn")
     {
         if (this->opt_tn_ == nullptr)
         {
@@ -25,7 +25,7 @@ void ESolver_OF::init_opt()
         this->opt_tn_->allocate(this->pw_rho->nrxx);
         this->opt_tn_->set_para(this->dV_);
     }
-    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
+    else if (PARAM.inp.of_method == "cg1" || PARAM.inp.of_method == "cg2")
     {
         if (this->opt_cg_ == nullptr)
         {
@@ -35,7 +35,7 @@ void ESolver_OF::init_opt()
         this->opt_cg_->set_para(this->dV_);
         this->opt_dcsrch_->set_paras(1e-4, 1e-2);
     }
-    else if (this->of_method_ == "bfgs")
+    else if (PARAM.inp.of_method == "bfgs")
     {
         ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
         return;
@@ -62,7 +62,7 @@ void ESolver_OF::get_direction(UnitCell& ucell)
 {
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        if (this->of_method_ == "tn")
+        if (PARAM.inp.of_method == "tn")
         {
             this->tn_spin_flag_ = is;
             opt_tn_->next_direct(this->pphi_[is],
@@ -72,15 +72,15 @@ void ESolver_OF::get_direction(UnitCell& ucell)
                                  this,
                                  &ESolver_OF::cal_potential_wrapper);
         }
-        else if (this->of_method_ == "cg1")
+        else if (PARAM.inp.of_method == "cg1")
         {
             opt_cg_->next_direct(this->pdLdphi_[is], 1, this->pdirect_[is]);
         }
-        else if (this->of_method_ == "cg2")
+        else if (PARAM.inp.of_method == "cg2")
         {
             opt_cg_->next_direct(this->pdLdphi_[is], 2, this->pdirect_[is]);
         }
-        else if (this->of_method_ == "bfgs")
+        else if (PARAM.inp.of_method == "bfgs")
         {
             return;
         }

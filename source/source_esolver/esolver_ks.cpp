@@ -57,10 +57,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     classname = "ESolver_KS";
     basisname = "";
 
-    scf_thr = inp.scf_thr;
-    scf_ene_thr = inp.scf_ene_thr;
-    maxniter = inp.scf_nmax;
-    niter = maxniter;
+    niter = inp.scf_nmax;
     drho = 0.0;
 
     std::string fft_device = inp.device;
@@ -235,9 +232,9 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     // 2) SCF iterations
     //----------------------------------------------------------------
     bool conv_esolver = false;
-    this->niter = this->maxniter;
+    this->niter = PARAM.inp.scf_nmax;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
-    for (int iter = 1; iter <= this->maxniter; ++iter)
+    for (int iter = 1; iter <= PARAM.inp.scf_nmax; ++iter)
     {
 		//----------------------------------------------------------------
 		// 3) initialization of SCF iterations
@@ -398,10 +395,10 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         }
 #endif
 
-        conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
+        conv_esolver = (drho < PARAM.inp.scf_thr && not_restart_step && is_U_converged);
 
         // add energy threshold for SCF convergence
-        if (this->scf_ene_thr > 0.0)
+        if (PARAM.inp.scf_ene_thr > 0.0)
         {
             // calculate energy of output charge density
             this->update_pot(ucell, istep, iter, conv_esolver);
@@ -415,7 +412,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
             {
                 // update the convergence flag
                 conv_esolver
-                    = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
+                    = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < PARAM.inp.scf_ene_thr);
             }
         }
 
