@@ -298,7 +298,12 @@ void Input_Conv::Convert()
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
             || dft_functional_lower == "opt_orb"
-            || dft_functional_lower == "scan0") {
+            || dft_functional_lower == "scan0"
+            || dft_functional_lower == "lc_pbe"
+            || dft_functional_lower == "lc_wpbe" 
+            || dft_functional_lower == "lrc_wpbe"
+            || dft_functional_lower == "lrc_wpbeh"
+            || dft_functional_lower == "cam_pbeh") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
         }
@@ -323,10 +328,15 @@ void Input_Conv::Convert()
                    dft_functional_lower.begin(),
                    tolower);
     if (dft_functional_lower == "hf"
-     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
-     || dft_functional_lower == "scan0"
-     || dft_functional_lower == "muller" || dft_functional_lower == "power"
-     || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
+    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
+    || dft_functional_lower == "scan0"
+    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" 
+    || dft_functional_lower == "lc_pbe"
+    || dft_functional_lower == "lc_wpbe" 
+    || dft_functional_lower == "lrc_wpbe"
+    || dft_functional_lower == "lrc_wpbeh"
+    || dft_functional_lower == "cam_pbeh")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
 
@@ -356,9 +366,9 @@ void Input_Conv::Convert()
                 GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock][i] = {{
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"Rcut_type", "spencer"} }};
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
             }
             else if(PARAM.inp.basis_type == "lcao_in_pw")
@@ -389,13 +399,16 @@ void Input_Conv::Convert()
         if(!erfc_alpha.empty())
         {
             assert(erfc_alpha.size() == PARAM.inp.exx_erfc_omega.size());
-            GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
-            for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+            if(PARAM.inp.basis_type == "lcao")
             {
-                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
-                    {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                    {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
-                    {"Rcut_type", "limits"} }};
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
+                }
             }
         }
     }
