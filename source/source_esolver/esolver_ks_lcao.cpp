@@ -853,7 +853,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                                                                *this->p_hamilt,
                                                                                *this->pelec,
                                                                                *this->p_chgmix,
-                                                                               PARAM.inp.scf_ene_thr,
+                                                                               this->scf_ene_thr,
                                                                                iter,
                                                                                istep,
                                                                                conv_esolver)
@@ -862,7 +862,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                                                                *this->p_hamilt,
                                                                                *this->pelec,
                                                                                *this->p_chgmix,
-                                                                               PARAM.inp.scf_ene_thr,
+                                                                               this->scf_ene_thr,
                                                                                iter,
                                                                                istep,
                                                                                conv_esolver);
