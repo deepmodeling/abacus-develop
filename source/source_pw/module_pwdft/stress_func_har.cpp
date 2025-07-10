@@ -72,7 +72,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 			{
 				continue;
 			}
-
+			const FPTYPE g2 = rho_basis->gg[ig];
 			FPTYPE shart= ( conj( aux[ig] ) * aux[ig] ).real()/(ucell.tpiba2 * g2);
 			for(int l=0;l<3;l++)
 			{

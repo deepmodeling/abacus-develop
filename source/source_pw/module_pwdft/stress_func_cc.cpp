@@ -167,6 +167,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 				{
 					for (int m = 0;m< 3;m++)
 					{
+						const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
                         const std::complex<FPTYPE> t
                             = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]]
                               * ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;

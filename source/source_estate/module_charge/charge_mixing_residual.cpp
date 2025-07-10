@@ -213,7 +213,6 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
                 sum += fac2
@@ -421,7 +420,6 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
                 sum += fac2
