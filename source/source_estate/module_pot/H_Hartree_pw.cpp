@@ -50,11 +50,13 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if (ig == ig0) continue; // skip G=0
-            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (cell.tpiba2 * rho_basis->gg[ig]);
-
-            ehart += (conj(Porter[ig]) * Porter[ig]).real() * fac;
-            vh_g[ig] = fac * Porter[ig];
+        if (ig == ig0) 
+        {
+            continue; // skip G=0
+        }
+        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (cell.tpiba2 * rho_basis->gg[ig]);
+        ehart += (conj(Porter[ig]) * Porter[ig]).real() * fac;
+        vh_g[ig] = fac * Porter[ig];
         
     }
 

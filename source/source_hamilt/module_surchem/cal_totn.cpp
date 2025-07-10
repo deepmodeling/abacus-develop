@@ -47,11 +47,8 @@ void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho
         {
             continue;
         }
-        else
-        {
-            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
-            induced_rhog[ig] = -delta_phig[ig] / fac;
-        }
+        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
+        induced_rhog[ig] = -delta_phig[ig] / fac;
     }
 
     rho_basis->recip2real(induced_rhog, induced_rho);

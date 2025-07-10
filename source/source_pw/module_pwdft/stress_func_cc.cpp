@@ -148,6 +148,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 				rho_basis,
 				0);
 			// non diagonal term (g=0 contribution missing)
+			const int ig0 = rho_basis->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel
 {
@@ -158,8 +159,10 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 #endif
 			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
-				const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
-				if(norm_g < 1e-4) { 	continue;}
+				if (ig == ig0) 
+				{
+					continue; // skip G=0
+				}
 				for (int l = 0; l < 3; l++)
 				{
 					for (int m = 0;m< 3;m++)
