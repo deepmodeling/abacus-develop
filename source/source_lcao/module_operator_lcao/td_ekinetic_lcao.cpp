@@ -25,9 +25,8 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
     : OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), orb_cutoff_(orb_cutoff), kv(kv_in), intor_(intor)
 {
     this->ucell = ucell_in;
-    this->cal_type = calculation_type::lcao_tddft_velocity;
+    this->cal_type = calculation_type::lcao_tddft_periodic;
     this->Grid = GridD_in;
-    this->init_td();
     // initialize HR to get adjs info.
     this->initialize_HR(Grid);
 }
@@ -39,28 +38,18 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
     {
         delete this->hR_tmp;
     }
-    TD_Velocity::td_vel_op = nullptr;
 }
 
 // term A^2*S
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc,const TR& overlap, int nnr)
-{
-    return;
-}
-
-// term A^2*S
-template <>
-void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(std::complex<double>* Hloc,
-                                                                                const double& overlap,
-                                                                                int nnr)
+void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_scalar(std::complex<double>* Hloc,
+                                                            const TR& overlap,
+                                                            int nnr)
 {
     // the correction term A^2/2. From Hatree to Ry, it needs to be multiplied by 2.0
-    std::complex<double> tmp = {cart_At.norm2() * overlap, 0};
-    Hloc[nnr] += tmp;
+    Hloc[nnr] += cart_At.norm2() * overlap;
     return;
 }
-
 // term A dot ∇
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hloc,
@@ -106,12 +95,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<std::complex<double>>* tmp = this->hR_tmp->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                if (TD_Velocity::out_current)
+                if (TD_info::out_current)
                 {
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i] = td_velocity.get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                        tmp_c[i] = TD_info::td_vel_op->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
                     }
                     this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c);
                 }
@@ -233,19 +222,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
 		}
     }
 }
-// init two center integrals and vector potential for td_ekintic term
+//update vector potential for td_ekintic term
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::init_td()
+void TDEkinetic<OperatorLCAO<TK, TR>>::update_td()
 {
-    TD_Velocity::td_vel_op = &td_velocity;
-    // calculate At in cartesian coorinates.
-    td_velocity.cal_cart_At(elecstate::H_TDDFT_pw::At);
-    this->cart_At = td_velocity.cart_At;
-
-    // mohan update 2025-04-20
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", cart_At[0]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", cart_At[1]);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", cart_At[2]);
+    //std::cout<<"velocity"<<std::endl;
+    this->cart_At = TD_info::cart_At;
 }
 
 template <typename TK, typename TR>
@@ -343,7 +325,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
     {
         return;
     }
-    if (!this->hR_tmp_done)
+    if (!this->hR_tmp_done || TD_info::evolve_once)
     {
         const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
         // if this Operator is the first node of the sub_chain, then hR_tmp is nullptr
@@ -360,11 +342,13 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
         // initialize current term if needed
-        if (TD_Velocity::out_current)
+        if (TD_info::out_current)
         {
-            td_velocity.initialize_current_term(this->hR_tmp, paraV);
+            TD_info::td_vel_op->initialize_current_term(this->hR_tmp, paraV);
         }
         // calculate the values in hR_tmp
+        this->update_td();
+        this->hR_tmp->set_zero();
         this->calculate_HR();
         this->hR_tmp_done = true;
     }
@@ -376,12 +360,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    return;
-}
-template <>
-void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
-{
-    if (TD_Velocity::tddft_velocity == false)
+    if (PARAM.inp.td_stype != 1)
     {
         return;
     }
@@ -392,12 +371,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
         int spin_tot = PARAM.inp.nspin;
-
-        if (spin_tot == 4)
-        {
-
-        }
-        else if (!output_hR_done && TD_Velocity::out_mat_R)
+        if (!output_hR_done && TD_info::out_mat_R)
         {
             for (int spin_now = 0; spin_now < spin_tot; spin_now++)
             {
@@ -405,11 +379,10 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
                                                  spin_now,
                                                  1e-10,
                                                  *hR_tmp,
-                                                 td_velocity.HR_sparse_td_vel[spin_now]);
+                                                 TD_info::td_vel_op->HR_sparse_td_vel[spin_now]);
             }
             output_hR_done = true;
         }
-
         // folding inside HR to HK
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
@@ -426,7 +399,6 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
     }
 }
 
-template class TDEkinetic<hamilt::OperatorLCAO<double, double>>;
 template class TDEkinetic<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class TDEkinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;
 

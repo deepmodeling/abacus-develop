@@ -1,31 +1,30 @@
-#ifndef TD_CURRENT_H
-#define TD_CURRENT_H
+#ifndef TD_VELOCITY_OP_H
+#define TD_VELOCITY_OP_H
 #include <unordered_map>
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_basis/module_nao/two_center_integrator.h"
-#include "td_velocity.h"
 #include "source_base/vector3.h"
+#include "source_io/cal_r_overlap_R.h"
 
-#ifdef __LCAO
-//design to calculate current for length gauge
-class TD_current
+//design to calculate velocity operator
+template <typename TR>
+class Velocity_op
 {
   public:
-    TD_current(const UnitCell* ucell_in,
+    Velocity_op(const UnitCell* ucell_in,
                const Grid_Driver* GridD_in,
                const Parallel_Orbitals* paraV,
                const LCAO_Orbitals& orb,
                const TwoCenterIntegrator* intor);
-    ~TD_current();
+    ~Velocity_op();
 
     hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
     {
         return this->current_term[i];
     }
-
     void calculate_vcomm_r();
     void calculate_grad_term();
 
@@ -36,11 +35,11 @@ class TD_current
 
     const LCAO_Orbitals& orb_;
 
-    const Grid_Driver* Grid = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     
     const TwoCenterIntegrator* intor_ = nullptr;
+    const TwoCenterIntegrator* intorbeta_ = nullptr;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -57,8 +56,8 @@ class TD_current
                          const int& iat2,
                          const int& T0,
                          const Parallel_Orbitals* paraV,
-                         const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm1_all,
-                         const std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>& nlm2_all,
+                         const std::vector<std::unordered_map<int, std::vector<double>>>& nlm1_all,
+                         const std::vector<std::unordered_map<int, std::vector<double>>>& nlm2_all,
                          std::complex<double>** current_mat_p);
     void cal_grad_IJR(const int& iat1,
                       const int& iat2,
@@ -72,8 +71,9 @@ class TD_current
 
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;
+    static cal_r_overlap_R r_calculator;
+    static bool init_done;
 };
 
 
-#endif // __LCAO
 #endif // TD_CURRENT_H

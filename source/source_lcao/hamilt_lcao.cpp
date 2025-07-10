@@ -38,6 +38,7 @@
 #include "module_operator_lcao/overlap_new.h"
 #include "module_operator_lcao/td_ekinetic_lcao.h"
 #include "module_operator_lcao/td_nonlocal_lcao.h"
+#include "module_operator_lcao/td_pot_hybrid.h"
 #include "module_operator_lcao/veff_lcao.h"
 
 namespace hamilt
@@ -344,12 +345,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         }
 #endif
         // TDDFT_velocity_gauge
-        if (TD_Velocity::tddft_velocity)
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
-            if (!TD_Velocity::init_vecpot_file)
-            {
-                elecstate::H_TDDFT_pw::update_At();
-            }
             Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->hR,
                                                                              this->kv,
@@ -359,9 +356,26 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                              two_center_bundle.overlap_orb.get());
             this->getOperator()->add(td_ekinetic);
 
-            Operator<TK>* td_nonlocal
-                = new TDNonlocal<OperatorLCAO<TK, TR>>(this->hsk, this->kv->kvec_d, this->hR, &ucell, orb, &grid_d);
+            Operator<TK>* td_nonlocal = new TDNonlocal<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                             this->kv->kvec_d,
+                                                                             this->hR,
+                                                                             &ucell,
+                                                                             orb,
+                                                                             &grid_d);
             this->getOperator()->add(td_nonlocal);
+        }
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        {
+            Operator<TK>* td_pot_hybrid = new TD_pot_hybrid<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                           this->kv,
+                                                                           this->hR,
+                                                                           this->sR,
+                                                                           orb,
+                                                                           &ucell,
+                                                                           orb.cutoffs(),
+                                                                           &grid_d,
+                                                                           two_center_bundle.kinetic_orb.get());
+            this->getOperator()->add(td_pot_hybrid);
         }
         if (PARAM.inp.dft_plus_u)
         {

@@ -375,6 +375,8 @@
     - [out\_wannier\_unk](#out_wannier_unk)
     - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
   - [rt-TDDFT: Real-time time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+    - [estep\_per\_md](#estep_per_md)
+    - [td\_dt](#td_dt)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
     - [td\_propagator](#td_propagator)
@@ -1728,7 +1730,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the wave functions accumulate during ionic steps.
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
   - 0: no output
   - 1: (txt format) 
     - gamma-only: `wfs1_nao.txt` or `wfs2_nao.txt`, ...;
@@ -3687,6 +3689,18 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 ## TDDFT: time dependent density functional theory
 
+### estep_per_md
+
+- **Type**: Integer
+- **Description**: The number of electron propagation steps between two ionic steps.
+- **Default**: 1
+
+### td_dt
+
+- **Type**: Real
+- **Description**: The time step used in electron propagation. Setting td_dt will reset the md_dt value to td_dt * estep_per_md.
+- **Default**: md_dt/estep_per_md
+
 ### td_edm
 
 - **Type**: Integer
@@ -3739,6 +3753,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   Type of electric field in space domain
   - 0: length gauge.
   - 1: velocity gauge.
+  - 2: hybrid gauge.
 - **Default**: 0
 
 ### td_ttype

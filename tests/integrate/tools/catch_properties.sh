@@ -448,8 +448,10 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	else  # multi-k point case
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=wfs1k1g3_nao
+			input_file=WFC/wfs1k1g3_nao
 		else
 			wfc_name=wfs1k2_nao
+			input_file=wfs1k2_nao
 		fi
 		awk 'BEGIN {flag=999}
     	{
@@ -462,7 +464,7 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
             	printf "\n"
         	}	
         	else {print $0}
-    	}' OUT.autotest/"$wfc_name".txt > OUT.autotest/"$wfc_name"_mod.txt
+    	}' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
 		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi

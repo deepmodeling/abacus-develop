@@ -5,6 +5,8 @@
 #include "source_base/scalapack_connector.h" // Cpxgemr2d
 #include "source_lcao/record_adj.h"
 #include "source_psi/psi.h"
+#include "source_lcao/module_rt/velocity_op.h"
+#include "source_lcao/module_rt/td_info.h"
 
 namespace ModuleESolver
 {
@@ -47,8 +49,8 @@ void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock
 }
 //------------------------ MPI gathering and distributing functions ------------------------//
 
-template <typename Device = base_device::DEVICE_CPU>
-class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, double>
+template <typename TR, typename Device = base_device::DEVICE_CPU>
+class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 {
   public:
     ESolver_KS_LCAO_TDDFT();
@@ -58,6 +60,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
   protected:
+    virtual void runner(UnitCell& cell, const int istep) override;
+
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
@@ -66,6 +70,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
+    void print_step();
     //! wave functions of last time step
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
 
@@ -81,9 +86,21 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     bool use_tensor = false;
     bool use_lapack = false;
 
+    //! Total steps for evolving the wave function
+    int totstep = -1;
+
+    //! Velocity matrix for calculating current
+    Velocity_op<TR>* velocity_mat = nullptr;
+
+    TD_info* td_p = nullptr;
+
+    //! doubt
+    bool restart_done = false;
+
   private:
-    void weight_dm_rho();
+    void weight_dm_rho(const UnitCell& ucell);
 };
 
 } // namespace ModuleESolver
 #endif
+

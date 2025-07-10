@@ -356,6 +356,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     overlap_new.o\
     td_ekinetic_lcao.o\
     td_nonlocal_lcao.o\
+    td_pot_hybrid.o\
     veff_lcao.o\
     meta_lcao.o\
     op_dftu_lcao.o\
@@ -624,8 +625,9 @@ OBJS_LCAO=evolve_elec.o\
       propagator_cn2.o\
       propagator_taylor.o\
       propagator_etrs.o\
-      td_velocity.o\
-      td_current.o\
+      td_folding.o\
+      td_info.o\
+      velocity_op.o\
       snap_psibeta_half_tddft.o\
       solve_propagation.o\
       upsi.o\

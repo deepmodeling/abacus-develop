@@ -1,7 +1,7 @@
 #include "spar_hsr.h"
 
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_rt/td_velocity.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "spar_dh.h"
 #include "spar_exx.h"
@@ -96,13 +96,13 @@ void sparse_format::cal_HSR(const UnitCell& ucell,
 
         HS_Arrays.all_R_coor = get_R_range(*(p_ham_lcao->getHR()));
 
-        if (TD_Velocity::tddft_velocity)
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
             sparse_format::cal_HContainer_td(pv,
                                              current_spin,
                                              sparse_thr,
                                              *(p_ham_lcao->getHR()),
-                                             TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin]);
+                                             TD_info::td_vel_op->HR_sparse_td_vel[current_spin]);
         }
         else
         {
@@ -334,9 +334,9 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
                 }
             }
         }
-        if (TD_Velocity::tddft_velocity)
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
         {
-            for (auto& R_loop: TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin])
+            for (auto& R_loop: TD_info::td_vel_op->HR_sparse_td_vel[current_spin])
             {
                 for (auto& row_loop: R_loop.second)
                 {

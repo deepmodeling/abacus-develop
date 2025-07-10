@@ -12,6 +12,9 @@
 #include "source_hsolver/diago_elpa_native.h"
 #endif
 
+#include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/td_folding.h"
+
 namespace hamilt {
 
 template <>
@@ -200,7 +203,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
 
         break;
     }
-    case calculation_type::lcao_tddft_velocity: {
+    case calculation_type::lcao_tddft_periodic: {
         if (!this->hr_done) {
             // in cal_type=lcao_fixed, HR should be updated by each sub-chain
             // nodes
@@ -240,8 +243,8 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
 }
 
 // contributeHk()
-template <typename TK, typename TR>
-void OperatorLCAO<TK, TR>::contributeHk(int ik) {
+template <>
+void OperatorLCAO<double, double>::contributeHk(int ik) {
     ModuleBase::TITLE("OperatorLCAO", "contributeHk");
     ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
@@ -253,6 +256,37 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     {
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
+    }
+    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+}
+// contributeHk()
+template <typename TK, typename TR>
+void OperatorLCAO<TK, TR>::contributeHk(int ik) {
+    ModuleBase::TITLE("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+    {
+        const int nrow = this->hsk->get_pv()->get_row_size();
+        if(PARAM.inp.td_stype == 2)
+        {
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
+        }
+        else
+        {
+            hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
+        }
+    }
+    else
+    {
+        const int ncol = this->hsk->get_pv()->get_col_size();
+        if(PARAM.inp.td_stype == 2)
+        {
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0, TD_info::td_vel_op->get_ucell(), TD_info::cart_At);
+        }
+        else
+        {
+            hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
+        }
     }
     ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
 }

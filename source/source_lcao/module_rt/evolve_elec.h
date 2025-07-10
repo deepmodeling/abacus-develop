@@ -143,7 +143,8 @@ class Evolve_elec
     friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
 
     // Template parameter is needed for the friend class declaration
-    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<Device>;
+    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<double, Device>;
+    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<std::complex<double>, Device>;
 
   public:
     Evolve_elec();

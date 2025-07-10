@@ -1,27 +1,24 @@
-#ifndef TD_VELOCITY_H
-#define TD_VELOCITY_H
+#ifndef TD_INFO_H
+#define TD_INFO_H
 #include "source_base/abfs-vector3_order.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <map>
-// Class to store TDDFT velocity gauge infos.
-class TD_Velocity
+// Class to store TDDFT infos, mainly for periodic system.
+class TD_info
 {
   public:
-    TD_Velocity();
-    ~TD_Velocity();
+    TD_info(const UnitCell* ucell_in);
+    ~TD_info();
 
     void init();
-
-    /// @brief Judge if in tddft calculation or not
-    static bool tddft_velocity;
 
     /// @brief switch to control the output of HR
     static bool out_mat_R;
 
-    /// @brief pointer to the only TD_Velocity object itself
-    static TD_Velocity* td_vel_op;
+    /// @brief pointer to the only TD_info object itself
+    static TD_info* td_vel_op;
 
     /// @brief switch to control the output of At
     static bool out_vecpot;
@@ -35,11 +32,22 @@ class TD_Velocity
     /// @brief switch to control the source of At
     static bool init_vecpot_file;
 
+    /// @brief if need to calculate more than once
+    static bool evolve_once;
+
+    /// @brief Restart step
+    static int estep_shift;
+
     /// @brief Store the vector potential for tddft calculation
-    ModuleBase::Vector3<double> cart_At;
+    static ModuleBase::Vector3<double> cart_At;
 
     /// @brief calculate the At in cartesian coordinate
     void cal_cart_At(const ModuleBase::Vector3<double>& At);
+
+    /// @brief output RT-TDDFT info for restart
+    void out_restart_info(const int nstep, 
+                          const ModuleBase::Vector3<double>& At_current, 
+                          const ModuleBase::Vector3<double>& At_laststep);
 
     // allocate memory for current term.
     void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
@@ -49,10 +57,23 @@ class TD_Velocity
         return this->current_term[i];
     }
 
+    int get_istep()
+    {
+      return istep;
+    }
+
+    const UnitCell* get_ucell()
+    {
+        return this->ucell;
+    }
+
     // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
   private:
+    /// @brief pointer to the unit cell
+    const UnitCell* ucell = nullptr;
+
     /// @brief read At from output file
     void read_cart_At();
 

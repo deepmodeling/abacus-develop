@@ -285,8 +285,8 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     }
     else
     {
-        title += " (KBAR)";
-        unit = " KBAR";
+        title += " (kbar)";
+        unit = " kbar";
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     }
     std::vector<double> stress_x;
@@ -317,7 +317,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
     ofs << table;
-    if (name == "TOTAL-STRESS")
+    if (name == "TOTAL-STRESS" && PARAM.inp.calculation != "md")
     {
         ofs << " #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): " << std::fixed 
                              << std::setprecision(6) << pressure << unit
@@ -347,5 +347,16 @@ void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std
 //    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
 //                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
+void write_head_td(std::ofstream& ofs, const int& istep, const int& estep, const int& iter, const std::string& basisname)
+{
+    ofs << "\n";
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
+    ofs << " --> IONIC RELAXATION STEP=" << std::setw(6) << istep+1
+        << " ELECTRON PROPAGATION STEP=" << std::setw(6) << estep
+        << "  ELECTRONIC ITERATION STEP=" << std::setw(6) << iter << "\n"; 
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
 
+//    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+//                << "  ELEC=" << std::setw(4) << estep << "  iter=" << std::setw(4)  << iter << "--------------------------------\n";
+}
 }// namespace ModuleIO

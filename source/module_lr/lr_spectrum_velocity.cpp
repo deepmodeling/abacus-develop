@@ -7,17 +7,17 @@
 namespace LR
 {
     /// get the velocity matrix v(R)
-    inline TD_current get_velocity_matrix_R(const UnitCell& ucell,
+    inline Velocity_op<std::complex<double>> get_velocity_matrix_R(const UnitCell& ucell,
         const Grid_Driver& gd,
         const Parallel_Orbitals& pmat,
         const TwoCenterBundle& two_center_bundle)
     {
-        // convert the orbital object to the old class for TD_current
+        // convert the orbital object to the old class for Velocity_op
         LCAO_Orbitals orb;
         const auto& inp = PARAM.inp;
         two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
         // actually this class calculates the velocity matrix v(R) at A=0
-        TD_current vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
+        Velocity_op<std::complex<double>> vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
         vR.calculate_vcomm_r(); // $<\mu, 0|[Vnl, r]|\nu, R>$
         vR.calculate_grad_term();   // $<\mu, 0|\nabla|\nu, R>$
         return vR;
@@ -47,7 +47,7 @@ namespace LR
 
     /// this algorithm has bug in multi-k cases, just for test
     template<typename T>
-    ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_R(const int istate, const TD_current& vR)
+    ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_R(const int istate, const Velocity_op<std::complex<double>>& vR)
     {
         // transition density matrix D(R)
         const elecstate::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate);
@@ -69,7 +69,7 @@ namespace LR
 
     // this algorithm is actually in use
     template<typename T>
-    ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_k(const int istate, const TD_current& vR)
+    ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_k(const int istate, const Velocity_op<std::complex<double>>& vR)
     {
         // transition density matrix D(R)
         const elecstate::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate, this->X, false);
@@ -97,7 +97,7 @@ namespace LR
     template<typename T>
     void LR::LR_Spectrum<T>::cal_transition_dipoles_velocity()
     {
-        const TD_current& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);     // velocity matrix v(R)
+        const Velocity_op<std::complex<double>>& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);     // velocity matrix v(R)
         transition_dipole_.resize(nstate);
         this->mean_squared_transition_dipole_.resize(nstate);
         for (int istate = 0;istate < nstate;++istate)
@@ -148,7 +148,7 @@ namespace LR
     void LR::LR_Spectrum<T>::test_transition_dipoles_velocity_ks(const double* const ks_eig)
     {
         // velocity matrix v(R)
-        const TD_current& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
+        const Velocity_op<std::complex<double>>& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
         //  (e_c-e_v) of KS eigenvalues
         std::vector<double> eig_ks_diff(this->ldim);
         for (int is = 0;is < this->nspin_x;++is)
