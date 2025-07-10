@@ -97,8 +97,12 @@ namespace PCA
 }
 
 		Matrix_Orbs21 m_abfslcaos_lcaos;
-		m_abfslcaos_lcaos.init( 1, ucell , orb, kmesh_times, 1 );
-		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos );
+		ORB_gaunt_table MGT;
+		int Lmax;
+		m_abfslcaos_lcaos.init( 1, ucell , orb, kmesh_times, orb.get_Rmax(), Lmax );
+		MGT.init_Gaunt_CH(Lmax);
+        MGT.init_Gaunt(Lmax);
+		m_abfslcaos_lcaos.init_radial( abfs, lcaos, lcaos, MGT );
 
 		std::map<std::size_t,std::map<std::size_t,std::set<double>>> delta_R;
 		for( std::size_t it=0; it!=abfs.size(); ++it ) {

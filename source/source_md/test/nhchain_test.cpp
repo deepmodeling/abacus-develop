@@ -216,6 +216,13 @@ TEST_F(NHC_test, print_md)
     std::ifstream ifs("running_nhchain.log");
     std::string output_str;
     getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    getline(ifs, output_str);
+    getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(

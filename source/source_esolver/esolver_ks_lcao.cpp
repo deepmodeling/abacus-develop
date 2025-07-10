@@ -139,11 +139,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         int ncol = 0;
         if (PARAM.globalv.gamma_only_local)
         {
-            nsk = PARAM.inp.nspin;
+            nsk = inp.nspin;
             ncol = this->pv.ncol_bands;
-            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
-                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
-                || PARAM.inp.ks_solver == "cusolvermp")
+            if (inp.ks_solver == "genelpa" || inp.ks_solver == "elpa" || inp.ks_solver == "lapack"
+                || inp.ks_solver == "pexsi" || inp.ks_solver == "cusolver"
+                || inp.ks_solver == "cusolvermp")
             {
                 ncol = this->pv.ncol;
             }
@@ -154,14 +154,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 #ifdef __MPI
             ncol = this->pv.ncol_bands;
 #else
-            ncol = PARAM.inp.nbands;
+            ncol = inp.nbands;
 #endif
         }
         this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
     }
 
     // 5) read psi from file
-    if (PARAM.inp.init_wfc == "file")
+    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
 	{
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
 					this->pv, 
@@ -169,7 +169,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 					this->pelec, 
                     this->pelec->klist->ik2iktot,
                     this->pelec->klist->get_nkstot(),
-					PARAM.inp.nspin))
+					inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
         }
@@ -178,16 +178,16 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 6) initialize the density matrix
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
-    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
+    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
 
     // 7) initialize exact exchange calculations
 #ifdef __EXX
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
-        || PARAM.inp.calculation == "md")
+    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
+        || inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
-            if (PARAM.inp.init_wfc != "file")
+            if (inp.init_wfc != "file")
             { // if init_wfc==file, directly enter the EXX loop
                 XC_Functional::set_xc_first_loop(ucell);
             }
@@ -208,7 +208,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 #endif
 
     // 8) initialize DFT+U
-    if (PARAM.inp.dft_plus_u)
+    if (inp.dft_plus_u)
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
@@ -219,7 +219,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     // 10) inititlize the charge density
-    this->chr.allocate(PARAM.inp.nspin);
+    this->chr.allocate(inp.nspin);
     this->pelec->omega = ucell.omega;
 
     // 11) initialize the potential
@@ -238,13 +238,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 12) initialize deepks
 #ifdef __MLALGO
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
-    if (PARAM.inp.deepks_scf)
+    if (inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        DeePKS_domain::load_model(PARAM.inp.deepks_model, ld.model_deepks);
+        DeePKS_domain::load_model(inp.deepks_model, ld.model_deepks);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        DeePKS_domain::read_pdm((PARAM.inp.init_chg == "file"),
-                                PARAM.inp.deepks_equiv,
+        DeePKS_domain::read_pdm((inp.init_chg == "file"),
+                                inp.deepks_equiv,
                                 ld.init_pdm,
                                 ucell.nat,
                                 orb_.Alpha[0].getTotal_nchi() * ucell.nat,
@@ -257,11 +257,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 
     // 13) set occupations
     // tddft does not need to set occupations in the first scf
-    if (PARAM.inp.ocp && inp.esolver_type != "tddft")
+    if (inp.ocp && inp.esolver_type != "tddft")
     {
-        elecstate::fixed_weights(PARAM.inp.ocp_kb,
-                                 PARAM.inp.nbands,
-                                 PARAM.inp.nelec,
+        elecstate::fixed_weights(inp.ocp_kb,
+                                 inp.nbands,
+                                 inp.nelec,
                                  this->pelec->klist,
                                  this->pelec->wg,
                                  this->pelec->skip_weights);
@@ -289,7 +289,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 15) initialize rdmft, added by jghan
-    if (PARAM.inp.rdmft == true)
+    if (inp.rdmft == true)
     {
         rdmft_solver.init(this->GG,
                           this->GK,
@@ -300,8 +300,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                           *(this->pelec),
                           this->orb_,
                           two_center_bundle_,
-                          PARAM.inp.dft_functional,
-                          PARAM.inp.rdmft_power_alpha);
+                          inp.dft_functional,
+                          inp.rdmft_power_alpha);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");

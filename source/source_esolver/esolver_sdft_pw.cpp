@@ -72,7 +72,7 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input
                                   true);
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
-    if (PARAM.inp.nbands > 0)
+    if (inp.nbands > 0)
     {
         this->stowf.chiortho
             = new psi::Psi<T, Device>(this->kv.get_nks(), 

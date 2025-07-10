@@ -23,6 +23,7 @@ namespace Global_File
 	void make_dir_out(const std::string &suffix,
 		const std::string &calculation,
         const bool &out_dir,
+		const bool &out_wfc_dir,
 		const int rank,
         const bool &restart,
 		const bool out_alllog = false); 

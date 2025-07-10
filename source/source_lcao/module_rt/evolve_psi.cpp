@@ -76,7 +76,7 @@ void evolve_psi(const int nband,
         /// @brief compute U_operator
         /// @input Stmp, Htmp, print_matrix
         /// @output U_operator
-        Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+        Propagator prop(propagator, pv, PARAM.inp.td_dt);
         prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
     }
 
@@ -93,7 +93,7 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
-        solve_propagation(pv, nband, nlocal, PARAM.mdp.md_dt / ModuleBase::AU_to_FS, Stmp, Htmp, psi_k_laststep, psi_k);
+        solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

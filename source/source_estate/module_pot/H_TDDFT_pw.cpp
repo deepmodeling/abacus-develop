@@ -44,7 +44,9 @@ double H_TDDFT_pw::lcut2;
 
 // velocity gauge
 ModuleBase::Vector3<double> H_TDDFT_pw::At;
-
+ModuleBase::Vector3<double> H_TDDFT_pw::At_laststep;
+// hybrid gauge
+ModuleBase::Vector3<double> H_TDDFT_pw::Et;
 // time domain parameters
 
 // Gauss
@@ -83,15 +85,18 @@ std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
 {
     std::stringstream ssc;
-    ssc << file_dir << "Restart_md.dat";
+    ssc << file_dir << "Restart_td.txt";
     std::ifstream file(ssc.str().c_str());
 
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_md.dat!");
+        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_td.txt!");
     }
 
     file >> istep;
+    file >> At[0] >> At[1] >>At[2];
+    file >> At_laststep[0] >> At_laststep[1] >> At_laststep[2];
+    At_laststep=-At_laststep;
     file.close();
 }
 
@@ -99,8 +104,8 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
-    // skip if velocity_gauge
-    if (stype == 1)
+    // skip if not length gauge
+    if (stype != 0)
     {
         return;
     }
@@ -283,6 +288,10 @@ void H_TDDFT_pw::update_At()
     //std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
+    // midpoint rule should be used both in Hamiltonian and here.
+    At = At + At_laststep/2.0;
+    At_laststep.set(0.0, 0.0, 0.0);
+    Et.set(0.0, 0.0, 0.0);
 
     // judgement to skip vext
     if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
@@ -329,7 +338,11 @@ void H_TDDFT_pw::update_At()
         switch (stype)
         {
         case 1:
-            At[direc - 1] -= out;
+            At_laststep[direc - 1] -= out;
+            break;
+        case 2:
+            At_laststep[direc-1] -= out;
+            Et[direc-1] += vext_time[0];
             break;
         default:
             std::cout << "space_domain_type of electric field is wrong" << std::endl;
@@ -349,6 +362,7 @@ void H_TDDFT_pw::update_At()
         // total count++
         count++;
     }
+    At = At + At_laststep/2.0;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
     return;
@@ -373,7 +387,7 @@ double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
         break;
 
     case 3:
-        vext_time = cal_v_time_heaviside();
+        vext_time = cal_v_time_heaviside(last);
         break;
 
         // case 4:
@@ -460,7 +474,7 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_heaviside()
+double H_TDDFT_pw::cal_v_time_heaviside(const bool last)
 {
     double t0 = *(heavi_t0.begin() + heavi_count);
     double amp = *(heavi_amp.begin() + heavi_count);
@@ -473,7 +487,7 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     {
         vext_time = 0.0;
     }
-    heavi_count++;
+    if(last)heavi_count++;
 
     return vext_time;
 }
@@ -524,3 +538,4 @@ void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
 }
 
 } // namespace elecstate
+

@@ -169,7 +169,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     this->pelec->omega = ucell.omega;
 
     //! 3) inititlize the charge density.
-    this->chr.allocate(PARAM.inp.nspin);
+    this->chr.allocate(inp.nspin);
 
     //! 4) initialize the potential.
     if (this->pelec->pot == nullptr)
@@ -194,9 +194,9 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     //! 7) Allocate and initialize psi
-    this->p_psi_init = new psi::PSIInit<T, Device>(PARAM.inp.init_wfc,
-                                                   PARAM.inp.ks_solver,
-                                                   PARAM.inp.basis_type,
+    this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
+                                                   inp.ks_solver,
+                                                   inp.basis_type,
                                                    GlobalV::MY_RANK,
                                                    ucell,
                                                    this->sf,
@@ -206,28 +206,28 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
 
     allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
 
-    this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
+    this->p_psi_init->prepare_init(inp.pw_seed);
 
-    this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
+    this->kspw_psi = inp.device == "gpu" || inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     //! 8) setup occupations
-    if (PARAM.inp.ocp)
+    if (inp.ocp)
     {
-        elecstate::fixed_weights(PARAM.inp.ocp_kb,
-                                 PARAM.inp.nbands,
-                                 PARAM.inp.nelec,
+        elecstate::fixed_weights(inp.ocp_kb,
+                                 inp.nbands,
+                                 inp.nelec,
                                  this->pelec->klist,
                                  this->pelec->wg,
                                  this->pelec->skip_weights);
     }
 
     // 9) initialize exx pw
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
-        || PARAM.inp.calculation == "md")
+    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
+        || inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx && GlobalC::exx_info.info_global.separate_loop == true)
         {

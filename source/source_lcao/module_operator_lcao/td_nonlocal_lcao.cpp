@@ -22,14 +22,13 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hs
                                                              const Grid_Driver* GridD_in)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_(orb)
 {
-    this->cal_type = calculation_type::lcao_tddft_velocity;
+    this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
     this->Grid = GridD_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to get adjs info.
-    this->init_td();
     this->initialize_HR(Grid);
 }
 
@@ -43,10 +42,10 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::~TDNonlocal()
     }
 }
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td()
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     // calculate At in cartesian coorinates.
-    this->cart_At = TD_Velocity::td_vel_op->cart_At;
+    this->cart_At = TD_info::cart_At;
 }
 // initialize_HR()
 template <typename TK, typename TR>
@@ -130,7 +129,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
-    const int nlm_dim = TD_Velocity::out_current ? 4 : 1;
+    const int nlm_dim = TD_info::out_current ? 4 : 1;
     // 1. calculate <psi|beta> for each pair of atoms
 
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
@@ -182,7 +181,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                           tau0 * this->ucell->lat0,
                                                           T0,
                                                           cart_At,
-                                                          TD_Velocity::out_current);
+                                                          TD_info::out_current);
                     for (int dir = 0; dir < nlm_dim; dir++)
                     {
                         nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
@@ -245,12 +244,12 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     // if not found , skip this pair of atoms
                     if (tmp != nullptr)
                     {
-                        if (TD_Velocity::out_current)
+                        if (TD_info::out_current)
                         {
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                             for (int i = 0; i < 3; i++)
                             {
-                                tmp_c[i] = TD_Velocity::td_vel_op->get_current_term_pointer(i)
+                                tmp_c[i] = TD_info::td_vel_op->get_current_term_pointer(i)
                                                 ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                 ->get_pointer();
                             }
@@ -295,7 +294,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     std::complex<double>* data_pointer,
     std::complex<double>** data_pointer_c)
 {
-    const int nlm_dim = TD_Velocity::out_current ? 4 : 1;
+    const int nlm_dim = TD_info::out_current ? 4 : 1;
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
@@ -411,7 +410,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
 
-    if (!this->hR_tmp_done)
+    if (!this->hR_tmp_done || TD_info::evolve_once)
     {
         if (this->hR_tmp == nullptr)
         {
@@ -427,8 +426,10 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         }
 
         // calculate the values in hR_tmp
+        this->update_td();
         this->calculate_HR();
         this->hR_tmp_done = true;
+        TD_info::evolve_once = false;
     }
 
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
@@ -442,35 +443,5 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     return;
 }
 
-
-template <>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
-{
-    if (TD_Velocity::tddft_velocity == false)
-    {
-        return;
-    }
-    else
-    {
-        ModuleBase::TITLE("TDNonlocal", "contributeHk");
-        ModuleBase::timer::tick("TDNonlocal", "contributeHk");
-
-        // folding inside HR to HK
-        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
-        {
-            const int nrow = this->hsk->get_pv()->get_row_size();
-            folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
-        }
-        else
-        {
-            const int ncol = this->hsk->get_pv()->get_col_size();
-            folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
-        }
-
-        ModuleBase::timer::tick("TDNonlocal", "contributeHk");
-    }
-}
-
-template class hamilt::TDNonlocal<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

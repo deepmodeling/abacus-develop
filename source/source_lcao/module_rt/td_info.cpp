@@ -1,33 +1,52 @@
-#include "td_velocity.h"
+#include "td_info.h"
 
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
-bool TD_Velocity::tddft_velocity = false;
-bool TD_Velocity::out_mat_R = false;
-bool TD_Velocity::out_vecpot = false;
-bool TD_Velocity::out_current = false;
-bool TD_Velocity::out_current_k = false;
-bool TD_Velocity::init_vecpot_file = false;
+bool TD_info::out_mat_R = false;
+bool TD_info::out_vecpot = false;
+bool TD_info::out_current = false;
+bool TD_info::out_current_k = false;
+bool TD_info::init_vecpot_file = false;
+bool TD_info::evolve_once = false;
 
-TD_Velocity* TD_Velocity::td_vel_op = nullptr;
+TD_info* TD_info::td_vel_op = nullptr;
 
-int TD_Velocity::istep = -1;
-int TD_Velocity::max_istep = -1;
-std::vector<ModuleBase::Vector3<double>> TD_Velocity::At_from_file;
+int TD_info::estep_shift = 0;
+int TD_info::istep = -1;
+int TD_info::max_istep = -1;
+ModuleBase::Vector3<double> TD_info::cart_At;
+std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
 
-TD_Velocity::TD_Velocity()
+TD_info::TD_info(const UnitCell* ucell_in)
 {
+    this->ucell = ucell_in;
     if (init_vecpot_file && istep == -1)
     {
         this->read_cart_At();
     }
+    //read in restart step
+    if(PARAM.inp.mdp.md_restart)
+    {
+        std::stringstream ssc;
+        ssc << PARAM.globalv.global_readin_dir << "Restart_td.txt";
+        std::ifstream file(ssc.str().c_str());
+        if (!file)
+        {
+            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.txt!");
+        }
+        file >> estep_shift;
+        //std::cout<<"estep_shift"<<estep_shift<<std::endl;
+    }
+    this->istep += estep_shift;
     return;
 }
-TD_Velocity::~TD_Velocity()
+TD_info::~TD_info()
 {
-    this->destroy_HS_R_td_sparse();
-    delete td_vel_op;
+    if(elecstate::H_TDDFT_pw::stype == 1)
+    {
+        this->destroy_HS_R_td_sparse();
+    }
     for (int dir = 0; dir < 3; dir++)
     {
         if (this->current_term[dir] != nullptr)
@@ -37,7 +56,7 @@ TD_Velocity::~TD_Velocity()
     }
 }
 
-void TD_Velocity::output_cart_At(const std::string& out_dir)
+void TD_info::output_cart_At(const std::string& out_dir)
 {
     if (GlobalV::MY_RANK == 0)
     {
@@ -46,7 +65,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
         out_file = out_dir + "At.dat";
         std::ofstream ofs;
         // output title
-        if (istep == 0)
+        if (istep == estep_shift)
         {
             ofs.open(out_file.c_str(), std::ofstream::out);
             ofs << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y"
@@ -69,17 +88,17 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
     return;
 }
 
-void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
+void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
 {
     istep++;
     if (init_vecpot_file)
     {
-        this->cart_At = At_from_file[istep > max_istep ? max_istep : istep];
+        cart_At = At_from_file[istep > max_istep ? max_istep : istep];
     }
     else
     {
         // transfrom into atomic unit
-        this->cart_At = At / 2.0;
+        cart_At = At / 2.0;
     }
     // output the vector potential if needed
     if (out_vecpot == true)
@@ -88,7 +107,7 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
     }
 }
 
-void TD_Velocity::read_cart_At(void)
+void TD_info::read_cart_At(void)
 {
     std::string in_file;
     // generate the input file name
@@ -97,7 +116,7 @@ void TD_Velocity::read_cart_At(void)
     // check if the file is exist
     if (!ifs)
     {
-        ModuleBase::WARNING_QUIT("TD_Velocity::read_cart_At", "Cannot open Vector potential file!");
+        ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Cannot open Vector potential file!");
     }
     std::string line;
     std::vector<std::string> str_vec;
@@ -115,7 +134,7 @@ void TD_Velocity::read_cart_At(void)
         // skip the istep number
         if (!(iss >> tmp))
         {
-            ModuleBase::WARNING_QUIT("TD_Velocity::read_cart_At", "Error reading istep!");
+            ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Error reading istep!");
         }
         // read the vector potential
         double component = 0;
@@ -124,7 +143,7 @@ void TD_Velocity::read_cart_At(void)
         {
             if (!(iss >> component))
             {
-                ModuleBase::WARNING_QUIT("TD_Velocity::read_cart_At",
+                ModuleBase::WARNING_QUIT("TD_info::read_cart_At",
                                          "Error reading component " + std::to_string(i + 1) + " for istep "
                                              + std::to_string(tmp) + "!");
             }
@@ -139,11 +158,34 @@ void TD_Velocity::read_cart_At(void)
 
     return;
 }
-void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
+void TD_info::out_restart_info(const int nstep, 
+                      const ModuleBase::Vector3<double>& At_current, 
+                      const ModuleBase::Vector3<double>& At_laststep)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        // open file
+        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.txt";
+        std::ofstream outFile(outdir);
+        if (!outFile) {
+            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.txt!");
+        }
+        // write data
+        outFile << nstep << std::endl;
+        outFile << At_current[0] << " " << At_current[1] << " " << At_current[2] << std::endl;
+        outFile << At_laststep[0] << " " << At_laststep[1] << " " << At_laststep[2] << std::endl;
+        outFile.close();
+    }
+    
+
+    return;
+}
+
+void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
                                           const Parallel_Orbitals* paraV)
 {
-    ModuleBase::TITLE("TD_Velocity", "initialize_current_term");
-    ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
+    ModuleBase::TITLE("TD_info", "initialize_current_term");
+    ModuleBase::timer::tick("TD_info", "initialize_current_term");
 
     for (int dir = 0; dir < 3; dir++)
     {
@@ -172,10 +214,10 @@ void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<
         this->current_term[dir]->allocate(nullptr, true);
     }
 
-    ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
+    ModuleBase::timer::tick("TD_info", "initialize_current_term");
 }
 
-void TD_Velocity::destroy_HS_R_td_sparse(void)
+void TD_info::destroy_HS_R_td_sparse(void)
 {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
         empty_HR_sparse_td_vel_up;

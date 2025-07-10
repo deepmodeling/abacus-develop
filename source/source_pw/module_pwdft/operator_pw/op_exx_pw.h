@@ -1,15 +1,16 @@
 #ifndef OPEXXPW_H
 #define OPEXXPW_H
 
+#include "operator_pw.h"
+#include "source_base/blas_connector.h"
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/macros.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_cell/klist.h"
-#include "source_psi/psi.h"
-#include "operator_pw.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_base/macros.h"
-#include "source_base/kernels/math_kernel_op.h"
-#include "source_base/blas_connector.h"
+#include "source_cell/klist.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "source_psi/psi.h"
 
 #include <memory>
 #include <utility>
@@ -59,7 +60,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     const ModulePW::PW_Basis_K *wfcpw = nullptr;
     const ModulePW::PW_Basis   *rhopw = nullptr;
     const UnitCell *ucell = nullptr;
-    Real exx_div = 0;
+//    Real exx_div = 0;
     Real tpiba = 0;
     
     std::vector<int> get_q_points(const int ik) const;
@@ -67,7 +68,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void multiply_potential(T *density_recip, int ik, int iq) const;
 
-    void exx_divergence();
+    double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type, double erfc_omega = 0) const;
 
     void get_potential() const;
 
@@ -135,6 +136,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     base_device::AbacusDevice_t device = {};
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
