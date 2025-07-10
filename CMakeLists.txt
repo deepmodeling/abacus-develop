@@ -287,8 +287,8 @@ if (USE_SW)
   set(SW ON)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
-  include_directories(${SW_FFT}/lib/libfftw3.a)
-
+  
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
@@ -473,6 +473,7 @@ if(MKLROOT)
     list(APPEND math_libs ifcore)
   endif()
 elseif(USE_SW)
+   list(APPEND math_libs gfortran)
   # SW architecture can only use its own math library
 else()
   find_package(FFTW3 REQUIRED)
