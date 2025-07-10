@@ -76,8 +76,11 @@ class ESolver_KS : public ESolver_FP
     std::string basisname;      //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0; //! number of electrons
     double diag_ethr;           //! the threshold for diagonalization
+    double scf_thr;             //! scf density threshold
+    double scf_ene_thr;         //! scf energy threshold
     double drho;                //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
     double hsolver_error;       //! the error of HSolver
+    int maxniter;               //! maximum iter steps for scf
     int niter;                  //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
 };
