@@ -55,7 +55,6 @@ void Matrix_Orbs22::init(const int mode,
     Lmax = 2 * Lmax + 1;
 
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
-    std::cout << "Matrix_Orbs22::init()::done" << std::endl;
 }
 
 void Matrix_Orbs22::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
