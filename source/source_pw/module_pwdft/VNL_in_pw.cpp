@@ -724,28 +724,6 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
 
         double* jl = new double[kkbeta];
         double* aux = new double[kkbeta];
-        #ifdef __SW
-        for (int ib = 0; ib < nbeta; ib++)
-        {
-            int flag = 0;
-            for (int ir = 0; ir < kkbeta; ir++)
-            {
-                if (std::abs(cell.atoms[it].ncpp.betar(ib, ir)) < 1e-280)
-                {
-                    std::cout << "ir is  " << ir << " " << std::abs(cell.atoms[it].ncpp.betar(ib, ir)) << std::endl;
-                    flag = ir;
-                    break;
-                }
-            }
-            if (flag!=0)
-            {
-            for (int ir = flag; ir < kkbeta; ir++)
-            {
-                cell.atoms[it].ncpp.betar(ib, ir) = 0;
-            }
-            }
-        }
-        #endif
         for (int ib = 0; ib < nbeta; ib++)
         {
             const int l = cell.atoms[it].ncpp.lll[ib];
