@@ -9,6 +9,31 @@ pseudo::~pseudo()
 {
 }
 
+void pseudo::check_pseudo()
+{
+	for (int ib = 0; ib < nbeta; ib++)
+	{
+		int flag = mesh+1;
+		for (int ir = 0; ir < mesh; ir++)
+		{
+			if (std::abs(betar(ib, ir)) < 1.0e-30)
+			{
+				flag = ir;
+				break;
+			}
+		}
+		if (flag<mesh)
+		{
+			ModuleBase::WARNING_QUIT("pseudo::check_pseudo", 
+									"beta function is set to  zero for beta after " + std::to_string(falg + 1));
+		}
+		for (int ir = flag; ir < mesh; ir++)
+		{
+			betar(ib, ir) = 0.0;
+		}
+	}
+}
+
 void pseudo::print_pseudo(std::ofstream& ofs)
 {
 	print_pseudo_vl(ofs);
