@@ -531,7 +531,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
         ModuleBase::GlobalFunc::SCAN_END(ifs, word);
     }
     //check the betar for non-normal number
-    pp.check_pseudo();
+    pp.check_betar();
     // Read the hamiltonian terms D_ij
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ", true, false))
     {

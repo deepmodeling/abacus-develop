@@ -320,7 +320,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
             pp.kkbeta = (this->kbeta[i] > pp.kkbeta) ? this->kbeta[i] : pp.kkbeta;
         }
         //check the betar for non-normal number
-        pp.check_pseudo();
+        pp.check_betar();
         // DIJ
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_DIJ>", false);
         ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nd); // nl_4

@@ -9,7 +9,7 @@ pseudo::~pseudo()
 {
 }
 
-void pseudo::check_pseudo()
+void pseudo::check_betar()
 {
 	for (int ib = 0; ib < nbeta; ib++)
 	{
@@ -24,8 +24,8 @@ void pseudo::check_pseudo()
 		}
 		if (flag<mesh)
 		{
-			ModuleBase::WARNING_QUIT("pseudo::check_pseudo", 
-									"beta function is set to  zero for beta after " + std::to_string(falg + 1));
+			std::cout << "WARNING: beta function is set to "
+					  << "zero for beta after "<<std::to_string(flag + 1);
 		}
 		for (int ir = flag; ir < mesh; ir++)
 		{
