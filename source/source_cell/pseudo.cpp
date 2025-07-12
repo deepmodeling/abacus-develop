@@ -16,7 +16,8 @@ void pseudo::check_betar()
 		int flag = mesh+1;
 		for (int ir = 0; ir < mesh; ir++)
 		{
-			if (std::abs(betar(ib, ir)) < 1.0e-30)
+			// to check is non-normal number and it shoule not be zero
+			if ((std::abs(betar(ib, ir)) < 1.0e-30) && (std::abs(betar(ib, ir))!=0))
 			{
 				flag = ir;
 				break;
