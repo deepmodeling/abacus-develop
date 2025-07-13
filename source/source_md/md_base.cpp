@@ -5,7 +5,8 @@
 #endif
 #include "source_io/print_info.h"
 #include "source_cell/update_cell.h"
-MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) : mdp(param_in.mdp), ucell(unit_in)
+MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) 
+: mdp(param_in.mdp), ucell(unit_in)
 {
     my_rank = param_in.globalv.myrank;
     cal_stress = param_in.inp.cal_stress;
