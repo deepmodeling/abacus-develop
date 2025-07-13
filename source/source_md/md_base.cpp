@@ -159,6 +159,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     // screen output
+    std::cout << std::setprecision(8);
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
     std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"

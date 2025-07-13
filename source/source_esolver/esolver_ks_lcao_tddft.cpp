@@ -229,11 +229,8 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 {
     std::cout << " -------------------------------------------" << std::endl;
-	GlobalV::ofs_running << "\n -------------------------------------------" << std::endl;
     std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
-	GlobalV::ofs_running << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
     std::cout << " -------------------------------------------" << std::endl;
-    GlobalV::ofs_running << " -------------------------------------------" << std::endl;
 }
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
@@ -321,10 +318,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
-        GlobalV::ofs_running << " ---------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << " occupations of electrons" << std::endl;
-        GlobalV::ofs_running << " k-point  state   occupation" << std::endl;
+        GlobalV::ofs_running << " k-point  State   Occupations" << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         GlobalV::ofs_running << std::left;
         std::setprecision(6);
@@ -337,8 +331,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
                  << std::setw(12) << this->pelec->wg(ik, ib) << std::endl;
             }
         }
-        GlobalV::ofs_running << " ---------------------------------------------------------"
-                             << std::endl;
     }
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
@@ -471,32 +463,6 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::update_pot(UnitCell& ucell,
         }
     }
 
-    // print "eigen value" for tddft
-// it seems uncessary to print out E_ii because the band energies are printed
-/*
-    if (conv_esolver)
-    {
-        GlobalV::ofs_running << "----------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << " Print E=<psi_i|H|psi_i> " << std::endl;
-        GlobalV::ofs_running << " k-point  state    energy (eV)" << std::endl;
-        GlobalV::ofs_running << "----------------------------------------------------------"
-                             << std::endl;
-        GlobalV::ofs_running << std::setprecision(6);
-        GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
-
-        for (int ik = 0; ik < this->kv.get_nks(); ik++)
-        {
-            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
-            {
-                GlobalV::ofs_running << " " << std::setw(7) << ik + 1 
-                                     << std::setw(7) << ib + 1 
-                                     << std::setw(10) << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV 
-                                     << std::endl;
-            }
-        }
-    }
-*/
 }
 
 template <typename TR, typename Device>
@@ -555,7 +521,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
         }
     }
     // (3) output energy for sub loop
-    std::cout << "Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot <<std::endl;
+    std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot <<std::endl;
 
     // (4) output file for restart
     if(istep % PARAM.inp.out_interval == 0)
