@@ -192,7 +192,6 @@ void init_vel(const UnitCell& unit_in,
               ModuleBase::Vector3<int>* ionmbl,
               ModuleBase::Vector3<double>* vel)
 {
-    std::cout << " ----------------------------------- INIT VEL ---------------------------------------" << std::endl;
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
@@ -211,38 +210,38 @@ void init_vel(const UnitCell& unit_in,
 
     if (unit_in.init_vel)
     {
-        std::cout << " READ VEL FROM STRU" << std::endl;
+        std::cout << " Reading velocities from STRU file" << std::endl;
         read_vel(unit_in, vel);
         double kinetic = 0.0;
         double t_current = MD_func::current_temp(kinetic, unit_in.nat, frozen_freedom, allmass, vel);
         if (restart)
         {
-            std::cout << " RESTART MD, CURRENT TEMPERATURE IS " << t_current * ModuleBase::Hartree_to_K << " K"
+            std::cout << " Restart MD, current temperature is " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
         }
         else if (temperature < 0)
         {
-            std::cout << " UNSET INITIAL TEMPERATURE, AUTOSET TO " << t_current * ModuleBase::Hartree_to_K << " K"
+            std::cout << " Autoset the initial tempearture to " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
             temperature = t_current;
         }
         else
         {
-            std::cout << " INITIAL TEMPERATURE IN INPUT  = " << temperature * ModuleBase::Hartree_to_K << " K"
+            std::cout << " Initial temeprature from INPUT is " << temperature * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
-            std::cout << " READING TEMPERATURE FROM STRU = " << t_current * ModuleBase::Hartree_to_K << " K"
+            std::cout << " Reading temperature from STRU is " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
-            std::cout << " RESCALE VEL TO INITIAL TEMPERATURE" << std::endl;
+            std::cout << " Rescale velocties to initial temperature" << std::endl;
             rescale_vel(unit_in.nat, temperature, allmass, frozen_freedom, vel);
         }
     }
     else
     {
-        std::cout << " RANDOM VEL ACCORDING TO INITIAL TEMPERATURE: " << temperature * ModuleBase::Hartree_to_K << " K"
+        std::cout << " Random velocities according to initial temperature " 
+                  << temperature * ModuleBase::Hartree_to_K << " K"
                   << std::endl;
         rand_vel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, my_rank, vel);
     }
-    std::cout << " ------------------------------------- DONE -----------------------------------------" << std::endl;
 }
 
 void force_virial(ModuleESolver::ESolver* p_esolver,
