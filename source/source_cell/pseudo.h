@@ -74,6 +74,12 @@ class pseudo
     // uspp
     ModuleBase::realArray qfuncl; // qfuncl(2*lmax+1,nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
     ModuleBase::matrix qqq;       // qqq(nbeta,nbeta) q_{mu,nu}
+    /**
+     * @brief Check the input data for non-normal numbers in the betar.
+     * Subsequent values following non-normal numbers will be reset to zero
+     * to prevent potential computational issues arising from invalid data.
+     */
+    void check_betar();
 
     void print_pseudo_h(std::ofstream& ofs);
     void print_pseudo_atom(std::ofstream& ofs);

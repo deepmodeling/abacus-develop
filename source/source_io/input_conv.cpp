@@ -271,7 +271,6 @@ void Input_Conv::Convert()
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
@@ -297,7 +296,6 @@ void Input_Conv::Convert()
         GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0"
             || dft_functional_lower == "lc_pbe"
             || dft_functional_lower == "lc_wpbe" 
@@ -422,13 +420,6 @@ void Input_Conv::Convert()
             }
         }
     }
-#ifdef __EXX
-    else if (dft_functional_lower == "opt_orb")
-    {
-        GlobalC::exx_info.info_global.cal_exx = false;
-        Exx_Abfs::Jle::generate_matrix = true;
-    }
-#endif
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
@@ -456,7 +447,6 @@ void Input_Conv::Convert()
 
     if (GlobalC::exx_info.info_global.cal_exx
 #ifdef __EXX
-        || Exx_Abfs::Jle::generate_matrix
         || PARAM.inp.rpa
 #endif
         )
@@ -483,11 +473,9 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
-#ifdef __EXX
-        Exx_Abfs::Jle::Lmax = PARAM.inp.exx_opt_orb_lmax;
-        Exx_Abfs::Jle::Ecut_exx = PARAM.inp.exx_opt_orb_ecut;
-        Exx_Abfs::Jle::tolerence = PARAM.inp.exx_opt_orb_tolerence;
-#endif
+        GlobalC::exx_info.info_opt_abfs.abfs_Lmax  = PARAM.inp.exx_opt_orb_lmax;
+        GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
+        GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
         // EXX does not support symmetry for nspin==4
         if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4 && PARAM.inp.basis_type == "lcao")
