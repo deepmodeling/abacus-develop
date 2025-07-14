@@ -95,6 +95,9 @@ void Relax_Driver::relax_driver(
             if (inp.relax_new)
             {
                 stop = rl.relax_step(ucell, force, stress, this->etot);
+                // mohan added 2025-07-14
+                stress_step = istep+1;
+                force_step = 1;
             }
             else
             {
@@ -171,7 +174,7 @@ void Relax_Driver::relax_driver(
     } // end while (istep <= inp.relax_nmax && !stop)
 
 
-    if (istep == inp.relax_nmax+1 && !stop)
+    if (istep-1 == inp.relax_nmax && !stop)
     {
         std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
         std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
@@ -181,7 +184,7 @@ void Relax_Driver::relax_driver(
     else
     {
         std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        std::cout << " Geometry relaxation thresholds are satisfied within " << istep << " steps." << std::endl; 
+        std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
         std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
     }
 
