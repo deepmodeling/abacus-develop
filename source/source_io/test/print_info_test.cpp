@@ -186,15 +186,16 @@ TEST_F(PrintInfoTest, PrintScreen)
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
-				EXPECT_THAT(output,testing::HasSubstr("STEP OF ION RELAXATION"));
+				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
 			}
 			else if(PARAM.input.calculation=="cell-relax")
 			{
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
-				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
-				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
+				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
+				EXPECT_THAT(output,testing::HasSubstr("CELL_CHANGE#"));
+				EXPECT_THAT(output,testing::HasSubstr("IONS_CHANGE#"));
 			}
 		}
 	}
