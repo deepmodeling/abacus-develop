@@ -174,21 +174,28 @@ void Relax_Driver::relax_driver(
     } // end while (istep <= inp.relax_nmax && !stop)
 
 
-    if (istep-1 == inp.relax_nmax || stop)
-    {
-        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-    }
-    else
-    {
-        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
-        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-    }
+	if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+	{
+		if (istep-1 == inp.relax_nmax || stop)
+		{
+			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+			std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+			std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+		}
+		else
+		{
+			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+			std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
+			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+		}
+	}
+	else
+	{
+		// do nothing
+	}
 
-    if (inp.relax_nmax == 0)
+	if (inp.relax_nmax == 0)
     {
         std::cout << "-----------------------------------------------" << std::endl;
         std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
