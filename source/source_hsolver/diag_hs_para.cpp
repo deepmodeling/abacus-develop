@@ -5,7 +5,7 @@
 #include "source_hsolver/diago_pxxxgvx.h"
 
 #ifdef __ELPA
-#include "source_hsolver/genelpa/elpa_solver.h"
+#include "source_hsolver/module_genelpa/elpa_solver.h"
 #endif
 
 #include <iostream>

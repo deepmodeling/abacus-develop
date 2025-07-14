@@ -7,7 +7,7 @@
 
 extern "C"
 {
-#include "source_hsolver/genelpa/Cblacs.h"
+#include "source_hsolver/module_genelpa/Cblacs.h"
 }
 #include <iostream>
 #include <cstdint>

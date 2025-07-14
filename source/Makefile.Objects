@@ -32,7 +32,7 @@ VPATH=./src_global:\
 ./source_esolver:\
 ./source_hsolver:\
 ./source_hsolver/kernels:\
-./source_hsolver/genelpa:\
+./source_hsolver/module_genelpa:\
 ./source_hsolver/module_pexsi:\
 ./source_estate:\
 ./source_estate/kernels:\
