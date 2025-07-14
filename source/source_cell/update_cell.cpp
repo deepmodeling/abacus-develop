@@ -487,15 +487,11 @@ void periodic_boundary_adjustment(Atom* atoms,
             // mohan update 2011-03-21
             for (int ik = 0; ik < 3; ik++) 
             {
-                // important update: mohan update 2025-07-14, change 'if' to 'while'
-                // so I guess the following warning will not show up anymore, which
-                // I am not sure is correct or not. However, I prefer the current 
-                // implementation
-                while (atom->taud[ia][ik] < 0) 
+                if (atom->taud[ia][ik] < 0) 
                 {
                     atom->taud[ia][ik] += 1.0;
                 }
-                while (atom->taud[ia][ik] >= 1.0) 
+                if (atom->taud[ia][ik] >= 1.0) 
                 {
                     atom->taud[ia][ik] -= 1.0;
                 }
