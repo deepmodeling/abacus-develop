@@ -20,11 +20,11 @@ void Relax_Driver::relax_driver(
 
     if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
     {
-        if (!inp.relax_new)
+        if (!inp.relax_new) // traditional relax
         {
             rl_old.init_relax(ucell.nat);
         }
-        else
+        else // relax new
         {
             rl.init_relax(ucell.nat);
         }
@@ -149,7 +149,7 @@ void Relax_Driver::relax_driver(
             }
 
             ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
-        }
+        }// end relax or cell_relax
 
 #ifdef __RAPIDJSON
         // add the energy to outout
@@ -168,6 +168,21 @@ void Relax_Driver::relax_driver(
         time_t fend = time(nullptr);
 
         ++istep;
+    } // end while (istep <= inp.relax_nmax && !stop)
+
+
+    if (istep == inp.relax_nmax+1 && !stop)
+    {
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+    }
+    else
+    {
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        std::cout << " Geometry relaxation thresholds are satisfied within " << istep << " steps." << std::endl; 
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
     }
 
     if (inp.relax_nmax == 0)
@@ -179,15 +194,6 @@ void Relax_Driver::relax_driver(
 	else
 	{
 		// do nothing 
-	}
-
-    if (inp.out_level == "i")
-    {
-        std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
-	}
-	else
-	{
-		// do nothing
 	}
 
     ModuleBase::timer::tick("Relax_Driver", "relax_driver");
