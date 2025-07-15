@@ -7,7 +7,7 @@
 
 #ifdef __NORMAL
 #else
-#include "blas_connector.h"
+#include "module_external/blas_connector.h"
 #endif
 
 namespace ModuleBase
