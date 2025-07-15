@@ -10,9 +10,9 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
-    blas_connector_base.cpp
-    blas_connector_vector.cpp
-    blas_connector_matrix.cpp
+    module_external/blas_connector_base.cpp
+    module_external/blas_connector_vector.cpp
+    module_external/blas_connector_matrix.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp

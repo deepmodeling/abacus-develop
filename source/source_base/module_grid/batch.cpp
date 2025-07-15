@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iterator>
 
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/lapack_connector.h"
 
 namespace {

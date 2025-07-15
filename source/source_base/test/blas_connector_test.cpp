@@ -1,4 +1,4 @@
-#include "../blas_connector.h"
+#include "../module_external/blas_connector.h"
 #include "../module_device/memory_op.h"
 #include "gtest/gtest.h"
 

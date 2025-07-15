@@ -1,7 +1,7 @@
 #include "cal_pdos_multik.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "write_orb_info.h"
 #include "source_base/global_function.h"

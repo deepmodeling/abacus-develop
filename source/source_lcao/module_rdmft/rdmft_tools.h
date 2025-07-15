@@ -12,7 +12,7 @@
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
