@@ -69,12 +69,12 @@ VPATH=./src_global:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_io/module_parameter:\
-./module_lr:\
-./module_lr/ao_to_mo_transformer:\
-./module_lr/dm_trans:\
-./module_lr/operator_casida:\
-./module_lr/potentials:\
-./module_lr/utils:\
+./source_lcao/module_lr:\
+./source_lcao/module_lr/ao_to_mo_transformer:\
+./source_lcao/module_lr/dm_trans:\
+./source_lcao/module_lr/operator_casida:\
+./source_lcao/module_lr/potentials:\
+./source_lcao/module_lr/utils:\
 ./source_lcao/module_rdmft:\
 ./\
 

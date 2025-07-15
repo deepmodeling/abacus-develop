@@ -150,7 +150,7 @@ void transfer_dm_2d_to_gint(
     if (PARAM.inp.nspin != 4)
     {
         // dm_gint.size() usually equals to PARAM.inp.nspin,
-        // but there is exception within module_lr
+        // but there is exception within source_lcao/module_lr
         for (int is = 0; is < dm_gint.size(); is++)
         {
 #ifdef __MPI

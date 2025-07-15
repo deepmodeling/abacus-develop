@@ -10,7 +10,7 @@
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
-#include "module_lr/esolver_lrtd_lcao.h"
+#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
 #include "source_base/blacs_connector.h"
