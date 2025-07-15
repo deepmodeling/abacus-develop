@@ -20,6 +20,7 @@ VPATH=./src_global:\
 ./source_cell:\
 ./source_base:\
 ./source_base/kernels:\
+./source_base/module_external:\
 ./source_base/module_container/base/core:\
 ./source_base/module_container/ATen/core:\
 ./source_base/module_container/ATen/kernels:\
