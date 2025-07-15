@@ -249,7 +249,6 @@ void print_force(std::ofstream& ofs_running,
             force_x.push_back(fx);
             force_y.push_back(fy);
             force_z.push_back(fz);
-
             iat++;
         }
     }
@@ -258,16 +257,17 @@ void print_force(std::ofstream& ofs_running,
     FmtTable fmt(/*titles=*/titles, 
                  /*nrows=*/atom_label.size(), 
                  /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
-                 0,
+                 /*indent*/1,
 			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+
 
 	fmt << atom_label << force_x << force_y << force_z;
 	table = fmt.str();
-    ofs_running << table << std::endl;
+    ofs_running << table; 
 
 	if (PARAM.inp.test_force) 
 	{ 
-		std::cout << table << std::endl;
+		std::cout << table;
 	}
 }
 
@@ -311,8 +311,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
 
     FmtTable fmt(/*titles=*/titles, 
                  /*nrows=*/3, 
-                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 0,
+                 /*formats=*/{"%20.10f", "%20.10f", "%20.10f"}, 
+                 /*indent*/1,
                  {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+
 
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
@@ -338,25 +340,23 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs,
 
 void write_head(std::ofstream& ofs, const int& istep, const int& iter, const std::string& basisname)
 {
+    ofs << std::right;
     ofs << "\n";
     ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
-    ofs << " --> IONIC RELAXATION STEP=" << std::setw(6) << istep+1
-        << "  ELECTRONIC ITERATION STEP=" << std::setw(6) << iter << "\n"; 
+    ofs << " --> #ION MOVE#" << std::setw(10) << istep+1
+        << "  #ELEC ITER#" << std::setw(10) << iter << "\n"; 
     ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
 
-//    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
-//                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 void write_head_td(std::ofstream& ofs, const int& istep, const int& estep, const int& iter, const std::string& basisname)
 {
+    ofs << std::right;
     ofs << "\n";
-    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
-    ofs << " --> IONIC RELAXATION STEP=" << std::setw(6) << istep+1
-        << " ELECTRON PROPAGATION STEP=" << std::setw(6) << estep
-        << "  ELECTRONIC ITERATION STEP=" << std::setw(6) << iter << "\n"; 
-    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
+    ofs << " --> #ION MOVE#" << std::setw(10) << istep+1
+        << " #ELEC PROP#" << std::setw(10) << estep+1
+        << "  #ELEC ITER#" << std::setw(10) << iter << "\n"; 
+    ofs << " ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<< std::endl;
 
-//    ofs << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
-//                << "  ELEC=" << std::setw(4) << estep << "  iter=" << std::setw(4)  << iter << "--------------------------------\n";
 }
 }// namespace ModuleIO

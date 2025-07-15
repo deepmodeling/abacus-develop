@@ -58,6 +58,10 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 
+#ifdef __EXX
+#include "../source_lcao/module_ri/exx_opt_orb.h"
+#endif
+
 // test RDMFT
 #include "source_lcao/module_rdmft/rdmft.h"
 
@@ -131,6 +135,17 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                  ucell,
                                  two_center_bundle_,
                                  orb_);
+
+    if (PARAM.inp.calculation == "gen_opt_abfs")
+    {
+      #ifdef __EXX
+        Exx_Opt_Orb exx_opt_orb;
+        exx_opt_orb.generate_matrix(GlobalC::exx_info.info_opt_abfs, this->kv, ucell, this->orb_);
+      #else
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "calculation=gen_opt_abfs must compile __EXX");
+      #endif
+        return;
+    }
 
     // 4) initialize electronic wave function psi
     if (this->psi == nullptr)

@@ -1,7 +1,7 @@
 #include "diago_elpa.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "genelpa/elpa_solver.h"
+#include "module_genelpa/elpa_solver.h"
 #include "source_base/blacs_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/lapack_connector.h"

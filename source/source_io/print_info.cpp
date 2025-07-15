@@ -344,8 +344,8 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
 
 void print_screen(const int& stress_step, const int& force_step, const int& istep)
 {
-    std::cout << " ======================================================================" << std::endl;
-    GlobalV::ofs_running << " ======================================================================" << std::endl;
+    std::cout << "\n ================================================================" << std::endl;
+    GlobalV::ofs_running << " ================================================================" << std::endl;
 
 	if(PARAM.inp.calculation=="scf")
 	{
@@ -366,20 +366,22 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
 	{
 		if(PARAM.inp.calculation=="relax")
 		{
-        	std::cout << " STEP OF ION RELAXATION: " << unsigned(istep) << std::endl;
-			GlobalV::ofs_running << " STEP OF ION RELAXATION : " << unsigned(istep) << std::endl;
+        	std::cout << " RELAX STEP: " << unsigned(istep) << std::endl;
+			GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep) << std::endl;
 		}
     	else if(PARAM.inp.calculation=="cell-relax")
     	{
-        	std::cout << " RELAX CELL : " << unsigned(stress_step) << std::endl;
-        	std::cout << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
-			GlobalV::ofs_running << " RELAX CELL : " << unsigned(stress_step) << std::endl;
-        	GlobalV::ofs_running << " RELAX IONS : " << unsigned(force_step) << " (in total: " << unsigned(istep) << ")" << std::endl;
+            std::cout << " RELAX STEP: " << unsigned(istep);
+        	std::cout << " (CELL_CHANGE# " << unsigned(stress_step);
+        	std::cout << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
+            GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep);
+			GlobalV::ofs_running << " (CELL_CHANGE# " << unsigned(stress_step);
+        	GlobalV::ofs_running << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
     	}
 	}
 
-    std::cout << " ======================================================================" << std::endl;
-    GlobalV::ofs_running << " ======================================================================" << std::endl;
+    std::cout << " ================================================================" << std::endl;
+    GlobalV::ofs_running << " ================================================================" << std::endl;
 }
 
 } // namespace ModuleIO

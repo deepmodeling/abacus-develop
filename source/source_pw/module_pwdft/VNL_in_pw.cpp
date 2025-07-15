@@ -724,20 +724,18 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
 
         double* jl = new double[kkbeta];
         double* aux = new double[kkbeta];
-
         for (int ib = 0; ib < nbeta; ib++)
         {
             const int l = cell.atoms[it].ncpp.lll[ib];
             for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
             {
                 const double q = iq * PARAM.globalv.dq;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
-
+                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);  
                 for (int ir = 0; ir < kkbeta; ir++)
-                {
-                    aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
+                {   
+		            aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];   
                 }
-                double vqint;
+                double vqint=0.0;
                 ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
                 this->tab(it, ib, iq) = vqint * pref;
             }

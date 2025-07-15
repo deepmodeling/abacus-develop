@@ -3,6 +3,7 @@
 #include "exx_abfs-jle.h"
 
 void Exx_Opt_Orb::print_matrix(
+	const Exx_Info::Exx_Info_Opt_ABFs &info,
 	const UnitCell& ucell,
     const K_Vectors &kv,
     const std::string& file_name,
@@ -60,47 +61,44 @@ void Exx_Opt_Orb::print_matrix(
 		}
 		
 		// ecutwfc_jlq determine the jlq corresponding to plane wave calculation.
-		ofs << Exx_Abfs::Jle::Ecut_exx << " ecutwfc" << std::endl; // mohan add 2009-09-08
+		ofs << info.ecut_exx << " ecutwfc" << std::endl; // mohan add 2009-09-08
 
 		// this parameter determine the total number of jlq.
-		ofs << Exx_Abfs::Jle::Ecut_exx << " ecutwfc_jlq" << std::endl;//mohan modify 2009-09-08
+		ofs << info.ecut_exx << " ecutwfc_jlq" << std::endl;//mohan modify 2009-09-08
 
-		if(TA==TB) {
-			ofs << orb_cutoff[TA] << " rcut_Jlq" << std::endl;
-		} else {
-			ofs << orb_cutoff[TA] << " " << orb_cutoff[TB] << " rcut_Jlq" << std::endl;
-}
+		if(TA==TB)
+			{ ofs << orb_cutoff[TA] << " rcut_Jlq" << std::endl; }
+		else
+			{ ofs << orb_cutoff[TA] << " " << orb_cutoff[TB] << " rcut_Jlq" << std::endl; }
 
 		// mohan add 'smooth' and 'smearing_sigma' 2009-08-28
 		ofs << 0 << " smooth" << std::endl;
 		ofs << 0 << " smearing_sigma" << std::endl;
 
-		ofs << Exx_Abfs::Jle::tolerence << " tolerence" << std::endl;
+		ofs << info.tolerence << " tolerence" << std::endl;
 
-		ofs << Exx_Abfs::Jle::Lmax << " lmax" << std::endl;
+		ofs << info.abfs_Lmax << " lmax" << std::endl;
 
 		ofs << kv.get_nkstot() << " nks" << std::endl;
-		assert( matrix_V.shape[0] == matrix_V.shape[1] );
-		ofs	<< matrix_V.shape[0] << " nbands" << std::endl;
+		assert( matrix_V.shape[0]*matrix_V.shape[1] == matrix_V.shape[2]*matrix_V.shape[3] );
+		ofs	<< matrix_V.shape[0]*matrix_V.shape[1] << " nbands" << std::endl;
 		
 		auto cal_sum_M = [&range_jles](size_t T) -> size_t
 		{
 			size_t sum_M = 0;
-			for( size_t L = 0; L!=range_jles[T].size(); ++L ) {
-				sum_M += range_jles[T][L].M;
-}
+			for( size_t L = 0; L!=range_jles[T].size(); ++L )
+				{ sum_M += range_jles[T][L].M; }
 			return sum_M;
 		};
 		const size_t nwfc = (TA==TB && IA==IB) ? cal_sum_M(TA) : cal_sum_M(TA)+cal_sum_M(TB);
 		ofs	<< nwfc << " nwfc" << std::endl;
 		
-		const size_t ecut_numberA = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TA] / ModuleBase::PI ); // Rydberg Unit
-		const size_t ecut_numberB = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TB] / ModuleBase::PI ); // Rydberg Unit
-		if(TA==TB) {
-			ofs	<< ecut_numberA << " ne" << std::endl;
-		} else {
-			ofs	<< ecut_numberA << " " << ecut_numberB << " ne" << std::endl;
-}
+		const size_t ecut_numberA = static_cast<size_t>( std::sqrt( info.ecut_exx ) * orb_cutoff[TA] / ModuleBase::PI ); // Rydberg Unit
+		const size_t ecut_numberB = static_cast<size_t>( std::sqrt( info.ecut_exx ) * orb_cutoff[TB] / ModuleBase::PI ); // Rydberg Unit
+		if(TA==TB)
+			{ ofs << ecut_numberA << " ne" << std::endl; }
+		else
+			{ ofs << ecut_numberA << " " << ecut_numberB << " ne" << std::endl; }
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;
 		for( int ik=0; ik!=kv.get_nkstot(); ++ik )		
@@ -119,26 +117,27 @@ void Exx_Opt_Orb::print_matrix(
 		//---------------------
 		//  < Psi | jY >
 		//---------------------
-		ofs<< "<OVERLAP_Q>" << std::endl;
-		
-		for( size_t ib=0; ib!=matrix_V.shape[0]; ++ib )
+		ofs<< "<OVERLAP_Q>" << std::endl;		
+		for( size_t iw0=0; iw0!=matrix_V.shape[0]; ++iw0 )
 		{
-			for( size_t iat=0; iat!=matrix_Q.size(); ++iat )
+			for( size_t iw1=0; iw1!=matrix_V.shape[1]; ++iw1 )
 			{
-				const size_t it = (iat==0) ? TA : TB;
-				for( size_t il=0; il!=range_jles[it].size(); ++il )
+				for( size_t iat=0; iat!=matrix_Q.size(); ++iat )
 				{
-					for( size_t im=0; im!=range_jles[it][il].M; ++im )
+					const size_t it = (iat==0) ? TA : TB;
+					for( size_t il=0; il!=range_jles[it].size(); ++il )
 					{
-						for( size_t iq=0; iq!=range_jles[it][il].N; ++iq )
+						for( size_t im=0; im!=range_jles[it][il].M; ++im )
 						{
-							ofs<<matrix_Q[iat]( ib, index_jles[it][il][iq][im] )<<"\t"<<0<<std::endl;
+							for( size_t iq=0; iq!=range_jles[it][il].N; ++iq )
+							{
+								ofs<<matrix_Q[iat]( iw0, iw1, index_jles[it][il][iq][im] )<<"\t"<<0<<std::endl;
+							}
 						}
 					}
 				}
 			}
-		}
-		
+		}		
 		ofs<< "</OVERLAP_Q>" << std::endl << std::endl;
 	};
 	
@@ -149,7 +148,6 @@ void Exx_Opt_Orb::print_matrix(
 		//  < jY | jY >
 		//---------------------
 		ofs<< "<OVERLAP_Sq>" <<std::endl;
-		
 		for( size_t iat1=0; iat1!=matrix_S.size(); ++iat1 )
 		{
 			const size_t it1 = (iat1==0) ? TA : TB;
@@ -177,7 +175,6 @@ void Exx_Opt_Orb::print_matrix(
 				}
 			}
 		}
-		
 		ofs<< "</OVERLAP_Sq>" << std::endl << std::endl;
 	};
 	
@@ -188,23 +185,26 @@ void Exx_Opt_Orb::print_matrix(
 		//  < Psi | Psi >
 		//---------------------	
 		ofs << "<OVERLAP_V>" << std::endl;
-		
-		for( size_t ib1=0; ib1!=matrix_V.shape[0]; ++ib1 )
+		for( size_t iw0=0; iw0!=matrix_V.shape[0]; ++iw0 )
 		{
-			for( size_t ib2=0; ib2!=matrix_V.shape[1]; ++ib2 )
+			for( size_t iw1=0; iw1!=matrix_V.shape[1]; ++iw1 )
 			{
-				ofs<<matrix_V(ib1,ib2)*scale<<"\t";
+				for( size_t iw2=0; iw2!=matrix_V.shape[2]; ++iw2 )
+				{
+					for( size_t iw3=0; iw3!=matrix_V.shape[3]; ++iw3 )
+					{
+						ofs<<matrix_V(iw0,iw1,iw2,iw3)*scale<<"\t";
+					}
+				}
+				ofs<<std::endl;
 			}
-			ofs<<std::endl;
 		}
-		
 		ofs << "</OVERLAP_V>" << std::endl << std::endl;
 	};
 	
-	std::ofstream ofs(file_name+"_"+ModuleBase::GlobalFunc::TO_STRING(TA)+"_"+ModuleBase::GlobalFunc::TO_STRING(IA)+"_"+ModuleBase::GlobalFunc::TO_STRING(TB)+"_"+ModuleBase::GlobalFunc::TO_STRING(IB));
+	std::ofstream ofs(file_name+"_"+std::to_string(TA)+"_"+std::to_string(IA)+"_"+std::to_string(TB)+"_"+std::to_string(IB));
 	print_header(ofs);
 	print_Q(ofs);
 	print_S(ofs);
 	print_V(ofs);
-	ofs.close();
 }

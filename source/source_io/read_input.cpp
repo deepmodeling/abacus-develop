@@ -196,6 +196,7 @@ void ReadInput::create_directory(const Parameter& param)
     }
     // NOTE: "make_dir_out" must be called by all processes!!!
     //       Maybe it is not good, because only rank 0 can create the directory.
+    #ifndef __SW
     ModuleBase::Global_File::make_dir_out(param.input.suffix,
                                           param.input.calculation,
                                           out_dir,
@@ -203,13 +204,14 @@ void ReadInput::create_directory(const Parameter& param)
                                           this->rank,
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
-
+    #endif
     const std::string ss = "test -d " + PARAM.inp.read_file_dir;
+    #ifndef __SW
     if (system(ss.c_str()))
     {
         ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");
     }
-
+    #endif
     return;
 }
 
