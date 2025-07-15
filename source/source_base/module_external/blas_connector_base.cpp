@@ -1,5 +1,5 @@
 #include "blas_connector.h"
-#include "macros.h"
+#include "../macros.h"
 
 #ifdef __CUDA
 #include <base/macros/macros.h>

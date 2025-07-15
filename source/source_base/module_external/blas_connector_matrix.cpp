@@ -1,5 +1,5 @@
 #include "blas_connector.h"
-#include "macros.h"
+#include "../macros.h"
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
