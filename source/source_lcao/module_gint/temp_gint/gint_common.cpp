@@ -4,7 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 #include <mpi.h>
 #endif
 

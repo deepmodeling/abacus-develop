@@ -1,6 +1,6 @@
 #include "parallel_orbitals.h"
 
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/global_function.h"
 

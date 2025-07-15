@@ -1,6 +1,6 @@
 #include "diago_elpa_native.h"
 
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/lapack_connector.h"

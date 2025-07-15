@@ -13,7 +13,7 @@
 #include "source_lcao/module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 }
 #endif
 #include "esolver_dp.h"
