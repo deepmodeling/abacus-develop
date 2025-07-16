@@ -4,7 +4,7 @@
 #include "module_genelpa/elpa_solver.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/global_variable.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
