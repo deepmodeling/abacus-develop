@@ -61,6 +61,7 @@ void OUT(std::ofstream &ofs, const std::string &name)
 void MAKE_DIR(const std::string &fn)
 {
     //	ModuleBase::TITLE("global_function","MAKE_DIR");
+    #ifndef __SW
     if (GlobalV::MY_RANK == 0)
     {
         std::stringstream ss;
@@ -73,6 +74,7 @@ void MAKE_DIR(const std::string &fn)
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
         }
     }
+    #endif
     return;
 }
 

@@ -1,26 +1,26 @@
 INPUT_PARAMETERS
 #Parameters (General)
-suffix              autotest
-pseudo_dir  ../../PP_ORB
- 
-nbands   8
-calculation             cell-relax
+suffix       autotest
+pseudo_dir   ../../PP_ORB
+calculation  cell-relax
+basis_type   pw
+nspin        2
+nbands       8
+
 #Parameters (Accuracy)
-ecutwfc   20
-scf_nmax   20
-kpar  2
-nspin 2
+ecutwfc      20
+scf_nmax     20
+kpar         2
 
-basis_type  pw
-relax_nmax                   2
-relax_new                    0
+relax_method cg
+relax_nmax   2
+relax_new    0
 
-cal_stress                  1
-stress_thr              1e-6
-cal_force                   1
-force_thr_ev            1.0e-3
+cal_stress   1
+stress_thr   0.1
+cal_force    1
+force_thr_ev 0.001 
 
-#ks_solver               scalapack_gvx
-mixing_type         broyden
-mixing_beta         0.7
-mixing_gg0          1.5
+mixing_type  broyden
+mixing_beta  0.7
+mixing_gg0   1.5

@@ -163,8 +163,9 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
         etot_p = etot;
     }
 
-    GlobalV::ofs_running << "\n Largest gradient in force is " << max_grad << " eV/A." << std::endl;
-    GlobalV::ofs_running << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A." << std::endl;
+
+    GlobalV::ofs_running << "\n Largest force is " << max_grad << 
+             " eV/A while threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
     //=========================================
     // set gradient for cell degrees of freedom
     //=========================================
@@ -268,8 +269,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
             force_converged = false;
         }
 
-        GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << " kbar." << std::endl;
-        GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
+        GlobalV::ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << PARAM.inp.stress_thr << " kbar" << std::endl;
     }
 
     if (force_converged)

@@ -77,6 +77,15 @@ struct Exx_Info
     };
     Exx_Info_RI info_ri;
 
+    struct Exx_Info_Opt_ABFs
+    {
+        int abfs_Lmax = 0; // tmp
+        double ecut_exx = 60;
+        double tolerence = 1E-2;
+        double kmesh_times = 4;
+    };
+    Exx_Info_Opt_ABFs info_opt_abfs;
+
     Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
     {
     }

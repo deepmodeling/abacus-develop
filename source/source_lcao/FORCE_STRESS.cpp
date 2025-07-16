@@ -778,8 +778,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
         // print total stress
-        bool screen = false;
-        ModuleIO::print_stress("TOTAL-STRESS", scs, screen, ry, GlobalV::ofs_running);
+        bool screen_normal = true;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
 
         double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;

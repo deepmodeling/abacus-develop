@@ -1,4 +1,4 @@
-#include "source_base/grid/batch.h"
+#include "source_base/module_grid/batch.h"
 
 #include "gtest/gtest.h"
 #include <algorithm>
