@@ -5,9 +5,9 @@
 #include <stdexcept>
 #include <iostream>
 #include <cassert>
-#include "matrix.h"
-#include "complexmatrix.h"
-#include "global_function.h"
+#include "../matrix.h"
+#include "../complexmatrix.h"
+#include "../global_function.h"
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
