@@ -13,7 +13,7 @@
 #include "source_io/print_info.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition

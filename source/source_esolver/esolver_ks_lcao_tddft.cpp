@@ -13,7 +13,7 @@
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"

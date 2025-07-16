@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifdef __MPI
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #endif
 

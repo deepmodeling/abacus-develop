@@ -5,7 +5,7 @@
 #include "source_io/write_wfc_nao.h"
 
 #include "write_wfc_nao.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_io/filename.h"
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
