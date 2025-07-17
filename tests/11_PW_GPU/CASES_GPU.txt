@@ -2,3 +2,4 @@
 002_PW_CG_GPU
 003_PW_DA_GPU
 005_PW_CG_GPU_float
+006_PW_get_wf_GPU
