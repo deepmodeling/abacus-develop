@@ -407,8 +407,9 @@ struct Input_para
     std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
-    bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
-    std::vector<int> out_elf = {0, 3}; ///< output the electron localization function (ELF). 0: no; 1: yes
+    bool if_separate_k = false;           ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
+    std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
@@ -630,7 +631,7 @@ struct Input_para
     bool test_stress = false;       ///< test the stress.
     bool test_skip_ewald = false;   ///< variables for test only
     int test_atom_input = false;    ///< variables for test_atom_input only
-    int test_symmetry = false;      ///< variables for test_lattice only
+    // int test_symmetry = false;   ///< variables for test_lattice only
     int test_wf = 0;                ///< variables for test_wf only
     int test_grid = false;          ///< variables for test_grid only
     int test_charge = false;        ///< variables for test_vloc only

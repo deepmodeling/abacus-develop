@@ -331,6 +331,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
                  << std::setw(12) << this->pelec->wg(ik, ib) << std::endl;
             }
         }
+        GlobalV::ofs_running << std::endl;
     }
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
