@@ -1,8 +1,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_estate/module_charge/charge.h"
+#include "source_io/dipole_io.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_pw/module_pwdft/global.h"
-#include "source_io/dipole_io.h"
 
 // fuxiang add 2017-03-15
 void ModuleIO::write_dipole(const UnitCell& ucell,
@@ -11,8 +11,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
                             const int& is,
                             const int& istep,
                             const std::string& fn,
-                            const int& precision,
-                            const bool for_plot)
+                            const int& precision)
 {
     ModuleBase::TITLE("ModuleIO", "write_dipole");
 
@@ -51,9 +50,9 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
                 int index = i * rhopw->ny * rhopw->nz + j * rhopw->nz + k;
                 double rho_val = rho_save[index];
 
-                dipole_elec_x += rho_val * i * lat_factor_x;
-                dipole_elec_y += rho_val * j * lat_factor_y;
-                dipole_elec_z += rho_val * k * lat_factor_z;
+                dipole_elec_x -= rho_val * i * lat_factor_x;
+                dipole_elec_y -= rho_val * j * lat_factor_y;
+                dipole_elec_z -= rho_val * k * lat_factor_z;
             }
         }
     }
@@ -79,9 +78,9 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
         double y = (double)j / rhopw->ny;
         double z = (double)k / rhopw->nz;
 
-        dipole_elec[0] += rho_save[ir] * x;
-        dipole_elec[1] += rho_save[ir] * y;
-        dipole_elec[2] += rho_save[ir] * z;
+        dipole_elec[0] -= rho_save[ir] * x;
+        dipole_elec[1] -= rho_save[ir] * y;
+        dipole_elec[2] -= rho_save[ir] * z;
     }
 
     Parallel_Reduce::reduce_pool(dipole_elec[0]);
@@ -92,12 +91,12 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
         dipole_elec[i] *= ucell.lat0 / bmod[i] * ucell.omega / rhopw->nxyz;
     }
 
-    std::cout << std::setprecision(15) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
-    std::cout << std::setprecision(15) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
-    std::cout << std::setprecision(15) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_x(t)", dipole_elec[0]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_y(t)", dipole_elec[1]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_z(t)", dipole_elec[2]);
 
-    ofs << std::setprecision(8) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
-        << std::endl;
+    ofs << std::setprecision(precision) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
+        << dipole_elec[2] << std::endl;
 
     double dipole_ion[3] = {0.0};
     double dipole_sum = 0.0;
@@ -116,20 +115,23 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
         dipole_ion[i] *= ucell.lat0 / bmod[i]; //* ModuleBase::FOUR_PI / ucell.omega;
     }
 
-    std::cout << std::setprecision(8) << "dipole_ion_x: " << dipole_ion[0] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_ion_y: " << dipole_ion[1] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_ion_z: " << dipole_ion[2] << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_x(t)", dipole_ion[0]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_y(t)", dipole_ion[1]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_z(t)", dipole_ion[2]);
 
     double dipole[3] = {0.0};
     for (int i = 0; i < 3; ++i)
     {
-        dipole[i] = dipole_ion[i] - dipole_elec[i];
+        dipole[i] = dipole_ion[i] + dipole_elec[i];
     }
-    std::cout << std::setprecision(8) << "dipole_x: " << dipole[0] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_y: " << dipole[1] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_z: " << dipole[2] << std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_x(t)", dipole[0]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_y(t)", dipole[1]);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment P_tot_z(t)", dipole[2]);
+
     dipole_sum = sqrt(dipole[0] * dipole[0] + dipole[1] * dipole[1] + dipole[2] * dipole[2]);
-    std::cout << std::setprecision(8) << "dipole_sum: " << dipole_sum << std::endl;
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total dipole moment norm |P_tot(t)|", dipole_sum);
 
 #endif
 

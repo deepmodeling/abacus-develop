@@ -2,18 +2,18 @@
 
 #include "band_energy.h"
 #include "middle_hamilt.h"
+#include "norm_psi.h"
+#include "propagator.h"
+#include "solve_propagation.h"
 #include "source_base/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
 #include "source_base/scalapack_connector.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_pw/module_pwdft/global.h"
-#include "source_io/module_parameter/parameter.h"
-#include "norm_psi.h"
-#include "propagator.h"
 #include "upsi.h"
-#include "solve_propagation.h"
 
 #include <complex>
 
@@ -34,10 +34,10 @@ void evolve_psi(const int nband,
                 const int print_matrix)
 {
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    ofs_running << " Evolving electronic wave functions begins" << std::endl;
+    // ofs_running << " Evolving electronic wave functions begins" << std::endl;
 
     time_t time_start = time(nullptr);
-    ofs_running << " Start Time : " << ctime(&time_start);
+    // ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -120,7 +120,7 @@ void evolve_psi(const int nband,
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
-    ofs_running << " Evolving electronic wave functions ends" << std::endl;
+    // ofs_running << " Evolving electronic wave functions ends" << std::endl;
 
     return;
 }
@@ -155,11 +155,11 @@ void evolve_psi_tensor(const int nband,
     ct::kernels::createGpuBlasHandle();
 #endif // __CUDA
 
-    ofs_running << " evolve_psi_tensor::start " << std::endl;
+    // ofs_running << " evolve_psi_tensor::start " << std::endl;
 
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
     time_t time_start = time(nullptr);
-    ofs_running << " Start Time : " << ctime(&time_start);
+    // ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -305,7 +305,7 @@ void evolve_psi_tensor(const int nband,
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
-    ofs_running << " evolve_psi_tensor::end " << std::endl;
+    // ofs_running << " evolve_psi_tensor::end " << std::endl;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     // Destroy cuBLAS & cuSOLVER handle
