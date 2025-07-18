@@ -1,6 +1,7 @@
 #include "symmetry.h"
 #include "source_base/mymath.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/formatter.h"
 
 bool ModuleSymmetry::test_brav = 0;
 
@@ -11,15 +12,15 @@ std::string Symmetry_Basic::get_brav_name(const int ibrav) const
 {
 	switch(ibrav)
 	{
-		case 1: return "01. Cubic P (simple)";
-		case 2: return "02. Cubic I (body-centered)";
-		case 3: return "03. Cubic F (face-centered)";
-		case 4: return "04. Hexagonal cell";
-		case 5: return "05. Tetrogonal P (simple)";
-		case 6: return "06. Tetrogonal I (body-centered)";
-		case 7: return "07. Rhombohedral (Trigonal) cell";
-		case 8: return "08. Orthorhombic P(simple)";
-		case 9: return "09. Orthorhombic I (body-centered)";
+		case  1: return "01. Cubic P (simple)";
+		case  2: return "02. Cubic I (body-centered)";
+		case  3: return "03. Cubic F (face-centered)";
+		case  4: return "04. Hexagonal cell";
+		case  5: return "05. Tetrogonal P (simple)";
+		case  6: return "06. Tetrogonal I (body-centered)";
+		case  7: return "07. Rhombohedral (Trigonal) cell";
+		case  8: return "08. Orthorhombic P(simple)";
+		case  9: return "09. Orthorhombic I (body-centered)";
 		case 10: return "10. Orthorhombic F (face-centered)";
 		case 11: return "11. Orthorhombic C (base-centered)";
 		case 12: return "12. Monoclinic P (simple)";
@@ -27,14 +28,15 @@ std::string Symmetry_Basic::get_brav_name(const int ibrav) const
 		case 14: return "14. Triclinic cell";
 		case 15: return "wrong !! ";
 	}
-	return "Congratulations!You have found a bravais lattice that never existed!";
+	// return "Congratulations! You have found a bravais lattice that never existed!";
+	return "Unknown Bravais lattice";
 }
 
 // Control the accuracy
-bool Symmetry_Basic::equal(const double &m,const double &n)const
+bool Symmetry_Basic::equal(const double &m, const double &n) const
 {
 	//if( fabs(m-n) < 1.0e-5 )
-    if( fabs(m-n) < epsilon ) //LiuXh add 2021-08-12, use accuracy for symmetry
+    if (fabs(m-n) < epsilon) //LiuXh add 2021-08-12, use accuracy for symmetry
 	{
 		return true;
 	}
@@ -45,7 +47,6 @@ bool Symmetry_Basic::equal(const double &m,const double &n)const
 void Symmetry_Basic::check_boundary(double &x)const
 {
 	if(equal(x,-0.5) || equal(x,0.5)) x=-0.5;
-	return;
 }
 
 double Symmetry_Basic::get_translation_vector(const double& x1, const double& x2) const
@@ -53,7 +54,7 @@ double Symmetry_Basic::get_translation_vector(const double& x1, const double& x2
 	double t=0.0; // "t"ranslation
 	t = x2 - x1;
 	t = fmod(t+100.0, 1.0);
-	if( fabs(t-1) < epsilon * 0.5) t = 0.0;
+	if( fabs(t-1) < epsilon * 0.5) { t = 0.0; }
 	return t;
 }
 
@@ -109,8 +110,8 @@ void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) 
 	return;
 }
 
-//convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
-//to a set of vectors (vb) represented in the basis vectors new1, new2, new3
+// convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
+// to a set of vectors (vb) represented in the basis vectors new1, new2, new3
 void Symmetry_Basic::veccon(
 		double *carpos, 
 		double *rotpos, 
@@ -180,84 +181,89 @@ void Symmetry_Basic::veccon(
 }
 
 
-//generate all point group symmetry operations from the generation group
+// generate all point group symmetry operations from the generation group
 void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const
 {
-	int m1=0;
-    int m2=0;
-	int n=0;
+	int m1 = 0;
+    int m2 = 0;
+	int n = 0;
 
-	ModuleBase::Matrix3 iden(1,0,0,0,1,0,0,0,1);
-	ModuleBase::Matrix3 sig(1,0,0,0,1,0,0,0,1);
+	// allocate memory for the symmetry operations
+	ModuleBase::Matrix3  iden(1,0,0,0,1,0,0,0,1);
+	ModuleBase::Matrix3   sig(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp1(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp2(1,0,0,0,1,0,0,0,1);
 
-	bool flag = 0;
+	bool flag = false; // mark whether the symmetry operation is a new one
 	int order = 0;
 	int now = 0;
 
-	symop[0] = iden;	//identity (the trivial element)
-	nop = 1;
+	symop[0] = iden; //identity (the trivial element)
+	nop = 1; // counter of the symmetry operations
 
-	//take all generators
-	for(int i = 0; i < ngen; ++i)
+	// take all generators
+	for (int i = 0; i < ngen; ++i)
 	{
 		sig = symgen[i];
-		flag = 1;
-		for(int j = 0; j < nop; ++j)
+		flag = true; // assume it is a new symmetry operation
+		// search if the symmetry operation already exists among the found symmetry operations
+		// if so, skip it
+		for (int j = 0; j < nop; ++j)
 		{
-			if(symop[j] ==  sig)
+			if (symop[j] == sig)
 			{
-				flag = 0;
+				flag = 0; // not a new symmetry operation
 				break;
 			}
 		}
-		if(flag == 0)
+		if (flag == 0) // if old, return
 		{
 			continue;
 		}
+		// otherwise
 
-		//Determine the order of the operation
+		// determine the order of the operation: by which power will the operation return 
+		// to the identity operation. 
 		temp1 = sig;
-		for(int j = 1; j < 100; ++j)
+		for (int j = 1; j < 100; ++j)
 		{
 			order = j;
-			if(temp1 == iden)
+			if (temp1 == iden)
 			{
 				break;
 			}
-			temp1= sig * temp1;
+			temp1 = sig * temp1;
 		}
 		now = nop;
-		for(int j = 0; j < nop; ++j)
+		for (int j = 0; j < nop; ++j)
 		{	
 			temp1 = symop[j];
-			for(int k = 1; k < order; ++k)
+			for (int k = 1; k < order; ++k)
 			{
 				temp1 = sig * temp1;
 
-				for(int l = 0; l < nop; ++l)
+				for (int l = 0; l < nop; ++l)
 				{
 					temp2 = symop[l] * temp1;
 					flag = 1;
-					for(int m = 0; m < now; ++m)
+					for (int m = 0; m < now; ++m)
 					{
-						if(symop[m] == temp2)
+						if (symop[m] == temp2)
 						{
 							flag = 0;
 							break;
 						}
 					}
-					if(flag == 0)
+					if (flag == 0)
 					{
-						continue;	//the new-found element has already existed.
+						continue;	//the newly-found element has already existed.
 					}
 
-					++now;	//the number of elements we found
-					if(now > 48)
+					++now; // the number of elements we found
+					if (now > 48) // number of symm_op cannot be more than 48 (of O_h point group)
 					{
-						std::cout<<"\n a: now= "<<now<<std::endl;
-						std::cout<<"\n There are too many symmetrical matrices!"<<std::endl;
+						std::cout << "\n a: now= "<<now<<std::endl;
+						std::cout << "\n There are too many symmetrical matrices!"<<std::endl;
 						return;
 					}
 					symop[now - 1] = temp2;
@@ -271,38 +277,38 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 
 		m1 = nop;
 		m2 = now;
-		for(int j = 1; j < 50; ++j)
+		for (int j = 1; j < 50; ++j)
 		{
-			for(int k = nop; k < n; ++k)
+			for (int k = nop; k < n; ++k)
 			{
-				for(int m = m1; m < m2; ++m)
+				for (int m = m1; m < m2; ++m)
 				{	
 					temp1 = symop[k] * symop[m];
 					flag = 1;
-					for(int l = 0; l < now; ++l)	
+					for (int l = 0; l < now; ++l)	
 					{
-						if(symop[l] == temp1)
+						if (symop[l] == temp1)
 						{
 							flag = 0;
 							break;
 						}
 					}
-					if(flag == 0)	 
+					if (flag == 0)	 
 					{
 						continue;	//the new-found element has already existed
 					}
 
 					++now;
-					if(now > 48)
+					if (now > 48)
 					{
-						std::cout<<"\n b: now= "<<now<<std::endl;
-						std::cout<<"\n There are too many symmetrical matrices!"<<std::endl;
+						std::cout << "\n b: now= "<<now<<std::endl;
+						std::cout << "\n There are too many symmetrical matrices!"<<std::endl;
 						return;
 					}
 					symop[now - 1] = temp1;
 				}
 			}
-			if(now == m2)
+			if (now == m2)
 			{
 				break;	//if no more new element could be found, stop the loop
 			}
@@ -321,134 +327,140 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 //--------------------------------------------------------------
 void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
 {
-	if(PARAM.inp.test_symmetry) ModuleBase::TITLE("Symmetry_Basic","setgroup");
+	if(PARAM.inp.cal_symm_repr[0] > 1) {
+		ModuleBase::TITLE("Symmetry_Basic", "setgroup");
+	}
+	ModuleBase::Matrix3 symgen[3]; // the number of generators is up to 3
 
-	ModuleBase::Matrix3 symgen[3];
-
-	ModuleBase::Matrix3 inv(-1,0,0,0,-1,0,0,0,-1);
-	ModuleBase::Matrix3 r3d(0,1,0,0,0,1,1,0,0);
-	ModuleBase::Matrix3 r6z(1,1,0,-1,0,0,0,0,1);
-	ModuleBase::Matrix3 r2hex(1,0,0,-1,-1,0,0,0,-1);
-	ModuleBase::Matrix3 r2tri(-1,0,0,0,0,-1,0,-1,0);
-	ModuleBase::Matrix3 r4zp(0,1,0,-1,0,0,0,0,1);
-	ModuleBase::Matrix3 r2yp(-1,0,0,0,1,0,0,0,-1);
-	ModuleBase::Matrix3 r4zbc(0,0,-1,1,1,1,0,-1,0);
-	ModuleBase::Matrix3 r4zfc(1,0,-1,1,0,0,1,-1,0);
-	ModuleBase::Matrix3 r2zp(-1,0,0,0,-1,0,0,0,1);
-	ModuleBase::Matrix3 r2ybc(0,0,1,-1,-1,-1,1,0,0);
-	ModuleBase::Matrix3 r2zbc(0,1,0,1,0,0,-1,-1,-1);
-	ModuleBase::Matrix3 r2ybas(0,-1,0,-1,0,0,0,0,-1);
-	ModuleBase::Matrix3 r2yfc(0,-1,1,0,-1,0,1,-1,0);
-	ModuleBase::Matrix3 r2zfc(0,1,-1,1,0,-1,0,0,-1);
+	ModuleBase::Matrix3    inv(-1, 0, 0, 0,-1, 0, 0, 0,-1); // (x, y, z) -> (-x, -y, -z)
+	ModuleBase::Matrix3    r3d( 0, 1, 0, 0, 0, 1, 1, 0, 0); // (x, y, z) -> (y, z, x)
+	ModuleBase::Matrix3    r6z( 1, 1, 0,-1, 0, 0, 0, 0, 1); // (x, y, z) -> (x+y, -x, z)
+	ModuleBase::Matrix3  r2hex( 1, 0, 0,-1,-1, 0, 0, 0,-1); // (x, y, z) -> (x, -x-y, -z)
+	ModuleBase::Matrix3  r2tri(-1, 0, 0, 0, 0,-1, 0,-1, 0); // (x, y, z) -> (-x, -z, -y)
+	ModuleBase::Matrix3   r4zp( 0, 1, 0,-1, 0, 0, 0, 0, 1); // (x, y, z) -> (y, -x, z)
+	ModuleBase::Matrix3   r2yp(-1, 0, 0, 0, 1, 0, 0, 0,-1); // (x, y, z) -> (-x, y, -z)
+	ModuleBase::Matrix3  r4zbc( 0, 0,-1, 1, 1, 1, 0,-1, 0); // (x, y, z) -> (-z, x+y+z, -y)
+	ModuleBase::Matrix3  r4zfc( 1, 0,-1, 1, 0, 0, 1,-1, 0); // (x, y, z) -> (x-z, x, x-y)
+	ModuleBase::Matrix3   r2zp(-1, 0, 0, 0,-1, 0, 0, 0, 1); // (x, y, z) -> (-x, -y, z)
+	ModuleBase::Matrix3  r2ybc( 0, 0, 1,-1,-1,-1, 1, 0, 0); // (x, y, z) -> (z, -x-y-z, x)
+	ModuleBase::Matrix3  r2zbc( 0, 1, 0, 1, 0, 0,-1,-1,-1); // (x, y, z) -> (y, x, -x-y-z)
+	ModuleBase::Matrix3 r2ybas( 0,-1, 0,-1, 0, 0, 0, 0,-1); // (x, y, z) -> (-y, -x, -z)
+	ModuleBase::Matrix3  r2yfc( 0,-1, 1, 0,-1, 0, 1,-1, 0); // (x, y, z) -> (-y+z, -y, x-y)
+	ModuleBase::Matrix3  r2zfc( 0, 1,-1, 1, 0,-1, 0, 0,-1); // (x, y, z) -> (y-z, x-z, -z)
 
 	//the pure translation lattice (bravais lattice) has some maximum symmetry
 	//set first up the point group operations for this symmetry.
 	symgen[0] = inv;
-
-	if(ibrav == 14)
-	{
-		this->matrigen(symgen, 1, symop, nop);
-	}
-	else if(ibrav == 13)
-	{
-		symgen[1] = r2ybas;
-		this->matrigen(symgen, 2, symop, nop);
-	}
-	else if(ibrav == 12)
-	{
-		symgen[1] = r2yp;
-		this->matrigen(symgen, 2, symop, nop);
-	}
-	else if(ibrav == 11)
-	{
-		symgen[1] = r2zp;
-		symgen[2] = r2ybas;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 10)
-	{
-		symgen[1] = r2zfc;
-		symgen[2] = r2yfc;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 9)
-	{
-		symgen[1] = r2zbc;
-		symgen[2] = r2ybc;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 8)
-	{
-		symgen[1] = r2zp;
-		symgen[2] = r2yp;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 7)
-	{
-		symgen[1] = r2tri;
-		symgen[2] = r3d;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 6)
-	{
-		symgen[1] = r4zbc;
-		symgen[2] = r2ybc;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 5)
-	{
-		symgen[1] = r4zp;
-		symgen[2] = r2yp;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 4)
-	{
-		symgen[1] = r6z;
-		symgen[2] = r2hex;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 3)
-	{
-		symgen[1] = r3d;
-		symgen[2] = r4zfc;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 2)
-	{
-		symgen[1] = r3d;
-		symgen[2] = r4zbc;
-		this->matrigen(symgen, 3, symop, nop);
-	}
-	else if(ibrav == 1)
-	{
-		symgen[1] = r3d;
-		symgen[2] = r4zp;
-		this->matrigen(symgen, 3, symop, nop);
+	// generate the point group operations for the bravais lattice
+	// rewrite with switch-case to get better performance and readability
+	switch (ibrav) {
+		case 1:
+			symgen[1] = r3d;
+			symgen[2] = r4zp;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 2:
+			symgen[1] = r3d;
+			symgen[2] = r4zbc;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 3:
+			symgen[1] = r3d;
+			symgen[2] = r4zfc;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 4:
+			symgen[1] = r6z;
+			symgen[2] = r2hex;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 5:
+			symgen[1] = r4zp;
+			symgen[2] = r2yp;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 6:
+			symgen[1] = r4zbc;
+			symgen[2] = r2ybc;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 7:
+			symgen[1] = r2tri;
+			symgen[2] = r3d;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 8:
+			symgen[1] = r2zp;
+			symgen[2] = r2yp;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 9:
+			symgen[1] = r2zbc;
+			symgen[2] = r2ybc;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 10:
+			symgen[1] = r2zfc;
+			symgen[2] = r2yfc;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 11:
+			symgen[1] = r2zp;
+			symgen[2] = r2ybas;
+			this->matrigen(symgen, 3, symop, nop);
+		break;
+		case 12:
+			symgen[1] = r2yp;
+			this->matrigen(symgen, 2, symop, nop);
+		break;
+		case 13:
+			symgen[1] = r2ybas;
+			this->matrigen(symgen, 2, symop, nop);
+		break;
+		case 14:
+			this->matrigen(symgen, 1, symop, nop);
+		break;
+		default:
+			ModuleBase::WARNING_QUIT("Symmetry_Basic::setgroup", 
+				"ibrav = " + std::to_string(ibrav) + " is not supported.");
+		break;
 	}
 
-	if(test_brav)
+	// print
+	if (test_brav)
 	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Number of rotation matrices",nop);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of rotation matrices", nop);
 	}
 
-	if(PARAM.inp.test_symmetry > 1)
+	// print the symmetry operations
+	if (PARAM.inp.cal_symm_repr[0] > 0)
 	{
-		GlobalV::ofs_running<<" THERE ARE " << nop << " ROTATION MATRICES FOR THE PURE BRAVAIS LATTICE"<<std::endl;
-		GlobalV::ofs_running<<"    E11 E12 E13 E21 E22 E23 E31 E32 E33"<<std::endl;
-		for(int i = 0; i < nop; ++i)
+		GlobalV::ofs_running << std::endl
+							 << " ======================================================================\n"
+							 << " MATRIX REPRESENTATION OF SYMMETRY OPERATION\n"
+							 << " ======================================================================\n"
+							 << " There are " << nop << " symmetry operation representation matrices.\n" 
+							 << " For each matrix, the elements are arranged like: \n" 
+							 << " [[e11, e12, e13], [e21, e22, e23], [e31, e32, e33]].reshape(3, 3)\n" 
+							 << std::endl;
+		
+		// control the digits
+		const int precision = PARAM.inp.cal_symm_repr[1];
+		const int width = precision + 4;
+		std::string fmtstr = " %" + std::to_string(width) + "." + std::to_string(precision) + "f";
+		fmtstr += fmtstr + fmtstr + "\n";
+
+		// print the symmetry operations
+		std::string mat;
+		for (int i = 0; i < nop; ++i)
 		{
-			GlobalV::ofs_running << " " 
-			<< std::setw(3) << i + 1
-			<< std::setw(4) << symop[i].e11
-			<< std::setw(4) << symop[i].e12
-			<< std::setw(4) << symop[i].e13
-			<< std::setw(4) << symop[i].e21
-			<< std::setw(4) << symop[i].e22
-			<< std::setw(4) << symop[i].e23
-			<< std::setw(4) << symop[i].e31
-			<< std::setw(4) << symop[i].e32
-			<< std::setw(4) << symop[i].e33 << std::endl;
+			mat = " " + FmtCore::format("No. %3d", i + 1) + "\n"
+				+ FmtCore::format(fmtstr.c_str(), symop[i].e11, symop[i].e12, symop[i].e13)
+				+ FmtCore::format(fmtstr.c_str(), symop[i].e21, symop[i].e22, symop[i].e23)
+				+ FmtCore::format(fmtstr.c_str(), symop[i].e31, symop[i].e32, symop[i].e33);
+			GlobalV::ofs_running << mat << std::endl;
 		}
+		GlobalV::ofs_running << " ======================================================================\n";
 	}
 
 	return;
@@ -462,75 +474,75 @@ int Symmetry_Basic::subgroup(const int& nrot, const int& ninv,
     {
         if (ninv)
         {
-            // if (nc2 >= 7 && nc3 >= 2 && nc6 >= 2 && ns1 >= 7 && ns3 >= 2 && ns6 >= 2) return 27;//D_6h
-            if (nc2 >= 3 && nc3 >= 8 && ns1 >= 3 && ns6 >= 8) return 29; //T_h
+            // if (nc2 >= 7 && nc3 >= 2 && nc6 >= 2 && ns1 >= 7 && ns3 >= 2 && ns6 >= 2) { return 27; } //D_6h
+            if (nc2 >= 3 && nc3 >= 8 && ns1 >= 3 && ns6 >= 8) { return 29; } //T_h
         }
         else
         {
-            if (nc2 >= 9 && nc3 >= 8 && nc4 >= 6) return 30;    //O
-            if (nc2 >= 3 && nc3 >= 8 && ns1 >= 6 && ns4 >= 6) return 31; //T_d
+            if (nc2 >= 9 && nc3 >= 8 && nc4 >= 6) { return 30; } //O
+            if (nc2 >= 3 && nc3 >= 8 && ns1 >= 6 && ns4 >= 6) { return 31; } //T_d
         }
     }
     if (nrot > 16)//not else if: nrot>24 can also fall in this part and below
     {
-        if (ninv && nc2 >= 5 && nc4 >= 2 && ns1 >= 5 && ns4 >= 2) return 20; //D_4h
+        if (ninv && nc2 >= 5 && nc4 >= 2 && ns1 >= 5 && ns4 >= 2) { return 20; } //D_4h
     }
     if (nrot > 12)
     {
         if (ninv)
         {
-            if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2 && ns1 >= 1 && ns3 >= 2 && ns6 >= 2) return 23;//C_6h
-            if (nc2 >= 3 && nc3 >= 2 && ns1 >= 3 && ns6 >= 2)return 13;//D_3d
+            if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2 && ns1 >= 1 && ns3 >= 2 && ns6 >= 2) { return 23; } //C_6h
+            if (nc2 >= 3 && nc3 >= 2 && ns1 >= 3 && ns6 >= 2) { return 13; } //D_3d
         }
         else
         {
-            if (nc2 >= 3 && nc3 >= 8)return 28; //T
-            if (nc2 >= 3 && nc3 >= 2 && ns1 >= 4 && ns3 >= 2) return 26;//D_3h
-            if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2 && ns1 >= 6) return 25;//C_6v
-            if (nc2 >= 7 && nc3 >= 2 && nc6 >= 2) return 24;//D_6
+            if (nc2 >= 3 && nc3 >= 8) { return 28; } //T
+            if (nc2 >= 3 && nc3 >= 2 && ns1 >= 4 && ns3 >= 2) { return 26; } //D_3h
+            if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2 && ns1 >= 6) { return 25; } //C_6v
+            if (nc2 >= 7 && nc3 >= 2 && nc6 >= 2) { return 24; } //D_6
         }
     }
     if (nrot > 8)
     {
         if (ninv)
         {
-            if (nc2 >= 1 && nc4 >= 2 && ns1 >= 1 && ns4 >= 2) return 16;//C_4h
-            if (nc2 >= 3 && ns1 >= 3)return 8;//D_2h
+            if (nc2 >= 1 && nc4 >= 2 && ns1 >= 1 && ns4 >= 2) { return 16; } //C_4h
+            if (nc2 >= 3 && ns1 >= 3) { return 8; } //D_2h
         }
         else
         {
-            if (nc2 >= 3 && ns1 >= 2 && ns4 >= 2)return 19;//D_2d
-            if (nc2 >= 1 && nc4 >= 2 && ns1 >= 4) return 18;//C_4v
-            if (nc2 >= 5 && nc4 >= 2)return 17;//D_4
+            if (nc2 >= 3 && ns1 >= 2 && ns4 >= 2) { return 19; } //D_2d
+            if (nc2 >= 1 && nc4 >= 2 && ns1 >= 4) { return 18; } //C_4v
+            if (nc2 >= 5 && nc4 >= 2) { return 17; } //D_4
         }
     }
     if (nrot > 6)
     {
-        if (nc3 >= 2 && ns1 >= 1 && ns3 >= 2)return 22;//C_3h
-        if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2)return 21;//C_6
-        if (nc3 >= 2 && ns1 >= 3)return 12;//C_3v
-        if (nc2 >= 3 && nc3 >= 2)return 11;//D_3
-        if (ninv && nc3 >= 2 && ns3 >= 2)return 10;//S_6
+        if (nc3 >= 2 && ns1 >= 1 && ns3 >= 2) { return 22; } //C_3h
+        if (nc2 >= 1 && nc3 >= 2 && nc6 >= 2) { return 21; } //C_6
+        if (nc3 >= 2 && ns1 >= 3) { return 12; } //C_3v
+        if (nc2 >= 3 && nc3 >= 2) { return 11; } //D_3
+        if (ninv && nc3 >= 2 && ns3 >= 2) { return 10; }//S_6
     }
     if (nrot > 4)
     {
-        if (nc2 >= 1 && ns4 >= 2)return 15;//S_4
-        if (nc2 >= 1 && nc4 >= 2)return 14;//C_4
-        if (nc2 >= 1 && ns1 >= 2)return 7;//C_2v
-        if (nc2 >= 3)return 6;//D_2
-        if (ninv && nc2 >= 1 && ns1 >= 1)return 5;//C_2h
+        if (nc2 >= 1 && ns4 >= 2) { return 15; } //S_4
+        if (nc2 >= 1 && nc4 >= 2) { return 14; } //C_4
+        if (nc2 >= 1 && ns1 >= 2) { return 7; } //C_2v
+        if (nc2 >= 3) { return 6; } //D_2
+        if (ninv && nc2 >= 1 && ns1 >= 1) { return 5; } //C_2h
     }
     if (nrot > 3)
     {
-        if (nc3 >= 2)return 9;//C_3
+        if (nc3 >= 2) { return 9; } //C_3
     }
     if (nrot > 2)
     {
-        if (ns1 >= 1)return 4;//C_1h
-        if (nc2 >= 1)return 3;//C_2
-        if (ninv)return 2;//S_2
+        if (ns1 >= 1) { return 4; } //C_1h
+        if (nc2 >= 1) { return 3; } //C_2
+        if (ninv) { return 2; } //S_2
     }
-    return 1;//C_1
+    return 1; //C_1
 }
 
 
@@ -552,7 +564,9 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 
 	//there are four trivial cases which could be easily determined
 	//because the number of their elements are exclusive
-    if (PARAM.inp.test_symmetry) ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
+    if (PARAM.inp.cal_symm_repr[0] > 1) {
+		ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
+	}
 
     std::vector<std::string> pgdict = { "none", "C_1", "S_2", "C_2", "C_1h", "C_2h", 
     "D_2", "C_2v", "D_2h", "C_3", "S_6", "D_3", "C_3v", "D_3d", "C_4", "S_4", "C_4h", 
@@ -628,26 +642,26 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 			continue;
 		}
 
-		if(trace == -1 && det == 1) ++nc2;
-		else if(trace == 0 && det == 1) ++nc3;
-		else if(trace == 1 && det == 1) ++nc4;
-		else if(trace == 2 && det == 1) ++nc6;
-		else if(trace == 1 && det == -1) ++ns1;
-		else if(trace == 0 && det == -1) ++ns6; //mohan add 2012-01-15
-		else if(trace == -1 && det == -1) ++ns4;
-		else if(trace == -2 && det == -1) ++ns3; //mohan add 2012-01-15
+		if(trace == -1 && det == 1)       { ++nc2; }
+		else if(trace == 0 && det == 1)   { ++nc3; }
+		else if(trace == 1 && det == 1)   { ++nc4; }
+		else if(trace == 2 && det == 1)   { ++nc6; }
+		else if(trace == 1 && det == -1)  { ++ns1; }
+		else if(trace == 0 && det == -1)  { ++ns6; } //mohan add 2012-01-15
+		else if(trace == -1 && det == -1) { ++ns4; }
+		else if(trace == -2 && det == -1) { ++ns3; } //mohan add 2012-01-15
 	}
 
     if(test_brav)
 	{
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C2",nc2);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C3",nc3);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C4",nc4);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"C6",nc6);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S1",ns1);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S3",ns3);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S4",ns4);
-		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"S6",ns6);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "C2", nc2);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "C3", nc3);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "C4", nc4);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "C6", nc6);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S1", ns1);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S3", ns3);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S4", ns4);
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "S6", ns6);
 	}
 	
 	if(nrot == 2)
