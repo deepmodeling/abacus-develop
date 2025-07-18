@@ -811,6 +811,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
+#ifdef __CUDA
     if(PARAM.inp.device == "gpu")
     {
         Forces<double, base_device::DEVICE_GPU> f_pw(nat);
@@ -834,6 +835,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         //--------------------------------------------------------
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     } else
+#endif
     {
         Forces<double, base_device::DEVICE_CPU> f_pw(nat);
         f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
