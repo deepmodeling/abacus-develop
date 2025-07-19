@@ -176,7 +176,7 @@ void Relax_Driver::relax_driver(
 
 	if (inp.calculation == "relax" || inp.calculation == "cell-relax")
 	{
-		if (istep-1 == inp.relax_nmax || stop)
+		if (istep-1 == inp.relax_nmax)
 		{
 			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
 			std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
