@@ -4,7 +4,7 @@
 #include "source_cell/module_symmetry/symmetry.h"
 #include "winput.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 

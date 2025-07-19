@@ -7,7 +7,7 @@
 #include "source_pw/module_pwdft/onsite_projector.h"
 
 #include "source_base/projgen.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/kernels/math_kernel_op.h"
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"

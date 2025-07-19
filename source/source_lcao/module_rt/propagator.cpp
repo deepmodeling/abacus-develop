@@ -1,11 +1,11 @@
 #include "propagator.h"
 
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"
 #include "source_base/module_container/ATen/kernels/memory.h" // memory operations (Tensor)
 #include "source_base/module_device/memory_op.h"              // memory operations
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <complex>

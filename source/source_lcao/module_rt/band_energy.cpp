@@ -1,9 +1,9 @@
 #include "band_energy.h"
 
 #include "evolve_elec.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
 #include <iostream>

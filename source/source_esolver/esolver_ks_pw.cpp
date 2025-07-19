@@ -11,13 +11,6 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/elecond.h"
-#include "source_pw/module_pwdft/forces.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
-#include "source_pw/module_pwdft/stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/kernels/dngvd_op.h"
@@ -25,13 +18,20 @@
 #include "source_io/cal_ldos.h"
 #include "source_io/get_pchg_pw.h"
 #include "source_io/get_wf_pw.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/numerical_basis.h"
 #include "source_io/numerical_descriptor.h"
 #include "source_io/to_wannier90_pw.h"
 #include "source_io/winput.h"
 #include "source_io/write_dos_pw.h"
 #include "source_io/write_wfc_pw.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/elecond.h"
+#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/stress_pw.h"
 
 #include <iostream>
 
@@ -717,16 +717,25 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     //------------------------------------------------------------------
     // 4) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
-    const std::vector<int> out_pchg = PARAM.inp.out_pchg;
-    if (out_pchg.size() > 0)
+    if (PARAM.inp.out_pchg.size() > 0)
     {
-        ModuleIO::get_pchg_pw(out_pchg,
+        if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
+        {
+            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        }
+
+        // Refresh __kspw_psi
+        this->__kspw_psi = PARAM.inp.precision == "single"
+                               ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
+
+        ModuleIO::get_pchg_pw(PARAM.inp.out_pchg,
                               this->kspw_psi->get_nbands(),
                               PARAM.inp.nspin,
                               this->pw_rhod->nxyz,
                               this->chr.ngmc,
                               &ucell,
-                              this->psi,
+                              this->__kspw_psi,
                               this->pw_rhod,
                               this->pw_wfc,
                               this->ctx,
@@ -943,20 +952,25 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     //! 5) Print out electronic wave functions in real space
     //----------------------------------------------------------
-    const std::vector<int> out_wfc_norm = PARAM.inp.out_wfc_norm;
-    const std::vector<int> out_wfc_re_im = PARAM.inp.out_wfc_re_im;
-    if (out_wfc_norm.size() > 0 || out_wfc_re_im.size() > 0)
+    if (PARAM.inp.out_wfc_norm.size() > 0 || PARAM.inp.out_wfc_re_im.size() > 0)
     {
-        ModuleIO::get_wf_pw(out_wfc_norm,
-                            out_wfc_re_im,
+        if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
+        {
+            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        }
+
+        // Refresh __kspw_psi
+        this->__kspw_psi = PARAM.inp.precision == "single"
+                               ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
+                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
+
+        ModuleIO::get_wf_pw(PARAM.inp.out_wfc_norm,
+                            PARAM.inp.out_wfc_re_im,
                             this->kspw_psi->get_nbands(),
                             PARAM.inp.nspin,
-                            this->pw_rhod->nx,
-                            this->pw_rhod->ny,
-                            this->pw_rhod->nz,
                             this->pw_rhod->nxyz,
                             &ucell,
-                            this->psi,
+                            this->__kspw_psi,
                             this->pw_wfc,
                             this->ctx,
                             this->Pgrid,
@@ -991,29 +1005,29 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 
         ModuleIO::Write_MLKEDF_Descriptors write_mlkedf_desc;
         write_mlkedf_desc.cal_tool->set_para(this->chr.nrxx,
-                                            PARAM.inp.nelec,
-                                            PARAM.inp.of_tf_weight,
-                                            PARAM.inp.of_vw_weight,
-                                            PARAM.inp.of_ml_chi_p,
-                                            PARAM.inp.of_ml_chi_q,
-                                            PARAM.inp.of_ml_chi_xi,
-                                            PARAM.inp.of_ml_chi_pnl,
-                                            PARAM.inp.of_ml_chi_qnl,
-                                            PARAM.inp.of_ml_nkernel,
-                                            PARAM.inp.of_ml_kernel,
-                                            PARAM.inp.of_ml_kernel_scaling,
-                                            PARAM.inp.of_ml_yukawa_alpha,
-                                            PARAM.inp.of_ml_kernel_file,
-                                            ucell.omega,
-                                            this->pw_rho);
+                                             PARAM.inp.nelec,
+                                             PARAM.inp.of_tf_weight,
+                                             PARAM.inp.of_vw_weight,
+                                             PARAM.inp.of_ml_chi_p,
+                                             PARAM.inp.of_ml_chi_q,
+                                             PARAM.inp.of_ml_chi_xi,
+                                             PARAM.inp.of_ml_chi_pnl,
+                                             PARAM.inp.of_ml_chi_qnl,
+                                             PARAM.inp.of_ml_nkernel,
+                                             PARAM.inp.of_ml_kernel,
+                                             PARAM.inp.of_ml_kernel_scaling,
+                                             PARAM.inp.of_ml_yukawa_alpha,
+                                             PARAM.inp.of_ml_kernel_file,
+                                             ucell.omega,
+                                             this->pw_rho);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
-                                                this->kspw_psi,
-                                                this->pelec,
-                                                this->pw_wfc,
-                                                this->pw_rho,
-                                                ucell,
-                                                this->pelec->pot->get_effective_v(0));
+                                               this->kspw_psi,
+                                               this->pelec,
+                                               this->pw_wfc,
+                                               this->pw_rho,
+                                               ucell,
+                                               this->pelec->pot->get_effective_v(0));
     }
 #endif
 }

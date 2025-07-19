@@ -63,7 +63,6 @@ class Force_Stress_LCAO
     Record_adj* RA;
     Force_LCAO<T> flk;
     Stress_Func<double> sc_pw;
-    Forces<double> f_pw;
 
     void forceSymmetry(const UnitCell& ucell, ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
 

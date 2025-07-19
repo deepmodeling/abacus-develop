@@ -5,7 +5,7 @@
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "matrix_methods.h"
 //#include "line_search.h"
 #include "source_base/matrix.h"

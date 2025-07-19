@@ -14,7 +14,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
 #include "source_lcao/wavefunc_in_pw.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate.h"

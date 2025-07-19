@@ -8,6 +8,7 @@
     - [symmetry](#symmetry)
     - [symmetry\_prec](#symmetry_prec)
     - [symmetry\_autoclose](#symmetry_autoclose)
+    - [cal_symm_repr](#cal_symm_repr)
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
@@ -561,6 +562,11 @@ These variables are used to control general system parameters.
   - False: quit with an error message
   - True: automatically set symmetry to 0 and continue running without symmetry analysis
 - **Default**: True
+
+### cal_symm_repr
+- **Type**: Integer [Integer]\(optional\)
+- **Description**: Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.
+- **Default**: 1 3
 
 ### kpar
 

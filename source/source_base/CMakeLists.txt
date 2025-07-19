@@ -10,9 +10,9 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
-    blas_connector_base.cpp
-    blas_connector_vector.cpp
-    blas_connector_matrix.cpp
+    module_external/blas_connector_base.cpp
+    module_external/blas_connector_vector.cpp
+    module_external/blas_connector_matrix.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
@@ -85,7 +85,7 @@ if(BUILD_TESTING)
     add_subdirectory(kernels/test)
     add_subdirectory(module_mixing/test)
     add_subdirectory(module_device/test)
-    add_subdirectory(grid/test)
+    add_subdirectory(module_grid/test)
     if (USE_ABACUS_LIBM)
       add_subdirectory(libm/test)
     endif()

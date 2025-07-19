@@ -23,7 +23,7 @@
 #include "source_lcao/module_operator_lcao/nonlocal_new.h"
 
 template <typename T>
-Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
+Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), nat(nat_in)
 {
 }
 template <typename T>
@@ -811,24 +811,39 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
-    //--------------------------------------------------------
-    // local pseudopotential force:
-    // use charge density; plane wave; local pseudopotential;
-    //--------------------------------------------------------
-    f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
-    //--------------------------------------------------------
-    // ewald force: use plane wave only.
-    //--------------------------------------------------------
-    f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf); // remain problem
+#ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Forces<double, base_device::DEVICE_GPU> f_pw(nat);
 
-    //--------------------------------------------------------
-    // force due to core correlation.
-    //--------------------------------------------------------
-    f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
-    //--------------------------------------------------------
-    // force due to self-consistent charge.
-    //--------------------------------------------------------
-    f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
+        //--------------------------------------------------------
+        // local pseudopotential force:
+        // use charge density; plane wave; local pseudopotential;
+        //--------------------------------------------------------
+        f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
+        //--------------------------------------------------------
+        // ewald force: use plane wave only.
+        //--------------------------------------------------------
+        f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf); // remain problem
+
+        //--------------------------------------------------------
+        // force due to core correlation.
+        //--------------------------------------------------------
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        //--------------------------------------------------------
+        // force due to self-consistent charge.
+        //--------------------------------------------------------
+        f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
+    } else
+#endif
+    {
+        Forces<double, base_device::DEVICE_CPU> f_pw(nat);
+        f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
+        f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf); // remain problem
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
+    }
+
     return;
 }
 

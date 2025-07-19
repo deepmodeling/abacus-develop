@@ -1,5 +1,5 @@
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_reduce.h"
 #include <vector>

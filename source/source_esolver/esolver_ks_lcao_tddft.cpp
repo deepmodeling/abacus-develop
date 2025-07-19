@@ -10,10 +10,10 @@
 #include "source_io/output_log.h"
 
 //--------------temporary----------------------------
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/global_function.h"
-#include "source_base/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
@@ -331,6 +331,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
                  << std::setw(12) << this->pelec->wg(ik, ib) << std::endl;
             }
         }
+        GlobalV::ofs_running << std::endl;
     }
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);

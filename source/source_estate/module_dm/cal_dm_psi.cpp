@@ -1,8 +1,8 @@
 #include "cal_dm_psi.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/blas_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_psi/psi.h"
 
