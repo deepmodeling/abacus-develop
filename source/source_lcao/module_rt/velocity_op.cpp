@@ -40,7 +40,6 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
     ModuleBase::timer::tick("Velocity_op", "initialize_vcomm_r");
     if(!init_done)
     {
-        std::cout << "init_r_overlap_nonlocal" <<std::endl;
         r_calculator.init_nonlocal(*ucell, *paraV, orb_);
         init_done = true;
     }
