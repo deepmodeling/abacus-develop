@@ -4,7 +4,6 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
