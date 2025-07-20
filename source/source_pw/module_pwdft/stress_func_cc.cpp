@@ -61,7 +61,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
         // vtxc = std::get<1>(etxc_vtxc_v);
         vxc = std::get<2>(etxc_vtxc_v);
 #else
-        ModuleBase::WARNING_QUIT("cal_force_cc","to use mGGA, compile with LIBXC");
+        ModuleBase::WARNING_QUIT("stress_cc","to use mGGA, compile with LIBXC");
 #endif
 	}
 	else
@@ -108,7 +108,6 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	{
 		if(ucell.atoms[nt].ncpp.nlcc)
 		{
-			//drhoc();
 			this->deriv_drhoc(
 				numeric,
 				ucell.omega,
@@ -131,9 +130,11 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                 std::complex<double> local_sigmadiag;
                 if (rho_basis->ig_gge0 == ig) {
                     local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]];
-                } else {
-                    local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
-}
+                } 
+				else 
+				{
+					local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
+				}
                 sigmadiag += local_sigmadiag.real();
             }
 			this->deriv_drhoc (
@@ -171,7 +172,6 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                         const std::complex<FPTYPE> t
                             = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]]
                               * ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
-                        //						sigmacc [l][ m] += t.real();
                         local_sigma(l,m) += t.real();
 					}//end m
 				}//end l
