@@ -27,7 +27,7 @@ void Relax::init_relax(const int nat_in)
     etot = 0;
     etot_p = 0;
 
-    force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/A
+    force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
     fac_force = PARAM.inp.relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
@@ -114,7 +114,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     //=========================================
 
     grad_ion.zero_out();
-    ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/A
+    ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/Angstrom
 
     int iat = 0;
     for (int it = 0; it < ucell.ntype; it++)
@@ -158,14 +158,14 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     }
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
-        std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
+        std::cout << " ETOT DIFF (eV)              : " << etot - etot_p << std::endl;
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << max_grad << std::endl;
         etot_p = etot;
     }
 
 
     GlobalV::ofs_running << "\n Largest force is " << max_grad << 
-             " eV/A while threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
+             " eV/Angstrom while threshold is " << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     //=========================================
     // set gradient for cell degrees of freedom
     //=========================================
