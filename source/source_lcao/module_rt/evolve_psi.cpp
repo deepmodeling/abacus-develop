@@ -8,7 +8,6 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_base/module_external/scalapack_connector.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
