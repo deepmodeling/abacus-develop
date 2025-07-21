@@ -23,8 +23,10 @@ list(APPEND depend_files
   ../../source_base/matrix.cpp
   ../../source_base/timer.cpp
   ../../source_base/module_external/blas_connector_base.cpp
-  ../../source_base/module_external/blas_connector_matrix.cpp
-  ../../source_base/module_external/blas_connector_vector.cpp
+  ../../source_base/module_external/blas_connector_l1.cpp
+  ../../source_base/module_external/blas_connector_l2.cpp
+  ../../source_base/module_external/blas_connector_l3.cpp
+  ../../source_base/module_external/lapack_connector.cpp
   ../../source_base/memory.cpp
   ../../source_base/global_variable.cpp
   ../../source_base/global_function.cpp

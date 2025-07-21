@@ -75,7 +75,7 @@ int _maxmin_divide(const double* grid, int* idx, int m) {
     // Rearrange the indices to put points in each subset together by
     // examining the signed distances of points to the cut plane (R^T*n).
     std::vector<double> dist(m);
-    dgemv_("T", &i3, &m, &d1, R.data(), &i3, n, &i1, &d0, dist.data(), &i1);
+    BlasConnector::gemv_cm('T', 3, m, 1.0, R.data(), 3, n, 1, 0.0, dist.data(), 1);
 
     int *head = idx;
     std::reverse_iterator<int*> tail(idx + m), rend(idx);

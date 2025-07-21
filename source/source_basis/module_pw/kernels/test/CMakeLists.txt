@@ -9,5 +9,9 @@ AddTest(
     ../../../../source_base/parallel_comm.cpp
     ../../../../source_base/complexmatrix.cpp ../../../../source_base/matrix.cpp ../../../../source_base/memory.cpp
     ../../../../source_base/libm/branred.cpp ../../../../source_base/libm/sincos.cpp
-    ../../../../source_base/module_external/blas_connector_base.cpp ../../../../source_base/module_external/blas_connector_vector.cpp ../../../../source_base/module_external/blas_connector_matrix.cpp
+    ../../../../source_base/module_external/blas_connector_base.cpp
+    ../../../../source_base/module_external/blas_connector_l1.cpp
+    ../../../../source_base/module_external/blas_connector_l2.cpp
+    ../../../../source_base/module_external/blas_connector_l3.cpp
+    ../../../../source_base/module_external/lapack_connector.cpp
 )

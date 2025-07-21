@@ -25,5 +25,9 @@ AddTest(
   TARGET MODULE_BASE_GRID_test_batch
   SOURCES test_batch.cpp
   ../batch.cpp
-  LIBS ${math_libs}
+  ../../blas_connector_base.cpp
+  ../../blas_connector_l1.cpp
+  ../../blas_connector_l2.cpp
+  ../../blas_connector_l3.cpp
+  ../../lapack_connector.cpp
 )
