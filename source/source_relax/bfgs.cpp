@@ -1,5 +1,6 @@
 #include "bfgs.h"
 #include "source_pw/module_pwdft/global.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/matrix3.h"
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
