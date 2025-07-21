@@ -111,19 +111,20 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     const int dim = 2 * npw;
                     const double one = 1;
                     const double zero = 0;
-                    dgemm_(&transa,
-                           &transb,
-                           &dim,
-                           &PARAM.inp.nspin,
-                           &nij,
-                           &one,
+                    BlasConnector::gemm_cm(
+                           transa,
+                           transb,
+                           dim,
+                           PARAM.inp.nspin,
+                           nij,
+                           one,
                            qgm_data,
-                           &dim,
+                           dim,
                            tbecsum.c,
-                           &nij,
-                           &zero,
+                           nij,
+                           zero,
                            aux2_data,
-                           &dim);
+                           dim);
 
                     for (int is = 0; is < PARAM.inp.nspin; is++)
                     {
@@ -148,19 +149,20 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                     ModuleBase::matrix fac(PARAM.inp.nspin, 3);
                     const char transc = 'T';
                     const int three = 3;
-                    dgemm_(&transc,
-                           &transb,
-                           &three,
-                           &PARAM.inp.nspin,
-                           &dim,
-                           &one,
+                    BlasConnector::gemm_cm(
+                           transc,
+                           transb,
+                           three,
+                           PARAM.inp.nspin,
+                           dim,
+                           one,
                            aux1_data,
-                           &dim,
+                           dim,
                            aux2_data,
-                           &dim,
-                           &zero,
+                           dim,
+                           zero,
                            fac.c,
-                           &three);
+                           three);
 
                     for (int is = 0; is < PARAM.inp.nspin; is++)
                     {

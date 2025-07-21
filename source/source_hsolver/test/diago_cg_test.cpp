@@ -44,18 +44,11 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
 {
     clock_t start, end;
     start = clock();
-    int lwork = 2 * npw;
-    std::complex<double> *work2 = new std::complex<double>[lwork];
-    double *rwork = new double[3 * npw - 2];
-    int info = 0;
-    char tmp_c1 = 'V', tmp_c2 = 'U';
-    zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
+    LapackConnector::heev(LapackConnector::ColMajor, tmp_c1, tmp_c2, npw, hm.data(), npw, e);
     end = clock();
     if (outtime) {
         std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
 }
-    delete[] rwork;
-    delete[] work2;
 }
 
 class DiagoCGPrepare

@@ -96,7 +96,7 @@ struct lapack_getrs {
         const int& nrhs,
         T* A,
         const int& lda,
-        const int* ipiv,
+        int* ipiv,
         T* B,
         const int& ldb);
 };

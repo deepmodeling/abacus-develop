@@ -38,11 +38,7 @@ struct lapack_trtri<T, DEVICE_CPU> {
         T* Mat,
         const int& lda) 
     {
-        int info = 0;
-        lapackConnector::trtri(uplo, diag, dim, Mat, lda, info);
-        if (info != 0) {
-            throw std::runtime_error("potrf failed with info = " + std::to_string(info));
-        }
+        lapackConnector::trtri(uplo, diag, dim, Mat, lda);
     }
 };
 
@@ -54,11 +50,7 @@ struct lapack_potrf<T, DEVICE_CPU> {
         T* Mat, 
         const int& lda) 
     {
-        int info = 0;
-        lapackConnector::potrf(uplo, dim, Mat, dim, info);
-        if (info != 0) {
-            throw std::runtime_error("potrf failed with info = " + std::to_string(info));
-        }
+        lapackConnector::potrf(uplo, dim, Mat, dim);
     }
 };
 
@@ -72,23 +64,7 @@ struct lapack_dnevd<T, DEVICE_CPU> {
         const int& dim,
         Real* eigen_val)
     {
-        int info = 0;
-        int lwork = std::max(2 * dim + dim * dim, 1 + 6 * dim + 2 * dim * dim);
-        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
-        work.zero();
-
-        int lrwork = 1 + 5 * dim + 2 * dim * dim;
-        Tensor rwork(DataTypeToEnum<Real>::value, DeviceType::CpuDevice, {lrwork});
-        rwork.zero();
-
-        int liwork = 3 + 5 * dim;
-        Tensor iwork(DataTypeToEnum<int>::value, DeviceType::CpuDevice, {liwork});
-        iwork.zero();
-
-        lapackConnector::dnevd(jobz, uplo, dim, Mat, dim, eigen_val,  work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
-        if (info != 0) {
-            throw std::runtime_error("dnevd failed with info = " + std::to_string(info));
-        }
+        lapackConnector::dnevd(jobz, uplo, dim, Mat, dim, eigen_val);
     }
 };
 
@@ -104,23 +80,7 @@ struct lapack_dngvd<T, DEVICE_CPU> {
         const int& dim,
         Real* eigen_val)
     {
-        int info = 0;
-        int lwork = std::max(2 * dim + dim * dim, 1 + 6 * dim + 2 * dim * dim);
-        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
-        work.zero();
-
-        int lrwork = 1 + 5 * dim + 2 * dim * dim;
-        Tensor rwork(DataTypeToEnum<Real>::value, DeviceType::CpuDevice, {lrwork});
-        rwork.zero();
-
-        int liwork = 3 + 5 * dim;
-        Tensor iwork(DataType::DT_INT, DeviceType::CpuDevice, {liwork});
-        iwork.zero();
-
-        lapackConnector::dngvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
-        if (info != 0) {
-            throw std::runtime_error("dngvd failed with info = " + std::to_string(info));
-        }
+        lapackConnector::dngvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
     }
 };
 
@@ -133,11 +93,7 @@ struct lapack_getrf<T, DEVICE_CPU> {
         const int& lda,
         int* ipiv)
     {
-        int info = 0;
-        lapackConnector::getrf(m, n, Mat, lda, ipiv, info);
-        if (info != 0) {
-            throw std::runtime_error("getrf failed with info = " + std::to_string(info));
-        }
+        lapackConnector::getrf(m, n, Mat, lda, ipiv);
     }
 };
 
@@ -147,15 +103,11 @@ struct lapack_getri<T, DEVICE_CPU> {
         const int& n,
         T* Mat,
         const int& lda,
-        const int* ipiv,
+        int* ipiv,
         T* work,
         const int& lwork)
     {
-        int info = 0;
-        lapackConnector::getri(n, Mat, lda, ipiv, work, lwork, info);
-        if (info != 0) {
-            throw std::runtime_error("getri failed with info = " + std::to_string(info));
-        }
+        lapackConnector::getri(n, Mat, lda, ipiv);
     }
 };
 
@@ -167,15 +119,11 @@ struct lapack_getrs<T, DEVICE_CPU> {
         const int& nrhs,
         T* A,
         const int& lda,
-        const int* ipiv,
+        int* ipiv,
         T* B,
         const int& ldb)
     {
-        int info = 0;
-        lapackConnector::getrs(trans, n, nrhs, A, lda, ipiv, B, ldb, info);
-        if (info != 0) {
-            throw std::runtime_error("getrs failed with info = " + std::to_string(info));
-        }
+        lapackConnector::getrs(trans, n, nrhs, A, lda, ipiv, B, ldb);
     }
 };
 

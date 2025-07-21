@@ -211,8 +211,8 @@ struct dngvd_op<T, base_device::DEVICE_GPU>
     void operator()(const base_device::DEVICE_GPU* d,
                     const int nstart,
                     const int ldh,
-                    const T* A, // hcc
-                    const T* B, // scc
+                    T* A, // hcc
+                    T* B, // scc
                     Real* W,    // eigenvalue
                     T* V)
     {
@@ -231,7 +231,7 @@ struct dnevx_op<T, base_device::DEVICE_GPU>
     void operator()(const base_device::DEVICE_GPU* d,
                     const int nstart,
                     const int ldh,
-                    const T* A, // hcc
+                    T* A, // hcc
                     const int m,
                     Real* W, // eigenvalue
                     T* V)

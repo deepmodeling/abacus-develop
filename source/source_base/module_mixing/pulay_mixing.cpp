@@ -132,16 +132,10 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
             }
         }
 
-        double* work = new double[ndim_use];
-        int* iwork = new int[ndim_use];
+        std::vector<int> iwork(ndim_use);
         char uu = 'U';
-        int info;
-        dsytrf_(&uu, &ndim_use, beta_tmp.c, &ndim_use, iwork, work, &ndim_use, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
-        dsytri_(&uu, &ndim_use, beta_tmp.c, &ndim_use, iwork, work, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYTRI beta.");
+        LapackConnector::sytrf(LapackConnector::ColMajor, uu, ndim_use, beta_tmp.c, ndim_use, iwork.data());
+        LapackConnector::sytri(LapackConnector::ColMajor, uu, ndim_use, beta_tmp.c, ndim_use, iwork.data());
         for (int i = 0; i < ndim_use; ++i)
         {
             for (int j = i + 1; j < ndim_use; ++j)
@@ -168,8 +162,6 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
             }
             coef[i] /= sum_beta;
         }
-        delete[] work;
-        delete[] iwork;
     }
     else
     {

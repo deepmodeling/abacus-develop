@@ -1,4 +1,5 @@
 #include "cubic_spline.h"
+#include "source_base/lapack_connector.h"
 
 #include <cassert>
 #include <algorithm>
@@ -7,13 +8,6 @@
 #include <vector>
 
 using ModuleBase::CubicSpline;
-
-extern "C"
-{
-    // solve a tridiagonal linear system
-    void dgtsv_(int* N, int* NRHS, double* DL, double* D, double* DU, double* B, int* LDB, int* INFO);
-};
-
 
 CubicSpline::BoundaryCondition::BoundaryCondition(BoundaryType type)
     : type(type)
@@ -477,8 +471,7 @@ void CubicSpline::_build(
 
             int nrhs = 1;
             int ldb = n;
-            int info = 0;
-            dgtsv_(&n, &nrhs, l, d, u, dy, &ldb, &info);
+            LapackConnector::gtsv(LapackConnector::ColMajor, n, nrhs, l, d, u, dy, ldb);
         }
     }
 }
@@ -552,9 +545,8 @@ void CubicSpline::_solve_cyctri(int n, double* d, double* u, double* l, double* 
     d[n - 1] -= l[n - 1] * alpha / beta;
 
     int nrhs = 2;
-    int info = 0;
     int ldb = n;
-    dgtsv_(&n, &nrhs, l, d, u, bp.data(), &ldb, &info);
+    LapackConnector::gtsv(LapackConnector::ColMajor, n, nrhs, l, d, u, bp.data(), ldb);
 
     double fac = (beta * u[n - 1] * bp[0] + alpha * l[n - 1] * bp[n - 1])
                  / (1. + beta * u[n - 1] * bp[n] + alpha * l[n - 1] * bp[2 * n - 1]);

@@ -31,8 +31,8 @@ template <>
 void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                            const int nstart,
                                                            const int ldh,
-                                                           const double* _hcc,
-                                                           const double* _scc,
+                                                           double* _hcc,
+                                                           double* _scc,
                                                            double* _eigenvalue,
                                                            double* _vcc)
 {
@@ -105,8 +105,8 @@ template <>
 void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                         const int nstart,
                                                                         const int ldh,
-                                                                        const std::complex<float>* _hcc,
-                                                                        const std::complex<float>* _scc,
+                                                                        std::complex<float>* _hcc,
+                                                                        std::complex<float>* _scc,
                                                                         float* _eigenvalue,
                                                                         std::complex<float>* _vcc)
 {
@@ -177,8 +177,8 @@ template <>
 void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                          const int nstart,
                                                                          const int ldh,
-                                                                         const std::complex<double>* _hcc,
-                                                                         const std::complex<double>* _scc,
+                                                                         std::complex<double>* _hcc,
+                                                                         std::complex<double>* _scc,
                                                                          double* _eigenvalue,
                                                                          std::complex<double>* _vcc
                                                                         )
@@ -261,7 +261,7 @@ template <>
 void dnevx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                            const int nstart,
                                                            const int ldh,
-                                                           const double* _hcc,
+                                                           double* _hcc,
                                                            const int m,
                                                            double* _eigenvalue,
                                                            double* _vcc)
@@ -281,7 +281,7 @@ template <>
 void dnevx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                         const int nstart,
                                                                         const int ldh,
-                                                                        const std::complex<float>* _hcc,
+                                                                        std::complex<float>* _hcc,
                                                                         const int m,
                                                                         float* _eigenvalue,
                                                                         std::complex<float>* _vcc)
@@ -306,7 +306,7 @@ template <>
 void dnevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                          const int nstart,
                                                                          const int ldh,
-                                                                         const std::complex<double>* _hcc,
+                                                                         std::complex<double>* _hcc,
                                                                          const int m,
                                                                          double* _eigenvalue,
                                                                          std::complex<double>* _vcc)

@@ -24,15 +24,8 @@ void Inverse_Matrix<Tdata>::cal_inverse( const Method &method )
 template<typename Tdata>
 void Inverse_Matrix<Tdata>::using_potrf()
 {
-	int info;
-	LapackConnector::potrf('U', A.shape[0], A.ptr(), A.shape[0], info);
-	if(info)
-		throw std::range_error("info="+std::to_string(info)+"\n"+std::string(__FILE__)+" line "+std::to_string(__LINE__));
-
-	LapackConnector::potri('U', A.shape[0], A.ptr(), A.shape[0], info);
-	if(info)
-		throw std::range_error("info="+std::to_string(info)+"\n"+std::string(__FILE__)+" line "+std::to_string(__LINE__));
-
+	LapackConnector::potrf(LapackConnector::RowMajor, 'U', A.shape[0], A.ptr(), A.shape[0]);
+	LapackConnector::potri(LapackConnector::RowMajor, 'U', A.shape[0], A.ptr(), A.shape[0]);
 	copy_down_triangle();
 }
 

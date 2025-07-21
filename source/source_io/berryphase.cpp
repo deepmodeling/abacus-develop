@@ -313,7 +313,7 @@ double berryphase::stringPhase(const UnitCell& ucell,
             std::complex<double> det(1.0, 0.0);
             int info = 0;
             std::vector<int> ipiv(nbands);
-            LapackConnector::zgetrf(nbands, nbands, mat, nbands, ipiv.data(), &info);
+            LapackConnector::getrf(LapackConnector::RowMajor, nbands, nbands, mat.c, nbands, ipiv.data());
             for (int ib = 0; ib < nbands; ib++)
             {
                 if (ipiv[ib] != (ib + 1)) {

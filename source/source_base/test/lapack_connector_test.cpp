@@ -82,49 +82,19 @@ class LapackConnectorTest : public testing::Test
     std::vector<double> w;
 };
 
-// Test the zhegv_ function
+// Test the zhegv function
 TEST_F(LapackConnectorTest, ZHEGV)
 {
-    // First, query the optimal size of the work array
-    std::complex<double> work_query;
-    double rwork_query;
-    zhegv_(&itype,
-           &jobz,
-           &uplo,
-           &n,
+    LapackConnector::hegv(LapackConnector::ColMajor,
+           itype,
+           jobz,
+           uplo,
+           n,
            A.data(),
-           &lda,
+           lda,
            B.data(),
-           &ldb,
-           w.data(),
-           &work_query,
-           &lwork,
-           &rwork_query,
-           &info);
-    lwork = static_cast<int>(work_query.real());
-    std::vector<std::complex<double>> work(lwork);
-    // std::vector<double> rwork(static_cast<int>(rwork_query));
-    // the above line is not working as rwork_query will return -nan
-    // std::vector<double> rwork(7 * lwork);
-    std::vector<double> rwork(7 * n);
-
-    // Now, call zhegv_ with the optimal work array size
-    zhegv_(&itype,
-           &jobz,
-           &uplo,
-           &n,
-           A.data(),
-           &lda,
-           B.data(),
-           &ldb,
-           w.data(),
-           work.data(),
-           &lwork,
-           rwork.data(),
-           &info);
-
-    // Check that the function completed successfully
-    ASSERT_EQ(info, 0);
+           ldb,
+           w.data());
 
     // Check the computed eigenvalues and eigenvectors
     // (Use appropriate values for your test case)

@@ -118,66 +118,38 @@ namespace LR_Util
     void diag_lapack(const int& n, double* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack<double>");
-        int info = 0;
         char jobz = 'V', uplo = 'U';
-        double work_tmp;
-        const int minus_one = -1;
-        dsyev_(&jobz, &uplo, &n, mat, &n, eig, &work_tmp, &minus_one, &info);		// get best lwork
-        const int lwork = work_tmp;
-        double* work2 = new double[lwork];
-        dsyev_(&jobz, &uplo, &n, mat, &n, eig, work2, &lwork, &info);
-        if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl; }
-        delete[] work2;
+        LapackConnector::syev(LapackConnector::ColMajor, jobz, uplo, n, mat, n, eig);
     }
 
     void diag_lapack(const int& n, std::complex<double>* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack <std::complex<double>>");
-        int lwork = 2 * n;
-        std::complex<double>* work2 = new std::complex<double>[lwork];
-        double* rwork = new double[3 * n - 2];
-        int info = 0;
         char jobz = 'V', uplo = 'U';
-        zheev_(&jobz, &uplo, &n, mat, &n, eig, work2, &lwork, rwork, &info);
-        if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl; }
-        delete[] rwork;
-        delete[] work2;
+        LapackConnector::heev(LapackConnector::ColMajor, jobz, uplo, n, mat, n, eig);
     }
 
     void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh<double>");
-        int info = 0;
         char jobvl = 'N', jobvr = 'V';  //calculate right eigenvectors
-        double work_tmp;
-        const int minus_one = -1;
         std::vector<double> eig_real(n);
         std::vector<double> eig_imag(n);
         const int ldvl = 1, ldvr = n;
         std::vector<double> vl(ldvl * n), vr(ldvr * n);
-        dgeev_(&jobvl, &jobvr, &n, mat, &n, eig_real.data(), eig_imag.data(),
-            vl.data(), &ldvl, vr.data(), &ldvr, &work_tmp, &minus_one /*lwork*/, &info);		// get best lwork
-        const int lwork = work_tmp;
-        std::vector<double> work2(lwork);
-        dgeev_(&jobvl, &jobvr, &n, mat, &n, eig_real.data(), eig_imag.data(),
-            vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, &info);
-        if (info) { std::cout << "ERROR: Lapack solver dgeev, info=" << info << std::endl; }
+        LapackConnector::geev(LapackConnector::ColMajor, jobvl, jobvr, n, mat, n, eig_real.data(), eig_imag.data(),
+            vl.data(), ldvl, vr.data(), ldvr);
         for (int i = 0;i < n;++i) { eig[i] = std::complex<double>(eig_real[i], eig_imag[i]); }
     }
 
     void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh <std::complex<double>>");
-        int lwork = 2 * n;
-        std::vector<std::complex<double>> work2(lwork);
-        std::vector<double> rwork(3 * n - 2);
-        int info = 0;
         char jobvl = 'N', jobvr = 'V';
         const int ldvl = 1, ldvr = n;
         std::vector<std::complex<double>> vl(ldvl * n), vr(ldvr * n);
-        zgeev_(&jobvl, &jobvr, &n, mat, &n, eig,
-            vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, rwork.data(), &info);
-        if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
+        LapackConnector::geev(LapackConnector::ColMajor, jobvl, jobvr, n, mat, n, eig,
+            vl.data(), ldvl, vr.data(), ldvr);
     }
 
     std::string tolower(const std::string& str)

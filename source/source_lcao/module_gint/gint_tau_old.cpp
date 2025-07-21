@@ -29,9 +29,9 @@ void Gint::cal_meshball_tau(
 	// sum over mu to get density on grid
 	for(int ib=0; ib<this->bxyz; ++ib)
 	{
-		double rx=ddot_(&block_index[na_grid], dpsix[ib], &inc, dpsix_dm[ib], &inc);
-		double ry=ddot_(&block_index[na_grid], dpsiy[ib], &inc, dpsiy_dm[ib], &inc);
-		double rz=ddot_(&block_index[na_grid], dpsiz[ib], &inc, dpsiz_dm[ib], &inc);
+		double rx=BlasConnector::dot(block_index[na_grid], dpsix[ib], inc, dpsix_dm[ib], inc);
+		double ry=BlasConnector::dot(block_index[na_grid], dpsiy[ib], inc, dpsiy_dm[ib], inc);
+		double rz=BlasConnector::dot(block_index[na_grid], dpsiz[ib], inc, dpsiz_dm[ib], inc);
 		const int grid = vindex[ib];
 		rho[ grid ] += rx + ry + rz;
 	}

@@ -605,7 +605,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
                                              const int& nband,
-                                             const T* hcc,
+                                             T* hcc,
                                              const int& nbase_x,
                                              Real* eigenvalue, // in CPU
                                              T* vcc)

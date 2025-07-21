@@ -41,22 +41,18 @@ class DiagoLapack
                      double* const ekb,
                      psi::Psi<std::complex<double>>& wfc_2d);
 
-    int dsygvx_once(const int ncol,
+    void dsygvx_once(const int ncol,
                     const int nrow,
                     const double* const h_mat,
                     const double* const s_mat,
                     double* const ekb,
                     psi::Psi<double>& wfc_2d) const;
-    int zhegvx_once(const int ncol,
+    void zhegvx_once(const int ncol,
                     const int nrow,
                     const std::complex<double>* const h_mat,
                     const std::complex<double>* const s_mat,
                     double* const ekb,
                     psi::Psi<std::complex<double>>& wfc_2d) const;
-
-    int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
-
-    void post_processing(const int info, const std::vector<int>& vec);
 };
 
 } // namespace hsolver

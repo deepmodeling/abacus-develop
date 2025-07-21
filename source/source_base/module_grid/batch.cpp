@@ -66,13 +66,10 @@ int _maxmin_divide(const double* grid, int* idx, int m) {
     // The normal vector of the cut plane is taken to be the eigenvector
     // corresponding to the largest eigenvalue of the 3x3 matrix A = R*R^T.
     std::vector<double> A(9, 0.0);
-    int i3 = 3, i1 = 1;
-    double d0 = 0.0, d1 = 1.0;
-    dsyrk_("U", "N", &i3, &m, &d1, R.data(), &i3, &d0, A.data(), &i3);
+    BlasConnector::syrk('U', 'N', 3, m, 1.0, R.data(), 3, 0.0, A.data(), 3);
 
-    int info = 0, lwork = 102 /* determined by a work space query */;
-    std::vector<double> e(3), work(lwork);
-    dsyev_("V", "U", &i3, A.data(), &i3, e.data(), work.data(), &lwork, &info);
+    std::vector<double> e(3);
+    LapackConnector::syev(LapackConnector::ColMajor, 'V', 'U', 3, A.data(), 3, e.data());
     double* n = A.data() + 6; // normal vector of the cut plane
 
     // Rearrange the indices to put points in each subset together by

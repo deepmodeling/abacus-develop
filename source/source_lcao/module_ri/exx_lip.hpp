@@ -408,7 +408,7 @@ void Exx_Lip<T, Device>::b_sum(const int iq, const int ib)			// Peize Lin change
 {
     ModuleBase::timer::tick("Exx_Lip", "b_sum");
     // this->sum1[iw_l,iw_r] += \sum_{ig} this->b[iw_l,ig] * conj(this->b[iw_r,ig]) * this->q_pack->wf_wg(iq,ib)
-    LapackConnector::herk(
+    BlasConnector::herk(
         'U','N',
         PARAM.globalv.nlocal, this->rho_basis->npw,
         (Treal)this->q_pack->wf_wg(iq, ib), this->b.data(), this->rho_basis->npw,

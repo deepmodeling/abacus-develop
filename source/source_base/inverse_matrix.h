@@ -22,10 +22,6 @@ class Inverse_Matrix_Complex
 	private:
 	int dim=0;
 	double *e=nullptr;
-	int lwork=0;
-	std::complex<double> *work2=nullptr;
-	double* rwork=nullptr;
-	int info=0;
 	bool allocate=false; //mohan add 2012-04-02
 
 	ModuleBase::ComplexMatrix EA;

@@ -54,8 +54,8 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         hamilt::MatrixBlock<std::complex<double>> s_mat;
 
         p_hamilt->matrix(h_mat, s_mat);
-        zcopy_(&nloc, h_mat.p, &inc, Htmp, &inc);
-        zcopy_(&nloc, s_mat.p, &inc, Sinv, &inc);
+        BlasConnector::copy(nloc, h_mat.p, inc, Htmp, inc);
+        BlasConnector::copy(nloc, s_mat.p, inc, Sinv, inc);
 
         vector<int> ipiv(nloc, 0);
         int info = 0;
@@ -201,7 +201,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
                  &one_int,
                  pv.desc);
 
-        zcopy_(&nloc, tmp4, &inc, tmp_edmk.c, &inc);
+        BlasConnector::copy(nloc, tmp4, inc, tmp_edmk.c, inc);
 
         delete[] Htmp;
         delete[] Sinv;
@@ -236,8 +236,8 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 
         int IPIV[nlocal];
 
-        LapackConnector::zgetrf(nlocal, nlocal, Sinv, nlocal, IPIV, &INFO);
-        LapackConnector::zgetri(nlocal, Sinv, nlocal, IPIV, work, lwork, &INFO);
+        LapackConnector::getrf(LapackConnector::RowMajor, nlocal, nlocal, Sinv, nlocal, IPIV);
+        LapackConnector::getri(LapackConnector::RowMajor, nlocal, Sinv, nlocal, IPIV, work, lwork);
         // I just use ModuleBase::ComplexMatrix temporarily, and will change it
         // to std::complex<double>*
         ModuleBase::ComplexMatrix tmp_dmk_base(nlocal, nlocal);

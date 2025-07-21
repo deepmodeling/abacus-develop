@@ -1,6 +1,6 @@
 #include "mixing.h"
 
-#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/blas_connector.h"
 namespace Base_Mixing
 {
 
@@ -68,17 +68,17 @@ void Mixing::mix_data(const Mixing_Data& mdata, double* data_mix)
             data_mix[i] = FP_data[i];
         return;
     }
-    container::BlasConnector::gemv('N',
-                                   mdata.length,
-                                   mdata.ndim_use,
-                                   1.0,
-                                   FP_data,
-                                   mdata.length,
-                                   coef.data(),
-                                   1,
-                                   0.0,
-                                   data_mix,
-                                   1);
+    BlasConnector::gemv_cm('N',
+                            mdata.length,
+                            mdata.ndim_use,
+                            1.0,
+                            FP_data,
+                            mdata.length,
+                            coef.data(),
+                            1,
+                            0.0,
+                            data_mix,
+                            1);
 }
 void Mixing::mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
 {
@@ -98,16 +98,16 @@ void Mixing::mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
     std::vector<std::complex<double>> coef_complex(coef.size());
     for (int i = 0; i < coef.size(); ++i)
         coef_complex[i] = coef[i];
-    container::BlasConnector::gemv('N',
-                                   mdata.length,
-                                   mdata.ndim_use,
-                                   1.0,
-                                   FP_data,
-                                   mdata.length,
-                                   coef_complex.data(),
-                                   1,
-                                   0.0,
-                                   data_mix,
-                                   1);
+    BlasConnector::gemv_cm('N',
+                            mdata.length,
+                            mdata.ndim_use,
+                            1.0,
+                            FP_data,
+                            mdata.length,
+                            coef_complex.data(),
+                            1,
+                            0.0,
+                            data_mix,
+                            1);
 }
-} // namespace Base_Mixing
+}// namespace Base_Mixing

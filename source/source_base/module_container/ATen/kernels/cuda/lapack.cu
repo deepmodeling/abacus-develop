@@ -152,7 +152,7 @@ struct lapack_getrs<T, DEVICE_GPU> {
         const int& nrhs,
         T* A,
         const int& lda,
-        const int* ipiv,
+        int* ipiv,
         T* B,
         const int& ldb)
     {

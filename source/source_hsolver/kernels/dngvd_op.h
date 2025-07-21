@@ -4,7 +4,7 @@
 #define MODULE_HSOLVER_DNGVD_H
 
 #include "source_base/macros.h"
-#include "source_base/module_external/lapack_wrapper.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_device/types.h"
 
@@ -43,7 +43,7 @@ struct dngvd_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, const T* B, Real* W, T* V);
+    void operator()(const Device* d, const int nstart, const int ldh, T* A, T* B, Real* W, T* V);
 };
 
 template <typename T, typename Device>
@@ -103,7 +103,7 @@ struct dnevx_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (row major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, const int m, Real* W, T* V);
+    void operator()(const Device* d, const int nstart, const int ldh, T* A, const int m, Real* W, T* V);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -8,21 +8,14 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
 #include "source_psi/psi.h"
+#include "source_base/tool_quit.h"
+#include "source_base/lapack_connector.h"
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <memory>
 #include <utility>
-
-extern "C"
-{
-    void ztrtri_(char *uplo, char *diag, int *n, std::complex<double> *a, int *lda, int *info);
-    void ctrtri_(char *uplo, char *diag, int *n, std::complex<float> *a, int *lda, int *info);
-}
-
-//extern "C" void zpotrf_(char* uplo, const int* n, std::complex<double>* A, const int* lda, int* info);
-//extern "C" void cpotrf_(char* uplo, const int* n, std::complex<float>* A, const int* lda, int* info);
 
 #include "op_exx_pw.h"
 #include "source_pw/module_pwdft/global.h"
@@ -1062,25 +1055,25 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 template <>
 void trtri_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char *uplo, char *diag, int *n, std::complex<float> *a, int *lda, int *info)
 {
-    ctrtri_(uplo, diag, n, a, lda, info);
+    LapackConnector::trtri(LapackConnector::ColMajor, *uplo, *diag, *n, a, *lda);
 }
 
 template <>
 void trtri_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char *uplo, char *diag, int *n, std::complex<double> *a, int *lda, int *info)
 {
-    ztrtri_(uplo, diag, n, a, lda, info);
+    LapackConnector::trtri(LapackConnector::ColMajor, *uplo, *diag, *n, a, *lda);
 }
 
 template <>
 void potrf_op<std::complex<float>, base_device::DEVICE_CPU>::operator()(char *uplo, int *n, std::complex<float> *a, int *lda, int *info)
 {
-    cpotrf_(uplo, n, a, lda, info);
+    LapackConnector::potrf(LapackConnector::ColMajor, *uplo, *n, a, *lda);
 }
 
 template <>
 void potrf_op<std::complex<double>, base_device::DEVICE_CPU>::operator()(char *uplo, int *n, std::complex<double> *a, int *lda, int *info)
 {
-    zpotrf_(uplo, n, a, lda, info);
+    LapackConnector::potrf(LapackConnector::ColMajor, *uplo, *n, a, *lda);
 }
 
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;

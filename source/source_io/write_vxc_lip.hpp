@@ -2,7 +2,7 @@
 #define __WRITE_VXC_LIP_H_
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
-#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/blas_connector.h"
 #include "source_pw/module_pwdft/operator_pw/veff_pw.h"
 #include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
@@ -36,12 +36,12 @@ namespace ModuleIO
         char transb = 'N';
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, 
+        BlasConnector::gemm_cm(transa, transb, nbasis, nbands, nbasis, 
         alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 
         std::vector<T> cVc(nbands * nbands, 0.0);
         transa = ((std::is_same<T, double>::value || std::is_same<T, float>::value) ? 'T' : 'C');
-        container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, 
+        BlasConnector::gemm_cm(transa, transb, nbands, nbands, nbasis, 
         alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
@@ -54,7 +54,7 @@ namespace ModuleIO
         std::vector<T> cVc(nbands * nbands, (T)0.0);
         const T alpha(1.0, 0.0);
         const T beta(0.0, 0.0);
-        container::BlasConnector::gemm('C', 'N', nbands, nbands, nbasis, alpha, 
+        BlasConnector::gemm_cm('C', 'N', nbands, nbands, nbasis, alpha, 
         psi, nbasis, hpsi, nbasis, beta, cVc.data(), nbands);
         return cVc;
     }
@@ -204,7 +204,7 @@ namespace ModuleIO
                 // std::cout << "exx_energy from orbitals: " << all_band_energy(ik, e_orb_exx.at(ik), wg) << std::endl;
                 // std::cout << "exx_energy from exx_lip: " << GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_energy() << std::endl;
                 // ======test=======
-                container::BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
+                BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
             }
 #endif
         

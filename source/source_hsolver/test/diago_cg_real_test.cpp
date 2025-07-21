@@ -41,25 +41,14 @@
   // call lapack in order to compare to cg
 void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = false)
 {
-    int info = 0;
     auto tmp = hm;
     clock_t start, end;
     start = clock();
     char tmp_c1 = 'V', tmp_c2 = 'U';
-
-    double work_tmp;
-    constexpr int minus_one = -1;
-    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, &work_tmp, &minus_one, &info);		// get best lwork
-
-    const int lwork = work_tmp;
-    double* work2 = new double[lwork];
-    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, &info);
+    LapackConnector::syev(LapackConnector::ColMajor, tmp_c1, tmp_c2, npw, tmp.data(), npw, e);
     end = clock();
-    if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
-}
     if (outtime) { std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
 }
-    delete[] work2;
 }
 
 class DiagoCGPrepare

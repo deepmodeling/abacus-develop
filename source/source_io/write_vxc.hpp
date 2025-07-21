@@ -2,7 +2,7 @@
 #define __WRITE_VXC_H_
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
-#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
@@ -62,7 +62,7 @@ inline std::vector<T> cVc(T* V,
         c, i1, i1, pv.desc_wfc,
         beta, Vc.data(), i1, i1, pv.desc_wfc);
 #else
-    container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
+    BlasConnector::gemm_cm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 #endif
     std::vector<T> cVc(p2d.nloc, 0.0);
     transa = (std::is_same<T, double>::value ? 'T' : 'C');
@@ -73,7 +73,7 @@ inline std::vector<T> cVc(T* V,
         Vc.data(), i1, i1, pv.desc_wfc,
         beta, cVc.data(), i1, i1, p2d.desc);
 #else
-    container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbasis);
+    BlasConnector::gemm_cm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc.data(), nbasis);
 #endif
     return cVc;
 }

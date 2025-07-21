@@ -20,7 +20,7 @@ void Gint::cal_meshball_rho(const int na_grid,
     // sum over mu to get density on grid
     for (int ib = 0; ib < this->bxyz; ++ib)
     {
-        const double r = ddot_(&block_index[na_grid], psir_ylm[ib], &inc, psir_DMR[ib], &inc);
+        const double r = BlasConnector::dot(block_index[na_grid], psir_ylm[ib], inc, psir_DMR[ib], inc);
         const int grid = vindex[ib];
         rho[grid] += r;
     }

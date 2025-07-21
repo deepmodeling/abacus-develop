@@ -22,14 +22,7 @@ namespace PCA
 		assert(a.shape[0] == a.shape[1]);
 		const int nr = a.shape[0];
 		const int nc = a.shape[1];
-
-		double work_tmp=0.0;
-		constexpr int minus_one = -1;
-		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, &work_tmp, &minus_one, &info);		// get best lwork
-
-		const int lwork = work_tmp;
-		std::vector<double> work(std::max(1, lwork));
-		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, work.data(), &lwork, &info);
+		LapackConnector::syev(LapackConnector::ColMajor, jobz, uplo, nr, a.ptr(), nc);
 	}
 
 	RI::Tensor<double> get_sub_matrix( 

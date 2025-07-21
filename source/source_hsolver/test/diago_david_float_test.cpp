@@ -34,25 +34,15 @@
 //NOTE: after finish this function, hm stores the eigen vectors.
 void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float * e, bool outtime=false)
 {
-	int lwork = 2 * npw;
-	std::complex<float> *work2= new std::complex<float>[lwork];
-	float* rwork = new float[3*npw-2];
-	int info = 0;
-
 	auto tmp = hm;
 
 	clock_t start,end;
 	start = clock();
 	char tmp_c1 = 'V', tmp_c2 = 'U';
-	cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+	LapackConnector::heev(LapackConnector::ColMajor, tmp_c1, tmp_c2, npw, tmp.data(), npw, e);
 	end = clock();
-	if(info) { std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
-}
 	if (outtime) { std::cout<<"Lapack Run time: "<<(float)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
 }
-
-	delete [] rwork;
-	delete [] work2;
 }
 
 class DiagoDavPrepare 

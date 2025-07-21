@@ -22,7 +22,7 @@ struct gemv_op<T, base_device::DEVICE_CPU>
                     T* Y,
                     const int& incy)
     {
-        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
+        BlasConnector::gemv_cm(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
     }
 };
 

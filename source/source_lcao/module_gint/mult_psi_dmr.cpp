@@ -95,8 +95,8 @@ void mult_psi_DMR(
             const int idx1 = block_index[ia1];
             const int idx2 = block_index[ia2];
             
-            dgemm_(&trans, &trans, &block_size[ia2], &ib_len, &block_size[ia1], &alpha1, tmp_matrix_ptr, &block_size[ia2],
-                    &psi[ib_start][idx1], &LD_pool, &beta, &psi_DMR[ib_start][idx2], &LD_pool);
+            BlasConnector::gemm_cm(trans, trans, block_size[ia2], ib_len, block_size[ia1], alpha1, tmp_matrix_ptr, block_size[ia2],
+                    &psi[ib_start][idx1], LD_pool, beta, &psi_DMR[ib_start][idx2], LD_pool);
 
         }  // ia2
     } // ia1

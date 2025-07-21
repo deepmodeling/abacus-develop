@@ -120,9 +120,6 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
     
     //! call dysev
     std::vector<double> omega(3*size);
-    std::vector<double> work(3*size*3*size);
-    int lwork=3*size*3*size;
-    int info=0;
     std::vector<double> H_flat;
     
     for(const auto& row : H)
@@ -131,8 +128,7 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
     }
     
     int value=3*size;
-    int* ptr=&value;
-    dsyev_("V","U",ptr,H_flat.data(),ptr,omega.data(),work.data(),&lwork,&info);
+    LapackConnector::syev(LapackConnector::ColMajor, 'V','U', value, H_flat.data(), value, omega.data());
     std::vector<std::vector<double>> V(3*size, std::vector<double>(3*size, 0.0));
     for(int i = 0; i < 3*size; i++)
     {

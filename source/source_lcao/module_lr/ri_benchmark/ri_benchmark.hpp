@@ -1,6 +1,6 @@
 #pragma once
 #include "ri_benchmark.h"
-#include "source_base/module_container/base/third_party/blas.h"
+#include "source_base/blas_connector.h"
 namespace RI_Benchmark
 {
     // std::cout << "the size of Cs:" << std::endl;
@@ -91,13 +91,13 @@ namespace RI_Benchmark
                     // caution: Cs are row-major  (ia2 contiguous)
                     if (occ_first)
                     {
-                        container::BlasConnector::gemm('T', 'N', nvirt, nw1, nw2, 1.0, psi_a2.data(), nw2, ptr, nw2, 0.0, tmp.data(), nvirt);
-                        container::BlasConnector::gemm('N', 'N', nvirt, nocc, nw1, 1.0, tmp.data(), nvirt, psi_a1.data(), nw1, 0.0, &Cs_mo[c1.first][c2.first](iabf, 0, 0), nvirt);
+                        BlasConnector::gemm_cm('T', 'N', nvirt, nw1, nw2, 1.0, psi_a2.data(), nw2, ptr, nw2, 0.0, tmp.data(), nvirt);
+                        BlasConnector::gemm_cm('N', 'N', nvirt, nocc, nw1, 1.0, tmp.data(), nvirt, psi_a1.data(), nw1, 0.0, &Cs_mo[c1.first][c2.first](iabf, 0, 0), nvirt);
                     }
                     else
                     {
-                        container::BlasConnector::gemm('T', 'N', nw1, nocc, nw2, 1.0, ptr, nw2, psi_a2.data(), nw2, 0.0, tmp.data(), nw1);
-                        container::BlasConnector::gemm('T', 'N', nvirt, nocc, nw1, 1.0, psi_a1.data(), nw1, tmp.data(), nw1, 0.0, &Cs_mo[c1.first][c2.first](iabf, 0, 0), nvirt);
+                        BlasConnector::gemm_cm('T', 'N', nw1, nocc, nw2, 1.0, ptr, nw2, psi_a2.data(), nw2, 0.0, tmp.data(), nw1);
+                        BlasConnector::gemm_cm('T', 'N', nvirt, nocc, nw1, 1.0, psi_a1.data(), nw1, tmp.data(), nw1, 0.0, &Cs_mo[c1.first][c2.first](iabf, 0, 0), nvirt);
                     }
                 }
                 iw2 += nw2;
@@ -144,8 +144,8 @@ namespace RI_Benchmark
                         assert(tensor_ca.shape[0] == nabf1);   //abf1
                         assert(tensor_cb.shape[0] == nabf2); //abf2
                         std::vector<TK> tmp(npairs * nabf1);
-                        container::BlasConnector::gemm('T', 'T', nabf1, npairs, nabf2, 1.0, tensor_v.ptr(), nabf2, tensor_cb.ptr(), npairs, 0.0, tmp.data(), nabf1);
-                        container::BlasConnector::gemm('N', 'N', npairs, npairs, nabf1, 2.0/*Hartree to Ry*/, tensor_ca.ptr(), npairs, tmp.data(), nabf1, 1.0, Amat_full.data(), npairs);
+                        BlasConnector::gemm_cm('T', 'T', nabf1, npairs, nabf2, 1.0, tensor_v.ptr(), nabf2, tensor_cb.ptr(), npairs, 0.0, tmp.data(), nabf1);
+                        BlasConnector::gemm_cm('N', 'N', npairs, npairs, nabf1, 2.0/*Hartree to Ry*/, tensor_ca.ptr(), npairs, tmp.data(), nabf1, 1.0, Amat_full.data(), npairs);
                     }
                 }
             }
@@ -167,7 +167,7 @@ namespace RI_Benchmark
                 const int& npairs = tensor_c.shape[1] * tensor_c.shape[2];
                 std::vector<TK> CX(nabf);
                 for (int iabf = 0;iabf < nabf;++iabf)
-                    CX[iabf] = container::BlasConnector::dot(npairs, &tensor_c(iabf, 0, 0), 1, X, 1);
+                    CX[iabf] = BlasConnector::dot(npairs, &tensor_c(iabf, 0, 0), 1, X, 1);
                 CsX[iat1][it2.first] = CX;
             }
         }
@@ -201,12 +201,12 @@ namespace RI_Benchmark
                     if (CV.count(iat2) && CV.at(iat2).count({ iat3, {0, 0, 0} }))   // add-up, sum over iat1
                     {
                         auto& tensor_cv = CV.at(iat2).at({ iat3, {0, 0, 0} });
-                        container::BlasConnector::gemm('N', 'T', npairs, nabf2, nabf1, 1.0, tensor_c.ptr(), npairs, tensor_v.ptr(), nabf2, 1.0, tensor_cv.ptr(), npairs);
+                        BlasConnector::gemm_cm('N', 'T', npairs, nabf2, nabf1, 1.0, tensor_c.ptr(), npairs, tensor_v.ptr(), nabf2, 1.0, tensor_cv.ptr(), npairs);
                     }
                     else
                     {
                         RI::Tensor<TK> tmp({ nabf2, tensor_c.shape[1], tensor_c.shape[2] });  // (nabf2, nocc, nvirt)
-                        container::BlasConnector::gemm('N', 'T', npairs, nabf2, nabf1, 1.0, tensor_c.ptr(), npairs, tensor_v.ptr(), nabf2, 0.0, tmp.ptr(), npairs);
+                        BlasConnector::gemm_cm('N', 'T', npairs, nabf2, nabf1, 1.0, tensor_c.ptr(), npairs, tensor_v.ptr(), nabf2, 0.0, tmp.ptr(), npairs);
                         CV[iat2][{iat3, { 0, 0, 0 }}] = tmp;
                     }
                 }
@@ -242,8 +242,8 @@ namespace RI_Benchmark
                         assert(tensor_ca.shape[0] == nabf1);   //abf1
                         assert(vector_cb.size() == nabf2); //abf2
                         std::vector<TK> tmp(nabf1);
-                        container::BlasConnector::gemv('T', nabf1, nabf2, 1.0, tensor_v.ptr(), nabf2, vector_cb.data(), 1, 0.0, tmp.data(), 1);
-                        container::BlasConnector::gemv('N', npairs, nabf1, scale/*Hartree to Ry; singlet*/, tensor_ca.ptr(), npairs, tmp.data(), 1, 1.0, AX, 1);
+                        BlasConnector::gemv_cm('T', nabf1, nabf2, 1.0, tensor_v.ptr(), nabf2, vector_cb.data(), 1, 0.0, tmp.data(), 1);
+                        BlasConnector::gemv_cm('N', npairs, nabf1, scale/*Hartree to Ry; singlet*/, tensor_ca.ptr(), npairs, tmp.data(), 1, 1.0, AX, 1);
                     }
                 }
             }
@@ -270,7 +270,7 @@ namespace RI_Benchmark
                     const auto& vector_cx = it3.second; // (nabf)
                     const int& nabf = tensor_cv.shape[0];
                     assert(vector_cx.size() == nabf); //abf on at2
-                    container::BlasConnector::gemv('N', npairs, nabf, scale/*Hartree to Ry; singlet*/, tensor_cv.ptr(), npairs, vector_cx.data(), 1, 1.0, AX, 1);
+                    BlasConnector::gemv_cm('N', npairs, nabf, scale/*Hartree to Ry; singlet*/, tensor_cv.ptr(), npairs, vector_cx.data(), 1, 1.0, AX, 1);
                 }
             }
         }

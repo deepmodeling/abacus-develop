@@ -166,27 +166,17 @@ void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
     const int itype = 1; // solve A*X=(lambda)*B*X
     const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
     const char uplo = 'U'; // Upper triangles
-    int lwork = (nFull + 2) * nFull, info = 0;
-    double *ev = new double[nFull * nFull];
+    std::vector<double> ev(nFull * nFull);
 
-    double *a = new double[nFull * nFull];
-    double *b = new double[nFull * nFull];
+    std::vector<double> a(nFull * nFull);
+    std::vector<double> b(nFull * nFull);
     for (int i = 0; i < nFull * nFull; i++)
     {
         a[i] = hmatrix[i];
         b[i] = smatrix[i];
     }
 
-    dsygv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, &info);
-    if (info != 0)
-    {
-        std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;
-        exit(1);
-    }
-
-    delete[] a;
-    delete[] b;
-    delete[] ev;
+    LapackConnector::sygv(LapackConnector::ColMajor, itypr, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e, ev.data());
 }
 
 void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, double *e, int &nFull)
@@ -194,29 +184,17 @@ void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, 
     const int itype = 1; // solve A*X=(lambda)*B*X
     const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
     const char uplo = 'U'; // Upper triangles
-    int lwork = (nFull + 1) * nFull, info = 0;
-    double *rwork = new double[3 * nFull - 2];
-    std::complex<double> *ev = new std::complex<double>[nFull * nFull];
+    std::vector<std::complex<double>> ev(nFull * nFull);
 
-    std::complex<double> *a = new std::complex<double>[nFull * nFull];
-    std::complex<double> *b = new std::complex<double>[nFull * nFull];
+    std::vector<std::complex<double>> a(nFull * nFull);
+    std::vector<std::complex<double>> b(nFull * nFull);
     for (int i = 0; i < nFull * nFull; i++)
     {
         a[i] = hmatrix[i];
         b[i] = smatrix[i];
     }
 
-    zhegv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, rwork, &info);
-    if (info != 0)
-    {
-        std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;
-        exit(1);
-    }
-
-    delete[] a;
-    delete[] b;
-    delete[] ev;
-    delete[] rwork;
+    LapackConnector::hegv(LapackConnector::ColMajor, itype, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e, ev.data());
 }
 
 } // namespace LCAO_DIAGO_TEST

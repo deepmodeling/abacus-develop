@@ -83,10 +83,10 @@ void Gint::cal_meshball_vlocal(
                 hr_tmp.resize(m * n);
                 ModuleBase::GlobalFunc::ZEROS(hr_tmp.data(), m*n);
 
-                dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
-                    &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
-                    &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                    &beta, hr_tmp.data(), &n); 
+                BlasConnector::gemm('T', 'N', m, n, ib_length, 1,
+                    &psir_ylm[first_ib][block_index[ia1]], LD_pool,
+                    &psir_vlbr3[first_ib][block_index[ia2]], LD_pool,
+                    1, hr_tmp.data(), n); 
                 tmp_matrix->add_array_ts(hr_tmp.data());
 			}
 		}

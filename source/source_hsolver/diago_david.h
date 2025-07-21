@@ -297,7 +297,7 @@ class DiagoDavid
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
-                     const T* hcc,
+                     T* hcc,
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc);
