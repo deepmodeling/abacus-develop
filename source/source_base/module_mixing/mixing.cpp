@@ -1,6 +1,6 @@
 #include "mixing.h"
 
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 namespace Base_Mixing
 {
 

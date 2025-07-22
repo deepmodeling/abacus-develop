@@ -1,6 +1,6 @@
 #pragma once
 #include "ri_benchmark.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 namespace RI_Benchmark
 {
     // std::cout << "the size of Cs:" << std::endl;

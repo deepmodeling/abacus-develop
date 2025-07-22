@@ -2,7 +2,7 @@
 #define __WRITE_VXC_LIP_H_
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_pw/module_pwdft/operator_pw/veff_pw.h"
 #include "source_psi/psi.h"
 #include "source_cell/unitcell.h"

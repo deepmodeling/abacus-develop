@@ -3,7 +3,7 @@
  * These operations include matrix-vector multiplication and related operations.
  */
 #include "blas_connector.h"
-#include "macros.h"
+#include "source_base/macros.h"
 #include <cblas.h>
 
 #ifdef __DSP

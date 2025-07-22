@@ -9,7 +9,7 @@
 #include "source_hamilt/operator.h"
 #include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 
 #include <cmath>
 #include <complex>

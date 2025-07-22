@@ -3,7 +3,7 @@
 
 #include <complex>
 #include "source_base/macros.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 
 #if defined(__CUDA)
 #include <base/third_party/cusolver.h>
