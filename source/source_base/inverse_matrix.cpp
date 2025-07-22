@@ -33,9 +33,6 @@ void Inverse_Matrix_Complex::init(const int &dim_in)
 
 	assert(dim>0);
 	this->e = new double[dim];
-
-	assert(lwork>0);
-
 	assert(3*dim-2>0);
 	this->A.create(dim, dim);
 	this->EA.create(dim, dim);
