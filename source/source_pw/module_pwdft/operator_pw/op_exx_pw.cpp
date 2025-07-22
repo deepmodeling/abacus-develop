@@ -1,11 +1,12 @@
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
 #include "source_psi/psi.h"
-#include "source_base/tool_quit.h"
 
 #include <cmath>
 #include <complex>
@@ -54,7 +55,11 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell)
 {
     gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
-    if (!kv_in->get_is_mp())
+    bool is_mp = kv_in->get_is_mp();
+#ifdef __MPI
+    Parallel_Common::bcast_bool(is_mp);
+#endif
+    if (!is_mp)
     {
         gamma_extrapolation = false;
     }
