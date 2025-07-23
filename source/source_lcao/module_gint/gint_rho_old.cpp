@@ -1,7 +1,6 @@
 #include "gint_k.h"
 #include "gint_tools.h"
 #include "grid_technique.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"

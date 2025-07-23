@@ -14,6 +14,7 @@
 #ifdef __CUDA
 #include "source_hsolver/diago_cusolver.h"
 #endif
+#include "source_base/module_external/scalapack_connector.h"
 
 #define PASSTHRESHOLD 1e-10
 #define DETAILINFO false

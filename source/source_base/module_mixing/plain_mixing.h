@@ -30,6 +30,10 @@ class Plain_Mixing : public Mixing
         return;
     }
 
+    // explicitly introduce push_data version of the base class
+    // that is not overridden in this class
+    using Mixing::push_data;
+
     /**
      * @brief
      *
