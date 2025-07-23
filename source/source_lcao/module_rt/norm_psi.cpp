@@ -1,11 +1,14 @@
 #include "norm_psi.h"
 
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+
+#include "source_base/global_function.h" // ModuleBase::GlobalFunc::ZEROS
 
 #include <complex>
 #include <iostream>
+#include <cassert>
 
 namespace module_rt
 {

@@ -5,7 +5,6 @@
 #include "norm_psi.h"
 #include "propagator.h"
 #include "solve_propagation.h"
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
 #include "source_base/module_external/scalapack_connector.h"

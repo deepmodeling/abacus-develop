@@ -1,4 +1,3 @@
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"
 #include "source_base/module_container/ATen/kernels/memory.h" // memory operations (Tensor)
