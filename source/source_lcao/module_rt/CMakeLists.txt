@@ -10,9 +10,10 @@ if(ENABLE_LCAO)
         propagator_taylor.cpp
         propagator_etrs.cpp
         upsi.cpp
-        td_velocity.cpp
-        td_current.cpp
+        td_info.cpp
+        velocity_op.cpp
         snap_psibeta_half_tddft.cpp
+        td_folding.cpp
         solve_propagation.cpp
     )
 

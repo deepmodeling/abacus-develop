@@ -87,7 +87,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
@@ -127,12 +127,12 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     // Initialize KEDF
     // Calculate electron numbers, which will be used to initialize WT KEDF
-    this->nelec_ = new double[PARAM.inp.nspin];
-    if (PARAM.inp.nspin == 1)
+    this->nelec_ = new double[inp.nspin];
+    if (inp.nspin == 1)
     {
-        this->nelec_[0] = PARAM.inp.nelec;
+        this->nelec_[0] = inp.nelec;
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (inp.nspin == 2)
     {
         // in fact, nelec_spin will not be used anymore
         this->pelec->init_nelec_spin();

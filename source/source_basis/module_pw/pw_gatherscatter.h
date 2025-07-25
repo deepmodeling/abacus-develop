@@ -123,7 +123,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        ModuleBase::timer::tick(this->classname, "gathers_scatterp");
+        // ModuleBase::timer::tick(this->classname, "gathers_scatterp");
         return;
     }
 #ifdef __MPI

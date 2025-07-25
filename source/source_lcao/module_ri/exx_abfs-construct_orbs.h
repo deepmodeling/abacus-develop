@@ -57,6 +57,9 @@ public:
         return get_Rmax(rcut);
     }
 
+	static void filter_empty_orbs(
+		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs);
+
   private:
 	static std::vector<std::vector<std::vector<std::vector<double>>>> psi_mult_psi( 
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos );

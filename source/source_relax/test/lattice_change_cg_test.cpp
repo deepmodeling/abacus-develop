@@ -91,8 +91,7 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
 
     // Check output
     std::string expected_output
-        = " largest stress is 0, no movement is possible.\n it may converged, otherwise no movement of lattice "
-          "parameters is allowed.\n end of lattice optimization\n                              stress_step = 1\n       "
+        = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n                              stress_step = 1\n       "
           "                  update iteration = 5\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -120,7 +119,7 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -152,7 +151,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -182,7 +181,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -213,7 +212,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -247,7 +246,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -280,7 +279,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
+    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 

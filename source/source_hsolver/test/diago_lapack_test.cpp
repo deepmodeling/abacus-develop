@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "source_hsolver/diago_lapack.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 
 #define PASSTHRESHOLD 1e-5
 #define DETAILINFO false

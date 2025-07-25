@@ -93,6 +93,10 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_matrix_dir = sys.global_out_dir + "matrix/";
     sys.global_matrix_dir = to_dir(sys.global_matrix_dir);
 
+    /// get the global output directory
+    sys.global_wfc_dir = sys.global_out_dir + "WFC/";
+    sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
+
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
     sys.global_mlkedf_descriptor_dir = to_dir(sys.global_mlkedf_descriptor_dir);
@@ -126,22 +130,17 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
 
     // set the global log file
     bool out_alllog = inp.out_alllog;
-    // set the global calculation type
-    std::string cal_type = inp.calculation;
 #ifdef __MPI
     // because log_file is different for each rank, so we need to bcast the out_alllog
     Parallel_Common::bcast_bool(out_alllog);
-    // In `ReadInput::read_parameters`, `bcastfunc(param)` is after `set_global_dir`,
-    // so `cal_type` must be synchronized here manually
-    Parallel_Common::bcast_string(cal_type);
 #endif
     if (out_alllog)
     {
-        PARAM.sys.log_file = "running_" + cal_type + "_" + std::to_string(PARAM.sys.myrank + 1) + ".log";
+        PARAM.sys.log_file = "running_" + PARAM.inp.calculation + "_" + std::to_string(PARAM.sys.myrank + 1) + ".log";
     }
     else
     {
-        PARAM.sys.log_file = "running_" + cal_type + ".log";
+        PARAM.sys.log_file = "running_" + PARAM.inp.calculation + ".log";
     }
 #ifdef __MPI
     Parallel_Common::bcast_string(sys.global_in_card);
@@ -149,6 +148,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_readin_dir);
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
+    Parallel_Common::bcast_string(sys.global_wfc_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }

@@ -17,7 +17,7 @@
 #include "dist_bcd_matrix.h"
 #include "dist_ccs_matrix.h"
 #include "dist_matrix_transformer.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"

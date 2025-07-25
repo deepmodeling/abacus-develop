@@ -5,7 +5,7 @@
 #ifdef __LCAO
 #include "source_lcao/hamilt_lcao.h"
 #endif
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 namespace ModuleDFTU
 {

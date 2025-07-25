@@ -154,7 +154,10 @@ class HContainer
      * data of HR_in will not be copied, please call add() after this constructor to copy data.
      */
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
-
+    
+    // copy assignment, not allowed
+    HContainer& operator=(const HContainer<T>& HR_in) = delete;
+    
     // move constructor
     HContainer(HContainer<T>&& HR_in) noexcept;
     // move assignment

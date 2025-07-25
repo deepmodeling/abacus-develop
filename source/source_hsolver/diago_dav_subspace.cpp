@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_hsolver/kernels/dngvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_hsolver/kernels/bpcg_kernel_op.h"
+#include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
 #include "source_base/kernels/dsp/dsp_connector.h"
 
 #include "source_hsolver/diag_hs_para.h"

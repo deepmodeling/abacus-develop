@@ -10,10 +10,10 @@
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
-#include "module_lr/esolver_lrtd_lcao.h"
+#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 }
 #endif
 #include "esolver_dp.h"
@@ -230,13 +230,26 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao_tddft")
     {
-#if ((defined __CUDA) /* || (defined __ROCM) */)
-        if (PARAM.inp.device == "gpu")
+        if (PARAM.inp.nspin < 4)
         {
-            return new ESolver_KS_LCAO_TDDFT<base_device::DEVICE_GPU>();
-        }
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+            if (PARAM.inp.device == "gpu")
+            {
+                return new ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_GPU>();
+            }
 #endif
-        return new ESolver_KS_LCAO_TDDFT<base_device::DEVICE_CPU>();
+            return new ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+            if (PARAM.inp.device == "gpu")
+            {
+                return new ESolver_KS_LCAO_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+#endif
+            return new ESolver_KS_LCAO_TDDFT<std::complex<double>, base_device::DEVICE_CPU>();
+        }
     }
     else if (esolver_type == "lr_lcao")
     {

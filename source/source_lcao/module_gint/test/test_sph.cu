@@ -3,7 +3,6 @@
 
 #include "float.h"
 #include "cuda_runtime.h"
-#include "device_functions.h"
 #include "device_launch_parameters.h"
 #include "gtest/gtest.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"

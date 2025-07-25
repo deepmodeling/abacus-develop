@@ -486,15 +486,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           ucell.atoms,
                           false,
                           nullptr);
-        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x,
-                                         recip_vec1.y,
-                                         recip_vec1.z,
-                                         recip_vec2.x,
-                                         recip_vec2.y,
-                                         recip_vec2.z,
-                                         recip_vec3.x,
-                                         recip_vec3.y,
-                                         recip_vec3.z);
+        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
+                                         recip_vec2.x, recip_vec2.y, recip_vec2.z,
+                                         recip_vec3.x, recip_vec3.y, recip_vec3.z);
         // set the crystal point-group symmetry operation
         symm.setgroup(bsymop, bnop, recip_brav_type);
         // transform the above symmetric operation matrices between different coordinate

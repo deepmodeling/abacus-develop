@@ -21,7 +21,7 @@ void surchem::force_cor_one(const UnitCell& cell,
     // double Ael1 = 0;
     // ModuleBase::GlobalFunc::ZEROS(vg, ngmc);
     int iat = 0;
-
+    const int ig0 = rho_basis->ig_gge0; 
     for (int it = 0;it < cell.ntype;it++)
     {
         for (int ia = 0;ia < cell.atoms[it].na ; ia++)
@@ -31,17 +31,14 @@ void surchem::force_cor_one(const UnitCell& cell,
                 std::complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
                 //vloc for each atom
                 vloc_at[ig] = vloc(it, rho_basis->ig2igg[ig]) * phase;
-                if(rho_basis->ig_gge0 == ig)
+                if(ig==ig0)
                 {
                     N[ig] = cell.atoms[it].ncpp.zv / cell.omega;
+                    continue; // skip G=0
                 }
-                else
-                {
-                    const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /
-                               (cell.tpiba2 * rho_basis->gg[ig]);
-
-                    N[ig] = -vloc_at[ig] / fac;
-                }
+                const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /
+                            (cell.tpiba2 * rho_basis->gg[ig]);
+                N[ig] = -vloc_at[ig] / fac;
                 
                 //force for each atom
                 forcesol(iat, 0) += rho_basis->gcar[ig][0] * imag(conj(delta_phi_g[ig]) * N[ig]);

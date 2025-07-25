@@ -5,7 +5,7 @@
 #include "source_io/write_wfc_nao.h"
 
 #include "write_wfc_nao.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_io/filename.h"
 
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
@@ -30,7 +30,8 @@ bool ModuleIO::read_wfc_nao(
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int skip_band)
+    const int skip_band,
+    const int nstep)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
@@ -155,11 +156,14 @@ bool ModuleIO::read_wfc_nao(
         if (myrank == 0)
         {
             const bool out_app_flag = false;
-            const int istep = -1;
             std::stringstream error_message;
-
-            std::string ss = ModuleIO::filename_output(global_readin_dir,"wf","nao",
-                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,istep);
+            std::string readin_dir = global_readin_dir;
+            if(nstep >= 0)
+            {
+                readin_dir = readin_dir + "WFC/";
+            }
+            std::string ss = ModuleIO::filename_output(readin_dir,"wf","nao",
+                    ik,ik2iktot,nspin,nkstot,out_type,out_app_flag,gamma_only,nstep);
 
             read_success = read_one_file(ss, error_message, ik, ctot);
             errors = error_message.str();
@@ -207,6 +211,7 @@ template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_di
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
+    const int nstep,
     const int skip_band);
 
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
@@ -216,4 +221,5 @@ template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& gl
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
+    const int nstep,
 	const int skip_band);

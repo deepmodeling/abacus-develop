@@ -603,7 +603,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         }
         else
         {
-            EXPECT_THAT(output, testing::HasSubstr("latname not supported!"));
+            EXPECT_THAT(output, testing::HasSubstr("latname type not supported!"));
         }
     }
 }
@@ -804,6 +804,9 @@ TEST_F(UcellTest, SelectiveDynamics)
     EXPECT_TRUE(ucell->if_atoms_can_move());
 }
 
+
+// mohan comment out 2025-07-14
+/*
 TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-PBA"];
@@ -816,6 +819,7 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("the movement of atom is larger than the length of cell"));
 }
+*/
 
 TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
 {

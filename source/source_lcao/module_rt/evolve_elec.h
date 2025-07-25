@@ -7,7 +7,7 @@
 #include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/scalapack_connector.h"                   // Cpxgemr2d
+#include "source_base/module_external/scalapack_connector.h"                   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -143,7 +143,8 @@ class Evolve_elec
     friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
 
     // Template parameter is needed for the friend class declaration
-    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<Device>;
+    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<double, Device>;
+    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<std::complex<double>, Device>;
 
   public:
     Evolve_elec();

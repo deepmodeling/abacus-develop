@@ -77,6 +77,13 @@ void print_stress(const std::string& name,
 /// @param basisname basis set name
 void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname);
 
+/// @brief write head for scf iteration
+/// @param ofs_running output stream
+/// @param istep the ion step
+/// @param estep the electron step
+/// @param iter the scf iteration step
+/// @param basisname basis set name
+void write_head_td(std::ofstream& ofs_running, const int& istep, const int& estep, const int& iter, const std::string& basisname);
 } // namespace ModuleIO
 
 #endif

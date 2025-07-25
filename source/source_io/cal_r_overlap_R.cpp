@@ -5,6 +5,7 @@
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_pw/module_pwdft/global.h"
+#include "source_base/mathzone_add1.h"
 
 cal_r_overlap_R::cal_r_overlap_R()
 {
@@ -226,6 +227,238 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
     }
 }
 
+void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb)
+{
+    const InfoNonlocal& infoNL_ = ucell.infoNL;
+
+    int orb_r_ntype = 0;
+    int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
+    int count_Nr = 0;
+
+    orbs.resize(orb.get_ntype());
+    for (int T = 0; T < orb.get_ntype(); ++T)
+    {
+        count_Nr = orb.Phi[T].PhiLN(0, 0).getNr();
+        if (count_Nr > mat_Nr)
+        {
+            mat_Nr = count_Nr;
+            orb_r_ntype = T;
+        }
+
+        orbs[T].resize(orb.Phi[T].getLmax() + 1);
+        for (int L = 0; L <= orb.Phi[T].getLmax(); ++L)
+        {
+            orbs[T][L].resize(orb.Phi[T].getNchi(L));
+            for (int N = 0; N < orb.Phi[T].getNchi(L); ++N)
+            {
+                const auto& orb_origin = orb.Phi[T].PhiLN(L, N);
+                orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
+                                               orb_origin.getType(),
+                                               orb_origin.getL(),
+                                               orb_origin.getChi(),
+                                               orb_origin.getNr(),
+                                               orb_origin.getRab(),
+                                               orb_origin.getRadial(),
+                                               Numerical_Orbital_Lm::Psi_Type::Psi,
+                                               orb_origin.getPsi(),
+                                               static_cast<int>(orb_origin.getNk() * kmesh_times) | 1,
+                                               orb_origin.getDk(),
+                                               orb_origin.getDruniform(),
+                                               false,
+                                               true,
+                                               PARAM.inp.cal_force);
+            }
+        }
+    }
+
+    orb_r.set_orbital_info(orbs[orb_r_ntype][0][0].getLabel(),  // atom label
+                           orb_r_ntype,                         // atom type
+                           1,                                   // angular momentum L
+                           1,                                   // number of orbitals of this L , just N
+                           orbs[orb_r_ntype][0][0].getNr(),     // number of radial mesh
+                           orbs[orb_r_ntype][0][0].getRab(),    // the mesh interval in radial mesh
+                           orbs[orb_r_ntype][0][0].getRadial(), // radial mesh value(a.u.)
+                           Numerical_Orbital_Lm::Psi_Type::Psi,
+                           orbs[orb_r_ntype][0][0].getRadial(), // radial wave function
+                           orbs[orb_r_ntype][0][0].getNk(),
+                           orbs[orb_r_ntype][0][0].getDk(),
+                           orbs[orb_r_ntype][0][0].getDruniform(),
+                           false,
+                           true,
+                           PARAM.inp.cal_force);
+
+    orbs_nonlocal.resize(orb.get_ntype());
+    for (int T = 0; T < orb.get_ntype(); ++T)
+    {
+        const int nproj = infoNL_.nproj[T];
+        orbs_nonlocal[T].resize(nproj);
+        for (int ip = 0; ip < nproj; ip++)
+        {
+            int nr = infoNL_.Beta[T].Proj[ip].getNr();
+            double dr_uniform = 0.01;
+	        int nr_uniform = static_cast<int>((infoNL_.Beta[T].Proj[ip].getRadial(nr-1) - infoNL_.Beta[T].Proj[ip].getRadial(0))/dr_uniform) + 1;
+            double* rad = new double[nr_uniform];
+            double* rab = new double[nr_uniform];
+            for (int ir = 0; ir < nr_uniform; ir++)
+            {
+                rad[ir] = ir*dr_uniform;
+                rab[ir] = dr_uniform;
+            }
+            double* y2 = new double[nr];
+            double* Beta_r_uniform = new double[nr_uniform];
+            double* dbeta_uniform = new double[nr_uniform];
+            ModuleBase::Mathzone_Add1::SplineD2(infoNL_.Beta[T].Proj[ip].getRadial(), infoNL_.Beta[T].Proj[ip].getBeta_r(), nr, 0.0, 0.0, y2);
+            ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(
+                infoNL_.Beta[T].Proj[ip].getRadial(), 
+                infoNL_.Beta[T].Proj[ip].getBeta_r(), 
+                y2, 
+                nr, 
+                rad, 
+                nr_uniform, 
+                Beta_r_uniform, 
+                dbeta_uniform
+            );
+
+            // linear extrapolation at the zero point
+            if (infoNL_.Beta[T].Proj[ip].getRadial(0) > 1e-10)
+            {
+                double slope = (infoNL_.Beta[T].Proj[ip].getBeta_r(1) - infoNL_.Beta[T].Proj[ip].getBeta_r(0)) / (infoNL_.Beta[T].Proj[ip].getRadial(1) - infoNL_.Beta[T].Proj[ip].getRadial(0));
+                Beta_r_uniform[0] = infoNL_.Beta[T].Proj[ip].getBeta_r(0) - slope * infoNL_.Beta[T].Proj[ip].getRadial(0);
+            }
+
+            // Here, the operation beta_r / r is performed. To avoid divergence at r=0, beta_r(0) is set to beta_r(1). 
+            // However, this may introduce issues, so caution is needed.
+            for (int ir = 1; ir < nr_uniform; ir++)
+            {
+                Beta_r_uniform[ir] = Beta_r_uniform[ir] / rad[ir];
+            }
+            Beta_r_uniform[0] = Beta_r_uniform[1];
+
+            orbs_nonlocal[T][ip].set_orbital_info(infoNL_.Beta[T].getLabel(),
+                                                  infoNL_.Beta[T].getType(),
+                                                  infoNL_.Beta[T].Proj[ip].getL(),
+                                                  1,
+                                                  nr_uniform,
+                                                  rab,
+                                                  rad,
+                                                  Numerical_Orbital_Lm::Psi_Type::Psi,
+                                                  Beta_r_uniform,
+                                                  static_cast<int>(infoNL_.Beta[T].Proj[ip].getNk() * kmesh_times) | 1,
+                                                  infoNL_.Beta[T].Proj[ip].getDk(),
+                                                  infoNL_.Beta[T].Proj[ip].getDruniform(),
+                                                  false,
+                                                  true,
+                                                  PARAM.inp.cal_force);
+
+            delete [] rad;
+            delete [] rab;
+            delete [] y2;
+            delete [] Beta_r_uniform;
+            delete [] dbeta_uniform;
+        }
+    }
+
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
+    {
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
+        {
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
+            {
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
+                {
+                    for (int ip = 0; ip < infoNL_.nproj[TB]; ip++)
+                    {
+                        center2_orb11_nonlocal[TA][TB][LA][NA].insert(
+                            std::make_pair(ip, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs_nonlocal[TB][ip], psb_, MGT)));
+                    }
+                }
+            }
+        }
+    }
+
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
+    {
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
+        {
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
+            {
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
+                {
+                    for (int ip = 0; ip < infoNL_.nproj[TB]; ip++)
+                    {
+                        center2_orb21_r_nonlocal[TA][TB][LA][NA].insert(std::make_pair(
+                            ip,
+                            Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs_nonlocal[TB][ip], psb_, MGT)));
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto& co1: center2_orb11_nonlocal)
+    {
+        for (auto& co2: co1.second)
+        {
+            for (auto& co3: co2.second)
+            {
+                for (auto& co4: co3.second)
+                {
+                    for (auto& co5: co4.second)
+                    {
+                        co5.second.init_radial_table();
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto& co1: center2_orb21_r_nonlocal)
+    {
+        for (auto& co2: co1.second)
+        {
+            for (auto& co3: co2.second)
+            {
+                for (auto& co4: co3.second)
+                {
+                    for (auto& co5: co4.second)
+                    {
+                        co5.second.init_radial_table();
+                    }
+                }
+            }
+        }
+    }
+
+    iw2it.resize(PARAM.globalv.nlocal);
+    iw2ia.resize(PARAM.globalv.nlocal);
+    iw2iL.resize(PARAM.globalv.nlocal);
+    iw2iN.resize(PARAM.globalv.nlocal);
+    iw2im.resize(PARAM.globalv.nlocal);
+
+    int iw = 0;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            for (int iL = 0; iL < ucell.atoms[it].nwl + 1; iL++)
+            {
+                for (int iN = 0; iN < ucell.atoms[it].l_nchi[iL]; iN++)
+                {
+                    for (int im = 0; im < (2 * iL + 1); im++)
+                    {
+                        iw2it[iw] = it;
+                        iw2ia[iw] = ia;
+                        iw2iL[iw] = iL;
+                        iw2iN[iw] = iN;
+                        iw2im[iw] = im;
+                        iw++;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
@@ -238,6 +471,141 @@ void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, co
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     return;
 }
+
+void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+{
+    ModuleBase::TITLE("cal_r_overlap_R", "init_nonlocal");
+    ModuleBase::timer::tick("cal_r_overlap_R", "init_nonlocal");
+    this->ParaV = &pv;
+
+    initialize_orb_table(ucell,orb);
+    construct_orbs_and_nonlocal_and_orb_r(ucell,orb);
+
+    ModuleBase::timer::tick("cal_r_overlap_R", "init_nonlocal");
+    return;
+}
+
+ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_psi(const ModuleBase::Vector3<double>& R1,
+                                                           const int& T1,
+                                                           const int& L1,
+                                                           const int& m1,
+                                                           const int& N1,
+                                                           const ModuleBase::Vector3<double>& R2,
+                                                           const int& T2,
+                                                           const int& L2,
+                                                           const int& m2,
+                                                           const int& N2)
+{
+    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
+    double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
+    const ModuleBase::Vector3<double>& distance = R2 - R1;
+
+    double overlap_o = center2_orb11[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point, distance, m1, m2);
+
+    double overlap_x = -1 * factor
+                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
+                                                                                distance,
+                                                                                m1,
+                                                                                1,
+                                                                                m2); // m =  1
+
+    double overlap_y = -1 * factor
+                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
+                                                                                distance,
+                                                                                m1,
+                                                                                2,
+                                                                                m2); // m = -1
+
+    double overlap_z = factor
+                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
+                                                                                distance,
+                                                                                m1,
+                                                                                0,
+                                                                                m2); // m =  0
+
+    ModuleBase::Vector3<double> temp_prp
+        = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
+
+    return temp_prp;
+}
+
+void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
+                                     std::vector<std::vector<double>>& nlm,
+                                     const ModuleBase::Vector3<double>& R1,
+                                     const int& T1,
+                                     const int& L1,
+                                     const int& m1,
+                                     const int& N1,
+                                     const ModuleBase::Vector3<double>& R2,
+                                     const int& T2)
+{
+    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
+    double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
+    const ModuleBase::Vector3<double>& distance = R2 - R1;
+    const InfoNonlocal& infoNL_ = ucell.infoNL;
+    const int nproj = infoNL_.nproj[T2];
+    nlm.resize(4);
+    if (nproj == 0)
+    {
+        for(int i = 0;i < 4;i++)
+        {
+            nlm[i].resize(1);
+        }
+        return;
+    }
+
+    int natomwfc = 0;
+    for (int ip = 0; ip < nproj; ip++)
+    {
+        const int L2 = infoNL_.Beta[T2].Proj[ip].getL(); // mohan add 2021-05-07
+        natomwfc += 2 * L2 + 1;
+    }
+    for(int i = 0;i < 4;i++)
+    {
+        nlm[i].resize(natomwfc);
+    }
+    int index = 0;
+    for (int ip = 0; ip < nproj; ip++)
+    {
+        const int L2 = infoNL_.Beta[T2].Proj[ip].getL();
+        for (int m2 = 0; m2 < 2 * L2 + 1; m2++)
+        {
+            double overlap_o
+                = center2_orb11_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point, distance, m1, m2);
+
+            double overlap_x = -1 * factor
+                               * center2_orb21_r_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point,
+                                                                                             distance,
+                                                                                             m1,
+                                                                                             1,
+                                                                                             m2); // m =  1
+
+            double overlap_y = -1 * factor
+                               * center2_orb21_r_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point,
+                                                                                             distance,
+                                                                                             m1,
+                                                                                             2,
+                                                                                             m2); // m = -1
+
+            double overlap_z = factor
+                               * center2_orb21_r_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point,
+                                                                                             distance,
+                                                                                             m1,
+                                                                                             0,
+                                                                                             m2); // m =  0
+
+            //nlm[index] = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
+
+            //nlm[index] = ModuleBase::Vector3<double>(overlap_o, overlap_y, overlap_z);// + R1 * overlap_o;
+            nlm[0][index] = overlap_o;
+            nlm[1][index] = overlap_x + (R1 * overlap_o).x;
+            nlm[2][index] = overlap_y + (R1 * overlap_o).y;
+            nlm[3][index] = overlap_z + (R1 * overlap_o).z;
+            index++;
+        }
+    }
+}
+
 
 void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
 {
