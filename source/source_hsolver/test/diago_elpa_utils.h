@@ -176,7 +176,7 @@ void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
         b[i] = smatrix[i];
     }
 
-    LapackConnector::sygv(LapackConnector::ColMajor, itypr, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e, ev.data());
+    LapackConnector::hegv(LapackConnector::ColMajor, itype, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e);
 }
 
 void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, double *e, int &nFull)
@@ -194,7 +194,7 @@ void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, 
         b[i] = smatrix[i];
     }
 
-    LapackConnector::hegv(LapackConnector::ColMajor, itype, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e, ev.data());
+    LapackConnector::hegv(LapackConnector::ColMajor, itype, jobz, uplo, nFull, a.data(), nFull, b.data(), nFull, e);
 }
 
 } // namespace LCAO_DIAGO_TEST

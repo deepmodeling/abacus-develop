@@ -39,6 +39,7 @@ void lapackEigen(int& npw, std::vector<std::complex<double>>& hm, double* e, boo
 	clock_t start,end;
 	start = clock();
 	char tmp_c1 = 'V', tmp_c2 = 'U';
+	auto tmp = hm;
 	LapackConnector::heev(LapackConnector::ColMajor, tmp_c1, tmp_c2, npw, tmp.data(), npw, e);
 	end = clock();
 	if (outtime) { std::cout<<"Lapack Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;

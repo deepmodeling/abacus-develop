@@ -347,17 +347,18 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_cpu)
     int inc = 1;
     int row = 2;
     int col = 3;
-    zgemv_(&trans,
-           &row,
-           &col,
-           &ModuleBase::ONE,
+    BlasConnector::gemv_cm(
+           trans,
+           row,
+           col,
+           ModuleBase::ONE,
            A_gemv.data(),
-           &row,
+           row,
            X_gemv.data(),
-           &inc,
-           &ModuleBase::ONE,
+           inc,
+           ModuleBase::ONE,
            Y_test_gemv.data(),
-           &inc);
+           inc);
     for (int i = 0; i < Y_gemv.size(); i++)
     {
         EXPECT_LT(fabs(Y_gemv[i].imag() - Y_test_gemv[i].imag()), 1e-12);
@@ -607,17 +608,18 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     int inc = 1;
     int row = 2;
     int col = 3;
-    zgemv_(&trans,
-           &row,
-           &col,
-           &ModuleBase::ONE,
+    BlasConnector::gemv(
+           trans,
+           row,
+           col,
+           ModuleBase::ONE,
            A_gemv.data(),
-           &row,
+           row,
            X_gemv.data(),
-           &inc,
-           &ModuleBase::ONE,
+           inc,
+           ModuleBase::ONE,
            Y_test_gemv.data(),
-           &inc);
+           inc);
 
     for (int i = 0; i < Y_gemv.size(); i++)
     {

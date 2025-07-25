@@ -18,11 +18,6 @@ AddTest(
     ../../source_base/matrix3.cpp ../../source_base/intarray.cpp ../../source_base/tool_title.cpp
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
-    ../../source_base/module_external/blas_connector_base.cpp
-    ../../source_base/module_external/blas_connector_l1.cpp
-    ../../source_base/module_external/blas_connector_l2.cpp
-    ../../source_base/module_external/blas_connector_l3.cpp
-    ../../source_base/module_external/lapack_connector.cpp
     ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_io/output.cpp
     LIBS parameter ${math_libs} 
 )

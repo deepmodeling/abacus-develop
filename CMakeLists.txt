@@ -459,6 +459,14 @@ if(ENABLE_ASAN)
   target_link_libraries(${ABACUS_BIN_NAME} -fsanitize=address)
 endif()
 
+add_library(math_connector OBJECT 
+${ABACUS_SOURCE_DIR}/source_base/module_external/blas_connector_base.cpp
+${ABACUS_SOURCE_DIR}/source_base/module_external/blas_connector_l1.cpp
+${ABACUS_SOURCE_DIR}/source_base/module_external/blas_connector_l2.cpp
+${ABACUS_SOURCE_DIR}/source_base/module_external/blas_connector_l3.cpp
+${ABACUS_SOURCE_DIR}/source_base/module_external/lapack_connector.cpp
+)
+list(APPEND math_libs math_connector)
 if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
   set(MKLROOT "$ENV{MKLROOT}")
 endif()
@@ -479,7 +487,7 @@ else()
   find_package(FFTW3 REQUIRED)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs FFTW3::FFTW3 LAPACKE::LAPACKE LAPACK::LAPACK BLAS::BLAS)
+  list(APPEND math_libs FFTW3::FFTW3 LAPACKE::LAPACKE BLAS::BLAS)
   find_package(ScaLAPACK REQUIRED)
   list(APPEND math_libs ScaLAPACK::ScaLAPACK)
   if(USE_OPENMP)

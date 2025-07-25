@@ -40,11 +40,6 @@ AddTest(
     ../../../source_base/memory.cpp
     ../../../source_base/libm/branred.cpp
     ../../../source_base/libm/sincos.cpp
-    ../../../source_base/module_external/blas_connector_base.cpp
-    ../../../source_base/module_external/blas_connector_l1.cpp
-    ../../../source_base/module_external/blas_connector_l2.cpp
-    ../../../source_base/module_external/blas_connector_l3.cpp
-    ../../../source_base/module_external/lapack_connector.cpp
     ../../../source_basis/module_pw/module_fft/fft_bundle.cpp
     ../../../source_basis/module_pw/module_fft/fft_cpu.cpp
     ${FFT_SRC}
@@ -77,11 +72,6 @@ AddTest(
     ../xc_functional_vxc.cpp
     ../xc_functional_libxc_vxc.cpp
     ../xc_functional_libxc_tools.cpp
-    ../../../source_base/module_external/blas_connector_base.cpp
-    ../../../source_base/module_external/blas_connector_l1.cpp
-    ../../../source_base/module_external/blas_connector_l2.cpp
-    ../../../source_base/module_external/blas_connector_l3.cpp
-    ../../../source_base/module_external/lapack_connector.cpp
     ../../../source_base/matrix.cpp
     ../../../source_base/memory.cpp
     ../../../source_base/timer.cpp

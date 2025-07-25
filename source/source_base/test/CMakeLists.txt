@@ -86,7 +86,7 @@ AddTest(
 )
 AddTest(
   TARGET MODULE_BASE_math_sphbes
-  LIBS parameter 
+  LIBS parameter
   SOURCES math_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
 )
 AddTest(

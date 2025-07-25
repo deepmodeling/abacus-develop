@@ -7,11 +7,6 @@ list(APPEND depend_files
   ../../../source_base/math_ylmreal.cpp
   ../../../source_base/ylm.cpp
   ../../../source_base/memory.cpp
-  ../../../source_base/module_external/blas_connector_base.cpp
-  ../../../source_base/module_external/blas_connector_l1.cpp
-  ../../../source_base/module_external/blas_connector_l2.cpp
-  ../../../source_base/module_external/blas_connector_l3.cpp
-  ../../../source_base/module_external/lapack_connector.cpp
   ../../../source_base/complexarray.cpp
   ../../../source_base/complexmatrix.cpp
   ../../../source_base/matrix.cpp

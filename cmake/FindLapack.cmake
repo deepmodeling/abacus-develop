@@ -9,6 +9,12 @@ endif()
 find_package(Blas REQUIRED)
 find_package(LAPACK REQUIRED)
 
+find_path(LAPACKE_INCLUDE_DIR
+  NAMES lapacke.h
+  PATHS ${LAPACK_DIR} ${LAPACKE_DIR} ${CMAKE_PREFIX_PATH}
+  PATH_SUFFIXES include include/lapacke
+  DOC "Path to LAPACKE include directory"
+)
 # find LAPACKE libraries
 find_library(LAPACKE_LIBRARY
   NAMES lapacke
@@ -17,20 +23,10 @@ find_library(LAPACKE_LIBRARY
   DOC "Path to LAPACKE library"
 )
 
-if(NOT TARGET LAPACK::LAPACK)
-    add_library(LAPACK::LAPACK UNKNOWN IMPORTED)
-    set_target_properties(LAPACK::LAPACK PROPERTIES
-        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        IMPORTED_LOCATION "${LAPACK_LIBRARIES}")
-endif()
-
 if(NOT TARGET LAPACKE::LAPACKE)
   add_library(LAPACKE::LAPACKE UNKNOWN IMPORTED)
   set_target_properties(LAPACKE::LAPACKE PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${LAPACKE_INCLUDE_DIR}"
     IMPORTED_LINK_INTERFACE_LANGUAGES "C"
     IMPORTED_LOCATION "${LAPACKE_LIBRARY}")
-
-  set_target_properties(LAPACKE::LAPACKE PROPERTIES
-    INTERFACE_LINK_LIBRARIES "LAPACK::LAPACK"
-  )
 endif()
