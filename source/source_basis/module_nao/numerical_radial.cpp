@@ -274,7 +274,7 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
                                        const char mode,
                                        const bool enable_fft)
 {
-    double* grid = new double[ngrid];
+    double grid[ngrid];
     double dx = cutoff / (ngrid - 1);
     for (int i = 0; i != ngrid; ++i)
     {
@@ -282,7 +282,6 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
     }
 
     set_grid(for_r_space, ngrid, grid, mode);
-    delete[] grid;
 
     if (enable_fft)
     {
@@ -362,7 +361,7 @@ void NumericalRadial::radtab(const char op,
 
     double* rgrid_tab = new double[nr_tab];
     double dr = rmax_tab / (nr_tab - 1);
-    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (&r - rgrid_tab); });
+    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (int)(&r - rgrid_tab); });
 
     bool use_radrfft = is_fft_compliant(nr_tab, rgrid_tab, nk_, kgrid_);
 
