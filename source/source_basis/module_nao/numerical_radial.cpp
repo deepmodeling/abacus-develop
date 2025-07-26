@@ -274,14 +274,14 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
                                        const char mode,
                                        const bool enable_fft)
 {
-    double grid[ngrid];
+    std::vector<double> grid(ngrid);
     double dx = cutoff / (ngrid - 1);
     for (int i = 0; i != ngrid; ++i)
     {
         grid[i] = i * dx;
     }
 
-    set_grid(for_r_space, ngrid, grid, mode);
+    set_grid(for_r_space, ngrid, grid.data(), mode);
 
     if (enable_fft)
     {
