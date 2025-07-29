@@ -167,7 +167,9 @@ void psi_initializer_nao<T>::initialize(const Structure_Factor* sf,
 
     // allocate
     this->allocate_ao_table();
-    this->read_external_orbs(this->p_ucell_->orbital_fn.data(), rank);
+    std::string hn_tmp = this->p_ucell_->orbital_fn->data();
+    this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
+    //this->read_external_orbs(this->p_ucell_->orbital_fn->data(), rank);
 
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
