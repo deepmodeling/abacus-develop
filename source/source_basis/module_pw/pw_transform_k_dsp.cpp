@@ -91,7 +91,7 @@ void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
     }
 }
 template <>
-void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
+void PW_Basis_K::convolution_dsp(const base_device::DEVICE_CPU* ctx,
                              const int ik,
                              const int size,
                              const std::complex<float>* input,
@@ -103,7 +103,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
 }
 
 template <>
-void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
+void PW_Basis_K::convolution_dsp(const base_device::DEVICE_CPU* ctx,
                              const int ik,
                              const int size,
                              const std::complex<double>* input,

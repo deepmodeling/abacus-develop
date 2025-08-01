@@ -337,6 +337,79 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
         this->recip2real(in, out, ik, add, factor);
     #endif
 }
+template <>
+void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
+                             const int ik,
+                             const int size,
+                             const std::complex<float>* input,
+                             const float* input1,
+                             std::complex<float>* output,
+                             const bool add,
+                             const float factor) const
+{
+}
+
+template <>
+void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
+                             const int ik,
+                             const int size,
+                             const std::complex<double>* input,
+                             const double* input1,
+                             std::complex<double>* output,
+                             const bool add,
+                             const double factor) const
+{
+    ModuleBase::timer::tick(this->classname, "convolution");
+    assert(this->gamma_only == false);
+    // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxg_data<double>(), this->nst * this->nz);
+    // memset the auxr of 0 in the auxr,here the len of the auxr is nxyz
+    auto* auxg = this->fft_bundle.get_auxg_data<double>();
+    auto* auxr=this->fft_bundle.get_auxr_data<double>();
+
+     memset(auxg, 0, this->nst * this->nz * 2 * 8);
+    const int startig = ik * this->npwk_max;
+    const int npwk = this->npwk[ik];
+
+    // copy the mapping form the type of stick to the 3dfft
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(static, 4096 / sizeof(double))
+    #endif
+    for (int igl = 0; igl < npwk; ++igl)
+    {
+        auxg[this->igl2isz_k[igl + startig]] = input[igl];
+    }
+
+    // use 3d fft backward
+    this->fft_bundle.fftzbac(auxg, auxg);
+
+    this->gathers_scatterp(auxg, auxr);
+
+    this->fft_bundle.fftxybac(auxr, auxr);
+    for (int ir = 0; ir < size; ir++)
+    {
+        auxr[ir] *= input1[ir];
+    }
+
+    // 3d fft
+    this->fft_bundle.fftxyfor(auxr, auxr);
+
+    this->gatherp_scatters(auxr, auxg);
+
+    this->fft_bundle.fftzfor(auxg, auxg);
+    // copy the result from the auxr to the out ,while consider the add
+    if (add)
+    {
+        double tmpfac = factor / double(this->nxyz);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(double))
+#endif
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            output[igl] += tmpfac * auxg[this->igl2isz_k[igl + startig]];
+        }
+    }
+    ModuleBase::timer::tick(this->classname, "convolution");
+}
 
 #if (defined(__CUDA) || defined(__ROCM))
 template <>
