@@ -15,9 +15,25 @@ class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
 
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    void runner(UnitCell& ucell, const int istep) override;
+  protected:
+
+    void before_scf(UnitCell& ucell, const int istep) override;
+
+    void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+
+    //! Hamiltonian
+    hamilt::Hamilt<TK>* p_hamilt_base = nullptr;
+
+    //! Electronic wavefunctions
+    psi::Psi<TK>* psi_base = nullptr;
+
+    //! Electronic states
+    elecstate::ElecState* pelec_base = nullptr;
+
+    //! Electorn charge density
+    Charge chr_base;
 };
 } // namespace ModuleESolver
 #endif

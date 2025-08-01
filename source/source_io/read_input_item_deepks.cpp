@@ -22,6 +22,10 @@ void ReadInput::item_deepks()
             {
                 para.input.deepks_out_freq_elec = 0;
             }
+            if (para.input.deepks_out_freq_elec > 0 && para.input.deepks_out_base == "none")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_freq_elec, please set deepks_out_base ");
+            }            
         };
         this->add_item(item);
     }
@@ -30,7 +34,7 @@ void ReadInput::item_deepks()
         item.annotation = "base functional for output files, with dft_functional as target functional";
         read_sync_string(input.deepks_out_base);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.deepks_out_labels == 0)
+            if (para.input.deepks_out_base != "none" && para.input.deepks_out_labels == 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_base, please set deepks_out_labels > 0 ");
             }
