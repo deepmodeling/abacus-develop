@@ -71,6 +71,8 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK);
+    mtfunc::alp=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), GlobalV::MY_RANK);
+    mtfunc::bet=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), GlobalV::MY_RANK);
 #endif
 }
 

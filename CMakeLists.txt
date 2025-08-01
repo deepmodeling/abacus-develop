@@ -281,6 +281,7 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
 
 find_package(Threads REQUIRED)
 target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)

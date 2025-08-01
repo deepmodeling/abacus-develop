@@ -12,6 +12,8 @@ extern "C"
 }
 namespace mtfunc
 {
+std::complex<double>* alp=nullptr;
+std::complex<double>* bet=nullptr;
 void dspInitHandle(int id)
 {
     mt_blas_init(id);
@@ -271,9 +273,9 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
+    // std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *alp = *alpha;
-    std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
+    // std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *bet = *beta;
     mt_hthread_zgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),

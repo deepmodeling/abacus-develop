@@ -1,7 +1,7 @@
 #include "fft_dsp.h"
 
 #include "source_base/global_variable.h"
-
+#include "source_base/tool_quit.h"
 #include <iostream>
 #include <string.h>
 #include <vector>

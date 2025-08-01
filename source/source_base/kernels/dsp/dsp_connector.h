@@ -15,6 +15,8 @@ void* malloc_ht(size_t bytes, int cluster_id);
 void free_ht(void* ptr);
 
 // mtblas functions
+extern std::complex<double>* alp;
+extern std::complex<double>* bet;
 
 void sgemm_mt_(const char* transa,
                const char* transb,
