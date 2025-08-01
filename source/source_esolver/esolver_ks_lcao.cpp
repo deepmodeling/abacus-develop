@@ -505,6 +505,38 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
+       // Manually open and close the file, ensuring only the master process writes.
+       if (GlobalV::MY_RANK == 0)
+       {
+           // std::ofstream is used for writing files.
+           // std::ios::app ensures that content is appended to the end of the file.
+           std::ofstream output_file(PARAM.globalv.global_out_dir + "hks1k1_nao.txt", std::ios::app);
+           if (output_file.is_open())
+           {
+               output_file << "iter " << iter << " at iter_init beginning (after ESolver_KS)" << std::endl;
+               output_file.close(); // Manually close the file.
+           }
+           else
+           {
+               // Optional: Print a warning if the file could not be opened.
+               std::cout << "WARNING: Could not open hks1k1_nao.txt for writing." << std::endl;
+           }
+       }
+                // output h_base
+                ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
+                    PARAM.inp.nspin,
+                    this->kv.get_nks(), 
+                    this->kv.get_nkstot(), 
+                    this->kv.ik2iktot, 
+                    this->kv.isk,
+                    this->p_hamilt, 
+                    this->pv, 
+                    PARAM.globalv.gamma_only_local,
+                    true,
+                    istep,
+                    GlobalV::ofs_running); 
+    
+    
     if (iter == 1)
     {
         this->p_chgmix->mix_reset(); // init mixing
@@ -876,35 +908,84 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         GlobalC::dftu.initialed_locale = true;
     }
 
-    // 9) for deepks, output labels during electronic steps (after conv_esolver is renewed)
-#ifdef __MLALGO
-    if (PARAM.inp.deepks_out_labels >0 && PARAM.inp.deepks_out_freq_elec)
+    // Manually open and close the file, ensuring only the master process writes.
+    if (GlobalV::MY_RANK == 0)
     {
-        if (iter % PARAM.inp.deepks_out_freq_elec == 0 )
+        std::ofstream output_file(PARAM.globalv.global_out_dir + "hks1k1_nao.txt", std::ios::app);
+        if (output_file.is_open())
         {
-            hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
-            LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
-    
-            deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
-                                               this->kv.get_nks(),
-                                               ucell.nat,
-                                               PARAM.globalv.nlocal,
-                                               this->pelec->ekb,
-                                               this->kv.kvec_d,
-                                               ucell,
-                                               orb_,
-                                               this->gd,
-                                               &(this->pv),
-                                               *(this->psi),
-                                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                               p_ham_deepks,
-                                               iter,
-                                               conv_esolver,
-                                               GlobalV::MY_RANK,
-                                               GlobalV::ofs_running);
+            output_file << "iter " << iter << " after update_pot" << std::endl;
+            output_file.close(); // Manually close the file.
+        }
+        else
+        {
+            // Optional: Print a warning if the file could not be opened.
+            std::cout << "WARNING: Could not open hks1k1_nao.txt for writing." << std::endl;
         }
     }
+        // output h_base
+        ModuleIO::write_hsk(PARAM.globalv.global_out_dir,
+            PARAM.inp.nspin,
+            this->kv.get_nks(), 
+            this->kv.get_nkstot(), 
+            this->kv.ik2iktot, 
+            this->kv.isk,
+            this->p_hamilt, 
+            this->pv, 
+            PARAM.globalv.gamma_only_local,
+            true,
+            istep,
+            GlobalV::ofs_running);
+
+            // output the density for test
+            for (int is = 0; is < PARAM.inp.nspin; is++)
+            {
+                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
+                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + "_e"+std::to_string(iter)+".cube";
+                ModuleIO::write_vdata_palgrid(this->Pgrid,
+                                              this->chr.rho[is],
+                                              is,
+                                              PARAM.inp.nspin,
+                                              istep,
+                                              fn,
+                                              this->pelec->eferm.get_efval(is),
+                                              &(ucell),
+                                              10,
+                                              1);
+    
+                if (XC_Functional::get_ked_flag())
+                {
+                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1)  + "_e"+std::to_string(iter)+ ".cube";
+                    ModuleIO::write_vdata_palgrid(this->Pgrid,
+                                                  this->chr.kin_r[is],
+                                                  is,
+                                                  PARAM.inp.nspin,
+                                                  istep,
+                                                  fn,
+                                                  this->pelec->eferm.get_efval(is),
+                                                  &(ucell));
+                }
+            }
+#ifdef __EXX
+    //------------------------------------------------------------------
+    //! 13) Output Hexx matrix in LCAO basis
+    // (see `out_chg` in docs/advanced/input_files/input-main.md)
+    //------------------------------------------------------------------
+
+        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.calculation != "nscf") // Peize Lin add if 2022.11.14
+        {
+            const std::string file_name_exx = PARAM.globalv.global_out_dir
+                + "HexxR" + std::to_string(GlobalV::MY_RANK)+"_e"+std::to_string(iter);
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exd->get_Hexxs());
+            }
+            else
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exc->get_Hexxs());
+            }
+        }
+
 #endif
 }
 

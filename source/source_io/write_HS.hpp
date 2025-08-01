@@ -196,7 +196,7 @@ void ModuleIO::save_mat(const int istep,
 #ifdef __MPI
         if (drank == 0)
         {
-			if (app && istep > 0) 
+			if (app ) 
 			{
 				g.open(filename.c_str(), std::ofstream::app);
 			} 
