@@ -418,7 +418,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 
     if(this->device == base_device::GpuDevice)
     {
-        hamilt::cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>()(
+        hamilt::cal_force_loc_op<FPTYPE, Device>()(
             this->nat,
             rho_basis->npw,
             ucell.tpiba * ucell.omega,

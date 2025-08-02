@@ -164,6 +164,21 @@ struct cal_force_loc_op{
         FPTYPE* forcelc);
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_force_loc_op{
+    void operator()(
+        const int nat,
+        const int npw,
+        const FPTYPE tpiba_omega,
+        const int* iat2it,
+        const int* ig2igg,
+        const FPTYPE* gcar,
+        const FPTYPE* tau,
+        const std::complex<FPTYPE>* aux,
+        const FPTYPE* vloc,
+        const int vloc_nr,
+        FPTYPE* forcelc) {};
+};
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
