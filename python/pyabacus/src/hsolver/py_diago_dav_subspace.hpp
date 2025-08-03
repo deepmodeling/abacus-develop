@@ -161,6 +161,10 @@ private:
     int nband;
 
     std::unique_ptr<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>> obj;
+
+    base_device::DEVICE_CPU* ctx = {};
+    using syncmem_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 } // namespace py_hsolver
