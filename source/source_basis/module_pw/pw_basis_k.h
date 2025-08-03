@@ -135,18 +135,9 @@ public:
                     const int ik,
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
-    template <typename FPTYPE, typename Device>
-    void convolution(const Device* ctx,
-                      const int ik,
-                      const int size,
-                      const std::complex<FPTYPE>* input,
-                      const FPTYPE*               input1,
-                      std::complex<FPTYPE>*       output,
-                      const bool add = false,
-                      const FPTYPE factor =1.0) const ;
     #if defined(__DSP)
     template <typename FPTYPE, typename Device>
-    void convolution_dsp(const Device* ctx,
+    void convolution(const Device* ctx,
                       const int ik,
                       const int size,
                       const std::complex<FPTYPE>* input,

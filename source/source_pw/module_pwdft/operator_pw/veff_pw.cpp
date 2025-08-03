@@ -61,7 +61,7 @@ void Veff<OperatorPW<T, Device>>::act(
         ModulePW::FFT_Guard guard(wfcpw->fft_bundle);
         for (int ib = 0; ib < nbands; ib += npol)
         {
-            wfcpw->convolution_dsp(this->ctx,
+            wfcpw->convolution(this->ctx,
                                this->ik,
                                this->veff_col,
                                tmpsi_in,
@@ -96,19 +96,12 @@ void Veff<OperatorPW<T, Device>>::act(
     {
         for (int ib = 0; ib < nbands; ib += npol)
         {
-            wfcpw->convolution(this->ctx,
-                    this->ik,
-                    this->veff_col,
-                    tmpsi_in,
-                    this->veff + current_spin * this->veff_col,
-                    tmhpsi,
-                    true);
-            // wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
-            // // NOTICE: when MPI threads are larger than the number of Z grids
-            // // veff would contain nothing, and nothing should be done in real space
-            // // but the 3DFFT can not be skipped, it will cause hanging
-            // veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-            // wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            // NOTICE: when MPI threads are larger than the number of Z grids
+            // veff would contain nothing, and nothing should be done in real space
+            // but the 3DFFT can not be skipped, it will cause hanging
+            veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
+            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
