@@ -93,7 +93,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     }
 
     // (3) calculate the overlap in ik_L and ik_R
-    wfcpw->real2recip(psi_r, psi_r, ik_R);
+    wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psi_r, psi_r, ik_R);
 
     for (int ig = 0; ig < evc->get_ngk(ik_R); ig++)
     {
@@ -197,8 +197,8 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
 
     // (2) fft and get value
     rhopw->recip2real(phase, phase);
-    wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_up, ik_L);
-    wfcpw->recip2real(&evc[0](ik_L, iband_L, npwx), psi_down, ik_L);
+    wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&evc[0](ik_L, iband_L, 0), psi_up, ik_L);
+    wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&evc[0](ik_L, iband_L, npwx), psi_down, ik_L);
 
     for (int ir = 0; ir < wfcpw->nrxx; ir++)
     {
@@ -207,8 +207,8 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
     }
 
     // (3) calculate the overlap in ik_L and ik_R
-    wfcpw->real2recip(psi_up, psi_up, ik_L);
-    wfcpw->real2recip(psi_down, psi_down, ik_L);
+    wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psi_up, psi_up, ik_L);
+    wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psi_down, psi_down, ik_L);
 
     for (int i = 0; i < PARAM.globalv.npol; i++)
     {

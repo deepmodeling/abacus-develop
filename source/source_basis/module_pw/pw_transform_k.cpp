@@ -366,7 +366,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     auto* auxg = this->fft_bundle.get_auxg_data<double>();
     auto* auxr=this->fft_bundle.get_auxr_data<double>();
 
-     memset(auxg, 0, this->nst * this->nz * 2 * 8);
+    memset(auxg, 0, this->nst * this->nz * 2 * 8);
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
 
@@ -385,11 +385,14 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     this->gathers_scatterp(auxg, auxr);
 
     this->fft_bundle.fftxybac(auxr, auxr);
+
+    #ifdef _OPENMP
+    #pragma omp parallel for simd schedule(static) aligned(auxr, input1: 64)
+    #endif
     for (int ir = 0; ir < size; ir++)
     {
         auxr[ir] *= input1[ir];
     }
-
     // 3d fft
     this->fft_bundle.fftxyfor(auxr, auxr);
 
@@ -397,16 +400,13 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
 
     this->fft_bundle.fftzfor(auxg, auxg);
     // copy the result from the auxr to the out ,while consider the add
-    if (add)
-    {
-        double tmpfac = factor / double(this->nxyz);
+    double tmpfac = factor / double(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(double))
 #endif
-        for (int igl = 0; igl < npwk; ++igl)
-        {
-            output[igl] += tmpfac * auxg[this->igl2isz_k[igl + startig]];
-        }
+    for (int igl = 0; igl < npwk; ++igl)
+    {
+        output[igl] += tmpfac * auxg[this->igl2isz_k[igl + startig]];
     }
     ModuleBase::timer::tick(this->classname, "convolution");
 }

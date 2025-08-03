@@ -140,7 +140,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ib = 0; ib < nbands; ib++)
             {
-                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                pelec->basis->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi(ib, 0), wfcr.data(), ik);
 
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 double weight = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
@@ -210,7 +210,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
         for (int ib = 0; ib < nbands; ib++)
         {
-            pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            pelec->basis->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi(ib, 0), wfcr.data(), ik);
             const double weight = pelec->klist->wk[ik] / ucell.omega;
 
             for (int ir = 0; ir < pelec->basis->nrxx; ir++)
