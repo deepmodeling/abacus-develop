@@ -1,6 +1,6 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "source_psi/psi.h"
 

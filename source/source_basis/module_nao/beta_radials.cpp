@@ -1,6 +1,6 @@
 #include "source_basis/module_nao/beta_radials.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_quit.h"

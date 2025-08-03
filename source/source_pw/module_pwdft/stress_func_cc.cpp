@@ -1,6 +1,6 @@
 #include "stress_func.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/global.h"
@@ -61,7 +61,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
         // vtxc = std::get<1>(etxc_vtxc_v);
         vxc = std::get<2>(etxc_vtxc_v);
 #else
-        ModuleBase::WARNING_QUIT("cal_force_cc","to use mGGA, compile with LIBXC");
+        ModuleBase::WARNING_QUIT("stress_cc","to use mGGA, compile with LIBXC");
 #endif
 	}
 	else
@@ -108,7 +108,6 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	{
 		if(ucell.atoms[nt].ncpp.nlcc)
 		{
-			//drhoc();
 			this->deriv_drhoc(
 				numeric,
 				ucell.omega,
@@ -131,9 +130,11 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                 std::complex<double> local_sigmadiag;
                 if (rho_basis->ig_gge0 == ig) {
                     local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]];
-                } else {
-                    local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
-}
+                } 
+				else 
+				{
+					local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
+				}
                 sigmadiag += local_sigmadiag.real();
             }
 			this->deriv_drhoc (
@@ -148,6 +149,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 				rho_basis,
 				0);
 			// non diagonal term (g=0 contribution missing)
+			const int ig0 = rho_basis->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel
 {
@@ -158,17 +160,18 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 #endif
 			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
-				const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
-				if(norm_g < 1e-4) { 	continue;
-}
+				if (ig == ig0) 
+				{
+					continue; // skip G=0
+				}
 				for (int l = 0; l < 3; l++)
 				{
 					for (int m = 0;m< 3;m++)
 					{
+						const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
                         const std::complex<FPTYPE> t
                             = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]]
                               * ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
-                        //						sigmacc [l][ m] += t.real();
                         local_sigma(l,m) += t.real();
 					}//end m
 				}//end l

@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include <unistd.h>
 #include <cstdio>
@@ -292,7 +292,7 @@ TEST(PrintStress, PrintStress)
     std::string output_str;
     getline(ifs, output_str);
     getline(ifs, output_str); // mohan add 2025-06-22
-    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-STRESS (KBAR)#"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-STRESS (kbar)#"));
 
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
@@ -316,7 +316,7 @@ TEST(PrintStress, PrintStress)
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
 
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): 49035.075992 KBAR"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" #TOTAL-PRESSURE# (EXCLUDE KINETIC PART OF IONS): 49035.075992 kbar"));
     ifs.close();
     std::remove("running_stress.txt");
 }

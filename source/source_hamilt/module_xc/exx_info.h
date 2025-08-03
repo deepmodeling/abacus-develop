@@ -18,14 +18,14 @@ struct Exx_Info
 
 		// Fock:
 		//		"alpha":		"0"
-		//		"Rcut_type":	"limits" / "spencer"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
 		//		"lambda":		"0.3"
-		//		//"Rcut"
+        //      "Rcut"
 		// Erfc:
 		//		"alpha":		"0"
 		//		"omega":		"0.11"
-		//		"Rcut_type":	"limits"
-		//		//"Rcut"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
+        //      "Rcut"
 
         Conv_Coulomb_Pot_K::Ccp_Type ccp_type;
         double hybrid_alpha = 0.25;
@@ -51,10 +51,7 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
-        std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-            std::pair<bool, 
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
-                    std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
+        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
 
         bool real_number = false;
 
@@ -72,10 +69,24 @@ struct Exx_Info
         double kmesh_times = 4;
 
         int abfs_Lmax = 0; // tmp
+
+        Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
+            : coulomb_param(info_global.coulomb_param)
+        {
+        }
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global)
+    struct Exx_Info_Opt_ABFs
+    {
+        int abfs_Lmax = 0; // tmp
+        double ecut_exx = 60;
+        double tolerence = 1E-2;
+        double kmesh_times = 4;
+    };
+    Exx_Info_Opt_ABFs info_opt_abfs;
+
+    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
     {
     }
 };

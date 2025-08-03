@@ -1,7 +1,7 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"
@@ -10,7 +10,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
+#include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_velocity.h"

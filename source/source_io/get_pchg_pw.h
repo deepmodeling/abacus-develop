@@ -12,7 +12,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nxyz,
                  const int chr_ngmc,
                  UnitCell* ucell,
-                 const psi::Psi<std::complex<double>>* psi,
+                 const psi::Psi<std::complex<double>, Device>* kspw_psi,
                  const ModulePW::PW_Basis* pw_rhod,
                  const ModulePW::PW_Basis_K* pw_wfc,
                  const Device* ctx,
@@ -67,8 +67,16 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
             bands_picked[i] = static_cast<int>(out_pchg[i]);
         }
 
+        // Allocate host memory
         std::vector<std::complex<double>> wfcr(nxyz);
         std::vector<std::vector<double>> rho_band(nspin, std::vector<double>(nxyz));
+
+        // Allocate device memory
+        std::complex<double>* wfcr_device = nullptr;
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_device, nxyz);
+        }
 
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -91,8 +99,21 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     const int spin_index = kv.isk[ik];                  // spin index
                     const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
 
-                    psi->fix_k(ik);
-                    pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr.data(), ik);
+                    kspw_psi->fix_k(ik);
+
+                    // FFT on device and copy result back to host
+                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+                    {
+                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
+                    }
+                    else
+                    {
+                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
+
+                        base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                                   base_device::DEVICE_CPU,
+                                                                   Device>()(wfcr.data(), wfcr_device, nxyz);
+                    }
 
                     // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
                     double wg_sum_k = 0.0;
@@ -142,8 +163,21 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     const int spin_index = kv.isk[ik];                  // spin index
                     const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
 
-                    psi->fix_k(ik);
-                    pw_wfc->recip_to_real(ctx, &psi[0](ib, 0), wfcr.data(), ik);
+                    kspw_psi->fix_k(ik);
+
+                    // FFT on device and copy result back to host
+                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+                    {
+                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
+                    }
+                    else
+                    {
+                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
+
+                        base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                                   base_device::DEVICE_CPU,
+                                                                   Device>()(wfcr.data(), wfcr_device, nxyz);
+                    }
 
                     double w1 = static_cast<double>(kv.wk[ik] / ucell->omega);
 

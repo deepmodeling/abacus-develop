@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../global_file.h"
 #include "../global_variable.h"
@@ -33,7 +33,7 @@ TEST_F(GlobalFile,mkdirout)
 {
 	    std::string output;
 	    testing::internal::CaptureStdout();
-	    ModuleBase::Global_File::make_dir_out("Si","m",false,0,true,true);
+	    ModuleBase::Global_File::make_dir_out("Si","m",false,false,0,true,true);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE DIR"));
 	    GlobalV::ofs_warning.close();
@@ -43,7 +43,7 @@ TEST_F(GlobalFile,mkdirout)
         remove(dd.c_str());
 
 	    testing::internal::CaptureStdout();
-	    ModuleBase::Global_File::make_dir_out("Si","md",false,0,true,false);
+	    ModuleBase::Global_File::make_dir_out("Si","md",false,false,0,true,false);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE STRU DIR"));
 	    EXPECT_TRUE(GlobalV::ofs_running.is_open());
@@ -53,7 +53,7 @@ TEST_F(GlobalFile,mkdirout)
         remove(bb.c_str());
 
 	    testing::internal::CaptureStdout();
-	    ModuleBase::Global_File::make_dir_out("Si","md",true,0,true,true);
+	    ModuleBase::Global_File::make_dir_out("Si","md",true,false,0,true,true);
 	    output = testing::internal::GetCapturedStdout();
 	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE MATRIX DIR"));
 	    EXPECT_TRUE(GlobalV::ofs_running.is_open());

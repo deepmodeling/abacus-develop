@@ -9,9 +9,22 @@ void ReadInput::item_rt_tddft()
 { 
     // real time TDDFT
     {
-        Input_Item item("td_force_dt");
-        item.annotation = "time of force change";
-        read_sync_double(input.td_force_dt);
+        Input_Item item("td_dt");
+        item.annotation = "time step for evolving wavefunction";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.td_dt == -1.0)
+            {
+                GlobalV::ofs_running << "td_dt don't exist, set td_dt with md_dt" << std::endl;
+                para.input.td_dt = para.input.mdp.md_dt / para.input.estep_per_md;
+            }
+        };
+        read_sync_double(input.td_dt); 
+        this->add_item(item);
+    }
+    {
+        Input_Item item("estep_per_md");
+        item.annotation = "steps of force change";
+        read_sync_int(input.estep_per_md);
         this->add_item(item);
     }
     {

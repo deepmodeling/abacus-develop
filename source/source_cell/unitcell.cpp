@@ -6,13 +6,13 @@
 #include "source_base/global_variable.h"
 #include "unitcell.h"
 #include "bcast_cell.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/read_stru.h"
 #include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
 #include "source_base/parallel_common.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "mpi.h"

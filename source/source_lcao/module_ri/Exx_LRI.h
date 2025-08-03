@@ -90,6 +90,7 @@ private:
 	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
+	ORB_gaunt_table MGT;
 	std::vector<double> orb_cutoff_;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
@@ -98,6 +99,10 @@ private:
 	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
 	//LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
+        std::pair<bool, 
+            std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+                std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
 	double post_process_Eexx(const double& Eexx_in) const;

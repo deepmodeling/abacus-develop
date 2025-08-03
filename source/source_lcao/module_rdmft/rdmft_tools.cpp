@@ -180,6 +180,9 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     } else if ( symbol==4 ) { return alpha*std::pow(eta, alpha-1.0);
     } else if ( symbol==5 ) { return 1.0;
     }
+
+    // default symbol = 0
+    return eta;
     
 }
 

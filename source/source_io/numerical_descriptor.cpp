@@ -1,10 +1,9 @@
 #include "numerical_descriptor.h"
 #include "source_pw/module_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "winput.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/lapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 

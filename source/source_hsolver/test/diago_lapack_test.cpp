@@ -1,7 +1,7 @@
 // Author: Zhang Xiaoyang
 // A modified version of diago_lcao_test.cpp
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 // Remove some useless functions and dependencies. Serialized the full code
 // and refactored some function.
@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "source_hsolver/diago_lapack.h"
-#include "source_base/lapack_connector.h"
 
 #define PASSTHRESHOLD 1e-5
 #define DETAILINFO false

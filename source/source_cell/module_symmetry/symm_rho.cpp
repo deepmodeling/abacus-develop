@@ -2,7 +2,7 @@
 using namespace ModuleSymmetry;
 
 #include "source_base/libm/libm.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
@@ -285,7 +285,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 				//assert(rot_count<=nrotk);
 			}//end if section
 		}//end c_index loop
-		sum /= rot_count;
+		if (rot_count!=0) sum/= rot_count;
 		for (int isym = 0; isym < rot_count; ++isym)
 		{
 			rhogtot[ipw_record[isym]] = sum/gphase_record[isym];

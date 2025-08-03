@@ -1,7 +1,7 @@
 #include "spin_constrain.h"
 
 #include "source_base/formatter.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
 
 #include <cmath>
 

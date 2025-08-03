@@ -1,14 +1,14 @@
 #include "source_io/io_dmk.h"
 
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
 #include "prepare_unitcell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 #ifdef __MPI
 #include "mpi.h"

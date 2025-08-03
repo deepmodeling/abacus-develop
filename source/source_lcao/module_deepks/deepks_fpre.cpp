@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>

@@ -1,6 +1,6 @@
 #include "H_Hartree_pw.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
@@ -44,18 +44,20 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     double ehart = 0.0;
 
     std::vector<std::complex<double>> vh_g(rho_basis->npw);
+    const int ig0 = rho_basis->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:ehart)
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        if (rho_basis->gg[ig] >= 1.0e-8) // LiuXh 20180410
+        if (ig == ig0) 
         {
-            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (cell.tpiba2 * rho_basis->gg[ig]);
-
-            ehart += (conj(Porter[ig]) * Porter[ig]).real() * fac;
-            vh_g[ig] = fac * Porter[ig];
+            continue; // skip G=0
         }
+        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (cell.tpiba2 * rho_basis->gg[ig]);
+        ehart += (conj(Porter[ig]) * Porter[ig]).real() * fac;
+        vh_g[ig] = fac * Porter[ig];
+        
     }
 
     Parallel_Reduce::reduce_pool(ehart);

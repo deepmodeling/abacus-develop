@@ -6,7 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/test/prepare_unitcell.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #undef private
 /************************************************

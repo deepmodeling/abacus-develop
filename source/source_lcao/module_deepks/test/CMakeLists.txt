@@ -34,9 +34,12 @@ add_executable(
     ../../../source_lcao/module_hcontainer/func_folding.cpp
     ../../../source_lcao/module_hcontainer/transfer.cpp
     ../../../source_lcao/module_hcontainer/output_hcontainer.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/deepks_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
+    ../../../source_lcao/module_rt/td_info.cpp
+    ../../../source_lcao/module_rt/td_folding.cpp
+    ../../../source_estate/module_pot/H_TDDFT_pw.cpp
 )
 
 target_link_libraries(

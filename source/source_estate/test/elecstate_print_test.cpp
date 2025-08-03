@@ -9,7 +9,7 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_print.h"
 #undef private 
 /***************************************************************
@@ -184,7 +184,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation = 0.1"));
+    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
     EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
     EXPECT_THAT(str, testing::HasSubstr("E_vdwD2"));
@@ -197,49 +197,6 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     delete elecstate.charge;
     std::remove("test.dat");
 }
-
-/*
-TEST_F(ElecStatePrintTest, PrintEtot2)
-{
-    GlobalV::ofs_running.open("test.dat", std::ios::out);
-    bool converged = false;
-    int iter = 1;
-    double scf_thr = 0.1;
-    double scf_thr_kin = 0.0;
-    double duration = 2.0;
-    double pw_diag_thr = 0.1;
-    int avg_iter = 2;
-    bool print = true;
-    PARAM.input.out_freq_elec = 0;
-    elecstate.charge = new Charge;
-    elecstate.charge->nrxx = 100;
-    elecstate.charge->nxyz = 1000;
-    PARAM.input.imp_sol = true;
-    PARAM.input.efield_flag = true;
-    PARAM.input.gate_flag = true;
-    PARAM.sys.two_fermi = false;
-    PARAM.input.out_bandgap = true;
-    GlobalV::MY_RANK = 0;
-    PARAM.input.basis_type = "pw";
-    PARAM.input.scf_nmax = 100;
-
-    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, scf_thr_kin, duration, 
-    pw_diag_thr, avg_iter, print);
-
-    GlobalV::ofs_running.close();
-    ifs.open("test.dat", std::ios::in);
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("Electron density deviation = 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("Diago Threshold = 0.1"));
-    EXPECT_THAT(str, testing::HasSubstr("E_KohnSham"));
-    EXPECT_THAT(str, testing::HasSubstr("E_Harris"));
-    EXPECT_THAT(str, testing::HasSubstr("E_Fermi"));
-    EXPECT_THAT(str, testing::HasSubstr("E_bandgap"));
-    ifs.close();
-    delete elecstate.charge;
-    std::remove("test.dat");
-}
-*/
 
 TEST_F(ElecStatePrintTest, PrintEtotColorS2)
 {

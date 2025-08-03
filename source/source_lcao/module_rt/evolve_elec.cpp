@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/global.h"
 
@@ -83,8 +83,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                            propagator,
                            ofs_running,
                            print_matrix);
-                // std::cout << "Print ekb: " << std::endl;
-                // ekb.print(std::cout);
+                // GlobalV::ofs_running << "Print ekb: " << std::endl;
+                // ekb.print(GlobalV::ofs_running);
             }
             else
             {
@@ -118,7 +118,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 #ifdef __MPI
                     // Access the rank of the calling process in the communicator
                     int myid = 0;
-                    int root_proc = 0;
+                    const int root_proc = 0;
                     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
                     // Gather psi to the root process
@@ -203,8 +203,16 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                          len_HS_laststep);
                 syncmem_double_d2h_op()(&(ekb(ik, 0)), ekb_tensor.data<double>(), nband);
 
-                // std::cout << "Print ekb tensor: " << std::endl;
-                // ekb.print(std::cout);
+#ifdef __MPI
+                const int root_proc = 0;
+                if (use_lapack)
+                {
+                    // Synchronize ekb to all MPI processes
+                    MPI_Bcast(&(ekb(ik, 0)), nband, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
+                }
+#endif
+                // GlobalV::ofs_running << "Print ekb: " << std::endl;
+                // ekb.print(GlobalV::ofs_running);
             }
         }
         else

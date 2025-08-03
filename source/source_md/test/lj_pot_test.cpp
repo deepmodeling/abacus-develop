@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/md_func.h"
 #include "setcell.h"

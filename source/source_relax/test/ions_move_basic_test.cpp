@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_relax/ions_move_basic.h"
 #include "for_test.h"
@@ -133,9 +133,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
           "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
-          " Largest gradient in force is 0 eV/A.\n Threshold is -1 eV/A.\n largest force is 0, no "
+          " Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n largest force is 0, no "
           "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
-    std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/A)  : 0\n";
+    std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 0\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
@@ -172,9 +172,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
           "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest gradient in force is 2.57111 eV/A.\n Threshold is -1 eV/A.\n\n Ion relaxation is "
+          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is "
           "converged!\n\n Energy difference (Ry) = 0\n";
-    std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/A)  : 2.57111\n";
+    std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
@@ -211,9 +211,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
           "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest gradient in force is 2.57111 eV/A.\n Threshold is -1 eV/A.\n\n Ion relaxation is not "
+          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is not "
           "converged yet (threshold is 25.7111)\n";
-    std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/A)  : 2.57111\n";
+    std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);

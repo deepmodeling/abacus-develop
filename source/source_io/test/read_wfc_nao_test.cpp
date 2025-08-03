@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_io/read_wfc_nao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -105,6 +105,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     PARAM.sys.global_readin_dir = "./support/";
     const int nks = 1;
     const int nspin = 1;
+    const int nstep = -1;
     int my_rank = 0;
 
     Parallel_Orbitals ParaV;
@@ -130,7 +131,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 
 	// Act
 	ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			&(pelec), ik2iktot, nkstot, nspin, skip_band);
+			&(pelec), ik2iktot, nkstot, nspin, skip_band, nstep);
 
     // Assert
     EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);

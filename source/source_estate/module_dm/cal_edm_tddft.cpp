@@ -1,10 +1,9 @@
 #include "cal_edm_tddft.h"
 
-#include "source_base/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 namespace elecstate
 {
-
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void cal_edm_tddft(Parallel_Orbitals& pv,
                    elecstate::ElecState* pelec,
@@ -254,5 +253,5 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 #endif
     }
     return;
-}
-} // namespace ModuleESolver
+} // cal_edm_tddft
+} // namespace elecstate

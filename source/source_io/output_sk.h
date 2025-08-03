@@ -2,7 +2,7 @@
 #define OUTPUT_SK_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 namespace ModuleIO
 {

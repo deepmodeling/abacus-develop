@@ -1,10 +1,10 @@
 #include "gint_common.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 #include <mpi.h>
 #endif
 
@@ -150,7 +150,7 @@ void transfer_dm_2d_to_gint(
     if (PARAM.inp.nspin != 4)
     {
         // dm_gint.size() usually equals to PARAM.inp.nspin,
-        // but there is exception within module_lr
+        // but there is exception within source_lcao/module_lr
         for (int is = 0; is < dm_gint.size(); is++)
         {
 #ifdef __MPI

@@ -1,13 +1,11 @@
 #include "diago_elpa_native.h"
 
-#include "source_base/blacs_connector.h"
+#include "source_base/module_external/blacs_connector.h"
 #include "source_base/global_variable.h"
-#include "module_parameter/parameter.h"
-#include "source_base/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_hsolver/genelpa/elpa_new.h"
+#include "source_hsolver/module_genelpa/elpa_new.h"
 #include "omp.h"
 
 namespace hsolver

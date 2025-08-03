@@ -153,7 +153,7 @@ AddTest(
   ../../source_cell/atom_spec.cpp
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
-  ../../source_lcao/hamilt_lcaodft/center2_orb.cpp
+  ../../source_lcao/center2_orb.cpp
   ../orb_io.cpp
 )
 endif()
@@ -186,7 +186,7 @@ AddTest(
   LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb 
   SOURCES numerical_basis_test.cpp 
           ../numerical_basis_jyjy.cpp 
-          ../../source_lcao/hamilt_lcaodft/center2_orb.cpp
+          ../../source_lcao/center2_orb.cpp
           ../orb_io.cpp
 )
 

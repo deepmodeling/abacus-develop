@@ -31,7 +31,7 @@
 #include "source_io/to_wannier90_pw.h"
 #include "source_io/winput.h"
 #include "source_io/write_elecstat_pot.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -93,9 +93,9 @@ namespace ModuleESolver
                                           this->kv.ngk,
                                           true);
 #ifdef __EXX
-        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
-            || PARAM.inp.calculation == "cell-relax"
-            || PARAM.inp.calculation == "md") {
+        if (inp.calculation == "scf" || inp.calculation == "relax"
+            || inp.calculation == "cell-relax"
+            || inp.calculation == "md") {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(ucell);

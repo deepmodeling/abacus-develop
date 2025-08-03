@@ -8,8 +8,8 @@ Results will output to OUT/math_info.log, see ModuleBase::Global_File::make_dir_
 
 #include <ostream>
 #undef GATHER_INFO
-#include "source_base/blas_connector.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 
 #include <iostream>
 

@@ -2,7 +2,7 @@
 
 #ifdef __MPI
 #include "diago_scalapack.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #else
 #include "diago_lapack.h"
 #endif
@@ -32,7 +32,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace hsolver
 {

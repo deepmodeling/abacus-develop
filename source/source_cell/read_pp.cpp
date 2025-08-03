@@ -1,6 +1,6 @@
 #include "read_pp.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include <cmath>
 
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
@@ -399,22 +399,15 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
 void Pseudopot_upf::set_empty_element(Atom_pseudo& pp)
 {
 	pp.zv = 0;
-	for(int ir=0; ir<pp.mesh; ++ir)
-	{
-		pp.vloc_at[ir] = 0;
-	}
-	for(int i=0; i<pp.nbeta; ++i)
-	{
-		for(int j=0; j<pp.nbeta; ++j)
-		{
-			pp.dion(i,j) = 0;
-		}
-	}
-	for(int ir=0; ir<pp.mesh; ++ir)
-	{
-		pp.rho_at[ir] = 0;
-	}
-	return;
+	for(double &value : pp.vloc_at)
+		{ value = 0; }
+	for(double &value : pp.rho_atc)
+		{ value = 0; }
+	for(double &value : pp.rho_at)
+		{ value = 0; }
+	pp.chi.zero_out();
+	pp.dion.zero_out();
+	pp.betar.zero_out();
 }
 
 /**

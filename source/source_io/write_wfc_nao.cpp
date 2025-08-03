@@ -1,11 +1,11 @@
 #include "write_wfc_nao.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_2d.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"
 #include "binstream.h"
@@ -269,7 +269,16 @@ void write_wfc_nao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = filename_output(PARAM.globalv.global_out_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
+            std::string wfc_dir;
+            if(out_app_flag)
+            {
+                wfc_dir = PARAM.globalv.global_out_dir;
+            }
+            else
+            {
+                wfc_dir = PARAM.globalv.global_wfc_dir;
+            }
+            std::string fn = filename_output(wfc_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
               out_type,out_app_flag,gamma_only,istep);
 
             bool append_flag = (istep > 0 && out_app_flag);

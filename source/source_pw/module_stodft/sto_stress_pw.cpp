@@ -6,7 +6,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_io/output_log.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,

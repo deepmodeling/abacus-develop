@@ -5,7 +5,7 @@
 #include "../general_info.h"
 #include "../init_info.h"
 #include "../readin_info.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/para_json.h"
 #include "source_main/version.h"
 #undef private

@@ -1,6 +1,6 @@
 #include "psi_initializer_atomic_random.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_initializer_atomic_random<T>::initialize(const Structure_Factor* sf,         //< structure factor

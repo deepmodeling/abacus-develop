@@ -7,13 +7,12 @@
 #include "source_pw/module_pwdft/onsite_projector.h"
 
 #include "source_base/projgen.h"
-#include "source_base/blas_connector.h"
 #include "source_base/kernels/math_kernel_op.h"
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_common.h"
 #endif
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/formatter.h"
 

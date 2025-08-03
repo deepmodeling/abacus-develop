@@ -5,7 +5,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
 #include "source_cell/parallel_kpoints.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_initializer_random<T>::initialize(const Structure_Factor* sf,

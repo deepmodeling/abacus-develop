@@ -7,9 +7,9 @@ list(APPEND depend_files
   ../../../source_base/math_ylmreal.cpp
   ../../../source_base/ylm.cpp
   ../../../source_base/memory.cpp
-  ../../../source_base/blas_connector_base.cpp
-  ../../../source_base/blas_connector_vector.cpp
-  ../../../source_base/blas_connector_matrix.cpp
+  ../../../source_base/module_external/blas_connector_base.cpp
+  ../../../source_base/module_external/blas_connector_vector.cpp
+  ../../../source_base/module_external/blas_connector_matrix.cpp
   ../../../source_base/complexarray.cpp
   ../../../source_base/complexmatrix.cpp
   ../../../source_base/matrix.cpp
@@ -37,8 +37,8 @@ list(APPEND depend_files
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
   ../parallel_orbitals.cpp
-  ../../../source_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
-  ../../../source_lcao/hamilt_lcaodft/center2_orb.cpp
+  ../../../source_lcao/center2_orb-orb11.cpp
+  ../../../source_lcao/center2_orb.cpp
   )
 
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)

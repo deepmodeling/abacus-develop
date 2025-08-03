@@ -1,7 +1,7 @@
 #include "source_io/read_input.h"
 
 #include "source_base/tool_quit.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -33,6 +33,7 @@ namespace Global_File
 void make_dir_out(const std::string& suffix,
                   const std::string& calculation,
                   const bool& out_dir,
+                  const bool& out_wfc_dir,
                   const int rank,
                   const bool& restart,
                   const bool out_alllog)

@@ -1,6 +1,6 @@
 #include "source_base/parallel_global.h"
 #ifdef __PEXSI
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "pexsi_solver.h"
 
 #include <mpi.h>

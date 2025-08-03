@@ -1,6 +1,6 @@
 #include "H_Hartree_pw.h"
 #include "efield.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "gatefield.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

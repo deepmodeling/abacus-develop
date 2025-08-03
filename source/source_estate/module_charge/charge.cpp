@@ -29,7 +29,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/magnetism.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <vector>
 
@@ -279,8 +279,11 @@ void Charge::atomic_rho(const int spin_number_need,
                                 for (int ir = 0; ir < mesh; ++ir)
                                 {
                                     double r2 = atom->ncpp.r[ir] * atom->ncpp.r[ir];
-                                    rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
-                                }
+                                    if (r2!=0)
+                                    {
+                                     rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
+                                    }
+                                 }
                                 rhoatm[0]
                                     = pow((rhoatm[2] / rhoatm[1]), atom->ncpp.r[1] / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add, sunliang updated 2024-03-04
                                 if (rhoatm[0] < 1e-12)

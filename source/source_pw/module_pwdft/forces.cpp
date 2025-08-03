@@ -1,6 +1,6 @@
 #include "forces.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/output_log.h"
 // new
@@ -472,14 +472,18 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         upperbound = 2.0 * charge * charge * sqrt(2.0 * alpha / ModuleBase::TWO_PI)
                      * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
-
+    const int ig0 = rho_basis->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
+        if (ig== ig0)
+        {
+            continue; // skip G=0
+        }
         aux[ig] *= ModuleBase::libm::exp(-1.0 * rho_basis->gg[ig] * ucell.tpiba2 / alpha / 4.0)
-                   / (rho_basis->gg[ig] * ucell.tpiba2);
+                / (rho_basis->gg[ig] * ucell.tpiba2);
     }
 
     // set pos rho_basis->ig_gge0 to zero

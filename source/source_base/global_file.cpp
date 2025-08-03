@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <sstream>
 #include "global_function.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
@@ -25,6 +25,7 @@ void ModuleBase::Global_File::make_dir_out(
     const std::string &suffix,
 	const std::string &calculation,
     const bool &out_dir,
+    const bool &out_wfc_dir,
     const int rank,
     const bool &restart,
     const bool out_alllog)
@@ -147,6 +148,45 @@ void ModuleBase::Global_File::make_dir_out(
         if(make_dir_matrix==0)
         {
             std::cout << " CAN NOT MAKE THE MATRIX DIR......." << std::endl;
+            ModuleBase::QUIT();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+
+    if(out_wfc_dir)
+    {
+        int make_dir_wfc = 0;
+        std::string command1 =  "test -d " + PARAM.globalv.global_wfc_dir + " || mkdir " + PARAM.globalv.global_wfc_dir;
+
+        times = 0;
+        while(times<GlobalV::NPROC)
+        {
+            if(rank==times)
+            {
+                if ( system( command1.c_str() ) == 0 )
+                {
+                    std::cout << " MAKE THE WFC DIR    : " << PARAM.globalv.global_wfc_dir << std::endl;
+                    make_dir_wfc = 1;
+                }
+                else
+                {
+                    std::cout << " PROC " << rank << " CAN NOT MAKE THE WFC DIR !!! " << std::endl;
+                    make_dir_wfc = 0;
+                }
+            }
+#ifdef __MPI
+            Parallel_Reduce::reduce_all(make_dir_wfc);
+#endif
+            if(make_dir_wfc>0) { break;
+}
+            ++times;
+        }
+
+#ifdef __MPI
+        if(make_dir_wfc==0)
+        {
+            std::cout << " CAN NOT MAKE THE WFC DIR......." << std::endl;
             ModuleBase::QUIT();
         }
         MPI_Barrier(MPI_COMM_WORLD);

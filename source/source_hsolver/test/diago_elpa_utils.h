@@ -1,6 +1,5 @@
-#include "source_base/blacs_connector.h"
-#include "source_base/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/blacs_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "mpi.h"
 
 #include <complex>

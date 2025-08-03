@@ -1279,6 +1279,11 @@ TEST_F(InputTest, Item_test2)
         param.input.dft_functional = "SCAN0";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_fock_alpha[0], "0.25");
+
+        param.input.exx_fock_alpha[0] = "default";
+        param.input.dft_functional = "cam_pbeh";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_fock_alpha[0], "0.2");
     }
     { // exx_erfc_alpha
         auto it = find_label("exx_erfc_alpha", readinput.input_lists);
@@ -1286,6 +1291,58 @@ TEST_F(InputTest, Item_test2)
         param.input.dft_functional = "HSE";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_erfc_alpha[0], "0.25");
+
+        param.input.exx_erfc_alpha[0] = "default";
+        param.input.dft_functional = "lc_wpbe";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_alpha[0], "-1");
+
+        param.input.exx_erfc_alpha[0] = "default";
+        param.input.dft_functional = "lrc_wpbe";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_alpha[0], "-1");
+
+        param.input.exx_erfc_alpha[0] = "default";
+        param.input.dft_functional = "lrc_wpbeh";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_alpha[0], "-0.8");
+
+        param.input.exx_erfc_alpha[0] = "default";
+        param.input.dft_functional = "cam_pbeh";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_alpha[0], "0.8");
+    }
+    { // exx_erfc_omega
+        auto it = find_label("exx_erfc_omega", readinput.input_lists);
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "lc_pbe";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.33");
+
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "lc_wpbe";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.4");
+
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "lrc_wpbe";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.3");
+
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "lrc_wpbeh";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.2");
+
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "cam_pbeh";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.7");
+
+        param.input.exx_erfc_omega[0] = "default";
+        param.input.dft_functional = "hse";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_erfc_omega[0], "0.11");
     }
     { // exx_hybrid_step
         auto it = find_label("exx_hybrid_step", readinput.input_lists);
@@ -1306,6 +1363,23 @@ TEST_F(InputTest, Item_test2)
         param.input.gamma_only = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_real_number, "0");
+    }
+    { // exx_singluarity_correction
+        auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "HF";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "spencer");
+
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "PBE0";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "spencer");
+
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "HSE";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "limits");
     }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);

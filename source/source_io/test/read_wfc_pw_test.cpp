@@ -1,7 +1,7 @@
 #include "source_io/read_wfc_pw.h"
 
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

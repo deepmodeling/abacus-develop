@@ -1,6 +1,6 @@
 //=====================
 // AUTHOR : Peize Lin
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // DATE : 2021-11-02
 // REFACTORING AUTHOR : Daye Zheng
 // DATE : 2022-04-14
@@ -13,7 +13,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/matrixblock.h"
 
 typedef hamilt::MatrixBlock<double> matd;

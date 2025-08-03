@@ -1,7 +1,7 @@
 #include "magnetism.h"
 
 #include "source_base/parallel_reduce.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 //#include "source_estate/module_charge/charge.h"
 
 Magnetism::Magnetism()
@@ -84,7 +84,7 @@ void Magnetism::compute_mag(const double& omega,
 		{
 			this->tot_mag_nc[i] *= omega/ nxyz;
             // mohan add 2025-06-21
-			if( abs(this->tot_mag_nc[i]) < 1.0e-16)
+			if( std::abs(this->tot_mag_nc[i]) < 1.0e-16)
 			{
 				this->tot_mag_nc[i] = 0.0;
 			}

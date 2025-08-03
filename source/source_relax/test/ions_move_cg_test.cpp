@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
 #undef private
@@ -114,7 +114,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0 eV/A.\n Threshold is -1 eV/A.\n"
+    std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
                                   " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
@@ -152,7 +152,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartSd.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -191,7 +191,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartTrialGoto.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -229,7 +229,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartTrial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -269,7 +269,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartNoTrialGotoCase1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -308,7 +308,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartNoTrialGotoCase2.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -348,7 +348,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
+    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("TestStartNoTrial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

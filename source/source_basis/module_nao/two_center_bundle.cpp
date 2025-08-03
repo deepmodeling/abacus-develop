@@ -5,7 +5,7 @@
 #include "source_base/parallel_common.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_nao/real_gaunt_table.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <memory>
 
