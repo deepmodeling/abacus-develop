@@ -105,13 +105,8 @@ namespace LR
                         PARAM.inp.diag_subspace,
                         PARAM.inp.nb2d);
                     std::vector<double> ethr_band(nband, diag_ethr);
-                    hsolver::DiagoIterAssist<T>::avg_iter
-                        += static_cast<double>(dav_subspace.diag(
-                            hpsi_func, psi,
-                            dim,
-                            eigenvalue.data(),
-                            ethr_band,
-                            false /*scf*/));
+                    hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(
+                        dav_subspace.diag(hpsi_func, spsi_func, psi, dim, eigenvalue.data(), ethr_band, false /*scf*/));
                 }
                 else if (method == "cg")
                 {
