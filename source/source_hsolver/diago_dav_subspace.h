@@ -100,16 +100,25 @@ class Diago_DavSubspace
     base_device::AbacusDevice_t device = {};
 
     void cal_grad(const HPsiFunc& hpsi_func,
+                  const HPsiFunc& spsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
                   T* psi_iter,
                   T* hphi,
+                  T* spsi,
                   T* vcc,
                   const int* unconv,
                   std::vector<Real>* eigenvalue_iter);
 
-    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* sphi, const T* hphi, T* hcc, T* scc);
+    void cal_elem(const int& dim,
+                  int& nbase,
+                  const int& notconv,
+                  const T* psi_iter,
+                  const T* sphi,
+                  const T* hphi,
+                  T* hcc,
+                  T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
@@ -117,6 +126,7 @@ class Diago_DavSubspace
                  const Real* eigenvalue,
                  T* psi_iter,
                  T* hphi,
+                 T* sphi,
                  T* hcc,
                  T* scc,
                  T* vcc);
