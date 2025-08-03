@@ -4,7 +4,7 @@
 #define MODULE_HSOLVER_DNGVD_H
 
 #include "source_base/macros.h"
-#include "source_base/lapack_wrapper.h"
+#include "source_base/module_external/lapack_wrapper.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_device/types.h"
 

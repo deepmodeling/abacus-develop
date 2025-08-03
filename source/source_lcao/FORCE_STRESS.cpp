@@ -23,7 +23,7 @@
 #include "source_lcao/module_operator_lcao/nonlocal_new.h"
 
 template <typename T>
-Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
+Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), nat(nat_in)
 {
 }
 template <typename T>
@@ -480,13 +480,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     fcs(iat, i) -= sum / nat;
                 }
             }
-
-            // xiaohui add "OUT_LEVEL", 2015-09-16
-//            if (PARAM.inp.out_level != "m")
-//            {
-//                GlobalV::ofs_running << " correction force for each atom along direction " << i + 1 << " is "
-//                                     << sum / nat << std::endl;
-//            }
         }
 
         if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
@@ -550,8 +543,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             //-----------------------------
             // this->print_force("OVERLAP    FORCE",foverlap,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "OVERLAP    FORCE", foverlap, false);
-            //  this->print_force("TVNL_DPHI  force",ftvnl_dphi,PARAM.inp.test_force);
-            //  this->print_force("VNL_DBETA  force",fvnl_dbeta,PARAM.inp.test_force);
+            // this->print_force("TVNL_DPHI  force",ftvnl_dphi,PARAM.inp.test_force);
+            // this->print_force("VNL_DBETA  force",fvnl_dbeta,PARAM.inp.test_force);
             // this->print_force("T_VNL      FORCE",ftvnl,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "T_VNL      FORCE", ftvnl, false);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "VL_dPHI    FORCE", fvl_dphi, false);
@@ -559,7 +552,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             // this->print_force("VL_dVL     FORCE",fvl_dvl,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "VL_dVL     FORCE", fvl_dvl, false);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "EWALD      FORCE", fewalds, false);
-            // 	this->print_force("VLOCAL     FORCE",fvlocal,PARAM.inp.test_force);
+            // this->print_force("VLOCAL     FORCE",fvlocal,PARAM.inp.test_force);
             // this->print_force("EWALD      FORCE",fewalds,1,ry);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "NLCC       FORCE", fcc, false);
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "SCC        FORCE", fscc, false);
@@ -778,8 +771,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
         // print total stress
-        bool screen = false;
-        ModuleIO::print_stress("TOTAL-STRESS", scs, screen, ry, GlobalV::ofs_running);
+        bool screen_normal = true;
+        ModuleIO::print_stress("TOTAL-STRESS", scs, screen_normal, ry, GlobalV::ofs_running);
 
         double unit_transform = 0.0;
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
@@ -811,24 +804,25 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           const Structure_Factor& sf)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
-    //--------------------------------------------------------
-    // local pseudopotential force:
-    // use charge density; plane wave; local pseudopotential;
-    //--------------------------------------------------------
-    f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
-    //--------------------------------------------------------
-    // ewald force: use plane wave only.
-    //--------------------------------------------------------
-    f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf); // remain problem
+#ifdef __CUDA
+    if(PARAM.inp.device == "gpu")
+    {
+        Forces<double, base_device::DEVICE_GPU> f_pw(nat);
+        f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
+        f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
+	}
+	else
+#endif
+    {
+        Forces<double, base_device::DEVICE_CPU> f_pw(nat);
+        f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
+        f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
+    }
 
-    //--------------------------------------------------------
-    // force due to core correlation.
-    //--------------------------------------------------------
-    f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
-    //--------------------------------------------------------
-    // force due to self-consistent charge.
-    //--------------------------------------------------------
-    f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     return;
 }
 

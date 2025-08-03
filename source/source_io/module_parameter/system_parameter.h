@@ -43,6 +43,7 @@ struct System_para
     std::string global_readin_dir = "";     ///< global readin directory
     std::string global_stru_dir = "";       ///< global structure directory
     std::string global_matrix_dir = "";     ///< global matrix directory
+    std::string global_wfc_dir = "";        ///< global wavefunction directory
     std::string global_mlkedf_descriptor_dir = ""; ///< global ML KEDF descriptor directory
     std::string global_deepks_label_elec_dir = ""; ///< global directory for DeePKS labels during electronic steps 
     std::string log_file = "log";           ///< log file name

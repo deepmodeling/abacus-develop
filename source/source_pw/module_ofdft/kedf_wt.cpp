@@ -292,6 +292,7 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
     double eta = 0.;
     double diff = 0.;
     this->stress.zero_out();
+    const int ig0 = pw_rho->ig_gge0;
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ip = 0; ip < pw_rho->npw; ++ip)
@@ -299,22 +300,20 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
             eta = sqrt(pw_rho->gg[ip]) * pw_rho->tpiba / this->tkf_;
             diff = this->diff_linhard(eta, vw_weight);
             diff *= eta * (recipRhoAlpha[is][ip] * std::conj(recipRhoBeta[is][ip])).real();
-            // cout << "diff    " << diff << endl;
+            if (ip == ig0)
+            {
+                continue;
+            }
             for (int a = 0; a < 3; ++a)
             {
                 for (int b = a; b < 3; ++b)
                 {
-                    if (pw_rho->gg[ip] == 0.)
+                    this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
+                    if (a == b) 
                     {
-                        continue;
+                        this->stress(a, b) += diff * coef;
                     }
-                    else
-                    {
-                        this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
-                        if (a == b) {
-                            this->stress(a, b) += diff * coef;
-}
-                    }
+
                 }
             }
         }

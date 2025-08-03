@@ -95,7 +95,6 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 		{
 			continue;
 		}
-
 		g2 = rho_basis->gg[ig]* ucell.tpiba2;
 		g2a = g2 /4.0/alpha;
 		rhostar=std::complex<FPTYPE>(0.0,0.0);

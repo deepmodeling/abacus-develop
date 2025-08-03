@@ -344,7 +344,7 @@ void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell
     Ions_Move_Basic::largest_grad /= ucell.lat0;
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " LARGEST GRAD (eV/A)  : " << Ions_Move_Basic::largest_grad 
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad 
             * ModuleBase::Ry_to_eV / 0.5291772109
                   << std::endl;
     }

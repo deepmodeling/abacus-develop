@@ -1,6 +1,6 @@
 #include "parallel_2d.h"
 
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 #include <cassert>
 #include <numeric>

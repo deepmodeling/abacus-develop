@@ -12,8 +12,9 @@ void surchem::cal_totn(const UnitCell& cell,
     ModuleBase::GlobalFunc::ZEROS(vloc_g, rho_basis->npw);
 
     rho_basis->real2recip(vlocal, vloc_g);  // now n is vloc in Recispace
+    const int ig0 = rho_basis->ig_gge0; // G=0 index
     for (int ig = 0; ig < rho_basis->npw; ig++) {
-        if(ig==rho_basis->ig_gge0)
+        if(ig==ig0)
         {
             N[ig] = Porter_g[ig];
             continue;
@@ -39,17 +40,15 @@ void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho
     std::complex<double> *induced_rhog = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(induced_rhog, rho_basis->npw);
     rho_basis->real2recip(delta_phi, delta_phig);
+    const int ig0 = rho_basis->ig_gge0; // G=0 index
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {   
-        if(rho_basis->ig_gge0 == ig)
+        if(ig==ig0)
         {
             continue;
         }
-        else
-        {
-            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
-            induced_rhog[ig] = -delta_phig[ig] / fac;
-        }
+        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
+        induced_rhog[ig] = -delta_phig[ig] / fac;
     }
 
     rho_basis->recip2real(induced_rhog, induced_rho);

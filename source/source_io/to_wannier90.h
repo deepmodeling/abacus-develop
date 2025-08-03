@@ -11,7 +11,7 @@
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/klist.h"

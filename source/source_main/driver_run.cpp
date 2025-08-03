@@ -69,13 +69,13 @@ void Driver::driver_run()
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell);
+        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp);
     }
     else if (cal == "get_s")
     {
         p_esolver->runner(ucell, 0);
     }
-    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || 
+    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" || 
              cal == "test_memory" || cal == "test_neighbour")
     {
         //! supported "other" functions:

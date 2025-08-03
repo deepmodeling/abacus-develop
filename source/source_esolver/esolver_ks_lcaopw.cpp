@@ -93,9 +93,9 @@ namespace ModuleESolver
                                           this->kv.ngk,
                                           true);
 #ifdef __EXX
-        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
-            || PARAM.inp.calculation == "cell-relax"
-            || PARAM.inp.calculation == "md") {
+        if (inp.calculation == "scf" || inp.calculation == "relax"
+            || inp.calculation == "cell-relax"
+            || inp.calculation == "md") {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(ucell);

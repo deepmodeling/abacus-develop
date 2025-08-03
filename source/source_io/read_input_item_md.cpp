@@ -23,7 +23,7 @@ void ReadInput::item_md()
         Input_Item item("md_nstep");
         item.annotation = "md steps";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_nstep == 0)
+            if (para.input.mdp.md_nstep == 0 && para.input.esolver_type != "tddft")
             {
                 GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
                 para.input.mdp.md_nstep = 50;
@@ -39,6 +39,13 @@ void ReadInput::item_md()
             if (para.input.mdp.md_dt < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
 }
+        };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.td_dt != -1.0)
+            {
+                GlobalV::ofs_running << "td_dt exist, set md_dt with td_dt" << std::endl;
+                para.input.mdp.md_dt = para.input.td_dt * para.input.estep_per_md;
+            }
         };
         read_sync_double(input.mdp.md_dt);
         this->add_item(item);

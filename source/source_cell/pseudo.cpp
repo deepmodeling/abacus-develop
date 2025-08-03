@@ -9,6 +9,34 @@ pseudo::~pseudo()
 {
 }
 
+void pseudo::check_betar()
+{
+	bool min_flag = false;
+	for (int ib = 0; ib < nbeta; ib++)
+	{
+		for (int ir = 0; ir < mesh; ir++)
+		{
+			// Get the bit representation of the double
+			uint64_t bits = *(uint64_t*)&betar(ib, ir);
+    		// Extract exponent field (bits 52-62)
+			uint64_t exponent = (bits >> 52) & 0x7FF;
+			// Define exponent threshold for 1e-30
+    		// Calculated as: bias + floor(log2(1e-30))
+    		// Where bias = 1023 and log2(1e-30) ≈ -99.657
+			// Thus threshold is approximately 923
+			if ((exponent <= 923))
+			{
+				min_flag = true;
+				betar(ib, ir) = 0.0;
+			}
+		}
+	}
+	if (min_flag)
+	{
+		std::cout << "WARNING: some of potential function is set to zero cause of less than 1e-30.\n";
+	}
+}
+
 void pseudo::print_pseudo(std::ofstream& ofs)
 {
 	print_pseudo_vl(ofs);

@@ -1,6 +1,6 @@
 #include "inverse_matrix.h"
 #include "tool_quit.h"
-#include "lapack_connector.h"
+#include "module_external/lapack_connector.h"
 #include "timer.h"
 #include "complexmatrix.h"
 

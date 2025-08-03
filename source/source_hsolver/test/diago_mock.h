@@ -1,6 +1,6 @@
 #include<random>
-#include "../../source_base/lapack_connector.h"
-#include "../../source_base/blas_connector.h"
+#include "../../source_base/module_external/lapack_connector.h"
+#include "../../source_base/module_external/blas_connector.h"
 #include "mpi.h"
 #include "source_base/parallel_reduce.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"

@@ -4,7 +4,6 @@
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/module_ri/exx_opt_orb.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
@@ -181,15 +180,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
-    }
-
-    if (Exx_Abfs::Jle::generate_matrix)
-    {
-        //program should be stopped after this judgement
-        Exx_Opt_Orb exx_opt_orb;
-        exx_opt_orb.generate_matrix(kv, ucell,orb);
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-        return;
     }
 
     // set initial parameter for mix_DMk_2D

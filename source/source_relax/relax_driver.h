@@ -7,6 +7,8 @@
 #include "relax_sync.h"
 #include "relax_nsync.h"
 #include "bfgs.h"
+#include "source_io/module_parameter/input_parameter.h"
+
 class Relax_Driver
 {
 
@@ -14,7 +16,9 @@ class Relax_Driver
     Relax_Driver(){};
     ~Relax_Driver(){};
 
-    void relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
+	void relax_driver(ModuleESolver::ESolver* p_esolver, 
+			UnitCell& ucell, 
+			const Input_para& inp);
 
   private:
     // mohan add 2021-01-28

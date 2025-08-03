@@ -13,7 +13,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/matrixblock.h"
 
 typedef hamilt::MatrixBlock<double> matd;

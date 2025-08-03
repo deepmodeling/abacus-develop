@@ -45,6 +45,9 @@ class Numerical_Nonlocal_Lm
 	const double& getKpoint(const int &ik) const { return this->k_radial[ik]; }
 	const double* getBeta_k() const { return this->beta_k; }
 	const double& getBeta_k(const int &ik) const { return this->beta_k[ik]; }
+
+	const int& getNk() const { return nk; }
+	const double& getDruniform() const { return dr_uniform; }
 	
     // enables deep copy
 	Numerical_Nonlocal_Lm& operator= (const Numerical_Nonlocal_Lm& nol );

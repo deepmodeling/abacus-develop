@@ -5,7 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_rt/td_velocity.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "operator_lcao.h"
 #include <vector>
 
@@ -48,8 +48,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     virtual void contributeHk(int ik) override;
 
-    /// @brief init two center integrals and vector potential for td_ekintic term
-    void init_td();
+    /// @brief update vector potential
+    void update_td();
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -83,7 +83,6 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     virtual void set_HR_fixed(void*) override;
 
-    TD_Velocity td_velocity;
 
   private:
 
@@ -124,3 +123,4 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
 } // namespace hamilt
 #endif
+

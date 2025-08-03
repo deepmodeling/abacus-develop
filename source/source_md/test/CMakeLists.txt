@@ -22,9 +22,9 @@ list(APPEND depend_files
   ../../source_base/matrix3.cpp
   ../../source_base/matrix.cpp
   ../../source_base/timer.cpp
-  ../../source_base/blas_connector_base.cpp
-  ../../source_base/blas_connector_matrix.cpp
-  ../../source_base/blas_connector_vector.cpp
+  ../../source_base/module_external/blas_connector_base.cpp
+  ../../source_base/module_external/blas_connector_matrix.cpp
+  ../../source_base/module_external/blas_connector_vector.cpp
   ../../source_base/memory.cpp
   ../../source_base/global_variable.cpp
   ../../source_base/global_function.cpp

@@ -3,7 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include <cmath>
 #include "source_base/parallel_reduce.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"

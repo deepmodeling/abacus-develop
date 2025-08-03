@@ -1,7 +1,7 @@
 #include "source_hsolver/diago_bpcg.h"
 
 #include "diago_iter_assist.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds

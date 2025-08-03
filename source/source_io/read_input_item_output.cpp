@@ -546,5 +546,31 @@ void ReadInput::item_output()
         sync_intvec(input.out_elf, 2, 0);
         this->add_item(item);
     }
+    {
+        // recover the functionality of test_symmetry by introducing a new keyword "out_symm_mat"
+        // the "out_symm_mat" keyword will be a 
+        Input_Item item("cal_symm_repr");
+        item.annotation = "output matrix representation of symmetry operation into running log file"
+                          " > 0 output the matrix representation of symmetry operation "
+                          ", the second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> cal_symm_repr(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), // iterators of 1
+                           cal_symm_repr.begin(),                       // iterator of 2
+                           [](std::string s){ return std::stoi(s); });     // lambda func
+            // assign non-negative values to para.input.cal_symm_repr
+            std::copy(cal_symm_repr.begin(), cal_symm_repr.end(), 
+                      para.input.cal_symm_repr.begin());
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.cal_symm_repr[0] < 0 || para.input.cal_symm_repr[0] > 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "cal_symm_repr should be 0 or 1");
+            }
+        };
+        sync_intvec(input.cal_symm_repr, 2, 0);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

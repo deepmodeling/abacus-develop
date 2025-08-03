@@ -79,7 +79,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(ENABLE_LCAO AND USE_ELPA)
-  add_subdirectory(genelpa)
+  add_subdirectory(module_genelpa)
 endif()
 
 IF (BUILD_TESTING)

@@ -90,6 +90,7 @@ private:
 	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
+	ORB_gaunt_table MGT;
 	std::vector<double> orb_cutoff_;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
