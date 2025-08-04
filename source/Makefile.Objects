@@ -342,6 +342,10 @@ OBJS_HAMILT=hamilt_pw.o\
     velocity_pw.o\
     radial_proj.o\
     exx_helper.o\
+    vec_mul_vec_complex_op.o\
+    exx_cal_energy_op.o\
+    cal_density_real_op.o\
+    mul_potential_op.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\

@@ -488,8 +488,8 @@ void Input_Conv::Convert()
     {
         if (ModuleSymmetry::Symmetry::symm_flag != -1)
         {
-            ModuleBase::WARNING("Input_Conv", "EXX PW works only with symmetry=-1");
-            ModuleSymmetry::Symmetry::symm_flag = -1;
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with symmetry=-1");
+            // ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
         if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
@@ -497,10 +497,6 @@ void Input_Conv::Convert()
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
 
-        if (PARAM.inp.device != "cpu")
-        {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with device=cpu");
-        }
     }
 
     //----------------------------------------------------------

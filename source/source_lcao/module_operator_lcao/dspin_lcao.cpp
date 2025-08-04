@@ -1,6 +1,5 @@
 #include "dspin_lcao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/memory.h"
 #include "source_base/tool_title.h"

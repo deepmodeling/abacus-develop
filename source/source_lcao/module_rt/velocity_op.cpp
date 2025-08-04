@@ -295,7 +295,11 @@ void Velocity_op<TR>::calculate_vcomm_r()
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])->get_pointer();
+                        hamilt::BaseMatrix<std::complex<double>>* matrix_ptr = this->current_term[i]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                        if (matrix_ptr != nullptr)
+                        {
+                            tmp_c[i] = matrix_ptr->get_pointer();
+                        }
                     }
                     // if not found , skip this pair of atoms
                     if (tmp_c[0] != nullptr)
@@ -432,7 +436,11 @@ void Velocity_op<TR>::calculate_grad_term()
             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
             for (int i = 0; i < 3; i++)
             {
-                tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                hamilt::BaseMatrix<std::complex<double>>* matrix_ptr = this->current_term[i]->find_matrix(iat1, iat2, R_index2);
+                if (matrix_ptr != nullptr)
+                {
+                    tmp_c[i] = matrix_ptr->get_pointer();
+                }
             }
             if (tmp_c[0] != nullptr)
             {

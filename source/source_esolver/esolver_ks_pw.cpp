@@ -621,6 +621,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
             {
                 auto start = std::chrono::high_resolution_clock::now();
                 exx_helper.set_firstiter(false);
+                exx_helper.op_exx->first_iter = false;
                 exx_helper.set_psi(this->kspw_psi);
 
                 conv_esolver = exx_helper.exx_after_converge(iter);

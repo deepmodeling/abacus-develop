@@ -2,7 +2,6 @@
 #define OPEXXPW_H
 
 #include "operator_pw.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/macros.h"
 #include "source_base/matrix.h"
@@ -11,6 +10,7 @@
 #include "source_cell/klist.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_psi/psi.h"
+#include "source_base/module_container/ATen/kernels/lapack.h"
 
 #include <memory>
 #include <utility>
@@ -56,9 +56,10 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     bool first_iter = false;
 
   private:
-    const int *isk = nullptr;
-    const ModulePW::PW_Basis_K *wfcpw = nullptr;
-    const ModulePW::PW_Basis   *rhopw = nullptr;
+    const int* isk = nullptr;
+    const ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis* rhopw = nullptr;
+    ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
 //    Real exx_div = 0;
     Real tpiba = 0;
@@ -91,6 +92,10 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     double cal_exx_energy_op(psi::Psi<T, Device> *psi_) const;
 
     double cal_exx_energy_ace(psi::Psi<T, Device> *psi_) const;
+
+    void cal_density_recip(const T* psi_nk_real, const T* psi_mq_real, double omega) const;
+
+    void rho_recip2real(const T* rho_recip, T* rho_real, bool add = false, Real factor = 1.0) const;
 
     mutable int cnt = 0;
 
@@ -135,16 +140,25 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+    using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using resmem_real_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
     using gemm_complex_op = ModuleBase::gemm_op<T, Device>;
+    using axpy_complex_op = ModuleBase::axpy_op<T, Device>;
     using vec_add_vec_complex_op = ModuleBase::vector_add_vector_op<T, Device>;
     using dot_op = ModuleBase::dot_real_op<T, Device>;
+    using syncmem_complex_c2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2c_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_real_d2c_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using lapack_potrf = container::kernels::lapack_potrf<T, ct_Device>;
+    using lapack_trtri = container::kernels::lapack_trtri<T, ct_Device>;
 
     bool gamma_extrapolation = true;
 

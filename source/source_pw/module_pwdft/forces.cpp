@@ -329,7 +329,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_loc");
     ModuleBase::timer::tick("Forces", "cal_force_loc");
-
+    this->device = base_device::get_device_type<Device>(this->ctx);
     std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
     // now, in all pools , the charge are the same,
     // so, the force calculated by each pool is equal.
@@ -368,30 +368,105 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int iat = 0; iat < this->nat; ++iat)
+    std::vector<double> tau_h;
+    std::vector<double> gcar_h;
+    if(this->device == base_device::GpuDevice)
     {
-        // read `it` `ia` from the table
-        int it = ucell.iat2it[iat];
-        int ia = ucell.iat2ia[iat];
-        for (int ig = 0; ig < rho_basis->npw; ig++)
+        tau_h.resize(this->nat * 3);
+        for(int iat = 0; iat < this->nat; ++iat)
         {
-            const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * ucell.atoms[it].tau[ia]);
-            double sinp, cosp;
-            ModuleBase::libm::sincos(phase, &sinp, &cosp);
-            const double factor
-                = vloc(it, rho_basis->ig2igg[ig]) * (cosp * aux[ig].imag() + sinp * aux[ig].real());
-            forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
-            forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
-            forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
+            int it = ucell.iat2it[iat];
+            int ia = ucell.iat2ia[iat];
+            tau_h[iat * 3] = ucell.atoms[it].tau[ia].x;
+            tau_h[iat * 3 + 1] = ucell.atoms[it].tau[ia].y;
+            tau_h[iat * 3 + 2] = ucell.atoms[it].tau[ia].z;
         }
-        forcelc(iat, 0) *= (ucell.tpiba * ucell.omega);
-        forcelc(iat, 1) *= (ucell.tpiba * ucell.omega);
-        forcelc(iat, 2) *= (ucell.tpiba * ucell.omega);
+
+        gcar_h.resize(rho_basis->npw * 3);
+        for(int ig = 0; ig < rho_basis->npw; ++ig)
+        {
+            gcar_h[ig * 3] = rho_basis->gcar[ig].x;
+            gcar_h[ig * 3 + 1] = rho_basis->gcar[ig].y;
+            gcar_h[ig * 3 + 2] = rho_basis->gcar[ig].z;
+        }
+    }
+    int* iat2it_d = nullptr;
+    int* ig2gg_d = nullptr;
+    double* gcar_d = nullptr;
+    double* tau_d = nullptr;
+    std::complex<double>* aux_d = nullptr;
+    double* forcelc_d  = nullptr;
+    double* vloc_d = nullptr;
+    if(this->device == base_device::GpuDevice)
+    {
+        resmem_int_op()(iat2it_d, this->nat);
+        resmem_int_op()(ig2gg_d, rho_basis->npw);
+        resmem_var_op()(gcar_d, rho_basis->npw * 3);
+        resmem_var_op()(tau_d, this->nat * 3);
+        resmem_complex_op()(aux_d, rho_basis->npw);
+        resmem_var_op()(forcelc_d, this->nat * 3);
+        resmem_var_op()(vloc_d, vloc.nr * vloc.nc);
+
+        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it, this->nat);
+        syncmem_int_h2d_op()(ig2gg_d, rho_basis->ig2igg, rho_basis->npw);
+        syncmem_var_h2d_op()(gcar_d, gcar_h.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
+        syncmem_complex_h2d_op()(aux_d, aux, rho_basis->npw);
+        syncmem_var_h2d_op()(forcelc_d, forcelc.c, this->nat * 3);
+        syncmem_var_h2d_op()(vloc_d, vloc.c, vloc.nr * vloc.nc);
     }
 
+    if(this->device == base_device::GpuDevice)
+    {
+        hamilt::cal_force_loc_op<FPTYPE, Device>()(
+            this->nat,
+            rho_basis->npw,
+            ucell.tpiba * ucell.omega,
+            iat2it_d,
+            ig2gg_d,
+            gcar_d,
+            tau_d,
+            aux_d,
+            vloc_d,
+            vloc.nc,
+            forcelc_d);
+        syncmem_var_d2h_op()(forcelc.c, forcelc_d, this->nat * 3);
+    }
+    else{
+        #ifdef _OPENMP
+        #pragma omp parallel for
+        #endif
+        for (int iat = 0; iat < this->nat; ++iat)
+        {
+            // read `it` `ia` from the table
+            int it = ucell.iat2it[iat];
+            int ia = ucell.iat2ia[iat];
+            for (int ig = 0; ig < rho_basis->npw; ig++)
+            {
+                const double phase = ModuleBase::TWO_PI * (rho_basis->gcar[ig] * ucell.atoms[it].tau[ia]);
+                double sinp, cosp;
+                ModuleBase::libm::sincos(phase, &sinp, &cosp);
+                const double factor
+                    = vloc(it, rho_basis->ig2igg[ig]) * (cosp * aux[ig].imag() + sinp * aux[ig].real());
+                forcelc(iat, 0) += rho_basis->gcar[ig][0] * factor;
+                forcelc(iat, 1) += rho_basis->gcar[ig][1] * factor;
+                forcelc(iat, 2) += rho_basis->gcar[ig][2] * factor;
+            }
+            forcelc(iat, 0) *= (ucell.tpiba * ucell.omega);
+            forcelc(iat, 1) *= (ucell.tpiba * ucell.omega);
+            forcelc(iat, 2) *= (ucell.tpiba * ucell.omega);
+        }
+    }
+    if(this->device == base_device::GpuDevice)
+    {
+        delmem_int_op()(iat2it_d);
+        delmem_int_op()(ig2gg_d);
+        delmem_var_op()(gcar_d);
+        delmem_var_op()(tau_d);
+        delmem_complex_op()(aux_d);
+        delmem_var_op()(forcelc_d);
+        delmem_var_op()(vloc_d);
+    }
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;

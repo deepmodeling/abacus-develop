@@ -432,6 +432,9 @@ public:
     void set_device(std::string device_);
     void set_precision(std::string precision_);
 
+    std::string get_device() const { return device; }
+    std::string get_precision() const { return precision; }
+
 protected:
 
   std::string device = "cpu";       ///< cpu or gpu

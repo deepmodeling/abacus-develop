@@ -8,7 +8,6 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"

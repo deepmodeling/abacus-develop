@@ -87,45 +87,57 @@ static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, float * A, const int& lda)
 {
     int lwork;
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
     cusolverErrcheck(cusolverDnSpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     float* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(float)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnSpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnSpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, double * A, const int& lda)
 {
     int lwork;
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
     cusolverErrcheck(cusolverDnDpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     double* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(double)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnDpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnDpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<float> * A, const int& lda)
 {
     int lwork;
-    cusolverErrcheck(cusolverDnCpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, &lwork));
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
+    cusolverErrcheck(cusolverDnCpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
     cuComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuComplex)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnCpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnCpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), lda, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<double> * A, const int& lda)
 {
     int lwork;
-    cusolverErrcheck(cusolverDnZpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, &lwork));
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
+    cusolverErrcheck(cusolverDnZpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), lda, &lwork));
     cuDoubleComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuDoubleComplex)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), lda, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 
 

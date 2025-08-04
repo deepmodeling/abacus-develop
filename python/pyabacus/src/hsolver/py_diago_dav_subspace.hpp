@@ -132,6 +132,11 @@ public:
             std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
         };
 
+        auto spsi_func = [this](const std::complex<double>* psi_in,
+                                std::complex<double>* spsi_out,
+                                const int ld_psi,
+                                const int nvec) { syncmem_op()(spsi_out, psi_in, static_cast<size_t>(ld_psi * nvec)); };
+
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
             precond_vec, 
             nband, 
@@ -145,7 +150,7 @@ public:
             nb2d
         );
 
-        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
+        return obj->diag(hpsi_func, spsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
     }
 
 private:
@@ -156,6 +161,10 @@ private:
     int nband;
 
     std::unique_ptr<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>> obj;
+
+    base_device::DEVICE_CPU* ctx = {};
+    using syncmem_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 } // namespace py_hsolver
