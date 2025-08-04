@@ -21,6 +21,6 @@ gamma_only    1
 nspin         2
 pseudo_dir	../../../tests/PP_ORB
 orbital_dir	../../../tests/PP_ORB
+pw_seed       1
 
-psi_initializer 1
 init_wfc nao

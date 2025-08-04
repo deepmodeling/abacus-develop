@@ -316,13 +316,6 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.init_wfc, "nao");
     }
-    { // psi_initializer
-        auto it = find_label("psi_initializer", readinput.input_lists);
-        param.input.psi_initializer = false;
-        param.input.basis_type = "lcao_in_pw";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.psi_initializer, true);
-    }
     { // init_chg
         auto it = find_label("init_chg", readinput.input_lists);
         param.input.init_chg = "get_pchg";

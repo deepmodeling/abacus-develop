@@ -6,6 +6,7 @@ calculation     scf
 nbands			8
 symmetry		1
 pseudo_dir	../../PP_ORB
+pw_seed         1
 nelec           10
 
 #Parameters (2.Iteration)

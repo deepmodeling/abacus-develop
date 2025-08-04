@@ -21,12 +21,12 @@ toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
     const std::string &wannier_spin
 ):toWannier90_PW(out_wannier_mmn, out_wannier_amn, out_wannier_unk, out_wannier_eig, out_wannier_wvfn_formatted, nnkpfile, wannier_spin)
 {
-
 }
 
 toWannier90_LCAO_IN_PW::~toWannier90_LCAO_IN_PW()
 {
-    
+    delete psi_initer_;
+    delete psi;   
 }
 
 void toWannier90_LCAO_IN_PW::calculate(
@@ -44,14 +44,15 @@ void toWannier90_LCAO_IN_PW::calculate(
 
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &ucell, &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
-    #else
-    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(ucell), 1, nullptr);
-    #endif
-    this->psi_init_->tabulate();
-    this->psi_init_->allocate(true);
+    delete this->psi_initer_;
+    this->psi_initer_ = new psi_initializer_nao<std::complex<double>>();
+    this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
+    this->psi_initer_->tabulate();
+    delete this->psi;
+    const int nks_psi = (PARAM.inp.calculation == "nscf" && PARAM.inp.mem_saver == 1)? 1 : wfcpw->nks;
+    const int nks_psig = (PARAM.inp.basis_type == "pw")? 1 : nks_psi;
+    const int nbands_actual = this->psi_initer_->nbands_start();
+    this->psi = new psi::Psi<std::complex<double>, base_device::DEVICE_CPU>(nks_psig, nbands_actual, wfcpw->npwk_max*PARAM.globalv.npol, wfcpw->npwk);
     read_nnkp(ucell,kv);
 
     if (PARAM.inp.nspin == 2)
@@ -217,17 +218,15 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
 )
 {
     int npwx = wfcpw->npwk_max;
-    this->psi_init_->proj_ao_onkG(ik);
-    std::weak_ptr<psi::Psi<std::complex<double>>> psig = this->psi_init_->share_psig();
-    if(psig.expired()) { ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
-}
+    this->psi->fix_k(ik);
+    this->psi_initer_->init_psig(this->psi->get_pointer(), ik);
     int nbands = PARAM.globalv.nlocal;
     int nbasis = npwx*PARAM.globalv.npol;
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ig = 0; ig < nbasis; ig++)
         {
-            psi(ib, ig) = psig.lock().get()[0](ik, ib, ig);
+            psi(ib, ig) = this->psi->operator()(ib, ig);
         }
     }
 }

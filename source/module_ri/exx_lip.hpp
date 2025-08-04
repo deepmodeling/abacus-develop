@@ -13,7 +13,6 @@
 #include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/klist.h"
-#include "module_psi/wavefunc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/parallel_global.h"
@@ -84,9 +83,8 @@ template <typename T, typename Device>
 Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
                             const ModuleSymmetry::Symmetry& symm,
                             K_Vectors* kv_ptr_in,
-                            psi::PSIInit<T, Device>* wf_ptr_in,
+                            psi::Psi<T, Device>* psi_local_in,
                             psi::Psi<T, Device>* kspw_psi_ptr_in,
-                            //    wavefunc* wf_ptr_in,
                             const ModulePW::PW_Basis_K* wfc_basis_in,
                             const ModulePW::PW_Basis* rho_basis_in,
                             const Structure_Factor& sf,
@@ -99,7 +97,7 @@ Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
 
     this->k_pack = new k_package;
     this->k_pack->kv_ptr = kv_ptr_in;
-    this->k_pack->wf_ptr = wf_ptr_in;
+    this->k_pack->psi_local = psi_local_in;
     this->k_pack->pelec = pelec_in;
     this->k_pack->kspw_psi_ptr = kspw_psi_ptr_in;
     this->wfc_basis = wfc_basis_in;
@@ -184,7 +182,7 @@ Exx_Lip<T, Device>::~Exx_Lip()
     else if (PARAM.inp.init_chg == "file")
     {
         delete this->q_pack->kv_ptr;	this->q_pack->kv_ptr = nullptr;
-        delete this->q_pack->wf_ptr;	this->q_pack->wf_ptr = nullptr;
+        // delete this->q_pack->wf_ptr;	this->q_pack->wf_ptr = nullptr;
         // delete[] this->q_pack->hvec_array;	this->q_pack->hvec_array=nullptr;
         delete this->q_pack;	this->q_pack = nullptr;
     }
@@ -216,7 +214,7 @@ void Exx_Lip<T, Device>::phi_cal(k_package* kq_pack, const int ikq)
     for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
     {
         // this->wfc_basis->recip2real(&kq_pack->wf_ptr->wanf2[ikq](iw,0), porter.data(), ikq);
-        this->wfc_basis->recip2real(&(kq_pack->wf_ptr->get_psig().lock()->operator()(ikq, iw, 0)), porter.data(), ikq);
+        this->wfc_basis->recip2real(&(kq_pack->psi_local->operator()(ikq, iw, 0)), porter.data(), ikq);
         int ir = 0;
         for (int ix = 0; ix < this->rho_basis->nx; ++ix)
         {

@@ -1,7 +1,6 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
+#ifndef PSI_INIT_H
+#define PSI_INIT_H
 #include "module_hamilt_general/hamilt.h"
-#include "module_psi/wavefunc.h"
 #include "module_psi/psi_initializer.h"
 
 namespace psi
@@ -15,35 +14,16 @@ class PSIInit
     PSIInit(const std::string& init_wfc_in,
             const std::string& ks_solver_in,
             const std::string& basis_type_in,
-            const bool& use_psiinitializer_in,
-            ModulePW::PW_Basis_K* pw_wfc_in);
+            const int& rank,
+            const UnitCell& ucell,
+            const Structure_Factor& sf,
+            const Parallel_Kpoints& parakpts,
+            const pseudopot_cell_vnl& nlpp,
+            const ModulePW::PW_Basis_K& pw_wfc);
     ~PSIInit(){};
 
-    // prepare the wavefunction initialization
-    void prepare_init(Structure_Factor* p_sf, //< structure factor
-                      UnitCell* p_ucell,      //< unit cell
-                      const int& random_seed, //< random seed
-#ifdef __MPI
-                      Parallel_Kpoints* = nullptr, //< parallel kpoints
-                      const int& rank = 0,         //< rank
-#endif
-                      pseudopot_cell_vnl* = nullptr); //< nonlocal pseudopotential
-
-    // allocate the wavefunction
-    void allocate_psi(Psi<std::complex<double>>*& psi, //< psi: wavefunction
-                      const int nkstot,                //< total number of k-points for all pools
-                      const int nks,                   //< number of k-points in the current pool
-                      const int* ngk,                  //< number of G-vectors in the current pool
-                      const int npwx,                  //< max number of plane waves of all pools
-                      Structure_Factor* p_sf,          //< structure factor
-                      pseudopot_cell_vnl* p_ppcell,    //< nonlocal pseudopotential
-                      const UnitCell& ucell);          //< unit cell
-
-    // make interpolate table
-    void make_table(const int nks, 
-                    Structure_Factor* p_sf, 
-                    pseudopot_cell_vnl* p_ppcell,
-                    const UnitCell& ucell);
+    ///@brief prepare the wavefunction initialization
+    void prepare_init(const int& random_seed);
 
     //------------------------ only for psi_initializer --------------------
     /**
@@ -57,35 +37,21 @@ class PSIInit
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,
                         hamilt::Hamilt<T, Device>* p_hamilt,
-                        const pseudopot_cell_vnl& nlpp,
-                        const UnitCell& ucell,
-                        std::ofstream& ofs_running,
-                        const bool is_already_initpsi);
+                        std::ofstream& ofs_running);
 
     /**
-     * @brief get the psi_initializer
+     * @brief initialize NAOs in plane wave basis, only for LCAO_IN_PW
      *
-     * @return psi_initializer<T, Device>*
      */
-    std::weak_ptr<psi::Psi<T, Device>> get_psig() const
-    {
-        return this->psi_init->share_psig();
-    }
-    //----------------------------------------------------------------------
+    void initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running);
 
-  private:
-    // psi_initializer<T, Device>* psi_init = nullptr;
+    // psi_initializer<T, Device>* psi_initer = nullptr;
     // change to use smart pointer to manage the memory, and avoid memory leak
     // while the std::make_unique() is not supported till C++14,
     // so use the new and std::unique_ptr to manage the memory, but this makes new-delete not symmetric
-    std::unique_ptr<psi_initializer<T, Device>> psi_init;
+    std::unique_ptr<psi_initializer<T>> psi_initer;
 
-    //! temporary: wave functions, this one may be deleted in future
-    wavefunc wf_old;
-
-    // whether to use psi_initializer
-    bool use_psiinitializer = false;
-
+  private:
     // wavefunction initialization type
     std::string init_wfc = "none";
 
@@ -96,10 +62,32 @@ class PSIInit
     std::string basis_type = "none";
 
     // pw basis
-    ModulePW::PW_Basis_K* pw_wfc = nullptr;
+    const ModulePW::PW_Basis_K& pw_wfc;
 
-    Device* ctx = {};
+    // parallel kpoints
+    const Parallel_Kpoints& parakpts;
+
+    // unit cell
+    const UnitCell& ucell;
+
+    // structure factor
+    const Structure_Factor& sf;
+
+    // nonlocal pseudopotential
+    const pseudopot_cell_vnl& nlpp;
+
+    Device* ctx = {};                      ///< device
+    base_device::DEVICE_CPU* cpu_ctx = {}; ///< CPU device
+    const int rank;                        ///< MPI rank
+
+    //-------------------------OP--------------------------------------------
+    using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using castmem_h2d_op
+        = base_device::memory::cast_memory_op<T, T, Device, base_device::DEVICE_CPU>;
 };
+
+///@brief allocate the wavefunction
+void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const int* ngk, const int& nbands, const int& npwx);
 
 } // namespace psi
 #endif

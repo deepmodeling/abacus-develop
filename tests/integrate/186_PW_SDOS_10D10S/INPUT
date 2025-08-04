@@ -12,6 +12,7 @@ emax_sto		0
 emin_sto		0
 seed_sto        20000
 pseudo_dir	../../PP_ORB
+pw_seed         1
 symmetry	    1
 kpar            1
 bndpar          2
