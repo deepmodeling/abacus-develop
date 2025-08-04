@@ -158,7 +158,6 @@ public:
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
-    
     #endif
 
      template <typename FPTYPE, typename Device>
@@ -175,7 +174,6 @@ public:
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
-
 
     template <typename TK,
               typename Device,
@@ -245,6 +243,47 @@ public:
     {
         this->recip2real_gpu(in, out, ik, add, factor);
     }
+    template <typename FPTYPE, typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_GPU>::value, int>::type = 0>
+    void convolution(const int ik,
+                    const int size,
+                    const FPTYPE* input,
+                    const typename GetTypeReal<FPTYPE>::type* input1,
+                    FPTYPE*       output,
+                    const bool add = false,
+                    const typename GetTypeReal<FPTYPE>::type factor =1.0) const
+    {
+        this->convolution_gpu(ik, size, input, input1, output, add, factor);
+    }
+    template <typename FPTYPE, typename Device,
+              typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
+        void convolution(const int ik,
+                    const int size,
+                    const FPTYPE* input,
+                    const typename GetTypeReal<FPTYPE>::type* input1,
+                    FPTYPE*       output,
+                    const bool add = false,
+                    const typename GetTypeReal<FPTYPE>::type factor =1.0) const
+    {
+        this->convolution_cpu(ik, size, input, input1, output, add, factor);
+    }
+    template <typename FPTYPE>
+    void convolution_cpu(const int ik,
+                         const int size,
+                         const std::complex<FPTYPE>* input,
+                         const FPTYPE*               input1,
+                         std::complex<FPTYPE>*       output,
+                         const bool add = false,
+                         const FPTYPE factor = 1.0) const;
+    
+    template <typename FPTYPE>
+    void convolution_gpu(const int ik,
+                         const int size,
+                         const std::complex<FPTYPE>* input,
+                         const FPTYPE*               input1,
+                         std::complex<FPTYPE>*       output,
+                         const bool add = false,
+                         const FPTYPE factor = 1.0) const;
 
   public:
     //operator:
