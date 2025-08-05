@@ -50,6 +50,15 @@ class LCAO_Deepks_Interface
                            const bool& conv_esolver, 
                            const int rank,
                            std::ostream& ofs_running);
+    
+    /// @brief Get the filename for deepks output files
+    /// @param file_type Type of the file (e.g., "etot", "ftot", etc.)
+    /// @param label_type Type of the label (from PARAM.inp.deepks_out_labels)
+    /// @param iter Iteration number (e.g., -1 for after_scf, or specific iteration number)
+    /// @return The full path to the output file
+    std::string get_filename(const std::string& file_type,
+                            const int& label_type,
+                            const int& iter);
 
   private:
     std::shared_ptr<LCAO_Deepks<TK>> ld;

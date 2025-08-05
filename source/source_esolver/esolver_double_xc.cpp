@@ -191,6 +191,7 @@ template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "iter_finish");
+    ModuleBase::timer::tick("ESolver_DoubleXC", "iter_finish");
 
     bool output_iter = PARAM.inp.deepks_out_labels >0 && PARAM.inp.deepks_out_freq_elec && 
                   (iter % PARAM.inp.deepks_out_freq_elec == 0);
@@ -213,6 +214,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
     // for deepks, output labels during electronic steps (after conv_esolver is renewed)
     if ( output_iter)
     {
+        // ---------- update etot and htot ----------
         // get etot of output charge density, now the etot is of density after charge mixing
         this->pelec->pot->update_from_charge(&this->chr_base, &ucell); 
         this->pelec->f_en.descf = 0.0;
@@ -228,6 +230,8 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             // update real space Hamiltonian
             this->p_hamilt->refresh();
         }
+
+        // ---------- output tot and precalc ----------
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
@@ -253,6 +257,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // restore to density after charge mixing
         this->pelec->pot->update_from_charge(&this->chr, &ucell); 
 
+        // ---------- prepare for base ----------
         // set as base functional Temporarily
         XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
 
@@ -266,95 +271,75 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             this->pelec_base->cal_converged();
         }
 
-        // update the potential from charge density of target functional
-        // this->pelec_base->pot->update_from_charge(&this->chr, &ucell); 
-
-        //this->pelec_base->f_en.deband = this->pelec_base->cal_delta_eband(ucell);
-
-        // this->pelec_base->pot->update_from_charge(&this->chr_base, &ucell); 
-        // this->pelec_base->f_en.descf = this->pelec_base->cal_delta_escf();
-        // only change Exc, use the target charge
+        // ---------- e_base ----------
+        // ebase use the same output density with etot, just different in xc
         this->pelec_base->f_en.eband = this->pelec->f_en.eband;
         this->pelec_base->f_en.deband = this->pelec->f_en.deband;
         this->pelec_base->f_en.demet = this->pelec->f_en.demet;
-        //this->pelec_base->pot->update_from_charge(&this->chr, &ucell); 
-        // set descf to 0
-        this->pelec_base->f_en.descf = 0.0;
-        
+        this->pelec_base->f_en.descf = 0.0; // set descf to 0
         this->pelec_base->cal_energies(2); // 2 means Kohn-Sham functional
         std::cout<<"in double_xc------"<<std::endl;
         this->pelec_base->f_en.print_all();
         std::cout<<"in double_xc------"<<std::endl;
 
-        // output e_base and o_base
         GlobalV::ofs_running << std::setprecision(15) << " etot of base functional (Ry) " << pelec_base->f_en.etot << std::endl;
+        const std::string file_ebase = deepks_interface.get_filename("ebase", PARAM.inp.deepks_out_labels, iter);
+        LCAO_deepks_io::save_npy_e(pelec_base->f_en.etot, file_ebase, GlobalV::MY_RANK);
 
-        if (PARAM.inp.vl_in_h)
+        // ---------- h_base ----------
+        if (PARAM.inp.deepks_v_delta > 0)
         {
-            // update real space Hamiltonian
-            this->p_hamilt_base->refresh();
+            if (PARAM.inp.vl_in_h)
+            {
+                // update real space Hamiltonian
+                this->p_hamilt_base->refresh();
+            }
+
+            // output h_base
+            std::string out_dir = PARAM.globalv.global_out_dir+"base/";
+            std::string command1 =  "test -d " + out_dir + " || mkdir " + out_dir;
+            system( command1.c_str() );
+            ModuleIO::write_hsk(out_dir,
+                PARAM.inp.nspin,
+                this->kv.get_nks(), 
+                this->kv.get_nkstot(), 
+                this->kv.ik2iktot, 
+                this->kv.isk,
+                p_hamilt_base, 
+                this->pv, 
+                PARAM.globalv.gamma_only_local,
+                PARAM.inp.out_app_flag,
+                istep,
+                GlobalV::ofs_running);        
+
+            using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
+            hamilt::HamiltLCAO<TK, TR>* p_ham_deepks_base = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base);
+            int nks = this->kv.get_nks();
+            std::vector<TH> h_tot(nks);
+            DeePKS_domain::get_h_tot<TK, TH, TR>(this->pv, p_ham_deepks_base, h_tot, PARAM.globalv.nlocal, nks, 'H');
+
+            const std::string file_htot = deepks_interface.get_filename("hbase", PARAM.inp.deepks_out_labels, iter);
+            LCAO_deepks_io::save_npy_h<TK, TH>(h_tot, file_htot, PARAM.globalv.nlocal, nks, GlobalV::MY_RANK);
         }
 
-        // output h_base
-        std::string out_dir = PARAM.globalv.global_out_dir+"base/";
-        std::string command1 =  "test -d " + out_dir + " || mkdir " + out_dir;
-        system( command1.c_str() );
-        ModuleIO::write_hsk(out_dir,
-            PARAM.inp.nspin,
-            this->kv.get_nks(), 
-            this->kv.get_nkstot(), 
-            this->kv.ik2iktot, 
-            this->kv.isk,
-            p_hamilt_base, 
-            this->pv, 
-            PARAM.globalv.gamma_only_local,
-            PARAM.inp.out_app_flag,
-            istep,
-            GlobalV::ofs_running);        
+        // ---------- o_base ----------
+        if ( PARAM.inp.deepks_bandgap > 0 )
+        {
+            // obase isn't easy to output
+            bool skip_charge = true ;
+            hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+            hsolver_lcao_obj.solve(this->p_hamilt_base, this->psi_base[0], this->pelec_base, skip_charge);
 
-        // for descf, save this->chr.rho to this->chr_base.rho_save, rhopw for them are the same
-        // for (int is = 0; is < PARAM.inp.nspin; is++)
-        // {
-        //     ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
-        //     if (XC_Functional::get_ked_flag())
-        //     {
-        //         ModuleBase::GlobalFunc::DCOPY(this->chr.kin_r[is], this->chr_base.kin_r[is], this->chr.rhopw->nrxx);
-        //     }
-        // }
-
-        bool skip_charge = true ;
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt_base, this->psi_base[0], this->pelec_base, skip_charge);
-
-        pelec_base->cal_bandgap();
-        GlobalV::ofs_running << std::setprecision(15) << " otot of base functional (Ry) " << pelec_base->bandgap << std::endl;
-        
-        // // use chr to restore veff, useful for vnew when converged
-        // this->pelec_base->pot->update_from_charge(&this->chr, &ucell); 
-        
-
-        // else
-        // {
-        //     for (int is = 0; is < PARAM.inp.nspin; is++)
-        //     {
-        //         ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
-        //         if (XC_Functional::get_ked_flag())
-        //         {
-        //             ModuleBase::GlobalFunc::DCOPY(this->chr.kin_r[is], this->chr_base.kin_r[is], this->chr.rhopw->nrxx);
-        //         }
-        //     }
-        //     *this->psi_base = *this->psi;
-
-        //     this->pelec_base->pot->get_vnew(&this->chr_base, this->pelec_base->vnew);
-        //     this->pelec_base->vnew_exist = true;
-        //     // vnew will be used in force_scc()
-            
-        // }
+            pelec_base->cal_bandgap();
+            GlobalV::ofs_running << std::setprecision(15) << " otot of base functional (Ry) " << pelec_base->bandgap << std::endl;            
+        }
+    
         // restore to original xc
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
     }
-    else if ( conv_esolver )
+    // ---------- prepare for f_base ----------
+    else if ( PARAM.inp.cal_force && conv_esolver )
     {
         // vnew must be updated for force_scc() even if not output_iter
         // set as base functional Temporarily
@@ -364,37 +349,39 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
     }
     
-    // prepare for force
-    if ( ! conv_esolver )
+    if ( PARAM.inp.cal_force )
     {
-        // use chr after mixing to restore veff, useful for vnew when converged
-        this->pelec_base->pot->update_from_charge(&this->chr, &ucell); 
-    }
-    else
-    {
-        // // copy charge
-        // for (int is = 0; is < PARAM.inp.nspin; is++)
-        // {
-        //     ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
-        //     if (XC_Functional::get_ked_flag())
-        //     {
-        //         ModuleBase::GlobalFunc::DCOPY(this->chr.kin_r[is], this->chr_base.kin_r[is], this->chr.rhopw->nrxx);
-        //     }
-        // }
-
-        // copy dm
-        int nks = this->kv.get_nks();
-        auto _pes_lcao_base = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base);
-        auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-        for (int ik = 0; ik < nks; ik++)
+        if ( ! conv_esolver )
         {
-            _pes_lcao_base->get_DM()->set_DMK_pointer(ik, _pes_lcao->get_DM()->get_DMK_pointer(ik));
+            // use chr after mixing to restore veff, useful for vnew when converged
+            this->pelec_base->pot->update_from_charge(&this->chr, &ucell); 
         }
-        _pes_lcao_base->get_DM()->cal_DMR();
-        _pes_lcao_base->ekb = _pes_lcao->ekb;
-        _pes_lcao_base->wg = _pes_lcao->wg;          
-    }
+        else
+        {
+            // copy charge
+            for (int is = 0; is < PARAM.inp.nspin; is++)
+            {
+                ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
+                if (XC_Functional::get_ked_flag())
+                {
+                    ModuleBase::GlobalFunc::DCOPY(this->chr.kin_r[is], this->chr_base.kin_r[is], this->chr.rhopw->nrxx);
+                }
+            }
 
+            // copy dm
+            int nks = this->kv.get_nks();
+            auto _pes_lcao_base = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec_base);
+            auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+            for (int ik = 0; ik < nks; ik++)
+            {
+                _pes_lcao_base->get_DM()->set_DMK_pointer(ik, _pes_lcao->get_DM()->get_DMK_pointer(ik));
+            }
+            _pes_lcao_base->get_DM()->cal_DMR();
+            _pes_lcao_base->ekb = _pes_lcao->ekb;
+            _pes_lcao_base->wg = _pes_lcao->wg;          
+        }        
+    }
+    ModuleBase::timer::tick("ESolver_DoubleXC", "iter_finish");
 }
 
 template <typename TK, typename TR>
@@ -433,6 +420,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->solvent,
 #ifdef __MLALGO
                        this->ld,
+                       "base",
 #endif
 #ifdef __EXX
                        *this->exd,

@@ -51,6 +51,7 @@ class Force_Stress_LCAO
                         surchem& solvent,
 #ifdef __MLALGO
                         LCAO_Deepks<T>& ld,
+                        const std::string& dpks_out_type,
 #endif
 #ifdef __EXX
                         Exx_LRI_Interface<T, double>& exd,

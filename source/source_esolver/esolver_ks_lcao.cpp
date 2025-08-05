@@ -346,6 +346,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->solvent,
 #ifdef __MLALGO
                        this->ld,
+                       "tot",
 #endif
 #ifdef __EXX
                        *this->exd,
