@@ -48,7 +48,7 @@ struct veff_pw_op {
         const int& size,
         std::complex<FPTYPE>* out,
         std::complex<FPTYPE>* out1,
-        const FPTYPE** in);
+        const std::complex<FPTYPE>* in);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

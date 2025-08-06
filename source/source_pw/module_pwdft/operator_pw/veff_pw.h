@@ -68,6 +68,7 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const Real *veff = nullptr, *h_veff = nullptr, *d_veff = nullptr;
     T *porter = nullptr;
     T *porter1 = nullptr;
+    mutable T* nspin_4_veff=nullptr;
     base_device::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<Real, Device>;
 

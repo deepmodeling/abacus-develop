@@ -25,6 +25,8 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
+    resmem_complex_op()(nspin_4_veff, 4*veff_col, "Veff<PW>::porter");
+    // this->nspin_4_veff=new std::complex<double>[4*veff_row];
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
 
@@ -35,6 +37,7 @@ Veff<OperatorPW<T, Device>>::~Veff()
 {
     delmem_complex_op()(this->porter);
     delmem_complex_op()(this->porter1);
+    delmem_complex_op()(this->nspin_4_veff);
 }
 
 template<typename T, typename Device>
@@ -111,17 +114,26 @@ void Veff<OperatorPW<T, Device>>::act(
     }
     else if (npol == 2)
     {
-        const Real* current_veff[4]={nullptr};
-        for (int is = 0; is < 4; is++)
+        const Real* current_veff={nullptr};
+        const std::complex<Real> imag=std::complex<Real>(0.0, 1.0);
+        for (int ir=0; ir < veff_col; ir++)
         {
-            current_veff[is] = this->veff + is * this->veff_col;
+            const int base = 4 *ir;
+            Real part_1 = this->veff[ir];
+            Real part_2 = this->veff[ir + veff_col];
+            Real part_3 = this->veff[ir + 2*veff_col];
+            Real part_4 = this->veff[ir + 3*veff_col];
+            nspin_4_veff[base ] = part_1 + part_4;
+            nspin_4_veff[base + 1] = part_2 - imag * part_3;
+            nspin_4_veff[base + 2] = part_1 - part_4;
+            nspin_4_veff[base + 3] = part_2 + imag * part_3;
         }
         for (int ib = 0; ib < nbands; ib += npol)
         {
             // FFT to real space and do things.
             wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
             wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
-            veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
+            veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, nspin_4_veff);
             // FFT back to G space.
             wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);

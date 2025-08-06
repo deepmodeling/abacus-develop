@@ -20,20 +20,17 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& size,
                     std::complex<FPTYPE>* out,
                     std::complex<FPTYPE>* out1,
-                    const FPTYPE** in)
+                    const std::complex<FPTYPE>* in)
     {
+
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int ir = 0; ir < size; ir++) {
-            auto sup = out[ir] * (in[0][ir] + in[3][ir])
-                + out1[ir]
-                        * (in[1][ir]
-                        - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-            auto sdown = out1[ir] * (in[0][ir] - in[3][ir])
-                    + out[ir]
-                        * (in[1][ir]
-                            + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
+        for (int ir = 0; ir < size; ir++) 
+        {
+            const int base = ir * 4;
+            auto sup = out[ir] * (in[base]) + out1[ir] * (in[base + 1]);
+            auto sdown = out1[ir] * (in[base + 2]) + out[ir] * (in[base + 3]);
             out[ir] = sup;
             out1[ir] = sdown;
         }
