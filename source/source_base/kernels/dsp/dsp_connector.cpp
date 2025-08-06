@@ -14,16 +14,31 @@ namespace mtfunc
 {
 std::complex<double>* alp=nullptr;
 std::complex<double>* bet=nullptr;
+std::complex<float>*  alp_f=nullptr;
+std::complex<float>*  bet_f=nullptr;
+
 void dspInitHandle(int id)
 {
     mt_blas_init(id);
     std::cout << " ** DSP inited on cluster " << id << " **" << std::endl;
+    mtfunc::alp=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::bet=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::alp_f=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
+    mtfunc::bet_f=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
 } // Use this at the beginning of the program to start a dsp cluster
 
 void dspDestoryHandle(int id)
 {
     hthread_dev_close(id);
     std::cout << " ** DSP closed on cluster " << id << " **" << std::endl;
+    mtfunc::free_ht(mtfunc::alp);
+    mtfunc::free_ht(mtfunc::bet);
+    mtfunc::free_ht(mtfunc::alp_f);
+    mtfunc::free_ht(mtfunc::bet_f);
+    mtfunc::alp = nullptr;
+    mtfunc::bet = nullptr;
+    mtfunc::alp_f = nullptr;
+    mtfunc::bet_f = nullptr;
 } // Close dsp cluster at the end
 
 MTBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
@@ -47,9 +62,7 @@ MTBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
 
 void* malloc_ht(size_t bytes, int cluster_id)
 {
-    // std::cout << "MALLOC " << cluster_id;
     void* ptr = hthread_malloc((int)cluster_id, bytes, HT_MEM_RW);
-    // std::cout << ptr << " SUCCEED" << std::endl;;
     return ptr;
 }
 
@@ -57,9 +70,7 @@ void* malloc_ht(size_t bytes, int cluster_id)
 
 void free_ht(void* ptr)
 {
-    // std::cout << "FREE " << ptr;
     hthread_free(ptr);
-    // std::cout << " FREE SUCCEED" << std::endl;
 }
 
 // Used to replace original free
@@ -273,9 +284,7 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    // std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *alp = *alpha;
-    // std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *bet = *beta;
     mt_hthread_zgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
@@ -310,10 +319,8 @@ void cgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    std::complex<float>* alp = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
-    *alp = *alpha;
-    std::complex<float>* bet = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
-    *bet = *beta;
+    alp_f = alpha;
+    bet_f = beta;
 
     mt_hthread_cgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
@@ -330,8 +337,5 @@ void cgemm_mth_(const char* transa,
                      (void*)c,
                      *ldc,
                      cluster_id);
-
-    free_ht(alp);
-    free_ht(bet);
 } // cgemm that needn't malloc_ht or free_ht
 } // namespace mtfunc

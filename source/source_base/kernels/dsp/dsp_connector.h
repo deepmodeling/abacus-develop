@@ -17,7 +17,8 @@ void free_ht(void* ptr);
 // mtblas functions
 extern std::complex<double>* alp;
 extern std::complex<double>* bet;
-
+extern std::complex<float>*  alp_f;
+extern std::complex<float>*  bet_f;
 void sgemm_mt_(const char* transa,
                const char* transb,
                const int* m,
