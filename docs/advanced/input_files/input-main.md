@@ -1978,6 +1978,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Description**: Generate output files used in rpa calculations.
+- **Note**: If [`symmetry`](#symmetry) is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output:  `irreducible_sector.dat`, `symrot_k.dat` and `symrot_R.dat`
 - **Default**: False
 
 ### out_pchg
