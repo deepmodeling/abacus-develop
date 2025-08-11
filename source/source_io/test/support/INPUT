@@ -36,7 +36,7 @@ mem_saver                      0 #Only for nscf calculations. if set to 1, then 
 diago_proc                     4 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
 wannier_card                   none #input card for wannier functions
-soc_lambda                     1 #The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)
+soc_lambda                     1 #The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 cal_force                      0 #if calculate the force at the end of the electronic iteration
 out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
 device                         cpu #the computing device for ABACUS

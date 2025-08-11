@@ -123,8 +123,7 @@ struct Input_para
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
-    double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
-                             ///< is given by (1-soc_lambda)
+    double soc_lambda = 1.0; ///< The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 
     // ==============   #Parameters (3.LCAO) ===========================
     int nb2d = 0;                              ///< matrix 2d division.
