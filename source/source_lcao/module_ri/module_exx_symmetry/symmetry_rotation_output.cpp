@@ -15,7 +15,7 @@ namespace ModuleSymmetry
         const int lmax_ao, const std::vector<TC>& Rs)
     {
         ModuleBase::TITLE("ModuleSymmetry", "print_symrot_info_R");
-        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_R.dat");
+        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_R.txt");
         // Print the irreducible sector (to be optimized)
         ofs << "Number of irreducible sector: " << symrot.get_irreducible_sector().size() << std::endl;
         ofs << "Lmax of AOs: " << lmax_ao << "\n";
@@ -54,7 +54,7 @@ namespace ModuleSymmetry
     void print_symrot_info_k(const Symmetry_rotation& symrot, const K_Vectors& kv, const UnitCell& ucell)
     {
         ModuleBase::TITLE("Symmetry_rotation", "print_symrot_info_k");
-        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_k.dat");
+        std::ofstream ofs(PARAM.globalv.global_out_dir + "symrot_k.txt");
         ofs << "Number of IBZ k-points (k stars): " << kv.kstars.size() << std::endl;
         ofs << "Format:\n" << "The symmetry operation index to the irreducible k-point. For the irreducible k-points, isym=0.\n\n"
             << "(The direct coordinate of the original k-point)\n"
