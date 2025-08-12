@@ -69,6 +69,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv(const UnitCell& ucell)
     });
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs = std::get<0>(Cs_dCs);
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
+    this->Cs_period = exx_lri_rpa.exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 }
 
 template <typename T, typename Tdata>
