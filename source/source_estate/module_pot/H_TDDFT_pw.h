@@ -1,9 +1,9 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
+#include "pot_base.h"
 #include "source_io/input_conv.h"
 #include "source_io/module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
-#include "pot_base.h"
 
 namespace elecstate
 {
@@ -128,9 +128,6 @@ class H_TDDFT_pw : public PotBase
     static double amp;
     static vector<double> global_vext_time;
 
-    static double bmod;
-    static double bvec[3];
-
     const UnitCell* ucell_ = nullptr;
 
     // Obtain the current MD step information, used for restart calculation
@@ -151,11 +148,8 @@ class H_TDDFT_pw : public PotBase
 
     // get ncut number for At integral
     static int check_ncut(int t_type);
-
-    void prepare(const ModuleBase::Matrix3& G, int& dir);
 };
 
 } // namespace elecstate
 
 #endif
-
