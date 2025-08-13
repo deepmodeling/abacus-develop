@@ -139,7 +139,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
         this->symrot_.find_irreducible_sector(
             ucell.symm, ucell.atoms, ucell.st,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-        // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+        this->symrot_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
         this->symrot_.cal_Ms(kv, ucell, pv);
     }
 }

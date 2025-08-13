@@ -90,9 +90,15 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     if (exx_spacegroup_symmetry)
     {
         const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
+        const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
         symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
-            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+            Rs, period, ucell.lat);
+        // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
+        symrot.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
         symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
+        // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
+        ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
+        ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);
         mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
     }
     else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }

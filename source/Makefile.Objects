@@ -677,6 +677,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Mix_DMk_2D.o\
       Mix_Matrix.o\
       symmetry_rotation.o\
+      symmetry_rotation_output.o\
       symmetry_irreducible_sector.o\
 
 OBJS_PARALLEL=parallel_common.o\
