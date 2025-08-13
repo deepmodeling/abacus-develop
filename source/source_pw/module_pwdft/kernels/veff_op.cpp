@@ -20,7 +20,7 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& size,
                     std::complex<FPTYPE>* out,
                     std::complex<FPTYPE>* out1,
-                    const std::complex<FPTYPE>* in)
+                    std::complex<FPTYPE>* in)
     {
 
 #ifdef _OPENMP
@@ -37,6 +37,31 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
     }
 };
 
+template<typename FPTYPE>
+struct rearrange<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev,
+                    const int& size, 
+                    const FPTYPE* in, 
+                    std::complex<FPTYPE>* out) const
+    {
+        for (int ir=0; ir < size; ir++)
+        {
+            const int base = 4 *ir;
+            FPTYPE part_1 = in[ir];
+            FPTYPE part_2 = in[ir + size];
+            FPTYPE part_3 = in[ir + 2*size];
+            FPTYPE part_4 = in[ir + 3*size];
+            out[base ] = std::complex<FPTYPE>(part_1 + part_4, 0.0);
+            out[base + 1] = std::complex<FPTYPE>(part_2 , -part_3);
+            out[base + 2] = std::complex<FPTYPE>(part_1 - part_4, 0.0);
+            out[base + 3] = std::complex<FPTYPE>(part_2, part_3);
+        }
+    }
+};
+
+template struct rearrange<float, base_device::DEVICE_CPU>;
+template struct rearrange<double, base_device::DEVICE_CPU>;
 template struct veff_pw_op<float, base_device::DEVICE_CPU>;
 template struct veff_pw_op<double, base_device::DEVICE_CPU>;
 

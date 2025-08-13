@@ -412,8 +412,7 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
             {
                 int z = iz;
                 if (z < 0) {
-                    z += this->nz;
-}
+                    z += this->nz;}
                 if (!found[ixy * this->nz + z])
                 {
                     found[ixy * this->nz + z] = true;
@@ -422,7 +421,7 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
                     pw_filled++;
                     if (xprime && ixy / fftny == 0) {
                         ng_xeq0++;
-}
+                    }
                 }
             }
         }

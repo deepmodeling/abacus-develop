@@ -48,7 +48,7 @@ struct veff_pw_op {
         const int& size,
         std::complex<FPTYPE>* out,
         std::complex<FPTYPE>* out1,
-        const std::complex<FPTYPE>* in);
+        std::complex<FPTYPE>* in);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -62,7 +62,25 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& size,
                     std::complex<FPTYPE>* out,
                     std::complex<FPTYPE>* out1,
-                    const FPTYPE** in);
+                    std::complex<FPTYPE>* in);
+};
+
+#endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+template<typename FPTYPE, typename Device>
+struct rearrange
+{
+    void operator()(const Device* device,const int& size, const FPTYPE* in, std::complex<FPTYPE>* out) const;
+};
+
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+
+template<typename FPTYPE>
+struct rearrange<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* device, 
+                    const int& size, 
+                    const FPTYPE* in, 
+                    std::complex<FPTYPE>* out) const;
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

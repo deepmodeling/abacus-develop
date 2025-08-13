@@ -114,20 +114,7 @@ void Veff<OperatorPW<T, Device>>::act(
     }
     else if (npol == 2)
     {
-        const Real* current_veff={nullptr};
-        const std::complex<Real> imag=std::complex<Real>(0.0, 1.0);
-        for (int ir=0; ir < veff_col; ir++)
-        {
-            const int base = 4 *ir;
-            Real part_1 = this->veff[ir];
-            Real part_2 = this->veff[ir + veff_col];
-            Real part_3 = this->veff[ir + 2*veff_col];
-            Real part_4 = this->veff[ir + 3*veff_col];
-            nspin_4_veff[base ] = part_1 + part_4;
-            nspin_4_veff[base + 1] = part_2 - imag * part_3;
-            nspin_4_veff[base + 2] = part_1 - part_4;
-            nspin_4_veff[base + 3] = part_2 + imag * part_3;
-        }
+        rearrange<Real,Device>()(this->ctx, this->veff_col, this->veff, this->nspin_4_veff);
         for (int ib = 0; ib < nbands; ib += npol)
         {
             // FFT to real space and do things.
