@@ -3995,7 +3995,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### out_efield
 
 - **Type**: Boolean
-- **Description**: Whether to output the electric field data to files. When enabled, write real-time electric field values (unit: ​​V/Å​​) into files named `efield_[num].txt`, where `[num]` is the index of electric field, starting from `0`.
+- **Description**: Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: ​​V/Å​​) into files named `efield_[num].txt`, where `[num]` is the ​​sequential index of the electric field ranges from `0` to `N-1` for `N` configured fields. It is noteworthy that the field type sequence follows [`td_ttype`](#td_ttype), while the direction sequence follows [`td_vext_dire`](#td_vext_dire).
   - True: Output electric field.
   - False: Do not output electric field.
 - **Default**: False
