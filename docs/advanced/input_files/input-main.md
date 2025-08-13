@@ -3720,10 +3720,11 @@ These variables are used to control berry phase and wannier90 interface paramete
 ### td_print_eij
 
 - **Type**: Real
-- **Description**:
-  - $<0$: Do not print $E_{ij}$.
-  - $\geqslant 0$: Print the $E_{ij}=\Braket{\psi_i|\hat{H}|\psi_j}$ elements which are larger than `td_print_eij`.
+- **Description**: Controls the printing of Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i|\hat{H}|\psi_j}$.
+  - $<0$: Suppress all $E_{ij}$ output.
+  - $\geqslant 0$: Print only elements with ​​either $|\text{Re}(E_{ij})|$ or $|\text{Im}(E_{ij})|$​​ exceeding `td_print_eij`.
 - **Default**: -1
+- **Unit**: Ry
 
 ### td_propagator
 
