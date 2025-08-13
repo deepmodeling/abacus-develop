@@ -297,11 +297,10 @@ struct Input_para
     int propagator = 0;            ///< method of propagator
     int td_stype = 0;              ///< type of space domain  0 : length gauge  1: velocity gauge
     std::string td_ttype = "0";    ///< type of time domain
-    ///<  0  Gauss type function.
-    ///<  1  trapezoid type function.
-    ///<  2  Trigonometric functions, sin^2.
-    ///<  3  heaviside function.
-    ///<  4  HHG function.
+    ///< 0: Gaussian type function.
+    ///< 1: Trapezoid type function.
+    ///< 2: Trigonometric functions, sin^2.
+    ///< 3: Heaviside step function.
     int td_tstart = 1;
     int td_tend = 1000;
 

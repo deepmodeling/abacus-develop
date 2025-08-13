@@ -3771,8 +3771,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   - 0: Gaussian type function.
   - 1: Trapezoid function.
   - 2: Trigonometric function.
-  - 3: Heaviside function.
-  - 4: HHG function.
+  - 3: Heaviside step function.
 - **Default**: 0
 
 ### td_tstart

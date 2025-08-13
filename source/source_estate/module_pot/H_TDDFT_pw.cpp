@@ -22,11 +22,10 @@ vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 
 std::vector<int> H_TDDFT_pw::ttype;
-//  0  Gauss type function.
-//  1  trapezoid type function.
-//  2  Trigonometric functions, sin^2.
-//  3  heaviside function.
-//  4  HHG function.
+//  0: Gaussian type function.
+//  1: Trapezoid type function.
+//  2: Trigonometric functions, sin^2.
+//  3: Heaviside step function.
 
 int H_TDDFT_pw::tstart;
 int H_TDDFT_pw::tend;
@@ -259,10 +258,6 @@ int H_TDDFT_pw::check_ncut(int t_type)
         ncut = 2;
         break;
 
-        // case 4:
-        //     vext_time = cal_v_time_HHG();
-        //     break;
-
     default:
         std::cout << "time_domain_type of electric field is wrong" << std::endl;
         break;
@@ -375,10 +370,6 @@ double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
     case 3:
         vext_time = cal_v_time_heaviside(last);
         break;
-
-        // case 4:
-        //     vext_time = cal_v_time_HHG();
-        //     break;
 
     default:
         std::cout << "time_domain_type of electric field is wrong" << std::endl;
