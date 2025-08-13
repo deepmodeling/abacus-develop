@@ -32,6 +32,8 @@ class TestModuleHamiltVeff : public ::testing::Test
     const base_device::DEVICE_CPU* cpu_ctx = {};
     const base_device::DEVICE_GPU* gpu_ctx = {};
 
+    using rearrange_cpu = hamilt::rearrange<double, base_device::DEVICE_CPU>;
+    using rearrange_gpu = hamilt::rearrange<double, base_device::DEVICE_GPU>;
     using veff_cpu_op = hamilt::veff_pw_op<double, base_device::DEVICE_CPU>;
     using veff_gpu_op = hamilt::veff_pw_op<double, base_device::DEVICE_GPU>;
 
@@ -70,13 +72,10 @@ TEST_F(TestModuleHamiltVeff, veff_pw_spin_op_cpu)
     std::vector<std::complex<double>> expected_out1_spin(out_spin.size(), std::complex<double>(0, 0));
     std::vector<std::complex<double>> res = out_spin;
     std::vector<std::complex<double>> res1 = out1_spin;
+    std::vector<std::complex<double>>  in_(4 * in_spin.size(), std::complex<double>(0, 0));
+    rearrange_cpu()(cpu_ctx, this->size, in_spin.data(), in_.data());
 
-    const double * in_[4];
-    for (int ii = 0; ii < 4; ii++) {
-        in_[ii] = in_spin.data() + ii * this->size;
-    }
-
-    veff_cpu_op()(cpu_ctx, this->size, res.data(), res1.data(), in_);
+    veff_cpu_op()(cpu_ctx, this->size, res.data(), res1.data(), in_.data());
     for (int ii = 0; ii < res.size(); ii++) {
         EXPECT_LT(std::abs(res[ii] - expected_out_spin[ii]), 7.5e-5);
         EXPECT_LT(std::abs(res1[ii] - expected_out1_spin[ii]), 6e-5);
@@ -108,23 +107,22 @@ TEST_F(TestModuleHamiltVeff, veff_pw_spin_op_gpu)
 {
     std::vector<std::complex<double>> out1_spin(out_spin.size(), std::complex<double>(0, 0));
     std::vector<std::complex<double>> expected_out1_spin(out_spin.size(), std::complex<double>(0, 0));
+    std::vector<std::complex<double>> in_(4 * in_spin.size(), std::complex<double>(0, 0));
     std::vector<std::complex<double>> res = out_spin;
     std::vector<std::complex<double>> res1 = out1_spin;
     double* d_in = NULL;
+    std::complex<double>* d_in_ = NULL;
     std::complex<double>* d_res = NULL, * d_res1 = NULL;
     resize_memory_double_op()(d_in, in_spin.size());
     resize_memory_complex_op()(d_res, res.size());
     resize_memory_complex_op()(d_res1, res1.size());
+    resize_memory_complex_op()(d_in_, in_spin.size()*4);
     syncmem_double_h2d_op()(d_in, in_spin.data(), in_spin.size());
     syncmem_complex_h2d_op()(d_res, res.data(), res.size());
     syncmem_complex_h2d_op()(d_res1, res1.data(), res1.size());
-
-    const double * in_[4];
-    for (int ii = 0; ii < 4; ii++) {
-        in_[ii] = d_in + ii * this->size;
-    }
-
-    veff_gpu_op()(gpu_ctx, this->size, d_res, d_res1, in_);
+    
+    rearrange_gpu()(gpu_ctx, this->size, d_in, d_in_);
+    veff_gpu_op()(gpu_ctx, this->size, d_res, d_res1, d_in_);
 
     syncmem_complex_d2h_op()(res.data(), d_res, res.size());
     syncmem_complex_d2h_op()(res1.data(), d_res1, res1.size());
@@ -135,5 +133,6 @@ TEST_F(TestModuleHamiltVeff, veff_pw_spin_op_gpu)
     delete_memory_double_op()(d_in);
     delete_memory_complex_op()(d_res);
     delete_memory_complex_op()(d_res1);
+    delete_memory_complex_op()(d_in_);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
