@@ -12,33 +12,33 @@ extern "C"
 }
 namespace mtfunc
 {
-std::complex<double>* alp=nullptr;
-std::complex<double>* bet=nullptr;
-std::complex<float>*  alp_f=nullptr;
-std::complex<float>*  bet_f=nullptr;
+std::complex<double>* gemm_alp_double=nullptr;
+std::complex<double>* gemm_bet_double=nullptr;
+std::complex<float>*  gemm_alp_float=nullptr;
+std::complex<float>*  gemm_bet_float=nullptr;
 
 void dspInitHandle(int id)
 {
     mt_blas_init(id);
     std::cout << " ** DSP inited on cluster " << id << " **" << std::endl;
-    mtfunc::alp=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
-    mtfunc::bet=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
-    mtfunc::alp_f=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
-    mtfunc::bet_f=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
+    mtfunc::gemm_alp_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::gemm_bet_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::gemm_alp_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
+    mtfunc::gemm_bet_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
 } // Use this at the beginning of the program to start a dsp cluster
 
 void dspDestoryHandle(int id)
 {
     hthread_dev_close(id);
     std::cout << " ** DSP closed on cluster " << id << " **" << std::endl;
-    mtfunc::free_ht(mtfunc::alp);
-    mtfunc::free_ht(mtfunc::bet);
-    mtfunc::free_ht(mtfunc::alp_f);
-    mtfunc::free_ht(mtfunc::bet_f);
-    mtfunc::alp = nullptr;
-    mtfunc::bet = nullptr;
-    mtfunc::alp_f = nullptr;
-    mtfunc::bet_f = nullptr;
+    mtfunc::free_ht(mtfunc::gemm_alp_double);
+    mtfunc::free_ht(mtfunc::gemm_bet_double);
+    mtfunc::free_ht(mtfunc::gemm_alp_float);
+    mtfunc::free_ht(mtfunc::gemm_bet_float);
+    mtfunc::gemm_alp_double = nullptr;
+    mtfunc::gemm_bet_double = nullptr;
+    mtfunc::gemm_alp_float = nullptr;
+    mtfunc::gemm_bet_float = nullptr;
 } // Close dsp cluster at the end
 
 MTBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
@@ -284,20 +284,20 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    *alp = *alpha;
-    *bet = *beta;
+    *gemm_alp_double = *alpha;
+    *gemm_bet_double = *beta;
     mt_hthread_zgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
                      convertBLASTranspose(transb),
                      *m,
                      *n,
                      *k,
-                     alp,
+                     gemm_alp_double,
                      a,
                      *lda,
                      b,
                      *ldb,
-                     bet,
+                     gemm_bet_double,
                      c,
                      *ldc,
                      cluster_id);
@@ -319,8 +319,8 @@ void cgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    alp_f = alpha;
-    bet_f = beta;
+    gemm_alp_float = alpha;
+    gemm_bet_float = beta;
 
     mt_hthread_cgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
@@ -328,12 +328,12 @@ void cgemm_mth_(const char* transa,
                      *m,
                      *n,
                      *k,
-                     (const void*)alp,
+                     (const void*)gemm_alp_float,
                      (const void*)a,
                      *lda,
                      (const void*)b,
                      *ldb,
-                     (const void*)bet,
+                     (const void*)gemm_bet_float,
                      (void*)c,
                      *ldc,
                      cluster_id);

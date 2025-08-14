@@ -567,7 +567,11 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
             const int npw = this->pkv->ngk[ik];
             const double kweight = this->pkv->wk[ik];
             T* hshchi = nullptr;
-            resmem_complex_op()(hshchi, nchip_ik * npwx);
+            #ifdef __DSP
+            base_device::memory::resmem_complex_op<T, Device>()(hshchi);
+            #else
+            resmem_complex_op()(hshchi);
+            #endif
             T* tmpin = stowf.shchi->get_pointer();
             T* tmpout = hshchi;
             p_hamilt_sto->hPsi(tmpin, tmpout, nchip_ik);
@@ -577,7 +581,11 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
                 tmpin += npwx;
                 tmpout += npwx;
             }
+            #ifdef __DSP
+            base_device::memory::delete_memory_op_mt<T, Device>()(hshchi);
+            #else
             delmem_complex_op()(hshchi);
+            #endif
         }
     }
 #ifdef __MPI
