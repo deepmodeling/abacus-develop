@@ -568,9 +568,9 @@ void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
             const double kweight = this->pkv->wk[ik];
             T* hshchi = nullptr;
             #ifdef __DSP
-            base_device::memory::resize_memory_op_mt<T, Device>()(hshchi);
+            base_device::memory::resize_memory_op_mt<T, Device>()(hshchi, nchip_ik * npwx);
             #else
-            resmem_complex_op()(hshchi);
+            resmem_complex_op()(hshchi, nchip_ik * npwx);
             #endif
             T* tmpin = stowf.shchi->get_pointer();
             T* tmpout = hshchi;
