@@ -80,6 +80,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             pot_in->pot_register(pot_register_in);
             Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
                                                                         pot_in->get_veff_smooth_data<Real>(),
+                                                                        PARAM.inp.nspin,
                                                                         pot_in->get_veff_smooth().nr,
                                                                         pot_in->get_veff_smooth().nc,
                                                                         wfc_basis);

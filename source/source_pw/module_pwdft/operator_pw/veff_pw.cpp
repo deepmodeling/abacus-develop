@@ -7,10 +7,11 @@ namespace hamilt {
 
 template<typename T, typename Device>
 Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
-                                       const Real* veff_in,
-                                       const int veff_row,
-                                       const int veff_col,
-                                       const ModulePW::PW_Basis_K* wfcpw_in)
+                                const Real* veff_in,
+                                const int nspin_in,
+                                const int veff_row,
+                                const int veff_col,
+                                const ModulePW::PW_Basis_K* wfcpw_in)
 {
     if (isk_in == nullptr || wfcpw_in == nullptr) 
     {
@@ -21,23 +22,28 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->cal_type = calculation_type::pw_veff;
     this->isk = isk_in;
     this->veff = veff_in;
+    this->nspin = nspin_in;
     //note: "veff = nullptr" means that this core does not treat potential but still treats wf. 
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(nspin_4_veff, 4*veff_col, "Veff<PW>::porter");
-    // this->nspin_4_veff=new std::complex<double>[4*veff_row];
     resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
-    resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
-
+    if (nspin == 4)
+    {
+        resmem_complex_op()(nspin_4_veff, 4*veff_col, "Veff<PW>::porter");
+        resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
+    }
 }
 
 template<typename T, typename Device>
 Veff<OperatorPW<T, Device>>::~Veff()
 {
     delmem_complex_op()(this->porter);
-    delmem_complex_op()(this->porter1);
-    delmem_complex_op()(this->nspin_4_veff);
+    if (nspin == 4)
+    {
+        delmem_complex_op()(this->porter1);
+        delmem_complex_op()(this->nspin_4_veff);
+    }
 }
 
 template<typename T, typename Device>

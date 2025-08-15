@@ -27,6 +27,7 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   public:
     Veff(const int* isk_in,
          const Real* veff_in,
+         const int nspin_in,
          const int veff_row,
          const int veff_col,
          const ModulePW::PW_Basis_K* wfcpw_in);
@@ -65,6 +66,7 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     int veff_col = 0;
     int veff_row = 0;
+    int nspin = 1;
     const Real *veff = nullptr, *h_veff = nullptr, *d_veff = nullptr;
     T *porter = nullptr;
     T *porter1 = nullptr;

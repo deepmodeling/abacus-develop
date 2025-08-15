@@ -160,7 +160,11 @@ namespace ModuleIO
         {
             // 2.1 local xc
             vxcs_op_pw = new hamilt::Veff<hamilt::OperatorPW<T>>(kv.isk.data(),
-                potxc->get_veff_smooth_data<FPTYPE>(), potxc->get_veff_smooth().nr, potxc->get_veff_smooth().nc, &wfc_basis);
+                                                                potxc->get_veff_smooth_data<FPTYPE>(), 
+                                                                PARAM.inp.nspin,
+                                                                potxc->get_veff_smooth().nr, 
+                                                                potxc->get_veff_smooth().nc, 
+                                                                &wfc_basis);
             vxcs_op_pw->init(ik);   // set k-point index
             psi_pw.fix_k(ik);
             hpsi_localxc.fix_k(ik);
