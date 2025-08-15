@@ -15,10 +15,10 @@ void* malloc_ht(size_t bytes, int cluster_id);
 void free_ht(void* ptr);
 
 // mtblas functions
-extern std::complex<double>* gemm_alp_double;
-extern std::complex<double>* gemm_bet_double;
-extern std::complex<float>*  gemm_alp_float;
-extern std::complex<float>*  gemm_bet_float;
+extern std::complex<double>* gemm_alpha_double;
+extern std::complex<double>* gemm_beta_double;
+extern std::complex<float>*  gemm_alpha_float;
+extern std::complex<float>*  gemm_beta_float;
 void sgemm_mt_(const char* transa,
                const char* transb,
                const int* m,

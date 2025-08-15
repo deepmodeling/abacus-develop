@@ -12,33 +12,33 @@ extern "C"
 }
 namespace mtfunc
 {
-std::complex<double>* gemm_alp_double=nullptr;
-std::complex<double>* gemm_bet_double=nullptr;
-std::complex<float>*  gemm_alp_float=nullptr;
-std::complex<float>*  gemm_bet_float=nullptr;
+std::complex<double>* gemm_alpha_double=nullptr;
+std::complex<double>* gemm_beta_double=nullptr;
+std::complex<float>*  gemm_alpha_float=nullptr;
+std::complex<float>*  gemm_beta_float=nullptr;
 
 void dspInitHandle(int id)
 {
     mt_blas_init(id);
     std::cout << " ** DSP inited on cluster " << id << " **" << std::endl;
-    mtfunc::gemm_alp_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
-    mtfunc::gemm_bet_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
-    mtfunc::gemm_alp_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
-    mtfunc::gemm_bet_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
+    mtfunc::gemm_alpha_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::gemm_beta_double=(std::complex<double>*)mtfunc::malloc_ht(sizeof(std::complex<double>), id);
+    mtfunc::gemm_alpha_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
+    mtfunc::gemm_beta_float=(std::complex<float>*)mtfunc::malloc_ht(sizeof(std::complex<float>), id);
 } // Use this at the beginning of the program to start a dsp cluster
 
 void dspDestoryHandle(int id)
 {
     hthread_dev_close(id);
     std::cout << " ** DSP closed on cluster " << id << " **" << std::endl;
-    mtfunc::free_ht(mtfunc::gemm_alp_double);
-    mtfunc::free_ht(mtfunc::gemm_bet_double);
-    mtfunc::free_ht(mtfunc::gemm_alp_float);
-    mtfunc::free_ht(mtfunc::gemm_bet_float);
-    mtfunc::gemm_alp_double = nullptr;
-    mtfunc::gemm_bet_double = nullptr;
-    mtfunc::gemm_alp_float = nullptr;
-    mtfunc::gemm_bet_float = nullptr;
+    mtfunc::free_ht(mtfunc::gemm_alpha_double);
+    mtfunc::free_ht(mtfunc::gemm_beta_double);
+    mtfunc::free_ht(mtfunc::gemm_alpha_float);
+    mtfunc::free_ht(mtfunc::gemm_beta_float);
+    mtfunc::gemm_alpha_double = nullptr;
+    mtfunc::gemm_beta_double = nullptr;
+    mtfunc::gemm_alpha_float = nullptr;
+    mtfunc::gemm_beta_float = nullptr;
 } // Close dsp cluster at the end
 
 MTBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
@@ -284,20 +284,20 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    *gemm_alp_double = *alpha;
-    *gemm_bet_double = *beta;
+    *gemm_alpha_double = *alpha;
+    *gemm_beta_double = *beta;
     mt_hthread_zgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
                      convertBLASTranspose(transb),
                      *m,
                      *n,
                      *k,
-                     gemm_alp_double,
+                     gemm_alpha_double,
                      a,
                      *lda,
                      b,
                      *ldb,
-                     gemm_bet_double,
+                     gemm_beta_double,
                      c,
                      *ldc,
                      cluster_id);
@@ -319,8 +319,8 @@ void cgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id)
 {
-    gemm_alp_float = alpha;
-    gemm_bet_float = beta;
+    gemm_alpha_float = alpha;
+    gemm_beta_float = beta;
 
     mt_hthread_cgemm(MTBLAS_ORDER::MtblasColMajor,
                      convertBLASTranspose(transa),
@@ -328,12 +328,12 @@ void cgemm_mth_(const char* transa,
                      *m,
                      *n,
                      *k,
-                     (const void*)gemm_alp_float,
+                     (const void*)gemm_alpha_float,
                      (const void*)a,
                      *lda,
                      (const void*)b,
                      *ldb,
-                     (const void*)gemm_bet_float,
+                     (const void*)gemm_beta_float,
                      (void*)c,
                      *ldc,
                      cluster_id);
