@@ -123,8 +123,7 @@ struct Input_para
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
-    double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
-                             ///< is given by (1-soc_lambda)
+    double soc_lambda = 1.0; ///< The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 
     // ==============   #Parameters (3.LCAO) ===========================
     int nb2d = 0;                              ///< matrix 2d division.
@@ -297,11 +296,10 @@ struct Input_para
     int propagator = 0;            ///< method of propagator
     int td_stype = 0;              ///< type of space domain  0 : length gauge  1: velocity gauge
     std::string td_ttype = "0";    ///< type of time domain
-    ///<  0  Gauss type function.
-    ///<  1  trapezoid type function.
-    ///<  2  Trigonometric functions, sin^2.
-    ///<  3  heaviside function.
-    ///<  4  HHG function.
+    ///< 0: Gaussian type function.
+    ///< 1: Trapezoid type function.
+    ///< 2: Trigonometric functions, sin^2.
+    ///< 3: Heaviside step function.
     int td_tstart = 1;
     int td_tend = 1000;
 

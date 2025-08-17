@@ -96,9 +96,15 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                if (aa > 0.0 || bb > 0.0)
+                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
                 {
-                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    std::streamsize original_precision = ofs_running.precision();
+                    ofs_running << std::fixed << std::setprecision(8);
+                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
+                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
+                                << std::endl;
+                    ofs_running.unsetf(std::ios_base::fixed);
+                    ofs_running.precision(original_precision);
                 }
             }
         }
@@ -233,9 +239,15 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                if (aa > 0.0 || bb > 0.0)
+                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
                 {
-                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    std::streamsize original_precision = ofs_running.precision();
+                    ofs_running << std::fixed << std::setprecision(8);
+                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
+                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
+                                << std::endl;
+                    ofs_running.unsetf(std::ios_base::fixed);
+                    ofs_running.precision(original_precision);
                 }
             }
         }
@@ -371,9 +383,15 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                if (aa > 0.0 || bb > 0.0)
+                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
                 {
-                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    std::streamsize original_precision = ofs_running.precision();
+                    ofs_running << std::fixed << std::setprecision(8);
+                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
+                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
+                                << std::endl;
+                    ofs_running.unsetf(std::ios_base::fixed);
+                    ofs_running.precision(original_precision);
                 }
             }
         }
