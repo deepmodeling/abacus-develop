@@ -27,11 +27,12 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     if (nspin == 4)
     {
+        resmem_complex_op()(this->porter, 2*this->wfcpw->nmaxgr, "Veff<PW>::porter1");
         resmem_complex_op()(nspin_4_veff, 4*veff_col, "Veff<PW>::porter");
-        resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
+    }else{
+        resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     }
 }
 
@@ -41,7 +42,6 @@ Veff<OperatorPW<T, Device>>::~Veff()
     delmem_complex_op()(this->porter);
     if (nspin == 4)
     {
-        delmem_complex_op()(this->porter1);
         delmem_complex_op()(this->nspin_4_veff);
     }
 }
@@ -124,12 +124,19 @@ void Veff<OperatorPW<T, Device>>::act(
         for (int ib = 0; ib < nbands; ib += npol)
         {
             // FFT to real space and do things.
-            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
-            veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, nspin_4_veff);
-            // FFT back to G space.
-            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+            wfcpw->convolution<T, Device>(this->ik,
+                               this->veff_col,
+                               max_npw,
+                               tmpsi_in,
+                               this->porter,
+                               nspin_4_veff,
+                               tmhpsi);
+            // wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            // wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            // veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, nspin_4_veff);
+            // // FFT back to G space.
+            // wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            // wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }

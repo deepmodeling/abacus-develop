@@ -353,7 +353,7 @@ void PW_Basis_K::convolution_cpu(const int ik,
     auto* auxg = this->fft_bundle.get_auxg_data<FPTYPE>();
     auto* auxr=this->fft_bundle.get_auxr_data<FPTYPE>();
 
-    memset(auxg, 0, this->nst * this->nz * 2 * 8);
+    memset(auxg, 0, this->nst * this->nz * sizeof(FPTYPE)*2);
     const int startig = ik * this->npwk_max;
     const int npwk = this->npwk[ik];
 
@@ -394,6 +394,76 @@ void PW_Basis_K::convolution_cpu(const int ik,
         }
     ModuleBase::timer::tick(this->classname, "convolution");
 }
+
+template <typename FPTYPE>
+void PW_Basis_K::convolution_cpu(const int ik,
+                             const int size,
+                             const int max_npw,
+                             const std::complex<FPTYPE>* input,
+                             std::complex<FPTYPE>* tmp,
+                             std::complex<FPTYPE>* input1,
+                             std::complex<FPTYPE>* output,
+                             const bool add,
+                             const FPTYPE factor) const
+{
+    ModuleBase::timer::tick(this->classname, "convolution");
+    assert(this->gamma_only == false);
+    base_device::DEVICE_CPU* cpu_ctx ;
+    memset(tmp, 0, 2*size * 2 * sizeof(FPTYPE));
+    const int startig = ik * this->npwk_max;
+    const int startig2 = ik * this->npwk_max;
+    const int npwk = this->npwk[ik];
+    auto *augr = tmp;
+    auto *augr1 = &tmp[size];
+    auto *augx = this->fft_bundle.get_auxg_data<FPTYPE>();
+    auto *augx1 = this->fft_bundle.get_auxr_data<FPTYPE>();
+    memset(augx, 0, this->nst * this->nz * sizeof(FPTYPE)*2);
+    memset(augx1, 0, this->nst * this->nz * sizeof(FPTYPE)*2);
+    for (int igl = 0; igl < npwk; ++igl)
+    {
+        // const int idx = this->igl2isz_k[igl + startig];
+        augr[this->igl2isz_k[igl + startig]] = input[igl];
+    }
+    for (int igl =0 ; igl < npwk ; ++igl)
+    {
+        augr1[this->igl2isz_k[igl + startig]] = input[igl+max_npw];
+    }
+    // use 3d fft backward
+    this->fft_bundle.fftzbac(augr, augr);
+    this->fft_bundle.fftzbac(augr1, augr1);
+
+    this->gathers_scatterp(augr, augx);
+    this->gathers_scatterp(augr1, augx1);
+
+    this->fft_bundle.fftxybac(augx, augx);
+    this->fft_bundle.fftxybac(augx1, augx1);
+    hamilt::veff_pw_op<FPTYPE,base_device::DEVICE_CPU>()(cpu_ctx, size, augx, augx1, input1);
+    this->fft_bundle.fftxyfor(augx, augx);
+    this->fft_bundle.fftxyfor(augx1, augx1);
+
+    this->gatherp_scatters(augx, augr);
+    this->gatherp_scatters(augx1,augr1);
+    
+    this->fft_bundle.fftzfor(augr, augr);
+    this->fft_bundle.fftzfor(augr1,augr1);
+
+    FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#endif
+        for (int igl = 0; igl < npwk; ++igl)
+        {
+            // const int idx = this->igl2isz_k[igl + startig];
+            output[igl] += tmpfac * augr[this->igl2isz_k[igl + startig]];
+        }
+    
+        for (int igl =0 ; igl < npwk ; ++igl)
+        {
+            output[igl+max_npw] += tmpfac * augr1[this->igl2isz_k[igl + startig]];
+        }
+    ModuleBase::timer::tick(this->classname, "convolution");
+    }
+
 
 #if (defined(__CUDA) || defined(__ROCM))
 template <>
@@ -673,6 +743,25 @@ template void PW_Basis_K::convolution_gpu<double>(const int ik,
                                                   const bool add,
                                                   const double factor) const;
 #endif
+template void PW_Basis_K::convolution_cpu<float>(const int ik,
+                                                    const int size,
+                                                    const int max_npw,
+                                                    const std::complex<float>* input,
+                                                    std::complex<float>* tmp,
+                                                    std::complex<float>* input1,
+                                                    std::complex<float>* output,
+                                                    const bool add,
+                                                    const float factor) const;
+template void PW_Basis_K::convolution_cpu<double>(const int ik,
+                                                   const int size,
+                                                   const int max_npw,
+                                                   const std::complex<double>* input,
+                                                   std::complex<double>* tmp,
+                                                   std::complex<double>* input1,
+                                                   std::complex<double>* output,
+                                                   const bool add,
+                                                   const double factor) const;
+
 template void PW_Basis_K::convolution_cpu<float>(const int ik,
                                                  const int size,
                                                  const std::complex<float>* input,
