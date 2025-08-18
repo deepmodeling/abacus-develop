@@ -368,10 +368,10 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-    std::vector<double> tau_h;
-    std::vector<double> gcar_h;
     if(this->device == base_device::GpuDevice)
     {
+        std::vector<double> tau_h;
+        std::vector<double> gcar_h;
         tau_h.resize(this->nat * 3);
         for(int iat = 0; iat < this->nat; ++iat)
         {
@@ -389,16 +389,15 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             gcar_h[ig * 3 + 1] = rho_basis->gcar[ig].y;
             gcar_h[ig * 3 + 2] = rho_basis->gcar[ig].z;
         }
-    }
-    int* iat2it_d = nullptr;
-    int* ig2gg_d = nullptr;
-    double* gcar_d = nullptr;
-    double* tau_d = nullptr;
-    std::complex<double>* aux_d = nullptr;
-    double* forcelc_d  = nullptr;
-    double* vloc_d = nullptr;
-    if(this->device == base_device::GpuDevice)
-    {
+
+        int* iat2it_d = nullptr;
+        int* ig2gg_d = nullptr;
+        double* gcar_d = nullptr;
+        double* tau_d = nullptr;
+        std::complex<double>* aux_d = nullptr;
+        double* forcelc_d  = nullptr;
+        double* vloc_d = nullptr;
+
         resmem_int_op()(iat2it_d, this->nat);
         resmem_int_op()(ig2gg_d, rho_basis->npw);
         resmem_var_op()(gcar_d, rho_basis->npw * 3);
@@ -414,10 +413,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         syncmem_complex_h2d_op()(aux_d, aux, rho_basis->npw);
         syncmem_var_h2d_op()(forcelc_d, forcelc.c, this->nat * 3);
         syncmem_var_h2d_op()(vloc_d, vloc.c, vloc.nr * vloc.nc);
-    }
 
-    if(this->device == base_device::GpuDevice)
-    {
         hamilt::cal_force_loc_op<FPTYPE, Device>()(
             this->nat,
             rho_basis->npw,
@@ -431,8 +427,16 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             vloc.nc,
             forcelc_d);
         syncmem_var_d2h_op()(forcelc.c, forcelc_d, this->nat * 3);
+
+        delmem_int_op()(iat2it_d);
+        delmem_int_op()(ig2gg_d);
+        delmem_var_op()(gcar_d);
+        delmem_var_op()(tau_d);
+        delmem_complex_op()(aux_d);
+        delmem_var_op()(forcelc_d);
+        delmem_var_op()(vloc_d);
     }
-    else{
+    else{  // calculate forces on CPU
         #ifdef _OPENMP
         #pragma omp parallel for
         #endif
@@ -456,16 +460,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             forcelc(iat, 1) *= (ucell.tpiba * ucell.omega);
             forcelc(iat, 2) *= (ucell.tpiba * ucell.omega);
         }
-    }
-    if(this->device == base_device::GpuDevice)
-    {
-        delmem_int_op()(iat2it_d);
-        delmem_int_op()(ig2gg_d);
-        delmem_var_op()(gcar_d);
-        delmem_var_op()(tau_d);
-        delmem_complex_op()(aux_d);
-        delmem_var_op()(forcelc_d);
-        delmem_var_op()(vloc_d);
     }
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
