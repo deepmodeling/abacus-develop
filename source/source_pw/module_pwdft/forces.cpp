@@ -681,9 +681,9 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                             = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
                         H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
 
-                    for (int n = 0; n < nrm; n++)
-                    {
-                        const double rr = sqrt(r2[n]) * ucell.lat0;
+                        for (int n = 0; n < nrm; n++)
+                        {
+                            const double rr = sqrt(r2[n]) * ucell.lat0;
 
                             double factor;
                             {
