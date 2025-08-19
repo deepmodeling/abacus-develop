@@ -476,7 +476,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
-
+    this->device = base_device::get_device_type<Device>(this->ctx);
     double fact = 2.0;
     std::vector<std::complex<double>> aux(rho_basis->npw);
 
@@ -556,89 +556,152 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     {
         aux[rho_basis->ig_gge0] = std::complex<double>(0.0, 0.0);
     }
-
-    #pragma omp parallel for
-    for(int iat = 0; iat < this->nat; ++iat)
+    if(this->device == base_device::GpuDevice)
     {
-        const int it = ucell.iat2it[iat];
-        const int ia = ucell.iat2ia[iat];
-        double it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
-
+        std::vector<double> tau_h(this->nat * 3);
+        std::vector<double> gcar_h(rho_basis->npw * 3);
+        for(int iat = 0; iat < this->nat; ++iat)
+        {
+            int it = ucell.iat2it[iat];
+            int ia = ucell.iat2ia[iat];
+            tau_h[iat * 3] = ucell.atoms[it].tau[ia].x;
+            tau_h[iat * 3 + 1] = ucell.atoms[it].tau[ia].y;
+            tau_h[iat * 3 + 2] = ucell.atoms[it].tau[ia].z;
+        }
         for(int ig = 0; ig < rho_basis->npw; ++ig)
         {
-            if(ig != rho_basis->ig_gge0) // skip G=0
-            {
-                const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
-                const double arg = ModuleBase::TWO_PI * (gcar * ucell.atoms[it].tau[ia]);
-                double sinp, cosp;
-                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
-                forceion(iat, 0) += gcar[0] * sumnb;
-                forceion(iat, 1) += gcar[1] * sumnb;
-                forceion(iat, 2) += gcar[2] * sumnb;
-            }
+            gcar_h[ig * 3] = rho_basis->gcar[ig].x;
+            gcar_h[ig * 3 + 1] = rho_basis->gcar[ig].y;
+            gcar_h[ig * 3 + 2] = rho_basis->gcar[ig].z;
         }
-        forceion(iat, 0) *= it_fact;
-        forceion(iat, 1) *= it_fact;
-        forceion(iat, 2) *= it_fact;
-    }
-
-    // means that the processor contains G=0 term.
-    if (rho_basis->ig_gge0 >= 0)
-    {
-        double rmax = 5.0 / (sqrt(alpha) * ucell.lat0);
-        int nrm = 0;
-
-        // output of rgen: the number of vectors in the sphere
-        const int mxr = 200;
-        // the maximum number of R vectors included in r
-        std::vector<ModuleBase::Vector3<double>> r(mxr);
-        std::vector<double> r2(mxr);
-        std::vector<int> irr(mxr);
-        // the square modulus of R_j-tau_s-tau_s'
-
-        const double sqa = sqrt(alpha);
-        const double sq8a_2pi = sqrt(8.0 * alpha / ModuleBase::TWO_PI);
-
-        // iterating atoms.
-        #pragma omp parallel for
-        for(int iat1 = 0; iat1 < this->nat; iat1++)
+        std::vector<double> it_fact_h(ucell.ntype);
+        for(int it = 0; it < ucell.ntype; ++it)
         {
-            int T1 = ucell.iat2it[iat1];
-            int I1 = ucell.iat2ia[iat1];
-            for(int iat2 = 0; iat2 < this->nat; iat2++)
+            it_fact_h[it] = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+        }
+
+        int* iat2it_d = nullptr;
+        double* gcar_d = nullptr;
+        double* tau_d = nullptr;
+        double* it_fact_d = nullptr;
+        std::complex<double>* aux_d = nullptr;
+        double* forceion_d  = nullptr;
+        resmem_int_op()(iat2it_d, this->nat);
+        resmem_var_op()(gcar_d, rho_basis->npw * 3);
+        resmem_var_op()(tau_d, this->nat * 3);
+        resmem_var_op()(it_fact_d, ucell.ntype);
+        resmem_complex_op()(aux_d, rho_basis->npw);
+        resmem_var_op()(forceion_d, this->nat * 3);
+
+        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it, this->nat);
+        syncmem_var_h2d_op()(gcar_d, gcar_h.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
+        syncmem_var_h2d_op()(it_fact_d, it_fact_h.data(), ucell.ntype);
+        syncmem_complex_h2d_op()(aux_d, aux.data(), rho_basis->npw);
+        syncmem_var_h2d_op()(forceion_d, forceion.c, this->nat * 3);
+
+        hamilt::cal_force_ew_op<FPTYPE, Device>()(
+            this->nat,
+            rho_basis->npw,
+            rho_basis->ig_gge0,
+            iat2it_d,
+            gcar_d,
+            tau_d,
+            it_fact_d,
+            aux_d,
+            forceion_d);
+        
+        syncmem_var_d2h_op()(forceion.c, forceion_d, this->nat * 3);
+        delmem_int_op()(iat2it_d);
+        delmem_var_op()(gcar_d);
+        delmem_var_op()(tau_d);
+        delmem_var_op()(it_fact_d);
+        delmem_complex_op()(aux_d);
+        delmem_var_op()(forceion_d);
+    } else // calculate forces on CPU
+    {
+    #pragma omp parallel for
+        for(int iat = 0; iat < this->nat; ++iat)
+        {
+            const int it = ucell.iat2it[iat];
+            const int ia = ucell.iat2ia[iat];
+            double it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+
+            for(int ig = 0; ig < rho_basis->npw; ++ig)
             {
-                if (iat1 != iat2)
+                if(ig != rho_basis->ig_gge0) // skip G=0
+                {
+                    const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
+                    const double arg = ModuleBase::TWO_PI * (gcar * ucell.atoms[it].tau[ia]);
+                    double sinp, cosp;
+                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                    double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
+                    forceion(iat, 0) += gcar[0] * sumnb;
+                    forceion(iat, 1) += gcar[1] * sumnb;
+                    forceion(iat, 2) += gcar[2] * sumnb;
+                }
+            }
+            forceion(iat, 0) *= it_fact;
+            forceion(iat, 1) *= it_fact;
+            forceion(iat, 2) *= it_fact;
+        }
+    }
+    // means that the processor contains G=0 term.
+    #pragma omp parallel
+    {
+        if (rho_basis->ig_gge0 >= 0)
+        {
+            double rmax = 5.0 / (sqrt(alpha) * ucell.lat0);
+            int nrm = 0;
+
+            // output of rgen: the number of vectors in the sphere
+            const int mxr = 200;
+            // the maximum number of R vectors included in r
+            std::vector<ModuleBase::Vector3<double>> r(mxr);
+            std::vector<double> r2(mxr);
+            std::vector<int> irr(mxr);
+            // the square modulus of R_j-tau_s-tau_s'
+
+            const double sqa = sqrt(alpha);
+            const double sq8a_2pi = sqrt(8.0 * alpha / ModuleBase::TWO_PI);
+
+            // iterating atoms.
+            #pragma omp for
+            for(int iat1 = 0; iat1 < this->nat; iat1++)
+            {
+                int T1 = ucell.iat2it[iat1];
+                int I1 = ucell.iat2ia[iat1];
+                for(int iat2 = 0; iat2 < this->nat; iat2++)
                 {
                     int T2 = ucell.iat2it[iat2];
                     int I2 = ucell.iat2ia[iat2];
-                    ModuleBase::Vector3<double> d_tau
-                        = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
-                    H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
-
-                    for (int n = 0; n < nrm; n++)
+                    if (iat1 != iat2)
                     {
-                        const double rr = sqrt(r2[n]) * ucell.lat0;
+                        ModuleBase::Vector3<double> d_tau
+                            = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
+                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
 
-                        double factor;
+                        for (int n = 0; n < nrm; n++)
                         {
-                            factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
-                                        * ModuleBase::e2 / (rr * rr)
-                                        * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
-                                        * ucell.lat0;
+                            const double rr = sqrt(r2[n]) * ucell.lat0;
+
+                            double factor;
+                            {
+                                factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
+                                            * ModuleBase::e2 / (rr * rr)
+                                            * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
+                                            * ucell.lat0;
+                            }
+                            forceion(iat1, 0) -= factor * r[n].x;
+                            forceion(iat1, 1) -= factor * r[n].y;
+                            forceion(iat1, 2) -= factor * r[n].z;
                         }
-
-                        forceion(iat1, 0) -= factor * r[n].x;
-                        forceion(iat1, 1) -= factor * r[n].y;
-                        forceion(iat1, 2) -= factor * r[n].z;
                     }
-                }
-            } // atom b
-        } // atom a
+                } // atom b
+            } // atom a
+        }
     }
-
     Parallel_Reduce::reduce_pool(forceion.c, forceion.nr * forceion.nc);
-
     // this->print(GlobalV::ofs_running, "ewald forces", forceion);
 
     ModuleBase::timer::tick("Forces", "cal_force_ew");
