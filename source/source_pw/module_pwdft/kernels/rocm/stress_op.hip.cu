@@ -844,23 +844,17 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
 template <typename FPTYPE>
 void cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const std::complex<FPTYPE> *psiv,
-        const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+        const FPTYPE* gv,
         const FPTYPE* rhocgigg_vec,
         FPTYPE* force,
-        const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+        const FPTYPE* tau,
         const int npw,
-        const FPTYPE omega, const FPTYPE tpiba
+        const FPTYPE omega, const FPTYPE tpiba, const int na
     )
 {
-    int t_size = 1024;
-    int t_num = (npw%t_size) ? (npw/t_size + 1) : (npw/t_size);
-
-    dim3 npwgrid(((t_num%THREADS_PER_BLOCK) ? (t_num/THREADS_PER_BLOCK + 1) : (t_num/THREADS_PER_BLOCK)));
-
-
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_npw<FPTYPE>), npwgrid, THREADS_PER_BLOCK,0,0,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_npw<FPTYPE>), na, THREADS_PER_BLOCK,0,0,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(psiv),
-        gv_x, gv_y, gv_z, rhocgigg_vec, force, pos_x, pos_y, pos_z,
+        gv, rhocgigg_vec, force, tau,
         npw, omega, tpiba
     );
 
