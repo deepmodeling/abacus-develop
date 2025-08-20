@@ -469,6 +469,7 @@ OBJS_PW=fft_bundle.o\
     pw_init.o\
     pw_transform.o\
     pw_transform_k.o\
+    pw_transform_convolution.o\
 
 OBJS_RELAXATION=bfgs_basic.o\
     relax_driver.o\
