@@ -189,14 +189,18 @@ void PW_Basis_K::convolution_gpu(const int ik,
     assert(this->gamma_only == false);
     base_device::DEVICE_GPU* gpu_ctx;
     // memset the auxr of 0 in the auxr,here the len of the auxr is nxyz
-    base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
-        tmp,
-        0,
-        2*this->nxyz);
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
-    auto *auxg = tmp;
-    auto *auxg1 = &tmp[size];
+    auto *auxg = this->fft_bundle.get_auxr_3d_data<FPTYPE>();
+    auto *auxg1 = &this->fft_bundle.get_auxr_3d_data<FPTYPE>()[size];
+    base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
+        auxg,
+        0,
+        this->nxyz);
+    base_device::memory::set_memory_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>()(
+        auxg1,
+        0,
+        this->nxyz);
     set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
                                                          this->ig2ixyz_k + startig,
                                                          input,
@@ -215,14 +219,14 @@ void PW_Basis_K::convolution_gpu(const int ik,
     // use 3d fft backward
     set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
                                                                    this->nxyz,
-                                                                   add,
+                                                                   true,
                                                                    factor,
                                                                    this->ig2ixyz_k + startig,
                                                                    auxg,
                                                                    output);
     set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>()(npw_k,
                                                                    this->nxyz,
-                                                                   add,
+                                                                   true,
                                                                    factor,
                                                                    this->ig2ixyz_k + startig,
                                                                    auxg1,

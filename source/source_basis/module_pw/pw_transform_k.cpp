@@ -2,7 +2,6 @@
 #include "source_basis/module_pw/kernels/pw_op.h"
 #include "pw_basis_k.h"
 #include "pw_gatherscatter.h"
-#include "source_pw/module_pwdft/kernels/veff_op.h"
 namespace ModulePW
 {
 
