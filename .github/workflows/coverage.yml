@@ -12,7 +12,7 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Requirements for Coverage Testing
         run: |
           apt update && apt install -y lcov gpg curl jq ca-certificates
