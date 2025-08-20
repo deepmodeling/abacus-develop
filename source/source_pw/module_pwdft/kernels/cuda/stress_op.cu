@@ -713,8 +713,6 @@ __global__ void cal_force_npw(
 ){
     int ia = blockIdx.x;
     int tid = threadIdx.x;
-    const int warp_id = tid / WARP_SIZE;
-    const int lane_id = tid % WARP_SIZE;
     if(tid > npw) return;
 
     FPTYPE pos_x = tau[ia * 3];
