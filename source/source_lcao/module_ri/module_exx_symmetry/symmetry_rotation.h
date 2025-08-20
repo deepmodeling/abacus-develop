@@ -27,6 +27,13 @@ namespace ModuleSymmetry
         {
             return this->irs_.get_return_lattice(symm, gmatd, gtransd, posd_a1, posd_a2);
         }
+        TCdouble get_return_lattice(const int iat, const int isym) const
+        {
+            return this->irs_.get_return_lattice(iat, isym);
+        }
+        /// the rotation matrix under the basis of S_l^m. size: [nsym][lmax][nm*nm]
+        const std::vector<std::vector<RI::Tensor<std::complex<double>>>>& rotmat_Slm = this->rotmat_Slm_;
+        const int& abfs_Lmax = this->abfs_Lmax_;
         //--------------------------------------------------------------------------------
         // setters
         void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
@@ -34,6 +41,7 @@ namespace ModuleSymmetry
         {
             this->irs_.find_irreducible_sector(symm, atoms, st, Rs, period, lat);
         }
+        void set_abfs_Lmax(const int l) { this->abfs_Lmax_ = l; }
         void set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi);
         //--------------------------------------------------------------------------------
         /// functions  to contruct rotation matrix in AO-representation
@@ -167,6 +175,20 @@ namespace ModuleSymmetry
         Irreducible_Sector irs_;
 
     };
+
+    template<typename T>  std::string vec3_fmt(const T& x, const T& y, const T& z)
+    {
+        return  "(" + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ")";
+    }
+    template<typename T>  std::string vec3_fmt(const ModuleBase::Vector3<T>& v)
+    {
+        return vec3_fmt(v.x, v.y, v.z);
+    }
+    // output k stars and the rotation matrices of Bloch orbitals
+    void print_symrot_info_k(const ModuleSymmetry::Symmetry_rotation& symrot,
+        const K_Vectors& kv, const UnitCell& ucell);
+    void print_symrot_info_R(const Symmetry_rotation& symrot, const Symmetry& symm,
+        const int lmax_ao, const std::vector<TC>& Rs);
 }
 
 #include "symmetry_rotation_R.hpp"

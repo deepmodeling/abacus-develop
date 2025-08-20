@@ -368,10 +368,10 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
     // to G space. maybe need fftw with OpenMP
     rho_basis->real2recip(aux, aux);
 
-    std::vector<double> tau_h;
-    std::vector<double> gcar_h;
     if(this->device == base_device::GpuDevice)
     {
+        std::vector<double> tau_h;
+        std::vector<double> gcar_h;
         tau_h.resize(this->nat * 3);
         for(int iat = 0; iat < this->nat; ++iat)
         {
@@ -389,16 +389,15 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             gcar_h[ig * 3 + 1] = rho_basis->gcar[ig].y;
             gcar_h[ig * 3 + 2] = rho_basis->gcar[ig].z;
         }
-    }
-    int* iat2it_d = nullptr;
-    int* ig2gg_d = nullptr;
-    double* gcar_d = nullptr;
-    double* tau_d = nullptr;
-    std::complex<double>* aux_d = nullptr;
-    double* forcelc_d  = nullptr;
-    double* vloc_d = nullptr;
-    if(this->device == base_device::GpuDevice)
-    {
+
+        int* iat2it_d = nullptr;
+        int* ig2gg_d = nullptr;
+        double* gcar_d = nullptr;
+        double* tau_d = nullptr;
+        std::complex<double>* aux_d = nullptr;
+        double* forcelc_d  = nullptr;
+        double* vloc_d = nullptr;
+
         resmem_int_op()(iat2it_d, this->nat);
         resmem_int_op()(ig2gg_d, rho_basis->npw);
         resmem_var_op()(gcar_d, rho_basis->npw * 3);
@@ -414,10 +413,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         syncmem_complex_h2d_op()(aux_d, aux, rho_basis->npw);
         syncmem_var_h2d_op()(forcelc_d, forcelc.c, this->nat * 3);
         syncmem_var_h2d_op()(vloc_d, vloc.c, vloc.nr * vloc.nc);
-    }
 
-    if(this->device == base_device::GpuDevice)
-    {
         hamilt::cal_force_loc_op<FPTYPE, Device>()(
             this->nat,
             rho_basis->npw,
@@ -431,8 +427,16 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             vloc.nc,
             forcelc_d);
         syncmem_var_d2h_op()(forcelc.c, forcelc_d, this->nat * 3);
+
+        delmem_int_op()(iat2it_d);
+        delmem_int_op()(ig2gg_d);
+        delmem_var_op()(gcar_d);
+        delmem_var_op()(tau_d);
+        delmem_complex_op()(aux_d);
+        delmem_var_op()(forcelc_d);
+        delmem_var_op()(vloc_d);
     }
-    else{
+    else{  // calculate forces on CPU
         #ifdef _OPENMP
         #pragma omp parallel for
         #endif
@@ -457,16 +461,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
             forcelc(iat, 2) *= (ucell.tpiba * ucell.omega);
         }
     }
-    if(this->device == base_device::GpuDevice)
-    {
-        delmem_int_op()(iat2it_d);
-        delmem_int_op()(ig2gg_d);
-        delmem_var_op()(gcar_d);
-        delmem_var_op()(tau_d);
-        delmem_complex_op()(aux_d);
-        delmem_var_op()(forcelc_d);
-        delmem_var_op()(vloc_d);
-    }
     // this->print(GlobalV::ofs_running, "local forces", forcelc);
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;
@@ -482,9 +476,9 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");
     ModuleBase::timer::tick("Forces", "cal_force_ew");
-
+    this->device = base_device::get_device_type<Device>(this->ctx);
     double fact = 2.0;
-    std::complex<double>* aux = new std::complex<double>[rho_basis->npw];
+    std::vector<std::complex<double>> aux(rho_basis->npw);
 
     /*
         blocking rho_basis->nrxnpwx for data locality.
@@ -494,9 +488,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         performance will be better when number of atom is quite huge
     */
     const int block_ig = 1024;
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
     for (int igb = 0; igb < rho_basis->npw; igb += block_ig)
     {
         // calculate the actual task length of this block
@@ -548,9 +540,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                      * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     } while (upperbound > 1.0e-6);
     const int ig0 = rho_basis->ig_gge0;
-#ifdef _OPENMP
 #pragma omp parallel for
-#endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
         if (ig== ig0)
@@ -566,83 +556,99 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
     {
         aux[rho_basis->ig_gge0] = std::complex<double>(0.0, 0.0);
     }
-
-#ifdef _OPENMP
-#pragma omp parallel
+    if(this->device == base_device::GpuDevice)
     {
-        int num_threads = omp_get_num_threads();
-        int thread_id = omp_get_thread_num();
-#else
-    int num_threads = 1;
-    int thread_id = 0;
-#endif
-
-        /* Here is task distribution for multi-thread,
-            0. atom will be iterated both in main nat loop and the loop in `if (rho_basis->ig_gge0 >= 0)`.
-                To avoid syncing, we must calculate work range of each thread by our self
-            1. Calculate the iat range [iat_beg, iat_end) by each thread
-                a. when it is single thread stage, [iat_beg, iat_end) will be [0, nat)
-            2. each thread iterate atoms form `iat_beg` to `iat_end-1`
-        */
-        int iat_beg, iat_end;
-        int it_beg, ia_beg;
-        ModuleBase::TASK_DIST_1D(num_threads, thread_id, this->nat, iat_beg, iat_end);
-        iat_end = iat_beg + iat_end;
-        ucell.iat2iait(iat_beg, &ia_beg, &it_beg);
-
-        int iat = iat_beg;
-        int it = it_beg;
-        int ia = ia_beg;
-
-        // preprocess ig_gap for skipping the ig point
-        int ig_gap = (rho_basis->ig_gge0 >= 0 && rho_basis->ig_gge0 < rho_basis->npw) ? rho_basis->ig_gge0 : -1;
-
-        double it_fact = 0.;
-        int last_it = -1;
-
-        // iterating atoms
-        while (iat < iat_end)
+        std::vector<double> tau_h(this->nat * 3);
+        std::vector<double> gcar_h(rho_basis->npw * 3);
+        for(int iat = 0; iat < this->nat; ++iat)
         {
-            if (it != last_it)
-            { // calculate it_tact when it is changed
-                double zv;
-                {
-                    zv = ucell.atoms[it].ncpp.zv;
-                }
-                it_fact = zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
-                last_it = it;
-            }
-
-            if (ucell.atoms[it].na != 0)
-            {
-                const auto ig_loop = [&](int ig_beg, int ig_end) {
-                    for (int ig = ig_beg; ig < ig_end; ig++)
-                    {
-                        const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
-                        const double arg = ModuleBase::TWO_PI * (gcar * ucell.atoms[it].tau[ia]);
-                        double sinp, cosp;
-                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                        double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
-                        forceion(iat, 0) += gcar[0] * sumnb;
-                        forceion(iat, 1) += gcar[1] * sumnb;
-                        forceion(iat, 2) += gcar[2] * sumnb;
-                    }
-                };
-
-                // skip ig_gge0 point by separating ig loop into two part
-                ig_loop(0, ig_gap);
-                ig_loop(ig_gap + 1, rho_basis->npw);
-
-                forceion(iat, 0) *= it_fact;
-                forceion(iat, 1) *= it_fact;
-                forceion(iat, 2) *= it_fact;
-
-                ++iat;
-                ucell.step_iait(&ia, &it);
-            }
+            int it = ucell.iat2it[iat];
+            int ia = ucell.iat2ia[iat];
+            tau_h[iat * 3] = ucell.atoms[it].tau[ia].x;
+            tau_h[iat * 3 + 1] = ucell.atoms[it].tau[ia].y;
+            tau_h[iat * 3 + 2] = ucell.atoms[it].tau[ia].z;
+        }
+        for(int ig = 0; ig < rho_basis->npw; ++ig)
+        {
+            gcar_h[ig * 3] = rho_basis->gcar[ig].x;
+            gcar_h[ig * 3 + 1] = rho_basis->gcar[ig].y;
+            gcar_h[ig * 3 + 2] = rho_basis->gcar[ig].z;
+        }
+        std::vector<double> it_fact_h(ucell.ntype);
+        for(int it = 0; it < ucell.ntype; ++it)
+        {
+            it_fact_h[it] = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
         }
 
-        // means that the processor contains G=0 term.
+        int* iat2it_d = nullptr;
+        double* gcar_d = nullptr;
+        double* tau_d = nullptr;
+        double* it_fact_d = nullptr;
+        std::complex<double>* aux_d = nullptr;
+        double* forceion_d  = nullptr;
+        resmem_int_op()(iat2it_d, this->nat);
+        resmem_var_op()(gcar_d, rho_basis->npw * 3);
+        resmem_var_op()(tau_d, this->nat * 3);
+        resmem_var_op()(it_fact_d, ucell.ntype);
+        resmem_complex_op()(aux_d, rho_basis->npw);
+        resmem_var_op()(forceion_d, this->nat * 3);
+
+        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it, this->nat);
+        syncmem_var_h2d_op()(gcar_d, gcar_h.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
+        syncmem_var_h2d_op()(it_fact_d, it_fact_h.data(), ucell.ntype);
+        syncmem_complex_h2d_op()(aux_d, aux.data(), rho_basis->npw);
+        syncmem_var_h2d_op()(forceion_d, forceion.c, this->nat * 3);
+
+        hamilt::cal_force_ew_op<FPTYPE, Device>()(
+            this->nat,
+            rho_basis->npw,
+            rho_basis->ig_gge0,
+            iat2it_d,
+            gcar_d,
+            tau_d,
+            it_fact_d,
+            aux_d,
+            forceion_d);
+        
+        syncmem_var_d2h_op()(forceion.c, forceion_d, this->nat * 3);
+        delmem_int_op()(iat2it_d);
+        delmem_var_op()(gcar_d);
+        delmem_var_op()(tau_d);
+        delmem_var_op()(it_fact_d);
+        delmem_complex_op()(aux_d);
+        delmem_var_op()(forceion_d);
+    } else // calculate forces on CPU
+    {
+    #pragma omp parallel for
+        for(int iat = 0; iat < this->nat; ++iat)
+        {
+            const int it = ucell.iat2it[iat];
+            const int ia = ucell.iat2ia[iat];
+            double it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+
+            for(int ig = 0; ig < rho_basis->npw; ++ig)
+            {
+                if(ig != rho_basis->ig_gge0) // skip G=0
+                {
+                    const ModuleBase::Vector3<double> gcar = rho_basis->gcar[ig];
+                    const double arg = ModuleBase::TWO_PI * (gcar * ucell.atoms[it].tau[ia]);
+                    double sinp, cosp;
+                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                    double sumnb = -cosp * aux[ig].imag() + sinp * aux[ig].real();
+                    forceion(iat, 0) += gcar[0] * sumnb;
+                    forceion(iat, 1) += gcar[1] * sumnb;
+                    forceion(iat, 2) += gcar[2] * sumnb;
+                }
+            }
+            forceion(iat, 0) *= it_fact;
+            forceion(iat, 1) *= it_fact;
+            forceion(iat, 2) *= it_fact;
+        }
+    }
+    // means that the processor contains G=0 term.
+    #pragma omp parallel
+    {
         if (rho_basis->ig_gge0 >= 0)
         {
             double rmax = 5.0 / (sqrt(alpha) * ucell.lat0);
@@ -651,33 +657,29 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             // output of rgen: the number of vectors in the sphere
             const int mxr = 200;
             // the maximum number of R vectors included in r
-            ModuleBase::Vector3<double>* r = new ModuleBase::Vector3<double>[mxr];
-            double* r2 = new double[mxr];
-            ModuleBase::GlobalFunc::ZEROS(r2, mxr);
-            int* irr = new int[mxr];
-            ModuleBase::GlobalFunc::ZEROS(irr, mxr);
+            std::vector<ModuleBase::Vector3<double>> r(mxr);
+            std::vector<double> r2(mxr);
+            std::vector<int> irr(mxr);
             // the square modulus of R_j-tau_s-tau_s'
 
-            int iat1 = iat_beg;
-            int T1 = it_beg;
-            int I1 = ia_beg;
             const double sqa = sqrt(alpha);
             const double sq8a_2pi = sqrt(8.0 * alpha / ModuleBase::TWO_PI);
 
             // iterating atoms.
-            // do not need to sync threads because task range of each thread is isolated
-            while (iat1 < iat_end)
+            #pragma omp for
+            for(int iat1 = 0; iat1 < this->nat; iat1++)
             {
-                int iat2 = 0; // mohan fix bug 2011-06-07
-                int I2 = 0;
-                int T2 = 0;
-                while (iat2 < this->nat)
+                int T1 = ucell.iat2it[iat1];
+                int I1 = ucell.iat2ia[iat1];
+                for(int iat2 = 0; iat2 < this->nat; iat2++)
                 {
-                    if (iat1 != iat2 && ucell.atoms[T2].na != 0 && ucell.atoms[T1].na != 0)
+                    int T2 = ucell.iat2it[iat2];
+                    int I2 = ucell.iat2ia[iat2];
+                    if (iat1 != iat2)
                     {
                         ModuleBase::Vector3<double> d_tau
                             = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
-                        H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
+                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), nrm);
 
                         for (int n = 0; n < nrm; n++)
                         {
@@ -686,38 +688,23 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                             double factor;
                             {
                                 factor = ucell.atoms[T1].ncpp.zv * ucell.atoms[T2].ncpp.zv
-                                         * ModuleBase::e2 / (rr * rr)
-                                         * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
-                                         * ucell.lat0;
+                                            * ModuleBase::e2 / (rr * rr)
+                                            * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
+                                            * ucell.lat0;
                             }
-
                             forceion(iat1, 0) -= factor * r[n].x;
                             forceion(iat1, 1) -= factor * r[n].y;
                             forceion(iat1, 2) -= factor * r[n].z;
                         }
                     }
-                    ++iat2;
-                    ucell.step_iait(&I2, &T2);
                 } // atom b
-                ++iat1;
-                ucell.step_iait(&I1, &T1);
             } // atom a
-
-            delete[] r;
-            delete[] r2;
-            delete[] irr;
         }
-#ifdef _OPENMP
     }
-#endif
-
     Parallel_Reduce::reduce_pool(forceion.c, forceion.nr * forceion.nc);
-
     // this->print(GlobalV::ofs_running, "ewald forces", forceion);
 
     ModuleBase::timer::tick("Forces", "cal_force_ew");
-
-    delete[] aux;
 
     return;
 }
