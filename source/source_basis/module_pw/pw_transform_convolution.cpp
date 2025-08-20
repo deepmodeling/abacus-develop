@@ -2,7 +2,7 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/kernels/pw_op.h"
 #include "source_pw/module_pwdft/kernels/veff_op.h"
-
+#include "pw_gatherscatter.h"
 namespace ModulePW
 {
 template <typename FPTYPE>
