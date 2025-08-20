@@ -32,6 +32,7 @@ list(APPEND objects
     pw_transform.cpp
     pw_transform_gpu.cpp
     pw_transform_k.cpp
+    pw_transform_convolution.cpp
     module_fft/fft_bundle.cpp
     module_fft/fft_cpu.cpp
     ${FFT_SRC}

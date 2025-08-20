@@ -282,7 +282,7 @@ public:
                     const bool add=false,
                     const typename GetTypeReal<FPTYPE>::type factor =1.0) const
     {
-        this->convolution_gpu(ik, size, input, tmp, input1, output ,add ,factor);
+        this->convolution_gpu(ik, size, max_npw,input, tmp, input1, output ,add ,factor);
     }
     template <typename FPTYPE, typename Device,
               typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
