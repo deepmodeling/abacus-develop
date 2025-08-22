@@ -721,7 +721,7 @@ __global__ void cal_force_npw(
     FPTYPE t_force0 = 0;
     FPTYPE t_force1 = 0;
     FPTYPE t_force2 = 0;
-    for(int ig = tid; ig<npw;ig += blockDim.x){ {
+    for(int ig = tid; ig<npw;ig += blockDim.x) {
         const thrust::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
 
         const FPTYPE arg = ModuleBase::TWO_PI * (gv[ig * 3] * pos_x + gv[ig * 3 + 1] * pos_y + gv[ig * 3 + 2] * pos_z);
@@ -740,10 +740,15 @@ __global__ void cal_force_npw(
         const thrust::complex<FPTYPE> ipol2 = tmp_var * gv[ig * 3 + 2];
         t_force2 += ipol2.real();
     }
-    atomicAdd(&force[ia * 3], t_force0);
-    atomicAdd(&force[ia * 3 + 1], t_force1);
-    atomicAdd(&force[ia * 3 + 2], t_force2);
-}
+    __syncwarp();
+    warp_reduce(t_force0);
+    warp_reduce(t_force1);
+    warp_reduce(t_force2);
+    if (threadIdx.x % WARP_SIZE == 0) {
+        atomicAdd(&force[ia * 3], t_force0);
+        atomicAdd(&force[ia * 3 + 1], t_force1);
+        atomicAdd(&force[ia * 3 + 2], t_force2);
+    }
 }
 
 template <typename FPTYPE>
