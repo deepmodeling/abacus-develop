@@ -23,7 +23,7 @@
 Gint::~Gint() {
 
     delete this->hRGint;
-    delete this->hRGintCd;
+    //delete this->hRGintCd;
     // in gamma_only case, DMRGint.size()=0, 
     // in multi-k case, DMRGint.size()=nspin
     for (int is = 0; is < this->DMRGint.size(); is++) {
@@ -155,11 +155,11 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
         this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
     } else {
         npol = 2;
-        if (this->hRGintCd != nullptr) {
-            delete this->hRGintCd;
-        }
-        this->hRGintCd
-            = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
+        // if (this->hRGintCd != nullptr) {
+        //     delete this->hRGintCd;
+        // }
+        // this->hRGintCd
+         //   = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
         for (int is = 0; is < nspin; is++) {
             if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
@@ -196,10 +196,10 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
                                    this->DMRGint[0]->get_memory_size()
                                        * this->DMRGint.size());
     } else {
-        this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
-        this->hRGintCd->allocate(nullptr, true);
-        ModuleBase::Memory::record("Gint::hRGintCd",
-                                   this->hRGintCd->get_memory_size());
+        // this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
+        // this->hRGintCd->allocate(nullptr, true);
+        // ModuleBase::Memory::record("Gint::hRGintCd",
+        //                            this->hRGintCd->get_memory_size());
         for(int is = 0; is < nspin; is++) {
             this->hRGint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
             this->DMRGint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);

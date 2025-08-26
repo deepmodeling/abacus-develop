@@ -45,8 +45,8 @@ Gint& Gint::operator=(Gint&& rhs)
     // move hR after refactor
     this->hRGint = rhs.hRGint;
     rhs.hRGint = nullptr;
-    this->hRGintCd = rhs.hRGintCd;
-    rhs.hRGintCd = nullptr;
+    // this->hRGintCd = rhs.hRGintCd;
+    // rhs.hRGintCd = nullptr;
     for (int i = 0; i < this->DMRGint.size(); i++)
     {
         delete this->DMRGint[i];
