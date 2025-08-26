@@ -86,7 +86,10 @@ class ORB_gaunt_table
 	/// ------------------------------------
 	void init_Gaunt(const int &lmax);
 
-	static int get_lm_index(const int l, const int m);
+	static inline int get_lm_index(const int l, const int m)
+	{
+		return l*l+m;
+	}
 
 	static int Index_M(const int& m);
 
