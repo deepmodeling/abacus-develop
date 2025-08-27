@@ -89,11 +89,9 @@ void PW_Basis_K::convolution_cpu(const int ik,
     memset(augx1, 0, this->nst * this->nz * sizeof(FPTYPE)*2);
     for (int igl = 0; igl < npwk; ++igl)
     {
-        augr[this->igl2isz_k[igl + startig]] = input[igl];
-    }
-    for (int igl =0 ; igl < npwk ; ++igl)
-    {
-        augr1[this->igl2isz_k[igl + startig]] = input[igl+max_npw];
+        const int idx=this->igl2isz_k[igl + startig];
+        augr[idx] = input[igl];
+        augr1[idx] = input[igl+max_npw];
     }
     // use 3d fft backward
     this->fft_bundle.fftzbac(augr, augr);
@@ -118,15 +116,12 @@ void PW_Basis_K::convolution_cpu(const int ik,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-        for (int igl = 0; igl < npwk; ++igl)
-        {
-            output[igl] += tmpfac * augr[this->igl2isz_k[igl + startig]];
-        }
-    
-        for (int igl =0 ; igl < npwk ; ++igl)
-        {
-            output[igl+max_npw] += tmpfac * augr1[this->igl2isz_k[igl + startig]];
-        }
+    for (int igl = 0; igl < npwk; ++igl)
+    {
+        const int idx=this->igl2isz_k[igl + startig];
+        output[igl] += tmpfac * augr[idx];
+        output[igl+max_npw] += tmpfac * augr1[idx];
+    }
     ModuleBase::timer::tick(this->classname, "convolution");
     }
 

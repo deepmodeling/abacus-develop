@@ -16,13 +16,13 @@ template <>
 void FFT_CUDA<float>::setupFFT()
 {
     cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
-    resmem_cd_op()(this->c_auxr_3d, 2*this->nx * this->ny * this->nz);
+    resmem_cd_op()(this->c_auxr_3d, this->nx * this->ny * this->nz);
 }
 template <>
 void FFT_CUDA<double>::setupFFT()
 {
     cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
-    resmem_zd_op()(this->z_auxr_3d, 2*this->nx * this->ny * this->nz);
+    resmem_zd_op()(this->z_auxr_3d, this->nx * this->ny * this->nz);
 }
 template <>
 void FFT_CUDA<float>::cleanFFT()
