@@ -17,9 +17,9 @@
 
 // Mock implementations for the template functions causing linking errors
 namespace ModulePW {
-    // Mock implementation for recip_to_real
+    // Mock implementation for recip2real_impl
     template<typename FPTYPE, typename Device>
-    void PW_Basis_K::recip_to_real(const Device* ctx,
+    void PW_Basis_K::recip2real_impl(const Device* ctx,
                                   const std::complex<FPTYPE>* in,
                                   std::complex<FPTYPE>* out,
                                   const int ik,
@@ -30,9 +30,9 @@ namespace ModulePW {
         // In a real test, you might want to implement behavior that simulates the actual function
     }
 
-    // Mock implementation for real_to_recip
+    // Mock implementation for real2recip_impl
     template<typename FPTYPE, typename Device>
-    void PW_Basis_K::real_to_recip(const Device* ctx,
+    void PW_Basis_K::real2recip_impl(const Device* ctx,
                                   const std::complex<FPTYPE>* in,
                                   std::complex<FPTYPE>* out,
                                   const int ik,
@@ -43,7 +43,7 @@ namespace ModulePW {
     }
 
     // Explicit template instantiations
-    template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
+    template void PW_Basis_K::recip2real_impl<float, base_device::DEVICE_CPU>(
         const base_device::DEVICE_CPU* ctx,
         const std::complex<float>* in,
         std::complex<float>* out,
@@ -51,7 +51,7 @@ namespace ModulePW {
         const bool add,
         const float factor) const;
 
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
+    template void PW_Basis_K::recip2real_impl<double, base_device::DEVICE_CPU>(
         const base_device::DEVICE_CPU* ctx,
         const std::complex<double>* in,
         std::complex<double>* out,
@@ -59,7 +59,7 @@ namespace ModulePW {
         const bool add,
         const double factor) const;
 
-    template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
+    template void PW_Basis_K::real2recip_impl<float, base_device::DEVICE_CPU>(
         const base_device::DEVICE_CPU* ctx,
         const std::complex<float>* in,
         std::complex<float>* out,
@@ -67,7 +67,7 @@ namespace ModulePW {
         const bool add,
         const float factor) const;
 
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
+    template void PW_Basis_K::real2recip_impl<double, base_device::DEVICE_CPU>(
         const base_device::DEVICE_CPU* ctx,
         const std::complex<double>* in,
         std::complex<double>* out,
