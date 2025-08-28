@@ -315,7 +315,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // Step 1: Split communicator by shared memory node
+    // Split communicator by shared memory node
     MPI_Comm nodeComm;
     MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &nodeComm);
 
@@ -323,7 +323,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     MPI_Comm_rank(nodeComm, &local_rank);
     MPI_Comm_size(nodeComm, &local_size);
 
-    // Step 2: Get number of CUDA devices on this node
+    // Get number of CUDA devices on this node
     int device_count = 0;
     cudaError_t cuda_err = cudaGetDeviceCount(&device_count);
     if (cuda_err != cudaSuccess) {
@@ -334,7 +334,6 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
         local_rank = -1; // Mark as inactive for GPU work
     }
 
-    // Step 3: Number of active process on this node
     // Determine the number of MPI processes on this node that can actively use a GPU.
     // This is the minimum of:
     //   - The number of available MPI processes on the node (local_size)
