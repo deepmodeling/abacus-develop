@@ -260,7 +260,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
             // psi_nk in real space
             d_psi_in->fix_kb(ik, nband);
             T* psi_nk = d_psi_in->get_pointer();
-            wfcpw->recip_to_real<std::complex<FPTYPE>,Device>(psi_nk, psi_nk_real, ik);
+            wfcpw->recip_to_real<std::complex<FPTYPE>,base_device::DEVICE_CPU>(psi_nk, psi_nk_real, ik);
 
             for (int iq = 0; iq < nqs; iq++)
             {
@@ -269,7 +269,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                     // psi_mq in real space
                     d_psi_in->fix_kb(iq, mband);
                     T* psi_mq = d_psi_in->get_pointer();
-                    wfcpw->recip_to_real<std::complex<FPTYPE>,Device>(psi_mq, psi_mq_real, iq);
+                    wfcpw->recip_to_real<std::complex<FPTYPE>,base_device::DEVICE_CPU>(psi_mq, psi_mq_real, iq);
 
                     // overlap density in real space
                     setmem_complex_op()(density_real, 0.0, rhopw->nrxx);
