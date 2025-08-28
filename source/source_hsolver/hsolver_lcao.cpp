@@ -49,11 +49,13 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     if (this->method != "pexsi")
     {
     #ifdef __MPI
+    #ifdef __CUDA
         if (this->method == "cusolver" && GlobalV::NPROC > 1)
         {
             this->parakSolve_cusolver(pHamilt, psi, pes);
-        }
-        else if (PARAM.globalv.kpar_lcao > 1
+        }else 
+    #endif
+        if (PARAM.globalv.kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
         {
             this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
@@ -302,7 +304,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 #endif
 }
 
-#ifdef __MPI
+#if defined (__MPI) && defined (__CUDA)
 template <typename T, typename Device>
 void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
