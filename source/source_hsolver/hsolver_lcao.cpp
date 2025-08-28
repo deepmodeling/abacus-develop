@@ -48,6 +48,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
     if (this->method != "pexsi")
     {
+    #ifdef __MPI
         if (this->method == "cusolver")
         {
             this->parakSolve_cusolver(pHamilt, psi, pes);
@@ -55,11 +56,10 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         else if (PARAM.globalv.kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
         {
-#ifdef __MPI
             this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
-#endif
-        }
-        else if (PARAM.globalv.kpar_lcao == 1)
+        } else
+    #endif
+        if (PARAM.globalv.kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -152,12 +152,22 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         el.diag(hm, psi, eigenvalue);
     }
 #endif
+#ifdef __CUDA
+    else if (this->method == "cusolver")
+    {
+        // Note: Only the non-MPI version will execute this if branch
+        DiagoCusolver<T> cu;
+        hamilt::MatrixBlock<T> hk, sk;
+        hm->matrix(hk, sk);
+        cu.diag(hk, sk, psi, eigenvalue);
+    }
 #ifdef __CUSOLVERMP
     else if (this->method == "cusolvermp")
     {
         DiagoCusolverMP<T> cm;
         cm.diag(hm, psi, eigenvalue);
     }
+#endif
 #endif
 #ifndef __MPI
     else if (this->method == "lapack") // only for single core
@@ -292,6 +302,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 #endif
 }
 
+#ifdef __MPI
 template <typename T, typename Device>
 void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
@@ -474,6 +485,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     MPI_Comm_free(&nodeComm);
     ModuleBase::timer::tick("HSolverLCAO", "parakSolve");
 }
+#endif
 
 
 template class HSolverLCAO<double>;

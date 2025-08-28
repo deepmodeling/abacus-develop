@@ -15,16 +15,6 @@ using complex = std::complex<double>;
 // Namespace for the diagonalization solver
 namespace hsolver
 {
-// this struct is used for collecting matrices from all processes to root process
-template <typename T>
-struct Matrix_g
-{
-    std::shared_ptr<T> p;
-    size_t row;
-    size_t col;
-    std::shared_ptr<int> desc;
-};
-
 // Initialize the DecomposedState variable for real and complex numbers
 template <typename T>
 int DiagoCusolver<T>::DecomposedState = 0;
