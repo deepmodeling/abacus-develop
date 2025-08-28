@@ -5,14 +5,16 @@
 #===========================================================
 #Dirac
 #CPLUSPLUS =CXX -O3 -w -ffast-math -funroll-loops
-CPLUSPLUS = /usr/mpi/intel/openmpi-1.4.1/bin/mpicxx
+CPLUSPLUS = icpc 
 #CPLUSPLUS_GPROF = g++ -gp
 #CPLUSPLUS_MPI = /opt/openmpi/bin/mpicxx -O3 -w 
-CPLUSPLUS_MPI=/usr/mpi/intel/openmpi-1.4.1/bin/mpicxx
+CPLUSPLUS_MPI = mpiicpc
 #Einstein
 #CPLUSPLUS_MPI = /opt/openmpi-intel9/bin/mpicxx -O3 -w
 
-LIBS=-L/opt/intel/cmkl/10.2.5.035/lib/em64t -i-dynamic  -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group -openmp -lpthread \
+#LIBS=-L/opt/intel/cmkl/10.2.5.035/lib/em64t -i-dynamic  -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group -openmp -lpthread \
+
+LIBS=-L/opt/intel/cmkl/10.2.5.035/lib/em64t -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group
 
 TOOLS_OBJS=src_tools/mathzone.o \
 			src_tools/matrix.o \
