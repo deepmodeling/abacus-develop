@@ -50,6 +50,11 @@ case "$with_cereal" in
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
         #unzip -q $filename
+        # apply patch files for libri installation in issue #6190, Kai Luo
+        # echo ${SCRIPT_DIR}
+        cd $dirname && pwd && patch -p1 < ${SCRIPT_DIR}/patches/6190.patch
+        cd "${BUILDDIR}"
+        # 
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"

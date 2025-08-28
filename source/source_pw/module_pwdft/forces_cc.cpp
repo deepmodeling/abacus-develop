@@ -108,44 +108,48 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     double* rhocg = new double[rho_basis->ngg];
     ModuleBase::GlobalFunc::ZEROS(rhocg, rho_basis->ngg);
 
-    std::vector<double> gv_x(rho_basis->npw);
-    std::vector<double> gv_y(rho_basis->npw);
-    std::vector<double> gv_z(rho_basis->npw);
+    std::vector<double> gv_h(3 * rho_basis->npw);
+    std::vector<double> tau_h(3 * this->nat);
     std::vector<double> rhocgigg_vec(rho_basis->npw);
-    double *gv_x_d = nullptr;
-    double *gv_y_d = nullptr;
-    double *gv_z_d = nullptr;
+    double *gv_d = nullptr;
+    double *tau_d = nullptr;
     double *force_d = nullptr;
     double *rhocgigg_vec_d = nullptr;
     std::complex<FPTYPE>* psiv_d = nullptr;
     this->device = base_device::get_device_type<Device>(this->ctx);
 
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {
-        gv_x[ig] = rho_basis->gcar[ig].x;
-        gv_y[ig] = rho_basis->gcar[ig].y;
-        gv_z[ig] = rho_basis->gcar[ig].z;
+        gv_h[3 * ig] = rho_basis->gcar[ig].x;
+        gv_h[3 * ig + 1] = rho_basis->gcar[ig].y;
+        gv_h[3 * ig + 2] = rho_basis->gcar[ig].z;
+    }
+
+    for (int iat = 0; iat < this->nat; iat++)
+    {
+        int it = ucell_in.iat2it[iat];
+        int ia = ucell_in.iat2ia[iat];
+        tau_h[iat * 3] = ucell_in.atoms[it].tau[ia].x;
+        tau_h[iat * 3 + 1] = ucell_in.atoms[it].tau[ia].y;
+        tau_h[iat * 3 + 2] = ucell_in.atoms[it].tau[ia].z;
     }
 
 	if(this->device == base_device::GpuDevice ) {
-		resmem_var_op()(gv_x_d, rho_basis->npw);
-        resmem_var_op()(gv_y_d, rho_basis->npw);
-        resmem_var_op()(gv_z_d, rho_basis->npw);
+		resmem_var_op()(gv_d, rho_basis->npw * 3);
+        resmem_var_op()(tau_d, this->nat * 3);
         resmem_var_op()(rhocgigg_vec_d, rho_basis->npw);
         resmem_complex_op()(psiv_d, rho_basis->nmaxgr);
-        resmem_var_op()(force_d, 3);
+        resmem_var_op()(force_d, 3 * this->nat);
 
-		syncmem_var_h2d_op()(gv_x_d, gv_x.data(), rho_basis->npw);
-        syncmem_var_h2d_op()(gv_y_d, gv_y.data(), rho_basis->npw);
-        syncmem_var_h2d_op()(gv_z_d, gv_z.data(), rho_basis->npw);
+		syncmem_var_h2d_op()(gv_d, gv_h.data(), rho_basis->npw * 3);
+        syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
         syncmem_complex_h2d_op()(psiv_d, psiv, rho_basis->nmaxgr);
+        syncmem_var_h2d_op()(force_d, forcecc.c, 3 * this->nat);
 	}
 
-
+    double* tau_it_d = tau_d;  // the start address of each atom type's tau
+    double* force_it_d = force_d;
     for (int it = 0; it < ucell_in.ntype; ++it)
     {
         if (ucell_in.atoms[it].ncpp.nlcc)
@@ -166,10 +170,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                               rho_basis,
                               1,
                               ucell_in);
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif                              
+                         
             for (int ig = 0; ig < rho_basis->npw; ig++)
             {
                 rhocgigg_vec[ig] = rhocg[rho_basis->ig2igg[ig]];
@@ -178,42 +179,53 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
             if(this->device == base_device::GpuDevice ) {
                 syncmem_var_h2d_op()(rhocgigg_vec_d, rhocgigg_vec.data(), rho_basis->npw);
             }
-            for (int ia = 0; ia < ucell_in.atoms[it].na; ++ia)
-            {
-                const ModuleBase::Vector3<double> pos = ucell_in.atoms[it].tau[ia];
-                // get iat form table
-                int iat = ucell_in.itia2iat(it, ia);
-                double force[3] = {0, 0, 0};
 
-                if(this->device == base_device::GpuDevice ) {
-                    syncmem_var_h2d_op()(force_d, force, 3);
-                    hamilt::cal_force_npw_op<FPTYPE, Device>()(
-                        psiv_d, gv_x_d, gv_y_d, gv_z_d, rhocgigg_vec_d, force_d, pos.x, pos.y, pos.z, 
-                        rho_basis->npw, ucell_in.omega, ucell_in.tpiba
-                    );      
-                    syncmem_var_d2h_op()(force, force_d, 3);	          
-                
-                } else {
-                    hamilt::cal_force_npw_op<FPTYPE, Device>()(
-                        psiv, gv_x.data(), gv_y.data(), gv_z.data(), rhocgigg_vec.data(), force, pos.x, pos.y, pos.z, 
-                        rho_basis->npw, ucell_in.omega, ucell_in.tpiba
-                    );  
-                }
-
+            if(this->device == base_device::GpuDevice ) {
+                hamilt::cal_force_npw_op<FPTYPE, Device>()(
+                    psiv_d, gv_d, rhocgigg_vec_d, force_it_d, tau_it_d, 
+                    rho_basis->npw, ucell_in.omega, ucell_in.tpiba, ucell_in.atoms[it].na
+                );
+            } else {
+                #pragma omp for
+                for(int ia = 0; ia < ucell_in.atoms[it].na; ia++)
                 {
-                    forcecc(iat, 0) += force[0];
-                    forcecc(iat, 1) += force[1];
-                    forcecc(iat, 2) += force[2];
+                    double fx = 0.0, fy = 0.0, fz = 0.0;
+                    int iat = ucell_in.itia2iat(it, ia);
+                    for (int ig = 0; ig < rho_basis->npw; ig++)
+                    {
+                        const std::complex<double> psiv_conj = conj(psiv[ig]);
+
+                        const double arg = ModuleBase::TWO_PI * (gv_h[ig * 3] * tau_h[iat * 3]
+                             + gv_h[ig * 3 + 1] * tau_h[iat * 3 + 1] + gv_h[ig * 3 + 2] * tau_h[iat * 3 + 2]);
+                        double sinp, cosp;
+                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                        const std::complex<double> expiarg = std::complex<double>(sinp, cosp);
+
+                        const std::complex<double> tmp_var = psiv_conj * expiarg * ucell_in.tpiba * ucell_in.omega * rhocgigg_vec[ig];
+
+                        const std::complex<double> ipol0 = tmp_var * gv_h[ig * 3];
+                        fx += ipol0.real();
+
+                        const std::complex<double> ipol1 = tmp_var * gv_h[ig * 3 + 1];
+                        fy += ipol1.real();
+
+                        const std::complex<double> ipol2 = tmp_var * gv_h[ig * 3 + 2];
+                        fz += ipol2.real();
+                    }
+                    forcecc(iat, 0) += fx;
+                    forcecc(iat, 1) += fy;
+                    forcecc(iat, 2) += fz;
                 }
             }
-
         }
+        tau_it_d += 3 * ucell_in.atoms[it].na;  // update the start address of each atom type's tau
+        force_it_d += 3 * ucell_in.atoms[it].na;
     }
-    if (this->device == base_device::GpuDevice)
+    if(this->device == base_device::GpuDevice)
     {
-        delmem_var_op()(gv_x_d);
-        delmem_var_op()(gv_y_d);
-        delmem_var_op()(gv_z_d);
+        syncmem_var_d2h_op()(forcecc.c, force_d, 3 * nat);
+        delmem_var_op()(gv_d);
+        delmem_var_op()(tau_d);
         delmem_var_op()(force_d);
         delmem_var_op()(rhocgigg_vec_d);
         delmem_complex_op()(psiv_d);
