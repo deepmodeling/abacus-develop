@@ -49,7 +49,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     if (this->method != "pexsi")
     {
     #ifdef __MPI
-        if (this->method == "cusolver")
+        if (this->method == "cusolver" && GlobalV::NPROC > 1)
         {
             this->parakSolve_cusolver(pHamilt, psi, pes);
         }
@@ -155,7 +155,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 #ifdef __CUDA
     else if (this->method == "cusolver")
     {
-        // Note: Only the non-MPI version will execute this if branch
+        // Note: This branch will only be executed in the single-process case
         DiagoCusolver<T> cu;
         hamilt::MatrixBlock<T> hk, sk;
         hm->matrix(hk, sk);
