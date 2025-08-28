@@ -27,7 +27,7 @@ struct set_3d_fft_box_op {
 
 template <typename FPTYPE, typename Device>
 struct set_recip_to_real_output_op {
-    /// @brief Calculate the outputs after the FFT translation of recip_to_real
+    /// @brief Calculate the outputs after the FFT translation of recip2real_impl
     ///
     /// Input Parameters
     /// @param dev - which device this function runs on
@@ -54,7 +54,7 @@ struct set_recip_to_real_output_op {
 
 template <typename FPTYPE, typename Device>
 struct set_real_to_recip_output_op {
-    /// @brief Calculate the outputs after the FFT translation of real_to_recip
+    /// @brief Calculate the outputs after the FFT translation of real2recip_impl
     ///
     /// Input Parameters
     /// @param dev - which device this function runs on

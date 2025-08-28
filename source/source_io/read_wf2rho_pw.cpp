@@ -129,8 +129,8 @@ void ModuleIO::read_wf2rho_pw(
             {
                 const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
                 const std::complex<double>* wfc_ib2 = wfc_tmp.c + ib * ng_npol + ng_npol / 2;
-                pw_wfc->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib, rho_tmp.data(), ik);
-                pw_wfc->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib2, rho_tmp2.data(), ik);
+                pw_wfc->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib, rho_tmp.data(), ik);
+                pw_wfc->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib2, rho_tmp2.data(), ik);
                 const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
 
                 if (w1 != 0.0)
@@ -152,7 +152,7 @@ void ModuleIO::read_wf2rho_pw(
             for (int ib = 0; ib < nbands; ++ib)
             {
                 const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
-                pw_wfc->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib, rho_tmp.data(), ik);
+                pw_wfc->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(wfc_ib, rho_tmp.data(), ik);
 
                 const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
 

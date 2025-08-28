@@ -111,11 +111,11 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 // FFT on device and copy result back to host
                 if (std::is_same<Device, base_device::DEVICE_CPU>::value)
                 {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm.data(), ik);
+                    pw_wfc->recip2real_impl(ctx, &kspw_psi[0](ib, 0), wfcr_norm.data(), ik);
                 }
                 else
                 {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm_device, ik);
+                    pw_wfc->recip2real_impl(ctx, &kspw_psi[0](ib, 0), wfcr_norm_device, ik);
 
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
                         wfcr_norm.data(),
@@ -200,11 +200,11 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 // FFT on device and copy result back to host
                 if (std::is_same<Device, base_device::DEVICE_CPU>::value)
                 {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im.data(), ik);
+                    pw_wfc->recip2real_impl(ctx, &kspw_psi[0](ib, 0), wfc_re_im.data(), ik);
                 }
                 else
                 {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im_device, ik);
+                    pw_wfc->recip2real_impl(ctx, &kspw_psi[0](ib, 0), wfc_re_im_device, ik);
 
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
                         wfc_re_im.data(),

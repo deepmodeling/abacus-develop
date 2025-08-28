@@ -192,7 +192,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     {
         const T *psi_nk = tmpsi_in + n_iband * nbasis;
         // retrieve \psi_nk in real space
-        wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
+        wfcpw->recip2real_impl(ctx, psi_nk, psi_nk_real, this->ik);
 
         // for \psi_nk, get the pw of iq and band m
         auto q_points = get_q_points(this->ik);
@@ -211,7 +211,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 }
 
                 const T* psi_mq = get_pw(m_iband, iq);
-                wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
+                wfcpw->recip2real_impl(ctx, psi_mq, psi_mq_real, iq);
 
                 // direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
                 cal_density_recip(psi_nk_real, psi_mq_real, ucell->omega);
@@ -254,7 +254,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         } // end of iq
         T* h_psi_nk = tmhpsi + n_iband * nbasis;
         Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        wfcpw->real2recip_impl(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
 
     }
@@ -933,7 +933,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             psi.fix_kb(ik, n_iband);
             const T* psi_nk = psi.get_pointer();
             // retrieve \psi_nk in real space
-            wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, ik);
+            wfcpw->recip2real_impl(ctx, psi_nk, psi_nk_real, ik);
 
             // for \psi_nk, get the pw of iq and band m
             // q_points is a vector of integers, 0 to nks-1
@@ -959,7 +959,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                     psi_.fix_kb(iq, m_iband);
                     const T* psi_mq = psi_.get_pointer();
                     // const T* psi_mq = get_pw(m_iband, iq);
-                    wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq);
+                    wfcpw->recip2real_impl(ctx, psi_mq, psi_mq_real, iq);
 
                     cal_density_recip(psi_nk_real, psi_mq_real, ucell->omega);
 

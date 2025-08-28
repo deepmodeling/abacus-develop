@@ -171,10 +171,10 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
 
                 h_rhor = new complex<T>[nrxx];
 
-                pwtest.recip_to_real<std::complex<T>, base_device::DEVICE_GPU>(d_rhog, d_rhor, ik);
+                pwtest.recip2real_impl<std::complex<T>, base_device::DEVICE_GPU>(d_rhog, d_rhor, ik);
                 cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(complex<T>), cudaMemcpyDeviceToHost);
 
-                pwtest.real_to_recip<std::complex<T>, base_device::DEVICE_GPU>(d_rhor, d_rhog, ik);
+                pwtest.real2recip_impl<std::complex<T>, base_device::DEVICE_GPU>(d_rhor, d_rhog, ik);
                 cudaMemcpy(h_rhogout, d_rhog, npwk * sizeof(complex<T>), cudaMemcpyDeviceToHost);
             }
         }

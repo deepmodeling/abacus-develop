@@ -154,10 +154,10 @@ class PW_BASIS_C2R_GPU_TEST : public ::testing::Test
         h_rhor = new T[nrxx];
 
         cudaMalloc((void**)&d_rhor, nrxx * sizeof(T));
-        pwtest.recip_to_real<std::complex<T>, T, base_device::DEVICE_GPU>(d_rhog, d_rhor);
+        pwtest.recip2real_impl<std::complex<T>, T, base_device::DEVICE_GPU>(d_rhog, d_rhor);
         cudaMemcpy(h_rhor, d_rhor, nrxx * sizeof(T), cudaMemcpyDeviceToHost);
 
-        pwtest.real_to_recip<T,std::complex<T>,base_device::DEVICE_GPU>(d_rhor,d_rhog);
+        pwtest.real2recip_impl<T,std::complex<T>,base_device::DEVICE_GPU>(d_rhor,d_rhog);
         cudaMemcpy(h_rhogout,d_rhog,npw * sizeof(complex<T>),cudaMemcpyDeviceToHost);
 
         

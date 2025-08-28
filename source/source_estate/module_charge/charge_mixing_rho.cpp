@@ -243,7 +243,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             // use rhodpw for double_grid
             // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
-            this->rhodpw->recip_to_real<std::complex<double>,double,base_device::DEVICE_CPU>(chr->rhog[is], chr->rho[is]);
+            this->rhodpw->recip2real_impl<std::complex<double>,double,base_device::DEVICE_CPU>(chr->rhog[is], chr->rho[is]);
         }
     }
     // For kinetic energy density

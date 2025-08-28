@@ -202,9 +202,9 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             /// be care of when smearing_sigma is large, wg would less than 0
             ///
 
-            this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
+            this->basis->recip2real_impl(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
+            this->basis->recip2real_impl(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
             const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
@@ -230,7 +230,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             /// only occupied band should be calculated.
             ///
 
-            this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
+            this->basis->recip2real_impl(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
             const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
@@ -258,7 +258,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                               &psi(ibnd, 0),
                               this->wfcr);
 
-                    this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
+                    this->basis->recip2real_impl(this->ctx, this->wfcr, this->wfcr, ik);
 
                     elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
                 }

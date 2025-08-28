@@ -23,7 +23,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         int nbands = psi.get_nbands();
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
-            this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
+            this->basis->recip2real_impl(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
             const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
@@ -43,7 +43,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
                             &psi(ibnd, 0),
                             this->wfcr);
 
-                this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
+                this->basis->recip2real_impl(this->ctx, this->wfcr, this->wfcr, ik);
 
                 elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
             }

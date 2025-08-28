@@ -67,13 +67,13 @@ void Meta<OperatorPW<T, Device>>::act(
         for (int j = 0; j < 3; j++)
         {
             meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), tmpsi_in, this->porter);
-            wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
+            wfcpw->recip2real_impl(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
                 vector_mul_vector_op()(this->vk_col, this->porter, this->porter, this->vk + current_spin * this->vk_col);
             }
 
-            wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);
+            wfcpw->real2recip_impl(this->ctx, this->porter, this->porter, this->ik);
             meta_op()(this->ctx, this->ik, j, ngk_ik, this->wfcpw->npwk_max, this->tpiba, wfcpw->get_gcar_data<Real>(), wfcpw->get_kvec_c_data<Real>(), this->porter, tmhpsi, true);
 
         } // x,y,z directions

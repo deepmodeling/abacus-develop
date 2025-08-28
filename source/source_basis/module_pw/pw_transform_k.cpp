@@ -289,7 +289,7 @@ void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
 }
 
 template <>
-void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
+void PW_Basis_K::real2recip_impl(const base_device::DEVICE_CPU* /*dev*/,
                                const std::complex<float>* in,
                                std::complex<float>* out,
                                const int ik,
@@ -299,7 +299,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
     this->real2recip(in, out, ik, add, factor);
 }
 template <>
-void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
+void PW_Basis_K::real2recip_impl(const base_device::DEVICE_CPU* /*dev*/,
                                const std::complex<double>* in,
                                std::complex<double>* out,
                                const int ik,
@@ -314,7 +314,7 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
 }
 
 template <>
-void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
+void PW_Basis_K::recip2real_impl(const base_device::DEVICE_CPU* /*dev*/,
                                const std::complex<float>* in,
                                std::complex<float>* out,
                                const int ik,
@@ -324,7 +324,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
     this->recip2real(in, out, ik, add, factor);
 }
 template <>
-void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
+void PW_Basis_K::recip2real_impl(const base_device::DEVICE_CPU* /*dev*/,
                                const std::complex<double>* in,
                                std::complex<double>* out,
                                const int ik,
@@ -340,14 +340,14 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
 
 #if (defined(__CUDA) || defined(__ROCM))
 template <>
-void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
+void PW_Basis_K::real2recip_impl(const base_device::DEVICE_GPU* ctx,
                                const std::complex<float>* in,
                                std::complex<float>* out,
                                const int ik,
                                const bool add,
                                const float factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -367,17 +367,17 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                                                   this->ig2ixyz_k + startig,
                                                                   this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
 }
 template <>
-void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
+void PW_Basis_K::real2recip_impl(const base_device::DEVICE_GPU* ctx,
                                const std::complex<double>* in,
                                std::complex<double>* out,
                                const int ik,
                                const bool add,
                                const double factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -398,18 +398,18 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
                                                                    this->ig2ixyz_k + startig,
                                                                    this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
 }
 
 template <>
-void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
+void PW_Basis_K::recip2real_impl(const base_device::DEVICE_GPU* ctx,
                                const std::complex<float>* in,
                                std::complex<float>* out,
                                const int ik,
                                const bool add,
                                const float factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<float>(), this->nxyz);
@@ -433,17 +433,17 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                                   this->fft_bundle.get_auxr_3d_data<float>(),
                                                                   out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
 }
 template <>
-void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
+void PW_Basis_K::recip2real_impl(const base_device::DEVICE_GPU* ctx,
                                const std::complex<double>* in,
                                std::complex<double>* out,
                                const int ik,
                                const bool add,
                                const double factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
@@ -467,7 +467,7 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                                    this->fft_bundle.get_auxr_3d_data<double>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
 }
 
 template <typename FPTYPE>
@@ -477,7 +477,7 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
                                const bool add,
                                const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
@@ -498,7 +498,7 @@ void PW_Basis_K::real2recip_gpu(const std::complex<FPTYPE>* in,
                                                                    this->ig2ixyz_k + startig,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
-    ModuleBase::timer::tick(this->classname, "real_to_recip gpu");
+    ModuleBase::timer::tick(this->classname, "real2recip_impl gpu");
 }
 template <typename FPTYPE>
 void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
@@ -507,7 +507,7 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
                                const bool add,
                                const FPTYPE factor) const
 {
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
@@ -531,7 +531,7 @@ void PW_Basis_K::recip2real_gpu(const std::complex<FPTYPE>* in,
                                                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                                                    out);
 
-    ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
+    ModuleBase::timer::tick(this->classname, "recip2real_impl gpu");
 }
 
 template void PW_Basis_K::real2recip_gpu<float>(const std::complex<float>*,

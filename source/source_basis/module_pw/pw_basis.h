@@ -319,7 +319,7 @@ public:
                                           && std::is_same<Device, base_device::DEVICE_CPU>::value,
                                       int>::type
               = 0>
-    void recip_to_real(TK* in, TR* out, const bool add = false, const typename GetTypeReal<TK>::type factor = 1.0) const
+    void recip2real_impl(TK* in, TR* out, const bool add = false, const typename GetTypeReal<TK>::type factor = 1.0) const
     {
         this->recip2real(in, out, add, factor);
     };
@@ -350,7 +350,7 @@ public:
                                           && std::is_same<Device, base_device::DEVICE_GPU>::value,
                                       int>::type
               = 0>
-    void recip_to_real(TK* in,
+    void recip2real_impl(TK* in,
                        TR* out,
                        const bool add = false,
                        const typename GetTypeReal<TK>::type factor = 1.0) const
@@ -361,7 +361,7 @@ public:
     // template <typename FPTYPE,
     //         typename Device,
     //         typename std::enable_if<!std::is_same<FPTYPE, typename GetTypeReal<FPTYPE>::type>::value, int>::type = 0>
-    // void recip_to_real(FPTYPE* in,
+    // void recip2real_impl(FPTYPE* in,
     //                    FPTYPE* out,
     //                    const bool add = false,
     //                    const typename GetTypeReal<FPTYPE>::type factor = 1.0) const;
@@ -391,7 +391,7 @@ public:
             typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
                     && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
                     && std::is_same<Device, base_device::DEVICE_CPU>::value ,int>::type = 0>
-    void real_to_recip(TR* in,
+    void real2recip_impl(TR* in,
                        TK* out,
                        const bool add = false,
                        const typename GetTypeReal<TK>::type factor = 1.0) const
@@ -403,7 +403,7 @@ public:
             typename std::enable_if<!std::is_same<TK, typename GetTypeReal<TK>::type>::value
                     && (std::is_same<TR, typename GetTypeReal<TK>::type>::value || std::is_same<TR, TK>::value)
                     && std::is_same<Device, base_device::DEVICE_GPU>::value ,int>::type = 0>
-    void real_to_recip(TR* in,
+    void real2recip_impl(TR* in,
                        TK* out,
                        const bool add = false,
                        const typename GetTypeReal<TK>::type factor = 1.0) const

@@ -599,8 +599,8 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int fro
         // psi.fix_k(from_ik);
         
         // FFT to real space
-        // this->wfc_basis->recip_to_real(this->ctx, psi.get_pointer(ib), porter, from_ik);
-        this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
+        // this->wfc_basis->recip2real_impl(this->ctx, psi.get_pointer(ib), porter, from_ik);
+        this->wfc_basis->recip2real_impl(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
         
         // Apply phase factor
         //     // TODO: Check how to get the r vector
@@ -613,8 +613,8 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int fro
         // psi.fix_k(to_ik);
         
         // FFT back to reciprocal space
-        // this->wfc_basis->real_to_recip(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
-        this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);
+        // this->wfc_basis->real2recip_impl(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
+        this->wfc_basis->real2recip_impl(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);
     }
 
     // Clean up porter

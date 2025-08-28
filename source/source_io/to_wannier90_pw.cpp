@@ -253,7 +253,7 @@ void toWannier90_PW::out_unk(
             {
                 int ib = cal_band_index[ib_w];
 
-                wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(ik, ib, 0), porter, ik);
+                wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(ik, ib, 0), porter, ik);
 
                 if (GlobalV::RANK_IN_POOL == 0)
                 {
@@ -383,7 +383,7 @@ void toWannier90_PW::unkdotkb(
             }
         }
 
-        wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(phase, phase, cal_ik);
+        wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(phase, phase, cal_ik);
 
         if (PARAM.inp.nspin == 4)
         {
@@ -396,17 +396,17 @@ void toWannier90_PW::unkdotkb(
             // (2) fft and get value
             // int npw_ik = wfcpw->npwk[cal_ik];
             int npwx = wfcpw->npwk_max;
-            wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, 0), psir_up, cal_ik);
-            // wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, npw_ik), psir_dn, cal_ik);
-            wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, npwx), psir_dn, cal_ik);
+            wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, 0), psir_up, cal_ik);
+            // wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, npw_ik), psir_dn, cal_ik);
+            wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, npwx), psir_dn, cal_ik);
             for (int ir = 0; ir < wfcpw->nrxx; ir++)
             {
                 psir_up[ir] *= phase[ir];
                 psir_dn[ir] *= phase[ir];
             }
 
-            wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psir_up, psir_up, cal_ikb);
-            wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psir_dn, psir_dn, cal_ikb);
+            wfcpw->real2recip_impl<std::complex<double>,base_device::DEVICE_CPU>(psir_up, psir_up, cal_ikb);
+            wfcpw->real2recip_impl<std::complex<double>,base_device::DEVICE_CPU>(psir_dn, psir_dn, cal_ikb);
 
             for (int n = 0; n < num_bands; n++)
             {
@@ -447,12 +447,12 @@ void toWannier90_PW::unkdotkb(
             ModuleBase::GlobalFunc::ZEROS(psir, wfcpw->nmaxgr);
 
             // (2) fft and get value
-            wfcpw->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, 0), psir, cal_ik);
+            wfcpw->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_pw(cal_ik, im, 0), psir, cal_ik);
             for (int ir = 0; ir < wfcpw->nrxx; ir++)
             {
                 psir[ir] *= phase[ir];
             }
-            wfcpw->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(psir, psir, cal_ikb);
+            wfcpw->real2recip_impl<std::complex<double>,base_device::DEVICE_CPU>(psir, psir, cal_ikb);
 
             for (int n = 0; n < num_bands; n++)
             {

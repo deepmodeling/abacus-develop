@@ -162,14 +162,14 @@ public:
     #endif
 
      template <typename FPTYPE, typename Device>
-    void real_to_recip(const Device* ctx,
+    void real2recip_impl(const Device* ctx,
                        const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
                        const int ik,
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
     template <typename FPTYPE, typename Device>
-    void recip_to_real(const Device* ctx,
+    void recip2real_impl(const Device* ctx,
                        const std::complex<FPTYPE>* in,
                        std::complex<FPTYPE>* out,
                        const int ik,
@@ -180,7 +180,7 @@ public:
     template <typename TK,
               typename Device,
               typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
-    void real_to_recip(const TK* in,
+    void real2recip_impl(const TK* in,
                        TK* out,
                        const int ik,
                        const bool add = false,
@@ -195,7 +195,7 @@ public:
     template <typename TK,
               typename Device,
               typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
-    void recip_to_real(const TK* in,
+    void recip2real_impl(const TK* in,
                        TK* out,
                        const int ik,
                        const bool add = false,
@@ -225,7 +225,7 @@ public:
     template <typename FPTYPE,
               typename Device,
               typename std::enable_if<!std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type = 0>
-    void real_to_recip(const FPTYPE* in,
+    void real2recip_impl(const FPTYPE* in,
                        FPTYPE* out,
                        const int ik,
                        const bool add = false,
@@ -237,7 +237,7 @@ public:
     template <typename TK,
               typename Device,
               typename std::enable_if<std::is_same<Device, base_device::DEVICE_GPU>::value, int>::type = 0>
-    void recip_to_real(const TK* in,
+    void recip2real_impl(const TK* in,
                        TK* out,
                        const int ik,
                        const bool add = false,

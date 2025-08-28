@@ -179,7 +179,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 // Calculate real-space wave functions
                 psi_g.fix_k(is);
                 std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                pw_wfc->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_g(ib, 0), wfc_r.data(), is);
+                pw_wfc->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_g(ib, 0), wfc_r.data(), is);
 
                 // Extract real and imaginary parts
                 std::vector<double> wfc_real(pw_wfc->nrxx);
@@ -399,7 +399,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 // Calculate real-space wave functions
                 std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                pw_wfc->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(&psi_g(ib, 0), wfc_r.data(), ik);
+                pw_wfc->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(&psi_g(ib, 0), wfc_r.data(), ik);
 
                 // Extract real and imaginary parts
                 std::vector<double> wfc_real(pw_wfc->nrxx);
@@ -551,7 +551,7 @@ void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
     }
 
     // call FFT
-    pw_wfc->real_to_recip<std::complex<double>,base_device::DEVICE_CPU>(Porter.data(), &wfc_g(ib, 0), ik);
+    pw_wfc->real2recip_impl<std::complex<double>,base_device::DEVICE_CPU>(Porter.data(), &wfc_g(ib, 0), ik);
 }
 
 #ifdef __MPI

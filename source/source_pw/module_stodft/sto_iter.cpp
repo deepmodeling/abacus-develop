@@ -650,7 +650,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         T* tmpout = stowf.shchi->get_pointer();
         for (int ichi = 0; ichi < nchip_ik; ++ichi)
         {
-            wfc_basis->recip_to_real(this->ctx, tmpout, porter, ik);
+            wfc_basis->recip2real_impl(this->ctx, tmpout, porter, ik);
             const auto w1 = static_cast<Real>(this->pkv->wk[ik]);
             elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, w1, pes->rho, porter);
             // for (int ir = 0; ir < nrxx; ++ir)

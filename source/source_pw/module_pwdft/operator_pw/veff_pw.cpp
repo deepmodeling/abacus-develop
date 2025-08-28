@@ -80,11 +80,11 @@ void Veff<OperatorPW<T, Device>>::act(
         }
         for (int ib = 0; ib < nbands; ib += npol)
         {
-            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            wfcpw->recip2real_impl<T, Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip2real_impl<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
             veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
-            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+            wfcpw->real2recip_impl<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real2recip_impl<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
@@ -96,12 +96,12 @@ void Veff<OperatorPW<T, Device>>::act(
     {
         for (int ib = 0; ib < nbands; ib += npol)
         {
-            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip2real_impl<T, Device>(tmpsi_in, this->porter, this->ik);
             // NOTICE: when MPI threads are larger than the number of Z grids
             // veff would contain nothing, and nothing should be done in real space
             // but the 3DFFT can not be skipped, it will cause hanging
             veff_op()(this->ctx, this->veff_col, this->porter, this->veff + current_spin * this->veff_col);
-            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real2recip_impl<T, Device>(this->porter, tmhpsi, this->ik, true);
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }
@@ -116,12 +116,12 @@ void Veff<OperatorPW<T, Device>>::act(
         for (int ib = 0; ib < nbands; ib += npol)
         {
             // FFT to real space and do things.
-            wfcpw->recip_to_real<T, Device>(tmpsi_in, this->porter, this->ik);
-            wfcpw->recip_to_real<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
+            wfcpw->recip2real_impl<T, Device>(tmpsi_in, this->porter, this->ik);
+            wfcpw->recip2real_impl<T, Device>(tmpsi_in + max_npw, this->porter1, this->ik);
             veff_op()(this->ctx, this->veff_col, this->porter, this->porter1, current_veff);
             // FFT back to G space.
-            wfcpw->real_to_recip<T, Device>(this->porter, tmhpsi, this->ik, true);
-            wfcpw->real_to_recip<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
+            wfcpw->real2recip_impl<T, Device>(this->porter, tmhpsi, this->ik, true);
+            wfcpw->real2recip_impl<T, Device>(this->porter1, tmhpsi + max_npw, this->ik, true);
             tmhpsi   += psi_offset;
             tmpsi_in += psi_offset;
         }

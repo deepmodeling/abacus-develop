@@ -432,7 +432,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
                 continue;
             }
 
-            pw_psi->recip_to_real(ctx, &psi->operator()(ibnd,0), wfcr, ik);
+            pw_psi->recip2real_impl(ctx, &psi->operator()(ibnd,0), wfcr, ik);
             const double w1 = pelec->wg(ik, ibnd) / ucell.omega;
             
             // output one wf, to check KS equation
@@ -472,7 +472,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
                     wfcr[ig] = psi->operator()(ibnd, ig) * std::complex<double>(0.0, fact);
                 }
 
-                pw_psi->recip_to_real<std::complex<double>,base_device::DEVICE_CPU>(wfcr, wfcr, ik);
+                pw_psi->recip2real_impl<std::complex<double>,base_device::DEVICE_CPU>(wfcr, wfcr, ik);
                 
                 for (int ir = 0; ir < this->nx; ++ir)
                 {
