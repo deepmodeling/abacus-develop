@@ -295,22 +295,9 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
                 this->p_hamilt_base->refresh();
             }
 
-            // output h_base
-            std::string out_dir = PARAM.globalv.global_out_dir+"base/";
-            std::string command1 =  "test -d " + out_dir + " || mkdir " + out_dir;
-            system( command1.c_str() );
-            ModuleIO::write_hsk(out_dir,
-                PARAM.inp.nspin,
-                this->kv.get_nks(), 
-                this->kv.get_nkstot(), 
-                this->kv.ik2iktot, 
-                this->kv.isk,
-                p_hamilt_base, 
-                this->pv, 
-                PARAM.globalv.gamma_only_local,
-                PARAM.inp.out_app_flag,
-                istep,
-                GlobalV::ofs_running);        
+            // Note!!!
+            // should not use ModuleIO::write_hsk() to output h_base, because it will call get_hs_pointers()
+            // which will change the hsolver::DiagoElpa<double>::DecomposedState, influencing the following SCF steps     
 
             using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
             hamilt::HamiltLCAO<TK, TR>* p_ham_deepks_base = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base);
@@ -325,13 +312,9 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // ---------- o_base ----------
         if ( PARAM.inp.deepks_bandgap > 0 )
         {
-            // obase isn't easy to output
-            bool skip_charge = true ;
-            hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt_base, this->psi_base[0], this->pelec_base, skip_charge);
-
-            pelec_base->cal_bandgap();
-            GlobalV::ofs_running << std::setprecision(15) << " otot of base functional (Ry) " << pelec_base->bandgap << std::endl;            
+            // obase isn't implemented yet
+            // don't need to solve p_hamilt_base
+            // just dm*p_hamilt_base, similar to cal_o_delta           
         }
     
         // restore to original xc
