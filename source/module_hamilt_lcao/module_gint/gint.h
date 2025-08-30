@@ -258,7 +258,7 @@ class Gint {
     std::vector<hamilt::HContainer<double>*> hRGint_tmp; 
 
     //! stores Hamiltonian in sparse format
-    //hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; 
+    hamilt::HContainer<std::complex<double>>* hR_tmp = nullptr; 
 
     //! stores DMR in sparse format
     std::vector<hamilt::HContainer<double>*> DMRGint; 
