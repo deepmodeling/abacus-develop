@@ -13,7 +13,7 @@ void Gint_vl_nspin4::cal_gint()
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
-    transfer_hr_gint_to_hR_nspin4(hr_gint_part_, *hR_, *gint_info_);
+    merge_hR_n4(hr_gint_part_, *hR_, *gint_info_);
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
