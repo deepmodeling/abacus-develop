@@ -252,6 +252,10 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
     } else // NSPIN=4 case
     {
 #ifdef __MPI
+        // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
+        const int row_set[4] = {0, 0, 1, 1};
+        const int col_set[4] = {0, 1, 0, 1};
+
         int mg = DM2D[0]->get_paraV()->get_global_row_size()/2;
         int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
         int nb = DM2D[0]->get_paraV()->get_block_size()/2;
@@ -267,42 +271,20 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         this-> DM2D_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
         ModuleBase::Memory::record("Gint::DM2D_tmp", this->DM2D_tmp->get_memory_size());
         for (int is = 0; is < 4; is++){
+            this->DM2D_tmp->set_zero();
             for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
                 auto& ap = DM2D[0]->get_atom_pair(iap);
                 int iat1 = ap.get_atom_i();
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                    double* tmp_pointer = this -> DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
-                    double* data_full = ap.get_pointer(ir);
-                    for (int irow = 0; irow < ap.get_row_size(); irow += 2) {
-                        switch (is) {//todo: It can be written more compactly
-                            case 0:
-                                for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                                    *(tmp_pointer)++ = data_full[icol];
-                                }
-                                data_full += ap.get_col_size() * 2;
-                                break;
-                            case 1:
-                                for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                                    *(tmp_pointer)++ = data_full[icol + 1];
-                                }
-                                data_full += ap.get_col_size() * 2;
-                                break;
-                            case 2:
-                                data_full += ap.get_col_size();
-                                for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                                    *(tmp_pointer)++ = data_full[icol];
-                                }
-                                data_full += ap.get_col_size();
-                                break;
-                            case 3:
-                                data_full += ap.get_col_size();
-                                for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                                    *(tmp_pointer)++ = data_full[icol + 1];
-                                }
-                                data_full += ap.get_col_size();
-                                break;           
+                    double* matrix_out = this -> DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    double* matrix_in = ap.get_pointer(ir);
+                    for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
+                        for (int icol = 0; icol < ap.get_col_size()/2; icol++){
+                            int index_i = irow* ap.get_col_size()/2 + icol;
+                            int index_j = (irow*2+row_set[is]) * ap.get_col_size() + icol*2+col_set[is];
+                            matrix_out[index_i] = matrix_in[index_j];
                         }
                     }
                 }

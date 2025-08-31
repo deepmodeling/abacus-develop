@@ -81,6 +81,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     int mg = hR->get_paraV()->get_global_row_size()/2;
     int ng = hR->get_paraV()->get_global_col_size()/2;
     int nb = hR->get_paraV()->get_block_size()/2;
+    hR->set_zero();
 #ifdef __MPI
     int blacs_ctxt = hR->get_paraV()->blacs_ctxt;
     int *iat2iwt = new int[ucell_in->nat];
@@ -98,8 +99,11 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     //0,3;1,2;1,2;0,3
     std::vector<int> first = {0, 1, 1, 0};
     std::vector<int> second= {3, 2, 2, 3};
+    std::vector<int> row_set = {0, 0, 1, 1};
+    std::vector<int> col_set = {0, 1, 0, 1};
+    std::vector<int> clx_i = {1, 0, 0, -1};
+    std::vector<int> clx_j = {0, 1, -1, 0};
     for (int is = 0; is < 4; is++){
-        this->hR_tmp->set_zero();
         hamilt::HContainer<std::complex<double>>* hRGint_tmpCd = new hamilt::HContainer<std::complex<double>>(this->ucell->nat);
         hRGint_tmpCd->insert_ijrs(this->gridt->get_ijr_info(), *(this->ucell));
         hRGint_tmpCd->allocate(nullptr, true);
@@ -128,23 +132,8 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                     {
                         for (int icol = 0; icol < mat_nspin1->get_col_size(); ++icol)
                         {
-                            switch (is)
-                            {
-                            case 0:
-                                upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) + mat_nspin2->get_value(irow, icol);
-                                break;
-                            case 1:
-                                upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) + 
-                                                                        std::complex<double>(0.0, 1.0) * mat_nspin2->get_value(irow, icol);
-                                break;
-                            case 2:
-                                upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) - 
-                                                                        std::complex<double>(0.0, 1.0) * mat_nspin2->get_value(irow, icol);
-                                break;
-                            case 3:
-                                upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) - mat_nspin2->get_value(irow, icol);
-                                break;
-                            }
+                            upper_mat->get_value(irow, icol) = mat_nspin1->get_value(irow, icol) 
+                            + std::complex<double>(clx_i[is], clx_j[is]) * mat_nspin2->get_value(irow, icol);
                         }
                     }
                     //fill the lower triangle matrix
@@ -166,7 +155,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
         }
 
         //std::cout<<"success"<<std::endl;
-
+        this->hR_tmp->set_zero();
         hamilt::transferSerials2Parallels( *hRGint_tmpCd, this->hR_tmp);
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
         {
@@ -186,48 +175,19 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                 {
                     for (int icol = 0; icol < mat_nspin->get_col_size(); ++icol)
                     {
-                        switch (is)
-                        {
-                        case 0:
-                            upper_mat->get_value(2*irow, 2*icol) += mat_nspin->get_value(irow, icol);
-                            break;
-                        case 1:
-                            upper_mat->get_value(2*irow, 2*icol+1) += mat_nspin->get_value(irow, icol);
-                            break;
-                        case 2:
-                            upper_mat->get_value(2*irow+1, 2*icol) += mat_nspin->get_value(irow, icol);
-                            break;
-                        case 3:
-                            upper_mat->get_value(2*irow+1, 2*icol+1) += mat_nspin->get_value(irow, icol);
-                            break;
-                        }
+                        upper_mat->get_value(2*irow+row_set[is], 2*icol+col_set[is]) = 
+                        mat_nspin->get_value(irow, icol);
                     }
                 }
             }
         }
+        delete hRGint_tmpCd;
     }
     delete[] iat2iwt;
 #else
 
 #endif
 
-    // ===================================
-    // transfer HR from Gint to Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>
-    // ===================================
-// #ifdef __MPI
-//     int size;
-//     MPI_Comm_size(MPI_COMM_WORLD, &size);
-//     if (size == 1)
-//     {
-//         hR->add(*this->hRGintCd);
-//     }
-//     else
-//     {
-//         hamilt::transferSerials2Parallels<std::complex<double>>(*this->hRGintCd, hR);
-//     }
-// #else
-    //  hR->add(*this->hRGintCd);
-// #endif
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
     return;
 }
