@@ -55,18 +55,23 @@ Direct
  '''
  */
 
-std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int ik, const int istep)
+std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
     assert(istep>=0);
 
     // ik should be the correct one
 
-    std::string fname = "dms" + std::to_string(ispin + 1);
+    std::string fname = "dm";
 
     if (!gamma_only)
 	{
 		fname += "k" + std::to_string(ik + 1); 
     }
+
+	if (nspin == 2)
+	{
+		fname += "s" + std::to_string(ispin + 1);
+	}
 
     if( istep >= 0 )
     {
@@ -196,7 +201,7 @@ bool ModuleIO::read_dmk(const int nspin,
             {
                 // to read density matrix in k space, delete the step information 'g'
                 const int istep = 0;
-                std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, ik, istep);
+                std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
                 std::ifstream ifs(fn.c_str());
 
                 if (!ifs)
@@ -240,11 +245,13 @@ bool ModuleIO::read_dmk(const int nspin,
                 }
 
                 // read the DMK data
+                const size_t index_k = ik + nk * ispin;
                 for (int i = 0; i < nlocal; ++i)
                 {
+                    const size_t index_i = i * nlocal;
                     for (int j = 0; j < nlocal; ++j)
                     {
-                        dmk_readData(ifs, dmk_global[ik + nk * ispin][i * nlocal + j]);
+                        dmk_readData(ifs, dmk_global[index_k][index_i + j]);
                     }
                 }
                 ifs.close();
@@ -345,7 +352,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
             if (my_rank == 0)
             {
-                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, ik, istep);
+                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
                 std::ofstream ofs(fn.c_str());
 
                 if (!ofs)

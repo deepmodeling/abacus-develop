@@ -17,7 +17,7 @@ namespace ModuleIO {
  * @param ik The index of the k-point.
  * @return The generated filename.
  */
-std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int ik, const int istep);
+std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep);
 
 /**
  * @brief Writes the unit cell information to a DMK file.
