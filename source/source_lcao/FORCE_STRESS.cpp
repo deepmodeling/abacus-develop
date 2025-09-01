@@ -505,7 +505,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // DeePKS force
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            if (PARAM.inp.deepks_out_base == "none" ) 
+            if (PARAM.inp.deepks_out_base == "none" 
+                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
             {
                 const std::string file_ftot = PARAM.globalv.global_out_dir
                                             + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
@@ -513,6 +514,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
                 if (PARAM.inp.deepks_out_labels == 1)
                 {
+                    // this base only considers subtracting the deepks_scf part
                     const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                     if (PARAM.inp.deepks_scf)
                     {
@@ -526,11 +528,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     }
                 }
             }
-            else 
+            if (PARAM.inp.deepks_out_base != "none") 
             {
-                // output fcs as tot or base
-                const std::string file_f = PARAM.globalv.global_out_dir + 
-                    (dpks_out_type == "tot" ? "deepks_ftot.npy" : "deepks_fbase.npy");
+                // output fcs as tot or base in another dir
+                // this base considers changing xc functional to base functional
+                const std::string file_f = PARAM.globalv.global_deepks_label_elec_dir + 
+                    (dpks_out_type == "tot" ? "ftot.npy" : "fbase.npy");
                 LCAO_deepks_io::save_matrix2npy(file_f, fcs, GlobalV::MY_RANK);              
             }
         }
@@ -703,7 +706,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_out_labels == 1)
         {
-            if (PARAM.inp.deepks_out_base == "none" ) 
+            if (PARAM.inp.deepks_out_base == "none" 
+                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
             {
                 const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
                 LCAO_deepks_io::save_matrix2npy(file_stot,
@@ -712,6 +716,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                 ucell.omega,
                                                 'U'); // change to energy unit Ry when printing, S_tot;
 
+                // this base only considers subtracting the deepks_scf part
                 const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
                 if (PARAM.inp.deepks_scf)
                 {
@@ -730,11 +735,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                     'U'); // sbase = stot
                 }
             }
-            else
+            if (PARAM.inp.deepks_out_base != "none") 
             {
-                // output scs as tot or base
-                const std::string file_s = PARAM.globalv.global_out_dir + 
-                    (dpks_out_type == "tot" ? "deepks_stot.npy" : "deepks_sbase.npy");
+                // output scs as tot or base in another dir
+                // this base considers changing xc functional to base functional
+                const std::string file_s = PARAM.globalv.global_deepks_label_elec_dir + 
+                    (dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
                 LCAO_deepks_io::save_matrix2npy(file_s,
                                                 scs,
                                                 GlobalV::MY_RANK,

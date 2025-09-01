@@ -37,12 +37,23 @@ process_npy() {
     local total="0"
     local file_pattern=""
     local base_pattern=""
+
+    # Check if force or stress
+    local is_force_or_stress=0
+    if [ "$file_prefix" = "ftot" ] || [ "$file_prefix" = "stot" ]; then
+        is_force_or_stress=1
+    fi
     
     # Determine file pattern based on mode
     if [ "$mode" = "multi" ]; then
-        # multi mode: multiple files with _e* suffix from different electronic steps
-        file_pattern="OUT.autotest/DeePKS_Labels_Elec/${file_prefix}_e*.npy"
-        base_pattern="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}_e*.npy"
+        # multi mode: multiple files with _e* suffix from different electronic steps, unless for force and stress
+        if [ "$is_force_or_stress" -eq 1 ] ; then
+            file_pattern="OUT.autotest/DeePKS_Labels_Elec/${file_prefix}.npy"
+            base_pattern="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}.npy"
+        else
+            file_pattern="OUT.autotest/DeePKS_Labels_Elec/${file_prefix}_e*.npy"
+            base_pattern="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}_e*.npy"
+        fi
     elif [ "$mode" = "single" ];then
         # single mode: single file
         file_pattern="OUT.autotest/deepks_${file_prefix}.npy"
@@ -63,7 +74,7 @@ process_npy() {
         
         # Get corresponding base file
         local base_file=""
-        if [ "$mode" = "multi" ]; then
+        if [ "$mode" = "multi" ] && [ "$is_force_or_stress" -ne 1 ]; then
             base_file="OUT.autotest/DeePKS_Labels_Elec/${base_prefix}_${step}.npy"
         else
             base_file=$base_pattern
@@ -120,6 +131,17 @@ process_many_npys() {
             process_npy "$mode" "numpy" "gevdm" "" "deepks_gevdm$suffix" "$output_file"
         fi
     fi
+
+    if ! test -z "$has_force" && [ $has_force == 1 ]; then
+        process_npy "$mode" "abs" "ftot" "" "deepks_f_label$suffix" "$output_file"
+        process_npy "$mode" "delta" "ftot" "fbase" "deepks_fdelta$suffix" "$output_file"
+    fi
+    
+    # For cal_stress = 1
+    if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+        process_npy "$mode" "abs" "stot" "" "deepks_s_label$suffix" "$output_file"
+        process_npy "$mode" "delta" "stot" "sbase" "deepks_sdelta$suffix" "$output_file"
+    fi
 }
 
 # Main script
@@ -150,18 +172,14 @@ fi
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
     process_many_npys "single" "" "$1"
 
-	# force and stress not considered in deepks_out_freq_elec > 0, so not in process_many_npys
+	# gradvx and gvepsl not considered in deepks_out_freq_elec > 0, so not in process_many_npys
     # For cal_force = 1
     if ! test -z "$has_force" && [ $has_force == 1 ]; then
-        process_npy "single" "abs" "ftot" "" "deepks_f_label" "$1"
-        process_npy "single" "delta" "ftot" "fbase" "deepks_fdelta" "$1"
         process_npy "single" "abs" "gradvx" "" "deepks_fpre" "$1"
     fi
     
     # For cal_stress = 1
     if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
-        process_npy "single" "abs" "stot" "" "deepks_s_label" "$1"
-        process_npy "single" "delta" "stot" "sbase" "deepks_sdelta" "$1"
         process_npy "single" "abs" "gvepsl" "" "deepks_spre" "$1"
     fi
 
