@@ -111,7 +111,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 		}
 		const int precision = 3;
 		ModuleIO::write_dmk(pelec->get_DM()->get_DMK_vector(),
-				precision, efermis, &(ucell), pv);
+				precision, efermis, &(ucell), pv, istep);
 	}
 
     //------------------------------------------------------------------

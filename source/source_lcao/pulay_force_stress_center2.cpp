@@ -16,8 +16,8 @@ namespace PulayForceStress
         const double& factor_force,
         const double& factor_stress)
     {
-        ModuleBase::TITLE("Forces", "cal_pulay");
-        ModuleBase::timer::tick("Forces", "cal_pulay");
+        ModuleBase::TITLE("Forces", "cal_pulay_fs");
+        ModuleBase::timer::tick("Forces", "cal_pulay_fs");
 
         const int nspin = PARAM.inp.nspin;
         const int nlocal = PARAM.globalv.nlocal;
@@ -50,9 +50,12 @@ namespace PulayForceStress
             }
         }
 
-        if (isstress) { StressTools::stress_fill(ucell.lat0, ucell.omega, s); }
+		if (isstress) 
+		{ 
+			StressTools::stress_fill(ucell.lat0, ucell.omega, s); 
+		}
 
-        ModuleBase::timer::tick("Forces", "cal_pulay");
+        ModuleBase::timer::tick("Forces", "cal_pulay_fs");
     }
 
     template<>  //multi-k, provided xy

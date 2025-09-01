@@ -55,18 +55,27 @@ Direct
  '''
  */
 
-std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int ik)
+std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int ik, const int istep)
 {
-    if (gamma_only)
-    {
-        return std::string("dm") + "s" + std::to_string(ispin + 1) + "_nao.txt";
+    assert(istep>=0);
+
+    // ik should be the correct one
+
+    std::string fname = "dms" + std::to_string(ispin + 1);
+
+    if (!gamma_only)
+	{
+		fname += "k" + std::to_string(ik + 1); 
     }
-    else
+
+    if( istep >= 0 )
     {
-        // mohan update 2025-05-25, the index of 'ik' should be the correct 'ik' without spin
-        return std::string("dm") + "s" + std::to_string(ispin + 1) 
-               + "k" + std::to_string(ik + 1) + "_nao.txt";
+        fname += "g" + std::to_string(istep + 1);
     }
+
+    fname += "_nao.txt";
+
+    return fname;
 }
 
 void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
@@ -185,7 +194,9 @@ bool ModuleIO::read_dmk(const int nspin,
         {
             for (int ik = 0; ik < nk; ik++)
             {
-                std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, ik);
+                // to read density matrix in k space, delete the step information 'g'
+                const int istep = 0;
+                std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, ik, istep);
                 std::ifstream ifs(fn.c_str());
 
                 if (!ifs)
@@ -283,7 +294,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                          const int precision,
                          const std::vector<double>& efs,
                          const UnitCell* ucell,
-                         const Parallel_2D& pv)
+						 const Parallel_2D& pv,
+						 const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::tick("ModuleIO", "write_dmk");
@@ -294,13 +306,16 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 #endif
 
     bool gamma_only = std::is_same<double, T>::value;
-    int nlocal = pv.get_global_row_size();
-    int nspin = efs.size();
-    int nk = dmk.size() / nspin;
+    const int nlocal = pv.get_global_row_size();
+    const int nspin = efs.size();
+    assert(nspin > 0);
+    const int nk = dmk.size() / nspin;
+
     if (nk * nspin != dmk.size())
     {
         ModuleBase::WARNING_QUIT("write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
+
     Parallel_2D pv_glb;
 
     // when nspin == 2, assume the order of K in dmk is K1_up, K2_up, ...,
@@ -330,7 +345,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
             if (my_rank == 0)
             {
-                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, ik);
+                std::string fn = PARAM.globalv.global_out_dir + dmk_gen_fname(gamma_only, ispin, ik, istep);
                 std::ofstream ofs(fn.c_str());
 
                 if (!ofs)
@@ -399,10 +414,12 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
                                           const int precision,
                                           const std::vector<double>& efs,
                                           const UnitCell* ucell,
-                                          const Parallel_2D& pv);
+                                          const Parallel_2D& pv,
+                                          const int istep);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
                                                         const int precision,
                                                         const std::vector<double>& efs,
                                                         const UnitCell* ucell,
-                                                        const Parallel_2D& pv);
+                                                        const Parallel_2D& pv,
+                                                        const int istep);

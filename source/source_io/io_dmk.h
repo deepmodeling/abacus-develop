@@ -17,7 +17,7 @@ namespace ModuleIO {
  * @param ik The index of the k-point.
  * @return The generated filename.
  */
-std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int ik);
+std::string dmk_gen_fname(const bool gamma_only, const int ispin, const int ik, const int istep);
 
 /**
  * @brief Writes the unit cell information to a DMK file.
@@ -83,7 +83,8 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const int precision,
                const std::vector<double>& efs,
                const UnitCell* ucell,
-               const Parallel_2D& pv);
+               const Parallel_2D& pv,
+               const int istep);
 
 } // namespace ModuleIO
 

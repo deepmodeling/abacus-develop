@@ -31,7 +31,6 @@ void Driver::driver_run()
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
     if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
-        ModuleBase::timer::tick("Driver","driver_run");
         ModuleBase::WARNING_QUIT("driver",
                                  "to use LCAO basis, compile with __LCAO");
     }

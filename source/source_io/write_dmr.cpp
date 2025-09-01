@@ -70,9 +70,12 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const int nat,
                const int istep)
 {
-    for (int ispin = 0; ispin < dmr.size(); ispin++)
+    const int nspin = dmr.size();
+    assert(nspin > 0);
+    for (int ispin = 0; ispin < nspin; ispin++)
 	{
 		const int nbasis = dmr[ispin]->get_nbasis();
+
 		// gather the parallel matrix to serial matrix
 #ifdef __MPI
 		Parallel_Orbitals serialV;
@@ -86,7 +89,10 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
 #endif
 		if (GlobalV::MY_RANK == 0)
 		{
-			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(1, ispin, append, istep);
+            // out_type = 1, csr format;
+            // out_type = 2, npz format (currently not support)
+            const int out_type = 1;
+			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
 			write_dmr_csr(fname, &dm_serial, istep);
 		}
 	}
