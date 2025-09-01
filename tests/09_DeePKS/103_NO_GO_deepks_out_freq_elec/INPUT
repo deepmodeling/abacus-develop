@@ -29,11 +29,11 @@ mixing_gg0          0
 #Parameters (6.File)
 deepks_out_labels   1 
 
-deepks_bandgap      1
 deepks_v_delta      1
 cal_force           1
 cal_stress          1
 
 deepks_out_freq_elec 1
 
-dft_functional      lda
+dft_functional      pbe
+deepks_out_base     lda
