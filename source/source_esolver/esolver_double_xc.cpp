@@ -261,7 +261,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // set as base functional Temporarily
         XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
 
-        // update_pot
+        // update pot of pelec_base according to chr_base
         if (!conv_esolver)
         {
             this->pelec_base->pot->update_from_charge(&this->chr_base, &ucell);
