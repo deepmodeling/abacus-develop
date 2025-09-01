@@ -107,6 +107,7 @@ def read_stru(fpath: str) -> Dict[str, Any]:
     """Read an ABACUS STRU file and return its content as a dictionary."""
     block_title = ['ATOMIC_SPECIES',
                    'NUMERICAL_ORBITAL',
+                   'NUMERICAL_DESCRIPTOR',
                    'LATTICE_CONSTANT',
                    'LATTICE_PARAMETER',
                    'LATTICE_VECTORS',
@@ -143,6 +144,10 @@ def read_stru(fpath: str) -> Dict[str, Any]:
     if 'NUMERICAL_ORBITAL' in blocks:
         for i, s in enumerate(stru['species']):
             s['orb_file'] = blocks['NUMERICAL_ORBITAL'][i].strip()
+
+    #============ NUMERICAL_DESCRIPTOR ============
+    if 'NUMERICAL_DESCRIPTOR' in blocks:
+        stru['desc'] = blocks['NUMERICAL_DESCRIPTOR'][0].strip()
 
     #============ ATOMIC_POSITIONS ============
     stru['coord_type'] = blocks['ATOMIC_POSITIONS'][0]
