@@ -101,14 +101,29 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
 
 
 TEST(DMKTest, GenFileName) {
-    std::string fname = ModuleIO::dmk_gen_fname(true, 0, 0);
+    bool gamma_only = true;
+    int ispin = 0;
+    int nspin = 2;
+    int ik = 0;
+    int istep = 0;
+    std::string fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
     EXPECT_EQ(fname, "dms1_nao.txt");
-    fname = ModuleIO::dmk_gen_fname(true, 1, 1);
+
+    ispin = 1;
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
     EXPECT_EQ(fname, "dms2_nao.txt");
 
-    fname = ModuleIO::dmk_gen_fname(false, 0, 0);
+    ispin = 0;
+    gamma_only = false;    
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
     EXPECT_EQ(fname, "dms1k1_nao.txt");
-    fname = ModuleIO::dmk_gen_fname(false, 1, 1);
+
+    ispin = 1;
+    ik = 1;
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
     EXPECT_EQ(fname, "dms2k2_nao.txt");
 };
 
@@ -132,8 +147,9 @@ TEST(DMKTest,WriteDMK) {
     gen_dmk(dmk_multik, efs, nspin, nk_multik, nlocal, pv);
     PARAM.sys.global_out_dir = "./";
 
-    ModuleIO::write_dmk(dmk, 3, efs, ucell, pv);
-    ModuleIO::write_dmk(dmk_multik, 3, efs, ucell, pv);
+    const int istep = 0;
+    ModuleIO::write_dmk(dmk, 3, efs, ucell, pv, istep);
+    ModuleIO::write_dmk(dmk_multik, 3, efs, ucell, pv, istep);
     std::ifstream ifs;
 
     int pass = 0;
