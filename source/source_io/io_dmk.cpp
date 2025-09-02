@@ -86,7 +86,7 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
 void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
 {
     // write the UnitCell information
-    ofs << ucell->latName << std::endl;
+    ofs << " " << ucell->latName << std::endl;
     ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
     ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
     ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
@@ -101,7 +101,7 @@ void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
         ofs << " " << ucell->atoms[it].na;
     }
     ofs << std::endl;
-    ofs << "Direct" << std::endl;
+    ofs << " Direct" << std::endl;
     for (int it = 0; it < ucell->ntype; it++)
     {
         Atom* atom = &ucell->atoms[it];
@@ -236,13 +236,6 @@ bool ModuleIO::read_dmk(const int nspin,
                     ifs.close();
                     break;
                 }
-                ifs >> tmp; // nlocal
-                if (!check_consistency(fn, "nlocal", tmp, nlocal))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
 
                 // read the DMK data
                 const size_t index_k = ik + nk * ispin;
@@ -317,6 +310,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     const int nspin = efs.size();
     assert(nspin > 0);
     const int nk = dmk.size() / nspin;
+    const double dm_thr = 1.0e-16; // mohan set 2025-09-02
 
     if (nk * nspin != dmk.size())
     {
@@ -369,29 +363,49 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 dmk_write_ucell(ofs, ucell);
 
 
-                ofs << "\n " << nspin; // nspin
+                ofs << "\n " << nspin << " (nspin)"; // nspin
                 ofs << "\n " << std::fixed << std::setprecision(5) << efs[ispin]
                     << " (fermi energy)";
-                ofs << "\n  " << nlocal << " " << nlocal << std::endl;
+                ofs << "\n " << nlocal << " (number of basis)" << std::endl;
 
-                ofs << std::setprecision(precision);
+                ofs << std::fixed;
                 ofs << std::scientific;
+                ofs << std::setprecision(precision);
+                ofs << std::right;
+//              ofs << std::showpos; // show positive label 
                 for (int i = 0; i < nlocal; ++i)
                 {
                     for (int j = 0; j < nlocal; ++j)
                     {
-                        if (j % 8 == 0)
-                        {
-                            ofs << "\n";
-                        }
                         if (std::is_same<double, T>::value)
                         {
+							if (j % 8 == 0)
+							{
+								ofs << "\n";
+							}
                             ofs << " " << dmk_global[i * nlocal + j];
                         }
                         else if (std::is_same<std::complex<double>, T>::value)
                         {
-                            ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
-                                << std::imag(dmk_global[i * nlocal + j]) << ")";
+							if (j % 4 == 0)
+							{
+								ofs << "\n";
+							}
+
+                            double real_v = std::real(dmk_global[i * nlocal + j]);
+							if(std::abs(real_v) < dm_thr)
+							{
+								real_v = 0.0;
+							} 
+                            double imag_v = std::imag(dmk_global[i * nlocal + j]);
+							if(std::abs(imag_v) < dm_thr)
+							{
+								imag_v = 0.0;
+							} 
+
+                            ofs << " (" << real_v << "," << imag_v << ")";
+ //                           ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
+   //                             << std::imag(dmk_global[i * nlocal + j]) << ")";
                         }
                     }
                 }
