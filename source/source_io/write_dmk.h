@@ -1,5 +1,5 @@
-#ifndef DM_IO_H
-#define DM_IO_H
+#ifndef WRITE_DMK_H
+#define WRITE_DMK_H
 
 #include "source_base/parallel_2d.h"
 #include "source_cell/unitcell.h"
@@ -88,4 +88,4 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
 
 } // namespace ModuleIO
 
-#endif // IO_DMK_H
+#endif

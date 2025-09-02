@@ -8,7 +8,7 @@
 // functions
 #include "source_io/write_dos_lcao.h" // use ModuleIO::write_dos_lcao() 
 #include "source_io/write_dmr.h" // use ModuleIO::write_dmr() 
-#include "source_io/io_dmk.h" // use ModuleIO::write_dmk()
+#include "source_io/write_dmk.h" // use ModuleIO::write_dmk()
 #include "source_io/write_HS.h" // use ModuleIO::write_hsk()
 #include "source_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 #include "source_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 

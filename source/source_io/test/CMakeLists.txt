@@ -239,7 +239,7 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 AddTest(
   TARGET MODULE_IO_dmk_io
   LIBS parameter ${math_libs} base device cell_info 
-  SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp
+  SOURCES write_dmk_test.cpp ../write_dmk.cpp ../output.cpp
 )
 
 add_test(
