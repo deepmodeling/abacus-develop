@@ -46,7 +46,6 @@ list(APPEND objects_advanced
     to_wannier90_lcao_in_pw.cpp
     to_wannier90_lcao.cpp
     fR_overlap.cpp
-    winput.cpp
 )
 
 if(ENABLE_LCAO)
