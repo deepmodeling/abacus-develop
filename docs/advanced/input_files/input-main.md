@@ -31,6 +31,7 @@
     - [read\_file\_dir](#read_file_dir)
     - [restart\_load](#restart_load)
     - [wannier\_card](#wannier_card)
+    - [spillage\_outdir](#spillage_outdir)
   - [Plane Wave](#plane-wave-related-variables)
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
@@ -172,6 +173,7 @@
     - [out\_wfc_re_im](#out_wfc_re_im)
     - [if\_separate\_k](#if_separate_k)
     - [out\_elf](#out_elf)
+    - [out\_spillage](#out_spillage)
   - [Density of States](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -779,6 +781,13 @@ These variables are used to control parameters related to input files.
 - **Availability**: Using ABACUS with Wannier90.
 - **Description**: The name of the input file related to Wannier90.
 - **Default**: "none"
+
+### spillage_outdir
+
+- **Type**: String
+- **Availability**: Used only for plane wave basis set.
+- **Description**: The directory to save the spillage files.
+- **Default**: "./"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2025,6 +2034,13 @@ These variables are used to control the output of properties.
   ---
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
+
+### out_spillage
+
+- **Type**: Integer
+- **Availability**: Only for Kohn-Sham DFT with plane-wave basis.
+- **Description**: This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as `OVERLAP_Q`), and between TSBFs (named as `OVERLAP_Sq`), also their first order derivatives. The output files are named starting with `orb_matrix`. A value of `2` would enable the output.
+- **Default**: 0 
 
 [back to top](#full-list-of-input-keywords)
 

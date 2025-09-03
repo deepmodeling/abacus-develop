@@ -59,7 +59,6 @@ struct Input_para
     std::string orbital_dir = "";       ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
     bool restart_load = false;
-    std::string wannier_card = "none";              ///< input card for wannier functions.
     int mem_saver = 0;                              ///< 1: save psi when nscf calculation.
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
     int nbspline = -1;                              ///< the order of B-spline basis(>=0) if it is -1 (default)
