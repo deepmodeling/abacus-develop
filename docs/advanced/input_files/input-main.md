@@ -30,7 +30,6 @@
     - [orbital\_dir](#orbital_dir)
     - [read\_file\_dir](#read_file_dir)
     - [restart\_load](#restart_load)
-    - [wannier\_card](#wannier_card)
     - [spillage\_outdir](#spillage_outdir)
   - [Plane Wave](#plane-wave-related-variables)
     - [ecutwfc](#ecutwfc)
@@ -774,13 +773,6 @@ These variables are used to control parameters related to input files.
 
   If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0* or *[rpa](#rpa)==True*), the Hexx(R) files in the same folder for each processor will also be read.
 - **Default**: False
-
-### wannier_card
-
-- **Type**: String
-- **Availability**: Using ABACUS with Wannier90.
-- **Description**: The name of the input file related to Wannier90.
-- **Default**: "none"
 
 ### spillage_outdir
 

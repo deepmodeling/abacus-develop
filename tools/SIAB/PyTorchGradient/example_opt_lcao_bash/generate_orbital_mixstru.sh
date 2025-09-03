@@ -504,7 +504,6 @@ latname             $element-$rcut-$BL
 stru_file           $name.stru
 pseudo_dir          $pseudo_dir
 kpoint_file         KPOINTS
-wannier_card        INPUTw
 calculation         scf
 ntype               1
 nspin               1
