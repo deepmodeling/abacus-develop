@@ -408,6 +408,8 @@ struct Input_para
     bool if_separate_k = false;           ///< whether to write partial charge for all k-points to individual files or merge them
     std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
     std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
+    int out_spillage = 0; ///< output the spillage of the wave function
+    std::string spillage_outdir = "./";  ///< output directory for spillage
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
