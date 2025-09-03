@@ -144,6 +144,7 @@ void PW_Basis::collect_local_pw()
     delete[] this->gcar; this->gcar = new ModuleBase::Vector3<double>[this->npw];
 
     ModuleBase::Vector3<double> f;
+    int gamma_num = 0;
     for(int ig = 0 ; ig < this-> npw ; ++ig)
     {
         int isz = this->ig2isz[ig];
@@ -173,6 +174,12 @@ void PW_Basis::collect_local_pw()
         if(this->gg[ig] < 1e-8)
         {
             this->ig_gge0 = ig;
+            ++gamma_num;
+            if (gamma_num > 1)
+            {
+                ModuleBase::WARNING_QUIT("PW_Basis::collect_local_pw", 
+                                        "More than one gamma point found in the plane wave basis set.\n");
+            }
         }
     }
     return;

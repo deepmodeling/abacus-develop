@@ -1,6 +1,6 @@
 #ifdef __MPI
 
-#include "../blacs_connector.h"
+#include "../module_external/blacs_connector.h"
 #include <mpi.h>
 #include "gtest/gtest.h"
 

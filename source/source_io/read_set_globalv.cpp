@@ -1,8 +1,8 @@
+#include "read_input.h"
+#include "read_input_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
-#include "read_input.h"
-#include "read_input_tool.h"
 namespace ModuleIO
 {
 /// @note Here para.inp has been synchronized of all ranks.
@@ -93,11 +93,15 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_matrix_dir = sys.global_out_dir + "matrix/";
     sys.global_matrix_dir = to_dir(sys.global_matrix_dir);
 
+    /// get the global output directory
+    sys.global_wfc_dir = sys.global_out_dir + "WFC/";
+    sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
+
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
     sys.global_mlkedf_descriptor_dir = to_dir(sys.global_mlkedf_descriptor_dir);
 
-    /// get the global directory for DeePKS labels during electronic steps 
+    /// get the global directory for DeePKS labels during electronic steps
     sys.global_deepks_label_elec_dir = sys.global_out_dir + "DeePKS_Labels_Elec/";
     sys.global_deepks_label_elec_dir = to_dir(sys.global_deepks_label_elec_dir);
 
@@ -149,6 +153,7 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_readin_dir);
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
+    Parallel_Common::bcast_string(sys.global_wfc_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }

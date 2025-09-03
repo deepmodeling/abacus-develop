@@ -57,7 +57,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 	//=============================
 	rho_basis->real2recip(aux, aux);
 
-
+	const int ig0 = rho_basis->ig_gge0; 
 #ifndef _OPENMP
 	ModuleBase::matrix& local_sigma = sigma;
 #else
@@ -68,12 +68,11 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 #endif
 		for (int ig = 0 ; ig < rho_basis->npw ; ++ig)
 		{
-			const FPTYPE g2 = rho_basis->gg[ig];
-			if(g2 < 1e-8) 
-			{ 
+			if (ig == ig0) 
+			{
 				continue;
 			}
-
+			const FPTYPE g2 = rho_basis->gg[ig];
 			FPTYPE shart= ( conj( aux[ig] ) * aux[ig] ).real()/(ucell.tpiba2 * g2);
 			for(int l=0;l<3;l++)
 			{

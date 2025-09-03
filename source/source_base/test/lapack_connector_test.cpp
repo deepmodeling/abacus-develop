@@ -1,4 +1,4 @@
-#include "../lapack_connector.h"
+#include "../module_external/lapack_connector.h"
 
 #include <cmath>
 #include <complex>

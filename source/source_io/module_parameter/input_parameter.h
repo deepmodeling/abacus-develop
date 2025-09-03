@@ -123,8 +123,7 @@ struct Input_para
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
-    double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
-                             ///< is given by (1-soc_lambda)
+    double soc_lambda = 1.0; ///< The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 
     // ==============   #Parameters (3.LCAO) ===========================
     int nb2d = 0;                              ///< matrix 2d division.
@@ -287,7 +286,8 @@ struct Input_para
     double bessel_descriptor_sigma = 0.1;           ///< spherical bessel smearing_sigma
 
     // ==============   #Parameters (9.rt-tddft) ===========================
-    double td_force_dt = 0.02; ///<"fs"
+    double td_dt = -1.0;            ///< time step for propagation
+    int estep_per_md = 1;           ///< number of electronic steps per MD step
     bool td_vext = false;      ///< add extern potential or not
     // std::string td_vext_dire = "1";   ///< vext direction
     std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
@@ -298,11 +298,10 @@ struct Input_para
     int propagator = 0;            ///< method of propagator
     int td_stype = 0;              ///< type of space domain  0 : length gauge  1: velocity gauge
     std::string td_ttype = "0";    ///< type of time domain
-    ///<  0  Gauss type function.
-    ///<  1  trapezoid type function.
-    ///<  2  Trigonometric functions, sin^2.
-    ///<  3  heaviside function.
-    ///<  4  HHG function.
+    ///< 0: Gaussian type function.
+    ///< 1: Trapezoid type function.
+    ///< 2: Trigonometric functions, sin^2.
+    ///< 3: Heaviside step function.
     int td_tstart = 1;
     int td_tend = 1000;
 
@@ -408,8 +407,9 @@ struct Input_para
     std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
-    bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
-    std::vector<int> out_elf = {0, 3}; ///< output the electron localization function (ELF). 0: no; 1: yes
+    bool if_separate_k = false;           ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
+    std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
@@ -631,7 +631,7 @@ struct Input_para
     bool test_stress = false;       ///< test the stress.
     bool test_skip_ewald = false;   ///< variables for test only
     int test_atom_input = false;    ///< variables for test_atom_input only
-    int test_symmetry = false;      ///< variables for test_lattice only
+    // int test_symmetry = false;   ///< variables for test_lattice only
     int test_wf = 0;                ///< variables for test_wf only
     int test_grid = false;          ///< variables for test_grid only
     int test_charge = false;        ///< variables for test_vloc only

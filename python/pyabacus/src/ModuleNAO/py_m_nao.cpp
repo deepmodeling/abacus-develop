@@ -82,9 +82,9 @@ void bind_m_nao(py::module& m)
         .def("symbol", &RadialCollection::symbol, "itype"_a)
         .def_property_readonly("ntype", &RadialCollection::ntype)
         .def("lmax", overload_cast_<const int>()(&RadialCollection::lmax, py::const_), "itype"_a)
-        .def_property_readonly("lmax", overload_cast_<>()(&RadialCollection::lmax, py::const_))
+        .def("lmax", overload_cast_<>()(&RadialCollection::lmax, py::const_))
         .def("rcut_max", overload_cast_<const int>()(&RadialCollection::rcut_max, py::const_), "itype"_a)
-        .def_property_readonly("rcut_max", overload_cast_<>()(&RadialCollection::rcut_max, py::const_))
+        .def("rcut_max", overload_cast_<>()(&RadialCollection::rcut_max, py::const_))
         .def("nzeta", &RadialCollection::nzeta, "itype"_a, "l"_a)
         .def("nzeta_max", overload_cast_<const int>()(&RadialCollection::nzeta_max, py::const_), "itype"_a)
         .def("nzeta_max", overload_cast_<>()(&RadialCollection::nzeta_max, py::const_))
@@ -152,12 +152,9 @@ void bind_m_nao(py::module& m)
                 double* cvR = static_cast<double*>(pvR_info.ptr);
                 ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
                 double out[1] = {0.0};
-                double* grad_out = nullptr;
-                if (cal_grad)
-                {
-                    grad_out = new double[3];
-                }
-                self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_out);
+                double grad_out[3] = {0.0, 0.0, 0.0};
+                double* grad_ptr = cal_grad ? grad_out : nullptr;
+                self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_ptr);
                 py::array_t<double> out_array(1, out);
                 if (cal_grad)
                 {

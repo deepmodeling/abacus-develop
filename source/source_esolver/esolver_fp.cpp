@@ -47,18 +47,18 @@ ESolver_FP::~ESolver_FP()
 void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
-    std::string fft_device = PARAM.inp.device;
-    std::string fft_precison = PARAM.inp.precision;
+    std::string fft_device = inp.device;
+    std::string fft_precison = inp.precision;
     // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(PARAM.inp.basis_type == "lcao")
+    if(inp.basis_type == "lcao")
     {
         fft_device = "cpu";
     }
-    if ((PARAM.inp.precision=="single") || (PARAM.inp.precision=="mixing"))
+    if ((inp.precision=="single") || (inp.precision=="mixing"))
     {
         fft_precison = "mixing";
     }
-    else if (PARAM.inp.precision=="double")
+    else if (inp.precision=="double")
     {
         fft_precison = "double";
     }
@@ -79,8 +79,8 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
         pw_rhod = pw_rho;
     }
     pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
-    pw_big->setbxyz(PARAM.inp.bx, PARAM.inp.by, PARAM.inp.bz);
-    sf.set(pw_rhod, PARAM.inp.nbspline);
+    pw_big->setbxyz(inp.bx, inp.by, inp.bz);
+    sf.set(pw_rhod, inp.nbspline);
 
     //! 1) read pseudopotentials
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
@@ -89,7 +89,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 #ifdef __MPI
     this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
-    if (this->classname == "ESolver_OF" || PARAM.inp.of_ml_gene_data == 1)
+    if (this->classname == "ESolver_OF" || inp.of_ml_gene_data == 1)
     {
         this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
     }
@@ -143,7 +143,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleIO::print_rhofft(this->pw_rhod, this->pw_rho, this->pw_big, GlobalV::ofs_running);
 
     //! 5) initialize the charge extrapolation method if necessary
-    this->CE.Init_CE(PARAM.inp.nspin, ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
+    this->CE.Init_CE(inp.nspin, ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
 
     return;
 }

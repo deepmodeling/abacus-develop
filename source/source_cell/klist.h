@@ -126,6 +126,7 @@ public:
     }
 
     std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
+    std::vector<int> ibz_index; ///< map k points (before symmetry reduction) to irreducible k-points
 
     /**
      * @brief Updates the k-points to use the irreducible Brillouin zone (IBZ).

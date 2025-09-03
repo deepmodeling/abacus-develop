@@ -74,6 +74,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
     }
+    else if (cal_type == "gen_opt_abfs")
+    {
+        return;
+    }
 
     // 1. prepare HS matrices, prepare grid integral
     // (1) Find adjacent atoms for each atom.

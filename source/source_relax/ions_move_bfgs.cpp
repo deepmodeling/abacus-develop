@@ -23,9 +23,10 @@ Ions_Move_BFGS::~Ions_Move_BFGS(){};
 void Ions_Move_BFGS::allocate()
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "init");
-    if (init_done) {
-        return;
-}
+	if (init_done) 
+	{
+		return;
+	}
     this->allocate_basic();
 
     // initialize data members
@@ -49,8 +50,9 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
         first_step = false;
     }
-    else{
-        std::vector<double> pos_tmp(3 * ucell.nat);
+	else
+	{
+		std::vector<double> pos_tmp(3 * ucell.nat);
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad);
     }
     // use energy_in and istep to setup etot and etot_old.

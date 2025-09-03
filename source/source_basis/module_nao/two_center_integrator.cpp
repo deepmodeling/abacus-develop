@@ -48,6 +48,12 @@ void TwoCenterIntegrator::calculate(const int itype1,
         return;
     }
 
+    if (m1 > l1 || m1 < -l1 || m2 > l2 || m2 < -l2)
+    {
+        ModuleBase::WARNING("TwoCenterIntegrator", "m should be in range [-l, l].");
+        return;
+    }
+
     // unit vector along R
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 

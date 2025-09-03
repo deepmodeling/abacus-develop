@@ -26,6 +26,7 @@ list(APPEND objects
     stress_func_nl.cpp
     stress_func_us.cpp
     stress_func_onsite.cpp
+    stress_func_exx.cpp
     stress_pw.cpp
     VL_in_pw.cpp
     VNL_in_pw.cpp
@@ -47,7 +48,6 @@ add_library(
     module_pwdft
     OBJECT
     ${objects}
-        stress_func_exx.cpp
 )
 
 if(ENABLE_COVERAGE)

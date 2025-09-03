@@ -7,6 +7,8 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include <vector>
+#include "source_lcao/module_rt/td_info.h"
+#include "source_lcao/module_rt/td_folding.h"
 
 template <typename TK, typename TR>
 hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hsk_in,
@@ -188,11 +190,11 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 }
 
 // contributeHk()
-template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
+template <>
+void hamilt::OverlapNew<hamilt::OperatorLCAO<double, double>>::contributeHk(int ik)
 {
     //! if k vector is not changed, then do nothing and return, only for gamma_only case
-    if (this->kvec_d[ik] == this->kvec_d_old && std::is_same<TK, double>::value)
+    if (this->kvec_d[ik] == this->kvec_d_old)
     {
         return;
     }
@@ -217,7 +219,44 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
 }
+template <typename TK, typename TR>
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
+{
+    ModuleBase::TITLE("OverlapNew", "contributeHk");
+    ModuleBase::timer::tick("OverlapNew", "contributeHk");
+    
+    //! set SK to zero and then calculate SK for each k vector
+    this->hsk->set_zero_sk();
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+    {
+        const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
+        if(PARAM.inp.td_stype == 2)
+        {
+            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1, ucell, TD_info::cart_At);
+        }
+        else
+        {
+            hamilt::folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], nrow, 1);
+        }
+    }
+    else
+    {
+        const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
+        if(PARAM.inp.td_stype == 2)
+        {
+            module_rt::folding_HR_td(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0, ucell, TD_info::cart_At);
+        }
+        else
+        {
+            hamilt::folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
+        }
+    }
+    
+    // update kvec_d_old
+    this->kvec_d_old = this->kvec_d[ik];
 
+    ModuleBase::timer::tick("OverlapNew", "contributeHk");
+}
 template <typename TK, typename TR>
 TK* hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::getSk()
 {

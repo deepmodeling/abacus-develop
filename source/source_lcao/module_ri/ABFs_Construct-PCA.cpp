@@ -1,7 +1,7 @@
 #include "ABFs_Construct-PCA.h"
 
 #include "exx_abfs-abfs_index.h"
-#include "../../source_base/lapack_connector.h"
+#include "../../source_base/module_external/lapack_connector.h"
 #include "../../source_base/global_function.h"
 #include "../../source_base/element_basis_index.h"
 #include "../../source_base/matrix.h"

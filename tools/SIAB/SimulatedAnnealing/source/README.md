@@ -1,0 +1,14 @@
+The code is used to generate numerical atomic orbitals
+
+
+The format of orbital file:
+
+(1) First line:
+Mesh number
+
+(2) Second line:
+delta r (unit: Bohr)
+
+(3) Type(always 0, you can ignore it), L(angular momentum), N (multizeta)
+(4) wave function: psi (note, not psi*r).
+
