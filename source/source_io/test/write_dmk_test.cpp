@@ -107,24 +107,24 @@ TEST(DMKTest, GenFileName) {
     int ik = 0;
     int istep = 0;
     std::string fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
-    EXPECT_EQ(fname, "dms1_nao.txt");
+    EXPECT_EQ(fname, "dms1g1_nao.txt");
 
     ispin = 1;
 
     fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
-    EXPECT_EQ(fname, "dms2_nao.txt");
+    EXPECT_EQ(fname, "dms2g1_nao.txt");
 
     ispin = 0;
     gamma_only = false;    
 
     fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
-    EXPECT_EQ(fname, "dms1k1_nao.txt");
+    EXPECT_EQ(fname, "dms1k1g1_nao.txt");
 
     ispin = 1;
     ik = 1;
 
     fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
-    EXPECT_EQ(fname, "dms2k2_nao.txt");
+    EXPECT_EQ(fname, "dms2k2g1_nao.txt");
 };
 
 

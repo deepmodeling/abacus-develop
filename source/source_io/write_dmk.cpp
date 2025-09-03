@@ -57,7 +57,8 @@ Direct
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
-    assert(istep>=0);
+    // set istep = -1 if you don't want the 'g' index appears in the file name
+    assert(istep>=-1);
 
     // ik should be the correct one
 
@@ -199,8 +200,9 @@ bool ModuleIO::read_dmk(const int nspin,
         {
             for (int ik = 0; ik < nk; ik++)
             {
-                // to read density matrix in k space, delete the step information 'g'
-                const int istep = 0;
+                // to read density matrix in k space, remember to delete the step information 'g'
+                // set istep = -1 if you don't want the 'g' index appears in the file name
+                const int istep = -1;
                 std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
                 std::ifstream ifs(fn.c_str());
 

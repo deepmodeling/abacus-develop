@@ -196,31 +196,48 @@ void ReadInput::item_output()
     {
         Input_Item item("out_dmk");
         item.annotation = ">0 output density matrix DM(k) for each k-point";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dmk should have 1 or 2 values");
+            }
+            para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_dmk[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {
-                para.input.out_dmk = false;
+                para.input.out_dmk[0] = 0;
             }
         };
-        read_sync_bool(input.out_dmk);
+
+        sync_intvec(input.out_dmk, 2, 0);
         this->add_item(item);
     }
     {
         Input_Item item("out_dmr");
-        item.annotation = ">0 output density matrix DM(R) with respect to lattice vector R";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+        item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
-                para.input.out_dmr = false;
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dmr should have 1 or 2 values");
             }
+            para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_dmr[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+			{
+				para.input.out_dmr[0] = 0;
+			}
         };
+
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.out_dmr)
+            if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
             }
         };
-        read_sync_bool(input.out_dmr);
+
+        sync_intvec(input.out_dmr, 2, 0);
         this->add_item(item);
     }
     {
@@ -252,7 +269,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_mat_tk");
-        item.annotation = "output T(k)";
+        item.annotation = "output kinetic matrix T(k)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
