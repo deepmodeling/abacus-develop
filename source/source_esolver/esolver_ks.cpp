@@ -478,9 +478,6 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     // 2 means Kohn-Sham functional
     this->pelec->cal_energies(1);
     this->pelec->cal_energies(2);
-    std::cout<<"in esolver_ks------"<<std::endl;
-    this->pelec->f_en.print_all();
-    std::cout<<"in esolver_ks------"<<std::endl;
     if (iter == 1)
     {
         this->pelec->f_en.etot_old = this->pelec->f_en.etot;
