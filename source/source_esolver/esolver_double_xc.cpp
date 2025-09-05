@@ -225,6 +225,10 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // GlobalV::ofs_running << std::setprecision(15) << " in deepks etot: etot of target functional (Ry) " << this->pelec->f_en.etot << std::endl;
 
         // update p_hamilt using output charge density
+        // Note!!!
+        // This will change the result of out_mat_hs
+        // The original result of out_mat_hs is H of input density, but this change H to that of output density
+        // When converged, these two should be close
         if (PARAM.inp.deepks_v_delta > 0 && PARAM.inp.vl_in_h)
         {
             // update real space Hamiltonian
