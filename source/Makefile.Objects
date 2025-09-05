@@ -274,6 +274,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_gets.o\
       lcao_others.o\
       esolver_dm2rho.o\
+      esolver_double_xc.o\
 
 OBJS_GINT=gint_old.o\
       gint_gamma_env.o\
