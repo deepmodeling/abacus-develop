@@ -563,7 +563,6 @@ OBJS_IO=input_conv.o\
     unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\
-    winput.o\
     write_cube.o\
     write_elecstat_pot.o\
     write_elf.o\

@@ -22,7 +22,6 @@
 #include "source_io/numerical_basis.h"
 #include "source_io/numerical_descriptor.h"
 #include "source_io/to_wannier90_pw.h"
-#include "source_io/winput.h"
 #include "source_io/write_dos_pw.h"
 #include "source_io/write_wfc_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
@@ -931,10 +930,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 4) Calculate the spillage value,
     //! which are used to generate numerical atomic orbitals
     //----------------------------------------------------------
-    if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
+    if (PARAM.inp.basis_type == "pw" && PARAM.inp.out_spillage)
     {
         // ! Print out overlap matrices
-        if (winput::out_spillage <= 2)
+        if (PARAM.inp.out_spillage <= 2)
         {
             for (int i = 0; i < PARAM.inp.bessel_nao_rcuts.size(); i++)
             {

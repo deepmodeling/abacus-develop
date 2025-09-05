@@ -5,7 +5,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/para_json.h"
 #include "source_io/print_info.h"
-#include "source_io/winput.h"
 #include "source_md/run_md.h"
 
 /**

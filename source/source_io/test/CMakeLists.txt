@@ -29,12 +29,6 @@ add_test(NAME MODULE_IO_read_exit_file_test_para_4
 )
 
 AddTest(
-  TARGET MODULE_IO_winput_test
-  LIBS parameter ${math_libs} base device 
-  SOURCES winput_test.cpp ../winput.cpp
-)
-
-AddTest(
   TARGET MODULE_IO_output_test
   LIBS parameter  ${math_libs} base device
   SOURCES output_test.cpp ../output.cpp

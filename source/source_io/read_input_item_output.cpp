@@ -572,5 +572,19 @@ void ReadInput::item_output()
         sync_intvec(input.cal_symm_repr, 2, 0);
         this->add_item(item);
     }
+    {
+        // refactored from the removal of wannier input file, ISSUE 6469
+        Input_Item item("out_spillage");
+        item.annotation = "output spillage of wavefunctions. This parameter only accepts 0 or 2.";
+        read_sync_int(input.out_spillage);
+        this->add_item(item);
+    }
+    {
+        // refactored from the removal of wannier input file, ISSUE 6469
+        Input_Item item("spillage_outdir");
+        item.annotation = "output directory for spillage of wavefunctions.";
+        read_sync_string(input.spillage_outdir);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO
