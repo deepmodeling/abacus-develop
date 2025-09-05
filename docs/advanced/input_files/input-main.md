@@ -191,6 +191,7 @@
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
     - [deepks\_out\_freq\_elec](#deepks_out_freq_elec)
+    - [deepks\_out\_base](#deepks_out_base)
     - [deepks\_scf](#deepks_scf)
     - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
@@ -2172,6 +2173,13 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: Numerical atomic orbital basis
 - **Description**: When `deepks_out_freq_elec` is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per `deepks_out_freq_elec` electronic iterations, with suffix `_e*` to distinguish different steps. Often used with `deepks_out_labels` equals 1.
 - **Default**: 0
+
+### deepks_out_base
+
+- **Type**: String
+- **Availability**: Numerical atomic orbital basis and `deepks_out_freq_elec` is greater than 0
+- **Description**: Print labels and descriptors calculated by base functional ( determined by `deepks_out_base` ) and target functional ( determined by `dft_functional` ) for DeePKS in per `deepks_out_freq_elec` electronic iterations. The SCF process remains identical to that using only the target functional, with the exception of additional outputs from the base functional. Often used with `deepks_out_labels` equals 1.
+- **Default**: None
 
 ### deepks_scf
 
