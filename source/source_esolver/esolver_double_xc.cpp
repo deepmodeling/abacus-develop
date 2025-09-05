@@ -219,10 +219,10 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         this->pelec->pot->update_from_charge(&this->chr_base, &ucell); 
         this->pelec->f_en.descf = 0.0;
         this->pelec->cal_energies(2);
-        std::cout<<"in deepks etot------"<<std::endl;
-        this->pelec->f_en.print_all();
-        std::cout<<"in deepks etot------"<<std::endl;
-        GlobalV::ofs_running << std::setprecision(15) << " in deepks etot: etot of target functional (Ry) " << this->pelec->f_en.etot << std::endl;
+        // std::cout<<"in deepks etot------"<<std::endl;
+        // this->pelec->f_en.print_all();
+        // std::cout<<"in deepks etot------"<<std::endl;
+        // GlobalV::ofs_running << std::setprecision(15) << " in deepks etot: etot of target functional (Ry) " << this->pelec->f_en.etot << std::endl;
 
         // update p_hamilt using output charge density
         if (PARAM.inp.deepks_v_delta > 0 && PARAM.inp.vl_in_h)
@@ -278,11 +278,11 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         this->pelec_base->f_en.demet = this->pelec->f_en.demet;
         this->pelec_base->f_en.descf = 0.0; // set descf to 0
         this->pelec_base->cal_energies(2); // 2 means Kohn-Sham functional
-        std::cout<<"in double_xc------"<<std::endl;
-        this->pelec_base->f_en.print_all();
-        std::cout<<"in double_xc------"<<std::endl;
-
-        GlobalV::ofs_running << std::setprecision(15) << " etot of base functional (Ry) " << pelec_base->f_en.etot << std::endl;
+        // std::cout<<"in double_xc------"<<std::endl;
+        // this->pelec_base->f_en.print_all();
+        // std::cout<<"in double_xc------"<<std::endl;
+        // GlobalV::ofs_running << std::setprecision(15) << " etot of base functional (Ry) " << pelec_base->f_en.etot << std::endl;
+        
         const std::string file_ebase = deepks_interface.get_filename("ebase", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_e(pelec_base->f_en.etot, file_ebase, GlobalV::MY_RANK);
 
