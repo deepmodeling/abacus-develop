@@ -43,6 +43,7 @@ list(APPEND device_srcs
   # source_psi/kernels/device.cpp
 
   source_base/module_device/device.cpp
+  source_base/module_device/output_device.cpp
   source_base/module_device/memory_op.cpp
   source_base/kernels/math_kernel_op.cpp
   source_base/kernels/math_kernel_op_vec.cpp

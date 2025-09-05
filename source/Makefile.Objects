@@ -178,6 +178,7 @@ OBJS_BASE=abfs-vector3_order.o\
     broyden_mixing.o\
     memory_op.o\
     device.o\
+    output_device.o\
     parallel_2d.o\
 
 OBJS_CELL=atom_pseudo.o\
