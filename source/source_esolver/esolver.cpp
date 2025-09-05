@@ -107,14 +107,8 @@ std::string determine_type()
             c = std::toupper(c);
         }
     }
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
-                  << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
-    }
-
-    GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl; 
+    base_device::information::output_device_info(std::cout);
+    base_device::information::output_device_info(GlobalV::ofs_running);
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
