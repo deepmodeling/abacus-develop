@@ -1697,21 +1697,21 @@ These variables are used to control the output of properties.
 
 ### out_dmk
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional) 
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 1 and 4: `dm_nao.csr`;
     - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
+    - nspin = 1 and 4: `dmk1_nao.csr`, `dmk2_nao.csr`, ...;
     - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dmr
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis (multi-k points)
 - **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
   - nspin = 1: `dmrs1_nao.csr`;
