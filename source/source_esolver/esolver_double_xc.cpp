@@ -235,6 +235,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             this->p_hamilt->refresh();
         }
 
+#ifdef __MLALGO
         // ---------- output tot and precalc ----------
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->ld, [](LCAO_Deepks<TK>*) {});
@@ -257,7 +258,8 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
                                             conv_esolver,
                                             GlobalV::MY_RANK,
                                             GlobalV::ofs_running);
-        
+#endif
+                                            
         // restore to density after charge mixing
         this->pelec->pot->update_from_charge(&this->chr, &ucell); 
 
@@ -286,9 +288,11 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // this->pelec_base->f_en.print_all();
         // std::cout<<"in double_xc------"<<std::endl;
         // GlobalV::ofs_running << std::setprecision(15) << " etot of base functional (Ry) " << pelec_base->f_en.etot << std::endl;
-        
+
+#ifdef __MLALGO        
         const std::string file_ebase = deepks_interface.get_filename("ebase", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_e(pelec_base->f_en.etot, file_ebase, GlobalV::MY_RANK);
+#endif
 
         // ---------- h_base ----------
         if (PARAM.inp.deepks_v_delta > 0)
@@ -303,6 +307,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             // should not use ModuleIO::write_hsk() to output h_base, because it will call get_hs_pointers()
             // which will change the hsolver::DiagoElpa<double>::DecomposedState, influencing the following SCF steps     
 
+#ifdef __MLALGO
             using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
             hamilt::HamiltLCAO<TK, TR>* p_ham_deepks_base = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base);
             int nks = this->kv.get_nks();
@@ -311,6 +316,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 
             const std::string file_htot = deepks_interface.get_filename("hbase", PARAM.inp.deepks_out_labels, iter);
             LCAO_deepks_io::save_npy_h<TK, TH>(h_tot, file_htot, PARAM.globalv.nlocal, nks, GlobalV::MY_RANK);
+#endif
         }
 
         // ---------- o_base ----------
