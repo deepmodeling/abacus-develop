@@ -94,6 +94,7 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    T* d_scc = nullptr;
     Real* d_eigenvalue = nullptr;
 
     /// device type of psi

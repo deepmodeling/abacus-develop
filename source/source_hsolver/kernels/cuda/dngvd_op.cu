@@ -216,7 +216,7 @@ struct dngvd_op<T, base_device::DEVICE_GPU>
                     Real* W,    // eigenvalue
                     T* V)
     {
-        assert(nstart == ldh);
+        // assert(nstart == ldh);
         // A to V
         cudaErrcheck(cudaMemcpy(V, A, sizeof(T) * ldh * nstart, cudaMemcpyDeviceToDevice));
         xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,

@@ -76,6 +76,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
         // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
+        base_device::memory::resize_memory_op<T, Device>()(this->d_scc, this->nbase_x * this->nbase_x);
         resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
 #endif
@@ -95,6 +96,7 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
     if (this->device == base_device::GpuDevice)
     {
         delmem_real_op()(this->d_precondition);
+        delmem_complex_op()(this->d_scc);
         delmem_real_op()(this->d_eigenvalue);
     }
 #endif
@@ -546,34 +548,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->diag_comm.rank == 0)
         {
-            Real* eigenvalue_gpu = nullptr;
-            resmem_real_op()(eigenvalue_gpu, this->nbase_x);
-
-            syncmem_var_h2d_op()(eigenvalue_gpu, (*eigenvalue_iter).data(), this->nbase_x);
-
-            T* hcc_gpu = nullptr;
-            T* scc_gpu = nullptr;
-            T* vcc_gpu = nullptr;
-            base_device::memory::resize_memory_op<T, Device>()(hcc_gpu, nbase * nbase);
-            base_device::memory::resize_memory_op<T, Device>()(scc_gpu, nbase * nbase);
-            base_device::memory::resize_memory_op<T, Device>()(vcc_gpu, nbase * nbase);
-            for(int i=0;i<nbase;i++)
-            {
-                base_device::memory::synchronize_memory_op<T, Device, Device>()(hcc_gpu + i * nbase, hcc + i * nbase_x, nbase);
-                base_device::memory::synchronize_memory_op<T, Device, Device>()(scc_gpu + i * nbase, scc + i * nbase_x, nbase);
-            }
-            dngvd_op<T, Device>()(this->ctx, nbase, nbase, hcc_gpu, scc_gpu, eigenvalue_gpu, vcc_gpu);
-            for(int i=0;i<nbase;i++)
-            {
-                base_device::memory::synchronize_memory_op<T, Device, Device>()(vcc + i * nbase_x, vcc_gpu + i * nbase, nbase);
-            }
-            delmem_complex_op()(hcc_gpu);
-            delmem_complex_op()(scc_gpu);
-            delmem_complex_op()(vcc_gpu);
-
-            syncmem_var_d2h_op()((*eigenvalue_iter).data(), eigenvalue_gpu, this->nbase_x);
-
-            delmem_real_op()(eigenvalue_gpu);
+            base_device::memory::synchronize_memory_op<T, Device, Device>()(this->d_scc, scc, nbase * this->nbase_x);
+            dngvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
     }
