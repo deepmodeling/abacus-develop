@@ -76,6 +76,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
         // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
+        resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
 #endif
 }
@@ -94,6 +95,7 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
     if (this->device == base_device::GpuDevice)
     {
         delmem_real_op()(this->d_precondition);
+        delmem_real_op()(this->d_eigenvalue);
     }
 #endif
 }
@@ -316,30 +318,15 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim);
 
     // Eigenvalues operation section
-    std::vector<Real> e_temp_cpu(this->notconv, 0);
-    Real* e_temp_hd = e_temp_cpu.data();
+    Real* e_temp_hd = eigenvalue_iter->data();
     if (this->device == base_device::GpuDevice)
     {
-        e_temp_hd = nullptr;
-        resmem_real_op()(e_temp_hd, nbase);
+        syncmem_var_h2d_op()(this->d_eigenvalue, eigenvalue_iter->data(), this->nbase_x);
+        e_temp_hd = this->d_eigenvalue;
     }
 
-    for (int m = 0; m < this->notconv; m++)
-    {
-        e_temp_cpu[m] = -(*eigenvalue_iter)[m];
-    }
-
-    if (this->device == base_device::GpuDevice)
-    {
-        syncmem_var_h2d_op()(e_temp_hd, e_temp_cpu.data(), this->notconv);
-    }
-    
-    apply_eigenvalues_op<T, Device>()(nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
-
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_real_op()(e_temp_hd);
-    }
+    // vcc = - vcc * eigenvalue
+    ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, eigenvalue_iter->data(), -1.0, vcc, this->nbase_x);
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -364,17 +351,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
-        Real* eigenvalues_gpu = nullptr;
-        resmem_real_op()(eigenvalues_gpu, notconv);
-        syncmem_var_h2d_op()(eigenvalues_gpu, (*eigenvalue_iter).data(), notconv);
-        
         precondition_op<T, Device>()(this->dim,
                                     psi_iter,
                                     nbase,
                                     notconv,
                                     d_precondition,
-                                    eigenvalues_gpu);
-        delmem_real_op()(eigenvalues_gpu);
+                                    this->d_eigenvalue);
     }
     else
 #endif
@@ -395,7 +377,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         resmem_real_op()(psi_norm, notconv);
         using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
         setmem_real_op()(psi_norm, 0.0, notconv);
-        
+
         normalize_op<T, Device>()(this->dim,
                                 psi_iter,
                                 nbase,
@@ -641,7 +623,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         }
         else
         {
-#ifdef __MPI  
+#ifdef __MPI
             std::vector<T> h_diag;
             std::vector<T> s_diag;
             std::vector<T> vcc_tmp;
@@ -680,7 +662,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
             }
 #else
             std::cout << "Error: parallel diagonalization is not supported in serial mode." << std::endl;
-            exit(1);    
+            exit(1);
 #endif
         }
     }
@@ -772,39 +754,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 
     if (this->device == base_device::GpuDevice)
     {
-#if defined(__CUDA) || defined(__ROCM)
-        T* hcc_cpu = nullptr;
-        T* scc_cpu = nullptr;
-        T* vcc_cpu = nullptr;
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(hcc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
-                                                                            "DAV::hcc");
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(scc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
-                                                                            "DAV::scc");
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(vcc_cpu,
-                                                                            this->nbase_x * this->nbase_x,
-                                                                            "DAV::vcc");
-
-        syncmem_d2h_op()(hcc_cpu, hcc, this->nbase_x * this->nbase_x);
-        syncmem_d2h_op()(scc_cpu, scc, this->nbase_x * this->nbase_x);
-        syncmem_d2h_op()(vcc_cpu, vcc, this->nbase_x * this->nbase_x);
-
-        for (int i = 0; i < nbase; i++)
-        {
-            hcc_cpu[i * this->nbase_x + i] = eigenvalue_in_hsolver[i];
-            scc_cpu[i * this->nbase_x + i] = this->one[0];
-            vcc_cpu[i * this->nbase_x + i] = this->one[0];
-        }
-
-        syncmem_h2d_op()(hcc, hcc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_h2d_op()(scc, scc_cpu, this->nbase_x * this->nbase_x);
-        syncmem_h2d_op()(vcc, vcc_cpu, this->nbase_x * this->nbase_x);
-
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(hcc_cpu);
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(scc_cpu);
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(vcc_cpu);
-#endif
+        refresh_hcc_scc_vcc_op<T, Device>()(nbase, hcc, scc, vcc, this->nbase_x, this->d_eigenvalue, this->one_);
     }
     else
     {

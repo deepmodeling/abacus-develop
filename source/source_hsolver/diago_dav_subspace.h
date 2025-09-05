@@ -94,6 +94,8 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    Real* d_eigenvalue = nullptr;
+
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
