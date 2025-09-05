@@ -136,12 +136,12 @@ void output_device_info(std::ostream &output)
 
         // Output all collected information
         output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
-                  << cpu_name << "(x" << total_cpus << ")" << std::endl;
+                  << cpu_name << " (x" << total_cpus << ")" << std::endl;
         #if defined(__CUDA) || defined(__ROCM)
         if(PARAM.inp.device == "gpu" && total_gpus > 0)
         {
             output << "                        " << "GPU" << " / "
-                  << gpu_name << "(x" << total_gpus << ")" << std::endl;
+                  << gpu_name << " (x" << total_gpus << ")" << std::endl;
         }
         #endif
     }
