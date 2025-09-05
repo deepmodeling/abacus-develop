@@ -1706,7 +1706,7 @@ These variables are used to control the output of properties.
     - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
     - nspin = 1 and 4: `dmk1_nao.csr`, `dmk2_nao.csr`, ...;
-    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
+    - nspin = 2: `dmk1s1_nao.csr`... and `dmk1s2_nao.csr`... for the two spin channels. 
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
