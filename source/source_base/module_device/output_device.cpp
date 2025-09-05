@@ -146,7 +146,6 @@ void output_device_info(std::ostream &output)
         }
         #endif
     }
-    return;
 #else
         int cpu_sockets = get_device_num("cpu");
         std::string cpu_name = get_device_name("cpu");
@@ -162,7 +161,8 @@ void output_device_info(std::ostream &output)
                 output << "                        " << "GPU" << " / "
                       << gpu_name << " (x" << gpu_count << ")" << std::endl;
             }
-        }       
+        }
+        #endif
 #endif
 }
 
