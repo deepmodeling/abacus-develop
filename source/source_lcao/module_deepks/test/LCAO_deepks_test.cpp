@@ -299,8 +299,8 @@ void test_deepks<T>::check_vdrpre()
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdrpre;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
-    // normally use hR to get R_size, here use phialpha[0] only for test case
-    int R_size = DeePKS_domain::get_R_size<double>(*(this->ld.phialpha[0]));
+    // normally use hR to get R_size, here use 3 instead for Bravo lattice R in [-1,0,1]
+    int R_size = 3;
     DeePKS_domain::cal_vdr_precalc(PARAM.sys.nlocal,
                                    this->ld.lmaxd,
                                    this->ld.inlmax,
@@ -317,8 +317,8 @@ void test_deepks<T>::check_vdrpre()
                                    ParaO,
                                    Test_Deepks::GridD,
                                    vdrpre);
-    // vdrpre is large, we only check the main element in Bravo lattice vector (0, 0, 0)
-    torch::Tensor vdrpre_sliced = vdrpre.slice(0, 0, 1, 1).slice(1, 0, 1, 1).slice(2, 0, 1, 1);
+    // vdrpre is large, we only check the main element in Bravo lattice vector (0, 0, 0) and (1, 0, 0)
+    torch::Tensor vdrpre_sliced = vdrpre.slice(0, 0, 2, 1).slice(1, 0, 1, 1).slice(2, 0, 1, 1);
     DeePKS_domain::check_tensor<double>(vdrpre_sliced, "vdr_precalc.dat", 0); // 0 for rank
     this->compare_with_ref("vdr_precalc.dat", "vdrpre_ref.dat");
 }
@@ -462,8 +462,8 @@ void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2
         file2 >> word2;
         if ((word1[0] - '0' >= 0 && word1[0] - '0' < 10) || word1[0] == '-')
         {
-            double num1 = std::stof(word1);
-            double num2 = std::stof(word2);
+            double num1 = std::stod(word1);
+            double num2 = std::stod(word2);
             if (std::abs(num1 - num2) > test_thr)
             {
                 this->failed_check += 1;
@@ -476,10 +476,10 @@ void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2
         {
             std::string word1_str = word1.substr(1, word1.size() - 2);
             std::string word2_str = word2.substr(1, word2.size() - 2);
-            double word1_real = std::stof(word1_str.substr(0, word1_str.find(',')));
-            double word1_imag = std::stof(word1_str.substr(word1_str.find(',') + 1));
-            double word2_real = std::stof(word2_str.substr(0, word2_str.find(',')));
-            double word2_imag = std::stof(word2_str.substr(word2_str.find(',') + 1));
+            double word1_real = std::stod(word1_str.substr(0, word1_str.find(',')));
+            double word1_imag = std::stod(word1_str.substr(word1_str.find(',') + 1));
+            double word2_real = std::stod(word2_str.substr(0, word2_str.find(',')));
+            double word2_imag = std::stod(word2_str.substr(word2_str.find(',') + 1));
             if (std::abs(word1_real - word2_real) > test_thr || std::abs(word1_imag - word2_imag) > test_thr)
             {
                 this->failed_check += 1;
