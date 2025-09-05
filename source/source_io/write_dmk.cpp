@@ -180,54 +180,6 @@ bool ModuleIO::read_dmk(const int nspin,
     bool gamma_only = std::is_same<double, T>::value;
     std::vector<std::vector<T>> dmk_global(nspin * nk, std::vector<T>(nlocal * nlocal, 0));
 
-
-	auto check_consistency
-       = [&](const std::string& fn, const std::string& name, const std::string& value, int target) 
-       {
-          try {
-              // Attempt to convert the string value to an integer
-              int converted_value = std::stoi(value);
-              
-              // Check if converted value matches the expected target
-              if (converted_value != target)
-              {
-                  ModuleBase::WARNING("ModuleIO::read_dmk", name + " is not consistent in file < " + fn + " >.");
-                  std::cout << name << " = " << target << ", " << name << " in file = " << value << std::endl;
-                  return false;
-              }
-          } 
-          // Handle case where string contains invalid characters for integer conversion
-          catch (const std::invalid_argument& e) {
-              ModuleBase::WARNING("ModuleIO::read_dmk", name + " has invalid format in file < " + fn + " >.");
-              std::cout << name << " in file is invalid: " << value << " (error: " << e.what() << ")" << std::endl;
-              return false;  // Consider format errors as inconsistency
-          } 
-          // Handle case where converted value exceeds int range limits
-          catch (const std::out_of_range& e) {
-              ModuleBase::WARNING("ModuleIO::read_dmk", name + " is out of range in file < " + fn + " >.");
-              std::cout << name << " in file is too large/small: " << value << " (error: " << e.what() << ")" << std::endl;
-              return false;  // Consider out-of-range values as inconsistency
-          }
-          
-          // All checks passed - values are consistent
-          return true;
-      };
-
-
-/*
-    // write a lambda function to check the consistency of the data
-    auto check_consistency
-        = [&](const std::string& fn, const std::string& name, const std::string& value, const int& target) {
-              if (std::stoi(value) != target)
-              {
-                  ModuleBase::WARNING("ModuleIO::read_dmk", name + " is not consistent in file < " + fn + " >.");
-                  std::cout << name << " = " << target << ", " << name << " in file = " << value << std::endl;
-                  return false;
-              }
-              return true;
-          };
-*/
-
     bool read_success = true;
     std::string tmp;
     if (my_rank == 0)
@@ -257,23 +209,23 @@ bool ModuleIO::read_dmk(const int nspin,
                 // read the UnitCell
                 dmk_read_ucell(ifs);
 
-                ifs >> tmp; // nspin
-                if (!check_consistency(fn, "nspin", tmp, nspin))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
-                ifs >> tmp;
-                ifs >> tmp;
-                ifs >> tmp; // fermi energy
-                ifs >> tmp; // nlocal
-                if (!check_consistency(fn, "nlocal", tmp, nlocal))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
+				int spin_tmp = 0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, spin_tmp);
+
+                double fermi_tmp = 0.0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, fermi_tmp);
+
+                int nlocal_tmp = 0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal_tmp);
+
+                if(nlocal_tmp==nlocal)
+				{
+					ofs_running << " number of basis (nlocal) is correct: " << nlocal << std::endl;
+				}
+				else
+				{
+					ModuleBase::WARNING_QUIT("ModuleIO::read_dmk","nlocal does not match!");
+				}
 
                 // read the DMK data
                 const size_t index_k = ik + nk * ispin;
