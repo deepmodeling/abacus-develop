@@ -814,19 +814,19 @@ TEST_F(InputTest, Item_test)
     { // out_dmk
         auto it = find_label("out_dmk", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_dmk = true;
+        param.input.out_dmk[0] = 1; // true
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmk, false);
+        EXPECT_EQ(param.input.out_dmk[0], 0); // 0: false
     }
     { // out_dmr
         auto it = find_label("out_dmr", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_dmr = true;
+        param.input.out_dmr[0] = 1; // true
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmr, false);
+        EXPECT_EQ(param.input.out_dmr[0], 0); // 0: false
 
         param.sys.gamma_only_local = true;
-        param.input.out_dmr = true;
+        param.input.out_dmr[0] = 1; // true
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

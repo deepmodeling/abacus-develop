@@ -186,8 +186,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_chg[1], 3);
     EXPECT_EQ(param.inp.out_elf[0], 0);
     EXPECT_EQ(param.inp.out_elf[1], 3);
-    EXPECT_EQ(param.inp.out_dmk, 0);
-    EXPECT_EQ(param.inp.out_dmr, 0);
+    EXPECT_EQ(param.inp.out_dmk[0], 0);
+    EXPECT_EQ(param.inp.out_dmr[0], 0);
     EXPECT_EQ(param.inp.deepks_out_labels, 0);
     EXPECT_EQ(param.inp.deepks_scf, 0);
     EXPECT_EQ(param.inp.deepks_equiv, 0);

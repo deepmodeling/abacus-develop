@@ -1,4 +1,4 @@
-#include "source_io/io_dmk.h"
+#include "source_io/write_dmk.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -57,7 +57,8 @@ Direct
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
-    assert(istep>=0);
+    // set istep = -1 if you don't want the 'g' index appears in the file name
+    assert(istep>=-1);
 
     // ik should be the correct one
 
@@ -86,7 +87,7 @@ std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, cons
 void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
 {
     // write the UnitCell information
-    ofs << ucell->latName << std::endl;
+    ofs << " " << ucell->latName << std::endl;
     ofs << " " << ucell->lat0 * ModuleBase::BOHR_TO_A << std::endl;
     ofs << " " << ucell->latvec.e11 << " " << ucell->latvec.e12 << " " << ucell->latvec.e13 << std::endl;
     ofs << " " << ucell->latvec.e21 << " " << ucell->latvec.e22 << " " << ucell->latvec.e23 << std::endl;
@@ -101,7 +102,7 @@ void ModuleIO::dmk_write_ucell(std::ofstream& ofs, const UnitCell* ucell)
         ofs << " " << ucell->atoms[it].na;
     }
     ofs << std::endl;
-    ofs << "Direct" << std::endl;
+    ofs << " Direct" << std::endl;
     for (int it = 0; it < ucell->ntype; it++)
     {
         Atom* atom = &ucell->atoms[it];
@@ -155,7 +156,7 @@ void ModuleIO::dmk_readData(std::ifstream& ifs, std::complex<double>& data)
     else
     {
         ModuleBase::WARNING_QUIT("ModuleIO::dmk_readData",
-                                 "Invalid complex number format: " + complex_str);
+                                 "Invalid complex number format in dmk: " + complex_str);
     }
 }
 
@@ -179,18 +180,6 @@ bool ModuleIO::read_dmk(const int nspin,
     bool gamma_only = std::is_same<double, T>::value;
     std::vector<std::vector<T>> dmk_global(nspin * nk, std::vector<T>(nlocal * nlocal, 0));
 
-    // write a lambda function to check the consistency of the data
-    auto check_consistency
-        = [&](const std::string& fn, const std::string& name, const std::string& value, const int& target) {
-              if (std::stoi(value) != target)
-              {
-                  ModuleBase::WARNING("ModuleIO::read_dmk", name + " is not consistent in file < " + fn + " >.");
-                  std::cout << name << " = " << target << ", " << name << " in file = " << value << std::endl;
-                  return false;
-              }
-              return true;
-          };
-
     bool read_success = true;
     std::string tmp;
     if (my_rank == 0)
@@ -199,8 +188,9 @@ bool ModuleIO::read_dmk(const int nspin,
         {
             for (int ik = 0; ik < nk; ik++)
             {
-                // to read density matrix in k space, delete the step information 'g'
-                const int istep = 0;
+                // to read density matrix in k space, remember to delete the step information 'g'
+                // set istep = -1 if you don't want the 'g' index appears in the file name
+                const int istep = -1;
                 std::string fn = dmk_dir + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
                 std::ifstream ifs(fn.c_str());
 
@@ -219,30 +209,23 @@ bool ModuleIO::read_dmk(const int nspin,
                 // read the UnitCell
                 dmk_read_ucell(ifs);
 
-                ifs >> tmp; // nspin
-                if (!check_consistency(fn, "nspin", tmp, nspin))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
-                ifs >> tmp;
-                ifs >> tmp;
-                ifs >> tmp; // fermi energy
-                ifs >> tmp; // nlocal
-                if (!check_consistency(fn, "nlocal", tmp, nlocal))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
-                ifs >> tmp; // nlocal
-                if (!check_consistency(fn, "nlocal", tmp, nlocal))
-                {
-                    read_success = false;
-                    ifs.close();
-                    break;
-                }
+				int spin_tmp = 0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, spin_tmp);
+
+                double fermi_tmp = 0.0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, fermi_tmp);
+
+                int nlocal_tmp = 0;
+				ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal_tmp);
+
+                if(nlocal_tmp==nlocal)
+				{
+					ofs_running << " number of basis (nlocal) is correct: " << nlocal << std::endl;
+				}
+				else
+				{
+					ModuleBase::WARNING_QUIT("ModuleIO::read_dmk","nlocal does not match!");
+				}
 
                 // read the DMK data
                 const size_t index_k = ik + nk * ispin;
@@ -317,10 +300,11 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     const int nspin = efs.size();
     assert(nspin > 0);
     const int nk = dmk.size() / nspin;
+    const double dm_thr = 1.0e-16; // mohan set 2025-09-02
 
     if (nk * nspin != dmk.size())
     {
-        ModuleBase::WARNING_QUIT("write_dmk", "The size of dmk is not consistent with nspin and nk.");
+        ModuleBase::WARNING_QUIT("ModuleIO::write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
 
     Parallel_2D pv_glb;
@@ -369,29 +353,49 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 dmk_write_ucell(ofs, ucell);
 
 
-                ofs << "\n " << nspin; // nspin
+                ofs << "\n " << nspin << " (nspin)"; // nspin
                 ofs << "\n " << std::fixed << std::setprecision(5) << efs[ispin]
                     << " (fermi energy)";
-                ofs << "\n  " << nlocal << " " << nlocal << std::endl;
+                ofs << "\n " << nlocal << " (number of basis)" << std::endl;
 
-                ofs << std::setprecision(precision);
+                ofs << std::fixed;
                 ofs << std::scientific;
+                ofs << std::setprecision(precision);
+                ofs << std::right;
+//              ofs << std::showpos; // show positive label 
                 for (int i = 0; i < nlocal; ++i)
                 {
                     for (int j = 0; j < nlocal; ++j)
                     {
-                        if (j % 8 == 0)
-                        {
-                            ofs << "\n";
-                        }
                         if (std::is_same<double, T>::value)
                         {
+							if (j % 8 == 0)
+							{
+								ofs << "\n";
+							}
                             ofs << " " << dmk_global[i * nlocal + j];
                         }
                         else if (std::is_same<std::complex<double>, T>::value)
                         {
-                            ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
-                                << std::imag(dmk_global[i * nlocal + j]) << ")";
+							if (j % 4 == 0)
+							{
+								ofs << "\n";
+							}
+
+                            double real_v = std::real(dmk_global[i * nlocal + j]);
+							if(std::abs(real_v) < dm_thr)
+							{
+								real_v = 0.0;
+							} 
+                            double imag_v = std::imag(dmk_global[i * nlocal + j]);
+							if(std::abs(imag_v) < dm_thr)
+							{
+								imag_v = 0.0;
+							} 
+
+                            ofs << " (" << real_v << "," << imag_v << ")";
+ //                           ofs << " (" << std::real(dmk_global[i * nlocal + j]) << ","
+   //                             << std::imag(dmk_global[i * nlocal + j]) << ")";
                         }
                     }
                 }
