@@ -696,12 +696,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("wannier_card");
-        item.annotation = "input card for wannier functions";
-        read_sync_string(input.wannier_card);
-        this->add_item(item);
-    }
-    {
         Input_Item item("mem_saver");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "

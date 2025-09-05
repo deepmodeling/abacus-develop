@@ -2,7 +2,6 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "winput.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -75,8 +74,7 @@ void Numerical_Descriptor::output_descriptor(const UnitCell& ucell, const psi::P
 	//-----------------------------------
     std::ofstream ofs;
     std::stringstream ss;
-    // the parameter 'winput::spillage_outdir' is read from INPUTw.
-    ss << winput::spillage_outdir << "/" << "descriptor.dat";
+    ss << PARAM.inp.spillage_outdir << "/" << "descriptor.dat";
     if (GlobalV::MY_RANK==0)
     {
         ofs.open(ss.str().c_str());

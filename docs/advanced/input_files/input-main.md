@@ -30,7 +30,7 @@
     - [orbital\_dir](#orbital_dir)
     - [read\_file\_dir](#read_file_dir)
     - [restart\_load](#restart_load)
-    - [wannier\_card](#wannier_card)
+    - [spillage\_outdir](#spillage_outdir)
   - [Plane Wave](#plane-wave-related-variables)
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
@@ -172,6 +172,7 @@
     - [out\_wfc_re_im](#out_wfc_re_im)
     - [if\_separate\_k](#if_separate_k)
     - [out\_elf](#out_elf)
+    - [out\_spillage](#out_spillage)
   - [Density of States](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -773,12 +774,12 @@ These variables are used to control parameters related to input files.
   If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0* or *[rpa](#rpa)==True*), the Hexx(R) files in the same folder for each processor will also be read.
 - **Default**: False
 
-### wannier_card
+### spillage_outdir
 
 - **Type**: String
-- **Availability**: Using ABACUS with Wannier90.
-- **Description**: The name of the input file related to Wannier90.
-- **Default**: "none"
+- **Availability**: Used only for plane wave basis set.
+- **Description**: The directory to save the spillage files.
+- **Default**: "./"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2026,6 +2027,13 @@ These variables are used to control the output of properties.
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
 
+### out_spillage
+
+- **Type**: Integer
+- **Availability**: Only for Kohn-Sham DFT with plane-wave basis.
+- **Description**: This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as `OVERLAP_Q`), and between TSBFs (named as `OVERLAP_Sq`), also their first order derivatives. The output files are named starting with `orb_matrix`. A value of `2` would enable the output.
+- **Default**: 0 
+
 [back to top](#full-list-of-input-keywords)
 
 ## Density of states
@@ -2258,7 +2266,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: int
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0 (k space), ABACUS will output `deepks_hbase.npy`, `deepks_vdelta.npy` and `deepks_htot.npy`(htot=hbase+vdelta). When `deepks_out_labels` is true and `deepks_v_delta` < 0 (real space), ABACUS will output `deepks_hrtot.csr`, `deepks_hrdelta.csr`. Some more files output for different settings.
+- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0 (k space), ABACUS will output `deepks_hbase.npy`, `deepks_vdelta.npy` and `deepks_htot.npy`(htot=hbase+vdelta). When `deepks_out_labels` is true and `deepks_v_delta` < 0 (real space), ABACUS will output `deepks_hrtot.csr`, `deepks_hrdelta.csr`. Some more files output for different settings. *NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.*
   - `deepks_v_delta` = 1: `deepks_vdpre.npy`, which is used to calculate V_delta during DeePKS training.
   - `deepks_v_delta` = 2: `deepks_phialpha.npy` and `deepks_gevdm.npy`, which can be used to calculate `deepks_vdpre.npy`. A recommanded method for memory saving.
   - `deepks_v_delta` = -1: `deepks_vdrpre.npy`, which is used to calculate V_delta_R during DeePKS training.
