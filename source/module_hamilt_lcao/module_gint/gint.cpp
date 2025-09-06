@@ -270,6 +270,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         pv->set_atomic_trace(iat2iwt, ucell->nat, mg);
         auto ijr_info = DM2D[0]->get_ijr_info();
         this-> DM2D_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
+        this-> DM2D_tmp->set_zero();
         ModuleBase::Memory::record("Gint::DM2D_tmp", this->DM2D_tmp->get_memory_size());
         for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
@@ -278,8 +279,8 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                    T* matrix_out = DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
-                    T* matrix_in = ap.get_pointer(ir);
+                    double* matrix_out = DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    double* matrix_in = ap.get_pointer(ir);
                     for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
                         for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
                             int index_i = irow* ap.get_col_size()/2 + icol;
@@ -291,7 +292,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
             }
             hamilt::transferParallels2Serials( *(this->DM2D_tmp), this->DMRGint[is]);
         }
-        // delete iat2iwt;
+        // delete iat2iwt [];
         // delete pv;
         // delete this-> DM2D_tmp;
 #else
