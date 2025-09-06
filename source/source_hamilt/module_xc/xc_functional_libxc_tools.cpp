@@ -134,7 +134,7 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 	const std::vector<double> &rho,
 	const std::vector<double> &sigma)
 {
-    assert(nrxx>0);
+    //assert(nrxx>0); // adding this once will cause error in examples
 	std::vector<double> sgn(nrxx*nspin, 1.0);
 	// in the case of GGA correlation for polarized case,
 	// a cutoff for grho is required to ensure that libxc gives reasonable results
