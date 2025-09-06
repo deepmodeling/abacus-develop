@@ -643,25 +643,37 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
+    // we only print information every few ionic steps
     //----------------------------------------------------------
-    if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-    {
-        ModuleIO::write_wfc_pw(GlobalV::KPAR,
-                               GlobalV::MY_POOL,
-                               GlobalV::MY_RANK,
-                               PARAM.inp.nbands,
-                               PARAM.inp.nspin,
-                               PARAM.globalv.npol,
-                               GlobalV::RANK_IN_POOL,
-                               GlobalV::NPROC_IN_POOL,
-                               PARAM.inp.out_wfc_pw,
-                               PARAM.inp.ecutwfc,
-                               PARAM.globalv.global_out_dir,
-                               this->psi[0],
-                               this->kv,
-                               this->pw_wfc,
-                               GlobalV::ofs_running);
-    }
+	if (istep % PARAM.inp.out_freq_ion == 0)
+	{
+		if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+		{
+			// if iter_in = -1, iter will not appera in file name
+			int iter_in = -1;
+			if(iter % PARAM.inp.out_freq_elec == 0)
+			{
+				iter_in = iter;
+			}
+
+			ModuleIO::write_wfc_pw(istep, iter_in, 
+					GlobalV::KPAR,
+					GlobalV::MY_POOL,
+					GlobalV::MY_RANK,
+					PARAM.inp.nbands,
+					PARAM.inp.nspin,
+					PARAM.globalv.npol,
+					GlobalV::RANK_IN_POOL,
+					GlobalV::NPROC_IN_POOL,
+					PARAM.inp.out_wfc_pw,
+					PARAM.inp.ecutwfc,
+					PARAM.globalv.global_out_dir,
+					this->psi[0],
+					this->kv,
+					this->pw_wfc,
+					GlobalV::ofs_running);
+		}
+	}
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -747,23 +759,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               GlobalV::MY_POOL,
                               &this->chr);
     }
-
-    // tmp 2025-05-17, mohan note
-    ModuleIO::write_wfc_pw(GlobalV::KPAR,
-                           GlobalV::MY_POOL,
-                           GlobalV::MY_RANK,
-                           PARAM.inp.nbands,
-                           PARAM.inp.nspin,
-                           PARAM.globalv.npol,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           PARAM.inp.out_wfc_pw,
-                           PARAM.inp.ecutwfc,
-                           PARAM.globalv.global_out_dir,
-                           this->psi[0],
-                           this->kv,
-                           this->pw_wfc,
-                           GlobalV::ofs_running);
 
     //------------------------------------------------------------------
     //! 5) calculate Wannier functions in pw basis

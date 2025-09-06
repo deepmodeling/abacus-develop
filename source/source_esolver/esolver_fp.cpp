@@ -162,7 +162,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     // 3) update delta_rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
-    if (istep % PARAM.inp.out_interval == 0)
+    if (istep % PARAM.inp.out_freq_ion == 0)
     {
         // 4) write charge density
         if (PARAM.inp.out_chg[0] > 0)
