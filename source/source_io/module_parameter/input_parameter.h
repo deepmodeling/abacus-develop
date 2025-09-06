@@ -361,8 +361,8 @@ struct Input_para
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
     bool out_stru = false;                ///< outut stru file each ion step
-    int out_freq_elec = -1;               ///< print information every few electronic steps 
-    int out_freq_ion = -1;                ///< print information every few ionic steps 
+    int out_freq_elec = 0;                ///< print information every few electronic steps 
+    int out_freq_ion = 0;                 ///< print information every few ionic steps 
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no

@@ -645,33 +645,37 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // 3) Print out electronic wavefunctions in pw basis
     // we only print information every few ionic steps
     //----------------------------------------------------------
-	if (istep % PARAM.inp.out_freq_ion == 0)
-	{
-		if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-		{
-			// if iter_in = -1, iter will not appera in file name
-			int iter_in = -1;
-			if(iter % PARAM.inp.out_freq_elec == 0)
-			{
-				iter_in = iter;
-			}
 
-			ModuleIO::write_wfc_pw(istep, iter_in, 
-					GlobalV::KPAR,
-					GlobalV::MY_POOL,
-					GlobalV::MY_RANK,
-					PARAM.inp.nbands,
-					PARAM.inp.nspin,
-					PARAM.globalv.npol,
-					GlobalV::RANK_IN_POOL,
-					GlobalV::NPROC_IN_POOL,
-					PARAM.inp.out_wfc_pw,
-					PARAM.inp.ecutwfc,
-					PARAM.globalv.global_out_dir,
-					this->psi[0],
-					this->kv,
-					this->pw_wfc,
-					GlobalV::ofs_running);
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if (istep % PARAM.inp.out_freq_ion == 0)
+		{
+			if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+			{
+				// if iter_in = -1, iter will not appera in file name
+				int iter_in = -1;
+				if(iter % PARAM.inp.out_freq_elec == 0)
+				{
+					iter_in = iter;
+				}
+
+				ModuleIO::write_wfc_pw(istep, iter_in, 
+						GlobalV::KPAR,
+						GlobalV::MY_POOL,
+						GlobalV::MY_RANK,
+						PARAM.inp.nbands,
+						PARAM.inp.nspin,
+						PARAM.globalv.npol,
+						GlobalV::RANK_IN_POOL,
+						GlobalV::NPROC_IN_POOL,
+						PARAM.inp.out_wfc_pw,
+						PARAM.inp.ecutwfc,
+						PARAM.globalv.global_out_dir,
+						this->psi[0],
+						this->kv,
+						this->pw_wfc,
+						GlobalV::ofs_running);
+			}
 		}
 	}
 

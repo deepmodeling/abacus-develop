@@ -557,10 +557,13 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 3) write eigenvalues
-    if (istep % PARAM.inp.out_freq_ion == 0)
-    {
-//        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
-    }
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if (istep % PARAM.inp.out_freq_ion == 0)
+		{
+			//        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
+		}
+	}
 }
 
 template <typename T, typename Device>

@@ -350,7 +350,13 @@ void ReadInput::item_output()
     {
         Input_Item item("out_freq_ion");
         item.annotation = "print information every few ionic steps";
-        read_sync_int(input.out_freq_ion);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+			if (para.input.out_freq_ion <= 0)
+			{
+				para.input.out_freq_ion = 0; // 0 means no output of info
+			}
+		};
+		read_sync_int(input.out_freq_ion);
         this->add_item(item);
     }
     {

@@ -26,33 +26,36 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 		ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
 	}
 
-    if(istep % PARAM.inp.out_freq_ion == 0)
-    {
-        ModuleIO::ctrl_output_lcao<TK, TR>(ucell, 
-				this->kv,
-				estate, 
-				this->pv, 
-				this->gd,
-				this->psi,
-				hamilt_lcao,
-				this->two_center_bundle_,
-				this->GK,
-				this->orb_,
-				this->pw_wfc,
-				this->pw_rho,
-				this->GridT,
-				this->pw_big,
-				this->sf,
-				this->rdmft_solver,
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if(istep % PARAM.inp.out_freq_ion == 0)
+		{
+			ModuleIO::ctrl_output_lcao<TK, TR>(ucell, 
+					this->kv,
+					estate, 
+					this->pv, 
+					this->gd,
+					this->psi,
+					hamilt_lcao,
+					this->two_center_bundle_,
+					this->GK,
+					this->orb_,
+					this->pw_wfc,
+					this->pw_rho,
+					this->GridT,
+					this->pw_big,
+					this->sf,
+					this->rdmft_solver,
 #ifdef __MLALGO
-				this->ld,
+					this->ld,
 #endif
 #ifdef __EXX
-				*this->exd,
-				*this->exc,
+					*this->exd,
+					*this->exc,
 #endif
-				istep);
-    }
+					istep);
+		}
+	}
 
     //------------------------------------------------------------------
     //! 3) Clean up RA, which is used to serach for adjacent atoms
