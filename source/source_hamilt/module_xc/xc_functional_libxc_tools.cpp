@@ -245,12 +245,12 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 	const double tpiba,
 	const Charge* const chr)
 {
-    assert(nrxx>0);
+    //assert(nrxx>0); // this line will cause bug
 	std::vector<std::vector<ModuleBase::Vector3<double>>> h(
 		nspin,
 		std::vector<ModuleBase::Vector3<double>>(nrxx) );
 
-	if( 1==nspin )
+	if( nspin==1 )
 	{
 		#ifdef _OPENMP
 		#pragma omp parallel for schedule(static, 1024)
@@ -292,7 +292,7 @@ ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 	const std::vector<double> &amag,
 	const ModuleBase::matrix &v)
 {
-    assert(nrxx>0);
+    //assert(nrxx>0);
 	assert(PARAM.inp.nspin==4);
 	constexpr double vanishing_charge = 1.0e-10;
 	ModuleBase::matrix v_nspin4(PARAM.inp.nspin, nrxx);
