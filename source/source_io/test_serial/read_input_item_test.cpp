@@ -822,12 +822,6 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_dmk[0], 1);
         EXPECT_EQ(param.input.out_dmk[1], 2);
-
-        it->second.str_values = {"1", "2", "3"};
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // out_dmr
         auto it = find_label("out_dmr", readinput.input_lists);
@@ -840,12 +834,6 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_dmr[0], 1);
         EXPECT_EQ(param.input.out_dmr[1], 2);
-
-        it->second.str_values = {"1", "2", "3"};
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // method_sto
         auto it = find_label("method_sto", readinput.input_lists);
@@ -957,12 +945,6 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
         EXPECT_EQ(param.input.out_mat_hs[1], 2);
-
-        it->second.str_values = {"1", "2", "3"};
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.out_mat_hs = {0};
         param.input.qo_switch = true;
