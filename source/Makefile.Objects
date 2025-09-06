@@ -605,7 +605,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_eig_occ.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
-      io_dmk.o\
+      write_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       read_wfc_lcao.o\
