@@ -43,15 +43,16 @@ void ReadInput::item_output()
         Input_Item item("out_chg");
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
-            }
-            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : std::stoi(item.str_values[0]);
-            para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
-        };
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
+			para.input.out_chg[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[1] = 3;
+			if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+		};
+        // reset value in some special case
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                                         ? 1
@@ -249,15 +250,16 @@ void ReadInput::item_output()
     {
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
-            }
-            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_mat_hs[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
-        };
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
+			para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_hs[1] = 8;
+			if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+		};
+        // reset value in some special case
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
             {
