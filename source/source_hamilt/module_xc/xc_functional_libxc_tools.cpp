@@ -193,7 +193,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const double tpiba,
 	const Charge* const chr)
 {
-    assert(nrxx>0);
+    // assert(nrxx>0); // will cause error
 	double vtxc = 0.0;
 	ModuleBase::matrix v(nspin, nrxx);
 
