@@ -26,6 +26,7 @@
 #include "source_io/write_wfc_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -239,6 +240,11 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
             exx_helper.set_wg(&this->pelec->wg);
         }
     }
+
+    // 10) initialize DFT-1/2
+    if (PARAM.inp.dfthalf_type > 0) {
+        GlobalC::vsep_cell.init_vsep(*this->pw_rhod);
+    }
 }
 
 template <typename T, typename Device>
@@ -290,6 +296,13 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
             auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
             hamilt_pw->set_exx_helper(exx_helper);
         }
+    }
+
+    //----------------------------------------------------------
+    //! 4.5) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
+    //----------------------------------------------------------
+    if (PARAM.inp.dfthalf_type > 0) {
+        GlobalC::vsep_cell.generate_vsep_r(this->pw_rhod[0], this->sf.strucFac);
     }
 
     //----------------------------------------------------------

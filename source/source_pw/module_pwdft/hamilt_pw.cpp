@@ -73,6 +73,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         {
             pot_register_in.push_back("gatefield");
         }
+        // DFT-1/2
+        if (PARAM.inp.dfthalf_type == 1) {
+            pot_register_in.push_back("dfthalf");
+        }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
         {
