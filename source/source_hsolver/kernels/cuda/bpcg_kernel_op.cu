@@ -7,6 +7,8 @@ namespace hsolver
 {
 const int warp_size = 32;
 const int thread_per_block = 256;
+#define FULL_MASK 0xffffffff
+#define WARP_SIZE 32
 
 template <typename Real>
 __global__ void line_minimize_with_block(
@@ -283,6 +285,37 @@ __global__ void precondition_kernel(
 }
 
 template <typename Real>
+__device__ Real warpReduceSum(Real val) {
+    for (int offset = WARP_SIZE / 2; offset > 0; offset >>= 1)
+        val += __shfl_down_sync(FULL_MASK, val, offset);
+    return val;
+}
+
+template <typename Real>
+__device__ Real blockReduceSum(Real val, volatile Real* shared) {
+    int lane = threadIdx.x % WARP_SIZE;
+    int wid  = threadIdx.x / WARP_SIZE;
+
+    val = warpReduceSum(val);
+
+    if (lane == 0)
+        shared[wid] = val;
+
+    __syncthreads();
+
+    Real sum = 0.0;
+    if (wid == 0) {
+        sum = (threadIdx.x < blockDim.x / 32) ? shared[lane] : 0.0;
+        sum = warpReduceSum(sum);
+        if (lane == 0) shared[0] = sum;
+    }
+
+    __syncthreads();
+    return shared[0];
+}
+
+
+template <typename Real>
 __global__ void normalize_kernel(
         thrust::complex<Real>* psi_iter,
         Real* psi_norm,
@@ -292,38 +325,19 @@ __global__ void normalize_kernel(
 {
     int m = blockIdx.x;
     int tid = threadIdx.x;
-    __shared__ Real sum[thread_per_block];
+    extern __shared__ char s_char[];
+    Real* shared = reinterpret_cast<Real*>(s_char);
 
-    sum[tid] = 0.0;
+    Real local_sum = 0.0;
 
     // Calculate the sum for normalization
     for (int i = tid; i < dim; i += thread_per_block) {
         auto val = psi_iter[(nbase + m) * dim + i];
-        sum[tid] += (val * thrust::conj(val)).real();
+        local_sum += (val * thrust::conj(val)).real();
     }
 
-    __syncthreads();
-
-    // Parallel reduction in shared memory
-    for (int s = thread_per_block/2; s > warp_size; s >>= 1) {
-        if (tid < s) {
-            sum[tid] += sum[tid + s];
-        }
-        __syncthreads();
-    }
-
-    if (tid < warp_size) {
-        sum[tid] += sum[tid + 32]; __syncwarp();
-        sum[tid] += sum[tid + 16]; __syncwarp();
-        sum[tid] += sum[tid + 8]; __syncwarp();
-        sum[tid] += sum[tid + 4]; __syncwarp();
-        sum[tid] += sum[tid + 2]; __syncwarp();
-        sum[tid] += sum[tid + 1]; __syncwarp();
-    }
-
-    __syncthreads();
-
-    Real norm = sqrt(sum[0]);
+    Real l2_sq = blockReduceSum(local_sum, shared);
+    Real norm = sqrt(l2_sq);
 
     // Normalize the vector
     for (int i = tid; i < dim; i += thread_per_block) {
@@ -452,8 +466,9 @@ void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                         Real* psi_norm)
 {
     auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    int sharedMemSize = (thread_per_block / WARP_SIZE) * sizeof(Real);
 
-    normalize_kernel<Real><<<notconv, thread_per_block>>>(
+    normalize_kernel<Real><<<notconv, thread_per_block, sharedMemSize, 0>>>(
         psi_complex, psi_norm, dim, nbase, notconv);
 
     cudaCheckOnDebug();
