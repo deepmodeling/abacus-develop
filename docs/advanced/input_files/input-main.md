@@ -706,6 +706,15 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - double: double precision
 - **Default**: double
 
+### timer_enable_nvtx
+
+- **Type**: Boolean
+- **Description**:
+
+  - True: Enable NVTX profiling labels in the timer.
+  - False: Disable NVTX profiling labels in the timer.
+- **Default**: False
+
 ### nb2d
 
 - **Type**: Integer
