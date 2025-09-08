@@ -40,6 +40,7 @@ class Driver
 
     // Init harewares according to Input parameters
     void init_hardware();
+    void finalize_hardware();
 };
 
 #endif

@@ -106,6 +106,7 @@ void Driver::driver_run()
     p_esolver->after_all_runners(ucell);
 
     ModuleESolver::clean_esolver(p_esolver);
+    this->finalize_hardware();
 
     //! 6: output the json file
     Json::create_Json(&ucell, PARAM);
@@ -113,7 +114,8 @@ void Driver::driver_run()
     return;
 }
 
-void Driver::init_hardware(){
+void Driver::init_hardware()
+{
 #if ((defined __CUDA) || (defined __ROCM))
     if (PARAM.inp.device == "gpu")
     {
@@ -127,5 +129,23 @@ void Driver::init_hardware(){
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK);
+#endif
+}
+
+void Driver::finalize_hardware()
+{
+#if defined(__CUDA) || defined(__ROCM)
+    if (PARAM.inp.device == "gpu")
+    {
+        ModuleBase::destoryBLAShandle();
+        hsolver::destroyGpuSolverHandle();
+        container::kernels::destroyGpuBlasHandle();
+        container::kernels::destroyGpuSolverHandle();
+    }
+#endif
+
+#ifdef __DSP
+    std::cout << " ** Closing DSP Hardware..." << std::endl;
+    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
 #endif
 }

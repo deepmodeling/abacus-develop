@@ -71,21 +71,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         this->pelec = nullptr;
     }
 
-    if (this->device == base_device::GpuDevice)
-    {
-#if defined(__CUDA) || defined(__ROCM)
-        ModuleBase::destoryBLAShandle();
-        hsolver::destroyGpuSolverHandle();
-        container::kernels::destroyGpuBlasHandle();
-        container::kernels::destroyGpuSolverHandle();
-#endif
-    }
-
-#ifdef __DSP
-    std::cout << " ** Closing DSP Hardware..." << std::endl;
-    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
-#endif
-
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         delete this->kspw_psi;
