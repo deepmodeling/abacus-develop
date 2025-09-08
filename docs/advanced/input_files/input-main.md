@@ -22,6 +22,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [timer_enable_nvtx](#timer_enable_nvtx)
     - [nb2d](#nb2d)
   - [Input Files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
