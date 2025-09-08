@@ -58,18 +58,18 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
     this->device = base_device::get_device_type<Device>(this->ctx);
 
 #if ((defined __CUDA) || (defined __ROCM))
-    if (this->device == base_device::GpuDevice)
+    /*if (this->device == base_device::GpuDevice)
     {
         ModuleBase::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
         container::kernels::createGpuBlasHandle();
         container::kernels::createGpuSolverHandle();
-    }
+    }*/
 #endif
 
 #ifdef __DSP
-    std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    mtfunc::dspInitHandle(GlobalV::MY_RANK);
+    // std::cout << " ** Initializing DSP Hardware..." << std::endl;
+    // mtfunc::dspInitHandle(GlobalV::MY_RANK);
 #endif
 }
 
