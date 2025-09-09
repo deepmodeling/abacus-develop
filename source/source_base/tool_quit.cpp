@@ -91,21 +91,21 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
     std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 
 #else
-		std::cout << " " << std::endl;
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		std::cout << "                         !NOTICE!                         " << std::endl;
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		std::cout << " " << std::endl;
-		std::cout << " " << description << std::endl;
-		std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
-		std::cout << " " << std::endl;
-		std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
-		std::cout << " https://abacus.deepmodeling.com" << std::endl;
-		std::cout << " For any questions, propose issues on the website" << std::endl;
-		std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
-		std::cout << " ---------------------------------------------------------" << std::endl;
-		std::cout << "                         !NOTICE!                         " << std::endl;
-		std::cout << " ---------------------------------------------------------" << std::endl;
+	std::cout << " " << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
+	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
+	std::cout << " " << std::endl;
+	std::cout << " " << description << std::endl;
+	std::cout << " CHECK IN FILE : " << PARAM.globalv.global_out_dir << "warning.log" << std::endl;
+	std::cout << " " << std::endl;
+	std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
+	std::cout << " https://abacus.deepmodeling.com" << std::endl;
+	std::cout << " For any questions, propose issues on the website" << std::endl;
+	std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
+	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << " ---------------------------------------------------------" << std::endl;
 
 
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;

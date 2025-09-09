@@ -1,6 +1,7 @@
 #ifndef PSEUDO_H
 #define PSEUDO_H
 
+#include <cstdint>
 #include "source_base/global_function.h"
 #include "source_io/output.h"
 

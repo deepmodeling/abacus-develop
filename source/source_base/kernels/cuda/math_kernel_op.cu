@@ -133,6 +133,14 @@ __global__ void matrix_copy_kernel(const int n1, const int n2, const T* A, const
     }
 }
 
+template <typename T, typename Real>
+__global__ void matrix_multiply_vector_kernel(const int m, const int n, T *a, const int lda, const Real *b, const Real alpha, T *c, const int ldc){
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if (col >= n || row >= m) return;
+    c[col * ldc + row] = a[col * lda + row] * b[col] * alpha;
+}
+
 cublasOperation_t judge_trans_op(bool is_complex, const char& trans, const char* name)
 {
     if (trans == 'N')
@@ -147,7 +155,7 @@ cublasOperation_t judge_trans_op(bool is_complex, const char& trans, const char*
     {
         return CUBLAS_OP_C;
     }
-    else 
+    else
     {
         ModuleBase::WARNING_QUIT(name, std::string("Unknown trans type ") + trans + std::string(" !"));
     }
@@ -438,10 +446,44 @@ void matrixCopy<std::complex<double>, base_device::DEVICE_GPU>::operator()(const
     cudaCheckOnDebug();
 }
 
+template <>
+void matrix_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  double *a, const int &lda, const double *b, const double alpha, double *c, const int &ldc){
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    matrix_multiply_vector_kernel<double, double> <<<block, thread >>>(m, n, a, lda,
+    b, alpha, c, ldc);
+    cudaCheckOnDebug();
+}
+
+template <>
+void matrix_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  std::complex<float> *a, const int &lda, const float *b, const float alpha, std::complex<float> *c, const int &ldc){
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    matrix_multiply_vector_kernel<thrust::complex<float>, float> <<<block, thread >>>(m, n, reinterpret_cast<thrust::complex<float>*>(a), lda,
+    b, alpha, reinterpret_cast<thrust::complex<float>*>(c), ldc);
+    cudaCheckOnDebug();
+}
+
+template <>
+void matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  std::complex<double> *a, const int &lda, const double *b, const double alpha, std::complex<double> *c, const int &ldc)
+{
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    matrix_multiply_vector_kernel<thrust::complex<double>, double> <<<block, thread >>>(m, n, reinterpret_cast<thrust::complex<double>*>(a), lda,
+    b, alpha, reinterpret_cast<thrust::complex<double>*>(c), ldc);
+    cudaCheckOnDebug();
+}
 
 // Explicitly instantiate functors for the types of functor registered.
 
 template struct matrixCopy<std::complex<float>, base_device::DEVICE_GPU>;
 template struct matrixCopy<double, base_device::DEVICE_GPU>;
 template struct matrixCopy<std::complex<double>, base_device::DEVICE_GPU>;
+
+template struct matrix_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct matrix_mul_vector_op<double, base_device::DEVICE_GPU>;
+template struct matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 }  // namespace ModuleBase

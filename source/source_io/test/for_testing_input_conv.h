@@ -45,34 +45,24 @@ double elecstate::Efield::efield_pos_max;
 double elecstate::Efield::efield_pos_dec;
 double elecstate::Efield::efield_amp;
 
-// parameters of electric field for tddft
+// Parameters of electric field for RT-TDDFT
 
-int elecstate::H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
+int elecstate::H_TDDFT_pw::stype;
 
 std::vector<int> elecstate::H_TDDFT_pw::ttype;
-//  0  Gauss type function.
-//  1  trapezoid type function.
-//  2  Trigonometric functions, sin^2.
-//  3  heaviside function.
-//  4  HHG function.
 
 int elecstate::H_TDDFT_pw::tstart;
 int elecstate::H_TDDFT_pw::tend;
 double elecstate::H_TDDFT_pw::dt;
 double elecstate::H_TDDFT_pw::dt_int;
 
-// space domain parameters
-
-// length gauge
 double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
-
-// time domain parameters
 
 bool TD_Velocity::tddft_velocity;
 bool TD_Velocity::out_mat_R;
 
-// Gauss
+// Gaussian
 int elecstate::H_TDDFT_pw::gauss_count;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_omega; // time(a.u.)^-1
 std::vector<double> elecstate::H_TDDFT_pw::gauss_phase;
@@ -81,7 +71,7 @@ std::vector<double> elecstate::H_TDDFT_pw::gauss_t0;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_amp; // Ry/bohr
 std::vector<int> elecstate::H_TDDFT_pw::gauss_ncut;
 
-// trapezoid
+// Trapezoid
 int elecstate::H_TDDFT_pw::trape_count;
 std::vector<double> elecstate::H_TDDFT_pw::trape_omega; // time(a.u.)^-1
 std::vector<double> elecstate::H_TDDFT_pw::trape_phase;

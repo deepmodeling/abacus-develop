@@ -41,7 +41,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.pseudo_dir, "../../PP_ORB/");
     EXPECT_EQ(param.inp.orbital_dir, "../../PP_ORB/");
     EXPECT_EQ(param.inp.read_file_dir, "OUT.autotest/");
-    EXPECT_EQ(param.inp.wannier_card, "none");
     EXPECT_EQ(param.inp.latname, "none");
     EXPECT_EQ(param.inp.calculation, "scf");
     EXPECT_EQ(param.inp.esolver_type, "ksdft");
@@ -187,8 +186,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_chg[1], 3);
     EXPECT_EQ(param.inp.out_elf[0], 0);
     EXPECT_EQ(param.inp.out_elf[1], 3);
-    EXPECT_EQ(param.inp.out_dmk, 0);
-    EXPECT_EQ(param.inp.out_dmr, 0);
+    EXPECT_EQ(param.inp.out_dmk[0], 0);
+    EXPECT_EQ(param.inp.out_dmr[0], 0);
     EXPECT_EQ(param.inp.deepks_out_labels, 0);
     EXPECT_EQ(param.inp.deepks_scf, 0);
     EXPECT_EQ(param.inp.deepks_equiv, 0);

@@ -696,12 +696,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("wannier_card");
-        item.annotation = "input card for wannier functions";
-        read_sync_string(input.wannier_card);
-        this->add_item(item);
-    }
-    {
         Input_Item item("mem_saver");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
@@ -834,6 +828,12 @@ void ReadInput::item_system()
 #endif
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("timer_enable_nvtx");
+        item.annotation = "enable NVTX labeling for profiling or not";
+        read_sync_bool(input.timer_enable_nvtx);
         this->add_item(item);
     }
 }

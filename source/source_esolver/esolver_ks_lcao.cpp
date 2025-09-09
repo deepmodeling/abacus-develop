@@ -13,8 +13,7 @@
 #include "source_io/berryphase.h"
 #include "source_io/cal_ldos.h"
 #include "source_io/cube_io.h"
-#include "source_io/io_dmk.h"
-#include "source_io/io_npz.h"
+//#include "source_io/io_npz.h"
 #include "source_io/output_dmk.h"
 #include "source_io/output_log.h"
 #include "source_io/output_mat_sparse.h"
@@ -361,6 +360,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->solvent,
 #ifdef __MLALGO
                        this->ld,
+                       "tot",
 #endif
 #ifdef __EXX
                        *this->exd,

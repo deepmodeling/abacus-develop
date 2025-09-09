@@ -261,7 +261,7 @@ export CMAKE_PREFIX_PATH=`python -c 'import torch;print(torch.utils.cmake_prefix
 And, follow the instructions in [Build and Install](#build-and-install) part above withou manually setting paths to dependencies.
 See [the advanced installation guide](../advanced/install.md) for more features.
 Make sure the environment variables are set before running `cmake`.
-Possible command: `cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
+Possible command: `cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
 
 ## Command line options
 

@@ -8,7 +8,7 @@
 // functions
 #include "source_io/write_dos_lcao.h" // use ModuleIO::write_dos_lcao() 
 #include "source_io/write_dmr.h" // use ModuleIO::write_dmr() 
-#include "source_io/io_dmk.h" // use ModuleIO::write_dmk()
+#include "source_io/write_dmk.h" // use ModuleIO::write_dmk()
 #include "source_io/write_HS.h" // use ModuleIO::write_hsk()
 #include "source_io/write_wfc_nao.h" // use ModuleIO::write_wfc_nao() 
 #include "source_io/output_mat_sparse.h" // use ModuleIO::output_mat_sparse() 
@@ -92,26 +92,30 @@ void ctrl_output_lcao(UnitCell& ucell,
 	//------------------------------------------------------------------
 	//! 1) Output density matrix DM(R)
 	//------------------------------------------------------------------
-    if(PARAM.inp.out_dmr)
+    if(PARAM.inp.out_dmr[0])
 	{
 		const auto& dmr_vector = pelec->get_DM()->get_DMR_vector();
-		ModuleIO::write_dmr(dmr_vector, pv,	out_app_flag,
+
+        const int precision = PARAM.inp.out_dmr[1];
+
+		ModuleIO::write_dmr(dmr_vector, precision, pv, out_app_flag,
 				ucell.get_iat2iwt(), ucell.nat, istep);
 	}
 
 	//------------------------------------------------------------------
 	//! 2) Output density matrix DM(k)
 	//------------------------------------------------------------------
-	if (PARAM.inp.out_dmk)
+	if (PARAM.inp.out_dmk[0])
 	{
 		std::vector<double> efermis(nspin == 2 ? 2 : 1);
 		for (int ispin = 0; ispin < efermis.size(); ispin++)
 		{
 			efermis[ispin] = pelec->eferm.get_efval(ispin);
 		}
-		const int precision = 3;
+		const int precision = PARAM.inp.out_dmk[1];
+
 		ModuleIO::write_dmk(pelec->get_DM()->get_DMK_vector(),
-				precision, efermis, &(ucell), pv);
+				precision, efermis, &(ucell), pv, istep);
 	}
 
     //------------------------------------------------------------------

@@ -716,8 +716,7 @@ void ReadInput::item_elec_stru()
     }
     {
         Input_Item item("soc_lambda");
-        item.annotation = "The fraction of averaged SOC pseudopotential is "
-                          "given by (1-soc_lambda)";
+        item.annotation = "The fraction of SOC based on scalar relativity (SR) of the pseudopotential";
         read_sync_double(input.soc_lambda);
         this->add_item(item);
     }

@@ -24,7 +24,7 @@ using namespace std;
 #include "../src_tools/matrix3.h"
 #include "../src_tools/complexmatrix.h"
 #include "../src_tools/complexarray.h"
-#include "../src_tools/module_external/lapack_connector.h"
+#include "../src_tools/lapack_connector.h"
 #include "../src_tools/Random.h"
 #include "../src_tools/timer.h"// added 2009-4-17
 #include "../src_tools/inverse_matrix.h"

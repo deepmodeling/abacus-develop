@@ -39,7 +39,12 @@ file=$1
 # the command will ignore lines starting with #
 calculation=`grep calculation INPUT | grep -v '^#' | awk '{print $2}' | sed s/[[:space:]]//g`
 
-running_path=`echo "OUT.autotest/running_$calculation"".log"`
+# running_path=`echo "OUT.autotest/running_$calculation"".log"`
+running_path=$(ls OUT.autotest/running_${calculation}*.log 2>/dev/null | head -1)
+if [ -z "$running_path" ]; then
+    echo "Error: No running log file found for calculation=$calculation in OUT.autotest/"
+    exit 1
+fi
 #echo $running_path
 
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
@@ -623,6 +628,47 @@ if ! test -z "$rdmft" && [[ $rdmft == 1 ]]; then
 	echo "E_exx_ksdft_ref $E_exx_ksdft" >>$1
 
 	echo "" >>$1
+fi
+
+#--------------------------------------------
+# Check if out_alllog is set to 1
+# and verify running*.log filenames
+#--------------------------------------------
+out_alllog=$(get_input_key_value "out_alllog" "INPUT")
+if ! test -z "$out_alllog" && [ $out_alllog -eq 1 ]; then
+    calculation=$(get_input_key_value "calculation" "INPUT")
+
+    if [ -z "$calculation" ]; then
+        echo "Error: calculation parameter not found in INPUT"
+        exit 1
+    fi
+
+    # Find all running*.log files in OUT.autotest directory
+    log_files=$(ls OUT.autotest/running*.log 2>/dev/null)
+
+    if [ -z "$log_files" ]; then
+        echo "Error: No running*.log files found in OUT.autotest/"
+        exit 1
+    fi
+
+    # Check each log file name contains the calculation parameter
+    all_valid=true
+    for log_file in $log_files; do
+        filename=$(basename "$log_file")
+        if [[ ! "$filename" =~ running_${calculation}_ ]]; then
+            echo "Error: Invalid log filename $filename - should contain 'running_${calculation}_'"
+            all_valid=false
+        fi
+    done
+
+    if $all_valid; then
+        echo "All log filenames contain 'running_${calculation}_' - validation passed"
+        echo "log_filename_validation 1" >>$1
+    else
+        echo "Error: Some log filenames do not contain 'running_${calculation}_'"
+        echo "log_filename_validation 0" >>$1
+        exit 1
+    fi
 fi
 
 #--------------------------------------------

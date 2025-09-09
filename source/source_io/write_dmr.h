@@ -24,15 +24,17 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
  * Writes HContainer to a csr file.
  *
  * @param fname The name of the file to write the CSR representation to.
+ * @param precision Control the ouptut precision
  * @param dm_serial A pointer to the Hamiltonian container.
  * @param istep The current step number.
  */
-void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep);
+void write_dmr_csr(std::string& fname, const int precision, hamilt::HContainer<double>* dm_serial, const int istep);
 
 /**
  * Writes DMR to a file.
  *
  * @param dmr The 2D block parallel matrix representing the density matrix. The first dimension is the spin index.
+ * @param precision Control the output precision
  * @param paraV The parallel 2D object.
  * @param out_type The output file type. 1: csr, 2: npz.
  * @param sparse Whether output the sparse DM.
@@ -42,6 +44,7 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
  * @param istep The ION step, starting from 0.
  */
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
+               const int precision,
                const Parallel_2D& paraV,
                const bool append,
                const int* iat2iwt,
