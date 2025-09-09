@@ -283,7 +283,11 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 
     const double ecutwfc = 20; // this is a fake number
 
-	ModuleIO::write_wfc_pw(
+
+    const int istep = -1; // -1 means ionic iteration number will not appear in file name
+    const int iter = -1; // -1 means electronic iteration number will not appear in file name
+
+	ModuleIO::write_wfc_pw(istep, iter,
 			kpar, my_pool, my_rank, nbands, nspin, npol,
 			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
 			PARAM.input.out_wfc_pw, ecutwfc, out_dir, *psi, *kv, wfcpw,

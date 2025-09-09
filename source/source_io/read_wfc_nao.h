@@ -45,7 +45,7 @@ bool read_wfc_nao(
 	const int nkstot,
 	const int nspin,
     const int skip_band = 0,
-    const int nstep = -1);
+    const int istep = -1);
 
 } // namespace ModuleIO
 

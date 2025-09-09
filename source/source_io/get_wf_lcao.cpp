@@ -204,8 +204,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
 
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
+    const int iter = -1; // -1 means electronic iteration number will not appear in file name
     ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
@@ -369,8 +369,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
+    const int iter = -1; // -1 means electronic iteration number will not appear in file name
     ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
