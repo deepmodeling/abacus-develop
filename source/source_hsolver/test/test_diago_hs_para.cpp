@@ -160,7 +160,9 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
     MPI_Comm_size(comm, &nproc);
 
     std::vector<T> h_mat, s_mat, wfc, h_psi, s_psi;
+#ifdef __ELPA
     std::vector<typename GetTypeReal<T>::type> ekb_elpa(lda);
+#endif
     std::vector<typename GetTypeReal<T>::type> ekb_scalap(lda);
     std::vector<typename GetTypeReal<T>::type> ekb_lapack(lda);
 
@@ -176,32 +178,36 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
     }
 
     // store all the times in a vector
+#ifdef __ELPA
     std::vector<double> time_elpa(case_numb, 0);
+#endif
     std::vector<double> time_scalap(case_numb, 0);
     std::vector<double> time_lapack(case_numb, 0);
 
     if (my_rank == 0) { std::cout << "Random matrix ";
 }
-    for (int randomi = 0; randomi < case_numb; ++randomi) 
+    for (int randomi = 0; randomi < case_numb; ++randomi)
     {
-        
+
         if (my_rank == 0) {
             std::cout << randomi << " ";
             generate_random_hs(lda, randomi, h_mat, s_mat);
         }
-
+        auto start = std::chrono::high_resolution_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
+#ifdef __ELPA
         // ELPA
         MPI_Barrier(comm);
-        auto start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
         for (int j=0;j<loop_numb;j++)
         {
             hsolver::diago_hs_para<T>(h_mat.data(), s_mat.data(), lda, nbands,ekb_elpa.data(), wfc.data(), comm, 1, nb);
             MPI_Barrier(comm);
         }
         MPI_Barrier(comm);
-        auto end = std::chrono::high_resolution_clock::now();
+        end = std::chrono::high_resolution_clock::now();
         time_elpa[randomi] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
+#endif
 
         // scalapack
         start = std::chrono::high_resolution_clock::now();
@@ -215,8 +221,8 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
         time_scalap[randomi] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         //LApack
-        if (my_rank == 0) 
-        { 
+        if (my_rank == 0)
+        {
             std::vector<T> h_tmp, s_tmp;
             start = std::chrono::high_resolution_clock::now();
             base_device::DEVICE_CPU* ctx = {};
@@ -239,26 +245,34 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
 
             //COMPARE EKB
             for (int i = 0; i < nbands; ++i) {
-                typename GetTypeReal<T>::type diff_elpa_lapack = std::abs(ekb_elpa[i] - ekb_lapack[i]);
                 typename GetTypeReal<T>::type diff_scalap_lapack = std::abs(ekb_scalap[i] - ekb_lapack[i]);
+#ifdef __ELPA
+                typename GetTypeReal<T>::type diff_elpa_lapack = std::abs(ekb_elpa[i] - ekb_lapack[i]);
                 if (diff_elpa_lapack > 1e-6 || diff_scalap_lapack > 1e-6)
+#else
+                if (diff_scalap_lapack > 1e-6)
+#endif
                 {
+#ifdef __ELPA
                     std::cout << "eigenvalue " << i << " by ELPA: " << ekb_elpa[i] << std::endl;
+#endif
                     std::cout << "eigenvalue " << i << " by Scalapack: " << ekb_scalap[i] << std::endl;
                     std::cout << "eigenvalue " << i << " by Lapack: " << ekb_lapack[i] << std::endl;
                 }
             }
         }
-        MPI_Barrier(comm);   
+        MPI_Barrier(comm);
 
     }
 
     if (my_rank == 0)
     {
+#ifdef __ELPA
         std::cout << "\nELPA Time     : ";
         for (int i=0; i < case_numb;i++)
         {std::cout << time_elpa[i] << " ";}
         std::cout << std::endl;
+#endif
 
         std::cout << "scalapack Time: ";
         for (int i=0; i < case_numb;i++)
@@ -271,21 +285,29 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
         std::cout << std::endl;
 
         // print out the average time and speedup
+#ifdef __ELPA
         double avg_time_elpa = 0;
+#endif
         double avg_time_scalap = 0;
         double avg_time_lapack = 0;
         for (int i=0; i < case_numb;i++)
         {
+#ifdef __ELPA
             avg_time_elpa += time_elpa[i];
+#endif
             avg_time_scalap += time_scalap[i];
             avg_time_lapack += time_lapack[i];
         }
 
+#ifdef __ELPA
         avg_time_elpa /= case_numb;
+#endif
         avg_time_scalap /= case_numb;
         avg_time_lapack /= case_numb;
         std::cout << "Average Lapack Time   : " << avg_time_lapack << " ms" << std::endl;
+#ifdef __ELPA
         std::cout << "Average ELPA Time     : " << avg_time_elpa << " ms, Speedup: " << avg_time_lapack / avg_time_elpa << std::endl;
+#endif
         std::cout << "Average Scalapack Time: " << avg_time_scalap << " ms, Speedup: " << avg_time_lapack / avg_time_scalap << std::endl;
     }
 }

@@ -153,12 +153,19 @@ install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DI
 install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
-
-AddTest(
-  TARGET MODULE_HSOLVER_diago_hs_parallel
-  LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
-  SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
-)
+if (USE_ELPA)
+  AddTest(
+    TARGET MODULE_HSOLVER_diago_hs_parallel
+    LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+    SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+  )
+else()
+  AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
+    )
+endif()
 
 AddTest(
   TARGET MODULE_HSOLVER_linear_trans
