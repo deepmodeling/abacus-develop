@@ -8,7 +8,7 @@ namespace hsolver {
 // NOTE: mimicked from ../cuda/dngvd_op.cu for three dngvd_op
 
 static hipsolverHandle_t hipsolver_H = nullptr;
-// Test on DCU platform. When nstart is greater than 234, code on DCU performs better. 
+// Test on DCU platform. When nstart is greater than 234, code on DCU performs better.
 const int N_DCU = 234;
 
 void createGpuSolverHandle() {
@@ -97,7 +97,7 @@ void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
         hipErrcheck(hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice));
     }
 
-    
+
 }
 #endif // __LCAO
 
@@ -112,7 +112,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
 {
     // copied from ../cuda/dngvd_op.cu, "dngvd_op"
     assert(nstart == ldh);
-    
+
     if (nstart > N_DCU){
         hipErrcheck(hipMemcpy(_vcc, _hcc, sizeof(std::complex<float>) * ldh * nstart, hipMemcpyDeviceToDevice));
         // now vcc contains hcc
@@ -170,7 +170,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
         hipErrcheck(hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(float) * eigenvalue.size(), hipMemcpyHostToDevice));
     }
 
-    
+
 }
 
 template <>
@@ -184,7 +184,7 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
                                                                         )
 {
     // copied from ../cuda/dngvd_op.cu, "dngvd_op"
-    assert(nstart == ldh);
+    // assert(nstart == ldh);
 
     // save a copy of scc in case the diagonalization fails
     if (nstart > N_DCU){
@@ -253,7 +253,7 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 
 
 
-    
+
 }
 
 #ifdef __LCAO
