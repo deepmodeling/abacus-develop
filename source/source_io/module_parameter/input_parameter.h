@@ -67,6 +67,7 @@ struct Input_para
 
     std::string device = "auto";
     std::string precision = "double";
+    bool timer_enable_nvtx = false;
 
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
@@ -377,7 +378,7 @@ struct Input_para
     bool out_proj_band = false;           ///< projected band structure calculation jiyy add 2022-05-11
     std::string out_level = "ie";         ///< control the output information.
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
-    std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)   
+    std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
     bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.

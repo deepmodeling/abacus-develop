@@ -22,6 +22,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [timer_enable_nvtx](#timer_enable_nvtx)
     - [nb2d](#nb2d)
   - [Input Files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -705,6 +706,15 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - single: single precision
   - double: double precision
 - **Default**: double
+
+### timer_enable_nvtx
+
+- **Type**: Boolean
+- **Description**: Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+
+  - True: Enable NVTX profiling labels in the timer.
+  - False: Disable NVTX profiling labels in the timer.
+- **Default**: False
 
 ### nb2d
 

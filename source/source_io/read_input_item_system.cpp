@@ -830,6 +830,12 @@ void ReadInput::item_system()
         };
         this->add_item(item);
     }
+    {
+        Input_Item item("timer_enable_nvtx");
+        item.annotation = "enable NVTX labeling for profiling or not";
+        read_sync_bool(input.timer_enable_nvtx);
+        this->add_item(item);
+    }
 }
 
 } // namespace ModuleIO
