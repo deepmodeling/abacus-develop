@@ -15,7 +15,11 @@
 #include "source_base/formatter.h"
 
 #if defined(__CUDA) && defined(__USE_NVTX)
-#include <nvToolsExt.h>
+#if CUDA_VERSION < 12090
+#include "nvToolsExt.h"
+#else
+#include "nvtx3/nvToolsExt.h"
+#endif
 #include "source_io/module_parameter/parameter.h"
 #endif
 
