@@ -710,7 +710,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 ### timer_enable_nvtx
 
 - **Type**: Boolean
-- **Description**:
+- **Description**: Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
 
   - True: Enable NVTX profiling labels in the timer.
   - False: Disable NVTX profiling labels in the timer.

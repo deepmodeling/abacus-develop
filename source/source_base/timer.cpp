@@ -14,7 +14,7 @@
 #include "chrono"
 #include "source_base/formatter.h"
 
-#ifdef __CUDA
+#if defined(__CUDA) && defined(__USE_NVTX)
 #include <nvToolsExt.h>
 #include "source_io/module_parameter/parameter.h"
 #endif
@@ -98,7 +98,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 #endif
 			++timer_one.calls;
 			timer_one.start_flag = false;
-#ifdef __CUDA
+#if defined(__CUDA) && defined(__USE_NVTX)
             if (PARAM.inp.timer_enable_nvtx){
                 std::string label = class_name + ":" + name;
                 nvtxRangePushA(label.data());
@@ -118,7 +118,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 			timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
 #endif
 			timer_one.start_flag = true;
-#ifdef __CUDA
+#if defined(__CUDA) && defined(__USE_NVTX)
             if (PARAM.inp.timer_enable_nvtx){
                 nvtxRangePop();
             }

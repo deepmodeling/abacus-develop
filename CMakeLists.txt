@@ -287,7 +287,7 @@ if (USE_SW)
   set(SW ON)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
-  
+
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
@@ -373,6 +373,7 @@ if(USE_CUDA)
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
+    target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
@@ -520,7 +521,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  
+
   add_compile_definitions(__MLALGO)
 endif()
 
@@ -560,7 +561,7 @@ if (ENABLE_CNPY)
     include_directories(${cnpy_INCLUDE_DIR})
   endif()
   include_directories(${cnpy_SOURCE_DIR})
-  
+
   # find ZLIB and link
   find_package(ZLIB REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} cnpy ZLIB::ZLIB)
