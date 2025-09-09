@@ -183,6 +183,30 @@ struct normalize_op<T, base_device::DEVICE_CPU> {
     }
 };
 
+template <typename T>
+struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int &n,
+                  T *hcc,
+                  T *scc,
+                  T *vcc,
+                  const int &ldh,
+                  const Real *eigenvalue,
+                  const T &one)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(1) schedule(static, 8192 / sizeof(T))
+#endif
+        for (int i = 0; i < n; i++)
+        {
+            hcc[i * ldh + i] = eigenvalue[i];
+            scc[i * ldh + i] = one;
+            vcc[i * ldh + i] = one;
+        }
+    }
+};
+
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -196,4 +220,7 @@ template struct precondition_op<double, base_device::DEVICE_CPU>;
 template struct normalize_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct normalize_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct normalize_op<double, base_device::DEVICE_CPU>;
+template struct refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct refresh_hcc_scc_vcc_op<double, base_device::DEVICE_CPU>;
 } // namespace hsolver

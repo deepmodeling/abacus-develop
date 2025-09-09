@@ -22,6 +22,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [timer_enable_nvtx](#timer_enable_nvtx)
     - [nb2d](#nb2d)
   - [Input Files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -191,6 +192,7 @@
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
     - [deepks\_out\_freq\_elec](#deepks_out_freq_elec)
+    - [deepks\_out\_base](#deepks_out_base)
     - [deepks\_scf](#deepks_scf)
     - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
@@ -704,6 +706,15 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - single: single precision
   - double: double precision
 - **Default**: double
+
+### timer_enable_nvtx
+
+- **Type**: Boolean
+- **Description**: Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+
+  - True: Enable NVTX profiling labels in the timer.
+  - False: Disable NVTX profiling labels in the timer.
+- **Default**: False
 
 ### nb2d
 
@@ -1698,21 +1709,21 @@ These variables are used to control the output of properties.
 
 ### out_dmk
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional) 
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 1 and 4: `dm_nao.csr`;
     - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
-    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
+    - nspin = 1 and 4: `dmk1_nao.csr`, `dmk2_nao.csr`, ...;
+    - nspin = 2: `dmk1s1_nao.csr`... and `dmk1s2_nao.csr`... for the two spin channels. 
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dmr
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis (multi-k points)
 - **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
   - nspin = 1: `dmrs1_nao.csr`;
@@ -2172,6 +2183,13 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: Numerical atomic orbital basis
 - **Description**: When `deepks_out_freq_elec` is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per `deepks_out_freq_elec` electronic iterations, with suffix `_e*` to distinguish different steps. Often used with `deepks_out_labels` equals 1.
 - **Default**: 0
+
+### deepks_out_base
+
+- **Type**: String
+- **Availability**: Numerical atomic orbital basis and `deepks_out_freq_elec` is greater than 0
+- **Description**: Print labels and descriptors calculated by base functional ( determined by `deepks_out_base` ) and target functional ( determined by `dft_functional` ) for DeePKS in per `deepks_out_freq_elec` electronic iterations. The SCF process, labels and descriptors output of the target functional are all consistent with those when the target functional is used alone. The only additional output under this configuration is the labels of the base functional. Often used with `deepks_out_labels` equals 1.
+- **Default**: None
 
 ### deepks_scf
 

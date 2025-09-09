@@ -53,6 +53,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           surchem& solvent,
 #ifdef __MLALGO
                                           LCAO_Deepks<T>& ld,
+                                          const std::string& dpks_out_type,
 #endif
 #ifdef __EXX
                                           Exx_LRI_Interface<T, double>& exd,
@@ -497,23 +498,36 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // DeePKS force
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            const std::string file_ftot = PARAM.globalv.global_out_dir
-                                          + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
-            LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
-
-            if (PARAM.inp.deepks_out_labels == 1)
+            if (PARAM.inp.deepks_out_base == "none" 
+                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
             {
-                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-                if (PARAM.inp.deepks_scf)
+                const std::string file_ftot = PARAM.globalv.global_out_dir
+                                            + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
+                LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
+
+                if (PARAM.inp.deepks_out_labels == 1)
                 {
-                    LCAO_deepks_io::save_matrix2npy(file_fbase,
-                                                    fcs - fvnl_dalpha,
-                                                    GlobalV::MY_RANK); // Hartree/Bohr, F_base
+                    // this base only considers subtracting the deepks_scf part
+                    const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
+                    if (PARAM.inp.deepks_scf)
+                    {
+                        LCAO_deepks_io::save_matrix2npy(file_fbase,
+                                                        fcs - fvnl_dalpha,
+                                                        GlobalV::MY_RANK); // Hartree/Bohr, F_base
+                    }
+                    else
+                    {
+                        LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
+                    }
                 }
-                else
-                {
-                    LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
-                }
+            }
+            if (PARAM.inp.deepks_out_base != "none") 
+            {
+                // output fcs as tot or base in another dir
+                // this base considers changing xc functional to base functional
+                const std::string file_f = PARAM.globalv.global_deepks_label_elec_dir + 
+                    (dpks_out_type == "tot" ? "ftot.npy" : "fbase.npy");
+                LCAO_deepks_io::save_matrix2npy(file_f, fcs, GlobalV::MY_RANK);              
             }
         }
 #endif
@@ -685,29 +699,46 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_out_labels == 1)
         {
-            const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
-            LCAO_deepks_io::save_matrix2npy(file_stot,
-                                            scs,
-                                            GlobalV::MY_RANK,
-                                            ucell.omega,
-                                            'U'); // change to energy unit Ry when printing, S_tot;
-
-            const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
-            if (PARAM.inp.deepks_scf)
+            if (PARAM.inp.deepks_out_base == "none" 
+                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
             {
-                LCAO_deepks_io::save_matrix2npy(file_sbase,
-                                                scs - svnl_dalpha,
-                                                GlobalV::MY_RANK,
-                                                ucell.omega,
-                                                'U'); // change to energy unit Ry when printing, S_base;
-            }
-            else
-            {
-                LCAO_deepks_io::save_matrix2npy(file_sbase,
+                const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
+                LCAO_deepks_io::save_matrix2npy(file_stot,
                                                 scs,
                                                 GlobalV::MY_RANK,
                                                 ucell.omega,
-                                                'U'); // sbase = stot
+                                                'U'); // change to energy unit Ry when printing, S_tot;
+
+                // this base only considers subtracting the deepks_scf part
+                const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+                if (PARAM.inp.deepks_scf)
+                {
+                    LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                    scs - svnl_dalpha,
+                                                    GlobalV::MY_RANK,
+                                                    ucell.omega,
+                                                    'U'); // change to energy unit Ry when printing, S_base;
+                }
+                else
+                {
+                    LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                    scs,
+                                                    GlobalV::MY_RANK,
+                                                    ucell.omega,
+                                                    'U'); // sbase = stot
+                }
+            }
+            if (PARAM.inp.deepks_out_base != "none") 
+            {
+                // output scs as tot or base in another dir
+                // this base considers changing xc functional to base functional
+                const std::string file_s = PARAM.globalv.global_deepks_label_elec_dir + 
+                    (dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
+                LCAO_deepks_io::save_matrix2npy(file_s,
+                                                scs,
+                                                GlobalV::MY_RANK,
+                                                ucell.omega,
+                                                'U'); // change to energy unit Ry when printing, S_tot;                   
             }
         }
         else if (PARAM.inp.deepks_out_labels == 2)

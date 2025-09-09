@@ -26,7 +26,7 @@ basis_type          lcao
 ks_solver           scalapack_gvx
 chg_extrap          second-order
 out_dmk             0
-out_chg             2  3
+out_chg             2  3 // 2 outputs the initial charge density
 pw_diag_thr         0.00001
 
 mixing_type         broyden 

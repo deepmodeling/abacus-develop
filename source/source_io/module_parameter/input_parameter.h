@@ -67,6 +67,7 @@ struct Input_para
 
     std::string device = "auto";
     std::string precision = "double";
+    bool timer_enable_nvtx = false;
 
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
@@ -265,6 +266,8 @@ struct Input_para
                                        ///< descriptors for training, wenfei 2022-1-12
     int deepks_out_freq_elec = 0;      ///< (need libnpy) frequency of electronic iteration to output
                                        ///< descriptors and labels, default is 0, which means no output until convergence
+    std::string deepks_out_base = "none"; ///< (need libnpy) base functional for output files, with dft_functional as target functional
+                                       ///  default is "none", which means no base functional
     bool deepks_scf = false;           ///< (need libnpy and libtorch) if set to true, a trained model
                                        ///< would be needed to calculate V_delta and F_delta
     int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
@@ -372,8 +375,8 @@ struct Input_para
     bool out_mul = false;                 ///< qifeng add 2019-9-10
     bool out_proj_band = false;           ///< projected band structure calculation jiyy add 2022-05-11
     std::string out_level = "ie";         ///< control the output information.
-    bool out_dmk = false;                 ///< output density matrix DM(k)
-    bool out_dmr = false;                 ///< output density matrix DM(R)
+    std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
+    std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
     bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
@@ -657,29 +660,29 @@ struct Input_para
      * the following two sets of parameters are for the XC parameterization.
      * The first element should be the LibXC id, to assign the analytical
      * form of the eXchange and Correlation part of the functional.
-     * 
+     *
      * Starting from the second parameter, the parameters are the coefficients
      * of the functional. For example the M06-L functional, one should refer
      * to the source file (source code of LibXC)
-     * 
+     *
      * src/mgga_x_m06l.c
-     * 
+     *
      * the implementation can be found in the file
-     * 
+     *
      * src/maple2c/mgga_exc/mgga_x_m06l.c.
-     * 
+     *
      * There are 18 parameters for the exchange part, so the whole length of
      * the xc_exch_ext should be 19. (MGGA_X_M06L, id = 203)
-     * 
+     *
      * Likewise, the correlation part can be found in corresponding files.
-     * 
+     *
      * PBE functional is used as the default functional for XCPNet.
      */
     // src/gga_x_pbe.c
     std::vector<double> xc_exch_ext = {
-        101, 0.8040, 0.2195149727645171}; 
+        101, 0.8040, 0.2195149727645171};
     // src/gga_c_pbe.c
     std::vector<double> xc_corr_ext = {
-        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
+        130, 0.06672455060314922, 0.031090690869654895034, 1.00000};
 };
 #endif

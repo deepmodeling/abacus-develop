@@ -73,6 +73,7 @@ class Input
     double lr_end = 1e-4;
     int lr_fre = 5000;
     double exponent = 5.; // exponent of weight rho^{exponent/3.}
+    std::string energy_type = "kedf"; // kedf or exx
 
     // output
     int dump_fre = 1;

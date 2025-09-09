@@ -94,6 +94,9 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    T* d_scc = nullptr;
+    Real* d_eigenvalue = nullptr;
+
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
@@ -176,6 +179,7 @@ class Diago_DavSubspace
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
 #endif
     using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+    using setmem_complex_2d_op = base_device::memory::set_memory_2d_op<T, Device>;
 
     using resmem_real_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
     using delmem_real_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
@@ -184,6 +188,7 @@ class Diago_DavSubspace
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_complex_2d_op = base_device::memory::synchronize_memory_2d_op<T, Device, Device>;
     using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;

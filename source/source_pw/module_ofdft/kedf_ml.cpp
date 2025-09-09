@@ -328,15 +328,24 @@ void KEDF_ML::NN_forward(const double * const * prho, ModulePW::PW_Basis *pw_rho
 
 void KEDF_ML::loadVector(std::string filename, std::vector<double> &data)
 {
-    std::vector<long unsigned int> cshape = {(long unsigned) this->cal_tool->nx};
-    bool fortran_order = false;
-    npy::LoadArrayFromNumpy(filename, cshape, fortran_order, data);
+    npy::npy_data<double> d = npy::read_npy<double>(filename);
+    data = d.data;
+    // ========== For old version of npy.hpp ==========
+    // std::vector<long unsigned int> cshape = {(long unsigned) this->cal_tool->nx};
+    // bool fortran_order = false;
+    // npy::LoadArrayFromNumpy(filename, cshape, fortran_order, data);
 }
 
 void KEDF_ML::dumpVector(std::string filename, const std::vector<double> &data)
 {
-    const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape
-    npy::SaveArrayAsNumpy(filename, false, 1, cshape, data);
+    npy::npy_data_ptr<double> d;
+    d.data_ptr = data.data();
+    d.shape = {(long unsigned) this->cal_tool->nx};
+    d.fortran_order = false; // optional
+    npy::write_npy(filename, d);
+    // ========== For old version of npy.hpp ==========
+    // const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape
+    // npy::SaveArrayAsNumpy(filename, false, 1, cshape, data);
 }
 
 /**

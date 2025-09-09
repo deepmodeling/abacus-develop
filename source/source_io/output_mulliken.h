@@ -102,12 +102,13 @@ void cal_mag(Parallel_Orbitals* pv,
     {
         auto cell_index
             = CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
-        auto out_sk = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
-        auto out_dmk = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
+        auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
+        auto out_dm_k = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
                                                 pv,
                                                 PARAM.inp.nspin,
                                                 kv.get_nks());
-        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_sk), &(out_dmk), pv, &cell_index, kv.isk, PARAM.inp.nspin);
+
+        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), &(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
         auto atom_chg = mulp.get_atom_chg();
         /// used in updating mag info in STRU file
         ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);

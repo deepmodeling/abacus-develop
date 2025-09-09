@@ -4,7 +4,7 @@ basis_type		lcao
 calculation     scf
 gamma_only		1
 
-out_dmk			1   // file name is dms1_nao.txt 
+out_dmk			1   // file name is dm_nao.txt 
 nbands			4
 latname			sc
 ecutwfc			25.0   //  Rydberg

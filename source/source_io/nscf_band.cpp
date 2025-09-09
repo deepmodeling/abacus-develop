@@ -21,6 +21,8 @@ void ModuleIO::nscf_band(
     ModuleBase::TITLE("ModuleIO","nscf_band");
     ModuleBase::timer::tick("ModuleIO", "nscf_band");
 
+    assert(precision>0);
+
 	GlobalV::ofs_running << "\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;

@@ -22,6 +22,7 @@ if(ENABLE_LCAO)
       esolver_gets.cpp
       lcao_others.cpp
       esolver_dm2rho.cpp
+      esolver_double_xc.cpp
   )
 endif()
 

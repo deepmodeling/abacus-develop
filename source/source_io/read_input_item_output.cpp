@@ -43,15 +43,16 @@ void ReadInput::item_output()
         Input_Item item("out_chg");
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
-            }
-            para.input.out_chg[0] = (item.str_values[0] == "-1") ? -1 : std::stoi(item.str_values[0]);
-            para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
-        };
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
+			para.input.out_chg[0] = std::stoi(item.str_values[0]);
+            para.input.out_chg[1] = 3;
+			if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+		};
+        // reset value in some special case
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
                                         ? 1
@@ -196,31 +197,50 @@ void ReadInput::item_output()
     {
         Input_Item item("out_dmk");
         item.annotation = ">0 output density matrix DM(k) for each k-point";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
-                para.input.out_dmk = false;
-            }
-        };
-        read_sync_bool(input.out_dmk);
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
+			para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_dmk[1] = 8;
+			if (count >= 2) try { para.input.out_dmk[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+			// some other case
+			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+			{
+				para.input.out_dmk[0] = 0;
+			}
+		};
+        sync_intvec(input.out_dmk, 2, 0);
         this->add_item(item);
     }
     {
         Input_Item item("out_dmr");
-        item.annotation = ">0 output density matrix DM(R) with respect to lattice vector R";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
-                para.input.out_dmr = false;
-            }
+        item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
+			para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_dmr[1] = 8;
+			if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+            // some special case
+			if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+			{
+				para.input.out_dmr[0] = 0;
+			}
         };
+
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.sys.gamma_only_local == true && para.input.out_dmr)
+            if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
             }
         };
-        read_sync_bool(input.out_dmr);
+
+        sync_intvec(input.out_dmr, 2, 0);
         this->add_item(item);
     }
     {
@@ -232,15 +252,16 @@ void ReadInput::item_output()
     {
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
-            }
-            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_mat_hs[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
-        };
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
+			para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_hs[1] = 8;
+			if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
+		};
+        // reset value in some special case
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
             {
@@ -252,15 +273,15 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_mat_tk");
-        item.annotation = "output T(k)";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
-            }
-            para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_mat_tk[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+        item.annotation = "output kinetic matrix of electrons T(k)";
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
+			para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_tk[1] = 8;
+			if (count >= 2) try { para.input.out_mat_tk[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
         };
         sync_intvec(input.out_mat_tk, 2, 0);
         this->add_item(item);
@@ -280,14 +301,14 @@ void ReadInput::item_output()
     {
         Input_Item item("out_mat_l");
         item.annotation = "output the expectation values of angular momentum operators";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            if (count != 1 && count != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l should have 1 or 2 values");
-            }
-            para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
-            para.input.out_mat_l[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
+		item.read_value = [](const Input_Item& item, Parameter& para) {
+			const size_t count = item.get_size();
+			if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
+			para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_l[1] = 8;
+			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
+			catch (const std::invalid_argument&) { /* do nothing */ }
+			catch (const std::out_of_range&) {/* do nothing */}
         };
         sync_intvec(input.out_mat_l, 2, 0);
         this->add_item(item);
@@ -502,10 +523,13 @@ void ReadInput::item_output()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_xc_r(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), 
+                           item.str_values.end(), 
+                           out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
             // assign non-negative values to para.input.out_xc_r
             std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
         };
+        // check value
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_xc_r[0] >= 0)
             {

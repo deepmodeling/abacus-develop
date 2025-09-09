@@ -1,4 +1,4 @@
-#include "source_io/io_dmk.h"
+#include "source_io/write_dmk.h"
 
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -101,15 +101,30 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
 
 
 TEST(DMKTest, GenFileName) {
-    std::string fname = ModuleIO::dmk_gen_fname(true, 0, 0);
-    EXPECT_EQ(fname, "dms1_nao.txt");
-    fname = ModuleIO::dmk_gen_fname(true, 1, 1);
-    EXPECT_EQ(fname, "dms2_nao.txt");
+    bool gamma_only = true;
+    int ispin = 0;
+    int nspin = 2;
+    int ik = 0;
+    int istep = 0;
+    std::string fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+    EXPECT_EQ(fname, "dms1g1_nao.txt");
 
-    fname = ModuleIO::dmk_gen_fname(false, 0, 0);
-    EXPECT_EQ(fname, "dms1k1_nao.txt");
-    fname = ModuleIO::dmk_gen_fname(false, 1, 1);
-    EXPECT_EQ(fname, "dms2k2_nao.txt");
+    ispin = 1;
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+    EXPECT_EQ(fname, "dms2g1_nao.txt");
+
+    ispin = 0;
+    gamma_only = false;    
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+    EXPECT_EQ(fname, "dmk1s1g1_nao.txt");
+
+    ispin = 1;
+    ik = 1;
+
+    fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+    EXPECT_EQ(fname, "dmk2s2g1_nao.txt");
 };
 
 
@@ -132,8 +147,9 @@ TEST(DMKTest,WriteDMK) {
     gen_dmk(dmk_multik, efs, nspin, nk_multik, nlocal, pv);
     PARAM.sys.global_out_dir = "./";
 
-    ModuleIO::write_dmk(dmk, 3, efs, ucell, pv);
-    ModuleIO::write_dmk(dmk_multik, 3, efs, ucell, pv);
+    const int istep = -1;
+    ModuleIO::write_dmk(dmk, 3, efs, ucell, pv, istep);
+    ModuleIO::write_dmk(dmk_multik, 3, efs, ucell, pv, istep);
     std::ifstream ifs;
 
     int pass = 0;
@@ -144,7 +160,7 @@ TEST(DMKTest,WriteDMK) {
         std::string str((std::istreambuf_iterator<char>(ifs)),
                         std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.00000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("0.000e+00 1.000e-01 2.000e-01 3.000e-01 4.000e-01 "
@@ -163,7 +179,7 @@ TEST(DMKTest,WriteDMK) {
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.10000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("1.000e+00 1.100e+00 1.200e+00 1.300e+00 1.400e+00 "
@@ -177,84 +193,84 @@ TEST(DMKTest,WriteDMK) {
             testing::HasSubstr("2.600e+00 2.700e+00 2.800e+00 2.900e+00\n"));
         ifs.close();
 
-        fn = "dms1k1_nao.txt";
+        fn = "dmk1s1_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.00000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(0.000e+00,0.000e+00) (1.000e-01,1.000e+00) (2.000e-01,2.000e+00) "
-                               "(3.000e-01,3.000e+00) (4.000e-01,4.000e+00) (5.000e-01,5.000e+00) "
+                               "(3.000e-01,3.000e+00)\n (4.000e-01,4.000e+00) (5.000e-01,5.000e+00) "
                                "(6.000e-01,6.000e+00) (7.000e-01,7.000e+00)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(8.000e-01,8.000e+00) (9.000e-01,9.000e+00) (1.000e+00,1.000e+01) "
-                               "(1.100e+00,1.100e+01) (1.200e+00,1.200e+01) (1.300e+00,1.300e+01) "
+                               "(1.100e+00,1.100e+01)\n (1.200e+00,1.200e+01) (1.300e+00,1.300e+01) "
                                "(1.400e+00,1.400e+01) (1.500e+00,1.500e+01)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(1.600e+00,1.600e+01) (1.700e+00,1.700e+01) (1.800e+00,1.800e+01) (1.900e+00,1.900e+01)\n"));
         ifs.close();
 
-        fn = "dms1k2_nao.txt";
+        fn = "dmk2s1_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.00000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(1.000e+00,1.000e-01) (1.100e+00,1.100e+00) (1.200e+00,2.100e+00) "
-                               "(1.300e+00,3.100e+00) (1.400e+00,4.100e+00) (1.500e+00,5.100e+00) "
+                               "(1.300e+00,3.100e+00)\n (1.400e+00,4.100e+00) (1.500e+00,5.100e+00) "
                                "(1.600e+00,6.100e+00) (1.700e+00,7.100e+00)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(1.800e+00,8.100e+00) (1.900e+00,9.100e+00) (2.000e+00,1.010e+01) "
-                               "(2.100e+00,1.110e+01) (2.200e+00,1.210e+01) (2.300e+00,1.310e+01) "
+                               "(2.100e+00,1.110e+01)\n (2.200e+00,1.210e+01) (2.300e+00,1.310e+01) "
                                "(2.400e+00,1.410e+01) (2.500e+00,1.510e+01)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(2.600e+00,1.610e+01) (2.700e+00,1.710e+01) (2.800e+00,1.810e+01) (2.900e+00,1.910e+01)\n"));
         ifs.close();
 
-        fn = "dms2k1_nao.txt";
+        fn = "dmk1s2_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.10000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(2.000e+00,2.000e-01) (2.100e+00,1.200e+00) (2.200e+00,2.200e+00) "
-                               "(2.300e+00,3.200e+00) (2.400e+00,4.200e+00) (2.500e+00,5.200e+00) "
+                               "(2.300e+00,3.200e+00)\n (2.400e+00,4.200e+00) (2.500e+00,5.200e+00) "
                                "(2.600e+00,6.200e+00) (2.700e+00,7.200e+00)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(2.800e+00,8.200e+00) (2.900e+00,9.200e+00) (3.000e+00,1.020e+01) "
-                               "(3.100e+00,1.120e+01) (3.200e+00,1.220e+01) (3.300e+00,1.320e+01) "
+                               "(3.100e+00,1.120e+01)\n (3.200e+00,1.220e+01) (3.300e+00,1.320e+01) "
                                "(3.400e+00,1.420e+01) (3.500e+00,1.520e+01)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(3.600e+00,1.620e+01) (3.700e+00,1.720e+01) (3.800e+00,1.820e+01) (3.900e+00,1.920e+01)\n"));
         ifs.close();
 
-        fn = "dms2k2_nao.txt";
+        fn = "dmk2s2_nao.txt";
         ifs.open(fn);
         str = std::string((std::istreambuf_iterator<char>(ifs)),
                           std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.10000 (fermi energy)"));
-        EXPECT_THAT(str, testing::HasSubstr("20 20"));
+        EXPECT_THAT(str, testing::HasSubstr("20 (number of basis)"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(3.000e+00,3.000e-01) (3.100e+00,1.300e+00) (3.200e+00,2.300e+00) "
-                               "(3.300e+00,3.300e+00) (3.400e+00,4.300e+00) (3.500e+00,5.300e+00) "
+                               "(3.300e+00,3.300e+00)\n (3.400e+00,4.300e+00) (3.500e+00,5.300e+00) "
                                "(3.600e+00,6.300e+00) (3.700e+00,7.300e+00)\n"));
         EXPECT_THAT(
             str,
             testing::HasSubstr("(3.800e+00,8.300e+00) (3.900e+00,9.300e+00) (4.000e+00,1.030e+01) "
-                               "(4.100e+00,1.130e+01) (4.200e+00,1.230e+01) (4.300e+00,1.330e+01) "
+                               "(4.100e+00,1.130e+01)\n (4.200e+00,1.230e+01) (4.300e+00,1.330e+01) "
                                "(4.400e+00,1.430e+01) (4.500e+00,1.530e+01)\n"));
         EXPECT_THAT(
             str,
@@ -262,10 +278,10 @@ TEST(DMKTest,WriteDMK) {
         ifs.close();
         remove("dms1_nao.txt");
         remove("dms2_nao.txt");
-        remove("dms1k1_nao.txt");
-        remove("dms1k2_nao.txt");
-        remove("dms2k1_nao.txt");
-        remove("dms2k2_nao.txt");
+        remove("dmk1s1_nao.txt");
+        remove("dmk2s1_nao.txt");
+        remove("dmk1s2_nao.txt");
+        remove("dmk2s2_nao.txt");
     }
 
     delete ucell;
@@ -287,6 +303,8 @@ TEST(DMKTest, ReadDMK) {
 
     std::ofstream ofs_running("running_log.txt");
 
+    GlobalV::ofs_warning.open("warning.log");
+
     EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk, ofs_running));
     ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running);
     EXPECT_TRUE(ModuleIO::read_dmk(1, 1, pv, "./support/", dmk_multik, ofs_running));
@@ -302,7 +320,9 @@ TEST(DMKTest, ReadDMK) {
     }
 
     ofs_running.close();
+    GlobalV::ofs_warning.close();
     remove("running_log.txt");
+    remove("warning.log");
 }
 
 

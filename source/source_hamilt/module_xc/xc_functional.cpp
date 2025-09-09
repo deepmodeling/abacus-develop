@@ -278,6 +278,10 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ked_flag = true;
     }
+    else
+    {
+        ked_flag = false;
+    }
 
     if (func_id[0] == XC_GGA_X_OPTX)
     {

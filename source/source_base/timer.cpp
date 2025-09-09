@@ -14,6 +14,11 @@
 #include "chrono"
 #include "source_base/formatter.h"
 
+#if defined(__CUDA) && defined(__USE_NVTX)
+#include <nvToolsExt.h>
+#include "source_io/module_parameter/parameter.h"
+#endif
+
 namespace ModuleBase
 {
 
@@ -93,6 +98,12 @@ void timer::tick(const std::string &class_name,const std::string &name)
 #endif
 			++timer_one.calls;
 			timer_one.start_flag = false;
+#if defined(__CUDA) && defined(__USE_NVTX)
+            if (PARAM.inp.timer_enable_nvtx){
+                std::string label = class_name + ":" + name;
+                nvtxRangePushA(label.data());
+            }
+#endif
 		}
 		else
 		{
@@ -107,6 +118,11 @@ void timer::tick(const std::string &class_name,const std::string &name)
 			timer_one.cpu_second += (cpu_time() - timer_one.cpu_start);
 #endif
 			timer_one.start_flag = true;
+#if defined(__CUDA) && defined(__USE_NVTX)
+            if (PARAM.inp.timer_enable_nvtx){
+                nvtxRangePop();
+            }
+#endif
 		}
 	} // end if(!omp_get_thread_num())
 }
@@ -128,7 +144,7 @@ void timer::write_to_json(std::string file_name)
 	int is_initialized = 0;
     MPI_Initialized(&is_initialized);
 	if (!is_initialized) {
-		return;	
+		return;
 }
 	int my_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -195,12 +211,12 @@ void timer::write_to_json(std::string file_name)
 			const Timer_One timer_one = timer_pool_B.second;
 			ofs << indent << indent << indent << indent << "{\n";
 			ofs << indent << indent << indent << indent << "\"name\": \"" << name << "\",\n";
-			ofs << indent << indent << indent << indent << "\"cpu_second\": " 
+			ofs << indent << indent << indent << indent << "\"cpu_second\": "
 				<< std::setprecision(15) << timer_one.cpu_second << ",\n";
 			ofs << indent << indent << indent << indent << "\"calls\": " << timer_one.calls << ",\n";
-			ofs << indent << indent << indent << indent << "\"cpu_second_per_call\": " 
+			ofs << indent << indent << indent << indent << "\"cpu_second_per_call\": "
 				<< double_to_string(timer_one.cpu_second/timer_one.calls) << ",\n";
-			ofs << indent << indent << indent << indent << "\"cpu_second_per_total\": " 
+			ofs << indent << indent << indent << indent << "\"cpu_second_per_total\": "
 				<< double_to_string(timer_one.cpu_second/timer_pool[""]["total"].cpu_second) << "\n";
 
 			if (order_b == timer_pool_A.second.size())
@@ -283,11 +299,11 @@ void timer::print_all(std::ofstream &ofs)
 
 
 		// if the total time is too small, we do not calculate the percentage
-		if (timer_pool_order[0].second.cpu_second < 1e-9) 
+		if (timer_pool_order[0].second.cpu_second < 1e-9)
 		{
 			pers.push_back(0);
-		} 
-		else 
+		}
+		else
 		{
 			pers.push_back(percentage);
 		}
@@ -300,10 +316,10 @@ void timer::print_all(std::ofstream &ofs)
 
 	std::vector<std::string> titles = {"CLASS_NAME", "NAME", "TIME/s", "CALLS", "AVG/s", "PER/%"};
 	std::vector<std::string> formats = {"%-10s", "%-10s", "%6.2f", "%8d", "%6.2f", "%6.2f"};
-	FmtTable time_statistics(/*titles=*/titles, 
-							 /*nrows=*/pers.size(), 
-							 /*formats=*/formats, 
-							 /*indent=*/0, 
+	FmtTable time_statistics(/*titles=*/titles,
+							 /*nrows=*/pers.size(),
+							 /*formats=*/formats,
+							 /*indent=*/0,
 							 /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
 	time_statistics << class_names << names << times << calls << avgs << pers;
 	const std::string table = "\nTIME STATISTICS\n" + time_statistics.str();
