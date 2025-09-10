@@ -103,13 +103,13 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
 
     // check the output files
     std::ifstream ifs;
-    ifs.open("eig.txt");
+    ifs.open("eig_occ.txt");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("Electronic state energy (eV) and occupations"));
     EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
     EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
     ifs.close();
-    remove("eig.txt");
+    remove("eig_occ.txt");
 }
 
 #ifdef __MPI

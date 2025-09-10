@@ -210,7 +210,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = PARAM.globalv.global_out_dir + "eig_occ_";
+    std::string filename = PARAM.globalv.global_out_dir + "eig_occ";
 
 	if(istep_in == -1)
 	{
@@ -218,7 +218,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 	}
 	else if(istep_in >= 0)
 	{
-		filename += "g" + std::to_string(istep_in+1);
+		filename += "_g" + std::to_string(istep_in+1);
 	}
 
     filename += ".txt";
