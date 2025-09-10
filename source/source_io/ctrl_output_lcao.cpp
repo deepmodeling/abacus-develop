@@ -34,7 +34,8 @@ namespace ModuleIO
 {
 
 template <typename TK, typename TR>
-void ctrl_output_lcao(UnitCell& ucell, 
+void ctrl_output_lcao(UnitCell& ucell,
+        const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<TK>* pelec, 
 		Parallel_Orbitals& pv,
@@ -68,7 +69,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
 	//------------------------------------------------------------------
-    // print out density of states (DOS)
+    //! 1) print out density of states (DOS)
 	//------------------------------------------------------------------
     if (PARAM.inp.out_dos)
     {
@@ -90,7 +91,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
 	//------------------------------------------------------------------
-	//! 1) Output density matrix DM(R)
+	//! 2) Output density matrix DM(R)
 	//------------------------------------------------------------------
     if(PARAM.inp.out_dmr[0])
 	{
@@ -103,7 +104,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
 	//------------------------------------------------------------------
-	//! 2) Output density matrix DM(k)
+	//! 3) Output density matrix DM(k)
 	//------------------------------------------------------------------
 	if (PARAM.inp.out_dmk[0])
 	{
@@ -119,7 +120,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    // 3) Output H(k) and S(k) matrices for each k-point
+    // 4) Output H(k) and S(k) matrices for each k-point
     //------------------------------------------------------------------
 	if (PARAM.inp.out_mat_hs[0])
 	{
@@ -138,7 +139,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    // 4) Output electronic wavefunctions Psi(k)
+    //! 5) Output electronic wavefunctions Psi(k)
     //------------------------------------------------------------------
     if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
     {
@@ -156,7 +157,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 	}
 
     //------------------------------------------------------------------
-    //! 5) Output DeePKS information
+    //! 6) Output DeePKS information
     //------------------------------------------------------------------
 #ifdef __MLALGO
     // need control parameter
@@ -184,7 +185,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 6) Output <phi_i|O|phi_j> matrices, where O can be chosen as
+    //! 7) Output <phi_i|O|phi_j> matrices, where O can be chosen as
     //!    H, S, dH, dS, T, r. The format is CSR format. 
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
@@ -206,7 +207,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 			p_ham_tk);
 
     //------------------------------------------------------------------
-    //! 7) Output kinetic matrix
+    //! 8) Output kinetic matrix
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_tk[0])
     {
@@ -250,7 +251,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 8) Output expectation of angular momentum operator
+    //! 9) Output expectation of angular momentum operator
     //------------------------------------------------------------------
     if (PARAM.inp.out_mat_l[0])
     {
@@ -273,7 +274,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 9) Output Mulliken charge
+    //! 10) Output Mulliken charge
     //------------------------------------------------------------------
     if (PARAM.inp.out_mul)
     {
@@ -290,7 +291,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 10) Output atomic magnetization by using 'spin_constraint'
+    //! 11) Output atomic magnetization by using 'spin_constraint'
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
     {
@@ -301,7 +302,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 11) Output Berry phase
+    //! 12) Output Berry phase
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -314,7 +315,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 12) Wannier90 interface in LCAO basis
+    //! 13) Wannier90 interface in LCAO basis
     // added by jingan in 2018.11.7
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
@@ -352,7 +353,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 
 #ifdef __EXX
     //------------------------------------------------------------------
-    //! 13) Output Hexx matrix in LCAO basis
+    //! 14) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
     if (PARAM.inp.out_chg[0])
@@ -373,7 +374,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 14) Write RPA information in LCAO basis
+    //! 15) Write RPA information in LCAO basis
     //------------------------------------------------------------------
     if (PARAM.inp.rpa)
     {
@@ -389,7 +390,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 18) Perform RDMFT calculations, added by jghan, 2024-10-17
+    //! 16) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
     if (PARAM.inp.rdmft == true)
     {
@@ -416,7 +417,7 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! Output quasi orbitals
+    //! 17) Output quasi orbitals
     //------------------------------------------------------------------
     if (PARAM.inp.qo_switch)
     {
@@ -441,6 +442,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 
 // For gamma only
 template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell, 
+        const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<double>* pelec, 
 		Parallel_Orbitals& pv,
@@ -467,6 +469,7 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 
 // For multiple k-points
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell& ucell, 
+        const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
 		Parallel_Orbitals& pv,
@@ -492,6 +495,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const int istep);
 
 template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
+        const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
 		Parallel_Orbitals& pv,

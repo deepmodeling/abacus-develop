@@ -30,7 +30,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 	{
 		if(istep % PARAM.inp.out_freq_ion == 0)
 		{
-			ModuleIO::ctrl_output_lcao<TK, TR>(ucell, 
+			ModuleIO::ctrl_output_lcao<TK, TR>(ucell,
+					PARAM.inp, 
 					this->kv,
 					estate, 
 					this->pv, 
