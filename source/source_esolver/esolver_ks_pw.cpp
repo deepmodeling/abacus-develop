@@ -622,14 +622,20 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 		{
 			if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
 			{
-				// if iter_in = -1, iter will not appera in file name
+				// if iter_in = -1, iter will not appear in file name
 				int iter_in = -1;
 				if(iter % PARAM.inp.out_freq_elec == 0)
 				{
 					iter_in = iter;
 				}
 
-				ModuleIO::write_wfc_pw(istep, iter_in, 
+                int istep_in = istep;
+				if(PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "nscf")
+				{
+                    istep_in = -1;
+				}
+
+				ModuleIO::write_wfc_pw(istep_in, iter_in, 
 						GlobalV::KPAR,
 						GlobalV::MY_POOL,
 						GlobalV::MY_RANK,

@@ -1640,7 +1640,8 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
-- **Default**: 1
+- **Default**: 0
+- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless 
 
 ### out_freq_elec
 
@@ -1722,12 +1723,16 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Availability**: Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in [calculation](#calculation) with NAO basis)
-- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k}{k-point index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and 's4' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
   - 0: no output
   - 1: (txt format)
-    - non-gamma-only: `wfs1k1_pw.txt` or `wfs1k2_pw.txt`, ...;
+    - non-gamma-only with nspin=1: `wfk1_pw.txt`, `wfk2_pw.txt`, ...;
+    - non-gamma-only with nspin=2: `wfk1s1_pw.txt`, `wfk1s2_pw.txt`, `wfk2s1_pw.txt`, `wfk2s2_pw.txt`, ...;
+    - non-gamma-only with nspin=4: `wfk1s4_pw.txt`, `wfk2s4_pw.txt`, ...;
   - 2: (binary format)
-    - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
+    - non-gamma-only with nspin=1: `wfk1_pw.dat`, `wfk2_pw.dat`, ...;
+    - non-gamma-only with nspin=2: `wfk1s1_pw.dat`, `wfk1s2_pw.dat`, `wfk2s1_pw.dat`, `wfk2s2_pw.dat`, ...;
+    - non-gamma-only with nspin=4: `wfk1s4_pw.dat`, `wfk2s4_pw.dat`, ...;
 - **Default**: 0
 - **Note**: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc. 
 
