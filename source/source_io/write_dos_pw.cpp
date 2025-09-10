@@ -36,11 +36,18 @@ void ModuleIO::write_dos_pw(
     for (int is = 0; is < nspin0; ++is)
     {
         // DOS_ispin contains not smoothed dos
-        std::stringstream ss;
-        ss << PARAM.globalv.global_out_dir << "doss" << is + 1 << "_pw.txt";
+		std::stringstream ss;
+		ss << PARAM.globalv.global_out_dir << "dos";
 
-        std::stringstream ss1;
-        ss1 << PARAM.globalv.global_out_dir << "doss" << is + 1 << "s_pw.txt";
+		if(nspin0==2)
+		{
+			ss << "s" << is + 1;
+		}
+		else
+		{
+			// do nothing;
+		}
+		ss << ".txt";
 
         ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
 
