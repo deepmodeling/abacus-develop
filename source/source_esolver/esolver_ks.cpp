@@ -581,14 +581,25 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
         const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "eigs" << is + 1 << ".txt";
+            std::stringstream ss;
+            ss << PARAM.globalv.global_out_dir << "eig";
+ 
+			if(nspin0==1)
+			{
+				// do nothing
+			}
+			else if(nspin0==2)
+			{
+				ss << "s" << is + 1;
+			}
+			ss << ".txt";
+
             const double eshift = 0.0;
             ModuleIO::nscf_band(is,
-                                ss2.str(),
+                                ss.str(),
                                 PARAM.inp.nbands,
                                 eshift,
-                                PARAM.inp.out_band[1],
+                                PARAM.inp.out_band[1], // precision
                                 this->pelec->ekb,
                                 this->kv);
         }

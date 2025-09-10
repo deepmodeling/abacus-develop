@@ -205,18 +205,18 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,const ModuleBase::ma
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = PARAM.globalv.global_out_dir + "eig.txt";
+    std::string filename = PARAM.globalv.global_out_dir + "eig_occ.txt";
     GlobalV::ofs_running << " Eigenvalues and occupations are in file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::ofstream ofs_eig0(filename.c_str()); // clear eig.txt
+        std::ofstream ofs_eig0(filename.c_str()); // clear eig_occ.txt
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();
     }
 
-    const int nk_fac = nspin == 2 ? 2 : 1;
+    const int nk_fac = (nspin == 2) ? 2 : 1;
     const int nks_np = nks / nk_fac;
     const int nkstot_np = nkstot / nk_fac;
     const int kpar = GlobalV::KPAR;

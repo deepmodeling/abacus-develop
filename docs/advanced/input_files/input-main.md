@@ -1781,7 +1781,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
-    - nspin = 1 or 4: `eigs1.txt`;
+    - nspin = 1 or 4: `eig.txt`;
     - nspin = 2: `eigs1.txt` and `eigs2.txt`;
     - For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
