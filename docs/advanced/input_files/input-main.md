@@ -1723,7 +1723,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Availability**: Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in [calculation](#calculation) with NAO basis)
-- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and 's4' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}`. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the [out_freq_ion](#out_freq_ion) command to control. To print out the electroinc wave functions every few SCF iterations, use the [out_freq_elec](#out_freq_elec) command and the e index will appear in the file name.
   - 0: no output
   - 1: (txt format)
     - non-gamma-only with nspin=1: `wfk1_pw.txt`, `wfk2_pw.txt`, ...;
@@ -1734,7 +1734,7 @@ These variables are used to control the output of properties.
     - non-gamma-only with nspin=2: `wfk1s1_pw.dat`, `wfk1s2_pw.dat`, `wfk2s1_pw.dat`, `wfk2s2_pw.dat`, ...;
     - non-gamma-only with nspin=4: `wfk1s4_pw.dat`, `wfk2s4_pw.dat`, ...;
 - **Default**: 0
-- **Note**: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc. 
+- **Note**: In the 3.10-LTS version, the file names are `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc. 
 
 ### out_wfc_lcao
 
