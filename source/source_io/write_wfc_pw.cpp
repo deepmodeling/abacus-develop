@@ -58,7 +58,7 @@ void ModuleIO::write_wfc_pw(
                     ik_local,kv.ik2iktot,nspin,nkstot,
                     out_wfc_pw,out_app_flag,gamma_only,istep,iter);
 
-            ofs_running << " Write G-space wave functions into file "
+            ofs_running << " Write G-space wave functions to file: "
                 << fn << std::endl;
 
 			wfilename[ik_local] = fn;

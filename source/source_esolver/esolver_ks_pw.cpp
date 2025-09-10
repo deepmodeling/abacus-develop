@@ -616,43 +616,47 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // we only print information every few ionic steps
     //----------------------------------------------------------
 
+    // if istep_in = -1, istep will not appear in file name
+    // if iter_in = -1, iter will not appear in file name
+	int istep_in = -1;
+    int iter_in = -1;
+	bool out_wfc_flag = false;
 	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
 	{
 		if (istep % PARAM.inp.out_freq_ion == 0)
 		{
-			if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+			if(iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
 			{
-				// if iter_in = -1, iter will not appear in file name
-				int iter_in = -1;
-				if(iter % PARAM.inp.out_freq_elec == 0)
-				{
-					iter_in = iter;
-				}
-
-                int istep_in = istep;
-				if(PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "nscf")
-				{
-                    istep_in = -1;
-				}
-
-				ModuleIO::write_wfc_pw(istep_in, iter_in, 
-						GlobalV::KPAR,
-						GlobalV::MY_POOL,
-						GlobalV::MY_RANK,
-						PARAM.inp.nbands,
-						PARAM.inp.nspin,
-						PARAM.globalv.npol,
-						GlobalV::RANK_IN_POOL,
-						GlobalV::NPROC_IN_POOL,
-						PARAM.inp.out_wfc_pw,
-						PARAM.inp.ecutwfc,
-						PARAM.globalv.global_out_dir,
-						this->psi[0],
-						this->kv,
-						this->pw_wfc,
-						GlobalV::ofs_running);
+				istep_in = istep;
+				iter_in = iter;
+				out_wfc_flag = true;
 			}
 		}
+	}
+	else if(iter == PARAM.inp.scf_nmax || conv_esolver)
+	{
+		out_wfc_flag = true;
+	}
+
+
+	if (out_wfc_flag)
+	{
+		ModuleIO::write_wfc_pw(istep_in, iter_in, 
+				GlobalV::KPAR,
+				GlobalV::MY_POOL,
+				GlobalV::MY_RANK,
+				PARAM.inp.nbands,
+				PARAM.inp.nspin,
+				PARAM.globalv.npol,
+				GlobalV::RANK_IN_POOL,
+				GlobalV::NPROC_IN_POOL,
+				PARAM.inp.out_wfc_pw,
+				PARAM.inp.ecutwfc,
+				PARAM.globalv.global_out_dir,
+				this->psi[0],
+				this->kv,
+				this->pw_wfc,
+				GlobalV::ofs_running);
 	}
 
     //----------------------------------------------------------

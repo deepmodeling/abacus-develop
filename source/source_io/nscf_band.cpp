@@ -23,6 +23,7 @@ void ModuleIO::nscf_band(
 
     assert(precision>0);
 
+/*
 	GlobalV::ofs_running << "\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -30,8 +31,9 @@ void ModuleIO::nscf_band(
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
 	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	GlobalV::ofs_running << "\n";
+*/
 
-    GlobalV::ofs_running << " Eigenvalues for plot are in file: " << eig_file << std::endl;
+    GlobalV::ofs_running << " Write eigenvalues data for plot to file: " << eig_file << std::endl;
 
     // number of k points without spin; 
     // nspin = 1,2, nkstot = nkstot_np * nspin; 

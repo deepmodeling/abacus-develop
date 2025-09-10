@@ -163,6 +163,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,const ModuleBase::ma
 	ModuleBase::TITLE("ModuleIO","write_eig_file");
 	ModuleBase::timer::tick("ModuleIO", "write_eig_file");
 
+/*
 	GlobalV::ofs_running << "\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -170,6 +171,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,const ModuleBase::ma
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
 	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	GlobalV::ofs_running << "\n";
+*/
 
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
@@ -206,7 +208,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,const ModuleBase::ma
 
     // file name to store eigenvalues
     std::string filename = PARAM.globalv.global_out_dir + "eig_occ.txt";
-    GlobalV::ofs_running << " Eigenvalues and occupations are in file: " << filename << std::endl;
+    GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
