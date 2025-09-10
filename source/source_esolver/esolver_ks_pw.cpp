@@ -710,8 +710,34 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->psi[0].size());
     }
 
+	//----------------------------------------------------------
+	//! 4) Compute density of states (DOS)
+	//----------------------------------------------------------
+	if (PARAM.inp.out_dos)
+	{
+		int istep_in = -1;
+		if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+		{
+			if (istep % PARAM.inp.out_freq_ion == 0)
+			{
+				istep_in=istep;
+			}
+		}
+		ModuleIO::write_dos_pw(ucell,
+				this->pelec->ekb,
+				this->pelec->wg,
+				this->kv,
+				PARAM.inp.nbands,
+                istep_in,
+				this->pelec->eferm,
+				PARAM.inp.dos_edelta_ev,
+				PARAM.inp.dos_scale,
+				PARAM.inp.dos_sigma,
+				GlobalV::ofs_running);
+	}
+
     //------------------------------------------------------------------
-    // 4) calculate band-decomposed (partial) charge density in pw basis
+    // 5) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_pchg.size() > 0)
     {
@@ -745,7 +771,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 5) calculate Wannier functions in pw basis
+    //! 6) calculate Wannier functions in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
@@ -763,7 +789,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 6) calculate Berry phase polarization in pw basis
+    //! 7) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -774,7 +800,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 7) write spin constrian results in pw basis
+    // 8) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -786,7 +812,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 8) write onsite occupations for charge and magnetizations
+    // 9) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
@@ -878,24 +904,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
     //----------------------------------------------------------
-    //! 2) Compute density of states (DOS)
-    //----------------------------------------------------------
-    if (PARAM.inp.out_dos)
-    {
-        ModuleIO::write_dos_pw(ucell,
-                               this->pelec->ekb,
-                               this->pelec->wg,
-                               this->kv,
-                               PARAM.inp.nbands,
-                               this->pelec->eferm,
-                               PARAM.inp.dos_edelta_ev,
-                               PARAM.inp.dos_scale,
-                               PARAM.inp.dos_sigma,
-                               GlobalV::ofs_running);
-    }
-
-    //----------------------------------------------------------
-    //! 3) Compute LDOS
+    //! 2) Compute LDOS
     //----------------------------------------------------------
     if (PARAM.inp.out_ldos[0])
     {
@@ -906,7 +915,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 4) Calculate the spillage value,
+    //! 3) Calculate the spillage value,
     //! which are used to generate numerical atomic orbitals
     //----------------------------------------------------------
     if (PARAM.inp.basis_type == "pw" && PARAM.inp.out_spillage)
@@ -929,7 +938,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 5) Print out electronic wave functions in real space
+    //! 4) Print out electronic wave functions in real space
     //----------------------------------------------------------
     if (PARAM.inp.out_wfc_norm.size() > 0 || PARAM.inp.out_wfc_re_im.size() > 0)
     {
@@ -960,7 +969,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 6) Use Kubo-Greenwood method to compute conductivities
+    //! 5) Use Kubo-Greenwood method to compute conductivities
     //----------------------------------------------------------
     if (PARAM.inp.cal_cond)
     {

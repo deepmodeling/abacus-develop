@@ -557,23 +557,17 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 3) write eigenvalues
+    int istep_in = -1;
 	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
 	{
 		if (istep % PARAM.inp.out_freq_ion == 0)
 		{
+            istep_in = istep;
 			// celecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
 		}
 	}
-}
 
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
-{
-    // 1) write Etot information
-    ESolver_FP::after_all_runners(ucell);
-
-    // 2) write eigenvalue information
-    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv);
+    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep_in);
 
     // 3) write band information
     if (PARAM.inp.out_band[0])
@@ -583,16 +577,26 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "eig";
- 
-			if(nspin0==1)
+
+            if(nspin0==1)
+            {
+                // do nothing
+            }
+            else if(nspin0==2)
+            {
+                ss << "s" << is + 1;
+            }
+
+			if(istep == -1)
 			{
 				// do nothing
 			}
-			else if(nspin0==2)
+			else if(istep>=0)
 			{
-				ss << "s" << is + 1;
+				ss << "g" << istep+1;
 			}
-			ss << ".txt";
+
+            ss << ".txt";
 
             const double eshift = 0.0;
             ModuleIO::nscf_band(is,
@@ -604,6 +608,16 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
                                 this->kv);
         }
     }
+
+
+
+}
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
+{
+    // 1) write Etot information
+    ESolver_FP::after_all_runners(ucell);
 }
 
 //------------------------------------------------------------------------------

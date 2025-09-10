@@ -173,6 +173,16 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 		}
 	}
 
+    std::string geom_block;
+    if(istep_in==-1)
+	{
+		// do nothing
+	}
+    else if(istep_in>=0)
+	{
+		geom_block = "g" + std::to_string(istep + 1);
+	}
+
 	// 4) write charge density
 	if (PARAM.inp.out_chg[0] > 0)
 	{
@@ -192,7 +202,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 				// do nothing
 			}
 
-			fn += spin_block + ".cube";
+			fn += spin_block + geom_block + ".cube";
 
 			ModuleIO::write_vdata_palgrid(Pgrid,
 					this->chr.rho_save[is],
@@ -209,7 +219,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 			{
 				fn = PARAM.globalv.global_out_dir + "tau";
 
-                fn += spin_block + ".cube";
+                fn += spin_block + geom_block + ".cube";
 
 				ModuleIO::write_vdata_palgrid(Pgrid,
 						this->chr.kin_r_save[is],
@@ -240,7 +250,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 				// do nothing
 			}
 
-			fn += spin_block + ".cube";
+			fn += spin_block + geom_block + ".cube";
 
 			ModuleIO::write_vdata_palgrid(Pgrid,
 					this->pelec->pot->get_effective_v(is),
@@ -256,7 +266,9 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	}
 	else if (PARAM.inp.out_pot == 2)
 	{
-		std::string fn =PARAM.globalv.global_out_dir + "pot_es.cube";
+		std::string fn =PARAM.globalv.global_out_dir + "potes";
+        fn += geom_block + ".cube";
+
 		ModuleIO::write_elecstat_pot(
 #ifdef __MPI
 				this->pw_big->bz,

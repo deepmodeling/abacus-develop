@@ -10,6 +10,7 @@ void ModuleIO::write_dos_pw(
 		const ModuleBase::matrix& wg,
 		const K_Vectors& kv,
 		const int nbands,
+        const int istep_in,
 		const elecstate::efermi &energy_fermi,
 		const double& dos_edelta_ev,
 		const double& dos_scale,
@@ -47,6 +48,16 @@ void ModuleIO::write_dos_pw(
 		{
 			// do nothing;
 		}
+
+		if(istep_in==-1)
+		{
+			// do nothing
+		}
+		else if(istep_in >= 0)
+		{
+			ss << "g" << std::to_string(istep_in+1);
+		}
+
 		ss << ".txt";
 
         ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());

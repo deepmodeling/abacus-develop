@@ -77,6 +77,7 @@ TEST_F(DosPWTest,Dos1)
 			dosp.wg,
 			*kv,
 			PARAM.inp.nbands,
+            -1, // istep_in
 			fermi_energy,
 			dosp.de_ev,
 			dos_scale,
@@ -140,7 +141,8 @@ TEST_F(DosPWTest,Dos2)
 			dosp.ekb,
 			dosp.wg,
 			*kv,
-            PARAM.inp.nbands,
+			PARAM.inp.nbands,
+			-1, // istep_in
             fermi_energy,
 			dosp.de_ev,
 			dos_scale,
