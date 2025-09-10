@@ -99,6 +99,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     std::vector<int> first = {0, 1, 1, 0};
     std::vector<int> second= {3, 2, 2, 3};
     for (int is = 0; is < 4; is++){
+        if(!PARAM.globalv.domag && (is==1 || is==2)) continue;
         this->hR_tmp->set_zero();
         hamilt::HContainer<std::complex<double>>* hRGint_tmpCd = new hamilt::HContainer<std::complex<double>>(this->ucell->nat);
         hRGint_tmpCd->insert_ijrs(this->gridt->get_ijr_info(), *(this->ucell));
@@ -148,7 +149,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                         }
                     }
                     //fill the lower triangle matrix
-                    if (PARAM.globalv.domag){
+                    if (is == 3 || is == 0){
                         if (iat1 < iat2)
                         {
                             auto lower_mat = lower_ap->find_matrix(-R_index);
@@ -157,6 +158,19 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                                 for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
                                 {
                                     lower_mat->get_value(icol, irow) = conj(upper_mat->get_value(irow, icol));
+                                }
+                            }
+                        }
+                    }
+                    if (is == 1 || is == 2){
+                        if (iat1 < iat2)
+                        {
+                            auto lower_mat = lower_ap->find_matrix(-R_index);
+                            for (int irow = 0; irow < upper_mat->get_row_size(); ++irow)
+                            {
+                                for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
+                                {
+                                    lower_mat->get_value(icol, irow) = upper_mat->get_value(irow, icol);
                                 }
                             }
                         }
