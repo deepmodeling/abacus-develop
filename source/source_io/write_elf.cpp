@@ -114,7 +114,7 @@ void write_elf(
         {
             std::string fn_temp = out_dir + "/elf";
 
-            fn_temp += fn_temp + std::to_string(is + 1) + ".cube";
+            fn_temp += std::to_string(is + 1) + ".cube";
 
             int ispin = is + 1;
 

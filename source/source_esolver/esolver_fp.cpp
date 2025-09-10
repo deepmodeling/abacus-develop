@@ -180,7 +180,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 		{
 			this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
 
-			std::string fn =PARAM.globalv.global_out_dir + "/chg";
+			std::string fn =PARAM.globalv.global_out_dir + "chg";
 
             std::string spin_block;
 			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
@@ -207,7 +207,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
 			if (XC_Functional::get_ked_flag())
 			{
-				fn = PARAM.globalv.global_out_dir + "/tau";
+				fn = PARAM.globalv.global_out_dir + "tau";
 
                 fn += spin_block + ".cube";
 
@@ -228,7 +228,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	{
 		for (int is = 0; is < PARAM.inp.nspin; is++)
 		{
-			std::string fn =PARAM.globalv.global_out_dir + "/pot";
+			std::string fn =PARAM.globalv.global_out_dir + "pot";
 
             std::string spin_block;
 			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
@@ -256,7 +256,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	}
 	else if (PARAM.inp.out_pot == 2)
 	{
-		std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
+		std::string fn =PARAM.globalv.global_out_dir + "pot_es.cube";
 		ModuleIO::write_elecstat_pot(
 #ifdef __MPI
 				this->pw_big->bz,
@@ -398,7 +398,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "/chgs" << is + 1 << "_ini.cube";
+            ss << PARAM.globalv.global_out_dir << "chgs" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->chr.rho[is],
                                           is,
