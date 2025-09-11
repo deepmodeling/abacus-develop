@@ -171,16 +171,15 @@ void transfer_dm_2d_to_gint(
         int nb = dm[0]->get_paraV()->get_block_size()/2;
         int blacs_ctxt = dm[0]->get_paraV()->blacs_ctxt;
         const UnitCell* ucell = gint_info.get_ucell();
-        int *iat2iwt = new int[ucell->nat];
+        std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
         }
         Parallel_Orbitals *pv = new Parallel_Orbitals();
         pv->set(mg, ng, nb, blacs_ctxt);
-        pv->set_atomic_trace(iat2iwt, ucell->nat, mg);
+        pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         auto ijr_info = dm[0]->get_ijr_info();
-        HContainer<T>* DM2D_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
-        //ModuleBase::Memory::record("Gint::DM2D_tmp", this->DM2D_tmp->get_memory_size());
+        HContainer<T>* dm2d_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
          for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap) {
                 auto& ap = dm[0]->get_atom_pair(iap);
@@ -188,7 +187,7 @@ void transfer_dm_2d_to_gint(
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                    T* matrix_out = DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    T* matrix_out = dm2d_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
                     T* matrix_in = ap.get_pointer(ir);
                     for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
                         for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
@@ -199,7 +198,7 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
-            hamilt::transferParallels2Serials( *DM2D_tmp, &dm_gint[is]);
+            hamilt::transferParallels2Serials( *dm2d_tmp, &dm_gint[is]);
         }
 #else
         //HContainer<T>& dm_full = *(dm[0]);
