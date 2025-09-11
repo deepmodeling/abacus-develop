@@ -265,7 +265,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         }
         Parallel_Orbitals *pv = new Parallel_Orbitals();
         pv->set(mg, ng, nb, blacs_ctxt);
-        pv->set_atomic_trace(iat2iwt, ucell->nat, mg);
+        pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         auto ijr_info = DM2D[0]->get_ijr_info();
         this-> DM2D_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
         this-> DM2D_tmp->set_zero();
@@ -290,8 +290,6 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
             }
             hamilt::transferParallels2Serials( *(this->DM2D_tmp), this->DMRGint[is]);
         }
-        delete pv;
-        delete this-> DM2D_tmp;
 #else
         //this->DMRGint_full = DM2D[0];
 #endif

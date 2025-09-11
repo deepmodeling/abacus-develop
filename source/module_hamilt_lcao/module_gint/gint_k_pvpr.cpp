@@ -182,8 +182,6 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
         }
         delete hRGint_tmpCd;
     }
-    delete pv;
-    delete this->hR_tmp;
 #else
 
 #endif
