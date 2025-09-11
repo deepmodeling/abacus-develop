@@ -259,7 +259,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
         int nb = DM2D[0]->get_paraV()->get_block_size()/2;
         int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
-        int *iat2iwt = new int[ucell->nat];
+        std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
         }
@@ -290,9 +290,8 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
             }
             hamilt::transferParallels2Serials( *(this->DM2D_tmp), this->DMRGint[is]);
         }
-        // delete iat2iwt [];
-        // delete pv;
-        // delete this-> DM2D_tmp;
+        delete pv;
+        delete this-> DM2D_tmp;
 #else
         //this->DMRGint_full = DM2D[0];
 #endif
