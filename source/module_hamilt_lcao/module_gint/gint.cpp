@@ -194,10 +194,6 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
                                    this->DMRGint[0]->get_memory_size()
                                        * this->DMRGint.size());
     } else {
-        // this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
-        // this->hRGintCd->allocate(nullptr, true);
-        // ModuleBase::Memory::record("Gint::hRGintCd",
-        //                            this->hRGintCd->get_memory_size());
         for(int is = 0; is < nspin; is++) {
             this->hRGint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
             this->DMRGint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
@@ -259,6 +255,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
         int nb = DM2D[0]->get_paraV()->get_block_size()/2;
         int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
+
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
