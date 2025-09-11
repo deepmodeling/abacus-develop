@@ -90,11 +90,14 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     int source_rank = status.MPI_SOURCE;
                     MPI_Recv(&recv_nbands, 1, MPI_INT, source_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     int* recv_ik2iktot = new int[recv_nks_np]; 
-                    MPI_Recv(recv_ik2iktot, recv_nks_np, MPI_INT,  source_rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(recv_ik2iktot, recv_nks_np, MPI_INT, source_rank, 
+                             2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     ModuleBase::matrix recv_ekb(recv_nks_np, recv_nbands);
-                    MPI_Recv(recv_ekb.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(recv_ekb.c, recv_nks_np * recv_nbands, MPI_DOUBLE, 
+                             source_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     ModuleBase::matrix recv_wg(recv_nks_np, recv_nbands);
-                    MPI_Recv(recv_wg.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+                    MPI_Recv(recv_wg.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 4, 
+                             MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
                     
                     // print EIGENVALUES and OCCUPATIONS of received k-points
                     for (int ik = 0; ik < recv_nks_np; ++ik)

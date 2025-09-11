@@ -576,7 +576,7 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "eig";
+            ss << PARAM.globalv.global_out_dir << "band";
 
             if(nspin0==1)
             {
@@ -587,11 +587,11 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
                 ss << "s" << is + 1;
             }
 
-			if(istep == -1)
+			if(istep_in == -1)
 			{
 				// do nothing
 			}
-			else if(istep>=0)
+			else if(istep_in>=0)
 			{
 				ss << "g" << istep+1;
 			}
