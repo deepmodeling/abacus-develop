@@ -38,6 +38,7 @@ class GintInfo
     const std::vector<int>& get_trace_lo() const{ return trace_lo_; }
     int get_lgd() const { return lgd_; }
     int get_nat() const { return ucell_->nat; }        // return the number of atoms in the unitcell
+    const UnitCell* get_ucell() const { return ucell_; }
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
 
