@@ -164,7 +164,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
 void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg, 
 		const K_Vectors& kv,
-		const int istep_in)
+		const int istep)
 {
 	ModuleBase::TITLE("ModuleIO","write_eig_file");
 	ModuleBase::timer::tick("ModuleIO", "write_eig_file");
@@ -213,24 +213,24 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = PARAM.globalv.global_out_dir + "eig_occ";
-
-	if(istep_in == -1)
-	{
-		// do nothing
-	}
-	else if(istep_in >= 0)
-	{
-		filename += "_g" + std::to_string(istep_in+1);
-	}
-
-    filename += ".txt";
+    std::string filename = PARAM.globalv.global_out_dir + "eig_occ.txt";
 
     GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::ofstream ofs_eig0(filename.c_str()); // clear eig_occ.txt
+        std::ofstream ofs_eig0;
+
+		if(PARAM.inp.out_app_flag==true)
+		{
+			ofs_eig0.open(filename.c_str(), std::ios::app);
+		}
+		else
+		{
+			ofs_eig0.open(filename.c_str());
+		}
+       
+        ofs_eig0 << istep+1 << "     # ionic step" << std::endl;
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();

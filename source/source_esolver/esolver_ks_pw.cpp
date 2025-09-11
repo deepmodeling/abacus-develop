@@ -718,20 +718,27 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         bool out_dos_tmp = false;
 
 		int istep_in = -1;
+
+		// default value of out_freq_ion is 0
 		if(PARAM.inp.out_freq_ion==0)
 		{
-			if(PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="nscf")
-			{
-				out_dos_tmp = true;
-			}
+			out_dos_tmp = true;
 		}
-		else if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+		else if (PARAM.inp.out_freq_ion>0)
 		{
 			if (istep % PARAM.inp.out_freq_ion == 0)
 			{
 				out_dos_tmp = true;
 				istep_in=istep;
 			}
+			else
+			{
+				out_dos_tmp = false;
+			}
+		}
+		else
+		{
+			out_dos_tmp = false;
 		}
 
 		if(out_dos_tmp)
