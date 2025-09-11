@@ -10,7 +10,6 @@
 #include "source_io/para_json.h"
 #include "source_io/print_info.h"
 #include "source_io/read_input.h"
-#include "source_io/winput.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 Driver::Driver()
@@ -163,10 +162,6 @@ void Driver::reading()
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
 #endif
-
-    // (6) Read in parameters about wannier functions.
-    winput::Init(PARAM.inp.wannier_card);
-
     ModuleBase::timer::tick("Driver", "reading");
 }
 

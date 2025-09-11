@@ -35,7 +35,10 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
     return fname;
 }
 
-void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep)
+void write_dmr_csr(std::string& fname, 
+                   hamilt::HContainer<double>* dm_serial, 
+                   const int precision,
+                   const int istep)
 {
     // write the head: ION step number, basis number and R loop number
 
@@ -57,22 +60,25 @@ void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, co
 
     // write HR_serial to ofs
     const double sparse_threshold = 1e-10;
-    const int precision = 8;
-    hamilt::Output_HContainer<double> out_dmr(dm_serial, ofs, sparse_threshold, precision);
-    out_dmr.write();
+    hamilt::Output_HContainer<double> dmr(dm_serial, ofs, sparse_threshold, precision);
+    dmr.write();
     ofs.close();
 }
 
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
+               const int precision,
                const Parallel_2D& paraV,
                const bool append,
                const int* iat2iwt,
                const int nat,
                const int istep)
 {
-    for (int ispin = 0; ispin < dmr.size(); ispin++)
+    const int nspin = dmr.size();
+    assert(nspin > 0);
+    for (int ispin = 0; ispin < nspin; ispin++)
 	{
 		const int nbasis = dmr[ispin]->get_nbasis();
+
 		// gather the parallel matrix to serial matrix
 #ifdef __MPI
 		Parallel_Orbitals serialV;
@@ -86,8 +92,11 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
 #endif
 		if (GlobalV::MY_RANK == 0)
 		{
-			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(1, ispin, append, istep);
-			write_dmr_csr(fname, &dm_serial, istep);
+            // out_type = 1, csr format;
+            // out_type = 2, npz format (currently not support)
+            const int out_type = 1;
+			std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
+			write_dmr_csr(fname, &dm_serial, precision, istep);
 		}
 	}
 }

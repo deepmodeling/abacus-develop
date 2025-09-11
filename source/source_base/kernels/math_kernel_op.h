@@ -104,7 +104,7 @@ template <typename T, typename Device> struct vector_div_constant_op {
   ///
   /// Input Parameters
   /// \param dim : array size
-  /// \param vector : input array 
+  /// \param vector : input array
   /// \param constant : input constant
   ///
   /// Output Parameters
@@ -299,6 +299,31 @@ template <typename T, typename Device> struct matrixCopy {
 };
 
 template <typename T, typename Device>
+struct matrix_mul_vector_op {
+    using Real = typename GetTypeReal<T>::type;
+  /// @brief a * b * beta by each column
+  ///
+  /// Input Parameters
+  /// \param m : row number
+  /// \param n : column number
+  /// \param a : input matrix
+  /// \param lda : leading dimension of matrix a
+  /// \param b : input vector
+  /// \param alpha : factor
+  /// \param ldc : leading dimension of matrix c
+  ///
+  /// Output Parameters
+  /// \param c : output matrix
+  void operator()(const int &m, const int &n,
+                  T *a,
+                  const int &lda,
+                  const Real *b,
+                  const Real alpha,
+                  T *c,
+                  const int &ldc);
+};
+
+template <typename T, typename Device>
 struct apply_eigenvalues_op {
     using Real = typename GetTypeReal<T>::type;
 
@@ -314,7 +339,7 @@ struct precondition_op {
                    T* psi_iter,
                    const int& nbase,
                    const int& notconv,
-                   const Real* precondition,  
+                   const Real* precondition,
                    const Real* eigenvalues);
 };
 
@@ -391,6 +416,17 @@ template <typename T> struct matrixCopy<T, base_device::DEVICE_GPU> {
                     const int& LDA,
                     T* B, // output
                     const int& LDB);
+};
+
+template <typename T> struct matrix_mul_vector_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int &m, const int &n,
+                  T *a,
+                  const int &lda,
+                  const Real *b,
+                  const Real alpha,
+                  T *c,
+                  const int &ldc);
 };
 
 void createGpuBlasHandle();

@@ -69,6 +69,7 @@ void RPA_LRI<T, Tdata>::cal_rpa_cv(const UnitCell& ucell)
     });
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs = std::get<0>(Cs_dCs);
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
+    this->Cs_period = exx_lri_rpa.exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 }
 
 template <typename T, typename Tdata>
@@ -112,6 +113,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
+    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(1);
+    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+        {"alpha", "1"},
+        {"singularity_correction", "spencer"} }};
+
 
     exx_lri_rpa.init(mpi_comm_in, ucell, kv, orb);
     exx_lri_rpa.cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
@@ -120,8 +126,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         exx_lri_rpa.cal_exx_elec(Ds, ucell,*dm.get_paraV_pointer(), &symrot);
     } else {
         exx_lri_rpa.cal_exx_elec(Ds, ucell,*dm.get_paraV_pointer());
-}
-    // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
+    }
 }
 
 template <typename T, typename Tdata>
@@ -133,7 +138,7 @@ void RPA_LRI<T, Tdata>::out_for_RPA(const UnitCell& ucell,
     ModuleBase::TITLE("DFT_RPA_interface", "out_for_RPA");
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
-    this->out_struc(ucell.latvec, ucell.G);
+    this->out_struc(ucell);
 
     this->cal_rpa_cv(ucell);
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
@@ -217,7 +222,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::out_struc(const ModuleBase::Matrix3& latvec, const ModuleBase::Matrix3& G)
+void RPA_LRI<T, Tdata>::out_struc(const UnitCell &ucell)
 {
     if (GlobalV::MY_RANK != 0)
     {
@@ -225,14 +230,16 @@ void RPA_LRI<T, Tdata>::out_struc(const ModuleBase::Matrix3& latvec, const Modul
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    ModuleBase::Matrix3 lat = latvec / ModuleBase::BOHR_TO_A;
-    ModuleBase::Matrix3 G_RPA = G * TWOPI_Bohr2A;
+    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nkstot() / 2 : p_kv->get_nkstot();
+    const int nks_tot_full = p_kv->get_nkstot_full();
+    const int natom = ucell.nat;
+    ModuleBase::Matrix3 lat = ucell.latvec / ModuleBase::BOHR_TO_A;
+    ModuleBase::Matrix3 G_RPA = ucell.G * TWOPI_Bohr2A;
     std::stringstream ss;
     ss << "stru_out";
     std::ofstream ofs;
     ofs.open(ss.str().c_str(), std::ios::out);
-    ofs << lat.e11 << std::setw(15) << lat.e12 << std::setw(15) << lat.e13 << std::endl;
+    ofs << std::fixed << std::setprecision(9) << lat.e11 << std::setw(15) << lat.e12 << std::setw(15) << lat.e13 << std::endl;
     ofs << lat.e21 << std::setw(15) << lat.e22 << std::setw(15) << lat.e23 << std::endl;
     ofs << lat.e31 << std::setw(15) << lat.e32 << std::setw(15) << lat.e33 << std::endl;
 
@@ -240,14 +247,25 @@ void RPA_LRI<T, Tdata>::out_struc(const ModuleBase::Matrix3& latvec, const Modul
     ofs << G_RPA.e21 << std::setw(15) << G_RPA.e22 << std::setw(15) << G_RPA.e23 << std::endl;
     ofs << G_RPA.e31 << std::setw(15) << G_RPA.e32 << std::setw(15) << G_RPA.e33 << std::endl;
 
+    ofs << natom << std::endl;
+	for(int iat=0; iat < natom; ++iat) {
+        int it = ucell.iat2it[iat];
+        ModuleBase::Vector3<double> atom_pos = ucell.atoms[ it ].tau[ ucell.iat2ia[iat] ]/ ModuleBase::BOHR_TO_A;
+        ofs << atom_pos.x << std::setw(15) << atom_pos.y << std::setw(15) << atom_pos.z << std::setw(15) << (it + 1) << std::endl;
+    }
+
     ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2] << std::setw(6) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
     {
-        ofs << std::setw(15) << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
-            << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15) << std::fixed
-            << std::setprecision(9) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
+        ofs << std::setw(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
+            << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
     }
+
+    for (int ik = 0; ik != nks_tot_full; ++ik){
+        ofs << (p_kv->ibz_index[ik] + 1) << std::endl;
+    }
+
     ofs.close();
     return;
 }
@@ -381,11 +399,11 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell &ucell)
                 size_t nu_num = exx_lri_rpa.exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.get_index_abfs_size(ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
+                ofs << ik + 1 << "  " << std::fixed << std::setprecision(12) << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
-                    ofs << std::setw(21) << std::fixed << std::setprecision(12) << (*vq_J.data)[i].real()
-                        << std::setw(21) << std::fixed << std::setprecision(12) << (*vq_J.data)[i].imag() << std::endl;
+                    ofs << std::setw(21) << (*vq_J.data)[i].real()
+                        << std::setw(21) << (*vq_J.data)[i].imag() << std::endl;
                 }
             }
         }

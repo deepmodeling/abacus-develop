@@ -22,7 +22,6 @@
 #include "source_io/numerical_basis.h"
 #include "source_io/numerical_descriptor.h"
 #include "source_io/to_wannier90_pw.h"
-#include "source_io/winput.h"
 #include "source_io/write_dos_pw.h"
 #include "source_io/write_wfc_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
@@ -57,21 +56,6 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
     this->device = base_device::get_device_type<Device>(this->ctx);
-
-#if ((defined __CUDA) || (defined __ROCM))
-    if (this->device == base_device::GpuDevice)
-    {
-        ModuleBase::createGpuBlasHandle();
-        hsolver::createGpuSolverHandle();
-        container::kernels::createGpuBlasHandle();
-        container::kernels::createGpuSolverHandle();
-    }
-#endif
-
-#ifdef __DSP
-    std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    mtfunc::dspInitHandle(GlobalV::MY_RANK);
-#endif
 }
 
 template <typename T, typename Device>
@@ -86,21 +70,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
         this->pelec = nullptr;
     }
-
-    if (this->device == base_device::GpuDevice)
-    {
-#if defined(__CUDA) || defined(__ROCM)
-        ModuleBase::destoryBLAShandle();
-        hsolver::destroyGpuSolverHandle();
-        container::kernels::destroyGpuBlasHandle();
-        container::kernels::destroyGpuSolverHandle();
-#endif
-    }
-
-#ifdef __DSP
-    std::cout << " ** Closing DSP Hardware..." << std::endl;
-    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
-#endif
 
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
@@ -931,10 +900,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 4) Calculate the spillage value,
     //! which are used to generate numerical atomic orbitals
     //----------------------------------------------------------
-    if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
+    if (PARAM.inp.basis_type == "pw" && PARAM.inp.out_spillage)
     {
         // ! Print out overlap matrices
-        if (winput::out_spillage <= 2)
+        if (PARAM.inp.out_spillage <= 2)
         {
             for (int i = 0; i < PARAM.inp.bessel_nao_rcuts.size(); i++)
             {

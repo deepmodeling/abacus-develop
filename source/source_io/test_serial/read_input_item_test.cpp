@@ -813,24 +813,27 @@ TEST_F(InputTest, Item_test)
     }
     { // out_dmk
         auto it = find_label("out_dmk", readinput.input_lists);
-        param.input.calculation = "get_wf";
-        param.input.out_dmk = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmk, false);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmk[0], 1);
+        EXPECT_EQ(param.input.out_dmk[1], 8);
+
+        it->second.str_values = {"1", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmk[0], 1);
+        EXPECT_EQ(param.input.out_dmk[1], 2);
     }
     { // out_dmr
         auto it = find_label("out_dmr", readinput.input_lists);
-        param.input.calculation = "get_wf";
-        param.input.out_dmr = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmr, false);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmr[0], 1);
+        EXPECT_EQ(param.input.out_dmr[1], 8);
 
-        param.sys.gamma_only_local = true;
-        param.input.out_dmr = true;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        it->second.str_values = {"1", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmr[0], 1);
+        EXPECT_EQ(param.input.out_dmr[1], 2);
     }
     { // method_sto
         auto it = find_label("method_sto", readinput.input_lists);
@@ -942,12 +945,6 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
         EXPECT_EQ(param.input.out_mat_hs[1], 2);
-
-        it->second.str_values = {"1", "2", "3"};
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.out_mat_hs = {0};
         param.input.qo_switch = true;

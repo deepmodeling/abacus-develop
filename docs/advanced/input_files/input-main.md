@@ -22,6 +22,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [timer_enable_nvtx](#timer_enable_nvtx)
     - [nb2d](#nb2d)
   - [Input Files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -30,7 +31,7 @@
     - [orbital\_dir](#orbital_dir)
     - [read\_file\_dir](#read_file_dir)
     - [restart\_load](#restart_load)
-    - [wannier\_card](#wannier_card)
+    - [spillage\_outdir](#spillage_outdir)
   - [Plane Wave](#plane-wave-related-variables)
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
@@ -172,6 +173,7 @@
     - [out\_wfc_re_im](#out_wfc_re_im)
     - [if\_separate\_k](#if_separate_k)
     - [out\_elf](#out_elf)
+    - [out\_spillage](#out_spillage)
   - [Density of States](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -190,6 +192,7 @@
   - [DeePKS](#deepks)
     - [deepks\_out\_labels](#deepks_out_labels)
     - [deepks\_out\_freq\_elec](#deepks_out_freq_elec)
+    - [deepks\_out\_base](#deepks_out_base)
     - [deepks\_scf](#deepks_scf)
     - [deepks\_equiv](#deepks_equiv)
     - [deepks\_model](#deepks_model)
@@ -375,7 +378,7 @@
     - [out\_wannier\_eig](#out_wannier_eig)
     - [out\_wannier\_unk](#out_wannier_unk)
     - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
-  - [rt-TDDFT: Real-time time dependent density functional theory](#tddft-time-dependent-density-functional-theory)
+  - [RT-TDDFT: Real-Time Time-Dependent Density Functional Theory](#rt-tddft-real-time-time-dependent-density-functional-theory)
     - [estep\_per\_md](#estep_per_md)
     - [td\_dt](#td_dt)
     - [td\_edm](#td_edm)
@@ -704,6 +707,15 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - double: double precision
 - **Default**: double
 
+### timer_enable_nvtx
+
+- **Type**: Boolean
+- **Description**: Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+
+  - True: Enable NVTX profiling labels in the timer.
+  - False: Disable NVTX profiling labels in the timer.
+- **Default**: False
+
 ### nb2d
 
 - **Type**: Integer
@@ -773,12 +785,12 @@ These variables are used to control parameters related to input files.
   If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0* or *[rpa](#rpa)==True*), the Hexx(R) files in the same folder for each processor will also be read.
 - **Default**: False
 
-### wannier_card
+### spillage_outdir
 
 - **Type**: String
-- **Availability**: Using ABACUS with Wannier90.
-- **Description**: The name of the input file related to Wannier90.
-- **Default**: "none"
+- **Availability**: Used only for plane wave basis set.
+- **Description**: The directory to save the spillage files.
+- **Default**: "./"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1697,21 +1709,21 @@ These variables are used to control the output of properties.
 
 ### out_dmk
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional) 
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
-    - nspin = 1: `dms1_nao.csr`;
+    - nspin = 1 and 4: `dm_nao.csr`;
     - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
   - For multi-k points case:
-    - nspin = 1: `dms1k1_nao.csr`, `dms1k2_nao.csr`, ...;
-    - nspin = 2: `dms1k1_nao.csr`... and `dms2k1_nao.csr`... for the two spin channels. 
+    - nspin = 1 and 4: `dmk1_nao.csr`, `dmk2_nao.csr`, ...;
+    - nspin = 2: `dmk1s1_nao.csr`... and `dmk1s2_nao.csr`... for the two spin channels. 
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
 ### out_dmr
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis (multi-k points)
 - **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder `OUT.${suffix}`. The files are named as `dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in [out_mat_hs2](#out_mat_hs2). Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
   - nspin = 1: `dmrs1_nao.csr`;
@@ -2026,6 +2038,13 @@ These variables are used to control the output of properties.
   In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
 - **Default**: 0 3
 
+### out_spillage
+
+- **Type**: Integer
+- **Availability**: Only for Kohn-Sham DFT with plane-wave basis.
+- **Description**: This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as `OVERLAP_Q`), and between TSBFs (named as `OVERLAP_Sq`), also their first order derivatives. The output files are named starting with `orb_matrix`. A value of `2` would enable the output.
+- **Default**: 0 
+
 [back to top](#full-list-of-input-keywords)
 
 ## Density of states
@@ -2165,6 +2184,13 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: When `deepks_out_freq_elec` is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per `deepks_out_freq_elec` electronic iterations, with suffix `_e*` to distinguish different steps. Often used with `deepks_out_labels` equals 1.
 - **Default**: 0
 
+### deepks_out_base
+
+- **Type**: String
+- **Availability**: Numerical atomic orbital basis and `deepks_out_freq_elec` is greater than 0
+- **Description**: Print labels and descriptors calculated by base functional ( determined by `deepks_out_base` ) and target functional ( determined by `dft_functional` ) for DeePKS in per `deepks_out_freq_elec` electronic iterations. The SCF process, labels and descriptors output of the target functional are all consistent with those when the target functional is used alone. The only additional output under this configuration is the labels of the base functional. Often used with `deepks_out_labels` equals 1.
+- **Default**: None
+
 ### deepks_scf
 
 - **Type**: Boolean
@@ -2258,7 +2284,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 - **Type**: int
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0 (k space), ABACUS will output `deepks_hbase.npy`, `deepks_vdelta.npy` and `deepks_htot.npy`(htot=hbase+vdelta). When `deepks_out_labels` is true and `deepks_v_delta` < 0 (real space), ABACUS will output `deepks_hrtot.csr`, `deepks_hrdelta.csr`. Some more files output for different settings.
+- **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0 (k space), ABACUS will output `deepks_hbase.npy`, `deepks_vdelta.npy` and `deepks_htot.npy`(htot=hbase+vdelta). When `deepks_out_labels` is true and `deepks_v_delta` < 0 (real space), ABACUS will output `deepks_hrtot.csr`, `deepks_hrdelta.csr`. Some more files output for different settings. *NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.*
   - `deepks_v_delta` = 1: `deepks_vdpre.npy`, which is used to calculate V_delta during DeePKS training.
   - `deepks_v_delta` = 2: `deepks_phialpha.npy` and `deepks_gevdm.npy`, which can be used to calculate `deepks_vdpre.npy`. A recommanded method for memory saving.
   - `deepks_v_delta` = -1: `deepks_vdrpre.npy`, which is used to calculate V_delta_R during DeePKS training.
@@ -3694,44 +3720,45 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 [back to top](#full-list-of-input-keywords)
 
-## TDDFT: time dependent density functional theory
+## RT-TDDFT: Real-Time Time-Dependent Density Functional Theory
 
 ### estep_per_md
 
 - **Type**: Integer
-- **Description**: The number of electron propagation steps between two ionic steps.
+- **Description**: The number of electronic propagation steps between two ionic steps.
 - **Default**: 1
 
 ### td_dt
 
 - **Type**: Real
-- **Description**: The time step used in electron propagation. Setting td_dt will reset the md_dt value to td_dt * estep_per_md.
-- **Default**: md_dt/estep_per_md
+- **Description**: The time step used in electronic propagation. Setting `td_dt` will reset the value of [`md_dt`](#md_dt) to `td_dt * estep_per_md`.
+- **Default**: `md_dt / estep_per_md`
+- **Unit**: fs
 
 ### td_edm
 
 - **Type**: Integer
-- **Description**: Method to calculate the energy density matrix
-  - 0: new method (use the original formula).
-  - 1: old method (use the formula for ground state).
+- **Description**: Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
+  - 0: Using the original formula: $\mathrm{EDM}_{\mu\nu}=\frac{1}{2} \sum_{\eta \zeta}\left(S_{\mu \eta}^{-1} H_{\eta \zeta} \rho_{\zeta \nu}+\rho_{\mu \eta} H_{\eta \zeta} S_{\zeta \nu}^{-1}\right)$.
+  - 1: Using the formula for ground state (deprecated): $\mathrm{EDM}_{\mu\nu}=\sum_n^{\mathrm{occ}} c_{\mu,n} f_n \epsilon_n c_{n,\nu}$. Note that this usually does not hold if wave function is not the eigenstate of the Hamiltonian.
 - **Default**: 0
 
 ### td_print_eij
 
 - **Type**: Real
-- **Description**:
-  - <0: don't print $E_{ij}$.
-  - \>=0: print the $E_{ij}\ (<\psi_i|H|\psi_j>$) elements which are larger than td_print_eij.
+- **Description**: Controls the printing of Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i|\hat{H}|\psi_j}$.
+  - $<0$: Suppress all $E_{ij}$ output.
+  - $\geqslant 0$: Print only elements with ​​either $|\text{Re}(E_{ij})|$ or $|\text{Im}(E_{ij})|$​​ exceeding `td_print_eij`.
 - **Default**: -1
+- **Unit**: Ry
 
 ### td_propagator
 
 - **Type**: Integer
-- **Description**:
-  Methods of propagator
-  - 0: Crank-Nicolson, based on matrix inversion.
-  - 1: 4th Taylor expansions of exponential.
-  - 2: enforced time-reversal symmetry (ETRS).
+- **Description**: Methods of electronic propagation: $\psi_{n\boldsymbol{k}}(\boldsymbol{r},t_2) = U(t_2,t_1) \psi_{n\boldsymbol{k}}(\boldsymbol{r},t_1)$.
+  - 0: Crank-Nicolson, based on matrix inversion: $U = \dfrac{S_{\boldsymbol{k}}-\mathrm{i}  H_{\boldsymbol{k}}((t_1+t_2)/2) \Delta t / 2}{S_{\boldsymbol{k}}+\mathrm{i}  H_{\boldsymbol{k}}((t_1+t_2)/2) \Delta t / 2}$.
+  - 1: 4th-order Taylor expansion of exponential: $U = I + \hat{A} + \frac{1}{2}\hat{A}^2 + \frac{1}{6}\hat{A}^3 + \frac{1}{24}\hat{A}^4$, where $\hat{A} = -\mathrm{i} S_{\boldsymbol{k}}^{-1} H_{\boldsymbol{k}}((t_1+t_2)/2)\Delta t$.
+  - 2: Enforced time-reversal symmetry (ETRS): $U = \mathrm{e}^{-\mathrm{i} S_{\boldsymbol{k}}^{-1} H_{\boldsymbol{k}}(t_2)\frac{\Delta t}{2}} \mathrm{e}^{-\mathrm{i} S_{\boldsymbol{k}}^{-1} H_{\boldsymbol{k}}(t_1)\frac{\Delta t}{2}}$.
   - 3: Crank-Nicolson, based on solving linear equation.
 - **Default**: 0
 
@@ -3739,53 +3766,75 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**:
-  - True: add a laser material interaction (extern laser field).
-  - False: no extern laser field.
+  - True: Add a laser-material interaction (external electric field).
+  - False: No external electric field.
 - **Default**: False
 
 ### td_vext_dire
 
 - **Type**: String
 - **Description**:
-  If `td_vext` is True, the td_vext_dire is a string to set the number of electric fields, like `td_vext_dire 1 2` representing external electric field is added to the x and y axis at the same time. Parameters of electric field can also be written as a string, like `td_gauss_phase 0 1.5707963267948966` representing the Gauss field in the x and y directions has a phase delay of Pi/2. See below for more parameters of electric field.
-  - 1: the direction of external light field is along x axis.
-  - 2: the direction of external light field is along y axis.
-  - 3: the direction of external light field is along z axis.
+  Specifies the direction(s) of the external electric field when `td_vext` is enabled. For example, `td_vext_dire 1 2` indicates that external electric fields are applied to both the x and y directions simultaneously. Electric field parameters can also be written as strings. For example, `td_gauss_phase 0 1.5707963` indicates that the Gaussian type electric fields in the x and y directions have a phase delay of $\pi/2$. See below for more electric field parameters.
+  - 1: The external field direction is along the x-axis.
+  - 2: The external field direction is along the y-axis.
+  - 3: The external field direction is along the z-axis.
 - **Default**: 1
+
+  > Note: The axes refer to the absolute Cartesian coordinate system, which is independent of lattice vectors or reciprocal space definitions.​ This is different from [`efield_dir`](#efield_dir), which is used in ground-state KSDFT.
 
 ### td_stype
 
 - **Type**: Integer
-- **Description**:
-  Type of electric field in space domain
-  - 0: length gauge.
-  - 1: velocity gauge.
-  - 2: hybrid gauge.
+- **Description**: Type of electric field in the space domain, i.e. the gauge of the electric field.
+  - 0: Length gauge.
+  - 1: Velocity gauge.
+  - 2: Hybrid gauge. See [*J. Chem. Theory Comput.* 2025, 21, 3335−3341](https://pubs.acs.org/doi/10.1021/acs.jctc.5c00111) for more information.
 - **Default**: 0
 
 ### td_ttype
 
-- **Type**: Integer
+- **Type**: String
 - **Description**:
-  Type of electric field in time domain
-  - 0: Gaussian type function.
-  - 1: Trapezoid function.
-  - 2: Trigonometric function.
-  - 3: Heaviside function.
-  - 4: HHG function.
+  Type of electric field in the time domain.
+  - 0: Gaussian type function:
+  $$
+    E(t) = A \cos\left[2\pi f(t-t_0)+\varphi\right]\exp\left[-\frac{(t-t_0)^2}{2\sigma^2}\right]
+  $$
+  - 1: Trapezoid function:
+  $$
+    E(t) = 
+    \begin{cases}
+        A \cos(2\pi f t + \varphi) \cdot \dfrac{t}{t_1}, & t < t_1 \\
+        A \cos(2\pi f t + \varphi), & t_1 \leqslant t \leqslant t_2 \\
+        A \cos(2\pi f t + \varphi) \left(1 - \dfrac{t - t_2}{t_3 - t_2}\right), & t_2 < t < t_3 \\
+        0, & t \geqslant t_3
+    \end{cases}
+  $$
+  - 2: Trigonometric function:
+  $$
+    E(t) = A \cos(2\pi f_1 t + \varphi_1) \sin^2(2\pi f_2 t + \varphi_2)
+  $$
+  - 3: Heaviside step function:
+  $$
+    E(t) = 
+    \begin{cases}
+        A, & t < t_0 \\
+        0, & t \geqslant t_0
+    \end{cases}
+  $$
 - **Default**: 0
 
 ### td_tstart
 
 - **Type**: Integer
-- **Description**: Number of steps where electric field starts
+- **Description**: The initial time step when the time-dependent electric field is activated.
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
-- **Description**: Number of steps where electric field ends
-- **Default**: 100
+- **Description**: The final time step when the time-dependent electric field is deactivated. The field remains active between `td_tstart` and `td_tend`.
+- **Default**: 1000
 
 ### td_lcut1
 
@@ -3793,9 +3842,9 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   The lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
 
-  $$
+  $
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
-  $$
+  $
 
 - **Default**: 0.05
 
@@ -3805,230 +3854,201 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   The upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
 
-  $$
+  $
     E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
-  $$
+  $
 
 - **Default**: 0.95
 
 ### td_gauss_freq
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Frequency (freq) of Gauss type electric field  (fs^-1)\
-  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  Frequency $f$ of the Gaussian type electric field.
 - **Default**: 22.13
+- **Unit**: 1/fs
 
 ### td_gauss_phase
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Phase of Gauss type electric field\
-  amp\*(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  Phase $\varphi$ of the Gaussian type electric field.
 - **Default**: 0.0
 
 ### td_gauss_sigma
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Sigma of Gauss type electric field  (fs)\
-  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  Pulse width (standard deviation) $\sigma$ of the Gaussian type electric field.
 - **Default**: 30.0
+- **Unit**: fs
 
 ### td_gauss_t0
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Step number of time center (t0) of Gauss type electric field\
-  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  Step number of the time center $t_0$ of the Gaussian type electric field.
 - **Default**: 100
 
 ### td_gauss_amp
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Amplitude (amp) of Gauss type electric field  (V/Angstrom)\
-  amp\*cos(2pi\*freq(t-t0)+phase)exp(-(t-t0)^2/2sigma^2)
+  Amplitude $A$ of the Gaussian type electric field.
 - **Default**: 0.25
+- **Unit**: V/Å
 
 ### td_trape_freq
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Frequency (freq) of Trapezoid type electric field  (fs^-1)\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Frequency $f$ of the trapezoid type electric field.
 - **Default**: 1.60
+- **Unit**: 1/fs
 
 ### td_trape_phase
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Phase of Trapezoid type electric field\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Phase $\varphi$ of the trapezoid type electric field.
 - **Default**: 0.0
 
 ### td_trape_t1
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Step number of time interval 1 (t1) of Trapezoid type electric field\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Step number of the time interval $t_1$ of the trapezoid type electric field.
 - **Default**: 1875
 
 ### td_trape_t2
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Step number of time interval 2 (t2) of Trapezoid type electric field\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Step number of the time interval $t_2$ of the trapezoid type electric field.
 - **Default**: 5625
 
 ### td_trape_t3
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Step number of time interval 3 (t3) of Trapezoid type electric field\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Step number of the time interval $t_3$ of the trapezoid type electric field.
 - **Default**: 7500
 
 ### td_trape_amp
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Amplitude (amp) of Trapezoid type electric field  (V/Angstrom)\
-  E = amp\*cos(2pi\*freq\*t+phase) t/t1 , t<t1\
-  E = amp\*cos(2pi\*freq\*t+phase) , t1<t<t2\
-  E = amp\*cos(2pi\*freq\*t+phase) (1-(t-t2)/(t3-t2)) , t2<t<t3\
-  E = 0 , t>t3
+  Amplitude $A$ of the trapezoid type electric field.
 - **Default**: 2.74
+- **Unit**: V/Å
 
 ### td_trigo_freq1
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Frequency 1 (freq1) of Trigonometric type electric field  (fs^-1)\
-  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
+  Frequency $f_1$ of the trigonometric type electric field.
 - **Default**: 1.164656
+- **Unit**: 1/fs
 
 ### td_trigo_freq2
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Frequency 2 (freq2) of Trigonometric type electric field  (fs^-1)\
-  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
+  Frequency $f_2$ of the trigonometric type electric field.
 - **Default**: 0.029116
+- **Unit**: 1/fs
 
 ### td_trigo_phase1
 
-- **Type**:Real
+- **Type**:String
 - **Description**:
-  Phase 1 (phase1) of Trigonometric type electric field\
-  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
+  Phase $\varphi_1$ of the trigonometric type electric field.
 - **Default**: 0.0
 
 ### td_trigo_phase2
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Phase 2 (phase2) of Trigonometric type electric field\
-  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
+  Phase $\varphi_2$ of the trigonometric type electric field.
 - **Default**: 0.0
 
 ### td_trigo_amp
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Amplitude (amp) of Trigonometric type electric field (V/Angstrom)\
-  amp\*cos(2\*pi\*freq1\*t+phase1)\*sin(2\*pi\*freq2\*t+phase2)^2
+  Amplitude $A$ of the trigonometric type electric field.
 - **Default**: 2.74
+- **Unit**: V/Å
 
 ### td_heavi_t0
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Step number of switch time (t0) of Heaviside type electric field\
-  E = amp , t<t0\
-  E = 0.0 , t>t0
+  Step number of the switch time $t_0$ of the Heaviside type electric field.
 - **Default**: 100
 
 ### td_heavi_amp
 
-- **Type**: Real
+- **Type**: String
 - **Description**:
-  Amplitude (amp) of Heaviside type electric field  (V/Angstrom)\
-  E = amp , t<t0\
-  E = 0.0 , t>t0
-- **Default**: 2.74
+  Amplitude $A$ of the Heaviside type electric field.
+- **Default**: 1.0
+- **Unit**: V/Å
 
 ### out_dipole
 
 - **Type**: Boolean
 - **Description**:
-  - True: output dipole.
-  - False: do not output dipole.
+  - True: Output electric dipole moment.
+  - False: Do not output electric dipole moment.
 - **Default**: False
 
 ### out_current
 
 - **Type**: Boolean
-- **Description**: Output current in real time TDDFT simulations with the velocity gauge
-  - True: output current.
-  - False: do not output current.
+- **Description**:
+  - True: Output current.
+  - False: Do not output current.
 - **Default**: False
 
 ### out_current_k
 
 - **Type**: Boolean
-- **Description**: Output rt-TDDFT current for all k points
-  - True: output tddft current for all k points
-  - False: output current in total
+- **Description**:
+  - True: Output current for each k-points separately.
+  - False: Output current in total.
 - **Default**: False
 
 ### out_efield
 
 - **Type**: Boolean
-- **Description**: Output TDDFT Efield or not (V/Angstrom)
-  - True: output efield
-  - False: do not output efield
+- **Description**: Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: ​​V/Å​​) into files named `efield_[num].txt`, where `[num]` is the ​​sequential index of the electric field ranges from `0` to `N-1` for `N` configured fields. It is noteworthy that the field type sequence follows [`td_ttype`](#td_ttype), while the direction sequence follows [`td_vext_dire`](#td_vext_dire).
+  - True: Output electric field.
+  - False: Do not output electric field.
 - **Default**: False
 
 ### out_vecpot
 
 - **Type**: Boolean
-- **Description**: Output TDDFT Vector potential or not (a.u.)
-  - True: output Vector potential in file "OUT.suffix/At.dat"
-  - False: do not output Vector potential
+- **Description**: Output vector potential or not (unit: a.u.).
+  - True: Output vector potential into file `At.dat`.
+  - False: Do not output vector potential.
 - **Default**: False
 
 ### init_vecpot_file
 
 - **Type**: Boolean
-- **Description**: Init vector potential through file or not
-  - True: init vector potential from file "At.dat".(a.u.) It consists of four columns, representing istep and vector potential on each direction.
-  - False: calculate vector potential by integral of Efield
+- **Description**: Initialize vector potential through file or not.
+  - True: Initialize vector potential from file `At.dat` (unit: a.u.). It consists of four columns, representing the step number and vector potential on each direction.
+  - False: Calculate vector potential by integrating the electric field.
 - **Default**: False
 
 ### ocp
 
 - **Type**: Boolean
 - **Availability**:
-  - For PW and LCAO codes: If set to 1, the band occupations will be determined by `ocp_set`.
-  - For RT-TDDFT in LCAO codes: If set to 1, same as above, but the occupations will be constrained starting from the second ionic step.
+  - For PW and LCAO codes: If enabled, the band occupations will be determined by `ocp_set`.
+  - For RT-TDDFT in LCAO codes: If enabled, same as above, but the occupations will be constrained starting from the second ionic step.
   - For OFDFT: This feature is not available.
 - **Description**:
 - True: Fixes the band occupations based on the values specified in `ocp_set`.

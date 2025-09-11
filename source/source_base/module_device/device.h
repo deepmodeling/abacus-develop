@@ -31,10 +31,22 @@ namespace information
 {
 
 /**
- * @brief Get the device info object
+ * @brief Get the device name
  * for source_esolver
  */
-std::string get_device_info(std::string device_flag);
+std::string get_device_name(std::string device_flag);
+
+/**
+ * @brief Get the device number
+ * for source_esolver
+ */
+int get_device_num(std::string device_flag);
+
+/**
+ * @brief Output the device information
+ * for source_esolver
+ */
+void output_device_info(std::ostream& output);
 
 /**
  * @brief Get the device kpar object

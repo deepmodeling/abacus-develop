@@ -208,7 +208,7 @@ void Data::init_data(const int nkernel, const int ndata, const int fftdim, const
         if (this->load_tanhxi[ik]){
             this->tanhxi[ik]    = torch::zeros({ndata, fftdim, fftdim, fftdim}).to(device);
         }
-        if (this->load_tanhxi_nl[ik{
+        if (this->load_tanhxi_nl[ik]){
             this->tanhxi_nl[ik] = torch::zeros({ndata, fftdim, fftdim, fftdim}).to(device);
         }
         if (this->load_tanh_pnl[ik]){
@@ -319,7 +319,16 @@ void Data::load_data_(
     enhancement.resize_({this->nx_tot, 1});
     pauli.resize_({nx_tot, 1});
 
-    this->tau_tf = this->cTF * torch::pow(this->rho, 5./3.);
+    if (input.energy_type == "kedf")
+    {
+        this->tau_exp = 5. / 3.;
+        this->tau_lda = this->cTF * torch::pow(this->rho, this->tau_exp);
+    }
+    else if (input.energy_type == "exx")
+    {
+        this->tau_exp = 4. / 3.;
+        this->tau_lda = this->cDirac * torch::pow(this->rho, this->tau_exp);
+    }
     // Input::print("load_data done");
 }
 

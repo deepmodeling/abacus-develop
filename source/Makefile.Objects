@@ -178,6 +178,7 @@ OBJS_BASE=abfs-vector3_order.o\
     broyden_mixing.o\
     memory_op.o\
     device.o\
+    output_device.o\
     parallel_2d.o\
 
 OBJS_CELL=atom_pseudo.o\
@@ -274,6 +275,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_gets.o\
       lcao_others.o\
       esolver_dm2rho.o\
+      esolver_double_xc.o\
 
 OBJS_GINT=gint_old.o\
       gint_gamma_env.o\
@@ -563,7 +565,6 @@ OBJS_IO=input_conv.o\
     unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\
-    winput.o\
     write_cube.o\
     write_elecstat_pot.o\
     write_elf.o\
@@ -606,7 +607,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_eig_occ.o\
       get_pchg_lcao.o\
       get_wf_lcao.o\
-      io_dmk.o\
+      write_dmk.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       read_wfc_lcao.o\
