@@ -49,15 +49,6 @@ void ModuleIO::write_dos_pw(
 			// do nothing;
 		}
 
-		if(istep_in==-1)
-		{
-			// do nothing
-		}
-		else if(istep_in >= 0)
-		{
-			ss << "g" << std::to_string(istep_in+1);
-		}
-
 		ss << ".txt";
 
         ModuleBase::GlobalFunc::OUT(ofs_running, "DOS file", ss.str());
@@ -74,7 +65,8 @@ void ModuleIO::write_dos_pw(
 				kv.isk,
 				nbands,
 				ekb,
-				wg);
+				wg,
+				istep_in);
 	}
 
 
