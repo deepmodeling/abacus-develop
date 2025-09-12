@@ -33,7 +33,7 @@ Gint::~Gint() {
         delete this->hRGint_tmp[is];
     }
 #ifdef __MPI
-    delete this->DMRGint_full;
+    delete this->dm2d_tmp;
 #endif
 }
 
@@ -171,10 +171,9 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
             this->hRGint_tmp[is] = new hamilt::HContainer<double>(ucell_in.nat);
         }
 #ifdef __MPI
-        if (this->DMRGint_full != nullptr) {
-            delete this->DMRGint_full;
+        if (this->dm2d_tmp != nullptr) {
+            delete this->dm2d_tmp;
         }
-        this->DMRGint_full = new hamilt::HContainer<double>(ucell_in.nat);
 #endif
     }
 
@@ -210,12 +209,6 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
         ModuleBase::Memory::record("Gint::DMRGint",
                                        this->DMRGint[0]->get_memory_size()
                                            * this->DMRGint.size()*nspin);
-#ifdef __MPI
-        this->DMRGint_full->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
-        this->DMRGint_full->allocate(nullptr, true);
-        ModuleBase::Memory::record("Gint::DMRGint_full",
-                                   this->DMRGint_full->get_memory_size());
-#endif
     }
 }
 
@@ -231,9 +224,7 @@ void Gint::reset_DMRGint(const int& nspin)
         {
             for (auto& d : this->DMRGint) { d->allocate(nullptr, false); }
 #ifdef __MPI
-            delete this->DMRGint_full;
-            this->DMRGint_full = new hamilt::HContainer<double>(*this->hRGint);
-            this->DMRGint_full->allocate(nullptr, false);
+            delete this->dm2d_tmp;
 #endif
         }
     }
@@ -262,37 +253,46 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
     } else // NSPIN=4 case
     {
 #ifdef __MPI
-        hamilt::transferParallels2Serials(*DM2D[0], this->DMRGint_full);
-#else
-        this->DMRGint_full = DM2D[0];
-#endif
-        std::vector<double*> tmp_pointer(4, nullptr);
-        for (int iap = 0; iap < this->DMRGint_full->size_atom_pairs(); ++iap) {
-            auto& ap = this->DMRGint_full->get_atom_pair(iap);
-            int iat1 = ap.get_atom_i();
-            int iat2 = ap.get_atom_j();
-            for (int ir = 0; ir < ap.get_R_size(); ++ir) {
-                const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                for (int is = 0; is < 4; is++) {
-                    tmp_pointer[is] = this->DMRGint[is]
-                                          ->find_matrix(iat1, iat2, r_index)
-                                          ->get_pointer();
-                }
-                double* data_full = ap.get_pointer(ir);
-                for (int irow = 0; irow < ap.get_row_size(); irow += 2) {
-                    for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                        *(tmp_pointer[0])++ = data_full[icol];
-                        *(tmp_pointer[1])++ = data_full[icol + 1];
+        // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
+        const int row_set[4] = {0, 0, 1, 1};
+        const int col_set[4] = {0, 1, 0, 1};
+        int mg = DM2D[0]->get_paraV()->get_global_row_size()/2;
+        int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
+        int nb = DM2D[0]->get_paraV()->get_block_size()/2;
+        int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
+        std::vector<int> iat2iwt(ucell->nat);
+        for (int iat = 0; iat < ucell->nat; iat++) {
+            iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
+        }
+        Parallel_Orbitals *pv = new Parallel_Orbitals();
+        pv->set(mg, ng, nb, blacs_ctxt);
+        pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
+        auto ijr_info = DM2D[0]->get_ijr_info();
+        this-> dm2d_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
+        ModuleBase::Memory::record("Gint::dm2d_tmp", this->dm2d_tmp->get_memory_size());
+        for (int is = 0; is < 4; is++){
+            for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
+                auto& ap = DM2D[0]->get_atom_pair(iap);
+                int iat1 = ap.get_atom_i();
+                int iat2 = ap.get_atom_j();
+                for (int ir = 0; ir < ap.get_R_size(); ++ir) {
+                    const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
+                    double* matrix_out = this -> dm2d_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    double* matrix_in = ap.get_pointer(ir);
+                    for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
+                        for (int icol = 0; icol < ap.get_col_size()/2; icol++){
+                            int index_i = irow* ap.get_col_size()/2 + icol;
+                            int index_j = (irow*2+row_set[is]) * ap.get_col_size() + icol*2+col_set[is];
+                            matrix_out[index_i] = matrix_in[index_j];
+                        }
                     }
-                    data_full += ap.get_col_size();
-                    for (int icol = 0; icol < ap.get_col_size(); icol += 2) {
-                        *(tmp_pointer[2])++ = data_full[icol];
-                        *(tmp_pointer[3])++ = data_full[icol + 1];
-                    }
-                    data_full += ap.get_col_size();
                 }
             }
+            hamilt::transferParallels2Serials( *(this->dm2d_tmp), this->DMRGint[is]);
         }
+#else
+        //this->DMRGint_full = DM2D[0];
+#endif
     }
     ModuleBase::timer::tick("Gint", "transfer_DMR");
 }
