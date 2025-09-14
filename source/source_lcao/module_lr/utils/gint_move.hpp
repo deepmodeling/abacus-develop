@@ -60,8 +60,8 @@ Gint& Gint::operator=(Gint&& rhs)
     this->pvdpRz_reduced = std::move(rhs.pvdpRz_reduced);
     this->DMRGint = std::move(rhs.DMRGint);
     this->hRGint_tmp = std::move(rhs.hRGint_tmp);
-    this->DMRGint_full = rhs.DMRGint_full;
-    rhs.DMRGint_full = nullptr;
+    this->dm2d_tmp = rhs.dm2d_tmp;
+    rhs.dm2d_tmp = nullptr;
 
     return *this;
 }
