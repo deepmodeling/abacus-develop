@@ -90,11 +90,14 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     int source_rank = status.MPI_SOURCE;
                     MPI_Recv(&recv_nbands, 1, MPI_INT, source_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     int* recv_ik2iktot = new int[recv_nks_np]; 
-                    MPI_Recv(recv_ik2iktot, recv_nks_np, MPI_INT,  source_rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(recv_ik2iktot, recv_nks_np, MPI_INT, source_rank, 
+                             2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     ModuleBase::matrix recv_ekb(recv_nks_np, recv_nbands);
-                    MPI_Recv(recv_ekb.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(recv_ekb.c, recv_nks_np * recv_nbands, MPI_DOUBLE, 
+                             source_rank, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     ModuleBase::matrix recv_wg(recv_nks_np, recv_nbands);
-                    MPI_Recv(recv_wg.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+                    MPI_Recv(recv_wg.c, recv_nks_np * recv_nbands, MPI_DOUBLE, source_rank, 4, 
+                             MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
                     
                     // print EIGENVALUES and OCCUPATIONS of received k-points
                     for (int ik = 0; ik < recv_nks_np; ++ik)
@@ -161,7 +164,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
 void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 		const ModuleBase::matrix &wg, 
 		const K_Vectors& kv,
-		const int istep_in)
+		const int istep)
 {
 	ModuleBase::TITLE("ModuleIO","write_eig_file");
 	ModuleBase::timer::tick("ModuleIO", "write_eig_file");
@@ -210,24 +213,24 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = PARAM.globalv.global_out_dir + "eig_occ";
-
-	if(istep_in == -1)
-	{
-		// do nothing
-	}
-	else if(istep_in >= 0)
-	{
-		filename += "_g" + std::to_string(istep_in+1);
-	}
-
-    filename += ".txt";
+    std::string filename = PARAM.globalv.global_out_dir + "eig_occ.txt";
 
     GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::ofstream ofs_eig0(filename.c_str()); // clear eig_occ.txt
+        std::ofstream ofs_eig0;
+
+		if(PARAM.inp.out_app_flag==true)
+		{
+			ofs_eig0.open(filename.c_str(), std::ios::app);
+		}
+		else
+		{
+			ofs_eig0.open(filename.c_str());
+		}
+       
+        ofs_eig0 << istep+1 << "     # ionic step" << std::endl;
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();

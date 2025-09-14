@@ -13,7 +13,7 @@ namespace ModuleIO
 	void write_eig_file(const ModuleBase::matrix &ekb,
 			const ModuleBase::matrix &wg,
 			const K_Vectors& kv,
-			const int istep_in);
+			const int istep);
 }
 
 #endif

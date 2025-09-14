@@ -715,25 +715,46 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
 	//----------------------------------------------------------
 	if (PARAM.inp.out_dos)
 	{
+        bool out_dos_tmp = false;
+
 		int istep_in = -1;
-		if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+
+		// default value of out_freq_ion is 0
+		if(PARAM.inp.out_freq_ion==0)
+		{
+			out_dos_tmp = true;
+		}
+		else if (PARAM.inp.out_freq_ion>0)
 		{
 			if (istep % PARAM.inp.out_freq_ion == 0)
 			{
+				out_dos_tmp = true;
 				istep_in=istep;
 			}
+			else
+			{
+				out_dos_tmp = false;
+			}
 		}
-		ModuleIO::write_dos_pw(ucell,
-				this->pelec->ekb,
-				this->pelec->wg,
-				this->kv,
-				PARAM.inp.nbands,
-                istep_in,
-				this->pelec->eferm,
-				PARAM.inp.dos_edelta_ev,
-				PARAM.inp.dos_scale,
-				PARAM.inp.dos_sigma,
-				GlobalV::ofs_running);
+		else
+		{
+			out_dos_tmp = false;
+		}
+
+		if(out_dos_tmp)
+		{
+			ModuleIO::write_dos_pw(ucell,
+					this->pelec->ekb,
+					this->pelec->wg,
+					this->kv,
+					PARAM.inp.nbands,
+					istep_in,
+					this->pelec->eferm,
+					PARAM.inp.dos_edelta_ev,
+					PARAM.inp.dos_scale,
+					PARAM.inp.dos_sigma,
+					GlobalV::ofs_running);
+		}
 	}
 
     //------------------------------------------------------------------

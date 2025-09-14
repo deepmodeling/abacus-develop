@@ -556,27 +556,17 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
-    // 3) write eigenvalues
-    int istep_in = -1;
-	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
-	{
-		if (istep % PARAM.inp.out_freq_ion == 0)
-		{
-            istep_in = istep;
-			// celecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
-		}
-	}
+    // 3) write eigenvalues and occupations to eig_occ.txt
+    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
 
-    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep_in);
-
-    // 3) write band information
+    // 3) write band information to band.txt
     if (PARAM.inp.out_band[0])
     {
         const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "eig";
+            ss << PARAM.globalv.global_out_dir << "band";
 
             if(nspin0==1)
             {
@@ -586,15 +576,6 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
             {
                 ss << "s" << is + 1;
             }
-
-			if(istep == -1)
-			{
-				// do nothing
-			}
-			else if(istep>=0)
-			{
-				ss << "g" << istep+1;
-			}
 
             ss << ".txt";
 
