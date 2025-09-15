@@ -63,7 +63,7 @@ ModulePW::PW_Basis::~PW_Basis()
 ModulePW::PW_Basis_Sup::~PW_Basis_Sup()
 {
 }
-ModulePW::FFT_Bundle::~FFT_Bundle() {};
+ModuleBase::FFT_Bundle::~FFT_Bundle() {};
 void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
 {
 }
