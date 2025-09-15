@@ -7,7 +7,7 @@
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include <complex>
-#include "module_fft/fft_bundle.h"
+#include "source_base/module_fft/fft_bundle.h"
 #include <cstring>
 #ifdef __MPI
 #include "mpi.h"
