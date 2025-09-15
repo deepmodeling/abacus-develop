@@ -546,7 +546,7 @@ struct Input_para
                                                  ///< calculating Columb potential is to that of atomic orbitals
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
-    double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel
+    double exx_opt_orb_tolerence = 1E-12;        ///< the threshold when solving for the zeros of spherical Bessel
                                                  ///< functions for opt ABFs
     bool exx_symmetry_realspace
         = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation

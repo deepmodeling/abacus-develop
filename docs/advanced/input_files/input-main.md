@@ -2977,7 +2977,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 - **Type**: Real
 - **Availability**: *[calculation](#calculation)==gen_opt_abfs*
 - **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
-- **Default**: 0
+- **Default**: 1E-12
 
 ### exx_real_number
 
