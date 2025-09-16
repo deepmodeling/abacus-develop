@@ -546,7 +546,7 @@ struct Input_para
                                                  ///< calculating Columb potential is to that of atomic orbitals
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
-    double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel
+    double exx_opt_orb_tolerence = 1E-12;        ///< the threshold when solving for the zeros of spherical Bessel
                                                  ///< functions for opt ABFs
     bool exx_symmetry_realspace
         = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
@@ -654,6 +654,8 @@ struct Input_para
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true; // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
     bool exx_gamma_extrapolation = true; // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+    std::string exx_thr_type = "density"; // threshold type for exx outer loop, energy or density
+    double exx_ene_thr = 1e-5; // threshold for exx outer loop when exx_thr_type = energy
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*

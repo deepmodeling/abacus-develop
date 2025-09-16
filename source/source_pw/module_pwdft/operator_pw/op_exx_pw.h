@@ -69,10 +69,6 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void multiply_potential(T *density_recip, int ik, int iq) const;
 
-    double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type, double erfc_omega = 0) const;
-
-    void get_potential() const;
-
     void act_op(const int nbands,
                 const int nbasis,
                 const int npol,
@@ -163,6 +159,33 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     bool gamma_extrapolation = true;
 
 };
+
+template <typename Real, typename Device>
+void get_exx_potential(const K_Vectors* kv,
+                       const ModulePW::PW_Basis_K* wfcpw,
+                       ModulePW::PW_Basis* rhopw_dev,
+                       Real* pot,
+                       double tpiba,
+                       bool gamma_extrapolation,
+                       double ucell_omega);
+
+template <typename Real, typename Device>
+void get_exx_stress_potential(const K_Vectors* kv,
+                              const ModulePW::PW_Basis_K* wfcpw,
+                              ModulePW::PW_Basis* rhopw_dev,
+                              Real* pot,
+                              double tpiba,
+                              bool gamma_extrapolation,
+                              double ucell_omega);
+
+double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
+                      double erfc_omega,
+                      const K_Vectors* kv,
+                      const ModulePW::PW_Basis_K* wfcpw,
+                      ModulePW::PW_Basis* rhopw_dev,
+                      double tpiba,
+                      bool gamma_extrapolation,
+                      double ucell_omega);
 
 } // namespace hamilt
 

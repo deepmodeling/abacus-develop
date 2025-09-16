@@ -1,6 +1,7 @@
 #include "exx_opt_orb.h"
 #include "../../source_pw/module_pwdft/global.h"
 #include "exx_abfs-jle.h"
+#include <iomanip>
 
 void Exx_Opt_Orb::print_matrix(
 	const Exx_Info::Exx_Info_Opt_ABFs &info,
@@ -204,6 +205,7 @@ void Exx_Opt_Orb::print_matrix(
 	
 	std::ofstream ofs(file_name+"_"+std::to_string(TA)+"_"+std::to_string(IA)+"_"+std::to_string(TB)+"_"+std::to_string(IB));
 	print_header(ofs);
+	ofs<<std::setprecision(15);
 	print_Q(ofs);
 	print_S(ofs);
 	print_V(ofs);

@@ -334,6 +334,8 @@ OBJS_HAMILT=hamilt_pw.o\
     op_exx_pw.o\
     ekinetic_pw.o\
     ekinetic_op.o\
+    exx_pw_ace.o\
+    exx_pw_pot.o\
     hpsi_norm_op.o\
     veff_pw.o\
     veff_op.o\
