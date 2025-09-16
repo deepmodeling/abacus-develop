@@ -222,9 +222,10 @@ void transfer_dm_2d_to_gint(
         int mg = dm[0]->get_paraV()->get_global_row_size()/2;
         int ng = dm[0]->get_paraV()->get_global_col_size()/2;
         int nb = dm[0]->get_paraV()->get_block_size()/2;
+        const UnitCell* ucell = gint_info.get_ucell();
+        auto ijr_info = dm[0]->get_ijr_info();
 #ifdef __MPI
         int blacs_ctxt = dm[0]->get_paraV()->blacs_ctxt;
-        const UnitCell* ucell = gint_info.get_ucell();
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
@@ -232,8 +233,11 @@ void transfer_dm_2d_to_gint(
         Parallel_Orbitals *pv = new Parallel_Orbitals();
         pv->set(mg, ng, nb, blacs_ctxt);
         pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = dm[0]->get_ijr_info();
         HContainer<T>* dm2d_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
+#else
+        dm2d_tmp = new hamilt::HContainer<double>(ucell->nat);
+        dm2d_tmp -> insert_ijrs(gint_info.get_ijr_info(), *ucell);
+        dm2d_tmp -> allocate(nullptr, true);
 #endif
          for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap) {
