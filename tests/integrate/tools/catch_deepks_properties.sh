@@ -203,6 +203,11 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
     # Process deepks_out_freq_elec > 0
     if [ ! -z "$deepks_out_freq_elec" ] && [ $deepks_out_freq_elec -gt 0 ]; then
         process_many_npys "multi" "_elec" "$1"
+        if ! test -z "$deepks_v_delta" && [[ $deepks_v_delta -gt 0 ]]; then
+            process_npy "single" "abs" "overlap" "" "deepks_overlap" "$1"
+            process_npy "multi" "abs" "overlap" "" "deepks_overlap_elec" "$1"
+            
+        fi
     fi
 fi
 

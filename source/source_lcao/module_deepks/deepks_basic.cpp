@@ -61,6 +61,15 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     ModuleBase::TITLE("DeePKS_domain", "load_model");
     ModuleBase::timer::tick("DeePKS_domain", "load_model");
 
+    // check whether file exists
+    std::ifstream ifs(model_file.c_str());
+    if (!ifs)
+    {
+        ModuleBase::timer::tick("DeePKS_domain", "load_model");
+        ModuleBase::WARNING_QUIT("DeePKS_domain::load_model", "No model file named " + model_file + ", please check!");
+        return;
+    }
+    ifs.close();
     try
     {
         model = torch::jit::load(model_file);

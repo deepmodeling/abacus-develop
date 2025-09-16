@@ -264,7 +264,6 @@ void transfer_dm_2d_to_gint(
             dm_gint[is].add(*dm2d_tmp);
 #endif
         }
-
     }
     ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
 }

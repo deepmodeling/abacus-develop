@@ -174,22 +174,19 @@ void Exx_Opt_Orb::generate_matrix(
 							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, T,I,T,I );
 							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
 							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
-								cal_proj_22(
-									ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
+								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I) - cal_mul_22(
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I));
 							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
-								{cal_proj_21(
-									ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I)[0],
+								{ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I)[0] - cal_mul_21(
 									ms_lcaoslcaos_abfs.at(T).at(I).at(T).at(I),
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})};
 							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
-								{{cal_proj_11(
-									ms_jys_jys.at(T).at(I).at(T).at(I),
+								{{ms_jys_jys.at(T).at(I).at(T).at(I) - cal_mul_11(
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)},
 									ms_abfs_abfs_I,
 									{ms_jys_abfs.at(T).at(I).at(T).at(I)})}};
@@ -228,42 +225,35 @@ void Exx_Opt_Orb::generate_matrix(
 							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
 							// < lcaos lcaos | lcaos lcaos > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | lcaos lcaos >
 							const RI::Tensor<double> m_lcaoslcaos_lcaoslcaos_proj =
-								cal_proj_22(
-									ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB),
+								ms_lcaoslcaos_lcaoslcaos.at(TA).at(IA).at(TB).at(IB) - cal_mul_22(
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
 									ms_abfs_abfs_I,
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB));
 							// < lcaos lcaos | jys > - < lcaos lcaos | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<RI::Tensor<double>> m_lcaoslcaos_jys_proj =
-								{cal_proj_21(
-									ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[0],
+								{ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[0] - cal_mul_21(
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								 cal_proj_21(
-									ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[1],
+								 ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB)[1] - cal_mul_21(
 									ms_lcaoslcaos_abfs.at(TA).at(IA).at(TB).at(IB),
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) })};
 							// < jys | jys > - < jys | abfs > * < abfs | abfs >.I * < abfs | jys >
 							const std::vector<std::vector<RI::Tensor<double>>> m_jys_jys_proj =
-								{{cal_proj_11(
-									ms_jys_jys.at(TA).at(IA).at(TA).at(IA),
+								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA) - cal_mul_11(
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								  cal_proj_11(
-									ms_jys_jys.at(TA).at(IA).at(TB).at(IB),
+								  ms_jys_jys.at(TA).at(IA).at(TB).at(IB) - cal_mul_11(
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) },
-								 {cal_proj_11(
-									ms_jys_jys.at(TB).at(IB).at(TA).at(IA),
+								 {ms_jys_jys.at(TB).at(IB).at(TA).at(IA) - cal_mul_11(
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TA).at(IA).at(TA).at(IA), ms_jys_abfs.at(TA).at(IA).at(TB).at(IB) }),
-								  cal_proj_11(
-									ms_jys_jys.at(TB).at(IB).at(TB).at(IB),
+								  ms_jys_jys.at(TB).at(IB).at(TB).at(IB) - cal_mul_11(
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) },
 									ms_abfs_abfs_I,
 									{ ms_jys_abfs.at(TB).at(IB).at(TA).at(IA), ms_jys_abfs.at(TB).at(IB).at(TB).at(IB) }) }};
@@ -301,86 +291,94 @@ void Exx_Opt_Orb::generate_matrix(
 	}
 }
 
-// m_big - m_left * m_middle * m_right.T
-RI::Tensor<double> Exx_Opt_Orb::cal_proj_22(
-	const RI::Tensor<double> & m_big,
+// m_left * m_middle * m_right.T
+RI::Tensor<double> Exx_Opt_Orb::cal_mul_22(
 	const std::vector<RI::Tensor<double>> & m_left,
 	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_proj_22");
-	RI::Tensor<double> m_proj = m_big.copy();
+	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_22");
+	RI::Tensor<double> m_mul;
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
 		for( size_t ir=0; ir!=m_right.size(); ++ir )
 		{
-			// m_proj = m_proj - m_left[il] * m_middle[il][ir] * m_right[ir].T;
+			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
 			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0x1y1_x0x1a_ay1(m_left[il], m_middle[il][ir]);
 			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0x1y0y1_x0x1a_y0y1a(m_lm, m_right[ir]);
-			m_proj -= m_lmr;
+			if(m_mul.empty())
+				{ m_mul = std::move(m_lmr); }
+			else
+				{ m_mul += m_lmr; }
 		}
 	}
-	return m_proj;
+	return m_mul;
 }
-RI::Tensor<double> Exx_Opt_Orb::cal_proj_21(
-	const RI::Tensor<double> & m_big,
+RI::Tensor<double> Exx_Opt_Orb::cal_mul_21(
 	const std::vector<RI::Tensor<double>> & m_left,
 	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_proj_21");
-	RI::Tensor<double> m_proj = m_big.copy();
+	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_21");
+	RI::Tensor<double> m_mul;
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
 		for( size_t ir=0; ir!=m_right.size(); ++ir )
 		{
-			// m_proj = m_proj - m_left[il] * m_middle[il][ir] * m_right[ir].T;
+			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
 			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0x1y1_x0x1a_ay1(m_left[il], m_middle[il][ir]);
 			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0x1y0_x0x1a_y0a(m_lm, m_right[ir]);
-			m_proj -= m_lmr;
+			if(m_mul.empty())
+				{ m_mul = std::move(m_lmr); }
+			else
+				{ m_mul += m_lmr; }
 		}
 	}
-	return m_proj;
+	return m_mul;
 }
-RI::Tensor<double> Exx_Opt_Orb::cal_proj_12(
-	const RI::Tensor<double> & m_big,
+RI::Tensor<double> Exx_Opt_Orb::cal_mul_12(
 	const std::vector<RI::Tensor<double>> & m_left,
 	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_proj_12");
-	RI::Tensor<double> m_proj = m_big.copy();
+	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_12");
+	RI::Tensor<double> m_mul;
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
 		for( size_t ir=0; ir!=m_right.size(); ++ir )
 		{
-			// m_proj = m_proj - m_left[il] * m_middle[il][ir] * m_right[ir].T;
+			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
 			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0y1_x0a_ay1(m_left[il], m_middle[il][ir]);
 			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0y0y1_x0a_y0y1a(m_lm, m_right[ir]);
-			m_proj -= m_lmr;
+			if(m_mul.empty())
+				{ m_mul = std::move(m_lmr); }
+			else
+				{ m_mul += m_lmr; }
 		}
 	}
-	return m_proj;
+	return m_mul;
 }
-RI::Tensor<double> Exx_Opt_Orb::cal_proj_11(
-	const RI::Tensor<double> & m_big,
+RI::Tensor<double> Exx_Opt_Orb::cal_mul_11(
 	const std::vector<RI::Tensor<double>> & m_left,
 	const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 	const std::vector<RI::Tensor<double>> & m_right ) const
 {
-	ModuleBase::TITLE("Exx_Opt_Orb::cal_proj_11");
-	RI::Tensor<double> m_proj = m_big.copy();
+	ModuleBase::TITLE("Exx_Opt_Orb::cal_mul_11");
+	RI::Tensor<double> m_mul;
 	for( size_t il=0; il!=m_left.size(); ++il )
 	{
 		for( size_t ir=0; ir!=m_right.size(); ++ir )
 		{
-			// m_proj = m_proj - m_left[il] * m_middle[il][ir] * m_right[ir].T;
+			// m_mul += m_left[il] * m_middle[il][ir] * m_right[ir].T;
 			const RI::Tensor<double> m_lm = RI::Tensor_Multiply::x0y1_x0a_ay1(m_left[il], m_middle[il][ir]);
 			const RI::Tensor<double> m_lmr = RI::Tensor_Multiply::x0y0_x0a_y0a(m_lm, m_right[ir]);
-			m_proj -= m_lmr;
+			if(m_mul.empty())
+				{ m_mul = std::move(m_lmr); }
+			else
+				{ m_mul += m_lmr; }
 		}
 	}
-	return m_proj;
+	return m_mul;
 }
 
 std::vector<std::vector<RI::Tensor<double>>> Exx_Opt_Orb::cal_I(
