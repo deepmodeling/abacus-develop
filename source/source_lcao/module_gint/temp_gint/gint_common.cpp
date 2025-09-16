@@ -235,7 +235,7 @@ void transfer_dm_2d_to_gint(
         pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         HContainer<T>* dm2d_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
 #else
-        dm2d_tmp = new hamilt::HContainer<double>(ucell->nat);
+        auto* dm2d_tmp = new hamilt::HContainer<double>(ucell->nat);
         dm2d_tmp -> insert_ijrs(gint_info.get_ijr_info(), *ucell);
         dm2d_tmp -> allocate(nullptr, true);
 #endif
