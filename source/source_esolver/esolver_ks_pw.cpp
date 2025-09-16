@@ -589,10 +589,20 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                 auto start = std::chrono::high_resolution_clock::now();
                 exx_helper.set_firstiter(false);
                 exx_helper.op_exx->first_iter = false;
+                double dexx = 0.0;
+                if (PARAM.inp.exx_thr_type == "energy")
+                {
+                    dexx = exx_helper.cal_exx_energy(this->kspw_psi);
+                }
                 exx_helper.set_psi(this->kspw_psi);
+                if (PARAM.inp.exx_thr_type == "energy")
+                {
+                    dexx -= exx_helper.cal_exx_energy(this->kspw_psi);
+                    // std::cout << "dexx = " << dexx << std::endl;
+                }
+                bool conv_ene = std::abs(dexx) < PARAM.inp.exx_ene_thr;
 
-                conv_esolver = exx_helper.exx_after_converge(iter);
-
+                conv_esolver = exx_helper.exx_after_converge(iter, conv_ene);
                 if (!conv_esolver)
                 {
                     auto duration = std::chrono::high_resolution_clock::now() - start;
@@ -602,6 +612,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                     update_pot(ucell, istep, iter, conv_esolver);
+                    exx_helper.iter_inc();
                 }
             }
         }
@@ -614,8 +625,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
     //----------------------------------------------------------
-    if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+    if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax)
     {
+        // conv_esolver == true has already been dealt with in after_scf
         ModuleIO::write_wfc_pw(GlobalV::KPAR,
                                GlobalV::MY_POOL,
                                GlobalV::MY_RANK,

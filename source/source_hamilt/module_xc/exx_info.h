@@ -81,7 +81,7 @@ struct Exx_Info
     {
         int abfs_Lmax = 0; // tmp
         double ecut_exx = 60;
-        double tolerence = 1E-2;
+        double tolerence = 1E-12;
         double kmesh_times = 4;
     };
     Exx_Info_Opt_ABFs info_opt_abfs;

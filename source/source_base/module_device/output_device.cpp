@@ -190,7 +190,7 @@ void print_device_info<base_device::DEVICE_GPU>(
     ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
   }
   int dev = 0, driverVersion = 0, runtimeVersion = 0;
-  cudaErrcheck(cudaSetDevice(dev));
+  cudaErrcheck(cudaGetDevice(&dev));
   cudaDeviceProp deviceProp;
   cudaErrcheck(cudaGetDeviceProperties(&deviceProp, dev));
   ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
@@ -429,7 +429,7 @@ void print_device_info<base_device::DEVICE_GPU>(
     ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
   }
   int dev = 0, driverVersion = 0, runtimeVersion = 0;
-  hipErrcheck(hipSetDevice(dev));
+  hipErrcheck(hipGetDevice(&dev));
   hipDeviceProp_t deviceProp;
   hipErrcheck(hipGetDeviceProperties(&deviceProp, dev));
   ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;

@@ -23,23 +23,19 @@ private:
 	std::vector<std::vector<RI::Tensor<double>>> cal_I( 
 		const std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> &ms, 
 		const size_t TA, const size_t IA, const size_t TB, const size_t IB ) const;
-	RI::Tensor<double> cal_proj_22(
-		const RI::Tensor<double> & m_big,
+	RI::Tensor<double> cal_mul_22(
 		const std::vector<RI::Tensor<double>> & m_left,
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 		const std::vector<RI::Tensor<double>> & m_right ) const;
-	RI::Tensor<double> cal_proj_21(
-		const RI::Tensor<double> & m_big,
+	RI::Tensor<double> cal_mul_21(
 		const std::vector<RI::Tensor<double>> & m_left,
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 		const std::vector<RI::Tensor<double>> & m_right ) const;
-	RI::Tensor<double> cal_proj_12(
-		const RI::Tensor<double> & m_big,
+	RI::Tensor<double> cal_mul_12(
 		const std::vector<RI::Tensor<double>> & m_left,
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 		const std::vector<RI::Tensor<double>> & m_right ) const;
-	RI::Tensor<double> cal_proj_11(
-		const RI::Tensor<double> & m_big,
+	RI::Tensor<double> cal_mul_11(
 		const std::vector<RI::Tensor<double>> & m_left,
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 		const std::vector<RI::Tensor<double>> & m_right ) const;
