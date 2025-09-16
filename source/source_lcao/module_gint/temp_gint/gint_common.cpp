@@ -80,6 +80,7 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     int ng = hR->get_paraV()->get_global_col_size()/2;
     int nb = hR->get_paraV()->get_block_size()/2;
     const UnitCell* ucell_in = gint_info.get_ucell();
+    auto ijr_info = hR->get_ijr_info();
 #ifdef __MPI
     int blacs_ctxt = hR->get_paraV()->blacs_ctxt;
     std::vector<int> iat2iwt(ucell_in->nat);
@@ -89,10 +90,9 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     Parallel_Orbitals *pv = new Parallel_Orbitals();
     pv->set(mg, ng, nb, blacs_ctxt);
     pv->set_atomic_trace(iat2iwt.data(), ucell_in->nat, mg);
-    auto ijr_info = hR->get_ijr_info();
-
     auto* hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
-
+    hR_tmp->set_zero();
+#endif
     //select hRGint_tmp
     std::vector<int> first = {0, 1, 1, 0};
     std::vector<int> second= {3, 2, 2, 3};
@@ -104,7 +104,6 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     std::vector<int> clx_j = {0, 1, -1, 0};
     for (int is = 0; is < 4; is++){
         if(!PARAM.globalv.domag && (is==1 || is==2)) continue;
-        hR_tmp->set_zero();
         hamilt::HContainer<std::complex<double>>* hRGint_tmpCd = new hamilt::HContainer<std::complex<double>>(ucell_in->nat);
         hRGint_tmpCd->insert_ijrs(&ijr_info, *ucell_in);
         hRGint_tmpCd->allocate(nullptr, true);
@@ -153,9 +152,12 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
                 }
             }
         }
-
+#ifdef __MPI
         // transfer hRGint_tmpCd to parallel hR_tmp
         hamilt::transferSerials2Parallels( *hRGint_tmpCd, hR_tmp);
+#else
+        auto* hR_tmp = hRGint_tmpCd;
+#endif
         // merge hR_tmp to hR
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
         {
@@ -181,9 +183,6 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
         }
         delete hRGint_tmpCd;
     }
-#else
-
-#endif
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
     return;
 }
@@ -216,13 +215,14 @@ void transfer_dm_2d_to_gint(
         }
     } else  // NSPIN=4 case
     {
-#ifdef __MPI
+
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
         int mg = dm[0]->get_paraV()->get_global_row_size()/2;
         int ng = dm[0]->get_paraV()->get_global_col_size()/2;
         int nb = dm[0]->get_paraV()->get_block_size()/2;
+#ifdef __MPI
         int blacs_ctxt = dm[0]->get_paraV()->blacs_ctxt;
         const UnitCell* ucell = gint_info.get_ucell();
         std::vector<int> iat2iwt(ucell->nat);
@@ -234,6 +234,7 @@ void transfer_dm_2d_to_gint(
         pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
         auto ijr_info = dm[0]->get_ijr_info();
         HContainer<T>* dm2d_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
+#endif
          for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < dm[0]->size_atom_pairs(); ++iap) {
                 auto& ap = dm[0]->get_atom_pair(iap);
@@ -252,11 +253,14 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
+#ifdef __MPI
             hamilt::transferParallels2Serials( *dm2d_tmp, &dm_gint[is]);
-        }
 #else
-        //HContainer<T>& dm_full = *(dm[0]);
+            dm_gint[is].set_zero();
+            dm_gint[is].add(*dm2d_tmp);
 #endif
+        }
+
     }
     ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
 }
