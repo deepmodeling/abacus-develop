@@ -252,13 +252,15 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         }
     } else // NSPIN=4 case
     {
-#ifdef __MPI
+
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
         int mg = DM2D[0]->get_paraV()->get_global_row_size()/2;
         int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
         int nb = DM2D[0]->get_paraV()->get_block_size()/2;
+        auto ijr_info = DM2D[0]->get_ijr_info();
+#ifdef __MPI
         int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
@@ -267,8 +269,15 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         Parallel_Orbitals *pv = new Parallel_Orbitals();
         pv->set(mg, ng, nb, blacs_ctxt);
         pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = DM2D[0]->get_ijr_info();
         this-> dm2d_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
+#else
+        if (this->dm2d_tmp != nullptr) {
+            delete this->dm2d_tmp;
+        }
+        this-> dm2d_tmp = new hamilt::HContainer<double>(*this->hRGint);
+        this-> dm2d_tmp -> insert_ijrs(this->gridt->get_ijr_info(), *(this->ucell));
+        this-> dm2d_tmp -> allocate(nullptr, true);
+#endif
         ModuleBase::Memory::record("Gint::dm2d_tmp", this->dm2d_tmp->get_memory_size());
         for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
@@ -288,11 +297,14 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
                     }
                 }
             }
+#ifdef __MPI
             hamilt::transferParallels2Serials( *(this->dm2d_tmp), this->DMRGint[is]);
-        }
 #else
-        //this->DMRGint_full = DM2D[0];
+            this->DMRGint[is]->set_zero();
+            this->DMRGint[is]->add(*(this->dm2d_tmp));
 #endif
+        }
+
     }
     ModuleBase::timer::tick("Gint", "transfer_DMR");
 }
