@@ -67,7 +67,6 @@ PW_Basis::PW_Basis()
 PW_Basis::~PW_Basis()
 {
 }
-ModuleBase::FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
 {
 }
