@@ -37,6 +37,7 @@ struct Input_para
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
     int nx = 0, ny = 0, nz = 0;    ///< three dimension of FFT wavefunc
+    int fft_batch = 0;             ///< the batch size of FFT on GPU. Set to zero if don't need to use. 
     int ndx = 0, ndy = 0, ndz = 0; ///< three dimension of FFT smooth charge density
 
     double cell_factor = 1.2;           ///< LiuXh add 20180619

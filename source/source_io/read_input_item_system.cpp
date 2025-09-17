@@ -387,6 +387,21 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("fft_batch");
+        item.annotation = "the batch size of FFT on GPU, probably makes cuFFT faster";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.fft_batch = intvalue;
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.fft_batch < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "fft_batch should be set to no less than zero");
+            }
+        };
+        sync_int(input.fft_batch);
+        this->add_item(item);
+    }
+    {
         Input_Item item("ndx");
         item.annotation = "number of points along x axis for FFT smooth grid";
         read_sync_int(input.ndx);
