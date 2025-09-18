@@ -28,7 +28,7 @@ void FFT_CUDA<float>::setupFFT()
         cufftPlanMany(&c_handle, rank, n,
                       inembed, istride, idist,
                       onembed, ostride, odist,
-                      CUFFT_C2C, this->batch_size)
+                      CUFFT_C2C, this->batch_size);
     }
     else{
         cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
@@ -51,7 +51,7 @@ void FFT_CUDA<double>::setupFFT()
         cufftPlanMany(&z_handle, rank, n,
                       inembed, istride, idist,
                       onembed, ostride, odist,
-                      CUFFT_Z2Z, this->batch_size)
+                      CUFFT_Z2Z, this->batch_size);
     }
     else{
         cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
