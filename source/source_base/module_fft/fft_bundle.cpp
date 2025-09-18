@@ -42,6 +42,7 @@ void FFT_Bundle::initfft(int nx_in,
                          int nproc_in,
                          bool gamma_only_in,
                          bool xprime_in,
+                         int batch_size,
                          bool mpifft_in)
 {
     assert(this->device == "cpu" || this->device == "gpu" || this->device == "dsp");

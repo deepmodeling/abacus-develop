@@ -6,11 +6,12 @@
 namespace ModuleBase
 {
 template <typename FPTYPE>
-void FFT_CUDA<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in)
+void FFT_CUDA<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in, int batch_size)
 {
     this->nx = nx_in;
     this->ny = ny_in;
     this->nz = nz_in;
+    this->batch_size = batch_size;
 }
 template <>
 void FFT_CUDA<float>::setupFFT()

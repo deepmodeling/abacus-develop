@@ -37,7 +37,7 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
                  int ns_in, 
                  int nplane_in, 
                  int nproc_in, 
-                 bool gamma_only_in, 
+                 bool gamma_only_in,
                  bool xprime_in = true) override;
                  
 	__attribute__((weak)) 

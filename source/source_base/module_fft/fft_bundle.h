@@ -61,6 +61,7 @@ class FFT_Bundle
                  int nproc_in,
                  bool gamma_only_in,
                  bool xprime_in = true,
+                 int batch_size = 0,
                  bool mpifft_in = false);
 
     /**

@@ -24,11 +24,13 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         * @param nx_in  number of grid points in x direction
         * @param ny_in  number of grid points in y direction
         * @param nz_in  number of grid points in z direction
+        * @param batch_size  number of batches. Please set to zero if batch FFT is not needed.
         * 
         */
         void initfft(int nx_in, 
                      int ny_in, 
-                     int nz_in) override;
+                     int nz_in,
+                     int batch_size) override;
         
         /**
          * @brief Get the real space data
@@ -60,6 +62,8 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
        
         std::complex<float>* c_auxr_3d = nullptr;  // fft space
         std::complex<double>* z_auxr_3d = nullptr; // fft space
+
+        int batch_size = 0;
 
 };
 

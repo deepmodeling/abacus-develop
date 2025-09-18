@@ -15,6 +15,7 @@ class FFT_BASE
      * @brief Initialize the fft parameters as virtual function.
      *
      * The function is used to initialize the fft parameters.
+     * Only FFT on GPU supports batch FFT. So only the second function has the batch_size parameter.
      */
     virtual __attribute__((weak)) void initfft(int nx_in,
                                                int ny_in,
@@ -27,7 +28,7 @@ class FFT_BASE
                                                bool gamma_only_in,
                                                bool xprime_in = true);
 
-    virtual __attribute__((weak)) void initfft(int nx_in, int ny_in, int nz_in);
+    virtual __attribute__((weak)) void initfft(int nx_in, int ny_in, int nz_in, int batch_size = 0);
 
     /**
      * @brief Setup the fft plan and data as pure virtual function.
