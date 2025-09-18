@@ -66,6 +66,11 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     // delete Hamilt
     this->deallocate_hamilt();
 
+    if (this->vsep_cell != nullptr)
+    {
+        delete this->vsep_cell;
+    }
+
     if (this->pelec != nullptr)
     {
         delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
@@ -141,6 +146,14 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! 3) inititlize the charge density.
     this->chr.allocate(inp.nspin);
 
+    // 3.5) initialize DFT-1/2
+    if (PARAM.inp.dfthalf_type > 0)
+    {
+        this->vsep_cell = new VSep;
+        this->vsep_cell->init_vsep(*this->pw_rhod, ucell.sep_cell);
+    }
+
+
     //! 4) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
@@ -151,7 +164,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &(this->sf),
                                                     &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
-                                                    &(this->pelec->f_en.vtxc));
+                                                    &(this->pelec->f_en.vtxc),
+                                                    this->vsep_cell);
     }
 
     //! 5) Initalize local pseudopotential
@@ -210,11 +224,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
             exx_helper.set_wg(&this->pelec->wg);
         }
     }
-
-    // 10) initialize DFT-1/2
-    if (PARAM.inp.dfthalf_type > 0) {
-        GlobalC::vsep_cell.init_vsep(*this->pw_rhod);
-    }
 }
 
 template <typename T, typename Device>
@@ -271,8 +280,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     //! 4.5) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
     //----------------------------------------------------------
-    if (PARAM.inp.dfthalf_type > 0) {
-        GlobalC::vsep_cell.generate_vsep_r(this->pw_rhod[0], this->sf.strucFac);
+    if (PARAM.inp.dfthalf_type > 0)
+    {
+        this->vsep_cell->generate_vsep_r(this->pw_rhod[0], this->sf.strucFac, ucell.sep_cell);
     }
 
     //----------------------------------------------------------

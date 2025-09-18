@@ -20,6 +20,10 @@ pseudo::~pseudo() {}
 // constructor of UnitCell
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 void UnitCell::set_iat2iwt(const int& npol_in) {
     this->iat2iwt.resize(this->nat);

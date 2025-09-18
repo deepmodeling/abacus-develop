@@ -134,7 +134,7 @@ TEST_F(SepCellTest, ReadSepPotentialsSuccess)
 
         sep_cell.init(ucell.ntype);
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell);
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 
@@ -153,8 +153,8 @@ TEST_F(SepCellTest, ReadSepPotentialsSuccess)
         EXPECT_EQ(seps[0].label, "");    // Default value
 
         EXPECT_TRUE(seps[1].is_enable); // Default value
-        EXPECT_EQ(seps[1].mesh, 1038);   // Default value
-        EXPECT_EQ(seps[1].label, "F");   // Default value
+        EXPECT_EQ(seps[1].mesh, 1038);  // Default value
+        EXPECT_EQ(seps[1].label, "F");  // Default value
         EXPECT_DOUBLE_EQ(seps[1].r_in, 0.0);
         EXPECT_DOUBLE_EQ(seps[1].r_out, 2.5);
         EXPECT_DOUBLE_EQ(seps[1].r_power, 20.0);
@@ -179,7 +179,7 @@ TEST_F(SepCellTest, ReadSepPotentialsNoSepFilesSection)
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
 
         sep_cell.init(ucell.ntype);
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell);
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 
@@ -202,7 +202,7 @@ TEST_F(SepCellTest, BcastSepCell)
 
         sep_cell.init(ucell.ntype);
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell);
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 
@@ -258,7 +258,7 @@ TEST_F(SepCellTest, BcastSepCell)
     EXPECT_DOUBLE_EQ(seps[1].r[0], 3.4643182373e-06);
     EXPECT_DOUBLE_EQ(seps[1].rv[0], -2.0868200000e-05);
     EXPECT_DOUBLE_EQ(seps[1].r[7], 2.8965849122e-05);
-    EXPECT_DOUBLE_EQ(seps[1].rv[7],	-1.9723800000e-05);
+    EXPECT_DOUBLE_EQ(seps[1].rv[7], -1.9723800000e-05);
 }
 #endif // __MPI
 

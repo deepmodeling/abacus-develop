@@ -58,7 +58,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
 #endif
     else if (pot_type == "dfthalf") {
-        return new PotSep(&(this->structure_factors_->strucFac), this->rho_basis_);
+        return new PotSep(&(this->structure_factors_->strucFac), this->rho_basis_, this->vsep_cell);
     }
     else
     {

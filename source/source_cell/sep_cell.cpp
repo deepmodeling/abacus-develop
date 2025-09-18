@@ -4,15 +4,15 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
-#include "source_cell/unitcell.h"
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
-namespace GlobalC
-{
-Sep_Cell sep_cell;
-}
+// namespace GlobalC
+// {
+// Sep_Cell sep_cell;
+// }
 
 Sep_Cell::Sep_Cell() noexcept : ntype(0), omega(0.0), tpiba2(0.0)
 {
@@ -48,7 +48,7 @@ void Sep_Cell::set_omega(const double omega_in, const double tpiba2_in)
 int Sep_Cell::read_sep_potentials(std::ifstream& ifpos,
                                   const std::string& pp_dir,
                                   std::ofstream& ofs_running,
-                                  UnitCell& ucell)
+                                  std::vector<std::string>& ucell_atom_label)
 {
     ModuleBase::TITLE("Sep_Cell", "read_sep_potentials");
 
@@ -71,10 +71,10 @@ int Sep_Cell::read_sep_potentials(std::ifstream& ifpos,
         ss >> atom_label >> enable_tmp;
 
         // Validate atom label
-        if (atom_label != ucell.atom_label[i])
+        if (atom_label != ucell_atom_label[i])
         {
             GlobalV::ofs_running << "Sep potential and atom order do not match. "
-                                 << "Expected: " << ucell.atoms[i].label << ", Got: " << atom_label << std::endl;
+                                 << "Expected: " << ucell_atom_label[i] << ", Got: " << atom_label << std::endl;
             return false;
         }
         this->sep_enable[i] = enable_tmp;

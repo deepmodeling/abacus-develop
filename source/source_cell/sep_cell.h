@@ -4,9 +4,9 @@
 #define SEP_CELL
 
 #include "source_cell/sep.h"
-#include "source_cell/unitcell.h"
 
 #include <fstream>
+#include <string>
 #include <vector>
 
 class Sep_Cell
@@ -25,7 +25,7 @@ class Sep_Cell
     int read_sep_potentials(std::ifstream& ifpos,
                             const std::string& pp_dir,
                             std::ofstream& ofs_running,
-                            UnitCell& ucell);
+                            std::vector<std::string>& ucell_atom_label);
 
 #ifdef __MPI
     // Broadcasts the Sep_Cell object to all processes
@@ -66,9 +66,9 @@ class Sep_Cell
     double tpiba2; // tpiba ^ 2
 };
 
-namespace GlobalC
-{
-extern Sep_Cell sep_cell;
-}
+// namespace GlobalC
+// {
+// extern Sep_Cell sep_cell;
+// }
 
 #endif // SEP_CEll

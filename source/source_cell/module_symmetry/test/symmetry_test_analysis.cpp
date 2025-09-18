@@ -6,7 +6,7 @@
  * 1-1. test if the bravis lattice analysis is right;
  * 1-2. check if matrix-type and vector3-type;
  *     input and optimized lattice vectors are right;
- * 1-3. double-check for  if `gtrans_convert` 
+ * 1-3. double-check for  if `gtrans_convert`
  *     gives the same results as `veccon`;
  * 1-4. check `invmap` function gives the right result;
  * 1-5 test if `gmatrix_convert` and `gmatrix_convert_int`
@@ -14,7 +14,7 @@
  * 2. function: `atom_ordering_new:
  * test the new atom-sort algorithm gives the right result;
  *3. function: `pricell`:
- * test if the number of primitive cells are right, 
+ * test if the number of primitive cells are right,
  * using cases whose space group
  * is different from its point group.
  ***********************************************/
@@ -34,6 +34,10 @@ UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism() {}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 TEST_F(SymmetryTest, AnalySys)
 {
@@ -50,8 +54,8 @@ TEST_F(SymmetryTest, AnalySys)
         int cal_ibrav = symm.real_brav;
         EXPECT_EQ(cal_ibrav, ref_ibrav);
         EXPECT_EQ(cal_point_group, ref_point_group) << "ibrav=" << stru_lib[stru].ibrav;
-        
-        //2. input and optimized lattice, gtrans_convert and veccon 
+
+        //2. input and optimized lattice, gtrans_convert and veccon
         //input lattice
         EXPECT_EQ(symm.s1, ucell.a1);
         EXPECT_EQ(symm.s2, ucell.a2);
@@ -73,7 +77,7 @@ TEST_F(SymmetryTest, AnalySys)
         symm.gtrans_convert(symm.gtrans, gtrans_optconf.data(), symm.nrotk, ucell.latvec, symm.optlat);
         symm.veccon(gtrans_veccon, gtrans_optconf_veccon, symm.nrotk, symm.s1, symm.s2, symm.s3, symm.a1, symm.a2, symm.a3);
         for(int i=0;i<symm.nrotk;++i)
-            EXPECT_EQ(gtrans_optconf[i], ModuleBase::Vector3<double>(gtrans_optconf_veccon[i*3], 
+            EXPECT_EQ(gtrans_optconf[i], ModuleBase::Vector3<double>(gtrans_optconf_veccon[i*3],
             gtrans_optconf_veccon[i*3+1], gtrans_optconf_veccon[i*3+2]));
         delete[] gtrans_veccon;
         delete[] gtrans_optconf_veccon;
@@ -108,7 +112,7 @@ TEST_F(SymmetryTest, AnalySys)
         symm.gmatrix_convert_int(symm.gmatrix, gmatrix_opt, symm.nrotk, ucell.latvec, symm.optlat); //1->2
         symm.gmatrix_convert_int(gmatrix_opt, gmatrix_input_back, symm.nrotk, symm.optlat, ucell.latvec);   //2->3
         symm.gmatrix_convert_int(gmatrix_input_back, gmatrix_opt_back, symm.nrotk, ucell.latvec, symm.optlat); //3->4
-        
+
         symm.gmatrix_convert(symm.gmatrix, kgmatrix_nonint, symm.nrotk, ucell.latvec, ucell.G);
         for (int i=0;i<symm.nrotk;++i)
         {
@@ -130,7 +134,7 @@ TEST_F(SymmetryTest, AnalySys)
             EXPECT_NEAR(gmatrix_opt[i].e31, gmatrix_opt_back[i].e31, DOUBLETHRESHOLD);
             EXPECT_NEAR(gmatrix_opt[i].e23, gmatrix_opt_back[i].e23, DOUBLETHRESHOLD);
             EXPECT_NEAR(gmatrix_opt[i].e32, gmatrix_opt_back[i].e32, DOUBLETHRESHOLD);
-            
+
             ModuleBase::Matrix3 tmpA=symm.optlat.Inverse()*gmatrix_opt[i]*symm.optlat; //A^-1*SA*A
             ModuleBase::Matrix3 tmpB=ucell.latvec.Inverse()*symm.gmatrix[i]*ucell.latvec;//B^-1*SB*B
             ModuleBase::Matrix3 tmpG_int=ucell.G.Inverse()*symm.kgmatrix[i]*ucell.G;//G^-1*SG*G
@@ -168,7 +172,7 @@ TEST_F(SymmetryTest, AnalySys)
             EXPECT_NEAR(tmpA.e23, tmpG.e23, DOUBLETHRESHOLD);
             EXPECT_NEAR(tmpA.e32, tmpG.e32, DOUBLETHRESHOLD);
         }
-            
+
         delete[] gmatrix_input_back;
         delete[] gmatrix_opt;
         delete[] gmatrix_opt_back;
@@ -180,7 +184,7 @@ TEST_F(SymmetryTest, AnalySys)
 
 TEST_F(SymmetryTest, AtomOrderingNew)
 {
-    // the old function `atom_ordering` has bugs 
+    // the old function `atom_ordering` has bugs
     // so here I do not compare with its results
     ModuleSymmetry::Symmetry symm;
     symm.epsilon=1e-5;
@@ -199,7 +203,7 @@ TEST_F(SymmetryTest, AtomOrderingNew)
     }
     //ordering
     symm.test_atom_ordering(new_pos, nat, subindex);
-    //check 
+    //check
     for (int i=0;i<nat-1;++i)
     {
         //x[i]<=x[i+1]
@@ -250,7 +254,7 @@ TEST_F(SymmetryTest, SG_Pricell)
         std::string cal_point_group = symm.pgname;
         std::string ref_space_group = supercell_lib[stru].space_group;
         std::string cal_space_group = symm.spgname;
-        
+
         int ref_ncells = supercell_lib[stru].ibrav;
         EXPECT_EQ(symm.ncell, ref_ncells);
         EXPECT_EQ(cal_point_group, ref_point_group);
