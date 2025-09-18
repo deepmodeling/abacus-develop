@@ -60,7 +60,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     // Ions_Move_Basic::istep = istep;
     Ions_Move_Basic::istep = force_step;
 
-    if (Ions_Move_Basic::relax_method == "bfgs")
+    if (Ions_Move_Basic::relax_method == "bfgs_old")
     {
         // move_ions
         // output tau
@@ -79,7 +79,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
     }
-    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    else if(Ions_Move_Basic::relax_method == "bfgs")
     {
         bfgs_trad.relax_step(f,ucell);        
     }
