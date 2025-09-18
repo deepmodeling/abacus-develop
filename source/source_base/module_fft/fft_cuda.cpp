@@ -16,14 +16,47 @@ void FFT_CUDA<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in, int batch_size)
 template <>
 void FFT_CUDA<float>::setupFFT()
 {
-    cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
-    resmem_cd_op()(this->c_auxr_3d, this->nx * this->ny * this->nz);
+    if (this->batch_size){
+        int rank = 3; // this means the dimension is 3
+        int n[3] = {this->nx, this->ny, this->nz};
+        int inembed[3] = {this->nx, this->ny, this->nz};
+        int onembed[3] = {this->nx, this->ny, this->nz};
+        int istride = 1, ostride = 1;
+        size_t N = static_cast<size_t>(this->nx) * this->ny * this->nz;
+        int idist = N;
+        int odist = N;
+        cufftPlanMany(&c_handle, rank, n,
+                      inembed, istride, idist,
+                      onembed, ostride, odist,
+                      CUFFT_C2C, this->batch_size)
+    }
+    else{
+        cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
+        resmem_cd_op()(this->c_auxr_3d, this->nx * this->ny * this->nz);
+    }
+    
 }
 template <>
 void FFT_CUDA<double>::setupFFT()
 {
-    cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
-    resmem_zd_op()(this->z_auxr_3d, this->nx * this->ny * this->nz);
+    if (this->batch_size){
+        int rank = 3; // this means the dimension is 3
+        int n[3] = {this->nx, this->ny, this->nz};
+        int inembed[3] = {this->nx, this->ny, this->nz};
+        int onembed[3] = {this->nx, this->ny, this->nz};
+        int istride = 1, ostride = 1;
+        size_t N = static_cast<size_t>(this->nx) * this->ny * this->nz;
+        int idist = N;
+        int odist = N;
+        cufftPlanMany(&z_handle, rank, n,
+                      inembed, istride, idist,
+                      onembed, ostride, odist,
+                      CUFFT_Z2Z, this->batch_size)
+    }
+    else{
+        cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
+        resmem_zd_op()(this->z_auxr_3d, this->nx * this->ny * this->nz);
+    }
 }
 template <>
 void FFT_CUDA<float>::cleanFFT()
