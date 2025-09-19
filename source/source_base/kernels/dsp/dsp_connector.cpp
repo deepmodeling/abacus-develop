@@ -290,7 +290,8 @@ void zgemm_mth_(const char* transa,
                      c,
                      *ldc,
                      cluster_id);
-
+    free_ht(alp);
+    free_ht(bet);
 } // zgemm that needn't malloc_ht or free_ht
 
 void cgemm_mth_(const char* transa,

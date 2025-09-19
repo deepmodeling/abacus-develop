@@ -5,7 +5,7 @@
 #include "fft_cpu.h"
 
 #include <memory>
-namespace ModulePW
+namespace ModuleBase
 {
 class FFT_Bundle
 {
@@ -216,5 +216,5 @@ struct FFT_Guard
       }
   };
 
-} // namespace ModulePW
+} // namespace ModuleBase
 #endif // FFT_H

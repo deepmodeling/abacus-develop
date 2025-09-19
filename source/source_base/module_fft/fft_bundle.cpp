@@ -19,7 +19,7 @@ std::unique_ptr<FFT_BASE> make_unique(Args&&... args)
 {
     return std::unique_ptr<FFT_BASE>(new FFT_BASE(std::forward<Args>(args)...));
 }
-namespace ModulePW
+namespace ModuleBase
 {
 FFT_Bundle::~FFT_Bundle()
 {
@@ -296,4 +296,4 @@ std::complex<double>* FFT_Bundle::get_auxr_3d_data() const
 {
     return fft_double->get_auxr_3d_data();
 }
-} // namespace ModulePW
+} // namespace ModuleBase
