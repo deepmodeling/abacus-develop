@@ -7,6 +7,7 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/module_fft/fft_bundle.h"
 #undef protected
 #undef private
 
@@ -63,7 +64,6 @@ ModulePW::PW_Basis::~PW_Basis()
 ModulePW::PW_Basis_Sup::~PW_Basis_Sup()
 {
 }
-ModulePW::FFT_Bundle::~FFT_Bundle() {};
 void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
 {
 }

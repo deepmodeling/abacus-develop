@@ -45,6 +45,7 @@ AddTest(
   TARGET elecstate_base
   LIBS parameter  ${math_libs} base device 
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
+  ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
 AddTest(
@@ -97,7 +98,7 @@ AddTest(
   TARGET charge_extra
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../source_io/read_cube.cpp ../../source_io/write_cube.cpp
-  ../../source_io/output.cpp
+  ../../source_io/output.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
 endif()

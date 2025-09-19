@@ -29,7 +29,7 @@ VPATH=./src_global:\
 ./source_base/module_mixing:\
 ./source_md:\
 ./source_basis/module_pw:\
-./source_basis/module_pw/module_fft:\
+./source_base/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
 ./source_hsolver/kernels:\

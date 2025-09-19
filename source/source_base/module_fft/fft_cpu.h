@@ -3,7 +3,7 @@
 
 #include "fft_base.h"
 #include "fftw3.h"
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 class FFT_CPU : public FFT_BASE<FPTYPE>

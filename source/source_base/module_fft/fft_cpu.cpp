@@ -1,6 +1,6 @@
 #include "fft_cpu.h"
 #include "fftw3.h"
-namespace ModulePW
+namespace ModuleBase
 {
 
 template <typename FPTYPE>
