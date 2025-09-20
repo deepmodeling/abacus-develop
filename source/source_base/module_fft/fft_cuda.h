@@ -4,7 +4,7 @@
 #include "fft_base.h"
 #include "cufft.h"
 #include "cuda_runtime.h"
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 class FFT_CUDA : public FFT_BASE<FPTYPE>
@@ -63,5 +63,5 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
 
 };
 
-} // namespace ModulePW
+} // namespace ModuleBase
 #endif

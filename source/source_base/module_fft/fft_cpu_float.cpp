@@ -1,6 +1,6 @@
 #include "fft_cpu.h"
 
-namespace ModulePW
+namespace ModuleBase
 {
 template <>
 void FFT_CPU<float>::setupFFT()

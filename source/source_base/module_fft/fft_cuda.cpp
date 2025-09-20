@@ -3,7 +3,7 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_pw/module_pwdft/global.h"
 
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 void FFT_CUDA<FPTYPE>::initfft(int nx_in, int ny_in, int nz_in)
@@ -111,4 +111,4 @@ template FFT_CUDA<float>::FFT_CUDA();
 template FFT_CUDA<float>::~FFT_CUDA();
 template FFT_CUDA<double>::FFT_CUDA();
 template FFT_CUDA<double>::~FFT_CUDA();
-} // namespace ModulePW
+} // namespace ModuleBase

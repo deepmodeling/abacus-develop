@@ -157,6 +157,11 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
             int iRx = DeePKS_domain::mapping_R(dR.x);
             int iRy = DeePKS_domain::mapping_R(dR.y);
             int iRz = DeePKS_domain::mapping_R(dR.z);
+            // Make sure the index is in range we need to save
+            if (iRx >= R_size || iRy >= R_size || iRz >= R_size)
+            {
+                return; // to next loop
+            }
 
             for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
             {

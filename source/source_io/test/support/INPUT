@@ -291,7 +291,7 @@ exx_v_grad_r_threshold         0 #
 exx_ccp_rmesh_times            default #
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
-exx_opt_orb_tolerence          0 #
+exx_opt_orb_tolerence          1E-12 #
 
 #Parameters (16.tddft)
 td_vext                        0 #add extern potential or not

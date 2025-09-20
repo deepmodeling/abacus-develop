@@ -618,6 +618,24 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 // 7. atom.npy, box.npy, overlap.npy
 //================================================================================
 
+    if(  ((PARAM.inp.deepks_out_labels == 2) && is_after_scf )
+      || ( PARAM.inp.deepks_out_freq_elec ) )// need overlap when deepks_out_freq_elec
+    {
+        if (PARAM.inp.deepks_v_delta > 0)
+        {
+            // prepare for overlap.npy, very much like h_tot except for p_ham->getSk()
+            std::vector<TH> s_tot(nks);
+            DeePKS_domain::get_h_tot<TK, TH, TR>(*ParaV, p_ham, s_tot, nlocal, nks, 'S');
+            const std::string file_stot = get_filename("overlap", PARAM.inp.deepks_out_labels, iter);
+            LCAO_deepks_io::save_npy_h<TK, TH>(s_tot,
+                                            file_stot,
+                                            nlocal,
+                                            nks,
+                                            rank,
+                                            1.0); // don't need unit_scale for overlap
+        }
+    }
+
     if ( is_after_scf ) // don't need to output in multiple electronic steps
     {
         if (PARAM.inp.deepks_out_labels == 2)
@@ -632,20 +650,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             DeePKS_domain::prepare_box(ucell, box_out);
             const std::string file_box = PARAM.globalv.global_out_dir + "deepks_box.npy";
             LCAO_deepks_io::save_tensor2npy<double>(file_box, box_out, rank);
-
-            if (PARAM.inp.deepks_v_delta > 0)
-            {
-                // prepare for overlap.npy, very much like h_tot except for p_ham->getSk()
-                std::vector<TH> s_tot(nks);
-                DeePKS_domain::get_h_tot<TK, TH, TR>(*ParaV, p_ham, s_tot, nlocal, nks, 'S');
-                const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_overlap.npy";
-                LCAO_deepks_io::save_npy_h<TK, TH>(s_tot,
-                                                file_stot,
-                                                nlocal,
-                                                nks,
-                                                rank,
-                                                1.0); // don't need unit_scale for overlap
-            }
         }
 
 //================================================================================

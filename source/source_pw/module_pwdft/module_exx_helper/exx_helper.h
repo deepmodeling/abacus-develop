@@ -21,6 +21,7 @@ struct Exx_Helper
     void set_firstiter(bool flag = true) { first_iter = flag; }
     void set_wg(const ModuleBase::matrix *wg_) { wg = wg_; }
     void set_psi(psi::Psi<T, Device> *psi_);
+    void iter_inc() { exx_iter++; }
 
     void set_op()
     {
@@ -29,7 +30,7 @@ struct Exx_Helper
         op_exx->set_wg(wg);
     }
 
-    bool exx_after_converge(int &iter);
+    bool exx_after_converge(int &iter, bool ene_conv);
 
     double cal_exx_energy(psi::Psi<T, Device> *psi_);
 
@@ -37,6 +38,7 @@ struct Exx_Helper
     bool first_iter = false;
     psi::Psi<T, Device> *psi = nullptr;
     const ModuleBase::matrix *wg = nullptr;
+    int exx_iter = 0;
 
 };
 #endif // EXX_HELPER_H
