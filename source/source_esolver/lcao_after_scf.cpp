@@ -41,8 +41,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 			out_flag = true;
 		}
 	}
-	//else if(iter == PARAM.inp.scf_nmax || conv_esolver) // we should output information when scf_nmax reached, fix this later 2025-09-21 by mohan
-	else if(conv_esolver)
+	else if(conv_esolver || this->scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
 	{
 		out_flag = true;
 	}

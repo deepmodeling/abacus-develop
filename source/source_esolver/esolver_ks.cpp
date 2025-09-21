@@ -237,8 +237,15 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     bool conv_esolver = false;
     this->niter = this->maxniter;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
+    this->scf_nmax_flag = false; // mohan add 2025-09-21
     for (int iter = 1; iter <= this->maxniter; ++iter)
-    {
+	{
+        // mohan add 2025-09-21
+		if(iter == this->maxniter)
+		{
+			this->scf_nmax_flag=true;
+		}
+
 		//----------------------------------------------------------------
 		// 3) initialization of SCF iterations
 		//----------------------------------------------------------------

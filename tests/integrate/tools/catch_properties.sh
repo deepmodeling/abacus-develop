@@ -205,8 +205,8 @@ fi
 # echo $get_s
 #-------------------------------
 if ! test -z "$get_s"  && [  $get_s == "get_s" ]; then
-	sref=srs1_nao.csr.ref
-	scal=OUT.autotest/srs1_nao.csr
+	sref=sr_nao.csr.ref
+	scal=OUT.autotest/sr_nao.csr
 	python3 $COMPARE_SCRIPT $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi
@@ -364,11 +364,11 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
-    python3 $COMPARE_SCRIPT dhrx_nao.csr.ref OUT.autotest/dhrx_nao.csr 8
+    python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
     echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhry_nao.csr.ref OUT.autotest/dhry_nao.csr 8
+    python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
     echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrz_nao.csr.ref OUT.autotest/dhrz_nao.csr 8
+    python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
     echo "ComparerdHRz_pass $?" >>$1
 fi
 
