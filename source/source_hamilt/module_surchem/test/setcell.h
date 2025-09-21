@@ -27,6 +27,10 @@ Atom_pseudo::Atom_pseudo(){};
 Atom_pseudo::~Atom_pseudo(){};
 pseudo::pseudo(){};
 pseudo::~pseudo(){};
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 /*
 Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};

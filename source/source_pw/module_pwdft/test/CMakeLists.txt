@@ -30,7 +30,7 @@ AddTest(
 
 AddTest(
 	TARGET structure_factor_test
-	LIBS parameter ${math_libs} base device planewave 
+	LIBS parameter ${math_libs} base device planewave
 	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
 	../../../source_cell/unitcell.cpp
 	../../../source_io/output.cpp
@@ -49,6 +49,8 @@ AddTest(
 	../../../source_cell/read_pp_upf201.cpp
 	../../../source_cell/read_pp_vwr.cpp
 	../../../source_cell/read_pp_blps.cpp
+  ../../../source_cell/sep.cpp
+  ../../../source_cell/sep_cell.cpp
 	../../../source_estate/read_pseudo.cpp
 	../../../source_estate/cal_wfc.cpp
 	../../../source_estate/cal_nelec_nband.cpp

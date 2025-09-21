@@ -2,7 +2,7 @@
 #define FFT_BASE_H
 
 #include <complex>
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 class FFT_BASE
@@ -160,5 +160,5 @@ template FFT_BASE<float>::FFT_BASE();
 template FFT_BASE<double>::FFT_BASE();
 template FFT_BASE<float>::~FFT_BASE();
 template FFT_BASE<double>::~FFT_BASE();
-} // namespace ModulePW
+} // namespace ModuleBase
 #endif // FFT_BASE_H

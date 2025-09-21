@@ -3,6 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
 #include "source_io/output.h"
 #include "module_symmetry/symmetry.h"
@@ -16,6 +17,7 @@
 class UnitCell {
   public:
     Atom* atoms = nullptr;
+    Sep_Cell sep_cell;
 
     bool set_atom_flag = false;                     // added on 2009-3-8 by mohan
     Magnetism magnet;                               // magnetism Yu Liu 2021-07-03
