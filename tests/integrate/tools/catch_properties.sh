@@ -87,6 +87,7 @@ base=$(get_input_key_value "basis_type" "INPUT")
 word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
+nspin=$(get_input_key_value "nspin" "INPUT")
 test -e $1 && rm $1
 
 #------------------------------------------------------------
@@ -422,8 +423,22 @@ fi
 # echo "$has_wfc_pw" ## test out_wfc_pw > 0
 #--------------------------------------------
 if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
-	if [[ ! -f OUT.autotest/wfk1_pw.txt ]];then
-		echo "Can't find file OUT.autotest/wfk1_pw.txt"
+
+    # according to nspin value 
+    if [ "$nspin" -eq 1 ]; then
+        filename="wfk1_pw.txt"
+    elif [ "$nspin" -eq 2 ]; then
+        filename="wfk1s1_pw.txt"
+    else
+        # other nspin cases 
+        echo "Unsupported nspin value: $nspin"
+        exit 1
+    fi
+
+    full_path="OUT.autotest/$filename"
+
+	if [[ ! -f "$full_path" ]];then
+		echo "Can't find file $full_path"
 		exit 1
 	fi
 	awk 'BEGIN {max=0;read=0;band=1}
@@ -438,7 +453,7 @@ if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
 					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
 				}
 			} 
-	}' OUT.autotest/wfk1_pw.txt >> $1
+	}' "$full_path" >> "$1"
 fi
 
 
