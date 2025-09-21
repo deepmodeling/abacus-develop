@@ -10,7 +10,7 @@
 #include "mtfft.h"
 #include "fftw3.h"
 
-namespace ModulePW
+namespace ModuleBase
 {
     
 template <typename FPTYPE>
@@ -84,5 +84,5 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
         std::complex<double>* z_auxr_3d = nullptr; // fft space
 
 };
-} // namespace ModulePW
+} // namespace ModuleBase
 #endif

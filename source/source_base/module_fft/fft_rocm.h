@@ -5,7 +5,7 @@
 #include "fft_base.h"
 #include <hipfft/hipfft.h>
 #include <hip/hip_runtime.h>
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 class FFT_ROCM : public FFT_BASE<FPTYPE>
@@ -59,5 +59,5 @@ class FFT_ROCM : public FFT_BASE<FPTYPE>
         mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
 
 };
-}// namespace ModulePW
+}// namespace ModuleBase
 #endif

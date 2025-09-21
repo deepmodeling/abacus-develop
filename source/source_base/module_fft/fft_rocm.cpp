@@ -1,7 +1,7 @@
 #include "fft_rocm.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_pw/module_pwdft/global.h"
-namespace ModulePW
+namespace ModuleBase
 {
 template <typename FPTYPE>
 void FFT_ROCM<FPTYPE>::initfft(int nx_in, 
@@ -107,4 +107,4 @@ template FFT_ROCM<float>::FFT_ROCM();
 template FFT_ROCM<float>::~FFT_ROCM();
 template FFT_ROCM<double>::FFT_ROCM();
 template FFT_ROCM<double>::~FFT_ROCM();
-}// namespace ModulePW
+}// namespace ModuleBase

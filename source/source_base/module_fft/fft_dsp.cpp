@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
-namespace ModulePW
+namespace ModuleBase
 {
 template <>
 void FFT_DSP<double>::initfft(int nx_in, int ny_in, int nz_in)
@@ -124,4 +124,4 @@ template FFT_DSP<float>::FFT_DSP();
 template FFT_DSP<float>::~FFT_DSP();
 template FFT_DSP<double>::FFT_DSP();
 template FFT_DSP<double>::~FFT_DSP();
-} // namespace ModulePW
+} // namespace ModuleBase

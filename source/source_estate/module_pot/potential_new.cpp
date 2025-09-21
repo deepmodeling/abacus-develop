@@ -21,8 +21,9 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      Structure_Factor* structure_factors_in,
                      surchem* solvent_in,
                      double* etxc_in,
-                     double* vtxc_in)
-    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), etxc_(etxc_in),
+                     double* vtxc_in,
+                     VSep* vsep_cell_in)
+    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), vsep_cell(vsep_cell_in), etxc_(etxc_in),
       vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
@@ -94,11 +95,11 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
     int nrxx = this->rho_basis_->nrxx;
     int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0) 
+    if (nrxx == 0)
 	{
 		return;
 	}
-	if (nrxx_smooth == 0) 
+	if (nrxx_smooth == 0)
 	{
 		return;
 	}

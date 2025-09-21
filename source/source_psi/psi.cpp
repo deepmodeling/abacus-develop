@@ -301,7 +301,7 @@ const int* Psi<T, Device>::get_ngk_pointer() const
 }
 
 template <typename T, typename Device>
-const int& Psi<T, Device>::get_psi_bias() const
+const size_t& Psi<T, Device>::get_psi_bias() const
 {
     return this->psi_bias;
 }

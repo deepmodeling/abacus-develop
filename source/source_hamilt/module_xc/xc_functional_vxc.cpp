@@ -4,30 +4,35 @@
 // NOTE : it is only used for nspin = 1 and 2, the nspin = 4 case is treated in v_xc
 // 3. v_xc_meta : which takes rho and tau as input, and v_xc as output
 
-#include "xc_functional.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
+#include "xc_functional.h"
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"
 #endif
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
-std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
-	const int &nrxx, // number of real-space grid
-    const Charge* const chr,
-    const UnitCell *ucell) // core charge density
+std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nrxx, // number of real-space grid
+                                                                   const Charge* const chr,
+                                                                   const UnitCell* ucell) // core charge density
 {
-    ModuleBase::TITLE("XC_Functional","v_xc");
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::TITLE("XC_Functional", "v_xc");
+    ModuleBase::timer::tick("XC_Functional", "v_xc");
 
-    if(use_libxc)
+    if (use_libxc)
     {
 #ifdef USE_LIBXC
-        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(), nrxx, ucell->omega, ucell->tpiba, chr, &(scaling_factor_xc));
+        ModuleBase::timer::tick("XC_Functional", "v_xc");
+        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
+                                               nrxx,
+                                               ucell->omega,
+                                               ucell->tpiba,
+                                               chr,
+                                               &(scaling_factor_xc));
 #else
-        ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
+        ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
     }
 
@@ -134,7 +139,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
                     double rhodw = arhox * (1.0-zeta) / 2.0;
                     XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1]);
 #else
-                    ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
+                    ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif                    
                 }
                 else
@@ -180,6 +185,6 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     etxc *= ucell->omega / chr->rhopw->nxyz;
     vtxc *= ucell->omega / chr->rhopw->nxyz;
 
-    ModuleBase::timer::tick("XC_Functional","v_xc");
+    ModuleBase::timer::tick("XC_Functional", "v_xc");
     return std::make_tuple(etxc, vtxc, std::move(v));
 }
