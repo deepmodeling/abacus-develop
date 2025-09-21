@@ -79,7 +79,15 @@ std::string filename_output(
     }
     else
     {
-        kpoint_block = "k" + std::to_string(ik0+1);
+        // mohan add 20250921
+		if(property=="hk" || property=="sk" || property=="tk")
+		{
+			kpoint_block = std::to_string(ik0+1);
+		}
+		else
+		{
+			kpoint_block = "k" + std::to_string(ik0+1);
+		}
     }
 
     std::string istep_block

@@ -183,8 +183,8 @@ fi
 #echo $out_pot2
 #-------------------------------
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
-	pot1ref=pot_es.cube.ref
-	pot1cal=OUT.autotest/pot_es.cube
+	pot1ref=potes.cube.ref
+	pot1cal=OUT.autotest/potes.cube
 	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
 fi
