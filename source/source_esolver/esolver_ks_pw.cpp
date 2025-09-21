@@ -775,6 +775,13 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
 			out_dos_tmp = false;
 		}
 
+        // the above is only valid for KSDFT, not SDFT
+        // this part needs update in the near future
+		if (PARAM.inp.esolver_type == "sdft")
+		{
+			out_dos_tmp = false;
+		}
+
 		if(out_dos_tmp)
 		{
 			ModuleIO::write_dos_pw(ucell,
