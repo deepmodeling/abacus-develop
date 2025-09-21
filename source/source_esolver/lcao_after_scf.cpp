@@ -26,36 +26,55 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 		ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
 	}
 
+
+    //*****
+    // if istep_in = -1, istep will not appear in file name
+    // if iter_in = -1, iter will not appear in file name
+	int istep_in = -1;
+    int iter_in = -1;
+	bool out_flag = false;
 	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
 	{
-		if(istep % PARAM.inp.out_freq_ion == 0)
+		if (istep % PARAM.inp.out_freq_ion == 0)
 		{
-			ModuleIO::ctrl_output_lcao<TK, TR>(ucell,
-					PARAM.inp, 
-					this->kv,
-					estate, 
-					this->pv, 
-					this->gd,
-					this->psi,
-					hamilt_lcao,
-					this->two_center_bundle_,
-					this->GK,
-					this->orb_,
-					this->pw_wfc,
-					this->pw_rho,
-					this->GridT,
-					this->pw_big,
-					this->sf,
-					this->rdmft_solver,
+			istep_in = istep;
+			out_flag = true;
+		}
+	}
+	//else if(iter == PARAM.inp.scf_nmax || conv_esolver) // we should output information when scf_nmax reached, fix this later 2025-09-21 by mohan
+	else if(conv_esolver)
+	{
+		out_flag = true;
+	}
+    //*****
+
+	if (out_flag)
+	{
+		ModuleIO::ctrl_output_lcao<TK, TR>(ucell,
+				PARAM.inp, 
+				this->kv,
+				estate, 
+				this->pv, 
+				this->gd,
+				this->psi,
+				hamilt_lcao,
+				this->two_center_bundle_,
+				this->GK,
+				this->orb_,
+				this->pw_wfc,
+				this->pw_rho,
+				this->GridT,
+				this->pw_big,
+				this->sf,
+				this->rdmft_solver,
 #ifdef __MLALGO
-					this->ld,
+				this->ld,
 #endif
 #ifdef __EXX
-					*this->exd,
-					*this->exc,
+				*this->exd,
+				*this->exc,
 #endif
-					istep);
-		}
+				istep);
 	}
 
     //------------------------------------------------------------------
