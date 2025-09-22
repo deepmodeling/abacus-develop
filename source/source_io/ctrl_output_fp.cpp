@@ -8,6 +8,7 @@ void ctrl_output_fp(UnitCell& ucell,
 		elecstate::ElecStateLCAO<TK>* pelec, 
 		const int istep)
 {
+/*
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_fp");
 
@@ -115,6 +116,9 @@ void ctrl_output_fp(UnitCell& ucell,
 	}
 
     ModuleBase::timer::tick("ModuleIO", "ctrl_output_fp");
+
+*/
+
 }
 
 } // End ModuleIO
