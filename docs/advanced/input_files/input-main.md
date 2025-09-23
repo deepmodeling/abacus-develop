@@ -100,6 +100,7 @@
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
     - [soc\_lambda](#soc_lambda)
+    - [dfthalf\_type](#dfthalf_type)
   - [Stochastic DFT](#electronic-structure-sdft)
     - [method\_sto](#method_sto)
     - [nbands\_sto](#nbands_sto)
@@ -545,7 +546,7 @@ These variables are used to control general system parameters.
 - **Default**:
   - 0:
     - if [calculation](#calculation)==md/nscf/get_pchg/get_wf/get_s or [gamma_only](#gamma_only)==True;
-    - If ([dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0 or [rpa](#rpa)==True). 
+    - If ([dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0 or [rpa](#rpa)==True).
     - If [efield_flag](#efield_flag)==1
   - 1: else
 
@@ -619,7 +620,7 @@ These variables are used to control general system parameters.
   - random: random numbers
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
-  
+
   > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `get_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
@@ -870,7 +871,7 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-- **Default**: 4 
+- **Default**: 4
 
 ### diag_subspace
 
@@ -973,7 +974,7 @@ These variables are used to control the numerical atomic orbitals related parame
 ### elpa_num_thread
 
 - **Type**: int
-- **Description**: Number of threads used in one elpa calculation. 
+- **Description**: Number of threads used in one elpa calculation.
 
   If the number is below 0 or 0 or beyond the max number of threads, all elpa calculation will be using all mpi threads
 - **Default**: -1
@@ -982,7 +983,7 @@ These variables are used to control the numerical atomic orbitals related parame
 
 - **Type** :int
 - **Description**: The number of streams used in GPU calculations (only for LCAO). For most devices, the performance is satisfactory when the number is larger than 2.
-- **Default** : "4" 
+- **Default** : "4"
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1015,9 +1016,9 @@ calculations.
   For numerical atomic orbitals basis,
 
   - lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-  - genelpa: Use GEN-ELPA to diagonalize the Hamiltonian. 
+  - genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
   - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
-  - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed. 
+  - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
   - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
   - elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
@@ -1028,7 +1029,7 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: 
+- **Default**:
   - PW basis: cg.
   - LCAO basis:
     - genelpa (if compiling option `USE_ELPA` has been set)
@@ -1299,7 +1300,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion.
-  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$, which is used in SCF of PW basis with unit Ry. 
+  - 1: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$, which is used in SCF of PW basis with unit Ry.
   - 2: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron, which is used in SCF of LCAO with unit **dimensionless**.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
@@ -1309,7 +1310,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: bool
 - **Description**: For systems that are difficult to converge, the SCF process may exhibit oscillations in charge density, preventing further progress toward the specified convergence criteria and resulting in continuous oscillation until the maximum number of steps is reached; this greatly wastes computational resources. To address this issue, this function allows ABACUS to terminate the SCF process early upon detecting oscillations, thus reducing subsequent meaningless calculations. The detection of oscillations is based on the slope of the logarithm of historical drho values.. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
-  - 0: The SCF will continue to run regardless of whether there is oscillation or not. 
+  - 0: The SCF will continue to run regardless of whether there is oscillation or not.
   - 1: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
 - **Default**: false
@@ -1368,6 +1369,29 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
   In particular, `soc_lambda 0.0` refers to scalar-relativistic case and `soc_lambda 1.0` refers to full-relativistic case.
 - **Default**: 1.0
+
+### dfthalf_type
+
+- Type: int
+- Availability: Relevant for DFT-1/2 calculations.
+- Description: Choose the type of DFT-1/2 calcutions. Currently, only the PW basis set is supported.
+  - 0: Do not consider DFT-1/2 correction.
+  - 1: Apply DFT-1/2(shell DFT-1/2) correction.
+
+  In addition, the SEP_FILES keyword also needs to be added to the STRU file, followed by the DFT-1/2 settings for each element, listed in the same order as ATOMIC_SPECIES. The format is
+```
+SEP_FILES
+ATOM_LABEL is_enable SEP_FILENAME r_in r_out r_power scale.
+```
+For example,
+```
+SEP_FILES
+Li 0
+F  1 F_pbe_50.sep 0.0 2.2 20.0 1.0
+```
+ATOM_LABEL must remain consistent with the definition in ATOMIC_SPECIES. Setting is_enable to 0 indicates that the DFT-1/2 correction will not be applied, while setting it to 1 indicates that the DFT-1/2 correction will be applied. SEP_FILENAME specifies the self-energy potential file used for this element; more self-energy potential files can be downloaded from [SEP files](http://www.eedevice.com/abacus-half.html). The corresponding self-energy potential files should be placed under [pseudo\_dir](#pseudo_dir), maintaining the same location as the pseudopotential files. r_in denotes the inner cutoff radius, r_out denotes the outer cutoff radius, and r_power determines the transition at the edge of the cutoff function—larger values result in a sharper transition, but may hinder convergence; a value of 20 is a suitable choice. scale is the self-energy potential scaling factor, with a default value of 1.
+
+- Default: 0
 
 [back to top](#full-list-of-input-keywords)
 
@@ -1467,7 +1491,7 @@ These variables are used to control the geometry relaxation.
 - **Description**: The methods to do geometry optimization.
   - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
   - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
-  - bfgs_trad: using the traditional Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm. 
+  - bfgs_trad: using the traditional Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
   - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
   - sd: using the steepest descent (SD) algorithm.
   - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
@@ -1641,7 +1665,7 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
 - **Default**: 0
-- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless 
+- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless
 
 ### out_freq_elec
 
@@ -1652,7 +1676,7 @@ These variables are used to control the output of properties.
 ### out_chg
 
 - **Type**: Integer \[Integer\](optional)
-- **Description**: 
+- **Description**:
   The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: `chgs1.cube`;
@@ -1664,7 +1688,7 @@ These variables are used to control the output of properties.
     - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
   - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
   - -1: disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
-    
+
   The second integer controls the precision of the charge density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
 
   ---
@@ -1674,7 +1698,7 @@ These variables are used to control the output of properties.
 
   In molecular dynamics simulations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: 0 3
-- **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc.
 
 ### out_pot
 
@@ -1683,29 +1707,29 @@ These variables are used to control the output of properties.
   - 1: Output the **total local potential** (i.e., local pseudopotential + Hartree potential + XC potential + external electric field (if exists) + dipole correction potential (if exists) + ...) on real space grids (in Ry) into files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: `pots1.cube`;
     - nspin = 2: `pots1.cube` and `pots2.cube`;
-    - nspin = 4: `pots1.cube`, `pots2.cube`, `pots3.cube`, and `pots4.cube` 
+    - nspin = 4: `pots1.cube`, `pots2.cube`, `pots3.cube`, and `pots4.cube`
   - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/pot_es.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the **total local potential** of the initial charge density. The files are named as:
-    - nspin = 1: `pots1_ini.cube`; 
-    - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`; 
+    - nspin = 1: `pots1_ini.cube`;
+    - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
     - nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`
 
   In molecular dynamics calculations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: 0
-- **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
+- **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc.
 
 ### out_dmk
 
-- **Type**: Boolean \[Integer\](optional) 
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the density matrix for each k-point into files in the folder `OUT.${suffix}`. The files are named as:
   - For gamma only case:
     - nspin = 1 and 4: `dm_nao.csr`;
-    - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels. 
+    - nspin = 2: `dms1_nao.csr` and `dms2_nao.csr` for the two spin channels.
   - For multi-k points case:
     - nspin = 1 and 4: `dmk1_nao.csr`, `dmk2_nao.csr`, ...;
-    - nspin = 2: `dmk1s1_nao.csr`... and `dmk1s2_nao.csr`... for the two spin channels. 
+    - nspin = 2: `dmk1s1_nao.csr`... and `dmk1s2_nao.csr`... for the two spin channels.
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the parameter is named `out_dm` and the file names are SPIN1_DM and SPIN2_DM, etc.
 
@@ -1734,7 +1758,7 @@ These variables are used to control the output of properties.
     - non-gamma-only with nspin=2: `wfk1s1_pw.dat`, `wfk1s2_pw.dat`, `wfk2s1_pw.dat`, `wfk2s2_pw.dat`, ...;
     - non-gamma-only with nspin=4: `wfk1s4_pw.dat`, `wfk2s4_pw.dat`, ...;
 - **Default**: 0
-- **Note**: In the 3.10-LTS version, the file names are `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc. 
+- **Note**: In the 3.10-LTS version, the file names are `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.
 
 ### out_wfc_lcao
 
@@ -1742,7 +1766,7 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if [out_app_flag](#out_app_flag) is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if [out_app_flag](#out_app_flag) is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
   - 0: no output
-  - 1: (txt format) 
+  - 1: (txt format)
     - gamma-only: `wfs1_nao.txt` or `wfs2_nao.txt`, ...;
     - non-gamma-only: `wfs1k1_nao.txt` or `wfs1k2_nao.txt`, ...;
   - 2: (binary format)
@@ -1760,11 +1784,11 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Description**: Whether to output the density of states (DOS). For more information, refer to the [dos.md](../elec_properties/dos.md).
   - 0: no output
-  - 1: output the density of states (DOS) 
+  - 1: output the density of states (DOS)
     - nspin=1 or 4: `doss1g{geom}_{basis}.txt`, where geom is the geometry index when cell changes or ions move while basis is either `pw` or `nao`.
     - nspin=2: `doss1g{geom}_{basis}.txt` and `doss2g{geom}_{basis}.txt` for two spin channles.
   - 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-  - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen 
+  - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
 - **Default**: 0
 
 ### out_ldos
@@ -1854,7 +1878,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into `OUT.${suffix}/tks1ki_nao.txt`, where i is the index of k points. One may optionally provide a second parameter to specify the precision. 
+- **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into `OUT.${suffix}/tks1ki_nao.txt`, where i is the index of k points. One may optionally provide a second parameter to specify the precision.
 - **Default**: False \[8\]
 - **Unit**: Ry
 - **Note**: In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr and data-TR-sparse_SPIN0.csr, etc.
@@ -1866,7 +1890,7 @@ These variables are used to control the output of properties.
 - **Description**: Whether to print the matrix representation of the position matrix into a file named `rr.csr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_s`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
 - **Default**: False
 - **Unit**: Bohr
-- **Note**: In the 3.10-LTS version, the file name is data-rR-sparse.csr. 
+- **Note**: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
 
 ### out_mat_t
 
@@ -1875,7 +1899,7 @@ These variables are used to control the output of properties.
 - **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1_nao.csr` and so on. Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Unit**: Ry
-- **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr. 
+- **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
 
 ### out_mat_dh
 
@@ -1923,7 +1947,7 @@ These variables are used to control the output of properties.
 ### out_xc_r
 
 - **Type**: Integer \[Integer\](optional)
-- **Description**: 
+- **Description**:
   The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder `OUT.${suffix}`:
   - 0: rho, amag, sigma, exc
   - 1: vrho, vsigma
@@ -2030,7 +2054,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer \[Integer\](optional)
 - **Availability**: Only for Kohn-Sham DFT and Orbital Free DFT.
-- **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as 
+- **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
     - nspin = 1:
       - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
     - nspin = 2:
@@ -2048,7 +2072,7 @@ These variables are used to control the output of properties.
 - **Type**: Integer
 - **Availability**: Only for Kohn-Sham DFT with plane-wave basis.
 - **Description**: This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as `OVERLAP_Q`), and between TSBFs (named as `OVERLAP_Sq`), also their first order derivatives. The output files are named starting with `orb_matrix`. A value of `2` would enable the output.
-- **Default**: 0 
+- **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2104,8 +2128,8 @@ These variables are used to control the calculation of DOS. [Detailed introducti
 - **Type**: Real Real(optional) Integer(optional)
 - **Description**: The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in [out_ldos](#out_ldos). When using three parameters:
 
-  - The first parameter specifies the initial bias voltage value. 
-  - The second parameter defines the voltage increment (step size between consecutive bias values). 
+  - The first parameter specifies the initial bias voltage value.
+  - The second parameter defines the voltage increment (step size between consecutive bias values).
   - The third parameter determines the total number of voltage points
 - **Default**: 1.0
 - **Unit**: V
@@ -2168,7 +2192,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: Print labels and descriptors for DeePKS in OUT.${suffix}. The names of these files start with "deepks".
   - 0 : No output.
   - 1 : Output intermediate files needed during DeePKS training.
-  - 2 : Output target labels for label preperation. The label files are named as `deepks_<property>.npy` or `deepks_<property>.csr`, where the units and formats are the same as label files `<property>.npy` or `<property>.csr` required for training, except that the first dimension (`nframes`) is excluded. System structrue files are also given in `deepks_atom.npy` and `deepks_box.npy` in the unit of *Bohr*, which means `lattice_constant` should be set to 1 when training. 
+  - 2 : Output target labels for label preperation. The label files are named as `deepks_<property>.npy` or `deepks_<property>.csr`, where the units and formats are the same as label files `<property>.npy` or `<property>.csr` required for training, except that the first dimension (`nframes`) is excluded. System structrue files are also given in `deepks_atom.npy` and `deepks_box.npy` in the unit of *Bohr*, which means `lattice_constant` should be set to 1 when training.
 - **Note**: When `deepks_out_labels` equals **1**, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
   ```text
@@ -2179,7 +2203,7 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
-  This is not needed when `deepks_out_labels` equals 2. 
+  This is not needed when `deepks_out_labels` equals 2.
 - **Default**: 0
 
 ### deepks_out_freq_elec
@@ -2477,24 +2501,24 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Availability**: Used only for KSDFT with plane wave basis
 - **Description**: Controls the generation of machine learning training data. When enabled, training data in `.npy` format will be saved in the directory `OUT.${suffix}/MLKEDF_Descriptors/`. The generated descriptors are categorized as follows:
   - Local/Semilocal Descriptors. Files are named as `{var}.npy`, where `{var}` corresponds to the descriptor type:
-    - `gamma`: Enabled by [of_ml_gamma](#of_ml_gamma)  
-    - `p`: Enabled by [of_ml_p](#of_ml_p)  
-    - `q`: Enabled by [of_ml_q](#of_ml_q)  
-    - `tanhp`: Enabled by [of_ml_tanhp](#of_ml_tanhp)  
-    - `tanhq`: Enabled by [of_ml_tanhq](#of_ml_tanhq)  
-  - Nonlocal Descriptors generated using kernels configured via [of_ml_nkernel](#of_ml_nkernel), [of_ml_kernel](#of_ml_kernel), and [of_ml_kernel_scaling](#of_ml_kernel_scaling). Files follow the naming convention `{var}_{kernel_type}_{kernel_scaling}.npy`, where `{kernel_type}` and `{kernel_scaling}` are specified by [of_ml_kernel](#of_ml_kernel), and [of_ml_kernel_scaling](#of_ml_kernel_scaling), respectively, and `{val}` denotes the kind of the descriptor, including 
-      - `gammanl`: Enabled by [of_ml_gammanl](#of_ml_gammanl)  
-      - `pnl`: Enabled by [of_ml_pnl](#of_ml_pnl)  
-      - `qnl`: Enabled by [of_ml_qnl](#of_ml_qnl)  
-      - `xi`: Enabled by [of_ml_xi](#of_ml_xi)  
-      - `tanhxi`: Enabled by [of_ml_tanhxi](#of_ml_tanhxi)  
-      - `tanhxi_nl`: Enabled by [of_ml_tanhxi_nl](#of_ml_tanhxi_nl)  
-      - `tanh_pnl`: Enabled by [of_ml_tanh_pnl](#of_ml_tanh_pnl)  
-      - `tanh_qnl`: Enabled by [of_ml_tanh_qnl](#of_ml_tanh_qnl)  
-      - `tanhp_nl`: Enabled by [of_ml_tanhp_nl](#of_ml_tanhp_nl)  
-      - `tanhq_nl`: Enabled by [of_ml_tanhq_nl](#of_ml_tanhq_nl) 
+    - `gamma`: Enabled by [of_ml_gamma](#of_ml_gamma)
+    - `p`: Enabled by [of_ml_p](#of_ml_p)
+    - `q`: Enabled by [of_ml_q](#of_ml_q)
+    - `tanhp`: Enabled by [of_ml_tanhp](#of_ml_tanhp)
+    - `tanhq`: Enabled by [of_ml_tanhq](#of_ml_tanhq)
+  - Nonlocal Descriptors generated using kernels configured via [of_ml_nkernel](#of_ml_nkernel), [of_ml_kernel](#of_ml_kernel), and [of_ml_kernel_scaling](#of_ml_kernel_scaling). Files follow the naming convention `{var}_{kernel_type}_{kernel_scaling}.npy`, where `{kernel_type}` and `{kernel_scaling}` are specified by [of_ml_kernel](#of_ml_kernel), and [of_ml_kernel_scaling](#of_ml_kernel_scaling), respectively, and `{val}` denotes the kind of the descriptor, including
+      - `gammanl`: Enabled by [of_ml_gammanl](#of_ml_gammanl)
+      - `pnl`: Enabled by [of_ml_pnl](#of_ml_pnl)
+      - `qnl`: Enabled by [of_ml_qnl](#of_ml_qnl)
+      - `xi`: Enabled by [of_ml_xi](#of_ml_xi)
+      - `tanhxi`: Enabled by [of_ml_tanhxi](#of_ml_tanhxi)
+      - `tanhxi_nl`: Enabled by [of_ml_tanhxi_nl](#of_ml_tanhxi_nl)
+      - `tanh_pnl`: Enabled by [of_ml_tanh_pnl](#of_ml_tanh_pnl)
+      - `tanh_qnl`: Enabled by [of_ml_tanh_qnl](#of_ml_tanh_qnl)
+      - `tanhp_nl`: Enabled by [of_ml_tanhp_nl](#of_ml_tanhp_nl)
+      - `tanhq_nl`: Enabled by [of_ml_tanhq_nl](#of_ml_tanhq_nl)
   - Training Targets, including key quantum mechanical quantities:
-    - `enhancement.npy`: Pauli energy enhancement factor $T_\theta/T_{\rm{TF}}$, where $T_{\rm{TF}}$ is the Thomas-Fermi functional  
+    - `enhancement.npy`: Pauli energy enhancement factor $T_\theta/T_{\rm{TF}}$, where $T_{\rm{TF}}$ is the Thomas-Fermi functional
     - `pauli.npy`: Pauli potential $V_\theta$
     - `veff.npy`: Effective potential
 - **Default**: False
@@ -2515,7 +2539,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: The method to incorporate the Free Electron Gas (FEG) limit: $F_\theta |_{\rm{FEG}} = 1$, where $F_\theta$ is enhancement factor of Pauli energy.
   - **0**: Do not incorporate the FEG limit.
   - **1**: Incorporate the FEG limit by translation: $F_\theta = F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + 1$.
-  - **3**: Incorporate the FEG limit by nonlinear transformation: $F_\theta = f(F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + \ln(e - 1))$, where $f = \ln(1 + e^x)$ is softplus function, satisfying $f(x)|_{x=\ln(e-1)} = 1$. 
+  - **3**: Incorporate the FEG limit by nonlinear transformation: $F_\theta = f(F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + \ln(e - 1))$, where $f = \ln(1 + e^x)$ is softplus function, satisfying $f(x)|_{x=\ln(e-1)} = 1$.
 - **Default**: 0
 
 ### of_ml_nkernel
@@ -2527,7 +2551,7 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_ml_kernel
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
 - **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the type of the $i$-th kernel function.
   - **1**: Wang-Teter kernel function.
@@ -2607,93 +2631,93 @@ Warning: this function is not robust enough for the current version. Please try 
 
 ### of_ml_gammanl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\gamma_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \gamma(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\gamma_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \gamma(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_pnl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $p_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') p(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $p_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') p(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_qnl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $q_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') q(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $q_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') q(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_xi
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\xi(\mathbf{r}) = \frac{\int{w_i(\mathbf{r}-\mathbf{r}') \rho^{1/3}(\mathbf{r}') dr'}}{\rho^{1/3}(\mathbf{r})}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\xi(\mathbf{r}) = \frac{\int{w_i(\mathbf{r}-\mathbf{r}') \rho^{1/3}(\mathbf{r}') dr'}}{\rho^{1/3}(\mathbf{r})}$.
 - **Default**: 0
 
 ### of_ml_tanhxi
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$.
 - **Default**: 0
 
 ### of_ml_tanhxi_nl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{\xi}(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{\xi}(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_tanh_pnl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$.
 - **Default**: 0
 
 ### of_ml_tanh_qnl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$.
 - **Default**: 0
 
 ### of_ml_tanhp_nl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{p}(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{p}(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_tanhq_nl
 
-- **Type**: Vector of Integer 
+- **Type**: Vector of Integer
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{q}(\mathbf{r}') dr'}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{q}(\mathbf{r}') dr'}$.
 - **Default**: 0
 
 ### of_ml_chi_xi
 
 - **Type**: Vector of Real
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_\xi$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_\xi$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$.
 - **Default**: 1.0
 
 ### of_ml_chi_pnl
 
 - **Type**: Vector of Real
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{p_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{p_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$.
 - **Default**: 1.0
 
 ### of_ml_chi_qnl
 
 - **Type**: Vector of Real
 - **Availability**: OFDFT
-- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{q_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{q_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$.
 - **Default**: 1.0
 
 ### of_ml_local_test
@@ -2821,7 +2845,7 @@ These variables are relevant to gate field (compensating charge) [Detailed intro
 
 ## Exact Exchange (Common)
 
-These variables are relevant when using hybrid functionals. Currently ABACUS supports hybrid functionals when *[basis_type](#basis_type)==lcao/lcao_in_pw*. 
+These variables are relevant when using hybrid functionals. Currently ABACUS supports hybrid functionals when *[basis_type](#basis_type)==lcao/lcao_in_pw*.
 Support for hybrid functionals in the *pw [basis_type](#basis_type)* is under active development.
 
 The following parameters apply to *[basis_type](#basis_type)==lcao/lcao_in_pw/pw*. For basis specific parameters, see the sections *[Exact Exchange (LCAO/LCAO in PW)](#exact-exchange-lcaolcao-in-pw)* and *[Exact Exchange (PW)](#exact-exchange-pw)*.
@@ -3014,7 +3038,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 
 - **Type**: Boolean
 - **Availability**: *[symmetry](#symmetry)==1* and exx calculation  (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0* or *[rpa](#rpa)==True*)
-- **Description**: 
+- **Description**:
   - False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
   - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 - **Default**: True
@@ -3033,7 +3057,7 @@ These variables are relevant when using hybrid functionals with *[basis_type](#b
 
 ### exxace
 - **Type**: Boolean
-- **Availability**: *[exx_separate_loop](#exx_separate_loop)==True*. 
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==True*.
 - **Description**: Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
   - True: Use the ACE method to calculate the Fock exchange operator.
   - False: Use the traditional method to calculate the Fock exchange operator.
@@ -3224,15 +3248,15 @@ These variables are used to control molecular dynamics calculations. For more in
 ### lj_rule
 
 - **Type**: Integer
-- **Description**: The Lennard-Jones potential between two atoms equals: 
-  $$V_{LJ}(r_{ij})=4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right)=\frac{C_{ij}^{(12)}}{{r_{ij}}^{12}}-\frac{C_{ij}^{(6)}}{{r_{ij}}^{6}}.$$ 
-  
-  The parameters [lj_epsilon](#lj_epsilon) and [lj_sigma](#lj_sigma) should be multiple-component vectors. For example, there are two choices in the calculations of 3 atom species: 
+- **Description**: The Lennard-Jones potential between two atoms equals:
+  $$V_{LJ}(r_{ij})=4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right)=\frac{C_{ij}^{(12)}}{{r_{ij}}^{12}}-\frac{C_{ij}^{(6)}}{{r_{ij}}^{6}}.$$
+
+  The parameters [lj_epsilon](#lj_epsilon) and [lj_sigma](#lj_sigma) should be multiple-component vectors. For example, there are two choices in the calculations of 3 atom species:
 
   Supply six-component vectors that describe the interactions between all possible atom pairs. The six-component vectors represent lower triangular symmetric matrixs, and the correspondence between the vector component $\sigma _k$ and the matrix element $\sigma (i,j)$ is
   $$k= i(i+1)/2 +j$$
-  
-  Supply three-component vectors that describe the interactions between atoms of the same species. In this case, two types of combination rules can be used to construct non-diagonal elements in the parameter matrix. 
+
+  Supply three-component vectors that describe the interactions between atoms of the same species. In this case, two types of combination rules can be used to construct non-diagonal elements in the parameter matrix.
 
   - 1: geometric average:
   $$\begin{array}{rcl}C_{ij}^{(6)}&=&\left(C_{ii}^{(6)}C_{jj}^{(6)}\right)^{1/2}\\C_{ij}^{(12)}&=&\left(C_{ii}^{(12)}C_{jj}^{(12)}\right)^{1/2}\end{array}$$
@@ -3489,7 +3513,7 @@ These variables are used to control vdW-corrected related parameters.
   - `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method (BJ-damping)
   - `none`: no vdW correction
 - **Default**: none
-- **Note**: ABACUS supports automatic setting on DFT-D3 parameters for common functionals after version 3.8.3 (and several develop versions earlier). To benefit from this feature, please specify the parameter `dft_functional` explicitly (for more details on this parameter, please see [dft_functional](#dft_functional)), otherwise the autoset procedure will crash with error message like `cannot find DFT-D3 parameter for XC(***)`. If not satisfied with those in-built parameters, any manually setting on `vdw_s6`, `vdw_s8`, `vdw_a1` and `vdw_a2` will overwrite. 
+- **Note**: ABACUS supports automatic setting on DFT-D3 parameters for common functionals after version 3.8.3 (and several develop versions earlier). To benefit from this feature, please specify the parameter `dft_functional` explicitly (for more details on this parameter, please see [dft_functional](#dft_functional)), otherwise the autoset procedure will crash with error message like `cannot find DFT-D3 parameter for XC(***)`. If not satisfied with those in-built parameters, any manually setting on `vdw_s6`, `vdw_s8`, `vdw_a1` and `vdw_a2` will overwrite.
 - **Special**: There are special cases for functional family wB97 (Omega-B97): if want to use the functional wB97X-D3BJ, one needs to specify the `dft_functional` as `HYB_GGA_WB97X_V` and `vdw_method` as `d3_bj`. If want to use the functional wB97X-D3, specify `dft_functional` as `HYB_GGA_WB97X_D3` and `vdw_method` as `d3_0`.
 
 ### vdw_s6
@@ -3807,7 +3831,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   $$
   - 1: Trapezoid function:
   $$
-    E(t) = 
+    E(t) =
     \begin{cases}
         A \cos(2\pi f t + \varphi) \cdot \dfrac{t}{t_1}, & t < t_1 \\
         A \cos(2\pi f t + \varphi), & t_1 \leqslant t \leqslant t_2 \\
@@ -3821,7 +3845,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   $$
   - 3: Heaviside step function:
   $$
-    E(t) = 
+    E(t) =
     \begin{cases}
         A, & t < t_0 \\
         0, & t \geqslant t_0
@@ -4497,17 +4521,17 @@ These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 ### xc_kernel (Under Development Feature)
 
 - **Type**: String
-- **Description**: The exchange-correlation kernel used in the calculation. 
+- **Description**: The exchange-correlation kernel used in the calculation.
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
 
 ### lr_init_xc_kernel (Under Development Feature)
 
 - **Type**: String
-- **Description**: The method to initalize the xc kernel. 
+- **Description**: The method to initalize the xc kernel.
   - "default": Calculate xc kerenel ($f_\text{xc}$) from the ground-state charge density.
   - "file": Read the xc kernel $f_\text{xc}$ on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (*[nspin](#nspin)==1*) or 3 (*[nspin](#nspin)==2*, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter [xc_kernel](#xc_kernel) will be invalid. Now only LDA-type kernel is supproted as the potential will be calculated by directly multiplying the transition density.
-  - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
+  - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in.
 - **Default**: "default"
 
 ### lr_solver (Under Development Feature)
@@ -4530,7 +4554,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 ### nocc (Under Development Feature)
 
 - **Type**: Integer
-- **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation. 
+- **Description**: The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
   - Note: If the value is illegal ( > [nelec](#nelec)\/2 or <= 0), it will be autoset to [nelec](#nelec)\/2.
 - **Default**: [nband](#nband)
 
@@ -4549,7 +4573,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 ### lr_unrestricted (Under Development Feature)
 - **Type**: Boolean
 - **Description**: Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
-  - True:  Always use unrestricted LR-TDDFT. 
+  - True:  Always use unrestricted LR-TDDFT.
   - False: Use unrestricted LR-TDDFT only when the system is open-shell.
 - **Default**: False
 
@@ -4573,7 +4597,7 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 
 ### ri_hartree_benchmark (Under Development Feature)
 - **Type**: String
-- **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). Now it only supports molecular systems running with a single processor, and a large enough supercell should be used to make LRI C, V tensors contain only the R=(0 0 0) cell. 
+- **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). Now it only supports molecular systems running with a single processor, and a large enough supercell should be used to make LRI C, V tensors contain only the R=(0 0 0) cell.
   - `aims`: The `OUT.${suffix}`directory should contain the FHI-aims output files: RI-LVL tensors`Cs_data_0.txt` and `coulomb_mat_0.txt`, and KS eigenstates from FHI-aims: `band_out`and `KS_eigenvectors.out`. The Casida equation will be constructed under FHI-aims' KS eigenpairs.
     - LRI tensor files (`Cs_data_0.txt` and `coulomb_mat_0.txt`)and Kohn-Sham eigenvalues (`bands_out`): run FHI-aims with periodic boundary conditions and with `total_energy_method rpa` and `output librpa`.
     - Kohn-Sham eigenstates under aims NAOs (`KS_eigenvectors.out`): run FHI-aims with `output eigenvectors`.
