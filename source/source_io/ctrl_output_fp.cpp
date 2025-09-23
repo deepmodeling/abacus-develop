@@ -1,9 +1,12 @@
 #include "source_io/ctrl_output_fp.h" // use ctrl_output_fp() 
-#include "source_io/write_elecstat_pot.h"
+#include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho
+#include "source_io/write_elecstat_pot.h" // use write_elecstat_pot 
 #include "source_io/write_elf.h"
+#include "cube_io.h"  // use write_vdata_palgrid
 
 #ifdef USE_LIBXC
 #include "source_io/write_libxc_r.h"
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional::get_func_id()
 #endif
 
 namespace ModuleIO
@@ -11,6 +14,11 @@ namespace ModuleIO
 
 void ctrl_output_fp(UnitCell& ucell, 
 		elecstate::ElecState* pelec,	
+        ModulePW::PW_Basis_Big* pw_big,
+        ModulePW::PW_Basis* pw_rhod,
+        Charge &chr,
+        surchem &solvent,
+        Parallel_Grid &para_grid,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
@@ -48,7 +56,7 @@ void ctrl_output_fp(UnitCell& ucell,
     {
         for (int is = 0; is < nspin; ++is)
         {
-            this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
+            pw_rhod->real2recip(chr.rho_save[is], chr.rhog_save[is]);
 
             std::string fn =PARAM.globalv.global_out_dir + "chg";
 
@@ -64,8 +72,8 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
-            ModuleIO::write_vdata_palgrid(Pgrid,
-                    this->chr.rho_save[is],
+            ModuleIO::write_vdata_palgrid(para_grid,
+                    chr.rho_save[is],
                     is,
                     nspin,
                     istep_in,
@@ -81,8 +89,8 @@ void ctrl_output_fp(UnitCell& ucell,
 
                 fn += spin_block + geom_block + ".cube";
 
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                        this->chr.kin_r_save[is],
+                ModuleIO::write_vdata_palgrid(para_grid,
+                        chr.kin_r_save[is],
                         is,
                         nspin,
                         istep,
@@ -112,7 +120,7 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
-            ModuleIO::write_vdata_palgrid(Pgrid,
+            ModuleIO::write_vdata_palgrid(para_grid,
                     pelec->pot->get_effective_v(is),
                     is,
                     nspin,
@@ -131,41 +139,41 @@ void ctrl_output_fp(UnitCell& ucell,
 
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
+                pw_big->bz,
+                pw_big->nbz,
 #endif
                 fn,
                 istep,
-                this->pw_rhod,
-                &this->chr,
+                pw_rhod,
+                &chr,
                 &(ucell),
                 pelec->pot->get_fixed_v(),
-                this->solvent);
+                solvent);
     }
 
     // 6) write ELF
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->chr.cal_elf = true;
+        chr.cal_elf = true;
         Symmetry_rho srho;
         for (int is = 0; is < nspin; is++)
         {
-            srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
+            srho.begin(is, chr, pw_rhod, ucell.symm);
         }
 
         std::string out_dir =PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(
 #ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
+                pw_big->bz,
+                pw_big->nbz,
 #endif
                 out_dir,
                 istep,
                 nspin,
-                this->chr.rho,
-                this->chr.kin_r,
-                this->pw_rhod,
-                this->Pgrid,
+                chr.rho,
+                chr.kin_r,
+                pw_rhod,
+                para_grid,
                 &(ucell),
                 PARAM.inp.out_elf[1]);
     }
@@ -177,12 +185,12 @@ void ctrl_output_fp(UnitCell& ucell,
         ModuleIO::write_libxc_r(
                 PARAM.inp.out_xc_r[0],
                 XC_Functional::get_func_id(),
-                this->pw_rhod->nrxx, // number of real-space grid
+                pw_rhod->nrxx, // number of real-space grid
                 ucell.omega, // volume of cell
                 ucell.tpiba,
-                this->chr,
-                *this->pw_big,
-                *this->pw_rhod);
+                chr,
+                *pw_big,
+                *pw_rhod);
     }
 #endif
 

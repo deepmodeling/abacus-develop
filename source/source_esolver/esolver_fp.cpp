@@ -8,7 +8,7 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/cif_io.h"
-#include "source_io/cube_io.h"
+#include "source_io/cube_io.h" // use write_vdata_palgrid
 #include "source_io/json_output/init_info.h"
 #include "source_io/json_output/output_info.h"
 #include "source_io/output_log.h"
@@ -158,7 +158,8 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
     // 4) print out charge density, potential, elf, etc.
-    ModuleIO::ctrl_output_fp(ucell, this->pelec, istep); 
+	ModuleIO::ctrl_output_fp(ucell, this->pelec, this->pw_big, this->pw_rhod, 
+			this->chr, this->solvent, this->Pgrid, istep); 
 
 }
 
