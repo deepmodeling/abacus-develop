@@ -731,7 +731,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 
 [back to top](#full-list-of-input-keywords)
 
-## Variables related to input files
+## Input files
 
 These variables are used to control parameters related to input files.
 
@@ -1632,16 +1632,16 @@ These variables are used to control the geometry relaxation.
 
 [back to top](#full-list-of-input-keywords)
 
-## Variables related to output information
+## Output information
 
 These variables are used to control the output of properties.
 
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
 - **Default**: 0
-- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless 
+- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
 
 ### out_freq_elec
 
