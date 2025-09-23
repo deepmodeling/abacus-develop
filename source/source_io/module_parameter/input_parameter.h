@@ -6,6 +6,11 @@
 #include <string>
 #include <vector>
 
+struct RelaxMethodParam {
+    std::string method;
+    int param = 1;
+};
+
 // It stores all input parameters both defined in INPUT file and not defined in
 // INPUT file
 struct Input_para
@@ -149,6 +154,7 @@ struct Input_para
 
     // ==============   #Parameters (4.Relaxation) ===========================
     std::string relax_method = "cg"; ///< methods to move_ion: sd, bfgs, cg...
+    RelaxMethodParam relax_method_param;
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
