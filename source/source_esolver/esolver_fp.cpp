@@ -184,20 +184,23 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	}
 
 	// 4) write charge density
+
+    const int nspin = PARAM.inp.nspin;
+
 	if (PARAM.inp.out_chg[0] > 0)
 	{
-		for (int is = 0; is < PARAM.inp.nspin; ++is)
+		for (int is = 0; is < nspin; ++is)
 		{
 			this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
 
 			std::string fn =PARAM.globalv.global_out_dir + "chg";
 
             std::string spin_block;
-			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
+			if(nspin == 2 || nspin == 4)
 			{
 				spin_block= "s" + std::to_string(is + 1);
 			}
-			else if(PARAM.inp.nspin == 1)
+			else if(nspin == 1)
 			{
 				// do nothing
 			}
@@ -207,7 +210,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 			ModuleIO::write_vdata_palgrid(Pgrid,
 					this->chr.rho_save[is],
 					is,
-					PARAM.inp.nspin,
+					nspin,
 					istep_in,
 					fn,
 					this->pelec->eferm.get_efval(is),
@@ -224,7 +227,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 				ModuleIO::write_vdata_palgrid(Pgrid,
 						this->chr.kin_r_save[is],
 						is,
-						PARAM.inp.nspin,
+						nspin,
 						istep,
 						fn,
 						this->pelec->eferm.get_efval(is),
@@ -236,16 +239,16 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	// 5) write potential
 	if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
 	{
-		for (int is = 0; is < PARAM.inp.nspin; is++)
+		for (int is = 0; is < nspin; is++)
 		{
 			std::string fn =PARAM.globalv.global_out_dir + "pot";
 
             std::string spin_block;
-			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
+			if(nspin == 2 || nspin == 4)
 			{
 				spin_block= "s" + std::to_string(is + 1);
 			}
-			else if(PARAM.inp.nspin == 1)
+			else if(nspin == 1)
 			{
 				// do nothing
 			}
@@ -255,7 +258,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 			ModuleIO::write_vdata_palgrid(Pgrid,
 					this->pelec->pot->get_effective_v(is),
 					is,
-					PARAM.inp.nspin,
+					nspin,
 					istep_in,
 					fn,
 					0.0, // efermi
@@ -288,7 +291,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 	{
 		this->chr.cal_elf = true;
 		Symmetry_rho srho;
-		for (int is = 0; is < PARAM.inp.nspin; is++)
+		for (int is = 0; is < nspin; is++)
 		{
 			srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
 		}
@@ -301,7 +304,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 #endif
 				out_dir,
 				istep,
-				PARAM.inp.nspin,
+				nspin,
 				this->chr.rho,
 				this->chr.kin_r,
 				this->pw_rhod,
@@ -402,19 +405,32 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     elecstate::cal_ux(ucell);
 
+
+
     //----------------------------------------------------------
     //! output the initial charge density
     //----------------------------------------------------------
+    const int nspin = PARAM.inp.nspin;
     if (PARAM.inp.out_chg[0] == 2)
     {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "chgs" << is + 1 << "_ini.cube";
+            ss << PARAM.globalv.global_out_dir << "chg";
+
+			if(nspin==1)
+			{
+				ss << "ini.cube";
+			}
+			else if(nspin==2 || nspin==4)
+			{
+				ss << "s" << is + 1 << "ini.cube";
+			}
+
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->chr.rho[is],
                                           is,
-                                          PARAM.inp.nspin,
+                                          nspin,
                                           istep,
                                           ss.str(),
                                           this->pelec->eferm.ef,
@@ -427,14 +443,24 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     if (PARAM.inp.out_pot == 3)
     {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "pots" << is + 1 << "_ini.cube";
+            ss << PARAM.globalv.global_out_dir << "pot";
+
+			if(nspin==1)
+			{
+				ss << "ini.cube";
+			}
+			else if(nspin==2 || nspin==4)
+			{
+				ss << "s" << is + 1 << "ini.cube";
+			}
+
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->pelec->pot->get_effective_v(is),
                                           is,
-                                          PARAM.inp.nspin,
+                                          nspin,
                                           istep,
                                           ss.str(),
                                           0.0, // efermi
