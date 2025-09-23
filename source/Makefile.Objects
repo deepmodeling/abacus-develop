@@ -202,6 +202,8 @@ OBJS_CELL=atom_pseudo.o\
     bcast_cell.o\
     read_stru.o\
     read_atom_species.o\
+    sep.o\
+    sep_cell.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -220,7 +222,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_phialpha.o\
         LCAO_deepks_io.o\
         LCAO_deepks_interface.o\
-        
+
 
 OBJS_ELECSTAT=elecstate.o\
     elecstate_energy_terms.o\
@@ -246,6 +248,7 @@ OBJS_ELECSTAT=elecstate.o\
     cal_nelec_nband.o\
     read_pseudo.o\
     cal_wfc.o\
+    pot_sep.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
@@ -397,7 +400,7 @@ OBJS_HSOLVER=diago_cg.o\
     diag_const_nums.o\
     diag_hs_para.o\
     diago_pxxxgvx.o\
-    
+
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\
       diago_lapack.o\
@@ -415,7 +418,7 @@ OBJS_HSOLVER_PEXSI=diago_pexsi.o\
       dist_bcd_matrix.o\
       dist_ccs_matrix.o\
       dist_matrix_transformer.o\
-      
+
 OBJS_MD=fire.o\
     langevin.o\
     md_base.o\
@@ -490,7 +493,7 @@ OBJS_RELAXATION=bfgs_basic.o\
     lbfgs.o\
     matrix_methods.o\
     line_search.o\
-    
+
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\
@@ -690,7 +693,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_kpoints.o\
     parallel_reduce.o\
     parallel_device.o
-      
+
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\
     VL_in_pw.o\
@@ -754,7 +757,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_elecond.o\
     sto_dos.o\
     onsite_projector.o\
-    onsite_proj_tools.o
+    onsite_proj_tools.o\
+    VSep_in_pw.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

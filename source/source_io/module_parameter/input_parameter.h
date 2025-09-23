@@ -126,6 +126,8 @@ struct Input_para
     bool noncolin = false;   ///< using non-collinear-spin
     double soc_lambda = 1.0; ///< The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 
+    int dfthalf_type = 0; ///< DFT-1/2 type, 0:off, 1: shell DFT-1/2
+
     // ==============   #Parameters (3.LCAO) ===========================
     int nb2d = 0;                              ///< matrix 2d division.
     int lmaxmax = 2;                           ///< maximum of l channels used

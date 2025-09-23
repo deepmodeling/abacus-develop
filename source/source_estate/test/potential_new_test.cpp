@@ -24,6 +24,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {

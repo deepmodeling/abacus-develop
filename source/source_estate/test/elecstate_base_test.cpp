@@ -53,6 +53,10 @@ InfoNonlocal::InfoNonlocal()
 InfoNonlocal::~InfoNonlocal()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #include "source_cell/klist.h"
 
 ModulePW::PW_Basis::PW_Basis()

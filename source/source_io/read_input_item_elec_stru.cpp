@@ -128,7 +128,7 @@ void ReadInput::item_elec_stru()
 #endif
 #ifndef __CUDA
                     warningstr = "ks_solver is set to " + ks_solver + " but ABACUS is built with CPU only!\n"
-                    + " Please rebuild ABACUS with GPU support or change the ks_solver.";  
+                    + " Please rebuild ABACUS with GPU support or change the ks_solver.";
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
 #endif
                     if( ks_solver == "cusolvermp")
@@ -137,7 +137,7 @@ void ReadInput::item_elec_stru()
                     warningstr = "ks_solver is set to cusolvermp, but ABACUS is not built with cusolvermp support\n"
                     " Please rebuild ABACUS with cusolvermp support or change the ks_solver.";
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-#endif              
+#endif
                     }
                 }
                 else if (ks_solver == "pexsi")
@@ -274,13 +274,13 @@ void ReadInput::item_elec_stru()
             const double libxc_id_dbl = para.input.xc_exch_ext[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
+                ModuleBase::WARNING_QUIT("ReadInput",
                     "The first parameter (libxc id) can never be a float number");
             }
             // the first value is a positive integer
             if (libxc_id_dbl < 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
+                ModuleBase::WARNING_QUIT("ReadInput",
                     "The first parameter (libxc id) should be a positive integer");
             }
         };
@@ -308,13 +308,13 @@ void ReadInput::item_elec_stru()
             const double libxc_id_dbl = para.input.xc_corr_ext[0];
             if (std::abs(libxc_id_dbl - std::round(libxc_id_dbl)) > 1.0e-6)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
+                ModuleBase::WARNING_QUIT("ReadInput",
                     "The first parameter (libxc id) can never be a float number");
             }
             // the first value is a positive integer
             if (libxc_id_dbl < 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", 
+                ModuleBase::WARNING_QUIT("ReadInput",
                     "The first parameter (libxc id) should be a positive integer");
             }
         };
@@ -418,7 +418,7 @@ void ReadInput::item_elec_stru()
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         read_sync_string(input.smearing_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> methods = {"gauss", "gaussian", 
+            const std::vector<std::string> methods = {"gauss", "gaussian",
                                                       "fd", "fermi-dirac",
                                                       "fixed",
                                                       "mp", "mp2", "mp3"
@@ -575,9 +575,9 @@ void ReadInput::item_elec_stru()
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.basis_type == "pw" && para.input.gamma_only) 
+            if (para.input.basis_type == "pw" && para.input.gamma_only)
             {
-                para.input.gamma_only = false;   
+                para.input.gamma_only = false;
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
                 GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
                 GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
@@ -890,6 +890,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("bessel_nao_sigma");
         item.annotation = "spherical bessel smearing_sigma";
         read_sync_double(input.bessel_nao_sigma);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfthalf_type");
+        item.annotation = "DFT-1/2 type, 0:off; 1:shell DFT-1/2";
+        read_sync_int(input.dfthalf_type);
         this->add_item(item);
     }
 }

@@ -46,6 +46,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 
@@ -285,14 +289,14 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 
 	ModuleIO::write_wfc_pw(
 			kpar, my_pool, my_rank, nbands, nspin, npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, 
+			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
 			PARAM.input.out_wfc_pw, ecutwfc, out_dir, *psi, *kv, wfcpw,
 			running_log);
 
-	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg, 
-			out_dir, kpar, my_pool, my_rank, 
+	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg,
+			out_dir, kpar, my_pool, my_rank,
 			GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
-			nbands, nspin, npol, 
+			nbands, nspin, npol,
 			nkstot, kv->ik2iktot, kv->isk, running_log);
 
     // compare the charge density
@@ -301,10 +305,10 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
         EXPECT_NEAR(chg.rho[0][ir], chg_ref.rho[0][ir], 1e-8);
     }
 
-	if (GlobalV::NPROC == 1) 
+	if (GlobalV::NPROC == 1)
 	{
 		EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-	} 
+	}
 	else if (GlobalV::NPROC == 4)
 	{
 		const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
