@@ -11,23 +11,36 @@ void ReadInput::item_relax()
 {
     {
         Input_Item item("relax_method");
-        item.annotation = "cg [param]; bfgs [param]; ...";
+        item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         read_sync_string(input.relax_method);
         item.read_value = [](const Input_Item& item, Parameter& para) {
-        std::istringstream iss(para.input.relax_method);
-        iss >> para.input.relax_method_param.method;
-        if (!(iss >> para.input.relax_method_param.param)) {
-        para.input.relax_method_param.param = 1;
+            para.input.relax_method_param.method=item.str_values[0];
+            para.input.relax_method = para.input.relax_method_param.method;
+        if(item.get_size()==1)
+        {
+            para.input.relax_method_param.param = "1"; 
         }
+        else
+        {
+            para.input.relax_method_param.param = item.str_values[1]; 
+        }
+
+        // std::istringstream iss(item.str_values[0]);
+        // iss >> para.input.relax_method_param.method;
+        // if (!(iss >> para.input.relax_method_param.param)) {
+        //     std::cout << "No parameter provided for relax_method_param.param, default to 1" << std::endl;
+        // para.input.relax_method_param.param = "1";        
+        // }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-        const std::vector<std::string> relax_methods = {"cg", "sd","bfgs_old" "cg_bfgs","bfgs","lbfgs"};
+        const std::vector<std::string> relax_methods = {"cg", "sd", "cg_bfgs","bfgs","lbfgs"};
         if (std::find(relax_methods.begin(), relax_methods.end(), para.input.relax_method_param.method) == relax_methods.end()) {
             const std::string warningstr = nofound_str(relax_methods, "relax_method");
             ModuleBase::WARNING_QUIT("ReadInput", warningstr);
         }
         };
         this->add_item(item);
+        
         // Input_Item item("relax_method");
         // item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         // read_sync_string(input.relax_method);

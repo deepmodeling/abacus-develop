@@ -8,7 +8,7 @@
 
 struct RelaxMethodParam {
     std::string method;
-    int param = 1;
+    std::string param;
 };
 
 // It stores all input parameters both defined in INPUT file and not defined in
