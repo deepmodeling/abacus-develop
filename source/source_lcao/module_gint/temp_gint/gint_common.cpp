@@ -76,11 +76,13 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
 
+    const UnitCell* ucell_in = gint_info.get_ucell();
     int mg = hR->get_paraV()->get_global_row_size()/2;
     int ng = hR->get_paraV()->get_global_col_size()/2;
     int nb = hR->get_paraV()->get_block_size()/2;
-    const UnitCell* ucell_in = gint_info.get_ucell();
-    auto ijr_info = hR->get_ijr_info();
+    hamilt::HContainer<std::complex<double>>* hR_tmp;
+
+
 #ifdef __MPI
     int blacs_ctxt = hR->get_paraV()->blacs_ctxt;
     std::vector<int> iat2iwt(ucell_in->nat);
@@ -90,9 +92,10 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     Parallel_Orbitals *pv = new Parallel_Orbitals();
     pv->set(mg, ng, nb, blacs_ctxt);
     pv->set_atomic_trace(iat2iwt.data(), ucell_in->nat, mg);
-    auto* hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
-    hR_tmp->set_zero();
+    auto ijr_info = hR->get_ijr_info();
+    hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
 #endif
+
     //select hRGint_tmp
     std::vector<int> first = {0, 1, 1, 0};
     std::vector<int> second= {3, 2, 2, 3};
@@ -104,8 +107,9 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     std::vector<int> clx_j = {0, 1, -1, 0};
     for (int is = 0; is < 4; is++){
         if(!PARAM.globalv.domag && (is==1 || is==2)) continue;
+        hR_tmp->set_zero();
         hamilt::HContainer<std::complex<double>>* hRGint_tmpCd = new hamilt::HContainer<std::complex<double>>(ucell_in->nat);
-        hRGint_tmpCd->insert_ijrs(&ijr_info, *ucell_in);
+        hRGint_tmpCd->insert_ijrs( &(gint_info.get_ijr_info()), *(ucell_in));
         hRGint_tmpCd->allocate(nullptr, true);
         hRGint_tmpCd->set_zero();
         for (int iap = 0; iap < hRGint_tmpCd->size_atom_pairs(); iap++)
@@ -152,11 +156,11 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
                 }
             }
         }
-#ifdef __MPI
         // transfer hRGint_tmpCd to parallel hR_tmp
+#ifdef __MPI
         hamilt::transferSerials2Parallels( *hRGint_tmpCd, hR_tmp);
 #else
-        auto* hR_tmp = hRGint_tmpCd;
+        hR_tmp = hRGint_tmpCd;
 #endif
         // merge hR_tmp to hR
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
