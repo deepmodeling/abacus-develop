@@ -767,6 +767,7 @@ TEST_F(InputTest, Item_test)
     { // relax_method
         auto it = find_label("relax_method", readinput.input_lists);
         param.input.relax_method = "none";
+        param.input.relax_method_param.method = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
