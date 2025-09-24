@@ -162,120 +162,169 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     // 3) update delta_rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
-    if (istep % PARAM.inp.out_interval == 0)
-    {
-        // 4) write charge density
-        if (PARAM.inp.out_chg[0] > 0)
-        {
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                                              this->chr.rho_save[is],
-                                              is,
-                                              PARAM.inp.nspin,
-                                              istep,
-                                              fn,
-                                              this->pelec->eferm.get_efval(is),
-                                              &(ucell),
-                                              PARAM.inp.out_chg[1],
-                                              1);
 
-                if (XC_Functional::get_ked_flag())
-                {
-                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
-                    ModuleIO::write_vdata_palgrid(Pgrid,
-                                                  this->chr.kin_r_save[is],
-                                                  is,
-                                                  PARAM.inp.nspin,
-                                                  istep,
-                                                  fn,
-                                                  this->pelec->eferm.get_efval(is),
-                                                  &(ucell));
-                }
-            }
-        }
+    // print out the 'g' index when istep_in!=-1
+    int istep_in = -1;
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if (istep % PARAM.inp.out_freq_ion == 0)
+		{
+			istep_in = istep;
+		}
+	}
 
-        // 5) write potential
-        if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
-        {
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                std::string fn =PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
+    std::string geom_block;
+    if(istep_in==-1)
+	{
+		// do nothing
+	}
+    else if(istep_in>=0)
+	{
+		geom_block = "g" + std::to_string(istep + 1);
+	}
 
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                                              this->pelec->pot->get_effective_v(is),
-                                              is,
-                                              PARAM.inp.nspin,
-                                              istep,
-                                              fn,
-                                              0.0, // efermi
-                                              &(ucell),
-                                              3,  // precision
-                                              0); // out_fermi
-            }
-        }
-        else if (PARAM.inp.out_pot == 2)
-        {
-            std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
-            ModuleIO::write_elecstat_pot(
+	// 4) write charge density
+	if (PARAM.inp.out_chg[0] > 0)
+	{
+		for (int is = 0; is < PARAM.inp.nspin; ++is)
+		{
+			this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
+
+			std::string fn =PARAM.globalv.global_out_dir + "chg";
+
+            std::string spin_block;
+			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
+			{
+				spin_block= "s" + std::to_string(is + 1);
+			}
+			else if(PARAM.inp.nspin == 1)
+			{
+				// do nothing
+			}
+
+			fn += spin_block + geom_block + ".cube";
+
+			ModuleIO::write_vdata_palgrid(Pgrid,
+					this->chr.rho_save[is],
+					is,
+					PARAM.inp.nspin,
+					istep_in,
+					fn,
+					this->pelec->eferm.get_efval(is),
+					&(ucell),
+					PARAM.inp.out_chg[1],
+					1);
+
+			if (XC_Functional::get_ked_flag())
+			{
+				fn = PARAM.globalv.global_out_dir + "tau";
+
+                fn += spin_block + geom_block + ".cube";
+
+				ModuleIO::write_vdata_palgrid(Pgrid,
+						this->chr.kin_r_save[is],
+						is,
+						PARAM.inp.nspin,
+						istep,
+						fn,
+						this->pelec->eferm.get_efval(is),
+						&(ucell));
+			}
+		}
+	}
+
+	// 5) write potential
+	if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
+	{
+		for (int is = 0; is < PARAM.inp.nspin; is++)
+		{
+			std::string fn =PARAM.globalv.global_out_dir + "pot";
+
+            std::string spin_block;
+			if(PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
+			{
+				spin_block= "s" + std::to_string(is + 1);
+			}
+			else if(PARAM.inp.nspin == 1)
+			{
+				// do nothing
+			}
+
+			fn += spin_block + geom_block + ".cube";
+
+			ModuleIO::write_vdata_palgrid(Pgrid,
+					this->pelec->pot->get_effective_v(is),
+					is,
+					PARAM.inp.nspin,
+					istep_in,
+					fn,
+					0.0, // efermi
+					&(ucell),
+					3,  // precision
+					0); // out_fermi
+		}
+	}
+	else if (PARAM.inp.out_pot == 2)
+	{
+		std::string fn =PARAM.globalv.global_out_dir + "potes";
+        fn += geom_block + ".cube";
+
+		ModuleIO::write_elecstat_pot(
 #ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
+				this->pw_big->bz,
+				this->pw_big->nbz,
 #endif
-                fn,
-                istep,
-                this->pw_rhod,
-                &this->chr,
-                &(ucell),
-                this->pelec->pot->get_fixed_v(),
-                this->solvent);
-        }
+				fn,
+				istep,
+				this->pw_rhod,
+				&this->chr,
+				&(ucell),
+				this->pelec->pot->get_fixed_v(),
+				this->solvent);
+	}
 
-        // 6) write ELF
-        if (PARAM.inp.out_elf[0] > 0)
-        {
-            this->chr.cal_elf = true;
-            Symmetry_rho srho;
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-            }
+	// 6) write ELF
+	if (PARAM.inp.out_elf[0] > 0)
+	{
+		this->chr.cal_elf = true;
+		Symmetry_rho srho;
+		for (int is = 0; is < PARAM.inp.nspin; is++)
+		{
+			srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
+		}
 
-            std::string out_dir =PARAM.globalv.global_out_dir;
-            ModuleIO::write_elf(
+		std::string out_dir =PARAM.globalv.global_out_dir;
+		ModuleIO::write_elf(
 #ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
+				this->pw_big->bz,
+				this->pw_big->nbz,
 #endif
-                out_dir,
-                istep,
-                PARAM.inp.nspin,
-                this->chr.rho,
-                this->chr.kin_r,
-                this->pw_rhod,
-                this->Pgrid,
-                &(ucell),
-                PARAM.inp.out_elf[1]);
-        }
+				out_dir,
+				istep,
+				PARAM.inp.nspin,
+				this->chr.rho,
+				this->chr.kin_r,
+				this->pw_rhod,
+				this->Pgrid,
+				&(ucell),
+				PARAM.inp.out_elf[1]);
+	}
 
 #ifdef USE_LIBXC
-        // 7) write xc(r)
-        if(PARAM.inp.out_xc_r[0]>=0)
-        {
-            ModuleIO::write_libxc_r(
-                PARAM.inp.out_xc_r[0],
-                XC_Functional::get_func_id(),
-                this->pw_rhod->nrxx, // number of real-space grid
-                ucell.omega, // volume of cell
-                ucell.tpiba,
-                this->chr,
-                *this->pw_big,
-                *this->pw_rhod);
-        }
+	// 7) write xc(r)
+	if(PARAM.inp.out_xc_r[0]>=0)
+	{
+		ModuleIO::write_libxc_r(
+				PARAM.inp.out_xc_r[0],
+				XC_Functional::get_func_id(),
+				this->pw_rhod->nrxx, // number of real-space grid
+				ucell.omega, // volume of cell
+				ucell.tpiba,
+				this->chr,
+				*this->pw_big,
+				*this->pw_rhod);
+	}
 #endif
-    }
 }
 
 void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
@@ -361,7 +410,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "/chgs" << is + 1 << "_ini.cube";
+            ss << PARAM.globalv.global_out_dir << "chgs" << is + 1 << "_ini.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->chr.rho[is],
                                           is,

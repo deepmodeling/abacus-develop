@@ -133,9 +133,9 @@
     - [fixed\_atoms](#fixed_atoms)
     - [cell\_factor](#cell_factor)
   - [Output Variables](#variables-related-to-output-information)
+    - [out\_freq\_ion](#out_freq_ion)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
-    - [out\_xc\_r](#out_xc_r)
     - [out\_pot](#out_pot)
     - [out\_dm](#out_dmk)
     - [out\_dm1](#out_dmr)
@@ -159,12 +159,12 @@
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
     - [out\_mat\_l](#out_mat_l)
+    - [out\_xc\_r](#out_xc_r)
     - [out\_eband\_terms](#out_eband_terms)
     - [dm\_to\_rho](#dm_to_rho)
     - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
-    - [out\_interval](#out_interval)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [rpa](#rpa)
@@ -1636,6 +1636,13 @@ These variables are used to control the geometry relaxation.
 
 These variables are used to control the output of properties.
 
+### out_freq_ion
+
+- **Type**: Integer
+- **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Default**: 0
+- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless 
+
 ### out_freq_elec
 
 - **Type**: Integer
@@ -1665,28 +1672,9 @@ These variables are used to control the output of properties.
 
   In EXX(exact exchange) calculations, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 
-  In molecular dynamics simulations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics simulations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: 0 3
 - **Note**: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc. 
-
-### out_xc_r
-
-- **Type**: Integer \[Integer\](optional)
-- **Description**: 
-  The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder `OUT.${suffix}`:
-  - 0: rho, amag, sigma, exc
-  - 1: vrho, vsigma
-  - 2: v2rho2, v2rhosigma, v2sigma2
-  - 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
-  - 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4
-  The meaning of the files is presented in [Libxc](https://libxc.gitlab.io/manual/libxc-5.1.x/)
-
-  The second integer controls the precision of the charge density output, if not given, will use `3` as default.
-
-  ---
-  The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
-
-- **Default**: -1 3
 
 ### out_pot
 
@@ -1703,7 +1691,7 @@ These variables are used to control the output of properties.
     - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`; 
     - nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`
 
-  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics calculations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: 0
 - **Note**: In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc. 
 
@@ -1735,14 +1723,18 @@ These variables are used to control the output of properties.
 
 - **Type**: Integer
 - **Availability**: Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in [calculation](#calculation) with NAO basis)
-- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{s}{spin index}{k}{k-point index}{_pw} + {".txt"/".dat"}`. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled.
+- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder `OUT.${suffix}`. The files are named as `wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}`. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the [out_freq_ion](#out_freq_ion) command to control. To print out the electroinc wave functions every few SCF iterations, use the [out_freq_elec](#out_freq_elec) command and the e index will appear in the file name.
   - 0: no output
   - 1: (txt format)
-    - non-gamma-only: `wfs1k1_pw.txt` or `wfs1k2_pw.txt`, ...;
+    - non-gamma-only with nspin=1: `wfk1_pw.txt`, `wfk2_pw.txt`, ...;
+    - non-gamma-only with nspin=2: `wfk1s1_pw.txt`, `wfk1s2_pw.txt`, `wfk2s1_pw.txt`, `wfk2s2_pw.txt`, ...;
+    - non-gamma-only with nspin=4: `wfk1s4_pw.txt`, `wfk2s4_pw.txt`, ...;
   - 2: (binary format)
-    - non-gamma-only: `wfs1k1_pw.dat` or `wfs1k2_pw.dat`, ....
+    - non-gamma-only with nspin=1: `wfk1_pw.dat`, `wfk2_pw.dat`, ...;
+    - non-gamma-only with nspin=2: `wfk1s1_pw.dat`, `wfk1s2_pw.dat`, `wfk2s1_pw.dat`, `wfk2s2_pw.dat`, ...;
+    - non-gamma-only with nspin=4: `wfk1s4_pw.dat`, `wfk2s4_pw.dat`, ...;
 - **Default**: 0
-- **Note**: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc. 
+- **Note**: In the 3.10-LTS version, the file names are `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc. 
 
 ### out_wfc_lcao
 
@@ -1759,7 +1751,7 @@ These variables are used to control the output of properties.
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
-  Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+  Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Note**: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 
@@ -1789,7 +1781,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to output the eigenvalues of the Hamiltonian matrix (in eV) into the running log during electronic iterations and into a file at the end of calculations. The former can be used with the 'out_freq_elec' parameter while the latter option allows the output precision to be set via a second parameter, with a default value of 8. The output file names are:
-    - nspin = 1 or 4: `eigs1.txt`;
+    - nspin = 1 or 4: `eig.txt`;
     - nspin = 2: `eigs1.txt` and `eigs2.txt`;
     - For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
@@ -1836,7 +1828,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag).
   - For gamma only case:
     - nspin = 1: `hks1_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix;
     - nspin = 2: `hks1_nao.txt` and `hks2_nao.txt` for the Hamiltonian matrix and `sks1_nao.txt` for the overlap matrix. Note that the code will not output `sks2_nao.txt` because it is the same as `sks1_nao.txt`;
@@ -1880,7 +1872,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1_nao.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Generate files containing the kinetic energy matrix $T(R)$. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `trs1_nao.csr` and so on. Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Unit**: Ry
 - **Note**: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr. 
@@ -1889,7 +1881,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1_nao.csr`, `dhrys1_nao.csr`, `dhrzs1_nao.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `dhrxs1_nao.csr`, `dhrys1_nao.csr`, `dhrzs1_nao.csr` and so on. Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag).
 - **Default**: False
 - **Unit**: Ry/Bohr
 - **Note**: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
@@ -1898,7 +1890,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `dsrxs1.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_s`.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix $dH(R)$ as mentioned in [out_mat_dh](#out_mat_dh). The name of the files will be `dsrxs1.csr` and so on. Also controled by [out_freq_ion](#out_freq_ion) and [out_app_flag](#out_app_flag). This feature can be used with `calculation get_s`.
 - **Default**: False
 - **Unit**: Ry/Bohr
 - **Note**: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
@@ -1928,6 +1920,25 @@ These variables are used to control the output of properties.
 - **Description**: Whether to print the expectation value of the angular momentum operator $\hat{L}_x$, $\hat{L}_y$, and $\hat{L}_z$ in the basis of the localized atomic orbitals. The files are named `OUT.${suffix}/${suffix}_Lx.dat`, `OUT.${suffix}/${suffix}_Ly.dat`, and `OUT.${suffix}/${suffix}_Lz.dat`. The second integer controls the precision of the output.
 - **Default**: False 8
 
+### out_xc_r
+
+- **Type**: Integer \[Integer\](optional)
+- **Description**: 
+  The first integer controls whether to output the exchange-correlation (in Bohr^-3) on real space grids using Libxc to folder `OUT.${suffix}`:
+  - 0: rho, amag, sigma, exc
+  - 1: vrho, vsigma
+  - 2: v2rho2, v2rhosigma, v2sigma2
+  - 3: v3rho3, v3rho2sigma, v3rhosigma2, v3sigma3
+  - 4: v4rho4, v4rho3sigma, v4rho2sigma2, v4rhosigma3, v4sigma4
+  The meaning of the files is presented in [Libxc](https://libxc.gitlab.io/manual/libxc-5.1.x/)
+
+  The second integer controls the precision of the charge density output, if not given, will use `3` as default.
+
+  ---
+  The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+
+- **Default**: -1 3
+
 ### out_eband_terms
 
 - **Type**: Boolean
@@ -1946,7 +1957,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Description**: Whether to print the Mulliken population analysis result into `OUT.${suffix}/mulliken.txt`. In molecular dynamics calculations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: False
 
 ### out_app_flag
@@ -1962,12 +1973,6 @@ These variables are used to control the output of properties.
 - **Availability**: `out_mat_hs 1` case presently.
 - **Description**: Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
 - **Default**: 8
-
-### out_interval
-
-- **Type**: Integer
-- **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
-- **Default**: 1
 
 ### out_element_info
 
@@ -2035,7 +2040,7 @@ These variables are used to control the output of properties.
   The second integer controls the precision of the kinetic energy density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
 
   ---
-  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+  In molecular dynamics calculations, the output frequency is controlled by [out_freq_ion](#out_freq_ion).
 - **Default**: 0 3
 
 ### out_spillage

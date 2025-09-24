@@ -12,6 +12,8 @@
 #include "source_io/filename.h"
 
 void ModuleIO::write_wfc_pw(
+        const int istep,
+        const int iter,
         const int kpar,
         const int my_pool,
         const int my_rank,
@@ -43,7 +45,6 @@ void ModuleIO::write_wfc_pw(
 
     bool out_app_flag = false; // need to modify later, mohan 2025-05-17
     bool gamma_only = false; // need to modify later, mohan 2025-05-17
-    int istep = -1; // need to modify later, mohan 2025-05-17
 
     std::string* wfilename = new std::string[nks];
 
@@ -55,9 +56,9 @@ void ModuleIO::write_wfc_pw(
         {
             std::string fn = filename_output(global_out_dir,"wf","pw",
                     ik_local,kv.ik2iktot,nspin,nkstot,
-                    out_wfc_pw,out_app_flag,gamma_only,istep);
+                    out_wfc_pw,out_app_flag,gamma_only,istep,iter);
 
-            ofs_running << " Write G-space wave functions into file "
+            ofs_running << " Write G-space wave functions to file: "
                 << fn << std::endl;
 
 			wfilename[ik_local] = fn;

@@ -125,6 +125,8 @@ struct Input_para
     bool noncolin = false;   ///< using non-collinear-spin
     double soc_lambda = 1.0; ///< The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 
+    int dfthalf_type = 0; ///< DFT-1/2 type, 0:off, 1: shell DFT-1/2
+
     // ==============   #Parameters (3.LCAO) ===========================
     int nb2d = 0;                              ///< matrix 2d division.
     int lmaxmax = 2;                           ///< maximum of l channels used
@@ -362,9 +364,8 @@ struct Input_para
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
     bool out_stru = false;                ///< outut stru file each ion step
-    int out_freq_elec = 0;                ///< the frequency of electronic iter to output charge and wavefunction
-    int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
-                                          ///< 0: output only when ion steps are finished
+    int out_freq_elec = 0;                ///< print information every few electronic steps 
+    int out_freq_ion = 0;                 ///< print information every few ionic steps 
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
     std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
@@ -389,7 +390,6 @@ struct Input_para
                                   ///< KS-orbital representation.
     bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
     bool out_eband_terms = false; ///< output the band energy terms separately
-    int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output

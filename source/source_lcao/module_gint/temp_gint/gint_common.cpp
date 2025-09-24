@@ -234,10 +234,11 @@ void transfer_dm_2d_to_gint(
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
         }
-        Parallel_Orbitals *pv = new Parallel_Orbitals();
-        pv->set(mg, ng, nb, blacs_ctxt);
-        pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        HContainer<T>* dm2d_tmp = new hamilt::HContainer<T>(pv, nullptr, &ijr_info);
+        Parallel_Orbitals pv{};
+        pv.set(mg, ng, nb, blacs_ctxt);
+        pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
+        auto ijr_info = dm[0]->get_ijr_info();
+        HContainer<T> dm2d_tmp(&pv, nullptr, &ijr_info);
 #else
         auto* dm2d_tmp = new hamilt::HContainer<T>(ucell->nat);
         dm2d_tmp -> insert_ijrs(&ijr_info, *ucell);
@@ -250,7 +251,7 @@ void transfer_dm_2d_to_gint(
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                    T* matrix_out = dm2d_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    T* matrix_out = dm2d_tmp.find_matrix(iat1, iat2, r_index)->get_pointer();
                     T* matrix_in = ap.get_pointer(ir);
                     for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
                         for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
@@ -261,13 +262,13 @@ void transfer_dm_2d_to_gint(
                     }
                 }
             }
-#ifdef __MPI
-            hamilt::transferParallels2Serials( *dm2d_tmp, &dm_gint[is]);
+#ifdef __MPI         
+            hamilt::transferParallels2Serials(dm2d_tmp, &dm_gint[is]);
 #else
             dm_gint[is].set_zero();
             dm_gint[is].add(*dm2d_tmp);
 #endif
-        }
+        }//is=4
     }
     ModuleBase::timer::tick("Gint", "transfer_dm_2d_to_gint");
 }

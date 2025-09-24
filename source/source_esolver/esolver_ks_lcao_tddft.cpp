@@ -524,10 +524,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot <<std::endl;
 
     // (4) output file for restart
-    if(istep % PARAM.inp.out_interval == 0)
-    {
-        td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
-    }
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if(istep % PARAM.inp.out_freq_ion == 0)
+		{
+			td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
+		}
+	}
     
     ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
 }

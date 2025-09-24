@@ -26,6 +26,7 @@
 #include "source_io/write_wfc_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -64,6 +65,11 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 
     // delete Hamilt
     this->deallocate_hamilt();
+
+    if (this->vsep_cell != nullptr)
+    {
+        delete this->vsep_cell;
+    }
 
     if (this->pelec != nullptr)
     {
@@ -140,6 +146,14 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! 3) inititlize the charge density.
     this->chr.allocate(inp.nspin);
 
+    // 3.5) initialize DFT-1/2
+    if (PARAM.inp.dfthalf_type > 0)
+    {
+        this->vsep_cell = new VSep;
+        this->vsep_cell->init_vsep(*this->pw_rhod, ucell.sep_cell);
+    }
+
+
     //! 4) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
@@ -150,7 +164,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &(this->sf),
                                                     &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
-                                                    &(this->pelec->f_en.vtxc));
+                                                    &(this->pelec->f_en.vtxc),
+                                                    this->vsep_cell);
     }
 
     //! 5) Initalize local pseudopotential
@@ -260,6 +275,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
             auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
             hamilt_pw->set_exx_helper(exx_helper);
         }
+    }
+
+    //----------------------------------------------------------
+    //! 4.5) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
+    //----------------------------------------------------------
+    if (PARAM.inp.dfthalf_type > 0)
+    {
+        this->vsep_cell->generate_vsep_r(this->pw_rhod[0], this->sf.strucFac, ucell.sep_cell);
     }
 
     //----------------------------------------------------------
@@ -624,26 +647,51 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
+    // we only print information every few ionic steps
     //----------------------------------------------------------
-    if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax)
-    {
-        // conv_esolver == true has already been dealt with in after_scf
-        ModuleIO::write_wfc_pw(GlobalV::KPAR,
-                               GlobalV::MY_POOL,
-                               GlobalV::MY_RANK,
-                               PARAM.inp.nbands,
-                               PARAM.inp.nspin,
-                               PARAM.globalv.npol,
-                               GlobalV::RANK_IN_POOL,
-                               GlobalV::NPROC_IN_POOL,
-                               PARAM.inp.out_wfc_pw,
-                               PARAM.inp.ecutwfc,
-                               PARAM.globalv.global_out_dir,
-                               this->psi[0],
-                               this->kv,
-                               this->pw_wfc,
-                               GlobalV::ofs_running);
-    }
+
+    // if istep_in = -1, istep will not appear in file name
+    // if iter_in = -1, iter will not appear in file name
+	int istep_in = -1;
+    int iter_in = -1;
+	bool out_wfc_flag = false;
+	if (PARAM.inp.out_freq_ion>0) // default value of out_freq_ion is 0
+	{
+		if (istep % PARAM.inp.out_freq_ion == 0)
+		{
+			if(iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+			{
+				istep_in = istep;
+				iter_in = iter;
+				out_wfc_flag = true;
+			}
+		}
+	}
+	else if(iter == PARAM.inp.scf_nmax || conv_esolver)
+	{
+		out_wfc_flag = true;
+	}
+
+
+	if (out_wfc_flag)
+	{
+		ModuleIO::write_wfc_pw(istep_in, iter_in, 
+				GlobalV::KPAR,
+				GlobalV::MY_POOL,
+				GlobalV::MY_RANK,
+				PARAM.inp.nbands,
+				PARAM.inp.nspin,
+				PARAM.globalv.npol,
+				GlobalV::RANK_IN_POOL,
+				GlobalV::NPROC_IN_POOL,
+				PARAM.inp.out_wfc_pw,
+				PARAM.inp.ecutwfc,
+				PARAM.globalv.global_out_dir,
+				this->psi[0],
+				this->kv,
+				this->pw_wfc,
+				GlobalV::ofs_running);
+	}
 
     //----------------------------------------------------------
     // 4) check if oscillate for delta_spin method
@@ -696,8 +744,62 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->psi[0].size());
     }
 
+	//----------------------------------------------------------
+	//! 4) Compute density of states (DOS)
+	//----------------------------------------------------------
+	if (PARAM.inp.out_dos)
+	{
+        bool out_dos_tmp = false;
+
+		int istep_in = -1;
+
+		// default value of out_freq_ion is 0
+		if(PARAM.inp.out_freq_ion==0)
+		{
+			out_dos_tmp = true;
+		}
+		else if (PARAM.inp.out_freq_ion>0)
+		{
+			if (istep % PARAM.inp.out_freq_ion == 0)
+			{
+				out_dos_tmp = true;
+				istep_in=istep;
+			}
+			else
+			{
+				out_dos_tmp = false;
+			}
+		}
+		else
+		{
+			out_dos_tmp = false;
+		}
+
+        // the above is only valid for KSDFT, not SDFT
+        // this part needs update in the near future
+		if (PARAM.inp.esolver_type == "sdft")
+		{
+			out_dos_tmp = false;
+		}
+
+		if(out_dos_tmp)
+		{
+			ModuleIO::write_dos_pw(ucell,
+					this->pelec->ekb,
+					this->pelec->wg,
+					this->kv,
+					PARAM.inp.nbands,
+					istep_in,
+					this->pelec->eferm,
+					PARAM.inp.dos_edelta_ev,
+					PARAM.inp.dos_scale,
+					PARAM.inp.dos_sigma,
+					GlobalV::ofs_running);
+		}
+	}
+
     //------------------------------------------------------------------
-    // 4) calculate band-decomposed (partial) charge density in pw basis
+    // 5) calculate band-decomposed (partial) charge density in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.out_pchg.size() > 0)
     {
@@ -730,25 +832,8 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               &this->chr);
     }
 
-    // tmp 2025-05-17, mohan note
-    ModuleIO::write_wfc_pw(GlobalV::KPAR,
-                           GlobalV::MY_POOL,
-                           GlobalV::MY_RANK,
-                           PARAM.inp.nbands,
-                           PARAM.inp.nspin,
-                           PARAM.globalv.npol,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           PARAM.inp.out_wfc_pw,
-                           PARAM.inp.ecutwfc,
-                           PARAM.globalv.global_out_dir,
-                           this->psi[0],
-                           this->kv,
-                           this->pw_wfc,
-                           GlobalV::ofs_running);
-
     //------------------------------------------------------------------
-    //! 5) calculate Wannier functions in pw basis
+    //! 6) calculate Wannier functions in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
@@ -766,7 +851,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    //! 6) calculate Berry phase polarization in pw basis
+    //! 7) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
@@ -777,7 +862,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 7) write spin constrian results in pw basis
+    // 8) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
     //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
@@ -789,7 +874,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     }
 
     //------------------------------------------------------------------
-    // 8) write onsite occupations for charge and magnetizations
+    // 9) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
@@ -881,24 +966,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
     //----------------------------------------------------------
-    //! 2) Compute density of states (DOS)
-    //----------------------------------------------------------
-    if (PARAM.inp.out_dos)
-    {
-        ModuleIO::write_dos_pw(ucell,
-                               this->pelec->ekb,
-                               this->pelec->wg,
-                               this->kv,
-                               PARAM.inp.nbands,
-                               this->pelec->eferm,
-                               PARAM.inp.dos_edelta_ev,
-                               PARAM.inp.dos_scale,
-                               PARAM.inp.dos_sigma,
-                               GlobalV::ofs_running);
-    }
-
-    //----------------------------------------------------------
-    //! 3) Compute LDOS
+    //! 2) Compute LDOS
     //----------------------------------------------------------
     if (PARAM.inp.out_ldos[0])
     {
@@ -909,7 +977,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 4) Calculate the spillage value,
+    //! 3) Calculate the spillage value,
     //! which are used to generate numerical atomic orbitals
     //----------------------------------------------------------
     if (PARAM.inp.basis_type == "pw" && PARAM.inp.out_spillage)
@@ -932,7 +1000,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 5) Print out electronic wave functions in real space
+    //! 4) Print out electronic wave functions in real space
     //----------------------------------------------------------
     if (PARAM.inp.out_wfc_norm.size() > 0 || PARAM.inp.out_wfc_re_im.size() > 0)
     {
@@ -963,7 +1031,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //----------------------------------------------------------
-    //! 6) Use Kubo-Greenwood method to compute conductivities
+    //! 5) Use Kubo-Greenwood method to compute conductivities
     //----------------------------------------------------------
     if (PARAM.inp.cal_cond)
     {
