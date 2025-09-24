@@ -237,7 +237,6 @@ void transfer_dm_2d_to_gint(
         Parallel_Orbitals pv{};
         pv.set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = dm[0]->get_ijr_info();
         HContainer<T> dm2d_tmp(&pv, nullptr, &ijr_info);
 #else
         auto* dm2d_tmp = new hamilt::HContainer<T>(ucell->nat);

@@ -269,7 +269,6 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         Parallel_Orbitals pv{};
         pv.set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = DM2D[0]->get_ijr_info();
         this-> dm2d_tmp = new hamilt::HContainer<double>(&pv, nullptr, &ijr_info);
 #else
         if (this->dm2d_tmp != nullptr) {
