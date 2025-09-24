@@ -1,5 +1,6 @@
 list(APPEND objects
     input_conv.cpp
+    ctrl_output_fp.cpp
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
@@ -82,7 +83,6 @@ if(ENABLE_LCAO)
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
       ctrl_output_lcao.cpp
-      ctrl_output_fp.cpp
   )
 endif()
 
