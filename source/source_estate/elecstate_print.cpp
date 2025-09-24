@@ -92,8 +92,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
         td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
     }
     // time column, trivial
-    th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
-    td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
+    th_fmt.emplace_back(" %" + std::to_string(wtime) + "s");
+    td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f");
     // contents
     std::vector<std::string> titles;
     std::vector<double> values;
@@ -141,12 +141,13 @@ void print_scf_iterinfo(const std::string& ks_solver,
         {
             buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);
         }
+        buf += '\n'; // add a new line after header
     }
     for (int i = 0; i < values.size(); i++)
     {
         buf += FmtCore::format(td_fmt[i].c_str(), values[i]);
     }
-    std::cout << buf << std::fflush;
+    std::cout << buf << std::endl; // endline and flush
 }
 
 
