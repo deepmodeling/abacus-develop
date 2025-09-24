@@ -3,10 +3,10 @@
 #include "source_io/write_elecstat_pot.h" // use write_elecstat_pot 
 #include "source_io/write_elf.h"
 #include "cube_io.h"  // use write_vdata_palgrid
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 
 #ifdef USE_LIBXC
 #include "source_io/write_libxc_r.h"
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional::get_func_id()
 #endif
 
 namespace ModuleIO
