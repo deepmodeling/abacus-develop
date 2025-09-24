@@ -88,6 +88,7 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
     delmem_complex_op()(this->psi_in_iter);
 
     delmem_complex_op()(this->hphi);
+    delmem_complex_op()(this->sphi);
     delmem_complex_op()(this->hcc);
     delmem_complex_op()(this->scc);
     delmem_complex_op()(this->vcc);
