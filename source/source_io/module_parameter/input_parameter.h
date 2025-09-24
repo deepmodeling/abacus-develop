@@ -154,7 +154,7 @@ struct Input_para
 
     // ==============   #Parameters (4.Relaxation) ===========================
     std::string relax_method = "cg"; ///< methods to move_ion: sd, bfgs, cg...
-    RelaxMethodParam relax_method_param;
+    RelaxMethodParam relax_method_param={"cg","1"};
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
