@@ -12,6 +12,7 @@
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
 #include "potential_new.h"
+#include "pot_sep.h"
 #include "pot_local_paw.h"
 #ifdef __LCAO
 #include "H_TDDFT_pw.h"
@@ -56,6 +57,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
         return new H_TDDFT_pw(this->rho_basis_, this->ucell_);
     }
 #endif
+    else if (pot_type == "dfthalf") {
+        return new PotSep(&(this->structure_factors_->strucFac), this->rho_basis_, this->vsep_cell);
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Potential::get_pot_type", "Please input correct component of potential!");

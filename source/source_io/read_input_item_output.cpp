@@ -21,7 +21,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_freq_elec");
-        item.annotation = "the frequency of electronic iter to output charge density and wavefunction ";
+        item.annotation = "print information every few electronic steps";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_elec <= 0)
             {
@@ -29,14 +29,6 @@ void ReadInput::item_output()
             }
         };
         read_sync_int(input.out_freq_elec);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("out_freq_ion");
-        item.annotation = "the frequency ( >= 0 ) of ionic step to output "
-                          "charge density and wavefunction. 0: output "
-                          "only when ion steps are finished";
-        read_sync_int(input.out_freq_ion);
         this->add_item(item);
     }
     {
@@ -356,15 +348,15 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_interval");
-        item.annotation = "interval for printing H(R) and S(R) matrix during MD";
-        read_sync_int(input.out_interval);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_interval <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_interval should be larger than 0");
-            }
-        };
+        Input_Item item("out_freq_ion");
+        item.annotation = "print information every few ionic steps";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+			if (para.input.out_freq_ion <= 0)
+			{
+				para.input.out_freq_ion = 0; // 0 means no output of info
+			}
+		};
+		read_sync_int(input.out_freq_ion);
         this->add_item(item);
     }
     {

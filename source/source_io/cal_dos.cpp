@@ -90,7 +90,7 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 
 bool ModuleIO::cal_dos(const int& is,  // index for spin
 		const std::string& fn,   // file name for DOS
-		const double& de_ev,           // delta energy in ev
+		const double& de_ev,   // delta energy in ev
 		const double& emax_ev, // maximal energy in eV
 		const double& emin_ev, // minimal energy in ev.
 		const double& bcoeff,
@@ -100,17 +100,24 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 		const std::vector<int>& isk,   // index of spin for each k-point
 		const int& nbands,             // number of bands
 		const ModuleBase::matrix& ekb, // energy for each k point and each band
-		const ModuleBase::matrix& wg   // weight of k-points and bands 
-		)
+		const ModuleBase::matrix& wg,  // weight of k-points and bands 
+        const int istep) // ionic step
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
     std::ofstream ofs_dos;
-    std::ofstream ofs_smear;
 
     if (GlobalV::MY_RANK == 0)
     {
-        ofs_dos.open(fn.c_str());
+		if(PARAM.inp.out_app_flag==true)
+		{
+			ofs_dos.open(fn.c_str(), std::ios::app);
+		}
+		else
+		{
+			ofs_dos.open(fn.c_str());
+		}
+        ofs_dos << istep+1 << "    # ionic step" << std::endl;
     }
 
     std::vector<double> dos;

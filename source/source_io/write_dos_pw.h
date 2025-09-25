@@ -15,6 +15,7 @@ namespace ModuleIO
 			const ModuleBase::matrix &wg,
 			const K_Vectors& kv,
 			const int nbands,
+			const int istep_in,
 			const elecstate::efermi &energy_fermi,
 			const double &dos_edelta_ev,
 			const double &dos_scale,

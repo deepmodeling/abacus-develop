@@ -968,14 +968,6 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // out_interval
-        auto it = find_label("out_interval", readinput.input_lists);
-        param.input.out_interval = 0;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
     { // dm_to_rho
         auto it = find_label("dm_to_rho", readinput.input_lists);
         param.input.dm_to_rho = true;

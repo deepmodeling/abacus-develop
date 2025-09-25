@@ -69,7 +69,8 @@ void write_dos_lcao(
 				kv.isk,
 				nbands,
 				ekb,
-				wg);
+				wg,
+				istep);
 	}
 
 
