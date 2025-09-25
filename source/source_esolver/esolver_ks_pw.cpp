@@ -265,20 +265,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //----------------------------------------------------------
-    //! 4) Exx calculations
-    //----------------------------------------------------------
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
-        || PARAM.inp.calculation == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
-        {
-            auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-            hamilt_pw->set_exx_helper(exx_helper);
-        }
-    }
-
-    //----------------------------------------------------------
-    //! 4.5) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
+    //! 4) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
     //----------------------------------------------------------
     if (PARAM.inp.dfthalf_type > 0)
     {
@@ -383,6 +370,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     {
         if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
         {
+            auto hamilt_pw = reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+            hamilt_pw->set_exx_helper(exx_helper);
             exx_helper.set_psi(kspw_psi);
         }
     }

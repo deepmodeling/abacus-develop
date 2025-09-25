@@ -80,10 +80,10 @@ class Diago_DavSubspace
     T* psi_in_iter = nullptr;
 
     /// the product of H and psi in the reduced basis set
-    T* hphi = nullptr;
+    T* hpsi = nullptr;
 
     /// the product of S and psi in the reduced basis set
-    T* sphi = nullptr;
+    T* spsi = nullptr;
 
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;
@@ -108,7 +108,7 @@ class Diago_DavSubspace
                   const int& nbase,
                   const int& notconv,
                   T* psi_iter,
-                  T* hphi,
+                  T* hpsi,
                   T* spsi,
                   T* vcc,
                   const int* unconv,
@@ -118,8 +118,8 @@ class Diago_DavSubspace
                   int& nbase,
                   const int& notconv,
                   const T* psi_iter,
-                  const T* sphi,
-                  const T* hphi,
+                  const T* spsi,
+                  const T* hpsi,
                   T* hcc,
                   T* scc);
 
@@ -128,8 +128,8 @@ class Diago_DavSubspace
                  int& nbase,
                  const Real* eigenvalue,
                  T* psi_iter,
-                 T* hphi,
-                 T* sphi,
+                 T* hpsi,
+                 T* spsi,
                  T* hcc,
                  T* scc,
                  T* vcc);

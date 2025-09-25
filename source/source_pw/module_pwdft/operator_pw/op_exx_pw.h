@@ -53,7 +53,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void construct_ace() const;
 
-    bool first_iter = false;
+    bool first_iter = true;
 
   private:
     const int* isk = nullptr;
