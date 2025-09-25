@@ -11,9 +11,7 @@
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/print_info.h"
 #include "source_estate/cal_ux.h"
-//-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
-//-----stress------------------
 #include "source_pw/module_ofdft/of_stress_pw.h"
 
 namespace ModuleESolver

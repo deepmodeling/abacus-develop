@@ -732,7 +732,7 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
 
 [back to top](#full-list-of-input-keywords)
 
-## Variables related to input files
+## Input files
 
 These variables are used to control parameters related to input files.
 
@@ -1656,16 +1656,16 @@ These variables are used to control the geometry relaxation.
 
 [back to top](#full-list-of-input-keywords)
 
-## Variables related to output information
+## Output information
 
 These variables are used to control the output of properties.
 
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: After self-consistent-field calculations, control the interval of ionic movements for printing properties. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
+- **Description**: Control the interval to print information every few ion steps. These properties cover charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis and so on.
 - **Default**: 0
-- **Note**: If you want to use out_freq_elec, please set out_freq_ion to 1, otherwise out_freq_elec is useless
+- **Note**: The integer indicates to print information every 'out_freq_ion' ion steps. 
 
 ### out_freq_elec
 
@@ -1679,11 +1679,11 @@ These variables are used to control the output of properties.
 - **Description**:
   The first integer controls whether to output the charge density on real space grids:
   - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-    - nspin = 1: `chgs1.cube`;
+    - nspin = 1: `chg.cube`;
     - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
     - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
   Note that by using the Meta-GGA functional, additional files containing the kinetic energy density will be output with the following names:
-    - nspin = 1: `taus1.cube`;
+    - nspin = 1: `tau.cube`;
     - nspin = 2: `taus1.cube`, and `taus2.cube`;
     - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
   - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.

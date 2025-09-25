@@ -1,5 +1,6 @@
 list(APPEND objects
     input_conv.cpp
+    ctrl_output_fp.cpp
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
