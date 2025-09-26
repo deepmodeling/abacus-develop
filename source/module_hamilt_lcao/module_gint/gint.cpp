@@ -247,15 +247,16 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         }
     } else // NSPIN=4 case
     {
-#ifdef __MPI
+
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
         int mg = DM2D[0]->get_paraV()->get_global_row_size()/2;
         int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
         int nb = DM2D[0]->get_paraV()->get_block_size()/2;
+        auto ijr_info = DM2D[0]->get_ijr_info();
+#ifdef __MPI
         int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
-
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
@@ -263,9 +264,16 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         Parallel_Orbitals *pv = new Parallel_Orbitals();
         pv->set(mg, ng, nb, blacs_ctxt);
         pv->set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = DM2D[0]->get_ijr_info();
         this-> DM2D_tmp = new hamilt::HContainer<double>(pv, nullptr, &ijr_info);
         this-> DM2D_tmp->set_zero();
+#else
+        if (this->DM2D_tmp != nullptr) {
+            delete this->DM2D_tmp;
+        }
+        this-> DM2D_tmp = new hamilt::HContainer<double>(*this->hRGint);
+        this-> DM2D_tmp -> insert_ijrs(this->gridt->get_ijr_info(), *(this->ucell));
+        this-> DM2D_tmp -> allocate(nullptr, true);
+#endif
         ModuleBase::Memory::record("Gint::DM2D_tmp", this->DM2D_tmp->get_memory_size());
         for (int is = 0; is < 4; is++){
             for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
@@ -274,7 +282,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
                     const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
-                    double* matrix_out = DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
+                    double* matrix_out = this-> DM2D_tmp -> find_matrix(iat1, iat2, r_index)->get_pointer();
                     double* matrix_in = ap.get_pointer(ir);
                     for (int irow = 0; irow < ap.get_row_size()/2; irow ++) {
                         for (int icol = 0; icol < ap.get_col_size()/2; icol ++) {
@@ -285,11 +293,14 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
                     }
                 }
             }
+#ifdef __MPI
             hamilt::transferParallels2Serials( *(this->DM2D_tmp), this->DMRGint[is]);
-        }
 #else
-        //this->DMRGint_full = DM2D[0];
+            this->DMRGint[is]->set_zero();
+            this->DMRGint[is]->add(*(this->DM2D_tmp));
 #endif
+        }
+
     }
     ModuleBase::timer::tick("Gint", "transfer_DMR");
 }

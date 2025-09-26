@@ -78,10 +78,12 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
 
+    auto ijr_info = hR->get_ijr_info();
+
+#ifdef __MPI
     int mg = hR->get_paraV()->get_global_row_size()/2;
     int ng = hR->get_paraV()->get_global_col_size()/2;
     int nb = hR->get_paraV()->get_block_size()/2;
-#ifdef __MPI
     int blacs_ctxt = hR->get_paraV()->blacs_ctxt;
     std::vector<int> iat2iwt(ucell_in->nat);
     for (int iat = 0; iat < ucell_in->nat; iat++) {
@@ -90,9 +92,9 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
     Parallel_Orbitals *pv = new Parallel_Orbitals();
     pv->set(mg, ng, nb, blacs_ctxt);
     pv->set_atomic_trace(iat2iwt.data(), ucell_in->nat, mg);
-    auto ijr_info = hR->get_ijr_info();
-
     this->hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
+#endif
+    
     ModuleBase::Memory::record("Gint::hRGintCd", this->hR_tmp->get_memory_size());
 
     //select hRGint_tmp
@@ -155,8 +157,12 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                 }
             }
         }
+#ifdef __MPI
         // transfer hRGint_tmpCd to parallel hR_tmp
         hamilt::transferSerials2Parallels( *hRGint_tmpCd, this->hR_tmp);
+#else
+        this->hR_tmp = hRGint_tmpCd;
+#endif
         // merge hR_tmp to hR
         for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
         {
@@ -182,9 +188,6 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
         }
         delete hRGint_tmpCd;
     }
-#else
-
-#endif
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
     return;
 }
