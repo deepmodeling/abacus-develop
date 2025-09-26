@@ -107,7 +107,6 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     }
     else
     {
-         std::cout<<"propagate_psi -------"<<std::endl;
         this->propagate_psi(ucell,this->pphi_td,this->pw_rho);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {

@@ -18,7 +18,7 @@ class ESolver_OF_TDDFT : public ESolver_OF
     psi::Psi<std::complex<double>>* psi_td = nullptr;   
     //std::complex<double>** pdEdphi_phi_ = nullptr;             // (dE/dphi)*phi
     // ==================== main process of TDOFDFT ======================
-     void before_opt(const int istep, UnitCell& ucell);
+    void before_opt(const int istep, UnitCell& ucell);
     void get_Hpsi(UnitCell& ucell, const std::complex<double>* const* psi_, ModulePW::PW_Basis* pw_rho, std::complex<double>** Hpsi);
     void get_tf_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot);
     void get_vw_potential_phi(const std::complex<double>* const* pphi, ModulePW::PW_Basis* pw_rho, std::complex<double>** Hpsi); // -1/2 \nabla^2 \phi
