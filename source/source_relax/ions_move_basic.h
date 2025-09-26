@@ -3,7 +3,6 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/input_parameter.h"
 
 namespace Ions_Move_Basic
 {
@@ -24,7 +23,7 @@ extern double relax_bfgs_init;  // initial value of trust radius,
 extern double best_xxx;         // the last step length of cg , we use it as  bfgs`s initial step length
 extern std::string relax_method; // relaxation method,
 extern int out_stru; // output the structure or not
-extern RelaxMethodParam relax_method_param;
+extern std::string relax_method_param;
 // funny way to pass this parameter, but nevertheless
 
 //----------------------------------------------------------------------------

@@ -16,20 +16,18 @@ void ReadInput::item_relax()
         item.read_value = [](const Input_Item& item, Parameter& para) {
         if(item.get_size()==1)
         {
-            para.input.relax_method_param.method=item.str_values[0];
-            para.input.relax_method = para.input.relax_method_param.method;
-            para.input.relax_method_param.param = "1"; 
+            para.input.relax_method = item.str_values[0];
+            para.input.relax_method_param = "1"; 
         }
         else if(item.get_size()==2)
         {
-            para.input.relax_method_param.method=item.str_values[0];
-            para.input.relax_method = para.input.relax_method_param.method;
-            para.input.relax_method_param.param = item.str_values[1]; 
+            para.input.relax_method = item.str_values[0];
+            para.input.relax_method_param = item.str_values[1];
         }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {          
-        const std::vector<std::string> relax_methods = {"cg", "sd", "cg_bfgs","bfgs","lbfgs"};
-        if (std::find(relax_methods.begin(), relax_methods.end(), para.input.relax_method_param.method) == relax_methods.end()) {
+        const std::vector<std::string> relax_methods = {"cg", "sd", "cg_bfgs","lbfgs","bfgs"};
+        if (std::find(relax_methods.begin(), relax_methods.end(), para.input.relax_method) == relax_methods.end()) {
             const std::string warningstr = nofound_str(relax_methods, "relax_method");
             ModuleBase::WARNING_QUIT("ReadInput", warningstr);
         }

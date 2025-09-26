@@ -16,7 +16,7 @@ void Ions_Move_Methods::allocate(const int &natom)
 {
     Ions_Move_Basic::dim = natom * 3;
 
-    if (Ions_Move_Basic::relax_method_param.method == "bfgs"&&Ions_Move_Basic::relax_method_param.param != "1")
+    if (Ions_Move_Basic::relax_method == "bfgs"&&Ions_Move_Basic::relax_method_param != "1")
     {
         this->bfgs.allocate();
     }
@@ -33,7 +33,7 @@ void Ions_Move_Methods::allocate(const int &natom)
         this->cg.allocate();
         this->bfgs.allocate(); // added by pengfei  13-8-8
     }
-    else if(Ions_Move_Basic::relax_method_param.method == "bfgs"&&Ions_Move_Basic::relax_method_param.param == "1")
+    else if(Ions_Move_Basic::relax_method == "bfgs"&&Ions_Move_Basic::relax_method_param == "1")
     {
         this->bfgs_trad.allocate(natom);       
     }
@@ -56,10 +56,9 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      UnitCell &ucell)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-
     // Ions_Move_Basic::istep = istep;
     Ions_Move_Basic::istep = force_step;
-    if (Ions_Move_Basic::relax_method_param.method == "bfgs"&&Ions_Move_Basic::relax_method_param.param != "1")
+    if (Ions_Move_Basic::relax_method == "bfgs"&&Ions_Move_Basic::relax_method_param != "1")
     {
         // move_ions
         // output tau
@@ -78,7 +77,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
     }
-    else if(Ions_Move_Basic::relax_method_param.method == "bfgs"&&Ions_Move_Basic::relax_method_param.param == "1")
+    else if(Ions_Move_Basic::relax_method == "bfgs"&&Ions_Move_Basic::relax_method_param == "1")
     {
         bfgs_trad.relax_step(f,ucell);        
     }
