@@ -22,12 +22,12 @@ namespace ModuleESolver
 ESolver_OF_TDDFT::ESolver_OF_TDDFT()
 {
     this->classname = "ESolver_OF_TDDFT";
-    this->evolve_psi=new EVOLVE_PSI();
+    this->evolve_phi=new EVOLVE_PHI();
 }
 
 ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 {
-    delete this->evolve_psi;
+    delete this->evolve_phi;
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] this->pphi_td[is];
@@ -102,7 +102,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     }
     else
     {
-        this->evolve_psi->propagate_psi(this->pelec, this->chr, ucell, this->pphi_td, this->pw_rho);
+        this->evolve_phi->propagate_psi(this->pelec, this->chr, ucell, this->pphi_td, this->pw_rho);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < pw_rho->nrxx; ++ir)
