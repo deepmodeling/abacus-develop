@@ -180,6 +180,7 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
     void TearDown() override
     {
+        delete[] kvec_d; // mohan add 20250926
         delete[] h_rhog;
         delete[] h_rhogout;
         delete[] h_rhor;
