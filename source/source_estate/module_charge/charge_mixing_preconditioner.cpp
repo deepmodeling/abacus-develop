@@ -57,15 +57,16 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         }
 
         gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
+
+        const double gg0_amin = this->mixing_gg0_min / amin;
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        const double gg0_amin = this->mixing_gg0_min / amin;
-
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), gg0_min);
+            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
             drhog[is_idx + ig] *= filter_g;
         }
     }
@@ -138,13 +139,12 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         }
         
         gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
 
         const int is_idx = is * this->rhopw->npw;
         const double gg0_amin = this->mixing_gg0_min / amin;
-
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];

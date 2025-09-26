@@ -31,10 +31,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 #endif
         for (int is = 0; is < nspin; ++is)
         {
-            const int is_idx = is * this->rhopw->npw;
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                drhog[is_idx + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
+                drhog[is * this->rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
             }
         }
 
