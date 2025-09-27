@@ -28,7 +28,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool)
@@ -592,10 +592,18 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
     ct::Tensor psi_temp = psi.slice({0, 0}, {int(psi.shape().dim_size(0)), int(prec.shape().dim_size(0))});
     do
     {
-        if (need_subspace_ || ntry > 0)
+        if (ntry > 0) // not the first try, then psi is orthogonalized
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
-            this->subspace_func_(psi_temp, psi_map);
+            const bool assume_orthogonal = true;
+            this->subspace_func_(psi_temp, psi_map, assume_orthogonal);
+            psi_temp.sync(psi_map);
+        }
+        else if (need_subspace_)
+        {
+            ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
+            const bool assume_orthogonal = false;
+            this->subspace_func_(psi_temp, psi_map, assume_orthogonal);
             psi_temp.sync(psi_map);
         }
 
