@@ -262,7 +262,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
-//        const Device* ctx,
+        const Device* ctx,
         Parallel_Grid &para_grid,
         const Input_para& inp)
 {
@@ -390,6 +390,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     ModuleBase::timer::tick("ModuleIO", "ctrl_runner_pw");
 }
 
+// complex<float> + CPU
 template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU>(
     const int nstep,
 	const UnitCell& ucell,
@@ -407,6 +408,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
+// complex<double> + CPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CPU>(
     const int nstep,
 	const UnitCell& ucell,
@@ -425,6 +427,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     const Input_para& inp);
 
 #if ((defined __CUDA) || (defined __ROCM))
+// complex<float> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU>(
     const int nstep,
 	const UnitCell& ucell,
@@ -438,10 +441,11 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
     psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
-//    const base_device::DEVICE_CPU* ctx,
+    const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
+// complex<double> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(
 	const int nstep,
 	const UnitCell& ucell,
@@ -455,11 +459,12 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
-    //const base_device::DEVICE_CPU* ctx,
+    const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif
 
+// complex<float> + CPU
 template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_CPU>(
 	UnitCell& ucell, 
 	elecstate::ElecState* pelec,	
@@ -474,10 +479,11 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-//    const Device* ctx,
+    const base_device::DEVICE_CPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
+// complex<double> + CPU
 template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_CPU>(
 	UnitCell& ucell, 
 	elecstate::ElecState* pelec,	
@@ -492,11 +498,12 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-//    const Device* ctx,
+    const base_device::DEVICE_CPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
 #if ((defined __CUDA) || (defined __ROCM))
+// complex<float> + GPU
 template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_GPU>(
 	UnitCell& ucell, 
 	elecstate::ElecState* pelec,	
@@ -511,10 +518,11 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-//    const Device* ctx,
+    const base_device::DEVICE_GPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 
+// complex<double> + GPU
 template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_GPU>(
 	UnitCell& ucell, 
 	elecstate::ElecState* pelec,	
@@ -529,7 +537,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
-//    const Device* ctx,
+    const base_device::DEVICE_GPU* ctx,
     Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif

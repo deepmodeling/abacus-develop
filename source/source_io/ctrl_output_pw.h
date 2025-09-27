@@ -2,12 +2,13 @@
 #define CTRL_OUTPUT_PW_H 
 
 #include "source_base/module_device/device.h" // use Device
-#include "source_psi/psi.h" // define psi
-#include "source_estate/elecstate_lcao.h" // use pelec
+#include "source_psi/psi.h"                   // define psi
+#include "source_estate/elecstate_lcao.h"     // use pelec
 
 namespace ModuleIO
 {
 
+// print out information in 'iter_finish' in ESolver_KS_PW
 void ctrl_iter_pw(const int istep, 
 		const int iter, 
 		const double &conv_esolver,
@@ -16,6 +17,7 @@ void ctrl_iter_pw(const int istep,
 		const ModulePW::PW_Basis_K *pw_wfc,
         const Input_para& inp);
 
+// print out information in 'after_scf' in ESolver_KS_PW
 template <typename T, typename Device>
 void ctrl_scf_pw(const int istep,
         const UnitCell& ucell,
@@ -33,6 +35,7 @@ void ctrl_scf_pw(const int istep,
         const Parallel_Grid &para_grid,
         const Input_para& inp);
 
+// print out information in 'after_all_runners' in ESolver_KS_PW
 template <typename T, typename Device>
 void ctrl_runner_pw(UnitCell& ucell, 
 		elecstate::ElecState* pelec,	
@@ -47,7 +50,7 @@ void ctrl_runner_pw(UnitCell& ucell,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
-//        const Device* ctx,
+        const Device* ctx,
         Parallel_Grid &para_grid,
         const Input_para& inp);
 
