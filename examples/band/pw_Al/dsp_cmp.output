@@ -1,0 +1,33 @@
+                                                                                     
+                              ABACUS v3.8.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 5dece2d32 (Tue Oct 22 20:06:12 2024 +0800)
+
+ Thu Oct 24 10:33:27 2024
+ Can't find the INPUT file.
+ 
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                         NOTICE                           
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ 
+ Error during readin parameters.
+ CHECK IN FILE : warning.log
+ 
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                         NOTICE                           
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+TIME STATISTICS
+-----------------------------------------------------
+ CLASS_NAME    NAME    TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------
+            total      0.00   1        0.00   100.00 
+ Driver     reading    0.00   1        0.00   0.00   
+-----------------------------------------------------
+
+ See output information in : 

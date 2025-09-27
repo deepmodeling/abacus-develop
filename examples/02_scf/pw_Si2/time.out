@@ -1,0 +1,348 @@
+                                                                                     
+                              ABACUS v3.9.0.10
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: afd9b089e (Wed Jul 23 22:04:44 2025 +0800)
+
+ Tue Jul 29 21:25:53 2025
+                                                                                     
+                              ABACUS v3.9.0.10
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: afd9b089e (Wed Jul 23 22:04:44 2025 +0800)
+
+ Tue Jul 29 21:25:53 2025
+ MAKE THE DIR         : OUT.ABACUS/
+                                                                                     
+                              ABACUS v3.9.0.10
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: afd9b089e (Wed Jul 23 22:04:44 2025 +0800)
+
+ Tue Jul 29 21:25:53 2025
+                                                                                     
+                              ABACUS v3.9.0.10
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: afd9b089e (Wed Jul 23 22:04:44 2025 +0800)
+
+ Tue Jul 29 21:25:53 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ MAKE THE DIR         : OUT.ABACUS/
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+ RUNNING WITH DEVICE  : CPU /  RUNNING WITH DEVICE  : CPU /  RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(0.0658004  SEC) : SETUP UNITCELL
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(0.0579897  SEC) : SETUP UNITCELL
+ DONE(0.054666   SEC) : SETUP UNITCELL
+ DONE(0.0463286  SEC) : SETUP UNITCELL
+ DONE(0.100059   SEC) : SYMMETRY
+ DONE(0.0916337  SEC) : SYMMETRY
+ DONE(0.0881978  SEC) : SYMMETRY
+ DONE(0.0802631  SEC) : SYMMETRY
+ DONE(0.191971   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.18009    SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.194187   SEC) : INIT PLANEWAVE
+ DONE(0.182236   SEC) : INIT PLANEWAVE
+ DONE(0.187419   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.198085   SEC) : LOCAL POTENTIAL
+ DONE(0.176183   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.189677   SEC) : INIT PLANEWAVE
+ DONE(0.186154   SEC) : LOCAL POTENTIAL
+ DONE(0.178443   SEC) : INIT PLANEWAVE
+ DONE(0.193644   SEC) : LOCAL POTENTIAL
+ DONE(0.182335   SEC) : LOCAL POTENTIAL
+ DONE(0.208256   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 3.62305
+ DONE(0.196144   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 3.62305
+ DONE(0.203733   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 3.62305
+ DONE(0.192504   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 3.62305
+ DONE(0.218353   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : atomic
+ DONE(0.206232   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : atomic
+ DONE(0.214182   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : atomic
+ DONE(0.202941   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : atomic
+ DONE(0.242617   SEC) : INIT SCF
+ DONE(0.230616   SEC) : INIT SCF
+ DONE(0.23922    SEC) : INIT SCF
+ DONE(0.227736   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454446e+02   0.00000000e+00   6.9815e-02   0.36
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454446e+02   0.00000000e+00   6.9815e-02   0.36
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454446e+02   0.00000000e+00   6.9815e-02   0.38
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454446e+02   0.00000000e+00   6.9815e-02   0.38
+ DS2     -2.15504004e+02  -4.95579087e-02   1.7872e-03   0.12
+ DS2     -2.15504004e+02  -4.95579087e-02   1.7872e-03   0.12
+ DS2     -2.15504004e+02  -4.95579087e-02   1.7872e-03   0.13
+ DS2     -2.15504004e+02  -4.95579087e-02   1.7872e-03   0.13
+ DS3     -2.15505638e+02  -1.63393439e-03   2.6188e-05   0.16
+ DS3     -2.15505638e+02  -1.63393439e-03   2.6188e-05   0.17
+ DS3     -2.15505638e+02  -1.63393439e-03   2.6188e-05   0.17
+ DS3     -2.15505638e+02  -1.63393439e-03   2.6188e-05   0.18
+ DS4     -2.15505697e+02  -5.92969010e-05   3.2662e-07   0.18
+ DS4     -2.15505697e+02  -5.92969010e-05   3.2662e-07   0.18
+ DS4     -2.15505697e+02  -5.92969010e-05   3.2662e-07   0.19
+ DS4     -2.15505697e+02  -5.92969010e-05   3.2662e-07   0.19
+ DS5     -2.15505698e+02  -1.40498709e-06   1.7971e-08   0.20
+ DS5     -2.15505698e+02  -1.40498709e-06   1.7971e-08   0.20
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             1.26   17       0.07   100.00 
+ Driver            atomic_world      1.26   1        1.26   100.00 
+ Driver            reading           0.03   1        0.03   2.61   
+ Symmetry          analy_sys         0.03   1        0.03   2.66   
+ Relax_Driver      relax_driver      1.05   1        1.05   83.49  
+ ESolver_KS        runner            1.05   1        1.05   83.48  
+ ESolver_KS_PW     before_scf        0.02   1        0.02   1.93   
+ Potential         cal_veff          0.02   6        0.00   1.57   
+ PSIInit           initialize_psi    0.01   1        0.01   1.03   
+ Nonlocal          getvnl            0.02   56       0.00   1.46   
+ pp_cell_vnl       getvnl            0.02   56       0.00   1.46   
+ ESolver_KS_PW     hamilt2rho_single 0.99   6        0.17   79.11  
+ HSolverPW         solve             0.98   6        0.16   77.86  
+ HSolverPW         solve_psik        0.84   48       0.02   67.14  
+ Diago_DavSubspace diag_once         0.83   48       0.02   65.71  
+ Diago_DavSubspace first             0.25   48       0.01   19.87  
+ Operator          hPsi              0.66   207      0.00   52.29  
+ Operator          veff_pw           0.63   207      0.00   50.16  
+ PW_Basis_K        recip2real        0.40   2564     0.00   31.77  
+ PW_Basis_K        real2recip        0.25   1892     0.00   19.71  
+ Operator          nonlocal_pw       0.02   207      0.00   1.71   
+ Diago_DavSubspace cal_elem          0.04   207      0.00   3.51   
+ Diago_DavSubspace diag_zhegvx       0.06   207      0.00   4.71   
+ Diago_DavSubspace cal_grad          0.47   159      0.00   37.61  
+ ElecStatePW       psiToRho          0.12   6        0.02   9.33   
+-------------------------------------------------------------------
+
+
+ START  Time  : Tue Jul 29 21:25:53 2025
+ FINISH Time  : Tue Jul 29 21:25:55 2025
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.ABACUS/
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             1.27   17       0.07   100.00 
+ Driver            atomic_world      1.27   1        1.27   100.00 
+ Driver            reading           0.04   1        0.04   3.16   
+ Symmetry          analy_sys         0.03   1        0.03   2.69   
+ Relax_Driver      relax_driver      1.05   1        1.05   82.72  
+ ESolver_KS        runner            1.05   1        1.05   82.72  
+ ESolver_KS_PW     before_scf        0.02   1        0.02   1.90   
+ Potential         cal_veff          0.02   6        0.00   1.53   
+ PSIInit           initialize_psi    0.01   1        0.01   1.02   
+ Nonlocal          getvnl            0.02   56       0.00   1.43   
+ pp_cell_vnl       getvnl            0.02   56       0.00   1.42   
+ ESolver_KS_PW     hamilt2rho_single 1.00   6        0.17   78.46  
+ HSolverPW         solve             0.98   6        0.16   77.22  
+ HSolverPW         solve_psik        0.85   48       0.02   66.60  
+ Diago_DavSubspace diag_once         0.83   48       0.02   65.23  
+ Diago_DavSubspace first             0.25   48       0.01   19.69  
+ Operator          hPsi              0.66   207      0.00   52.10  
+ Operator          veff_pw           0.64   207      0.00   50.05  
+ PW_Basis_K        recip2real        0.40   2564     0.00   31.78  
+ PW_Basis_K        real2recip        0.25   1892     0.00   19.75  
+ Operator          nonlocal_pw       0.02   207      0.00   1.66   
+ Diago_DavSubspace cal_elem          0.04   207      0.00   3.48   
+ Diago_DavSubspace diag_zhegvx       0.06   207      0.00   4.61   
+ Diago_DavSubspace cal_grad          0.48   159      0.00   37.43  
+ ElecStatePW       psiToRho          0.12   6        0.02   9.28   
+-------------------------------------------------------------------
+
+
+ START  Time  : Tue Jul 29 21:25:53 2025
+ FINISH Time  : Tue Jul 29 21:25:55 2025
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.ABACUS/
+ DS5     -2.15505698e+02  -1.40498709e-06   1.7971e-08   0.21
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             1.31   17       0.08   100.00 
+ Driver            atomic_world      1.31   1        1.31   100.00 
+ Driver            reading           0.02   1        0.02   1.85   
+ Symmetry          analy_sys         0.03   1        0.03   2.59   
+ Relax_Driver      relax_driver      1.10   1        1.10   84.34  
+ ESolver_KS        runner            1.10   1        1.10   84.34  
+ ESolver_KS_PW     before_scf        0.02   1        0.02   1.90   
+ Potential         cal_veff          0.02   6        0.00   1.56   
+ PSIInit           initialize_psi    0.01   1        0.01   1.04   
+ Nonlocal          getvnl            0.02   56       0.00   1.48   
+ pp_cell_vnl       getvnl            0.02   56       0.00   1.47   
+ ESolver_KS_PW     hamilt2rho_single 1.04   6        0.17   80.01  
+ HSolverPW         solve             1.03   6        0.17   78.74  
+ HSolverPW         solve_psik        0.88   48       0.02   67.71  
+ Diago_DavSubspace diag_once         0.87   48       0.02   66.32  
+ Diago_DavSubspace first             0.26   48       0.01   19.90  
+ Operator          hPsi              0.69   207      0.00   52.81  
+ Operator          veff_pw           0.66   207      0.00   50.69  
+ PW_Basis_K        recip2real        0.42   2564     0.00   32.49  
+ PW_Basis_K        real2recip        0.26   1892     0.00   19.88  
+ Operator          nonlocal_pw       0.02   207      0.00   1.70   
+ Diago_DavSubspace cal_elem          0.05   207      0.00   3.55   
+ Diago_DavSubspace diag_zhegvx       0.06   207      0.00   4.78   
+ Diago_DavSubspace cal_grad          0.50   159      0.00   38.06  
+ ElecStatePW       psiToRho          0.13   6        0.02   9.64   
+-------------------------------------------------------------------
+
+
+ START  Time  : Tue Jul 29 21:25:53 2025
+ FINISH Time  : Tue Jul 29 21:25:55 2025
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.ABACUS/
+ DS5     -2.15505698e+02  -1.40498709e-06   1.7971e-08   0.21
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             1.34   17       0.08   100.00 
+ Driver            atomic_world      1.34   1        1.34   100.00 
+ Driver            reading           0.04   1        0.04   2.74   
+ Symmetry          analy_sys         0.03   1        0.03   2.51   
+ Relax_Driver      relax_driver      1.12   1        1.12   83.89  
+ ESolver_KS        runner            1.12   1        1.12   83.89  
+ ESolver_KS_PW     before_scf        0.02   1        0.02   1.87   
+ Potential         cal_veff          0.02   6        0.00   1.52   
+ PSIInit           initialize_psi    0.01   1        0.01   1.00   
+ Nonlocal          getvnl            0.02   56       0.00   1.47   
+ pp_cell_vnl       getvnl            0.02   56       0.00   1.47   
+ ESolver_KS_PW     hamilt2rho_single 1.06   6        0.18   79.60  
+ HSolverPW         solve             1.05   6        0.17   78.31  
+ HSolverPW         solve_psik        0.90   48       0.02   67.19  
+ Diago_DavSubspace diag_once         0.88   48       0.02   65.81  
+ Diago_DavSubspace first             0.27   48       0.01   19.93  
+ Operator          hPsi              0.70   207      0.00   52.51  
+ Operator          veff_pw           0.67   207      0.00   50.40  
+ PW_Basis_K        recip2real        0.43   2564     0.00   32.51  
+ PW_Basis_K        real2recip        0.26   1892     0.00   19.77  
+ Operator          nonlocal_pw       0.02   207      0.00   1.70   
+ Diago_DavSubspace cal_elem          0.05   207      0.00   3.50   
+ Diago_DavSubspace diag_zhegvx       0.06   207      0.00   4.65   
+ Diago_DavSubspace cal_grad          0.50   159      0.00   37.70  
+ ElecStatePW       psiToRho          0.13   6        0.02   9.73   
+-------------------------------------------------------------------
+
+
+ START  Time  : Tue Jul 29 21:25:53 2025
+ FINISH Time  : Tue Jul 29 21:25:55 2025
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.ABACUS/

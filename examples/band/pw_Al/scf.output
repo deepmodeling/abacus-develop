@@ -1,0 +1,128 @@
+                                                                                     
+                              ABACUS v3.8.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 5dece2d32 (Tue Oct 22 20:06:12 2024 +0800)
+
+ Thu Oct 24 10:30:51 2024
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+ UNIFORM GRID DIM        : 27 * 27 * 27
+ UNIFORM GRID DIM(BIG)   : 27 * 27 * 27
+ DONE(0.0527788  SEC) : SETUP UNITCELL
+ DONE(0.0536258  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 1       36              2           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Al      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0566356  SEC) : INIT PLANEWAVE
+ DONE(0.0613835  SEC) : LOCAL POTENTIAL
+ DONE(0.0772123  SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 4.9845
+ DONE(0.115275   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.127956   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.25884109e+02   0.00000000e+00   1.0104e-02   1.07
+ CG2     -1.25883530e+02   5.79170034e-04   6.4025e-04   0.25
+ CG3     -1.25884351e+02  -8.20708588e-04   1.9701e-06   0.34
+ CG4     -1.25884423e+02  -7.23224010e-05   7.4764e-08   0.51
+ CG5     -1.25884423e+02  -1.21761473e-07   5.3141e-10   0.35
+ >> Leave SCF iteration.
+ * * * * * *
+TIME STATISTICS
+----------------------------------------------------------------------------
+    CLASS_NAME               NAME             TIME/s  CALLS   AVG/s  PER/%  
+----------------------------------------------------------------------------
+                  total                       2.66   15       0.18   100.00 
+ Driver           reading                     0.02   1        0.02   0.82   
+ Input_Conv       Convert                     0.00   1        0.00   0.03   
+ Driver           driver_line                 2.64   1        2.64   99.17  
+ UnitCell         check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup     setuptransform              0.00   1        0.00   0.12   
+ PW_Basis_Sup     distributeg                 0.00   1        0.00   0.01   
+ mymath           heapsort                    0.00   3        0.00   0.02   
+ PW_Basis_K       setuptransform              0.00   1        0.00   0.06   
+ PW_Basis_K       distributeg                 0.00   1        0.00   0.01   
+ PW_Basis         setup_struc_factor          0.00   1        0.00   0.01   
+ ppcell_vnl       init                        0.00   1        0.00   0.05   
+ ppcell_vl        init_vloc                   0.00   1        0.00   0.09   
+ ppcell_vnl       init_vnl                    0.02   1        0.02   0.59   
+ WF_atomic        init_at_1                   0.04   1        0.04   1.43   
+ wavefunc         wfcinit                     0.00   1        0.00   0.00   
+ Ions             opt_ions                    2.55   1        2.55   95.57  
+ ESolver_KS_PW    runner                      2.55   1        2.55   95.57  
+ ESolver_KS_PW    before_scf                  0.01   1        0.01   0.47   
+ H_Ewald_pw       compute_ewald               0.00   1        0.00   0.01   
+ Charge           set_rho_core                0.00   1        0.00   0.12   
+ PW_Basis_Sup     recip2real                  0.01   38       0.00   0.20   
+ PW_Basis_Sup     gathers_scatterp            0.00   38       0.00   0.08   
+ Charge           atomic_rho                  0.01   2        0.00   0.22   
+ Potential        init_pot                    0.01   1        0.01   0.23   
+ Potential        update_from_charge          0.03   6        0.00   1.08   
+ Potential        cal_fixed_v                 0.00   1        0.00   0.01   
+ PotLocal         cal_fixed_v                 0.00   1        0.00   0.01   
+ Potential        cal_v_eff                   0.03   6        0.00   1.07   
+ H_Hartree_pw     v_hartree                   0.00   6        0.00   0.09   
+ PW_Basis_Sup     real2recip                  0.01   50       0.00   0.23   
+ PW_Basis_Sup     gatherp_scatters            0.00   50       0.00   0.08   
+ PotXC            cal_v_eff                   0.03   6        0.00   0.98   
+ XC_Functional    v_xc                        0.03   6        0.00   0.98   
+ Potential        interpolate_vrs             0.00   6        0.00   0.00   
+ Charge_Mixing    init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW    hamilt2density              2.49   6        0.42   93.59  
+ HSolverPW        solve                       2.49   6        0.42   93.58  
+ Nonlocal         getvnl                      0.07   216      0.00   2.63   
+ pp_cell_vnl      getvnl                      0.07   216      0.00   2.63   
+ Structure_Factor get_sk                      0.01   288      0.00   0.23   
+ WF_atomic        atomic_wfc                  0.01   36       0.00   0.24   
+ DiagoIterAssist  diagH_subspace_init         0.08   36       0.00   2.82   
+ Operator         hPsi                        1.90   11700    0.00   71.25  
+ Operator         EkineticPW                  0.04   11700    0.00   1.50   
+ Operator         VeffPW                      1.48   11700    0.00   55.69  
+ PW_Basis_K       recip2real                  0.89   16668    0.00   33.24  
+ PW_Basis_K       gathers_scatterp            0.40   16668    0.00   15.13  
+ PW_Basis_K       real2recip                  0.59   13860    0.00   22.34  
+ PW_Basis_K       gatherp_scatters            0.22   13860    0.00   8.18   
+ Operator         NonlocalPW                  0.37   11700    0.00   13.75  
+ Nonlocal         add_nonlocal_pp             0.16   11700    0.00   6.16   
+ DiagoIterAssist  diagH_LAPACK                0.01   180      0.00   0.38   
+ DiagoCG          diag_once                   1.95   216      0.01   73.28  
+ DiagoCG_New      spsi_func                   0.02   23040    0.00   0.66   
+ DiagoCG_New      hpsi_func                   1.64   11520    0.00   61.40  
+ ElecStatePW      psiToRho                    0.14   6        0.02   5.30   
+ Charge_Mixing    get_drho                    0.00   6        0.00   0.06   
+ Charge_Mixing    inner_product_recip_rho     0.00   6        0.00   0.00   
+ Charge           mix_rho                     0.00   4        0.00   0.07   
+ Charge           Broyden_mixing              0.00   4        0.00   0.02   
+ DiagoIterAssist  diagH_subspace              0.23   144      0.00   8.66   
+ Charge_Mixing    inner_product_recip_hartree 0.00   12       0.00   0.01   
+ ESolver_KS_PW    after_scf                   0.01   1        0.01   0.48   
+ ModuleIO         write_rhog                  0.00   1        0.00   0.05   
+ ModuleIO         write_istate_info           0.00   1        0.00   0.08   
+----------------------------------------------------------------------------
+
+
+ START  Time  : Thu Oct 24 10:30:51 2024
+ FINISH Time  : Thu Oct 24 10:30:53 2024
+ TOTAL  Time  : 2
+ SEE INFORMATION IN : OUT.ABACUS/

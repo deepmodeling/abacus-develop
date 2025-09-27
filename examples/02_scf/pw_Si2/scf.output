@@ -1,0 +1,46 @@
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 12:07:08 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(0.101023   SEC) : SETUP UNITCELL
+ DONE(0.19945    SEC) : SYMMETRY
+ DONE(0.627082   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               2           2           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.705954   SEC) : INIT PLANEWAVE
+ DONE(0.730307   SEC) : LOCAL POTENTIAL
+ DONE(0.830534   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1.81665
+ DONE(0.929229   SEC) : INIT BASIS
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(1.0529     SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454411e+02   0.00000000e+00   6.9822e-02  11.73
+ DS2     -2.15503977e+02  -4.95659606e-02   1.7860e-03   3.93
+ DS3     -2.15505645e+02  -1.66797037e-03   2.6320e-05   5.53

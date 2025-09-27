@@ -1,0 +1,211 @@
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 11:03:00 2025
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 11:03:00 2025
+ MAKE THE DIR         : OUT.autotest/
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  :  RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 9 * 9 * 9
+ DONE(0.137662   SEC) : SETUP UNITCELL
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 9 * 9 * 9
+ DONE(0.140849   SEC) : SETUP UNITCELL
+ DONE( DONE(0.153843   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     NBASE       
+ 2       Gamma           1           1           54          
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe1     4s2p2d1f-6au    27          1           
+ Fe2     4s2p2d1f-6au    27          1           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+0.14164    SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     NBASE       
+ 2       Gamma           1           1           54          
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe1     4s2p2d1f-6au    27          1           
+ Fe2     4s2p2d1f-6au    27          1           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.155443   SEC) : INIT PLANEWAVE
+ DONE(0.150685   SEC) : INIT PLANEWAVE
+ DONE(1.59938    SEC) : LOCAL POTENTIAL
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(1.75803    SEC) : LOCAL POTENTIAL
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(1.93006    SEC) : INIT SCF
+ DONE(2.12055    SEC) : INIT SCF
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1      6.60e-14   7.81e+00  -6.23671637e+03   0.00000000e+00   5.8887e-01   1.26
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1      6.60e-14   7.81e+00  -6.23671637e+03   0.00000000e+00   5.8887e-01   1.11
+ GV2     -6.84e-13   7.85e+00  -6.23943131e+03  -2.71494303e+00   3.5216e-01   0.33
+ GV3      3.61e-14   7.96e+00  -6.24152299e+03  -2.09167551e+00   2.4216e-01   0.16
+ GV2     -6.84e-13   7.85e+00  -6.23943131e+03  -2.71494303e+00   3.5216e-01   0.69
+ GV4      2.17e-13   7.96e+00  -6.24225020e+03  -7.27217149e-01   1.2842e-01   0.20
+ GV5      4.79e-13   7.88e+00  -6.24217480e+03   7.54012415e-02   9.3930e-02   0.47
+ GV3      3.61e-14   7.96e+00  -6.24152299e+03  -2.09167551e+00   2.4216e-01   0.62
+ GV6     -5.30e-13   7.95e+00  -6.24294132e+03  -7.66521509e-01   3.7416e-02   0.22
+ GV7     -8.85e-13   7.94e+00  -6.24290785e+03   3.34776273e-02   2.4650e-02   0.16
+ GV8      4.10e-12   7.94e+00  -6.24290191e+03   5.93072630e-03   1.3503e-02   0.30
+ GV4      2.17e-13   7.96e+00  -6.24225020e+03  -7.27217149e-01   1.2842e-01   0.74
+ GV9     -2.34e-10   7.93e+00  -6.24292411e+03  -2.21978311e-02   6.6193e-04   0.34
+ GV10     4.11e-09   7.92e+00  -6.24292089e+03   3.22369370e-03   5.0303e-03   0.28
+ GV11    -9.67e-08   7.93e+00  -6.24291749e+03   3.39732874e-03   5.1182e-03   0.28
+ GV5      4.79e-13   7.88e+00  -6.24217480e+03   7.54012415e-02   9.3930e-02   0.73
+ GV12     1.13e-06   7.92e+00  -6.24292439e+03  -6.90163285e-03   5.6073e-04   0.31
+ GV13    -1.14e-05   7.92e+00  -6.24292423e+03   1.61135602e-04   3.4282e-04   0.18
+ GV6     -5.30e-13   7.95e+00  -6.24294132e+03  -7.66521509e-01   3.7416e-02   0.66
+ GV14     1.53e-04   7.93e+00  -6.24292406e+03   1.76640054e-04   8.9737e-05   0.16
+ GV15    -1.37e-04   7.93e+00  -6.24292402e+03   3.39898513e-05   4.3702e-05   0.16
+ GV16    -1.40e-05   7.93e+00  -6.24292401e+03   7.78626094e-06   3.5405e-05   0.18
+ GV17    -1.39e-05   7.93e+00  -6.24292399e+03   2.57976310e-05   2.2967e-06   0.22
+ GV7     -8.85e-13   7.94e+00  -6.24290785e+03   3.34776273e-02   2.4650e-02   0.68
+ GV18    -8.08e-06   7.93e+00  -6.24292399e+03   5.50857115e-07   1.3450e-06   0.16
+ GV19    -3.18e-06   7.93e+00  -6.24292399e+03   4.56943834e-07   3.1798e-07   0.23
+
+TIME STATISTICS
+----------------------------------------------------------------------
+   CLASS_NAME             NAME          TIME/s  CALLS   AVG/s  PER/%  
+----------------------------------------------------------------------
+                 total                  7.60   11       0.69   100.00 
+ Driver          atomic_world           7.60   1        7.60   100.00 
+ ESolver_KS_LCAO before_all_runners     1.72   1        1.72   22.62  
+ NOrbital_Lm     extra_uniform          0.08   18       0.00   1.00   
+ Ions            opt_ions               5.83   1        5.83   76.66  
+ ESolver_KS      runner                 5.83   1        5.83   76.66  
+ ESolver_KS_LCAO before_scf             0.35   1        0.35   4.58   
+ PW_Basis_Sup    recip2real             0.17   185      0.00   2.24   
+ PW_Basis_Sup    gathers_scatterp       2.35   93       0.03   30.94  
+ Potential       init_pot               0.28   1        0.28   3.65   
+ Potential       cal_veff               1.94   20       0.10   25.48  
+ PW_Basis_Sup    real2recip             0.14   202      0.00   1.80   
+ PotXC           cal_veff               1.88   20       0.09   24.66  
+ XC_Functional   v_xc                   1.87   20       0.09   24.63  
+ HSolverLCAO     solve                  3.63   19       0.19   47.68  
+ HamiltLCAO      updateHk               1.78   38       0.05   23.38  
+ OperatorLCAO    init                   1.51   114      0.01   19.91  
+ OverlapNew      calculate_SR           0.19   1        0.19   2.53   
+ EkineticNew     contributeHR           0.24   38       0.01   3.18   
+ EkineticNew     calculate_HR           0.24   1        0.24   3.18   
+ Veff            contributeHR           1.32   38       0.03   17.37  
+ Gint            cal_gint_vl            1.32   38       0.03   17.37  
+ HSolverLCAO     hamiltSolvePsiK        0.24   38       0.01   3.11   
+ ElecStateLCAO   psiToRho               1.61   19       0.08   21.15  
+ Gint            cal_gint_rho           1.58   19       0.08   20.76  
+ Gint            transfer_dm_2d_to_gint 0.38   19       0.02   5.03   
+ Charge_Mixing   mix_rho                0.12   18       0.01   1.56   
+----------------------------------------------------------------------
+
+
+ START  Time  : Fri Jul 11 11:03:00 2025
+ FINISH Time  : Fri Jul 11 11:03:08 2025
+ TOTAL  Time  : 8
+ SEE INFORMATION IN : OUT.autotest/
+ GV8      4.10e-12   7.94e+00  -6.24290191e+03   5.93072630e-03   1.3503e-02   0.69
+ GV9     -2.34e-10   7.93e+00  -6.24292411e+03  -2.21978311e-02   6.6193e-04   0.67
+ GV10     4.11e-09   7.92e+00  -6.24292089e+03   3.22369370e-03   5.0303e-03   0.69
+ GV11    -9.67e-08   7.93e+00  -6.24291749e+03   3.39732874e-03   5.1182e-03   0.68
+ GV12     1.13e-06   7.92e+00  -6.24292439e+03  -6.90163285e-03   5.6073e-04   0.63
+ GV13    -1.14e-05   7.92e+00  -6.24292423e+03   1.61135602e-04   3.4282e-04   0.53
+ GV14     1.53e-04   7.93e+00  -6.24292406e+03   1.76640054e-04   8.9737e-05   0.57
+ GV15    -1.37e-04   7.93e+00  -6.24292402e+03   3.39898513e-05   4.3702e-05   0.60
+ GV16    -1.40e-05   7.93e+00  -6.24292401e+03   7.78626094e-06   3.5405e-05   0.65
+ GV17    -1.39e-05   7.93e+00  -6.24292399e+03   2.57976310e-05   2.2967e-06   0.60
+ GV18    -8.08e-06   7.93e+00  -6.24292399e+03   5.50857115e-07   1.3450e-06   0.65
+ GV19    -3.18e-06   7.93e+00  -6.24292399e+03   4.56943834e-07   3.1798e-07   0.66
+
+TIME STATISTICS
+----------------------------------------------------------------------
+   CLASS_NAME             NAME          TIME/s  CALLS   AVG/s  PER/%  
+----------------------------------------------------------------------
+                 total                  15.01  11       1.36   100.00 
+ Driver          atomic_world           15.01  1        15.01  100.00 
+ ESolver_KS_LCAO before_all_runners     1.58   1        1.58   10.50  
+ Ions            opt_ions               13.37  1        13.37  89.11  
+ ESolver_KS      runner                 13.37  1        13.37  89.11  
+ ESolver_KS_LCAO before_scf             0.31   1        0.31   2.09   
+ PW_Basis_Sup    recip2real             0.45   185      0.00   2.98   
+ PW_Basis_Sup    gathers_scatterp       6.37   93       0.07   42.44  
+ Potential       init_pot               0.25   1        0.25   1.67   
+ Potential       cal_veff               4.80   20       0.24   32.01  
+ PW_Basis_Sup    real2recip             0.33   202      0.00   2.17   
+ PotXC           cal_veff               4.69   20       0.23   31.24  
+ XC_Functional   v_xc                   4.67   20       0.23   31.15  
+ HSolverLCAO     solve                  7.98   19       0.42   53.17  
+ HamiltLCAO      updateHk               3.65   38       0.10   24.32  
+ OperatorLCAO    init                   3.44   114      0.03   22.89  
+ OverlapNew      calculate_SR           0.20   1        0.20   1.31   
+ EkineticNew     contributeHR           0.21   38       0.01   1.41   
+ EkineticNew     calculate_HR           0.21   1        0.21   1.41   
+ Veff            contributeHR           3.21   38       0.08   21.40  
+ Gint            cal_gint_vl            3.21   38       0.08   21.40  
+ HSolverLCAO     hamiltSolvePsiK        0.50   38       0.01   3.32   
+ ElecStateLCAO   psiToRho               3.83   19       0.20   25.52  
+ Gint            cal_gint_rho           3.79   19       0.20   25.24  
+ Gint            transfer_dm_2d_to_gint 0.80   19       0.04   5.36   
+ Charge_Mixing   mix_rho                0.31   18       0.02   2.07   
+----------------------------------------------------------------------
+
+
+ START  Time  : Fri Jul 11 11:03:00 2025
+ FINISH Time  : Fri Jul 11 11:03:15 2025
+ TOTAL  Time  : 15
+ SEE INFORMATION IN : OUT.autotest/
