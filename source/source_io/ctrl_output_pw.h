@@ -29,7 +29,7 @@ void ctrl_scf_pw(const int istep,
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
         psi::Psi<T, Device>* kspw_psi,
         psi::Psi<std::complex<double>, Device>* __kspw_psi,
-//        const Device* ctx,
+        const Device* ctx,
         const Parallel_Grid &para_grid,
         const Input_para& inp);
 

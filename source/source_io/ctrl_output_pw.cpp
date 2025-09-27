@@ -89,7 +89,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
         psi::Psi<T, Device>* kspw_psi,
         psi::Psi<std::complex<double>, Device>* __kspw_psi,
-//        const Device* ctx,
+        const Device* ctx,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
 {
@@ -403,7 +403,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
     psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
-//    const base_device::DEVICE_CPU* ctx,
+    const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -420,7 +420,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
-//    const base_device::DEVICE_CPU* ctx,
+    const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
