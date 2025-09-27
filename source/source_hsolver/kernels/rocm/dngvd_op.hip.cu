@@ -328,7 +328,7 @@ void heevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 }
 
 template <>
-void dngvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                                         const int nbase,
                                                                         const int ldh,
                                                                         std::complex<float>* hcc,
@@ -340,7 +340,7 @@ void dngvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void dngvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                                          const int nbase,
                                                                          const int ldh,
                                                                          std::complex<double>* hcc,
@@ -353,7 +353,7 @@ void dngvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 
 #ifdef __LCAO
 template <>
-void dngvx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                            const int nbase,
                                                            const int ldh,
                                                            double* hcc,

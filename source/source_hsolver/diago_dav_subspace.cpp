@@ -542,7 +542,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             base_device::memory::synchronize_memory_op<T, Device, Device>()(this->d_scc, scc, nbase * this->nbase_x);
-            dngvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            hegvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
@@ -564,7 +564,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                         s_diag[i][j] = scc[i * this->nbase_x + j];
                     }
                 }
-                dngvx_op<T, Device>()(this->ctx,
+                hegvx_op<T, Device>()(this->ctx,
                                       nbase,
                                       this->nbase_x,
                                       this->hcc,
