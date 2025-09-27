@@ -77,8 +77,6 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
             // find the optimization direction and step lenghth theta according to the potential
             this->optimize(ucell);
 
-            std::cout<<"optimize------"<<std::endl;
-
             // update the rho and phi based on the direction and theta
             this->update_rho();
 
@@ -102,7 +100,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                pphi_[is][ir]=abs(pphi_td[is][ir]);
+                pphi_[is][ir]=std::abs(pphi_td[is][ir]);
             }
         }
         conv_esolver=true;
