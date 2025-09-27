@@ -6,7 +6,7 @@
 
 namespace hsolver
 {
-
+// hegvd and sygvd; dn for dense?
 template <typename T>
 struct dngvd_op<T, base_device::DEVICE_CPU>
 {

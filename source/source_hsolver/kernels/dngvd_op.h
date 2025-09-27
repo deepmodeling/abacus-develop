@@ -85,7 +85,7 @@ template <typename T, typename Device>
 struct heevx_op
 {
     using Real = typename GetTypeReal<T>::type;
-    /// @brief DNEVX computes the first m eigenvalues and their corresponding eigenvectors of
+    /// @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
     ///
     /// In this op, the CPU version is implemented through the `evx` interface, and the CUDA version
