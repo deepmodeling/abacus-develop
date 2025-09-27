@@ -205,7 +205,7 @@ void xheevd_wrapper (
 }
 
 template <typename T>
-struct dngvd_op<T, base_device::DEVICE_GPU>
+struct hegvd_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_GPU* d,
@@ -260,16 +260,16 @@ struct dngvx_op<T, base_device::DEVICE_GPU>
     }
 };
 
-template struct dngvd_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct hegvd_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct heevx_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct dngvx_op<std::complex<float>, base_device::DEVICE_GPU>;
 
-template struct dngvd_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct hegvd_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct heevx_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct dngvx_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
-template struct dngvd_op<double, base_device::DEVICE_GPU>;
+template struct hegvd_op<double, base_device::DEVICE_GPU>;
 template struct heevx_op<double, base_device::DEVICE_GPU>;
 template struct dngvx_op<double, base_device::DEVICE_GPU>;
 #endif

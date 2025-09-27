@@ -21,10 +21,10 @@ inline float get_real(const float &x) { return x; }
 
 
 template <typename T, typename Device>
-struct dngvd_op
+struct hegvd_op
 {
     using Real = typename GetTypeReal<T>::type;
-    /// @brief DNGVD computes all the eigenvalues and eigenvectors of a complex generalized
+    /// @brief HEGVD computes all the eigenvalues and eigenvectors of a complex generalized
     /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
     ///
     /// In this op, the CPU version is implemented through the `gvd` interface, and the CUDA version
