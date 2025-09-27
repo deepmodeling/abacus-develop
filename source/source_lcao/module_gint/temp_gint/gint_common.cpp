@@ -70,7 +70,7 @@ void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
 }
 
 
-void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_tmp,
+void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_tmp ,
                          hamilt::HContainer<std::complex<double>>* hR,
                          const GintInfo& gint_info){
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
@@ -96,7 +96,7 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
     hR_tmp = new hamilt::HContainer<std::complex<double>>(pv, nullptr, &ijr_info);
 #endif
 
-    //select hRGint_tmp
+    //select hr_gint_tmp 
     std::vector<int> first = {0, 1, 1, 0};
     std::vector<int> second= {3, 2, 2, 3};
     //select position in the big matrix
@@ -121,8 +121,8 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_t
             {
                 hamilt::AtomPair<std::complex<double>>* upper_ap = ap;
                 hamilt::AtomPair<std::complex<double>>* lower_ap = hRGint_tmpCd->find_pair(iat2, iat1);
-                const hamilt::AtomPair<double>* ap_nspin1 = hRGint_tmp[first[is]].find_pair(iat1, iat2);
-                const hamilt::AtomPair<double>* ap_nspin2 = hRGint_tmp[second[is]].find_pair(iat1, iat2);
+                const hamilt::AtomPair<double>* ap_nspin1 = hr_gint_tmp [first[is]].find_pair(iat1, iat2);
+                const hamilt::AtomPair<double>* ap_nspin2 = hr_gint_tmp [second[is]].find_pair(iat1, iat2);
                 for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
                 {   
                     const auto R_index = upper_ap->get_R_index(ir);

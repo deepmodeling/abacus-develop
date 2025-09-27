@@ -11,7 +11,7 @@ namespace ModuleGint
     template <typename T>
     void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR);
     // for nspin=4 case
-    void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hRGint_tmp,
+    void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_tmp ,
                          hamilt::HContainer<std::complex<double>>* hR,
                          const GintInfo& gint_info);
 
