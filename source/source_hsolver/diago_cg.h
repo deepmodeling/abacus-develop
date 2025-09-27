@@ -119,7 +119,7 @@ class DiagoCG final
     void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(const ct::Tensor& prec,
+    void diag_once(const ct::Tensor& prec,
                    ct::Tensor& psi,
                    ct::Tensor& eigen,
                    const std::vector<double>& ethr_band);
