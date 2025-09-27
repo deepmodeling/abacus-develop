@@ -140,7 +140,7 @@ struct dngv_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct dnevx_op<T, base_device::DEVICE_CPU>
+struct heevx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* /*ctx*/,
@@ -324,8 +324,8 @@ struct dngvx_op<T, base_device::DEVICE_CPU>
 template struct dngvd_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dngvd_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dnevx_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct dnevx_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct heevx_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct heevx_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 template struct dngvx_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dngvx_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -334,7 +334,7 @@ template struct dngv_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dngv_op<std::complex<double>, base_device::DEVICE_CPU>;
 #ifdef __LCAO
 template struct dngvd_op<double, base_device::DEVICE_CPU>;
-template struct dnevx_op<double, base_device::DEVICE_CPU>;
+template struct heevx_op<double, base_device::DEVICE_CPU>;
 template struct dngvx_op<double, base_device::DEVICE_CPU>;
 template struct dngv_op<double, base_device::DEVICE_CPU>;
 #endif

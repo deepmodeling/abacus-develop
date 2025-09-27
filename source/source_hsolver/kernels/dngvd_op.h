@@ -82,7 +82,7 @@ struct dngvx_op
 };
 
 template <typename T, typename Device>
-struct dnevx_op
+struct heevx_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief DNEVX computes the first m eigenvalues and their corresponding eigenvectors of
