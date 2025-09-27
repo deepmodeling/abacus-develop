@@ -11,16 +11,6 @@
 namespace base_device
 {
 
-// struct CPU;
-// struct GPU;
-
-// enum AbacusDevice_t
-// {
-//     UnKnown,
-//     CpuDevice,
-//     GpuDevice
-// };
-
 template <typename Device>
 base_device::AbacusDevice_t get_device_type(const Device* dev);
 
