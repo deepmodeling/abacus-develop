@@ -1,6 +1,5 @@
 #include "esolver_ks_pw.h"
 
-//#include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/memory.h"
@@ -19,16 +18,11 @@
 #include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/VSep_in_pw.h"
-//#include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 
 #include <iostream>
-
-//#ifdef __MLALGO
-//#include "source_io/write_mlkedf_descriptors.h"
-//#endif
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -55,7 +49,6 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
-
     // delete Hamilt
     this->deallocate_hamilt();
 
@@ -495,6 +488,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
             skip_solve = true;
         }
     }
+
     if (!skip_solve)
     {
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
@@ -645,8 +639,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         }
     }
 
-//    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->psi, 
-  //            this->kv, this->pw_wfc, PARAM.inp);
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->psi, 
+              this->kv, this->pw_wfc, PARAM.inp);
 }
 
 template <typename T, typename Device>
@@ -681,9 +675,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->psi[0].size());
     }
 
-//    ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
-  //            this->pw_rho, this->pw_rhod, this->pw_big, this->psi, this->kspw_psi, 
-    //          this->__kspw_psi, /* this->ctx,*/ this->Pgrid, PARAM.inp);
+    ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
+              this->pw_rho, this->pw_rhod, this->pw_big, this->psi, this->kspw_psi, 
+              this->__kspw_psi, this->ctx, this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
@@ -710,18 +704,9 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
     // Calculate forces
-    ff.cal_force(ucell,
-                 force,
-                 *this->pelec,
-                 this->pw_rhod,
-                 &ucell.symm,
-                 &this->sf,
-                 this->solvent,
-                 &this->locpp,
-                 &this->ppcell,
-                 &this->kv,
-                 this->pw_wfc,
-                 this->__kspw_psi);
+    ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
+                 &this->sf, this->solvent, &this->locpp, &this->ppcell, 
+                 &this->kv, this->pw_wfc, this->__kspw_psi);
 }
 
 template <typename T, typename Device>
@@ -738,16 +723,9 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
     this->__kspw_psi = PARAM.inp.precision == "single"
                            ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
-    ss.cal_stress(stress,
-                  ucell,
-                  this->locpp,
-                  this->ppcell,
-                  this->pw_rhod,
-                  &ucell.symm,
-                  &this->sf,
-                  &this->kv,
-                  this->pw_wfc,
-                  this->__kspw_psi);
+
+    ss.cal_stress(stress, ucell, this->locpp, this->ppcell, this->pw_rhod,
+                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
 
     // external stress
     double unit_transform = 0.0;
@@ -767,10 +745,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
-    //ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
-      //      this->pw_rho, this->pw_rhod, this->chr, this->psi,
-        //    this->kspw_psi, this->__kspw_psi, this->sf, 
-          //  this->ppcell, this->solvent, /* this->ctx,*/ this->Pgrid, PARAM.inp); 
+    ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
+            this->pw_rho, this->pw_rhod, this->chr, this->kv, this->psi,
+            this->kspw_psi, this->__kspw_psi, this->sf, 
+            this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
 
 }
 
