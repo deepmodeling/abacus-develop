@@ -14,30 +14,30 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/kernels/dngvd_op.h"
-#include "source_io/berryphase.h"
-#include "source_io/cal_ldos.h"
-#include "source_io/get_pchg_pw.h"
-#include "source_io/get_wf_pw.h"
+//#include "source_io/berryphase.h"
+//#include "source_io/cal_ldos.h"
+//#include "source_io/get_pchg_pw.h"
+//#include "source_io/get_wf_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/numerical_basis.h"
-#include "source_io/numerical_descriptor.h"
-#include "source_io/to_wannier90_pw.h"
-#include "source_io/write_dos_pw.h"
-#include "source_io/write_wfc_pw.h"
+//#include "source_io/numerical_basis.h"
+//#include "source_io/numerical_descriptor.h"
+//#include "source_io/to_wannier90_pw.h"
+//#include "source_io/write_dos_pw.h"
+//#include "source_io/write_wfc_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+//#include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 
 #include <iostream>
 
-#ifdef __MLALGO
-#include "source_io/write_mlkedf_descriptors.h"
-#endif
+//#ifdef __MLALGO
+//#include "source_io/write_mlkedf_descriptors.h"
+//#endif
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -47,6 +47,8 @@
 #endif
 
 #include <chrono>
+
+#include "source_io/ctrl_output_pw.h" // mohan add 20250927
 
 namespace ModuleESolver
 {
@@ -652,7 +654,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         }
     }
 
-    ctrl_iter_pw();
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->psi, 
+              this->kv, this->pw_wfc, PARAM.inp);
 }
 
 template <typename T, typename Device>
@@ -687,7 +690,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->psi[0].size());
     }
 
-    ModuleIO::ctrl_scf_pw();
+    ModuleIO::ctrl_scf_pw<T, Device>(this->pelec, this->chr, this->kv, this->pw_wfc,
+              this->pw_rho, this->pw_rhod, this->pw_big, this->psi, this->kspw_psi, 
+              this->__kspw_psi, this->ctx, this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
@@ -771,8 +776,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //----------------------------------------------------------
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
-    ModuleIO::ctrl_runner_pw(ucell, this->pelec, this->pw_big, this->pw_rhod,
-			this->chr, this->solvent, this->Pgrid, istep); 
+    ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
+            this->pw_rho, this->pw_rhod, this->chr, this->psi,
+            this->kspw_psi, this->__kspw_psi, this->sf, 
+            this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
 
 }
 
