@@ -127,6 +127,7 @@ struct heevx_op
     ///     @param w: calculated eigenvalues
     ///     @param z: calculated eigenvectors
     void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *w, T *z);
+
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

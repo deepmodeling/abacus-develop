@@ -1,0 +1,12 @@
+                               nkstot now = 2
+K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  0.5000
+       2  0.00000000  0.00000000  0.50000000  0.5000
+
+                                   nkstot = 2                                                            ibzkpt
+K-POINTS REDUCTION ACCORDING TO SYMMETRY
+     KPT    DIRECT_X    DIRECT_Y    DIRECT_Z     IBZ    DIRECT_X    DIRECT_Y    DIRECT_Z
+       1  0.00000000  0.00000000  0.00000000       1  0.00000000  0.00000000  0.00000000
+       2  0.00000000  0.00000000  0.50000000       2  0.00000000  0.00000000  0.50000000
+

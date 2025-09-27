@@ -1,0 +1,8 @@
+version = 1
+revision = 3
+requires-python = ">=3.11"
+
+[[package]]
+name = "100-pw-w90"
+version = "0.1.0"
+source = { virtual = "." }

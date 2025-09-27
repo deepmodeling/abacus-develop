@@ -1,0 +1,82 @@
+                                                                                     
+                              ABACUS v3.9.0.15
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: ac53706e3 (Sun Sep 28 02:17:15 2025 +0800)
+
+ Sun Sep 28 04:26:56 2025
+ MAKE THE DIR         : OUT.develop/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz (x2)
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+ UNIFORM GRID DIM     : 20 * 20 * 20
+ UNIFORM GRID DIM(BIG): 20 * 20 * 20
+ DONE(0.375035   SEC) : SETUP UNITCELL
+ DONE(0.398363   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       64              4           4           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ C       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.421113   SEC) : INIT PLANEWAVE
+ DONE(0.422454   SEC) : LOCAL POTENTIAL
+ DONE(0.489662   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 0.367188
+ DONE(0.489769   SEC) : INIT BASIS
+
+ ================================================================
+ NONSELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : file
+ DONE(2.16388    SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -3.08006150e+02   0.00000000e+00   0.0000e+00  24.25
+
+ * * * * * *
+ << Start Wannier functions calculation.
+ >> Finish Wannier functions calculation.
+ * * * * * *
+
+TIME STATISTICS
+-----------------------------------------------------------------
+   CLASS_NAME          NAME        TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------
+                 total             37.04  15       2.47   100.00 
+ Driver          atomic_world      37.04  1        37.04  100.00 
+ Relax_Driver    relax_driver      36.55  1        36.55  98.68  
+ ESolver_KS      runner            36.55  1        36.55  98.68  
+ ESolver_KS_PW   before_scf        1.67   1        1.67   4.52   
+ PSIInit         initialize_psi    1.63   1        1.63   4.40   
+ psi_init_random init_psig         1.13   64       0.02   3.06   
+ psi_init        random_t          1.13   64       0.02   3.06   
+ psi_init        stick_to_pool     1.06   46592    0.00   2.85   
+ DiagoIterAssist diag_subspace     13.75  45       0.31   37.13  
+ Operator        hPsi              9.68   6486     0.00   26.12  
+ Operator        veff_pw           6.99   6486     0.00   18.88  
+ PW_Basis_K      recip2real        6.60   10852    0.00   17.82  
+ PW_Basis_K      real2recip        5.74   8804     0.00   15.50  
+ Operator        nonlocal_pw       2.65   6486     0.00   7.16   
+ DiagoAssist     diag_subspace     13.97  45       0.31   37.72  
+ ESolver_KS_PW   hamilt2rho_single 24.13  1        24.13  65.13  
+ HSolverPW       solve             24.13  1        24.13  65.13  
+ HSolverPW       solve_psik        24.06  64       0.38   64.96  
+ DiagoCG         diag_once         24.02  90       0.27   64.86  
+ ESolver_KS_PW   after_scf         10.53  1        10.53  28.41  
+-----------------------------------------------------------------
+
+
+ START  Time  : Sun Sep 28 04:26:56 2025
+ FINISH Time  : Sun Sep 28 04:27:34 2025
+ TOTAL  Time  : 38
+ SEE INFORMATION IN : OUT.develop/

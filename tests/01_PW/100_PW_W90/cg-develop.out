@@ -1,0 +1,84 @@
+                                                                                     
+                              ABACUS v3.9.0.15
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 3a5886ae3 (Sun Sep 28 02:46:24 2025 +0800)
+
+ Sun Sep 28 03:21:05 2025
+ MAKE THE DIR         : OUT.develop/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz (x2)
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+ UNIFORM GRID DIM     : 20 * 20 * 20
+ UNIFORM GRID DIM(BIG): 20 * 20 * 20
+ DONE(0.105164   SEC) : SETUP UNITCELL
+ DONE(0.108197   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       64              1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ C       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.12043    SEC) : INIT PLANEWAVE
+ DONE(0.124563   SEC) : LOCAL POTENTIAL
+ DONE(0.147006   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1.34375
+ DONE(0.147111   SEC) : INIT BASIS
+
+ ================================================================
+ NONSELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : file
+ DONE(0.276947   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -3.08006150e+02   0.00000000e+00   0.0000e+00   2.92
+
+ * * * * * *
+ << Start Wannier functions calculation.
+ >> Finish Wannier functions calculation.
+ * * * * * *
+
+TIME STATISTICS
+-----------------------------------------------------------------
+   CLASS_NAME          NAME        TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------
+                 total             4.61   15       0.31   100.00 
+ Driver          atomic_world      4.61   1        4.61   100.00 
+ Relax_Driver    relax_driver      4.46   1        4.46   96.74  
+ ESolver_KS      runner            4.46   1        4.46   96.74  
+ ESolver_KS_PW   before_scf        0.13   1        0.13   2.81   
+ PSIInit         initialize_psi    0.12   1        0.12   2.54   
+ Nonlocal        getvnl            0.05   128      0.00   1.03   
+ pp_cell_vnl     getvnl            0.05   128      0.00   1.02   
+ psi_init_random init_psig         0.06   64       0.00   1.23   
+ psi_init        random_t          0.06   64       0.00   1.22   
+ DiagoAssist     diag_subspace     0.09   90       0.00   1.92   
+ Operator        hPsi              2.33   6413     0.00   50.48  
+ Operator        EkineticPW        0.05   6413     0.00   1.00   
+ Operator        veff_pw           1.90   6413     0.00   41.14  
+ PW_Basis_K      recip2real        1.51   10779    0.00   32.66  
+ PW_Basis_K      real2recip        0.83   8731     0.00   17.99  
+ Operator        nonlocal_pw       0.36   6413     0.00   7.88   
+ Nonlocal        add_nonlocal_pp   0.18   6413     0.00   3.81   
+ ESolver_KS_PW   hamilt2rho_single 2.90   1        2.90   63.00  
+ HSolverPW       solve             2.90   1        2.90   63.00  
+ HSolverPW       solve_psik        2.85   64       0.04   61.85  
+ DiagoCG         diag_once         2.79   90       0.03   60.61  
+ ESolver_KS_PW   after_scf         1.40   1        1.40   30.39  
+-----------------------------------------------------------------
+
+
+ START  Time  : Sun Sep 28 03:21:05 2025
+ FINISH Time  : Sun Sep 28 03:21:10 2025
+ TOTAL  Time  : 5
+ SEE INFORMATION IN : OUT.develop/

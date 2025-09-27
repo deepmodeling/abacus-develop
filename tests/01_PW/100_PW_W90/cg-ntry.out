@@ -1,0 +1,85 @@
+                                                                                     
+                              ABACUS v3.9.0.15
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: ac53706e3 (Sun Sep 28 02:17:15 2025 +0800)
+
+ Sun Sep 28 03:15:42 2025
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz (x2)
+WARNING: some of potential function is set to zero cause of less than 1e-30.
+ UNIFORM GRID DIM     : 20 * 20 * 20
+ UNIFORM GRID DIM(BIG): 20 * 20 * 20
+ DONE(0.0956792  SEC) : SETUP UNITCELL
+ DONE(0.0992365  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       64              1           1           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ C       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.108406   SEC) : INIT PLANEWAVE
+ DONE(0.114106   SEC) : LOCAL POTENTIAL
+ DONE(0.139103   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1.34375
+ DONE(0.140133   SEC) : INIT BASIS
+
+ ================================================================
+ NONSELF-CONSISTENT: 
+ ================================================================
+ START CHARGE      : file
+ DONE(0.412757   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -3.08006150e+02   0.00000000e+00   0.0000e+00   2.75
+
+ * * * * * *
+ << Start Wannier functions calculation.
+ >> Finish Wannier functions calculation.
+ * * * * * *
+
+TIME STATISTICS
+-----------------------------------------------------------------
+   CLASS_NAME          NAME        TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------
+                 total             3.76   15       0.25   100.00 
+ Driver          atomic_world      3.76   1        3.76   100.00 
+ Relax_Driver    relax_driver      3.62   1        3.62   96.21  
+ ESolver_KS      runner            3.62   1        3.62   96.21  
+ ESolver_KS_PW   before_scf        0.27   1        0.27   7.25   
+ PSIInit         initialize_psi    0.25   1        0.25   6.62   
+ Nonlocal        getvnl            0.07   128      0.00   1.90   
+ pp_cell_vnl     getvnl            0.07   128      0.00   1.88   
+ psi_init_random init_psig         0.07   64       0.00   1.77   
+ psi_init        random_t          0.07   64       0.00   1.77   
+ DiagoIterAssist diag_subspace     1.65   45       0.04   43.81  
+ Operator        hPsi              2.27   6486     0.00   60.52  
+ Operator        EkineticPW        0.04   6486     0.00   1.17   
+ Operator        veff_pw           1.85   6486     0.00   49.26  
+ PW_Basis_K      recip2real        1.19   10852    0.00   31.60  
+ PW_Basis_K      real2recip        0.71   8804     0.00   18.94  
+ Operator        nonlocal_pw       0.36   6486     0.00   9.52   
+ Nonlocal        add_nonlocal_pp   0.16   6486     0.00   4.35   
+ DiagoAssist     diag_subspace     1.65   45       0.04   43.84  
+ ESolver_KS_PW   hamilt2rho_single 2.73   1        2.73   72.64  
+ HSolverPW       solve             2.73   1        2.73   72.64  
+ HSolverPW       solve_psik        2.68   64       0.04   71.22  
+ DiagoCG         diag_once         2.63   90       0.03   69.94  
+ ESolver_KS_PW   after_scf         0.59   1        0.59   15.65  
+-----------------------------------------------------------------
+
+
+ START  Time  : Sun Sep 28 03:15:42 2025
+ FINISH Time  : Sun Sep 28 03:15:46 2025
+ TOTAL  Time  : 4
+ SEE INFORMATION IN : OUT.autotest/

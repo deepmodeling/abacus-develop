@@ -1,0 +1,51 @@
+                                                                                     
+                              ABACUS v3.9.0.3
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 42e098cae (Mon Apr 14 15:53:52 2025 +0800)
+
+ Sat May  3 08:48:12 2025
+ MAKE THE DIR         : OUT.test_kerker/
+ RUNNING WITH DEVICE  : GPU / NVIDIA GeForce RTX 3090
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Al: [Ne] 3s2 3p1
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 24 * 24 * 24
+ UNIFORM GRID DIM(BIG)   : 24 * 24 * 24
+ DONE(0.224963   SEC) : SETUP UNITCELL
+ 
+ ---------------------------------------------------------
+                         !NOTICE!                         
+ ---------------------------------------------------------
+ 
+ This Mixing mode is not implemended yet,coming soon.
+ CHECK IN FILE : OUT.test_kerker/warning.log
+ 
+ For detailed manual of ABACUS, please see the website
+ https://abacus.deepmodeling.com
+ For any questions, propose issues on the website
+ https://github.com/deepmodeling/abacus-develop/issues
+ ---------------------------------------------------------
+                         !NOTICE!                         
+ ---------------------------------------------------------
+
+TIME STATISTICS
+--------------------------------------------------------------
+  CLASS_NAME        NAME        TIME/s  CALLS   AVG/s  PER/%  
+--------------------------------------------------------------
+              total             0.23   3        0.08   100.00 
+ Driver       reading           0.12   1        0.12   54.58  
+ unitcell     check_atomic_stru 0.02   1        0.02   7.24   
+ PW_Basis_Sup setuptransform    0.06   1        0.06   25.10  
+--------------------------------------------------------------
+
+ See output information in : OUT.test_kerker/

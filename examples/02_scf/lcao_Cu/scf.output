@@ -1,0 +1,65 @@
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 10:29:09 2025
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 10:29:09 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ PROC 0 Please delete the file named by OUT.suffix !!! 
+ CAN NOT MAKE THE OUT DIR.......
+
+TIME STATISTICS
+-----------------------------------------------------
+ CLASS_NAME    NAME    TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------
+            total      0.01   1        0.01   100.00 
+-----------------------------------------------------
+
+ See output information in : OUT.ABACUS/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: The lattice vector is left-handed; a right-handed vector is prefered.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+ UNIFORM GRID DIM     : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG): 8 * 8 * 8
+ DONE(0.0245374  SEC) : SETUP UNITCELL
+ DONE(0.0512807  SEC) : SYMMETRY
+ DONE(0.128367   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     NBASE       
+ 1       8               1           1           18          
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Cu      2s2p2d-7au      18          1           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.129951   SEC) : INIT PLANEWAVE
+ DONE(0.232349   SEC) : LOCAL POTENTIAL
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(0.257431   SEC) : INIT SCF

@@ -1,0 +1,49 @@
+                                                                                     
+                              ABACUS v3.9.0.2
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: ce45c3fee (Wed Apr 2 18:47:50 2025 +0800)
+
+ Tue Apr  8 23:08:32 2025
+ MAKE THE DIR         : OUT.ABACUS/
+latvec.det=33.4018
+lat0=1.88972
+ RUNNING WITH DEVICE  : GPU / NVIDIA GeForce RTX 3090
+ UNIFORM GRID DIM        : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG)   : 32 * 32 * 32
+ DONE(0.284668   SEC) : SETUP UNITCELL
+ DONE(0.286882   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       36              2           2           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Al      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.296343   SEC) : INIT PLANEWAVE
+ DONE(0.303721   SEC) : LOCAL POTENTIAL
+ DONE(0.325412   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 6.427
+ DONE(0.390341   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.630559   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.25883960e+02   0.00000000e+00   1.0117e-02   3.29
+ CG2     -1.25883532e+02   4.28342970e-04   6.4495e-04   0.62
+ CG3     -1.25884530e+02  -9.98153707e-04   2.8201e-06   0.97
+ CG4     -1.25884589e+02  -5.88173378e-05   3.1917e-07   1.60
+ CG5     -1.25884589e+02  -1.94728575e-07   1.5600e-09   0.75

@@ -1,0 +1,78 @@
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 12:07:55 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(0.143232   SEC) : SETUP UNITCELL
+ DONE(0.330735   SEC) : SYMMETRY
+ DONE(0.735468   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               2           2           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.744705   SEC) : INIT PLANEWAVE
+ DONE(0.756605   SEC) : LOCAL POTENTIAL
+ DONE(0.822382   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1.81665
+ DONE(0.859688   SEC) : INIT BASIS
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(1.09339    SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454411e+02   0.00000000e+00   6.9822e-02  10.93
+ DS2     -2.15503977e+02  -4.95659606e-02   1.7860e-03   4.30
+ DS3     -2.15505645e+02  -1.66797037e-03   2.6320e-05   5.35
+ DS4     -2.15505697e+02  -5.20233180e-05   3.5142e-07   5.01
+ DS5     -2.15505698e+02  -1.56707639e-06   2.5637e-08   5.42
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             32.17  17       1.89   100.00 
+ Driver            atomic_world      32.17  1        32.17  100.00 
+ Ions              opt_ions          31.29  1        31.29  97.28  
+ ESolver_KS        runner            31.29  1        31.29  97.28  
+ ESolver_KS_PW     hamilt2rho_single 30.45  6        5.08   94.68  
+ HSolverPW         solve             30.12  6        5.02   93.64  
+ HSolverPW         solve_psik        25.87  48       0.54   80.44  
+ Diago_DavSubspace diag_once         25.84  48       0.54   80.32  
+ Diago_DavSubspace first             7.92   48       0.17   24.63  
+ Operator          hPsi              21.10  198      0.11   65.60  
+ Operator          veff_pw           20.33  198      0.10   63.22  
+ PW_Basis_K        recip2real        12.47  2561     0.00   38.76  
+ PW_Basis_K        real2recip        11.91  1889     0.01   37.03  
+ Operator          nonlocal_pw       0.76   198      0.00   2.37   
+ Diago_DavSubspace cal_elem          1.32   198      0.01   4.12   
+ Diago_DavSubspace diag_zhegvx       2.48   198      0.01   7.71   
+ Diago_DavSubspace cal_grad          14.34  150      0.10   44.60  
+ ElecStatePW       psiToRho          4.16   6        0.69   12.94  
+-------------------------------------------------------------------
+
+
+ START  Time  : Fri Jul 11 12:07:55 2025
+ FINISH Time  : Fri Jul 11 12:08:27 2025
+ TOTAL  Time  : 32
+ SEE INFORMATION IN : OUT.ABACUS/

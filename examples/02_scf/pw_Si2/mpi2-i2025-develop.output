@@ -1,0 +1,82 @@
+                                                                                     
+                              ABACUS v3.9.0.9
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 012c2169b (Fri Jul 11 00:54:40 2025 +0800)
+
+ Fri Jul 11 14:43:20 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(0.329398   SEC) : SETUP UNITCELL
+ DONE(0.644493   SEC) : SYMMETRY
+ DONE(1.49472    SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     
+ 1       8               2           2           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Si      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(1.53458    SEC) : INIT PLANEWAVE
+ DONE(1.55757    SEC) : LOCAL POTENTIAL
+ DONE(1.67341    SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1.81665
+ DONE(1.75488    SEC) : INIT BASIS
+ ======================================================================
+ SELF-CONSISTENT: 
+ ======================================================================
+ START CHARGE      : atomic
+ DONE(2.00334    SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -2.15454411e+02   0.00000000e+00   6.9822e-02   7.84
+ DS2     -2.15503977e+02  -4.95659606e-02   1.7860e-03   1.98
+ DS3     -2.15505645e+02  -1.66797037e-03   2.6320e-05   2.30
+ DS4     -2.15505697e+02  -5.20233180e-05   3.5142e-07   2.91
+ DS5     -2.15505698e+02  -1.56707530e-06   2.5637e-08   4.44
+
+TIME STATISTICS
+-------------------------------------------------------------------
+    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------
+                   total             21.53  17       1.27   100.00 
+ Driver            atomic_world      21.53  1        21.53  100.00 
+ Driver            reading           0.22   1        0.22   1.00   
+ Symmetry          analy_sys         0.30   1        0.30   1.37   
+ Ions              opt_ions          19.76  1        19.76  91.78  
+ ESolver_KS        runner            19.76  1        19.76  91.78  
+ ESolver_KS_PW     before_scf        0.25   1        0.25   1.15   
+ Potential         cal_veff          0.34   6        0.06   1.57   
+ ESolver_KS_PW     hamilt2rho_single 18.96  6        3.16   88.06  
+ HSolverPW         solve             18.82  6        3.14   87.43  
+ HSolverPW         solve_psik        16.70  48       0.35   77.55  
+ Diago_DavSubspace diag_once         16.67  48       0.35   77.43  
+ Diago_DavSubspace first             5.08   48       0.11   23.60  
+ Operator          hPsi              12.52  198      0.06   58.17  
+ Operator          veff_pw           12.25  198      0.06   56.89  
+ PW_Basis_K        recip2real        7.72   2561     0.00   35.87  
+ PW_Basis_K        real2recip        6.34   1889     0.00   29.47  
+ Operator          nonlocal_pw       0.25   198      0.00   1.18   
+ Diago_DavSubspace cal_elem          1.05   198      0.01   4.87   
+ Diago_DavSubspace diag_zhegvx       0.44   198      0.00   2.06   
+ Diago_DavSubspace cal_grad          10.43  150      0.07   48.43  
+ ElecStatePW       psiToRho          2.04   6        0.34   9.49   
+-------------------------------------------------------------------
+
+
+ START  Time  : Fri Jul 11 14:43:20 2025
+ FINISH Time  : Fri Jul 11 14:43:42 2025
+ TOTAL  Time  : 22
+ SEE INFORMATION IN : OUT.ABACUS/
