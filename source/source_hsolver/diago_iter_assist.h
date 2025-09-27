@@ -42,14 +42,14 @@ class DiagoIterAssist
      * @param evc     Output container for computed eigenvectors.
      * @param en      Output array for computed eigenvalues.
      * @param n_band  Number of bands (eigenvalues/eigenvectors) to compute. Default is 0 (all).
-     * @param is_orthogonal If true, assumes the input wavefunction is already orthogonalized.
+     * @param is_S_orthogonal If true, assumes the input wavefunction is already orthogonalized.
      */
     static void diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
                                const psi::Psi<T, Device>& psi,
                                psi::Psi<T, Device>& evc,
                                Real *en,
                                int n_band = 0,
-                               const bool is_orthogonal = false);
+                               const bool is_S_orthogonal = false);
 
     /// @brief use LAPACK to diagonalize the Hamiltonian matrix
     /// @param pHamilt interface to hamiltonian
