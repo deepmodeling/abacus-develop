@@ -236,11 +236,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.onsite_radius > 0)
     { // float type has not been implemented
-/*
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi),
                                   pelec->wg);
-*/
     }
 
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
@@ -254,7 +252,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         ModulePW::PW_Basis* pw_rho,
         ModulePW::PW_Basis* pw_rhod,
 		Charge &chr,
-        const K_Vectors &kv,
+        K_Vectors &kv,
 		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
 		psi::Psi<T, Device>* kspw_psi,
 		psi::Psi<std::complex<double>, Device>* __kspw_psi,
@@ -315,7 +313,6 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                ? new psi::Psi<std::complex<double>, Device>(kspw_psi[0])
                                : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi);
 
-/*
         ModuleIO::get_wf_pw(inp.out_wfc_norm,
                             inp.out_wfc_re_im,
                             kspw_psi->get_nbands(),
@@ -330,7 +327,6 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                             kv,
                             GlobalV::KPAR,
                             GlobalV::MY_POOL);
-*/
     }
 
     //----------------------------------------------------------
@@ -338,7 +334,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     //----------------------------------------------------------
     if (inp.cal_cond)
     {
-/*
+        using Real = typename GetTypeReal<T>::type;
         EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, kspw_psi, &ppcell);
         elec_cond.KG(inp.cond_smear,
                      inp.cond_fwhm,
@@ -347,7 +343,6 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                      inp.cond_dt,
                      inp.cond_nonlocal,
                      pelec->wg);
-*/
     }
 
 #ifdef __MLALGO
@@ -471,7 +466,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     ModulePW::PW_Basis* pw_rho,
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	const K_Vectors &kv,
+	K_Vectors &kv,
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
 	psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
@@ -490,7 +485,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     ModulePW::PW_Basis* pw_rho,
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	const K_Vectors &kv,
+	K_Vectors &kv,
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
@@ -510,7 +505,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     ModulePW::PW_Basis* pw_rho,
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	const K_Vectors &kv,
+	K_Vectors &kv,
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
 	psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
 	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
@@ -529,7 +524,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     ModulePW::PW_Basis* pw_rho,
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
-	const K_Vectors &kv,
+	K_Vectors &kv,
 	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
 	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
 	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
