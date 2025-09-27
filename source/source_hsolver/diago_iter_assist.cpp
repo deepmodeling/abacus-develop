@@ -24,7 +24,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                                                 Real* en,                           // [out] eigenvalues
                                                 int n_band, // [in] number of bands to be calculated, also number of rows
                                                            // of evc, if set to 0, n_band = nstart, default 0
-                                                const bool is_orthogonal // [in] if true, psi is already orthogonalized
+                                                const bool is_S_orthogonal // [in] if true, psi is already orthogonalized
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace");
@@ -47,7 +47,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     setmem_complex_op()(hcc, 0, nstart * nstart);
 
     // scc is overlap matrix, only needed when psi is not orthogonal
-    if(!is_orthogonal){
+    if(!is_S_orthogonal){
         resmem_complex_op()(scc, nstart * nstart, "DiagSub::scc");
         setmem_complex_op()(scc, 0, nstart * nstart);
     }
@@ -96,7 +96,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                                          hcc,
                                          nstart);
 
-        if(!is_orthogonal){
+        if(!is_S_orthogonal){
             // Only calculate S_sub if not orthogonal
             T *spsi = temp;
             // do sPsi for all bands
@@ -121,13 +121,13 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     if (GlobalV::NPROC_IN_POOL > 1)
     {
         Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
-        if(!is_orthogonal){
+        if(!is_S_orthogonal){
             Parallel_Reduce::reduce_pool(scc, nstart * nstart);
         }
     }
 
     // after generation of H and (optionally) S matrix, diag them
-    if (is_orthogonal) {
+    if (is_S_orthogonal) {
         // Solve standard eigenproblem: H_sub * y = lambda * y
         DiagoIterAssist::diagH_LAPACK_standard(nstart, n_band, hcc, nstart, en, vcc);
     } else {
@@ -160,7 +160,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
         delmem_complex_op()(temp);
     }
     delmem_complex_op()(hcc);
-    if(!is_orthogonal){
+    if(!is_S_orthogonal){
         delmem_complex_op()(scc);
     }
     delmem_complex_op()(vcc);

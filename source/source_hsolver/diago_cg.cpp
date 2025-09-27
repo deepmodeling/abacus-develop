@@ -592,18 +592,22 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
     ct::Tensor psi_temp = psi.slice({0, 0}, {int(psi.shape().dim_size(0)), int(prec.shape().dim_size(0))});
     do
     {
-        if (ntry > 0) // not the first try, then psi is orthogonalized
+        // subspace diagonalization to get a better starting guess
+        // for cg diagonalization, restart from current psi approximation
+        // Note: if not the first try, then psi is already S-orthogonalized by CG iterations!
+        // Otherwise, if the first try, then psi is not assumed to be S-orthogonalized
+        if (ntry > 0)
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
-            const bool assume_orthogonal = true;
-            this->subspace_func_(psi_temp, psi_map, assume_orthogonal);
+            const bool assume_S_orthogonal = true;
+            this->subspace_func_(psi_temp, psi_map, assume_S_orthogonal);
             psi_temp.sync(psi_map);
         }
         else if (need_subspace_)
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
-            const bool assume_orthogonal = false;
-            this->subspace_func_(psi_temp, psi_map, assume_orthogonal);
+            const bool assume_S_orthogonal = false;
+            this->subspace_func_(psi_temp, psi_map, assume_S_orthogonal);
             psi_temp.sync(psi_map);
         }
 
