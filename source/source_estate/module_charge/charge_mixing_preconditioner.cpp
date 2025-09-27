@@ -6,21 +6,32 @@
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) {
-        return;
-}
+    ModuleBase::TITLE("Charge_Mixing", "Kerker_screen_recip");
+
+	if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) 
+	{
+		return;
+	}
+
+    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_recip");
+
+    const int nspin = PARAM.inp.nspin;
+
     double fac = 0.0;
     double gg0 = 0.0;
     double amin = 0.0;
 
     /// consider a resize for mixing_angle
-    int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
+	int resize_tmp = 1;
+    if (nspin == 4 && this->mixing_angle > 0) 
+    { 
+    	resize_tmp = 2;
+    }
 
     /// implement Kerker for density and magnetization separately
-    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
+    for (int is = 0; is < nspin / resize_tmp; ++is)
     {
+        const int is_idx = is * this->rhopw->npw;
         /// new mixing method only support nspin=2 not nspin=4
         if (is >= 1)
         {
@@ -29,10 +40,10 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
-                double is_mag = PARAM.inp.nspin - 1;
+                double is_mag = nspin - 1;
                 //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 //{
-                //    drhog[is * this->rhopw->npw + ig] *= 1;
+                //    drhog[is_idx + ig] *= 1;
                 //}
                 break;
             }
@@ -46,32 +57,49 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         }
 
         gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
+
+        const double gg0_amin = this->mixing_gg0_min / amin;
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
-            drhog[is * this->rhopw->npw + ig] *= filter_g;
+            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
+            drhog[is_idx + ig] *= filter_g;
         }
     }
+
+    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_recip");
     return;
 }
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) {
-        return;
-}
-    /// consider a resize for mixing_angle
+    ModuleBase::TITLE("Charge_Mixing", "Kerker_screen_real");
+
+	if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) 
+	{
+		return;
+	}
+
+    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_real");
+
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
+
+	/// consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
-}
+	if (nspin == 4 && this->mixing_angle > 0) 
+	{ 
+		resize_tmp = 2;
+	}
     
-    std::vector<std::complex<double>> drhog(this->rhopw->npw * PARAM.inp.nspin / resize_tmp);
-    std::vector<double> drhor_filter(this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp);
-    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
+    std::vector<std::complex<double>> drhog(this->rhopw->npw * nspin / resize_tmp);
+    std::vector<double> drhor_filter(this->rhopw->nrxx * nspin / resize_tmp);
+
+    for (int is = 0; is < nspin / resize_tmp; ++is)
     {
         // Note after this process some G which is higher than Gmax will be filtered.
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
@@ -82,7 +110,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     double gg0 = 0.0;
     double amin = 0.0;
 
-    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; is++)
+    for (int is = 0; is < nspin / resize_tmp; is++)
     {
 
         if (is >= 1)
@@ -92,8 +120,8 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef __DEBUG
                 assert(is == 1); /// make sure break works
 #endif
-                double is_mag = PARAM.inp.nspin - 1;
-                if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { is_mag = 1;
+                double is_mag = nspin - 1;
+                if (nspin == 4 && this->mixing_angle > 0) { is_mag = 1;
 }
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
@@ -111,6 +139,9 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         }
         
         gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
+
+        const int is_idx = is * this->rhopw->npw;
+        const double gg0_amin = this->mixing_gg0_min / amin;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -120,15 +151,15 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             // I have not decided how to handle gg=0 part, will be changed in future
             //if (gg == 0)
             //{
-            //    drhog[is * this->rhopw->npw + ig] *= 0;
+            //    drhog[is_idx + ig] *= 0;
             //    continue;
             //}
-            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
-            drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
+            double filter_g = std::max(gg / (gg + gg0), gg0_amin);
+            drhog[is_idx + ig] *= (1 - filter_g);
         }
     }
     /// inverse FT
-    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
+    for (int is = 0; is < nspin / resize_tmp; ++is)
     {
         this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
     }
@@ -136,8 +167,11 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp; ir++)
+    for (int ir = 0; ir < this->rhopw->nrxx * nspin / resize_tmp; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
     }
+
+    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_real");
+    return;
 }

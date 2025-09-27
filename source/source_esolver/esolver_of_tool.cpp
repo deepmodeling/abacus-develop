@@ -220,7 +220,7 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
  * @brief Rotate and renormalize the direction |d>,
  * make it orthogonal to phi (<d|phi> = 0), and <d|d> = nelec
  */
-void ESolver_OF::adjust_direction()
+void ESolver_OF::adjust_direction(void)
 {
     // filter the high frequency term in direction if of_full_pw = false
     if (!PARAM.inp.of_full_pw)
