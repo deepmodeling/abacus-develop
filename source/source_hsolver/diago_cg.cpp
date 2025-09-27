@@ -54,7 +54,7 @@ DiagoCG<T, Device>::~DiagoCG()
 }
 
 template <typename T, typename Device>
-void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in,
+void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
                                    ct::Tensor& psi,
                                    ct::Tensor& eigen,
                                    const std::vector<double>& ethr_band)
@@ -601,7 +601,7 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
 
         ++ntry;
         avg_iter_ += 1.0;
-        this->diag_mock(prec, psi_temp, eigen, ethr_band);
+        this->diag_once(prec, psi_temp, eigen, ethr_band);
     } while (this->test_exit_cond(ntry, this->notconv_));
 
     if (this->notconv_ > std::max(5, this->n_band_ / 4))
