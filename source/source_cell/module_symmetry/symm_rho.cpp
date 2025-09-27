@@ -9,6 +9,10 @@ void Symmetry::rho_symmetry( double *rho,
 {
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
+    assert(nr1>0);
+    assert(nr2>0);
+    assert(nr3>0);
+
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[nr1 * nr2 * nr3];
     for (int i=0; i<nr1*nr2*nr3; i++)

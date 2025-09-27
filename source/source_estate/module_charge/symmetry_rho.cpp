@@ -11,37 +11,45 @@ Symmetry_rho::~Symmetry_rho()
 }
 
 void Symmetry_rho::begin(const int& spin_now,
-                         const Charge& CHR,
+                         const Charge& chr,
                          const ModulePW::PW_Basis* rho_basis,
                          ModuleSymmetry::Symmetry& symm) const
 {
     assert(spin_now < 4); // added by zhengdy-soc
 
-    if (ModuleSymmetry::Symmetry::symm_flag != 1) {
-        return;
-}
+	if (ModuleSymmetry::Symmetry::symm_flag != 1) 
+	{
+		return;
+	}
+
+    ModuleBase::TITLE("Symmetry_rho", "begin");
+    ModuleBase::timer::tick("Symmetry_rho","begin");
+
 // both parallel and serial
 // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
 // {
-// 	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
-// 	if(XC_Functional::get_ked_flag()) psymm(CHR.kin_r[spin_now],
+// 	psymm(chr.rho[spin_now], rho_basis, Pgrid, symm);
+// 	if(XC_Functional::get_ked_flag()) psymm(chr.kin_r[spin_now],
 // rho_basis,Pgrid,symm);
 // }
 // else	//space group, do rho_symm in reciprocal space
-{
-    rho_basis->real2recip(CHR.rho[spin_now], CHR.rhog[spin_now]);
-    psymmg(CHR.rhog[spin_now], rho_basis, symm); // need to modify
-    rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
 
-    if (XC_Functional::get_ked_flag() || CHR.cal_elf)
+    rho_basis->real2recip(chr.rho[spin_now], chr.rhog[spin_now]);
+
+    psymmg(chr.rhog[spin_now], rho_basis, symm); // need to modify
+
+    rho_basis->recip2real(chr.rhog[spin_now], chr.rho[spin_now]);
+
+    if (XC_Functional::get_ked_flag() || chr.cal_elf)
     {
         // Use std::vector to manage kin_g instead of raw pointer
-        std::vector<std::complex<double>> kin_g(CHR.ngmc);
-        rho_basis->real2recip(CHR.kin_r[spin_now], kin_g.data());
+        std::vector<std::complex<double>> kin_g(chr.ngmc);
+        rho_basis->real2recip(chr.kin_r[spin_now], kin_g.data());
         psymmg(kin_g.data(), rho_basis, symm);
-        rho_basis->recip2real(kin_g.data(), CHR.kin_r[spin_now]);
+        rho_basis->recip2real(kin_g.data(), chr.kin_r[spin_now]);
     }
-    }
+
+    ModuleBase::timer::tick("Symmetry_rho","begin");
     return;
 }
 
@@ -59,6 +67,10 @@ void Symmetry_rho::begin(const int& spin_now,
     {
         return;
     }
+
+    ModuleBase::TITLE("Symmetry_rho", "begin");
+    ModuleBase::timer::tick("Symmetry_rho","begin");
+
     // both parallel and serial
     // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
     // {
@@ -81,6 +93,8 @@ void Symmetry_rho::begin(const int& spin_now,
             rho_basis->recip2real(kin_g.data(), kin_r[spin_now]);
         }
     }
+
+    ModuleBase::timer::tick("Symmetry_rho","begin");
     return;
 }
 
@@ -89,8 +103,11 @@ void Symmetry_rho::psymm(double* rho_part,
                          Parallel_Grid& Pgrid,
                          ModuleSymmetry::Symmetry& symm) const
 {
+    ModuleBase::TITLE("Symmetry_rho", "psymm");
+    ModuleBase::timer::tick("Symmetry_rho","psymm");
+
 #ifdef __MPI
-    // (1) reduce all rho from the first pool.
+    // reduce all rho from the first pool.
     std::vector<double> rhotot;
     if (GlobalV::MY_RANK == 0)
     {
@@ -99,7 +116,6 @@ void Symmetry_rho::psymm(double* rho_part,
     }
     Pgrid.reduce(rhotot.data(), rho_part, false);
 
-    // (2)
     if (GlobalV::MY_RANK == 0)
     {
         symm.rho_symmetry(rhotot.data(), rho_basis->nx, rho_basis->ny, rho_basis->nz);
@@ -126,8 +142,9 @@ void Symmetry_rho::psymm(double* rho_part,
 #ifdef __MPI
     }
 
-    // (3)
-Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK);
+	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK);
 #endif
+
+    ModuleBase::timer::tick("Symmetry_rho","psymm");
     return;
 }
