@@ -78,7 +78,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
 
 template <typename T, typename Device>
 void ModuleIO::ctrl_scf_pw(const int istep,
-        const UnitCell& ucell,
+        UnitCell& ucell,
         elecstate::ElecState* pelec,
         const Charge &chr,
 		const K_Vectors &kv,
@@ -167,13 +167,13 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi);
 
         const int nbands = kspw_psi->get_nbands();
+        const int ngmc = chr.ngmc;
 
-/*
         ModuleIO::get_pchg_pw(inp.out_pchg,
                               nbands,
                               inp.nspin,
                               pw_rhod->nxyz,
-                              chr.ngmc,
+                              ngmc,
                               &ucell,
                               __kspw_psi,
                               pw_rhod,
@@ -186,7 +186,6 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                               GlobalV::KPAR,
                               GlobalV::MY_POOL,
                               &chr);
-*/
     }
 
 
@@ -393,7 +392,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 // complex<float> + CPU
 template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU>(
     const int nstep,
-	const UnitCell& ucell,
+	UnitCell& ucell,
     elecstate::ElecState* pelec,
     const Charge &chr,
     const K_Vectors &kv,
@@ -411,7 +410,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
 // complex<double> + CPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CPU>(
     const int nstep,
-	const UnitCell& ucell,
+    UnitCell& ucell,
     elecstate::ElecState* pelec,
     const Charge &chr,
     const K_Vectors &kv,
@@ -430,7 +429,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
 // complex<float> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU>(
     const int nstep,
-	const UnitCell& ucell,
+	UnitCell& ucell,
     elecstate::ElecState* pelec,
     const Charge &chr,
     const K_Vectors &kv,
@@ -448,7 +447,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
 // complex<double> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(
 	const int nstep,
-	const UnitCell& ucell,
+	UnitCell& ucell,
     elecstate::ElecState* pelec,
     const Charge &chr,
     const K_Vectors &kv,

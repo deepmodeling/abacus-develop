@@ -20,7 +20,7 @@ void ctrl_iter_pw(const int istep,
 // print out information in 'after_scf' in ESolver_KS_PW
 template <typename T, typename Device>
 void ctrl_scf_pw(const int istep,
-        const UnitCell& ucell,
+        UnitCell& ucell,
         elecstate::ElecState* pelec,
         const Charge &chr,
 		const K_Vectors &kv,
