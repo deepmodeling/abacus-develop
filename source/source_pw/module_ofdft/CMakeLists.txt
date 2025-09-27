@@ -6,7 +6,7 @@ list(APPEND hamilt_ofdft_srcs
     kedf_lkt.cpp
     kedf_manager.cpp
     of_stress_pw.cpp
-    evolve_phi.cpp
+    evolve_ofdft.cpp
 )
 
 add_library(

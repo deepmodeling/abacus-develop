@@ -1,11 +1,11 @@
-#include "evolve_phi.h"
+#include "evolve_ofdft.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include <iostream>
 
 #include "source_base/parallel_reduce.h"
 
-void EVOLVE_PHI::get_Hpsi(elecstate::ElecState* pelec, const Charge& chr, UnitCell& ucell, const std::complex<double>* const* psi_, ModulePW::PW_Basis* pw_rho, std::complex<double>** Hpsi)
+void Evolve_OFDFT::get_Hpsi(elecstate::ElecState* pelec, const Charge& chr, UnitCell& ucell, std::vector<std::vector<std::complex<double>>> psi_, ModulePW::PW_Basis* pw_rho, std::vector<std::vector<std::complex<double>>> Hpsi)
 {
     // update rho
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -29,7 +29,7 @@ void EVOLVE_PHI::get_Hpsi(elecstate::ElecState* pelec, const Charge& chr, UnitCe
     this->get_vw_potential_phi(psi_, pw_rho, Hpsi);
 }
 
-void EVOLVE_PHI::get_tf_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot)
+void Evolve_OFDFT::get_tf_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot)
 {
     if (PARAM.inp.nspin == 1)
     {
@@ -50,18 +50,22 @@ void EVOLVE_PHI::get_tf_potential(const double* const* prho, ModulePW::PW_Basis*
     }
 }
 
-void EVOLVE_PHI::get_vw_potential_phi(const std::complex<double>* const* pphi, ModulePW::PW_Basis* pw_rho, std::complex<double>** Hpsi)
+void Evolve_OFDFT::get_vw_potential_phi(std::vector<std::vector<std::complex<double>>> pphi, ModulePW::PW_Basis* pw_rho, std::vector<std::vector<std::complex<double>>> Hpsi)
 {
     std::complex<double>** rLapPhi = new std::complex<double>*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         rLapPhi[is] = new std::complex<double>[pw_rho->nrxx];
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            rLapPhi[is][ir]=pphi[is][ir];
+        }
     }
     std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         recipPhi[is] = new std::complex<double>[pw_rho->npw];
 
-        pw_rho->real2recip(pphi[is], recipPhi[is]);
+        pw_rho->real2recip(rLapPhi[is], recipPhi[is]);
         for (int ik = 0; ik < pw_rho->npw; ++ik)
         {
             recipPhi[is][ik] *= pw_rho->gg[ik] * pw_rho->tpiba2;
@@ -82,7 +86,7 @@ void EVOLVE_PHI::get_vw_potential_phi(const std::complex<double>* const* pphi, M
     delete[] rLapPhi;
 }
 
-void EVOLVE_PHI::get_CD_potential(const std::complex<double>* const* psi_, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot)
+void Evolve_OFDFT::get_CD_potential(std::vector<std::vector<std::complex<double>>> psi_, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpot)
 {
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -91,28 +95,20 @@ void EVOLVE_PHI::get_CD_potential(const std::complex<double>* const* psi_, Modul
     }
 }
 
-void EVOLVE_PHI::propagate_psi(elecstate::ElecState* pelec, const Charge& chr, UnitCell& ucell, std::complex<double>** pphi_, ModulePW::PW_Basis* pw_rho)
+void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec, const Charge& chr, UnitCell& ucell, std::vector<std::vector<std::complex<double>>> pphi_, ModulePW::PW_Basis* pw_rho)
 {
     ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagte_psi");
 
     std::complex<double> imag(0.0,1.0);
     double dt=PARAM.inp.mdp.md_dt;
-    std::complex<double>** K1 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** K2 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** K3 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** K4 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** psi1 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** psi2 = new std::complex<double>*[PARAM.inp.nspin];
-    std::complex<double>** psi3 = new std::complex<double>*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
-        K1[is] = new std::complex<double>[pw_rho->nrxx];
-        K2[is] = new std::complex<double>[pw_rho->nrxx];
-        K3[is] = new std::complex<double>[pw_rho->nrxx];
-        K4[is] = new std::complex<double>[pw_rho->nrxx];
-        psi1[is] = new std::complex<double>[pw_rho->nrxx];
-        psi2[is] = new std::complex<double>[pw_rho->nrxx];
-        psi3[is] = new std::complex<double>[pw_rho->nrxx];
-    }
+    std::vector<std::vector<std::complex<double>>> K1(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> K2(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> K3(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> K4(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> psi1(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> psi2(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+    std::vector<std::vector<std::complex<double>>> psi3(PARAM.inp.nspin,std::vector<std::complex<double>>(pw_rho->nrxx));
+
     get_Hpsi(pelec,chr,ucell,pphi_,pw_rho,K1);
     for (int is = 0; is < PARAM.inp.nspin; ++is){
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -146,21 +142,5 @@ void EVOLVE_PHI::propagate_psi(elecstate::ElecState* pelec, const Charge& chr, U
         }
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
-        delete[] K1[is];
-        delete[] K2[is];
-        delete[] K3[is];
-        delete[] K4[is];
-        delete[] psi1[is];
-        delete[] psi2[is];
-        delete[] psi3[is];
-    }
-    delete[] K1;
-    delete[] K2;
-    delete[] K3;
-    delete[] K4;
-    delete[] psi1;
-    delete[] psi2;
-    delete[] psi3;
     ModuleBase::timer::tick("ESolver_OF_TDDFT", "propagte_psi");
 }

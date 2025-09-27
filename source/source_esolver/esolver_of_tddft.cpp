@@ -22,17 +22,12 @@ namespace ModuleESolver
 ESolver_OF_TDDFT::ESolver_OF_TDDFT()
 {
     this->classname = "ESolver_OF_TDDFT";
-    this->evolve_phi=new EVOLVE_PHI();
+    this->evolve_ofdft=new Evolve_OFDFT();
 }
 
 ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 {
-    delete this->evolve_phi;
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        delete[] this->pphi_td[is];
-    }
-    delete[] this->pphi_td;
+    delete this->evolve_ofdft;
 }
 
 
@@ -52,11 +47,11 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
 
     if (istep==0)
     {
-        this->pphi_td= new std::complex<double>*[PARAM.inp.nspin];
+        this->pphi_td.resize(PARAM.inp.nspin);
 
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            this->pphi_td[is]= new std::complex<double>[pw_rho->nrxx];
+            this->pphi_td[is].resize(this->pw_rho->nrxx);
         }
     }
 
@@ -94,7 +89,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
 
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 pphi_td[is][ir]=pphi_[is][ir];
             }
@@ -102,10 +97,10 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
     }
     else
     {
-        this->evolve_phi->propagate_psi(this->pelec, this->chr, ucell, this->pphi_td, this->pw_rho);
+        this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->pphi_td, this->pw_rho);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 pphi_[is][ir]=abs(pphi_td[is][ir]);
             }

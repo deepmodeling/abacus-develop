@@ -361,7 +361,7 @@ OBJS_HAMILT_OF=kedf_tf.o\
     kedf_xwm.o\
     kedf_lkt.o\
     kedf_manager.o\
-    evolve_phi.o\
+    evolve_ofdft.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\
