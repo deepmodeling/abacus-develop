@@ -18,7 +18,7 @@
 // x stands for compute a subset of the eigenvalues and, optionally,
 // their corresponding eigenvectors
 // d for all, x for selected
-// gv: all, gvd: all/devided, x: selected eigenvalues
+// gv: all, gvd: all/devide-and-conquer, x: selected eigenvalues
 // -----------------------------------
 // search for docs using the op function name as keywords.
 
