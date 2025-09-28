@@ -45,8 +45,8 @@ Gint& Gint::operator=(Gint&& rhs)
     // move hR after refactor
     this->hRGint = rhs.hRGint;
     rhs.hRGint = nullptr;
-    this->hRGintCd = rhs.hRGintCd;
-    rhs.hRGintCd = nullptr;
+    this->hR_tmp = rhs.hR_tmp;
+    rhs.hR_tmp = nullptr;
     for (int i = 0; i < this->DMRGint.size(); i++)
     {
         delete this->DMRGint[i];
@@ -60,8 +60,8 @@ Gint& Gint::operator=(Gint&& rhs)
     this->pvdpRz_reduced = std::move(rhs.pvdpRz_reduced);
     this->DMRGint = std::move(rhs.DMRGint);
     this->hRGint_tmp = std::move(rhs.hRGint_tmp);
-    this->DMRGint_full = rhs.DMRGint_full;
-    rhs.DMRGint_full = nullptr;
+    this->DM2D_tmp = rhs.DM2D_tmp;
+    rhs.DM2D_tmp = nullptr;
 
     return *this;
 }

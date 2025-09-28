@@ -258,13 +258,13 @@ class Gint {
     std::vector<hamilt::HContainer<double>*> hRGint_tmp; 
 
     //! stores Hamiltonian in sparse format
-    hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; 
+    hamilt::HContainer<std::complex<double>>* hR_tmp = nullptr; 
 
     //! stores DMR in sparse format
     std::vector<hamilt::HContainer<double>*> DMRGint; 
 
     //! tmp tools used in transfer_DM2DtoGrid 
-    hamilt::HContainer<double>* DMRGint_full = nullptr;
+    hamilt::HContainer<double>* DM2D_tmp = nullptr;
 
     std::vector<hamilt::HContainer<double>> pvdpRx_reduced;
     std::vector<hamilt::HContainer<double>> pvdpRy_reduced;
