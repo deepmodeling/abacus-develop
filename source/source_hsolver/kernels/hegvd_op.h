@@ -1,7 +1,15 @@
-// TODO: This is a temperary location for these functions.
-// And will be moved to a global module(module base) later.
+/// This is the module for wrapper of 
+/// DeNse Generalized eigenValue (eXtended)
+/// HErmitian / SYmmetric
 
-// DeNse Generalized eigenValue eXtended
+// named HEGVD, actually includes HE/SY GV/GVD/GVX
+
+#ifndef MODULE_HSOLVER_HEGVD_H
+#define MODULE_HSOLVER_HEGVD_H
+
+// Note:
+// names follow the same style as standard LAPACK APIs:
+// -----------------------------------
 // he stands for Hermitian
 // sy stands for Symmetric
 // gv stands for Generalized eigenValue problem
@@ -10,9 +18,12 @@
 // x stands for compute a subset of the eigenvalues and, optionally,
 // their corresponding eigenvectors
 // d for all, x for selected
+// gv: all, gvd: all/devided, x: selected eigenvalues
+// -----------------------------------
+// search for docs using the op function name as keywords.
 
-#ifndef MODULE_HSOLVER_DNGVD_H
-#define MODULE_HSOLVER_DNGVD_H
+// TODO: This is a temperary location for these functions.
+// And will be moved to a global module(module base) later.
 
 #include "source_base/macros.h"
 #include "source_base/module_external/lapack_wrapper.h"
@@ -126,4 +137,4 @@ void destroyGpuSolverHandle();
 
 } // namespace hsolver
 
-#endif // !MODULE_HSOLVER_DNGVD_H
+#endif // !MODULE_HSOLVER_HEGVD_H
