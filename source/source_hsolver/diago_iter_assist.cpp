@@ -372,7 +372,7 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(const int nstart,
     resmem_var_op()(eigenvalues, nstart);
     setmem_var_op()(eigenvalues, 0, nstart);
 
-    dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
+    hegvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
