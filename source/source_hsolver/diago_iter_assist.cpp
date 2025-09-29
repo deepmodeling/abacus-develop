@@ -18,13 +18,13 @@ namespace hsolver
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
+void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
                                                 const psi::Psi<T, Device>& psi,     // [in] wavefunction
                                                 psi::Psi<T, Device>& evc,           // [out] wavefunction, eigenvectors
                                                 Real* en,                           // [out] eigenvalues
                                                 int n_band, // [in] number of bands to be calculated, also number of rows
                                                            // of evc, if set to 0, n_band = nstart, default 0
-                                                const bool is_S_orthogonal // [in] if true, psi is already orthogonalized
+                                                const bool S_orth // [in] if true, psi is assumed to be already S-orthogonalized
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace");
@@ -47,7 +47,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     setmem_complex_op()(hcc, 0, nstart * nstart);
 
     // scc is overlap matrix, only needed when psi is not orthogonal
-    if(!is_S_orthogonal){
+    if(!S_orth){
         resmem_complex_op()(scc, nstart * nstart, "DiagSub::scc");
         setmem_complex_op()(scc, 0, nstart * nstart);
     }
@@ -96,7 +96,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                                          hcc,
                                          nstart);
 
-        if(!is_S_orthogonal){
+        if(!S_orth){
             // Only calculate S_sub if not orthogonal
             T *spsi = temp;
             // do sPsi for all bands
@@ -121,20 +121,19 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     if (GlobalV::NPROC_IN_POOL > 1)
     {
         Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
-        if(!is_S_orthogonal){
+        if(!S_orth){
             Parallel_Reduce::reduce_pool(scc, nstart * nstart);
         }
     }
 
     // after generation of H and (optionally) S matrix, diag them
-    if (is_S_orthogonal) {
+    if (S_orth) {
         // Solve standard eigenproblem: H_sub * y = lambda * y
-        DiagoIterAssist::diagH_LAPACK_standard(nstart, n_band, hcc, nstart, en, vcc);
+        DiagoIterAssist::diag_heevx(nstart, n_band, hcc, nstart, en, vcc);
     } else {
         // Solve generalized eigenproblem: H_sub * y = lambda * S_sub * y
-        DiagoIterAssist::diagH_LAPACK_generalized(nstart, n_band, hcc, scc, nstart, en, vcc);
+        DiagoIterAssist::diag_hegvd(nstart, n_band, hcc, scc, nstart, en, vcc);
     }
-
 
     const int ld_temp = in_place ? dmax : dmin;
 
@@ -160,7 +159,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
         delmem_complex_op()(temp);
     }
     delmem_complex_op()(hcc);
-    if(!is_S_orthogonal){
+    if(!S_orth){
         delmem_complex_op()(scc);
     }
     delmem_complex_op()(vcc);
@@ -315,7 +314,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
         }
     }*/
 
-    DiagoIterAssist::diagH_LAPACK_generalized(nstart, n_band, hcc, scc, nstart, en, vcc);
+    DiagoIterAssist::diag_hegvd(nstart, n_band, hcc, scc, nstart, en, vcc);
 
     export_vcc(vcc, nstart, n_band);
 
@@ -381,15 +380,15 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 }
 
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diagH_LAPACK_standard(const int matrix_size,
+void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
                                                        const int num_eigenpairs,
                                                        const T *h,
                                                        const int ldh,
                                                        Real *e, // always in CPU
                                                        T *v)
 {
-    ModuleBase::TITLE("DiagoIterAssist", "diagH_LAPACK_standard");
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_standard");
+    ModuleBase::TITLE("DiagoIterAssist", "diag_heevx");
+    ModuleBase::timer::tick("DiagoIterAssist", "diag_heevx");
 
     Real *eigenvalues = nullptr;
     // device memory for eigenvalues
@@ -414,11 +413,11 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK_standard(const int matrix_size,
 
     delmem_var_op()(eigenvalues);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_standard");
+    ModuleBase::timer::tick("DiagoIterAssist", "diag_heevx");
 }
 
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diagH_LAPACK_generalized(const int nstart,
+void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
                                               const int nbands,
                                               const T *hcc,
                                               const T *scc,
@@ -426,8 +425,8 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK_generalized(const int nstart,
                                               Real *e,       // always in CPU
                                               T *vcc)
 {
-    ModuleBase::TITLE("DiagoIterAssist", "diagH_LAPACK_generalized");
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_generalized");
+    ModuleBase::TITLE("DiagoIterAssist", "diag_hegvd");
+    ModuleBase::timer::tick("DiagoIterAssist", "diag_hegvd");
 
     Real *eigenvalues = nullptr;
     resmem_var_op()(eigenvalues, nstart);
@@ -465,7 +464,7 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK_generalized(const int nstart,
     //     dngvx_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
     // }
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK_generalized");
+    ModuleBase::timer::tick("DiagoIterAssist", "diag_hegvd");
 }
 
 template <typename T, typename Device>
@@ -557,7 +556,7 @@ void DiagoIterAssist<T, Device>::diag_responce( const T* hcc,
     setmem_complex_op()(vcc, 0, nstart * nstart);
 
     // after generation of H and S matrix, diag them
-    DiagoIterAssist::diagH_LAPACK_generalized(nstart, nstart, hcc, scc, nstart, en, vcc);
+    DiagoIterAssist::diag_hegvd(nstart, nstart, hcc, scc, nstart, en, vcc);
 
     { // code block to calculate tar_mat
         ModuleBase::gemm_op<T, Device>()('N',
@@ -599,7 +598,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
     setmem_complex_op()(vcc, 0, nstart * nstart);
 
     // after generation of H and S matrix, diag them
-    DiagoIterAssist::diagH_LAPACK_generalized(nstart, nstart, hcc, scc, nstart, en, vcc);
+    DiagoIterAssist::diag_hegvd(nstart, nstart, hcc, scc, nstart, en, vcc);
 
     { // code block to calculate tar_mat
         const int dmin = evc.get_current_ngk();
@@ -633,7 +632,7 @@ template <typename T, typename Device>
 bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notconv)
 {
     //================================================================
-    // If this logical function is true, need to do diagH_subspace
+    // If this logical function is true, need to do diag_subspace
     // and cg again.
     //================================================================
 
@@ -649,7 +648,7 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notc
     const bool f2 = ((!scf && (notconv > 0)));
 
     // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
+    // using diag_subspace and cg method again. ntry++
     const bool f3 = ((scf && (notconv > 5)));
     return (f1 && (f2 || f3));
 }

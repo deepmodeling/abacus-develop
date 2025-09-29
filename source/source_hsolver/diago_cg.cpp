@@ -569,7 +569,7 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
     // In non-self consistent calculation, do until totally converged.
     const bool f2 = !scf && notconv > 0;
     // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
+    // using diag_subspace and cg method again. ntry++
     const bool f3 = scf && notconv > 5;
     return f1 && (f2 || f3);
 }

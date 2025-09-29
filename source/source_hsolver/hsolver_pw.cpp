@@ -247,9 +247,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     if (this->method == "cg")
     {
         // wrap the subspace_func into a lambda function
-        // if assume_orthogonal is true, then solve standard eigenproblem
+        // if S_orth is true, then assume psi is S-orthogonal, solve standard eigenproblem
         // otherwise, solve generalized eigenproblem
-        auto subspace_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool assume_S_orthogonal) {
+        auto subspace_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool S_orth) {
             // psi_in should be a 2D tensor:
             // psi_in.shape() = [nbands, nbasis]
             const auto ndim = psi_in.shape().ndim();
@@ -269,7 +269,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                     ct::DeviceType::CpuDevice,
                                     ct::TensorShape({psi_in.shape().dim_size(0)}));
 
-            DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>(), assume_S_orthogonal);
+            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>(), S_orth);
         };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,

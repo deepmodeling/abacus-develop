@@ -97,14 +97,14 @@ struct dnevx_op
     ///
     /// Input Parameters
     ///     @param d : the type of device
-    ///     @param matrix_size : the size of square matrix
+    ///     @param ndim : the size of square matrix
     ///     @param lda : leading dimension of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda x (row major)
-    ///     @param num_eigenpairs : the number of eigenpairs to be calculated
+    ///     @param A : the hermitian matrix A in A x=lambda x
+    ///     @param neig : the number of eigenpairs to be calculated
     /// Output Parameter
     ///     @param eigenvalues: calculated eigenvalues
-    ///     @param eigenvectors: calculated eigenvectors (row major)
-    void operator()(const Device *d, const int matrix_size, const int lda, const T *A, const int num_eigenpairs, Real *eigenvalues, T *eigenvectors);
+    ///     @param eigenvectors: calculated eigenvectors
+    void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *eigenvalues, T *eigenvectors);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
