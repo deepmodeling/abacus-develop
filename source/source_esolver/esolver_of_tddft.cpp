@@ -91,6 +91,20 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
             }
         }
     }
+    else if ((istep<1) && PARAM.inp.init_chg == "file")
+    {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        {
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+            {
+                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
+            }
+        } 
+        conv_esolver=true;
+    }
     else
     {
         this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
