@@ -18,8 +18,9 @@
 #include "source_pw/module_pwdft/onsite_projector.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/VSep_in_pw.h"
-#include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
+
+#include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 
 #include <iostream>
@@ -33,6 +34,7 @@
 
 #include <chrono>
 
+#include "source/source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
 
 namespace ModuleESolver
@@ -251,96 +253,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //----------------------------------------------------------
-    //! 4) DFT-1/2 calculations, sep potential need to generate before effective potential calculation
+    // 4) setup potentials (local, non-local, sc, +U, DFT-1/2)
     //----------------------------------------------------------
-    if (PARAM.inp.dfthalf_type > 0)
-    {
-        this->vsep_cell->generate_vsep_r(this->pw_rhod[0], this->sf.strucFac, ucell.sep_cell);
-    }
+    setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
+              this->chr, this->locpp, this->ppcell, this->vsep_cell,
+              this->kspw_psi, this->pw_wfc, this->pw_rhod, inp);
 
     //----------------------------------------------------------
-    //! 5) Renew local pseudopotential
-    //----------------------------------------------------------
-    this->pelec
-        ->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
-
-    //----------------------------------------------------------
-    //! 6) Symmetrize the charge density (rho)
-    //----------------------------------------------------------
-
-    //! Symmetry_rho should behind init_scf, because charge should be
-    //! initialized first. liuyu comment: Symmetry_rho should be
-    //! located between init_rho and v_of_rho?
-    Symmetry_rho srho;
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-    }
-
-    //----------------------------------------------------------
-    //! 7) Calculate the effective potential with rho
-    //----------------------------------------------------------
-    //! liuyu move here 2023-10-09
-    //! D in uspp need vloc, thus behind init_scf()
-    //! calculate the effective coefficient matrix
-    //! for non-local pseudopotential projectors
-    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-
-    this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
-
-    //----------------------------------------------------------
-    //! 8) Onsite projectors
-    //----------------------------------------------------------
-    if (PARAM.inp.onsite_radius > 0)
-    {
-        auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->init(PARAM.inp.orbital_dir,
-                       &ucell,
-                       *(this->kspw_psi),
-                       this->kv,
-                       *(this->pw_wfc),
-                       this->sf,
-                       PARAM.inp.onsite_radius,
-                       PARAM.globalv.nqx,
-                       PARAM.globalv.dq,
-                       this->pelec->wg,
-                       this->pelec->ekb);
-    }
-
-    //----------------------------------------------------------
-    //! 9) Spin-constrained algorithms
-    //----------------------------------------------------------
-    if (PARAM.inp.sc_mag_switch)
-    {
-        spinconstrain::SpinConstrain<std::complex<double>>& sc
-            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-        sc.init_sc(PARAM.inp.sc_thr,
-                   PARAM.inp.nsc,
-                   PARAM.inp.nsc_min,
-                   PARAM.inp.alpha_trial,
-                   PARAM.inp.sccut,
-                   PARAM.inp.sc_drop_thr,
-                   ucell,
-                   nullptr,
-                   PARAM.inp.nspin,
-                   this->kv,
-                   this->p_hamilt,
-                   this->kspw_psi,
-                   this->pelec,
-                   this->pw_wfc);
-    }
-
-    //----------------------------------------------------------
-    //! 10) DFT+U algorithm
-    //----------------------------------------------------------
-    if (PARAM.inp.dft_plus_u)
-    {
-        auto* dftu = ModuleDFTU::DFTU::get_instance();
-        dftu->init(ucell, nullptr, this->kv.get_nks());
-    }
-
-    //----------------------------------------------------------
-    //! 10) Initialize wave functions
+    //! 5) Initialize wave functions
     //----------------------------------------------------------
     if (!this->already_initpsi)
     {
@@ -349,10 +269,10 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     }
 
     //----------------------------------------------------------
-    //! 11) Exx calculations
+    //! 6) Exx calculations
     //----------------------------------------------------------
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
-        || PARAM.inp.calculation == "md")
+    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" 
+        || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
         {

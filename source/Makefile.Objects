@@ -712,6 +712,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\
     fp_energy.o\
+    setup_pot.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
