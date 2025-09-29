@@ -231,7 +231,7 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
             {
                 h_tmp = h_mat;
                 s_tmp = s_mat;
-                hsolver::dngvx_op<T,base_device::DEVICE_CPU>()(ctx,
+                hsolver::hegvx_op<T,base_device::DEVICE_CPU>()(ctx,
                                       lda,
                                       lda,
                                       h_tmp.data(),

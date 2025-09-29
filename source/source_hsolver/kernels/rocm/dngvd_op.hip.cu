@@ -5,7 +5,7 @@
 
 namespace hsolver {
 
-// NOTE: mimicked from ../cuda/dngvd_op.cu for three dngvd_op
+// NOTE: mimicked from ../cuda/dngvd_op.cu for three hegvd_op
 
 static hipsolverHandle_t hipsolver_H = nullptr;
 // Test on DCU platform. When nstart is greater than 234, code on DCU performs better.
@@ -28,7 +28,7 @@ void destroyGpuSolverHandle() {
 
 #ifdef __LCAO
 template <>
-void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void hegvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                            const int nstart,
                                                            const int ldh,
                                                            const double* _hcc,
@@ -36,7 +36,7 @@ void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
                                                            double* _eigenvalue,
                                                            double* _vcc)
 {
-    // copied from ../cuda/dngvd_op.cu, "dngvd_op"
+    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
     assert(nstart == ldh);
 
     if (nstart > N_DCU){
@@ -86,7 +86,7 @@ void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
         hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(double) * hcc.size(), hipMemcpyDeviceToHost));
         hipErrcheck(hipMemcpy(scc.data(), _scc, sizeof(double) * scc.size(), hipMemcpyDeviceToHost));
         base_device::DEVICE_CPU* cpu_ctx = {};
-        dngvd_op<double, base_device::DEVICE_CPU>()(cpu_ctx,
+        hegvd_op<double, base_device::DEVICE_CPU>()(cpu_ctx,
                                                    nstart,
                                                    ldh,
                                                    hcc.data(),
@@ -102,7 +102,7 @@ void dngvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
 #endif // __LCAO
 
 template <>
-void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void hegvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                         const int nstart,
                                                                         const int ldh,
                                                                         const std::complex<float>* _hcc,
@@ -110,7 +110,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
                                                                         float* _eigenvalue,
                                                                         std::complex<float>* _vcc)
 {
-    // copied from ../cuda/dngvd_op.cu, "dngvd_op"
+    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
     assert(nstart == ldh);
 
     if (nstart > N_DCU){
@@ -159,7 +159,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
         hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(std::complex<float>) * hcc.size(), hipMemcpyDeviceToHost));
         hipErrcheck(hipMemcpy(scc.data(), _scc, sizeof(std::complex<float>) * scc.size(), hipMemcpyDeviceToHost));
         base_device::DEVICE_CPU* cpu_ctx = {};
-        dngvd_op<std::complex<float>, base_device::DEVICE_CPU>()(cpu_ctx,
+        hegvd_op<std::complex<float>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                                 nstart,
                                                                 ldh,
                                                                 hcc.data(),
@@ -174,7 +174,7 @@ void dngvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void hegvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                          const int nstart,
                                                                          const int ldh,
                                                                          const std::complex<double>* _hcc,
@@ -183,7 +183,7 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
                                                                          std::complex<double>* _vcc
                                                                         )
 {
-    // copied from ../cuda/dngvd_op.cu, "dngvd_op"
+    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
     // assert(nstart == ldh);
 
     // save a copy of scc in case the diagonalization fails
@@ -237,7 +237,7 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
         hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(std::complex<double>) * hcc.size(), hipMemcpyDeviceToHost));
         hipErrcheck(hipMemcpy(scc.data(), _scc, sizeof(std::complex<double>) * scc.size(), hipMemcpyDeviceToHost));
         base_device::DEVICE_CPU* cpu_ctx = {};
-        dngvd_op<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
+        hegvd_op<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                                 nstart,
                                                                 ldh,
                                                                 hcc.data(),
@@ -258,7 +258,7 @@ void dngvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 
 #ifdef __LCAO
 template <>
-void dnevx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void heevx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                            const int nstart,
                                                            const int ldh,
                                                            const double* _hcc,
@@ -271,14 +271,14 @@ void dnevx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
     std::vector<double> eigenvalue(ldh, 0);
     hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(double) * hcc.size(), hipMemcpyDeviceToHost));
     base_device::DEVICE_CPU* cpu_ctx = {};
-    dnevx_op<double, base_device::DEVICE_CPU>()(cpu_ctx, nstart, ldh, hcc.data(), m, eigenvalue.data(), vcc.data());
+    heevx_op<double, base_device::DEVICE_CPU>()(cpu_ctx, nstart, ldh, hcc.data(), m, eigenvalue.data(), vcc.data());
     hipErrcheck(hipMemcpy(_vcc, vcc.data(), sizeof(double) * vcc.size(), hipMemcpyHostToDevice));
     hipErrcheck(hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice));
 }
 #endif // __LCAO
 
 template <>
-void dnevx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void heevx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                         const int nstart,
                                                                         const int ldh,
                                                                         const std::complex<float>* _hcc,
@@ -291,7 +291,7 @@ void dnevx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
     std::vector<float> eigenvalue(ldh, 0);
     hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(std::complex<float>) * hcc.size(), hipMemcpyDeviceToHost));
     base_device::DEVICE_CPU* cpu_ctx = {};
-    dnevx_op<std::complex<float>, base_device::DEVICE_CPU>()(cpu_ctx,
+    heevx_op<std::complex<float>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                              nstart,
                                                              ldh,
                                                              hcc.data(),
@@ -303,7 +303,7 @@ void dnevx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void dnevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+void heevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                          const int nstart,
                                                                          const int ldh,
                                                                          const std::complex<double>* _hcc,
@@ -316,7 +316,7 @@ void dnevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
     std::vector<double> eigenvalue(ldh, 0);
     hipErrcheck(hipMemcpy(hcc.data(), _hcc, sizeof(std::complex<double>) * hcc.size(), hipMemcpyDeviceToHost));
     base_device::DEVICE_CPU* cpu_ctx = {};
-    dnevx_op<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
+    heevx_op<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                               nstart,
                                                               ldh,
                                                               hcc.data(),
@@ -328,7 +328,7 @@ void dnevx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 }
 
 template <>
-void dngvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                                         const int nbase,
                                                                         const int ldh,
                                                                         std::complex<float>* hcc,
@@ -340,7 +340,7 @@ void dngvx_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void dngvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                                          const int nbase,
                                                                          const int ldh,
                                                                          std::complex<double>* hcc,
@@ -353,7 +353,7 @@ void dngvx_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
 
 #ifdef __LCAO
 template <>
-void dngvx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+void hegvx_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                            const int nbase,
                                                            const int ldh,
                                                            double* hcc,
