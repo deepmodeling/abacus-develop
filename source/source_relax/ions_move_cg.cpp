@@ -169,6 +169,7 @@ CG_begin:
                     < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
                     Ions_Move_Basic::relax_method[0] = "bfgs";
+                    Ions_Move_Basic::relax_method[1] = "2";
                 }
                 Ions_Move_Basic::best_xxx = steplength;
             }
