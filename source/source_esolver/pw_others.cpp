@@ -25,7 +25,7 @@
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_io/berryphase.h"
 #include "source_io/numerical_basis.h"

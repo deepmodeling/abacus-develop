@@ -13,7 +13,7 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/berryphase.h"
 #include "source_io/cal_ldos.h"
 #include "source_io/get_pchg_pw.h"
