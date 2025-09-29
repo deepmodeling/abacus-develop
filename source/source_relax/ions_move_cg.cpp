@@ -192,7 +192,7 @@ CG_begin:
                     goto CG_begin;
                 }
 
-                normalize(cg_gradn, cg_grad, dim);
+                normalize(cg_gradn, cg_grad0, dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
                 if (best_x > 6 * xb || best_x < (-xb))
@@ -237,7 +237,7 @@ CG_begin:
                         goto CG_begin;
                     }
 
-                    normalize(cg_gradn, cg_grad, dim);
+                    normalize(cg_gradn, cg_grad0, dim);
                     setup_move(move, cg_gradn, best_x);
                     Ions_Move_Basic::move_atoms(ucell, move, pos);
                     Ions_Move_Basic::relax_bfgs_init = xc;
