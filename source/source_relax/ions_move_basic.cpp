@@ -23,8 +23,7 @@ double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
 
 int Ions_Move_Basic::out_stru = 0;
-std::string Ions_Move_Basic::relax_method = "bfgs";
-std::string Ions_Move_Basic::relax_method_param = "1";
+std::vector<std::string> Ions_Move_Basic::relax_method = {"bfgs","1"};
 
 void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad)
 {

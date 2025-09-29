@@ -163,12 +163,12 @@ CG_begin:
             fmax = fa;
             sd = false;
 
-            if (Ions_Move_Basic::relax_method == "cg_bfgs")
+            if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
             {
                 if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
                     < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
-                    Ions_Move_Basic::relax_method = "bfgs";
+                    Ions_Move_Basic::relax_method[0] = "bfgs";
                 }
                 Ions_Move_Basic::best_xxx = steplength;
             }
