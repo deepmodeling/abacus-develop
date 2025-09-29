@@ -27,10 +27,10 @@ class TestDiagoIterAssist : public ::testing::Test
       std::ofstream temp_ofs;
 };
 
-TEST_F(TestDiagoIterAssist, diagH_subspace)
+TEST_F(TestDiagoIterAssist, diag_subspace)
 {
-    dia_f::diagH_subspace();
-    dia_d::diagH_subspace();
+    dia_f::diag_subspace();
+    dia_d::diag_subspace();
     EXPECT_EQ(true);
 }
 

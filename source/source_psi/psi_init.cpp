@@ -166,8 +166,8 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 }
                 else
                 {
-                    // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
-                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
+                    // for diag_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(p_hamilt,
                                                                         *psi_device,
                                                                         *kspw_psi,
                                                                         etatom.data(),

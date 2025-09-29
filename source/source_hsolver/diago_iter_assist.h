@@ -44,7 +44,7 @@ class DiagoIterAssist
      * @param n_band  Number of bands (eigenvalues/eigenvectors) to compute. Default is 0 (all).
      * @param is_S_orthogonal If true, assumes the input wavefunction is already orthogonalized.
      */
-    static void diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
+    static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
                                const psi::Psi<T, Device>& psi,
                                psi::Psi<T, Device>& evc,
                                Real *en,
@@ -70,13 +70,13 @@ class DiagoIterAssist
             const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
             const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
 
-    static void diagH_LAPACK_standard(const int nstart,
+    static void diag_heevx(const int nstart,
                               const int nbands,
                               const T *hcc,
                               const int ldh,
                               Real *e,
                               T *vcc);
-    static void diagH_LAPACK_generalized(const int nstart,
+    static void diag_hegvd(const int nstart,
                               const int nbands,
                               const T *hcc,
                               const T *sc,

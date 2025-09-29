@@ -110,7 +110,7 @@ namespace LR
                 }
                 else if (method == "cg")
                 {
-                    ////// `diagH_subspace` needs refactor: 
+                    ////// `diag_subspace` needs refactor: 
                     ////// replace `Hamilt*` with `hpsi_func`
                     ////// or I cannot use `is_subspace=true` as my `HamiltLR` does not inherit `Hamilt`.
 
@@ -129,7 +129,7 @@ namespace LR
                     //     auto eigen = ct::Tensor(ct::DataTypeToEnum<Real<T>>::value,
                     //         ct::DeviceType::CpuDevice,
                     //         ct::TensorShape({ psi_in.shape().dim_size(0) }));
-                    //     hsolver::DiagoIterAssist<T>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real<T>>());
+                    //     hsolver::DiagoIterAssist<T>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real<T>>());
                     //     };
 
                     ////// why diago_cg depends on basis_type?

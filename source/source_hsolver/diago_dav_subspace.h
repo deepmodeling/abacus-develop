@@ -58,7 +58,7 @@ class Diago_DavSubspace
     /// maximal iteration number
     const int iter_nmax;
 
-    /// is diagH_subspace needed?
+    /// is diag_subspace needed?
     const bool is_subspace;
 
     /// the first dimension of the matrix to be diagonalized
