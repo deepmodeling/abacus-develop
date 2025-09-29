@@ -11,16 +11,6 @@
 namespace base_device
 {
 
-// struct CPU;
-// struct GPU;
-
-// enum AbacusDevice_t
-// {
-//     UnKnown,
-//     CpuDevice,
-//     GpuDevice
-// };
-
 template <typename Device>
 base_device::AbacusDevice_t get_device_type(const Device* dev);
 
@@ -73,7 +63,6 @@ int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 int stringCmp(const void* a, const void* b);
 
 #ifdef __CUDA
-
 int set_device_by_rank(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 #endif
 

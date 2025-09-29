@@ -6,9 +6,9 @@
 
 namespace hsolver
 {
-
+// hegvd and sygvd; dn for dense?
 template <typename T>
-struct dngvd_op<T, base_device::DEVICE_CPU>
+struct hegvd_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* d,
@@ -83,7 +83,7 @@ struct dngvd_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct dngv_op<T, base_device::DEVICE_CPU>
+struct hegv_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* d,
@@ -139,8 +139,16 @@ struct dngv_op<T, base_device::DEVICE_CPU>
     }
 };
 
+// heevx and syevx
+/**
+ * @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
+ * a complex generalized Hermitian-definite eigenproblem.
+ * 
+ * both heevx and syevx are implemented through the `evx` interface of LAPACK.
+ * wrapped in LapackWrapper::xheevx
+ */
 template <typename T>
-struct dnevx_op<T, base_device::DEVICE_CPU>
+struct heevx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* /*ctx*/,
@@ -235,7 +243,7 @@ struct dnevx_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct dngvx_op<T, base_device::DEVICE_CPU>
+struct hegvx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* d,
@@ -321,21 +329,21 @@ struct dngvx_op<T, base_device::DEVICE_CPU>
     }
 };
 
-template struct dngvd_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct dngvd_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct hegvd_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct hegvd_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dnevx_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct dnevx_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct heevx_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct heevx_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dngvx_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct dngvx_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct hegvx_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct hegvx_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dngv_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct dngv_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct hegv_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct hegv_op<std::complex<double>, base_device::DEVICE_CPU>;
 #ifdef __LCAO
-template struct dngvd_op<double, base_device::DEVICE_CPU>;
-template struct dnevx_op<double, base_device::DEVICE_CPU>;
-template struct dngvx_op<double, base_device::DEVICE_CPU>;
-template struct dngv_op<double, base_device::DEVICE_CPU>;
+template struct hegvd_op<double, base_device::DEVICE_CPU>;
+template struct heevx_op<double, base_device::DEVICE_CPU>;
+template struct hegvx_op<double, base_device::DEVICE_CPU>;
+template struct hegv_op<double, base_device::DEVICE_CPU>;
 #endif
 } // namespace hsolver
