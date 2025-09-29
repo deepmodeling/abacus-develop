@@ -47,12 +47,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
 
     if (istep==0)
     {
-        this->pphi_td.resize(PARAM.inp.nspin);
-
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
-        {
-            this->pphi_td[is].resize(this->pw_rho->nrxx);
-        }
+        this->phi_td.resize(PARAM.inp.nspin*this->pw_rho->nrxx);
     }
 
     if ((istep<1) && PARAM.inp.init_chg != "file")
@@ -85,22 +80,28 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
             ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
         }
 
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                pphi_td[is][ir]=pphi_[is][ir];
+                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
             }
         }
     }
     else
     {
-        this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->pphi_td, this->pw_rho);
+        this->evolve_ofdft->propagate_psi(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                pphi_[is][ir]=std::abs(pphi_td[is][ir]);
+                pphi_[is][ir]=std::abs(phi_td[is*this->pw_rho->nrxx+ir]);
             }
         }
         conv_esolver=true;
