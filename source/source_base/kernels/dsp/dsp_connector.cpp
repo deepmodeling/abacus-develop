@@ -22,9 +22,9 @@ void dspDestoryHandle(int id)
 {
     hthread_dev_close(id);
     std::cout << " ** DSP closed on cluster " << id << " **" << std::endl;
-} // Close dsp cluster at the end
+} // Close dsp cluster at the end of the program
 
-// MTBlas secretly removed its MTBLAS_TRANSPOSE data type and used the original CBLAS_TRANSPOSE
+// MTBlas secretly removed its MTBLAS_TRANSPOSE data type and used the original CBLAS_TRANSPOSE. So this function is modified.
 
 CBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
 {
@@ -43,26 +43,21 @@ CBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
         std::cout << "Invalid BLAS transpose parameter!! Use default instead." << std::endl;
         return CblasNoTrans;
     }
-} // Used to convert normal transpost char to mtblas transpose flag
+} // Used to convert normal transpost char to cblas transpose flag
 
 void* malloc_ht(size_t bytes, int cluster_id)
 {
-    // std::cout << "MALLOC " << cluster_id;
     void* ptr = hthread_malloc((int)cluster_id, bytes, HT_MEM_RW);
-    // std::cout << ptr << " SUCCEED" << std::endl;;
     return ptr;
-}
+} // Malloc on dsp. Used to replace original malloc
 
-// Used to replace original malloc
+
 
 void free_ht(void* ptr)
 {
-    // std::cout << "FREE " << ptr;
     hthread_free(ptr);
-    // std::cout << " FREE SUCCEED" << std::endl;
-}
+} // Free on dsp. Used to replace original free
 
-// Used to replace original free
 
 void sgemm_mt_(const char* transa,
                const char* transb,
