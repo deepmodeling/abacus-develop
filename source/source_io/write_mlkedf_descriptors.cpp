@@ -82,6 +82,7 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     this->generateTrainData_KS(out_dir, &psi_double, pelec, pw_psi, pw_rho, ucell, veff);
 }
 
+#if ((defined __CUDA) || (defined __ROCM))
 void Write_MLKEDF_Descriptors::generateTrainData_KS(
     const std::string& out_dir,
     psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi,
@@ -111,6 +112,7 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
 
     this->generateTrainData_KS(dir, &psi_cpu_double, pelec, pw_psi, pw_rho, ucell, veff);
 }
+#endif
 
 void Write_MLKEDF_Descriptors::generate_descriptor(
     const std::string& out_dir,

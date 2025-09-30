@@ -42,6 +42,7 @@ public:
         const double *veff
     );
 
+#if ((defined __CUDA) || (defined __ROCM))
     void generateTrainData_KS(
         const std::string& dir,
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi,
@@ -60,6 +61,7 @@ public:
         UnitCell& ucell,
         const double *veff
     );
+#endif
 
     void generate_descriptor(
         const std::string& out_dir,
