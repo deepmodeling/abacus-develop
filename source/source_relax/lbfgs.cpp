@@ -1,7 +1,7 @@
 #include "lbfgs.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/matrix3.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // mohan add 2025-06-19  
@@ -287,7 +287,8 @@ void LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& uc
     Ions_Move_Basic::largest_grad /= ucell.lat0;
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " LARGEST GRAD (eV/A)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.5291772109
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
+                  << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.5291772109
                   << std::endl;
     }
 

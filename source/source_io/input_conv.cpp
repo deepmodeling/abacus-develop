@@ -6,9 +6,9 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/berryphase.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"
 
@@ -22,9 +22,9 @@
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "source_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "source_lcao/module_tddft/evolve_elec.h"
-#include "source_lcao/module_tddft/td_velocity.h"
+#include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
@@ -57,24 +57,25 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
-    {
-        TD_Velocity::tddft_velocity = true;
-    } else {
-        TD_Velocity::tddft_velocity = false;
-    }
     if (PARAM.inp.out_mat_hs2 == 1)
     {
-        TD_Velocity::out_mat_R = true;
+        TD_info::out_mat_R = true;
     } else {
-        TD_Velocity::out_mat_R = false;
+        TD_info::out_mat_R = false;
     }
     parse_expression(PARAM.inp.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = PARAM.inp.td_tstart;
     elecstate::H_TDDFT_pw::tend = PARAM.inp.td_tend;
+    if(PARAM.inp.td_dt!=-1.0)
+    {
+        elecstate::H_TDDFT_pw::dt = PARAM.inp.td_dt / ModuleBase::AU_to_FS;
+    }
+    else
+    {
+        elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / PARAM.inp.estep_per_md / ModuleBase::AU_to_FS;
+    }
 
-    elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / ModuleBase::AU_to_FS;
     elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
 
     // space domain parameters
@@ -247,10 +248,10 @@ void Input_Conv::Convert()
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    TD_Velocity::out_current = PARAM.inp.out_current;
-    TD_Velocity::out_current_k = PARAM.inp.out_current_k;
-    TD_Velocity::out_vecpot = PARAM.inp.out_vecpot;
-    TD_Velocity::init_vecpot_file = PARAM.inp.init_vecpot_file;
+    TD_info::out_current = PARAM.inp.out_current;
+    TD_info::out_current_k = PARAM.inp.out_current_k;
+    TD_info::out_vecpot = PARAM.inp.out_vecpot;
+    TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
     read_td_efield();
 #endif // __LCAO
 
@@ -270,7 +271,6 @@ void Input_Conv::Convert()
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
@@ -296,8 +296,12 @@ void Input_Conv::Convert()
         GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
-            || dft_functional_lower == "opt_orb"
-            || dft_functional_lower == "scan0") {
+            || dft_functional_lower == "scan0"
+            || dft_functional_lower == "lc_pbe"
+            || dft_functional_lower == "lc_wpbe" 
+            || dft_functional_lower == "lrc_wpbe"
+            || dft_functional_lower == "lrc_wpbeh"
+            || dft_functional_lower == "cam_pbeh") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
         }
@@ -322,10 +326,15 @@ void Input_Conv::Convert()
                    dft_functional_lower.begin(),
                    tolower);
     if (dft_functional_lower == "hf"
-     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
-     || dft_functional_lower == "scan0"
-     || dft_functional_lower == "muller" || dft_functional_lower == "power"
-     || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22")
+    || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
+    || dft_functional_lower == "scan0"
+    || dft_functional_lower == "muller" || dft_functional_lower == "power"
+    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" 
+    || dft_functional_lower == "lc_pbe"
+    || dft_functional_lower == "lc_wpbe" 
+    || dft_functional_lower == "lrc_wpbe"
+    || dft_functional_lower == "lrc_wpbeh"
+    || dft_functional_lower == "cam_pbeh")
     {
         GlobalC::exx_info.info_global.cal_exx = true;
 
@@ -352,15 +361,13 @@ void Input_Conv::Convert()
         {
             if(PARAM.inp.basis_type == "lcao")
             {
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-                coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock][i] = {{
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
-                        {"Rcut_type", "spencer"} }};
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
-                GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
             }
             else if(PARAM.inp.basis_type == "lcao_in_pw")
             {
@@ -392,26 +399,27 @@ void Input_Conv::Convert()
             assert(erfc_alpha.size() == PARAM.inp.exx_erfc_omega.size());
             if(PARAM.inp.basis_type == "lcao")
             {
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
-                coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
                 for(std::size_t i=0; i<erfc_alpha.size(); ++i)
                 {
-                    coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
                         {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
-                        {"Rcut_type", "limits"} }};
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
-                GlobalC::exx_info.info_ri.coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(true, coulomb_param);
+            }
+            else if(PARAM.inp.basis_type == "pw")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])} }};
+                }
             }
         }
     }
-#ifdef __EXX
-    else if (dft_functional_lower == "opt_orb")
-    {
-        GlobalC::exx_info.info_global.cal_exx = false;
-        Exx_Abfs::Jle::generate_matrix = true;
-    }
-#endif
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
@@ -439,7 +447,6 @@ void Input_Conv::Convert()
 
     if (GlobalC::exx_info.info_global.cal_exx
 #ifdef __EXX
-        || Exx_Abfs::Jle::generate_matrix
         || PARAM.inp.rpa
 #endif
         )
@@ -466,11 +473,9 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
-#ifdef __EXX
-        Exx_Abfs::Jle::Lmax = PARAM.inp.exx_opt_orb_lmax;
-        Exx_Abfs::Jle::Ecut_exx = PARAM.inp.exx_opt_orb_ecut;
-        Exx_Abfs::Jle::tolerence = PARAM.inp.exx_opt_orb_tolerence;
-#endif
+        GlobalC::exx_info.info_opt_abfs.abfs_Lmax  = PARAM.inp.exx_opt_orb_lmax;
+        GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
+        GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
         // EXX does not support symmetry for nspin==4
         if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4 && PARAM.inp.basis_type == "lcao")
@@ -483,8 +488,8 @@ void Input_Conv::Convert()
     {
         if (ModuleSymmetry::Symmetry::symm_flag != -1)
         {
-            ModuleBase::WARNING("Input_Conv", "EXX PW works only with symmetry=-1");
-            ModuleSymmetry::Symmetry::symm_flag = -1;
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with symmetry=-1");
+            // ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
         if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
@@ -492,10 +497,6 @@ void Input_Conv::Convert()
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
 
-        if (PARAM.inp.device != "cpu")
-        {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with device=cpu");
-        }
     }
 
     //----------------------------------------------------------

@@ -4,7 +4,7 @@
 #define private public
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // mock functions
 Structure_Factor::Structure_Factor()
 {
@@ -24,6 +24,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {

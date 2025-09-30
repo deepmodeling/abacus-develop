@@ -7,6 +7,8 @@ namespace hsolver
 {
 const int warp_size = 32;
 const int thread_per_block = 256;
+#define FULL_MASK 0xffffffff
+#define WARP_SIZE 32
 
 template <typename Real>
 __global__ void line_minimize_with_block(
@@ -257,7 +259,7 @@ __global__ void apply_eigenvalues_kernel(
 {
     int m = blockIdx.x;
     int idx = threadIdx.x + blockIdx.y * blockDim.x;
-    
+
     if (m < notconv && idx < nbase) {
         result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
     }
@@ -274,13 +276,44 @@ __global__ void precondition_kernel(
 {
     int m = blockIdx.x;
     int i = threadIdx.x + blockIdx.y * blockDim.x;
-    
+
     if (m < notconv && i < dim) {
         Real x = abs(precondition[i] - eigenvalues[m]);
         Real pre = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
         psi_iter[(nbase + m) * dim + i] = psi_iter[(nbase + m) * dim + i] / pre;
     }
 }
+
+template <typename Real>
+__device__ Real warpReduceSum(Real val) {
+    for (int offset = WARP_SIZE / 2; offset > 0; offset >>= 1)
+        val += __shfl_down_sync(FULL_MASK, val, offset);
+    return val;
+}
+
+template <typename Real>
+__device__ Real blockReduceSum(Real val, volatile Real* shared) {
+    int lane = threadIdx.x % WARP_SIZE;
+    int wid  = threadIdx.x / WARP_SIZE;
+
+    val = warpReduceSum(val);
+
+    if (lane == 0)
+        shared[wid] = val;
+
+    __syncthreads();
+
+    Real sum = 0.0;
+    if (wid == 0) {
+        sum = (threadIdx.x < blockDim.x / 32) ? shared[lane] : 0.0;
+        sum = warpReduceSum(sum);
+        if (lane == 0) shared[0] = sum;
+    }
+
+    __syncthreads();
+    return shared[0];
+}
+
 
 template <typename Real>
 __global__ void normalize_kernel(
@@ -292,47 +325,47 @@ __global__ void normalize_kernel(
 {
     int m = blockIdx.x;
     int tid = threadIdx.x;
-    __shared__ Real sum[thread_per_block];
-    
-    sum[tid] = 0.0;
-    
+    extern __shared__ char s_char[];
+    Real* shared = reinterpret_cast<Real*>(s_char);
+
+    Real local_sum = 0.0;
+
     // Calculate the sum for normalization
     for (int i = tid; i < dim; i += thread_per_block) {
         auto val = psi_iter[(nbase + m) * dim + i];
-        sum[tid] += (val * thrust::conj(val)).real();
+        local_sum += (val * thrust::conj(val)).real();
     }
-    
-    __syncthreads();
-    
-    // Parallel reduction in shared memory
-    for (int s = thread_per_block/2; s > warp_size; s >>= 1) {
-        if (tid < s) {
-            sum[tid] += sum[tid + s];
-        }
-        __syncthreads();
-    }
-    
-    if (tid < warp_size) {
-        sum[tid] += sum[tid + 32]; __syncwarp();
-        sum[tid] += sum[tid + 16]; __syncwarp();
-        sum[tid] += sum[tid + 8]; __syncwarp();
-        sum[tid] += sum[tid + 4]; __syncwarp();
-        sum[tid] += sum[tid + 2]; __syncwarp();
-        sum[tid] += sum[tid + 1]; __syncwarp();
-    }
-    
-    __syncthreads();
-    
-    Real norm = sqrt(sum[0]);
-    
+
+    Real l2_sq = blockReduceSum(local_sum, shared);
+    Real norm = sqrt(l2_sq);
+
     // Normalize the vector
     for (int i = tid; i < dim; i += thread_per_block) {
         psi_iter[(nbase + m) * dim + i] /= norm;
     }
-    
+
     // Store the norm if needed
     if (tid == 0 && psi_norm != nullptr) {
         psi_norm[m] = norm;
+    }
+}
+
+template <typename T, typename Real>
+__global__ void refresh_hcc_scc_vcc_kernel(
+        const int n,
+        T *hcc,
+        T *scc,
+        T *vcc,
+        const int ldh,
+        const Real *eigenvalue,
+        const T one)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        hcc[i * ldh + i] = eigenvalue[i];
+        scc[i * ldh + i] = one;
+        vcc[i * ldh + i] = one;
     }
 }
 
@@ -392,15 +425,15 @@ void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nba
 {
     const int threads_per_block = 256;
     const int blocks_per_grid_y = (nbase + threads_per_block - 1) / threads_per_block;
-    
+
     dim3 grid(notconv, blocks_per_grid_y);
-    
+
     auto vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
     auto res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
-    
+
     apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
         vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
-    
+
     cudaCheckOnDebug();
 }
 
@@ -414,14 +447,14 @@ void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
 {
     const int threads_per_block = 256;
     const int blocks_per_grid_y = (dim + threads_per_block - 1) / threads_per_block;
-    
+
     dim3 grid(notconv, blocks_per_grid_y);
-    
+
     auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
-    
+
     precondition_kernel<Real><<<grid, threads_per_block>>>(
         psi_complex, precondition, eigenvalues, dim, nbase, notconv);
-    
+
     cudaCheckOnDebug();
 }
 
@@ -433,10 +466,63 @@ void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                         Real* psi_norm)
 {
     auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
-    
-    normalize_kernel<Real><<<notconv, thread_per_block>>>(
+    int sharedMemSize = (thread_per_block / WARP_SIZE) * sizeof(Real);
+
+    normalize_kernel<Real><<<notconv, thread_per_block, sharedMemSize, 0>>>(
         psi_complex, psi_norm, dim, nbase, notconv);
-    
+
+    cudaCheckOnDebug();
+}
+
+template <>
+void refresh_hcc_scc_vcc_op<double, base_device::DEVICE_GPU>::operator()(const int &n,
+                  double *hcc,
+                  double *scc,
+                  double *vcc,
+                  const int &ldh,
+                  const double *eigenvalue,
+                  const double& one)
+{
+    int thread = 512;
+    int block = (n + thread - 1) / thread;
+    refresh_hcc_scc_vcc_kernel<double, double> <<<block, thread >>> (n, hcc, scc, vcc, ldh, eigenvalue, one);
+
+    cudaCheckOnDebug();
+}
+
+template <>
+void refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int &n,
+                  std::complex<float> *hcc,
+                  std::complex<float> *scc,
+                  std::complex<float> *vcc,
+                  const int &ldh,
+                  const float *eigenvalue,
+                  const std::complex<float>& one)
+{
+    int thread = 512;
+    int block = (n + thread - 1) / thread;
+    refresh_hcc_scc_vcc_kernel<thrust::complex<float>, float> <<<block, thread >>> (n, reinterpret_cast<thrust::complex<float>*>(hcc),
+                    reinterpret_cast<thrust::complex<float>*>(scc), reinterpret_cast<thrust::complex<float>*>(vcc), ldh, eigenvalue,
+                    thrust::complex<float>(one));
+
+    cudaCheckOnDebug();
+}
+
+template <>
+void refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int &n,
+                  std::complex<double> *hcc,
+                  std::complex<double> *scc,
+                  std::complex<double> *vcc,
+                  const int &ldh,
+                  const double *eigenvalue,
+                  const std::complex<double>& one)
+{
+    int thread = 512;
+    int block = (n + thread - 1) / thread;
+    refresh_hcc_scc_vcc_kernel<thrust::complex<double>, double> <<<block, thread >>> (n, reinterpret_cast<thrust::complex<double>*>(hcc),
+                    reinterpret_cast<thrust::complex<double>*>(scc), reinterpret_cast<thrust::complex<double>*>(vcc), ldh, eigenvalue,
+                    thrust::complex<double>(one));
+
     cudaCheckOnDebug();
 }
 
@@ -453,4 +539,7 @@ template struct precondition_op<double, base_device::DEVICE_GPU>;
 template struct normalize_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct normalize_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct normalize_op<double, base_device::DEVICE_GPU>;
+template struct refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct refresh_hcc_scc_vcc_op<double, base_device::DEVICE_GPU>;
 }

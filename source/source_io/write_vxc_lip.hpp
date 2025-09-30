@@ -1,9 +1,9 @@
 #ifndef __WRITE_VXC_LIP_H_
 #define __WRITE_VXC_LIP_H_
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
-#include "source_pw/hamilt_pwdft/operator_pw/veff_pw.h"
+#include "source_pw/module_pwdft/operator_pw/veff_pw.h"
 #include "source_psi/psi.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"

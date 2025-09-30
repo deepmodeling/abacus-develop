@@ -3,10 +3,10 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_tddft/evolve_elec.h"
-#include "source_pw/hamilt_pwdft/global.h"
 #include "source_io/input_conv.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_rt/evolve_elec.h"
+#include "source_pw/module_pwdft/global.h"
 
 namespace elecstate
 {
@@ -15,20 +15,17 @@ int H_TDDFT_pw::istep = -1;
 bool H_TDDFT_pw::is_initialized = false;
 
 double H_TDDFT_pw::amp;
-double H_TDDFT_pw::bmod;
-double H_TDDFT_pw::bvec[3];
 
-// Used for calculating electric field force on ions
+// Used for calculating electric field force on ions, summing over directions
 vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
 
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 
 std::vector<int> H_TDDFT_pw::ttype;
-//  0  Gauss type function.
-//  1  trapezoid type function.
-//  2  Trigonometric functions, sin^2.
-//  3  heaviside function.
-//  4  HHG function.
+//  0: Gaussian type function.
+//  1: Trapezoid type function.
+//  2: Trigonometric functions, sin^2.
+//  3: Heaviside step function.
 
 int H_TDDFT_pw::tstart;
 int H_TDDFT_pw::tend;
@@ -44,7 +41,9 @@ double H_TDDFT_pw::lcut2;
 
 // velocity gauge
 ModuleBase::Vector3<double> H_TDDFT_pw::At;
-
+ModuleBase::Vector3<double> H_TDDFT_pw::At_laststep;
+// hybrid gauge
+ModuleBase::Vector3<double> H_TDDFT_pw::Et;
 // time domain parameters
 
 // Gauss
@@ -83,15 +82,18 @@ std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
 {
     std::stringstream ssc;
-    ssc << file_dir << "Restart_md.dat";
+    ssc << file_dir << "Restart_td.txt";
     std::ifstream file(ssc.str().c_str());
 
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_md.dat!");
+        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_td.txt!");
     }
 
     file >> istep;
+    file >> At[0] >> At[1] >> At[2];
+    file >> At_laststep[0] >> At_laststep[1] >> At_laststep[2];
+    At_laststep = -At_laststep;
     file.close();
 }
 
@@ -99,8 +101,8 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
-    // skip if velocity_gauge
-    if (stype == 1)
+    // skip if not length gauge
+    if (stype != 0)
     {
         return;
     }
@@ -114,7 +116,6 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     {
         return;
     }
-    //std::cout << "calculate electric potential" << std::endl;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
 
@@ -126,20 +127,6 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     global_vext_time = {0.0, 0.0, 0.0};
 
-    if (PARAM.inp.td_vext_dire.size() != 1)
-    {
-        ModuleBase::WARNING("H_TDDFT_pw::cal_fixed_v",
-                            "Multiple electric fields detected. This feature may have potential issues and is not "
-                            "recommended for use!");
-    }
-    if (PARAM.inp.td_vext_dire.size() > 2)
-    {
-        // To avoid breaking the integration test 601_NO_TDDFT_H2_len_hhg, a maximum of 2 electric fields are allowed
-        ModuleBase::WARNING_QUIT("H_TDDFT_pw::cal_fixed_v",
-                                 "For the sake of program stability, the feature of applying multiple electric fields "
-                                 "simultaneously has been temporarily disabled. Thank you for your understanding!");
-    }
-
     for (auto direc: PARAM.inp.td_vext_dire)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
@@ -150,7 +137,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
-            as << PARAM.globalv.global_out_dir << "efield_" << count << ".dat";
+            as << PARAM.globalv.global_out_dir << "efield_" << count << ".txt";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
                 << vext_time * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
@@ -193,8 +180,6 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
 
-    prepare(ucell_->G, direc);
-
     for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
     {
         int i = ir / (this->rho_basis_->ny * this->rho_basis_->nplane);
@@ -207,15 +192,21 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
         switch (direc)
         {
         case 1:
-            vext_space[ir] = cal_v_space_length_potential(x) / bmod;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e11
+                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e21
+                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e31;
             break;
 
         case 2:
-            vext_space[ir] = cal_v_space_length_potential(y) / bmod;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e12
+                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e22
+                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e32;
             break;
 
         case 3:
-            vext_space[ir] = cal_v_space_length_potential(z) / bmod;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e13
+                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e23
+                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e33;
             break;
 
         default:
@@ -267,10 +258,6 @@ int H_TDDFT_pw::check_ncut(int t_type)
         ncut = 2;
         break;
 
-        // case 4:
-        //     vext_time = cal_v_time_HHG();
-        //     break;
-
     default:
         std::cout << "time_domain_type of electric field is wrong" << std::endl;
         break;
@@ -280,9 +267,12 @@ int H_TDDFT_pw::check_ncut(int t_type)
 
 void H_TDDFT_pw::update_At()
 {
-    //std::cout << "calculate electric potential" << std::endl;
     // time evolve
     H_TDDFT_pw::istep++;
+    // midpoint rule should be used both in Hamiltonian and here.
+    At = At + At_laststep / 2.0;
+    At_laststep.set(0.0, 0.0, 0.0);
+    Et.set(0.0, 0.0, 0.0);
 
     // judgement to skip vext
     if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
@@ -329,7 +319,11 @@ void H_TDDFT_pw::update_At()
         switch (stype)
         {
         case 1:
-            At[direc - 1] -= out;
+            At_laststep[direc - 1] -= out;
+            break;
+        case 2:
+            At_laststep[direc - 1] -= out;
+            Et[direc - 1] += vext_time[0];
             break;
         default:
             std::cout << "space_domain_type of electric field is wrong" << std::endl;
@@ -340,7 +334,7 @@ void H_TDDFT_pw::update_At()
         if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
         {
             std::stringstream as;
-            as << PARAM.globalv.global_out_dir << "efield_" << count << ".dat";
+            as << PARAM.globalv.global_out_dir << "efield_" << count << ".txt";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
             ofs << H_TDDFT_pw::istep * dt * ModuleBase::AU_to_FS << "\t"
                 << vext_time[0] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
@@ -349,6 +343,7 @@ void H_TDDFT_pw::update_At()
         // total count++
         count++;
     }
+    At = At + At_laststep / 2.0;
 
     ModuleBase::timer::tick("H_TDDFT_pw", "update_At");
     return;
@@ -373,12 +368,8 @@ double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
         break;
 
     case 3:
-        vext_time = cal_v_time_heaviside();
+        vext_time = cal_v_time_heaviside(last);
         break;
-
-        // case 4:
-        //     vext_time = cal_v_time_HHG();
-        //     break;
 
     default:
         std::cout << "time_domain_type of electric field is wrong" << std::endl;
@@ -460,7 +451,7 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_heaviside()
+double H_TDDFT_pw::cal_v_time_heaviside(const bool last)
 {
     double t0 = *(heavi_t0.begin() + heavi_count);
     double amp = *(heavi_amp.begin() + heavi_count);
@@ -473,36 +464,12 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     {
         vext_time = 0.0;
     }
-    heavi_count++;
+    if (last)
+    {
+        heavi_count++;
+    }
 
     return vext_time;
-}
-
-void H_TDDFT_pw::prepare(const ModuleBase::Matrix3& G, int& dir)
-{
-    if (dir == 1)
-    {
-        bvec[0] = G.e11;
-        bvec[1] = G.e12;
-        bvec[2] = G.e13;
-    }
-    else if (dir == 2)
-    {
-        bvec[0] = G.e21;
-        bvec[1] = G.e22;
-        bvec[2] = G.e23;
-    }
-    else if (dir == 3)
-    {
-        bvec[0] = G.e31;
-        bvec[1] = G.e32;
-        bvec[2] = G.e33;
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("H_TDDFT_pw::prepare", "direction is wrong!");
-    }
-    bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
 }
 
 void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
@@ -512,11 +479,10 @@ void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
     {
         for (int ia = 0; ia < cell.atoms[it].na; ++ia)
         {
-            for (int jj = 0; jj < 3; ++jj)
+            for (int direc = 0; direc < 3; ++direc)
             {
                 // No need to multiply ModuleBase::e2, since the unit of force is Ry/Bohr
-                fe(iat, jj)
-                    = (std::abs(bmod) > 1e-10 ? global_vext_time[jj] * cell.atoms[it].ncpp.zv * bvec[jj] / bmod : 0);
+                fe(iat, direc) = global_vext_time[direc] * cell.atoms[it].ncpp.zv;
             }
             ++iat;
         }

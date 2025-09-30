@@ -1,14 +1,12 @@
 #include "diago_iter_assist.h"
-#include "module_parameter/parameter.h"
-#include "source_base/blas_connector.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
-#include "source_base/lapack_connector.h"
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
 namespace hsolver
@@ -374,7 +372,7 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(const int nstart,
     resmem_var_op()(eigenvalues, nstart);
     setmem_var_op()(eigenvalues, 0, nstart);
 
-    dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
+    hegvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {

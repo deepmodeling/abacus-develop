@@ -1,7 +1,7 @@
 #include "atom_pair.h"
 #include <complex>
 #include <cassert>
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 
 namespace hamilt
 {
@@ -866,7 +866,7 @@ size_t AtomPair<T>::get_memory_size() const
     return memory_size;
 }
 
-// T of AtomPair can be double or complex<double>
+// T of AtomPair can be double or std::complex<double>
 template class AtomPair<double>;
 template class AtomPair<std::complex<double>>;
 

@@ -63,7 +63,7 @@ struct lapack_potrf<T, DEVICE_CPU> {
 };
 
 template <typename T>
-struct lapack_dnevd<T, DEVICE_CPU> {
+struct lapack_heevd<T, DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
@@ -85,15 +85,15 @@ struct lapack_dnevd<T, DEVICE_CPU> {
         Tensor iwork(DataTypeToEnum<int>::value, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        lapackConnector::dnevd(jobz, uplo, dim, Mat, dim, eigen_val,  work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::heevd(jobz, uplo, dim, Mat, dim, eigen_val,  work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         if (info != 0) {
-            throw std::runtime_error("dnevd failed with info = " + std::to_string(info));
+            throw std::runtime_error("heevd failed with info = " + std::to_string(info));
         }
     }
 };
 
 template <typename T>
-struct lapack_dngvd<T, DEVICE_CPU> {
+struct lapack_hegvd<T, DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,
@@ -117,9 +117,9 @@ struct lapack_dngvd<T, DEVICE_CPU> {
         Tensor iwork(DataType::DT_INT, DeviceType::CpuDevice, {liwork});
         iwork.zero();
 
-        lapackConnector::dngvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
+        lapackConnector::hegvd(itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val, work.data<T>(), lwork, rwork.data<Real>(), lrwork, iwork.data<int>(), liwork, info);
         if (info != 0) {
-            throw std::runtime_error("dngvd failed with info = " + std::to_string(info));
+            throw std::runtime_error("hegvd failed with info = " + std::to_string(info));
         }
     }
 };
@@ -194,15 +194,15 @@ template struct lapack_trtri<double, DEVICE_CPU>;
 template struct lapack_trtri<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_trtri<std::complex<double>, DEVICE_CPU>;
 
-template struct lapack_dnevd<float,  DEVICE_CPU>;
-template struct lapack_dnevd<double, DEVICE_CPU>;
-template struct lapack_dnevd<std::complex<float>,  DEVICE_CPU>;
-template struct lapack_dnevd<std::complex<double>, DEVICE_CPU>;
+template struct lapack_heevd<float,  DEVICE_CPU>;
+template struct lapack_heevd<double, DEVICE_CPU>;
+template struct lapack_heevd<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_heevd<std::complex<double>, DEVICE_CPU>;
 
-template struct lapack_dngvd<float,  DEVICE_CPU>;
-template struct lapack_dngvd<double, DEVICE_CPU>;
-template struct lapack_dngvd<std::complex<float>,  DEVICE_CPU>;
-template struct lapack_dngvd<std::complex<double>, DEVICE_CPU>;
+template struct lapack_hegvd<float,  DEVICE_CPU>;
+template struct lapack_hegvd<double, DEVICE_CPU>;
+template struct lapack_hegvd<std::complex<float>,  DEVICE_CPU>;
+template struct lapack_hegvd<std::complex<double>, DEVICE_CPU>;
 
 template struct lapack_getrf<float,  DEVICE_CPU>;
 template struct lapack_getrf<double, DEVICE_CPU>;

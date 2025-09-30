@@ -212,7 +212,7 @@ TEST_F(DMTest, DMInit3)
     delete kv;
 }
 
-// test for construct DMR from another HContainer<complex<double>>
+// test for construct DMR from another HContainer <std::complex<double>>
 TEST_F(DMTest, DMInit4)
 {
     // initalize a kvectors

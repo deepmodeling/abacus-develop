@@ -3,7 +3,7 @@
 // DATE : 2024-03-11
 //==========================================================
 #include "source_lcao/module_rdmft/rdmft_tools.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 // used by class Veff_rdmft
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
@@ -11,7 +11,7 @@
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/pot_local.h"
 #include "source_estate/module_pot/pot_xc.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <iostream>
@@ -180,6 +180,9 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     } else if ( symbol==4 ) { return alpha*std::pow(eta, alpha-1.0);
     } else if ( symbol==5 ) { return 1.0;
     }
+
+    // default symbol = 0
+    return eta;
     
 }
 

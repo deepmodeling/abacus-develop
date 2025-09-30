@@ -1,44 +1,51 @@
 #include "relax_driver.h"
 
 #include "source_base/global_file.h"
-#include "source_pw/hamilt_pwdft/global.h" // use chr.
+#include "source_pw/module_pwdft/global.h" // use chr.
 #include "source_io/cif_io.h"
 #include "source_io/json_output/output_info.h"
 #include "source_io/output_log.h"
 #include "source_io/print_info.h"
 #include "source_io/read_exit_file.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 
-void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
+void Relax_Driver::relax_driver(
+		ModuleESolver::ESolver* p_esolver, 
+		UnitCell& ucell,
+		const Input_para& inp)
 { 
-    ModuleBase::TITLE("Ions", "opt_ions");
-    ModuleBase::timer::tick("Ions", "opt_ions");
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" )
+    ModuleBase::TITLE("Relax_Driver", "relax_driver");
+    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+
+    if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
     {
-        if (!PARAM.inp.relax_new)
+        if (!inp.relax_new) // traditional relax
         {
             rl_old.init_relax(ucell.nat);
         }
-        else
+        else // relax new
         {
             rl.init_relax(ucell.nat);
         }
     }
+
     this->istep = 1;
-    int force_step = 1; // pengfei Li 2018-05-14
+    int force_step = 1;
     int stress_step = 1;
     bool stop = false;
 
-    while (istep <= PARAM.inp.relax_nmax && !stop)
+    while (istep <= inp.relax_nmax && !stop)
     {
         time_t estart = time(nullptr);
 
-        if (PARAM.inp.out_level == "ie"
-            && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
-                || PARAM.inp.calculation == "nscf")
-            && (PARAM.inp.esolver_type != "lr"))
-        {
+		if (inp.out_level == "ie"
+				&& (inp.calculation == "relax" 
+					|| inp.calculation == "cell-relax" 
+					|| inp.calculation == "scf"
+					|| inp.calculation == "nscf")
+				&& (inp.esolver_type != "lr"))
+		{
             ModuleIO::print_screen(stress_step, force_step, istep);
         }
 
@@ -63,21 +70,34 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
         this->etot = p_esolver->cal_energy();
 
         // calculate and gather all parts of total ionic forces
-        if (PARAM.inp.cal_force)
+        if (inp.cal_force)
         {
             p_esolver->cal_force(ucell, force);
         }
+		else
+		{
+            // do nothing
+		}
+
+
         // calculate and gather all parts of stress
-        if (PARAM.inp.cal_stress)
+        if (inp.cal_stress)
         {
             p_esolver->cal_stress(ucell, stress);
         }
+		else
+		{
+            // do nothing
+		}
 
-        if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
+        if (inp.calculation == "relax" || inp.calculation == "cell-relax")
         {
-            if (PARAM.inp.relax_new)
+            if (inp.relax_new)
             {
                 stop = rl.relax_step(ucell, force, stress, this->etot);
+                // mohan added 2025-07-14
+                stress_step = istep+1;
+                force_step = 1;
             }
             else
             {
@@ -87,26 +107,25 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                          force,
                                          stress,
                                          force_step,
-                                         stress_step); // pengfei Li 2018-05-14
+                                         stress_step);
             }
-            // print structure
-            // changelog 20240509
-            // because I move out the dependence on GlobalV from UnitCell::print_stru_file
-            // so its parameter is calculated here
-            bool need_orb = PARAM.inp.basis_type == "pw";
-            need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3) == "nao";
-            need_orb = need_orb || PARAM.inp.basis_type == "lcao";
-            need_orb = need_orb || PARAM.inp.basis_type == "lcao_in_pw";
+
+            bool need_orb = inp.basis_type == "pw";
+            need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
+            need_orb = need_orb || inp.basis_type == "lcao";
+            need_orb = need_orb || inp.basis_type == "lcao_in_pw";
+
             std::stringstream ss, ss1;
             ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
+
             unitcell::print_stru_file(ucell,
                                   ucell.atoms,
                                   ucell.latvec,
                                   ss.str(),
-                                  PARAM.inp.nspin,
+                                  inp.nspin,
                                   true,
-                                  PARAM.inp.calculation == "md",
-                                  PARAM.inp.out_mul,
+                                  inp.calculation == "md",
+                                  inp.out_mul,
                                   need_orb,
                                   PARAM.globalv.deepks_setorb,
                                   GlobalV::MY_RANK);
@@ -119,10 +138,10 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                       ucell.atoms,
                                       ucell.latvec,
                                       ss1.str(),
-                                      PARAM.inp.nspin,
+                                      inp.nspin,
                                       true,
-                                      PARAM.inp.calculation == "md",
-                                      PARAM.inp.out_mul,
+                                      inp.calculation == "md",
+                                      inp.out_mul,
                                       need_orb,
                                       PARAM.globalv.deepks_setorb,
                                       GlobalV::MY_RANK);
@@ -133,7 +152,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             }
 
             ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
-        }
+        }// end relax or cell_relax
 
 #ifdef __RAPIDJSON
         // add the energy to outout
@@ -152,20 +171,41 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
         time_t fend = time(nullptr);
 
         ++istep;
-    }
+    } // end while (istep <= inp.relax_nmax && !stop)
 
-    if (PARAM.inp.relax_nmax == 0)
+
+	if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+	{
+		if (istep-1 == inp.relax_nmax)
+		{
+			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+			std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+			std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+		}
+		else
+		{
+			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+			std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
+			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+		}
+	}
+	else
+	{
+		// do nothing
+	}
+
+	if (inp.relax_nmax == 0)
     {
         std::cout << "-----------------------------------------------" << std::endl;
         std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
         std::cout << "-----------------------------------------------" << std::endl;
     }
+	else
+	{
+		// do nothing 
+	}
 
-    if (PARAM.inp.out_level == "i")
-    {
-        std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
-    }
-
-    ModuleBase::timer::tick("Ions", "opt_ions");
+    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
     return;
 }

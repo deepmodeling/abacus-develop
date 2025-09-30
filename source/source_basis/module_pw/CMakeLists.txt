@@ -1,22 +1,22 @@
 if (ENABLE_FLOAT_FFTW)
   list (APPEND FFT_SRC
-    module_fft/fft_cpu_float.cpp
+    ../../source_base/module_fft/fft_cpu_float.cpp
   )
 endif()
 if (USE_CUDA)
   list (APPEND FFT_SRC
-    module_fft/fft_cuda.cpp
+    ../../source_base/module_fft/fft_cuda.cpp
   )
 endif()
 if (USE_ROCM)
   list (APPEND FFT_SRC
-    module_fft/fft_rocm.cpp
+    ../../source_base/module_fft/fft_rocm.cpp
   )
 endif()
 if (USE_DSP)
   list (APPEND FFT_SRC
-      module_fft/fft_dsp.cpp
-      module_fft/fft_dsp_float.cpp
+      ../../source_base/module_fft/fft_dsp.cpp
+      ../../source_base/module_fft/fft_dsp_float.cpp
       pw_transform_k_dsp.cpp)
 endif()
 
@@ -32,8 +32,8 @@ list(APPEND objects
     pw_transform.cpp
     pw_transform_gpu.cpp
     pw_transform_k.cpp
-    module_fft/fft_bundle.cpp
-    module_fft/fft_cpu.cpp
+    ../../source_base/module_fft/fft_bundle.cpp
+    ../../source_base/module_fft/fft_cpu.cpp
     ${FFT_SRC}
 )
 

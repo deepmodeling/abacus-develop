@@ -10,12 +10,12 @@
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gevdm * v_delta_pdm;
 // v_delta_pdm[nks,nlocal,nlocal,Inl,nm,nm] = overlap * overlap;

@@ -3,7 +3,7 @@
 #include "charge.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_sphbes.h"
@@ -12,8 +12,8 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "source_pw/hamilt_pwdft/parallel_grid.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/cube_io.h"
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
@@ -59,8 +59,18 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
         {
             for (int is = 0; is < nspin; ++is)
             {
-                std::stringstream ssc;
-                ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				std::stringstream ssc; 
+
+				if(nspin==1)
+				{
+                    ssc << PARAM.globalv.global_readin_dir << "chg.cube";
+				}
+				else
+				{               
+					ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+				}
+
+
                 if (ModuleIO::read_vdata_palgrid(pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,

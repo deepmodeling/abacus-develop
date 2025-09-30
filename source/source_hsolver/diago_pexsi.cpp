@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <complex>
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"

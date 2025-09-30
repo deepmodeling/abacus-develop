@@ -1,7 +1,7 @@
 #ifndef PSI_INITIALIZER_NAO_RANDOM_H
 #define PSI_INITIALIZER_NAO_RANDOM_H
 #include "source_cell/parallel_kpoints.h"
-#include "source_pw/hamilt_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/VNL_in_pw.h"
 #include "psi_initializer_nao.h"
 
 /*

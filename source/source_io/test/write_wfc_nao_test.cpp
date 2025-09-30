@@ -2,11 +2,11 @@
 #include "../filename.h"
 
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../binstream.h"
 #include "source_base/global_variable.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -35,7 +35,7 @@ TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
 			nkstot, out_type, out_app_flag, gamma_only, istep);
 
     // output .txt file when out_type=1
-	std::string expected_output = "wfs1_nao.txt";
+	std::string expected_output = "wf_nao.txt";
 
     EXPECT_EQ(result, expected_output);
 }
@@ -88,7 +88,7 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
     std::string output = testing::internal::GetCapturedStdout();
 
     // a .txt is chosen if out_type is not 1 or 2
-    std::string expected_output = "wfs1k3_nao.txt";
+    std::string expected_output = "wfk3_nao.txt";
     EXPECT_EQ(result, expected_output);
 }
 

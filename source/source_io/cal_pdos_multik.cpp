@@ -1,13 +1,13 @@
 #include "cal_pdos_multik.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_base/blas_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "write_orb_info.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_lcao/hamilt_lcao.h"
 
 void ModuleIO::cal_pdos(
 		const psi::Psi<std::complex<double>>* psi,

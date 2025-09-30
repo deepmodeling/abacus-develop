@@ -29,12 +29,6 @@ add_test(NAME MODULE_IO_read_exit_file_test_para_4
 )
 
 AddTest(
-  TARGET MODULE_IO_winput_test
-  LIBS parameter ${math_libs} base device 
-  SOURCES winput_test.cpp ../winput.cpp
-)
-
-AddTest(
   TARGET MODULE_IO_output_test
   LIBS parameter  ${math_libs} base device
   SOURCES output_test.cpp ../output.cpp
@@ -153,7 +147,7 @@ AddTest(
   ../../source_cell/atom_spec.cpp
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
-  ../../source_lcao/hamilt_lcaodft/center2_orb.cpp
+  ../../source_lcao/center2_orb.cpp
   ../orb_io.cpp
 )
 endif()
@@ -186,7 +180,7 @@ AddTest(
   LIBS parameter  base ${math_libs} device numerical_atomic_orbitals container orb 
   SOURCES numerical_basis_test.cpp 
           ../numerical_basis_jyjy.cpp 
-          ../../source_lcao/hamilt_lcaodft/center2_orb.cpp
+          ../../source_lcao/center2_orb.cpp
           ../orb_io.cpp
 )
 
@@ -237,14 +231,14 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 )
 
 AddTest(
-  TARGET MODULE_IO_dmk_io
+  TARGET MODULE_IO_write_dmk
   LIBS parameter ${math_libs} base device cell_info 
-  SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp
+  SOURCES write_dmk_test.cpp ../write_dmk.cpp ../output.cpp
 )
 
 add_test(
-  NAME MODULE_IO_dmk_io_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_dmk_io
+  NAME MODULE_IO_write_dmk_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_dmk
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

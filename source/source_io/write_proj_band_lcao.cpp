@@ -1,13 +1,13 @@
 #include "write_proj_band_lcao.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "write_orb_info.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 template<>
 void ModuleIO::write_proj_band_lcao(
@@ -197,7 +197,7 @@ void ModuleIO::write_proj_band_lcao(
     GlobalV::ofs_running << "\n";
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |       #Print out projected bands (psi in complex<double>)#         |" << std::endl;
+    GlobalV::ofs_running << " |       #Print out projected bands (psi in std::complex<double>)#         |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     GlobalV::ofs_running << "\n";

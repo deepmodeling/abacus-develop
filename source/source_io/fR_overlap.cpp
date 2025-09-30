@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/math_integral.h"
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 
 template <typename T>
 FR_overlap<T>::FR_overlap()
@@ -369,7 +369,7 @@ double FR_overlap<T>::Polynomial_Interpolation(
     return y;
 }
 
-// T of FR_overlap can be double or complex<double>
+// T of FR_overlap can be double or std::complex<double>
 template class FR_overlap<double>;
 template class FR_overlap<std::complex<double>>;
 

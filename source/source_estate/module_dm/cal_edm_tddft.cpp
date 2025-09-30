@@ -1,10 +1,9 @@
 #include "cal_edm_tddft.h"
 
-#include "source_base/lapack_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 namespace elecstate
 {
-
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void cal_edm_tddft(Parallel_Orbitals& pv,
                    elecstate::ElecState* pelec,
@@ -240,7 +239,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         LapackConnector::zgetrf(nlocal, nlocal, Sinv, nlocal, IPIV, &INFO);
         LapackConnector::zgetri(nlocal, Sinv, nlocal, IPIV, work, lwork, &INFO);
         // I just use ModuleBase::ComplexMatrix temporarily, and will change it
-        // to complex<double>*
+        // to std::complex<double>*
         ModuleBase::ComplexMatrix tmp_dmk_base(nlocal, nlocal);
         for (int i = 0; i < nlocal; i++)
         {
@@ -254,5 +253,5 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 #endif
     }
     return;
-}
-} // namespace ModuleESolver
+} // cal_edm_tddft
+} // namespace elecstate

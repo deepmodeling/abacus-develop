@@ -11,7 +11,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/ORB_gaunt_table.h"
 #include "source_basis/module_ao/ORB_read.h"
-#include "source_lcao/hamilt_lcaodft/center2_orb-orb11.h"
+#include "source_lcao/center2_orb-orb11.h"
 #include "source_cell/unitcell.h"
 #include <RI/global/Tensor.h>
 #include <map>
@@ -28,11 +28,13 @@ class Matrix_Orbs11
               const UnitCell& ucell,
               const LCAO_Orbitals& orb,
               const double kmesh_times,  // extend Kcut, keep dK
-              const double rmesh_times); // extend Rcut, keep dR
+              const double rmax,
+              int& Lmax); 
 
     void init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
-                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B);
-    void init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B);
+                     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
+                     const ORB_gaunt_table& MGT);
+    void init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals& orb_B, const ORB_gaunt_table& MGT);
 
     void init_radial_table();
     void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
@@ -69,7 +71,6 @@ class Matrix_Orbs11
 
   private:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
-    ORB_gaunt_table MGT;
     const double lcao_dr_ = 0.01;
     double* lat0=nullptr;                                         // restore ucell.lat0
     std::map<size_t,                                              // TA

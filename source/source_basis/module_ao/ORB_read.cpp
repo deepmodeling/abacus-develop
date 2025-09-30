@@ -4,7 +4,7 @@
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_base/tool_check.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cassert>

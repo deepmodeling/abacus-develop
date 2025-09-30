@@ -1,12 +1,12 @@
 //==========================================================
 // Author:Xin Qu
 #ifdef __LCAO
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "dftu.h"
 
 #include <cmath>

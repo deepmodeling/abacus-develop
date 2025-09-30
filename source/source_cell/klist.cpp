@@ -7,9 +7,9 @@
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/berryphase.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void K_Vectors::cal_ik_global()
 {
@@ -160,6 +160,13 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
 
+    // initialize ibz_index
+    this->ibz_index.resize(this->nkstot_full);
+    for (int ik = 0; ik < this->nkstot_full; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+    
     // get ik2iktot
     this->cal_ik_global();
 

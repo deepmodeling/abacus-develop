@@ -13,7 +13,7 @@ LATTICE_VECTORS
 0.5 0.5 0.0 		#Lattice vector 3
 
 ATOMIC_POSITIONS
-Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
+Cartesian 	#Cartesian(Unit is LATTICE_CONSTANT)
 Si 			#Name of element	
 0.0			#Magnetic for this element.
 2			#Number of atoms

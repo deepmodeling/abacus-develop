@@ -4,9 +4,9 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/read_pseudo.h"
-#include "source_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_io/cal_r_overlap_R.h"
 #include "source_io/print_info.h"
 #include "source_io/write_HS_R.h"
@@ -49,7 +49,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
     if (this->pelec == nullptr)
     {
-        // TK stands for double and complex<double>?
+        // TK stands for double and std::complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
                                                                          &(this->kv),
                                                                          this->kv.get_nks(),

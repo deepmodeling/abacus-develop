@@ -3,8 +3,8 @@
 
 #include <vector>
 #include "source_base/global_function.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace ModuleIO
 {

@@ -17,6 +17,7 @@ option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_SW "Enable SW Architecture" OFF)
 
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
@@ -281,6 +282,18 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+if (USE_SW)
+  add_compile_definitions(__SW)
+  set(SW ON)
+  include_directories(${SW_MATH}/include)
+  include_directories(${SW_FFT}/include)
+
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_FFT}/lib/libfftw3.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
+endif()
 
 find_package(Threads REQUIRED)
 target_link_libraries(${ABACUS_BIN_NAME} Threads::Threads)
@@ -360,6 +373,7 @@ if(USE_CUDA)
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
+    target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
@@ -459,6 +473,9 @@ if(MKLROOT)
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND math_libs ifcore)
   endif()
+elseif(USE_SW)
+   list(APPEND math_libs gfortran)
+  # SW architecture can only use its own math library
 else()
   find_package(FFTW3 REQUIRED)
   find_package(Lapack REQUIRED)
@@ -504,7 +521,7 @@ if(ENABLE_MLALGO)
     include_directories(${libnpy_INCLUDE_DIR})
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
-  
+
   add_compile_definitions(__MLALGO)
 endif()
 
@@ -544,7 +561,7 @@ if (ENABLE_CNPY)
     include_directories(${cnpy_INCLUDE_DIR})
   endif()
   include_directories(${cnpy_SOURCE_DIR})
-  
+
   # find ZLIB and link
   find_package(ZLIB REQUIRED)
   target_link_libraries(${ABACUS_BIN_NAME} cnpy ZLIB::ZLIB)
@@ -735,9 +752,9 @@ target_link_libraries(
   hsolver
   elecstate
   hamilt_general
-  hamilt_pwdft
-  hamilt_ofdft
-  hamilt_stodft
+  module_pwdft
+  module_ofdft
+  module_stodft
   psi
   psi_initializer
   psi_overall_init

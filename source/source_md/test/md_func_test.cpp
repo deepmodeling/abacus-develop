@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #define private public
 #define protected public
@@ -385,11 +385,11 @@ TEST_F(MD_func_test, print_stress)
     std::ifstream ifs("running.log");
     std::string output_str;
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
-    getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("ELECTRONIC      PART OF STRESS: 0 kbar"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("IONIC (KINETIC) PART OF STRESS: 0 kbar"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
 /*
     getline(ifs, output_str);
     getline(ifs, output_str);

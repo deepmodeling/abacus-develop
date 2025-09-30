@@ -1,5 +1,7 @@
 list(APPEND objects
     input_conv.cpp
+    ctrl_output_fp.cpp
+    ctrl_output_pw.cpp
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
@@ -46,7 +48,6 @@ list(APPEND objects_advanced
     to_wannier90_lcao_in_pw.cpp
     to_wannier90_lcao.cpp
     fR_overlap.cpp
-    winput.cpp
 )
 
 if(ENABLE_LCAO)
@@ -61,7 +62,7 @@ if(ENABLE_LCAO)
       read_wfc_nao.cpp
       read_wfc_lcao.cpp
       write_wfc_nao.cpp
-      io_dmk.cpp
+      write_dmk.cpp
       write_dmr.cpp
       sparse_matrix.cpp
       file_reader.cpp

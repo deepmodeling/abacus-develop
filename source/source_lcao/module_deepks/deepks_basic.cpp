@@ -7,7 +7,7 @@
 
 #include "source_base/atom_in.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
 // Dimension is different for each inl, so there's a vector of tensors
@@ -31,7 +31,7 @@ void DeePKS_domain::cal_gevdm(const int nat,
             // repeat each block for nm times in an additional dimension
             torch::Tensor tmp_x = pdm[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
             // torch::Tensor tmp_y = std::get<0>(torch::symeig(tmp_x, true));
-            torch::Tensor tmp_y = std::get<0>(torch::linalg::eigh(tmp_x, "U"));
+            torch::Tensor tmp_y = std::get<0>(torch::linalg_eigh(tmp_x, "U"));
             torch::Tensor tmp_yshell = torch::eye(nm, torch::TensorOptions().dtype(torch::kFloat64));
             std::vector<torch::Tensor> tmp_rpt; // repeated-pdm-tensor (x)
             std::vector<torch::Tensor> tmp_rdt; // repeated-d-tensor (y)
@@ -61,6 +61,15 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     ModuleBase::TITLE("DeePKS_domain", "load_model");
     ModuleBase::timer::tick("DeePKS_domain", "load_model");
 
+    // check whether file exists
+    std::ifstream ifs(model_file.c_str());
+    if (!ifs)
+    {
+        ModuleBase::timer::tick("DeePKS_domain", "load_model");
+        ModuleBase::WARNING_QUIT("DeePKS_domain::load_model", "No model file named " + model_file + ", please check!");
+        return;
+    }
+    ifs.close();
     try
     {
         model = torch::jit::load(model_file);

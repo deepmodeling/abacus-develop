@@ -131,7 +131,7 @@ void potrf (hipsolverHandle_t& hipsolver_handle, const char& uplo, const int& n,
 
 
 static inline
-void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
+void heevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -151,13 +151,13 @@ void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& u
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
+void heevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -177,13 +177,13 @@ void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& u
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
+void heevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -203,13 +203,13 @@ void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& u
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
+void heevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -229,14 +229,14 @@ void dnevd (hipsolverHandle_t& hipsolver_handle, const char& jobz, const char& u
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 
 static inline
-void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
+void hegvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -256,13 +256,13 @@ void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& j
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
+void hegvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -282,13 +282,13 @@ void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& j
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
+void hegvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -308,13 +308,13 @@ void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& j
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));
 }
 static inline
-void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
+void hegvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
 {
     // prepare some values for hipsolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -334,7 +334,7 @@ void dngvd (hipsolverHandle_t& hipsolver_handle, const int& itype, const char& j
 
     hipErrcheck(hipMemcpy(&h_info, d_info, sizeof(int), hipMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     hipErrcheck(hipFree(d_info));
     hipErrcheck(hipFree(d_work));

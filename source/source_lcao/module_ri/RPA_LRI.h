@@ -49,7 +49,7 @@ template <typename T, typename Tdata> class RPA_LRI
         const psi::Psi<T>& psi,
         const elecstate::ElecState* pelec);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
-    void out_struc(const ModuleBase::Matrix3& latvec, const ModuleBase::Matrix3& G);
+    void out_struc(const UnitCell &ucell);
     void out_bands(const elecstate::ElecState *pelec);
 
     void out_Cs(const UnitCell &ucell);

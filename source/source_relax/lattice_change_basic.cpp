@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 int Lattice_Change_Basic::dim = 0;
 bool Lattice_Change_Basic::converged = true;
@@ -75,26 +75,27 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     assert(move != nullptr);
     assert(lat != nullptr);
 
-    /*
-        std::cout<<" LATTICE CONSTANT  OLD:"<<std::endl;
-        std::cout<<" "<<std::setprecision(12)<<ucell.latvec.e11<<"   "<<ucell.latvec.e12<<"
-       "<<ucell.latvec.e13<<std::endl; std::cout<<" "<<std::setprecision(12)<<ucell.latvec.e21<<"
-       "<<ucell.latvec.e22<<"   "<<ucell.latvec.e23<<std::endl; std::cout<<"
-       "<<std::setprecision(12)<<ucell.latvec.e31<<"   "<<ucell.latvec.e32<<"
-       "<<ucell.latvec.e33<<std::endl;
-    */
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
-}
-}
-        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
+		for (int i = 0;i < 3;++i) 
+		{
+			for (int j = 0;j < 3;++j) 
+			{
+				move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+			}
+		}
+		ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
         move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
-        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
-}
-}
+
+		for (int i = 0;i < 3;++i) 
+		{
+			for (int j = 0;j < 3;++j) 
+			{
+				move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+			}
+		}
     }
 
     if (ucell.lc[0] != 0)
@@ -171,9 +172,10 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i))) {
-                stress_ii_max = std::abs(stress(i, i));
-}
+            if (stress_ii_max < std::abs(stress(i, i))) 
+			{
+				stress_ii_max = std::abs(stress(i, i));
+			}
             for (int j = 0; j < 3; j++)
             {
                 if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))
@@ -201,47 +203,41 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
 
     if (Lattice_Change_Basic::largest_grad == 0.0)
     {
-        GlobalV::ofs_running << " largest stress is 0, no movement is possible." << std::endl;
-        GlobalV::ofs_running << " it may converged, otherwise no movement of lattice parameters is allowed."
-                             << std::endl;
+        GlobalV::ofs_running << " Largest stress is 0, movement is impossible." << std::endl;
         Lattice_Change_Basic::converged = true;
     }
     else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
-        // if(Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr)
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
-            GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
+            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
+             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << " kbar)" << std::endl;
+            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+                                 << " kbar" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }
     else
     {
-        /*for(int i=0; i<9; i++)
-        {
-            std::cout<<"i= "<<i<<" "<<grad[i]<<std::endl;
-        }*/
+        // the code is almost the same as previous codes
         if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
-            GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
+            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
+             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
-            GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << " kbar)" << std::endl;
+            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+                                 << " kbar" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }

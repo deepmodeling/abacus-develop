@@ -7,12 +7,12 @@
 #include "deepks_orbpre.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 // calculates orbital_precalc[nks,NAt,NDscrpt] = gevdm * orbital_pdm;
 // orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;

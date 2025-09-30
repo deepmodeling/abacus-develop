@@ -455,7 +455,7 @@ void SpillageStep::init_QS_matrix( const int &istr)
                     else// if use 'average orbitals'
                     {
                         const int nofm = 2*L+1; // number of m
-                        complex<double> avalue = complex<double>(0.0, 0.0);
+                        std::complex<double> avalue = std::complex<double>(0.0, 0.0);
 
                         for (int m=0; m< nofm; m++)
                         {
@@ -513,7 +513,7 @@ void SpillageStep::init_QS_matrix( const int &istr)
                             // case 2
                             else
                             {
-                                complex<double> avalue = complex<double>(0.0, 0.0);
+                                std::complex<double> avalue = std::complex<double>(0.0, 0.0);
                                 // case 21
                                 if ( wayd[iw].average && wayd[iw2].average)
                                 {
@@ -661,7 +661,9 @@ double SpillageStep::get_spillage(
 	//omp_set_num_threads(8);		// Peize Lin test
 	//#endif
 
+    #ifdef _OPENMP
 	#pragma omp parallel for			// Peize Lin add 2016-01-18	
+    #endif
     for (int ik = 0; ik < Stru->nks ; ik++)
     {		
         //	cout << "ik=" << ik << endl;
@@ -902,7 +904,7 @@ void SpillageStep::newQ( const int &istr, const int &ic, const int &ie, const in
                 const int L = wayd[iw].L;
                 for (int ib = 0; ib < this->data[istr].nbands; ib++)
                 {
-                    complex<double> avalue = complex<double>(0.0, 0.0);
+                    std::complex<double> avalue = std::complex<double>(0.0, 0.0);
                     for (int m=0; m<2*L+1; m++)
                     {
                         avalue += this->data[istr].Qin(ik, ib, jw+m, ie);
@@ -999,7 +1001,7 @@ void SpillageStep::newS(
                         else // case 2
                         {
                             const int L2 = this->wayd[iw2].L;
-                            complex<double> avalue = complex<double>(0.0, 0.0);
+                            std::complex<double> avalue = std::complex<double>(0.0, 0.0);
                             // case 2.1
                             if ( wayd[iw].average && !wayd[iw2].average)
                             {
@@ -1061,7 +1063,7 @@ void SpillageStep::newS(
                         else // case 2
                         {
                             const int L2 = this->wayd[iw2].L;
-                            complex<double> avalue = complex<double>(0.0, 0.0);
+                            std::complex<double> avalue = std::complex<double>(0.0, 0.0);
                             // case 2.1
                             if ( wayd[iw].average && !wayd[iw2].average)
                             {

@@ -11,7 +11,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
 #include "source_base/spherical_bessel_transformer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 using ModuleBase::PI;
 
@@ -274,15 +274,14 @@ void NumericalRadial::set_uniform_grid(const bool for_r_space,
                                        const char mode,
                                        const bool enable_fft)
 {
-    double* grid = new double[ngrid];
+    std::vector<double> grid(ngrid);
     double dx = cutoff / (ngrid - 1);
     for (int i = 0; i != ngrid; ++i)
     {
         grid[i] = i * dx;
     }
 
-    set_grid(for_r_space, ngrid, grid, mode);
-    delete[] grid;
+    set_grid(for_r_space, ngrid, grid.data(), mode);
 
     if (enable_fft)
     {
@@ -362,7 +361,7 @@ void NumericalRadial::radtab(const char op,
 
     double* rgrid_tab = new double[nr_tab];
     double dr = rmax_tab / (nr_tab - 1);
-    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (&r - rgrid_tab); });
+    std::for_each(rgrid_tab, rgrid_tab + nr_tab, [dr,&rgrid_tab](double& r) { r = dr * (int)(&r - rgrid_tab); });
 
     bool use_radrfft = is_fft_compliant(nr_tab, rgrid_tab, nk_, kgrid_);
 

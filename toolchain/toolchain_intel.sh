@@ -29,8 +29,8 @@
 --with-rapidjson=install \
 --with-libtorch=no \
 --with-libnpy=no \
---with-libri=no \
---with-libcomm=no \
+--with-libri=install \
+--with-libcomm=install \
 --with-intel-classic=no \
 | tee compile.log
 # for using AMD-CPU or GPU-version: set --with-intel-classic=yes

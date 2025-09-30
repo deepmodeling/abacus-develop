@@ -1,5 +1,5 @@
 #include "psi_initializer_atomic.h"
-#include "source_pw/hamilt_pwdft/soc.h"
+#include "source_pw/module_pwdft/soc.h"
 // numerical algorithm support
 #include "source_base/math_integral.h" // for numerical integration
 #include "source_base/math_polyint.h" // for polynomial interpolation
@@ -10,7 +10,7 @@
 #include "source_base/timer.h"
 // global variables definition
 #include "source_base/global_variable.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 // io support
 #include "source_io/write_pao.h"
 

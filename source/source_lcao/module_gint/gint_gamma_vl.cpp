@@ -4,12 +4,11 @@
 #include "gint_gamma.h"
 #include "gint_tools.h"
 #include "grid_technique.h"
-#include "source_base/blas_connector.h"
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 #ifdef _OPENMP
 #include <omp.h>

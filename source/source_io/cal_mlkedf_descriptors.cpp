@@ -469,7 +469,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
                 {
                     double fact
                         = pw_psi->getgpluskcar(ik, ig)[j] * ucell.tpiba;
-                    wfcr[ig] = psi->operator()(ibnd, ig) * complex<double>(0.0, fact);
+                    wfcr[ig] = psi->operator()(ibnd, ig) * std::complex<double>(0.0, fact);
                 }
 
                 pw_psi->recip2real(wfcr, wfcr, ik);

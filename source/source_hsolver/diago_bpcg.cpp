@@ -1,7 +1,6 @@
 #include "source_hsolver/diago_bpcg.h"
 
 #include "diago_iter_assist.h"
-#include "source_base/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds
@@ -210,7 +209,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
     // gemm: hsub_out(n_band x n_band) = hpsi_in^T(n_band x n_basis) * psi_in(n_basis x n_band)
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
 
-    ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
+    ct::kernels::lapack_heevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 
     return;
 }

@@ -10,7 +10,7 @@
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace KVectorUtils
 {
@@ -486,15 +486,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           ucell.atoms,
                           false,
                           nullptr);
-        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x,
-                                         recip_vec1.y,
-                                         recip_vec1.z,
-                                         recip_vec2.x,
-                                         recip_vec2.y,
-                                         recip_vec2.z,
-                                         recip_vec3.x,
-                                         recip_vec3.y,
-                                         recip_vec3.z);
+        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
+                                         recip_vec2.x, recip_vec2.y, recip_vec2.z,
+                                         recip_vec3.x, recip_vec3.y, recip_vec3.z);
         // set the crystal point-group symmetry operation
         symm.setgroup(bsymop, bnop, recip_brav_type);
         // transform the above symmetric operation matrices between different coordinate
@@ -610,8 +604,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
         }
         return;
     };
-    // for output in kpoints file
-    int ibz_index[kv.get_nkstot()];
+    // update map k -> irreducible k
+    kv.ibz_index.assign( kv.get_nkstot_full(), -1); // -1 means not in ibz_kpoint list
     // search in all k-poins.
     for (int i = 0; i < kv.get_nkstot(); ++i)
     {
@@ -673,7 +667,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             // nkstot_ibz indicate the index of ibz kpoint.
             kvec_d_ibz[nkstot_ibz] = kv.kvec_d[i];
             // output in kpoints file
-            ibz_index[i] = nkstot_ibz;
+            kv.ibz_index[i] = nkstot_ibz;
 
             // the weight should be averged k-point weight.
             wk_ibz[nkstot_ibz] = weight;
@@ -694,7 +688,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             double kmol_new = kv.kvec_d[i].norm2();
             double kmol_old = kvec_d_ibz[exist_number].norm2();
 
-            ibz_index[i] = exist_number;
+            kv.ibz_index[i] = exist_number;
 
             //			std::cout << "\n kmol_new = " << kmol_new;
             //			std::cout << "\n kmol_old = " << kmol_old;
@@ -771,10 +765,10 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                                  kv.kvec_d[i].x,
                                  kv.kvec_d[i].y,
                                  kv.kvec_d[i].z,
-                                 ibz_index[i] + 1,
-                                 kvec_d_ibz[ibz_index[i]].x,
-                                 kvec_d_ibz[ibz_index[i]].y,
-                                 kvec_d_ibz[ibz_index[i]].z);
+                                 kv.ibz_index[i] + 1,
+                                 kvec_d_ibz[kv.ibz_index[i]].x,
+                                 kvec_d_ibz[kv.ibz_index[i]].y,
+                                 kvec_d_ibz[kv.ibz_index[i]].z);
     }
     ss << table << std::endl;
     skpt = ss.str();

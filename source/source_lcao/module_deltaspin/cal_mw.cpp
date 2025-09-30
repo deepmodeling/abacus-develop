@@ -2,16 +2,15 @@
 
 #include "source_base/matrix.h"
 #include "source_base/name_angular.h"
-#include "source_base/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_projector.h"
 #include "spin_constrain.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_operator_lcao/dspin_lcao.h"
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)

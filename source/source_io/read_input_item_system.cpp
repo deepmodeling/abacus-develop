@@ -62,7 +62,7 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("calculation");
-        item.annotation = "test; scf; relax; nscf; get_wf; get_pchg";
+        item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
@@ -73,13 +73,14 @@ void ReadInput::item_system()
                                                 "relax",
                                                 "md",
                                                 "cell-relax",
-                                                "test_memory",
-                                                "test_neighbour",
                                                 "nscf",
                                                 "get_s",
                                                 "get_wf",
                                                 "get_pchg",
-                                                "gen_bessel"};
+                                                "gen_bessel",
+                                                "gen_opt_abfs",
+                                                "test_memory",
+                                                "test_neighbour"};
             if (std::find(callist.begin(), callist.end(), calculation) == callist.end())
             {
                 const std::string warningstr = nofound_str(callist, "calculation");
@@ -107,10 +108,10 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("esolver_type");
-        item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, ks-lr, lr";
+        item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -157,6 +158,10 @@ void ReadInput::item_system()
             if (para.input.efield_flag)
             {
                 para.input.symmetry = "0";
+            }
+            if (para.input.esolver_type == "tddft")
+            {
+                para.input.symmetry = "-1";
             }
             if (para.input.qo_switch)
             {
@@ -691,12 +696,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("wannier_card");
-        item.annotation = "input card for wannier functions";
-        read_sync_string(input.wannier_card);
-        this->add_item(item);
-    }
-    {
         Input_Item item("mem_saver");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
@@ -829,6 +828,12 @@ void ReadInput::item_system()
 #endif
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("timer_enable_nvtx");
+        item.annotation = "enable NVTX labeling for profiling or not";
+        read_sync_bool(input.timer_enable_nvtx);
         this->add_item(item);
     }
 }

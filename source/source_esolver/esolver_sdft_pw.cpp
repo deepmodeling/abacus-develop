@@ -3,12 +3,12 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_pw/hamilt_stodft/sto_dos.h"
-#include "source_pw/hamilt_stodft/sto_elecond.h"
-#include "source_pw/hamilt_stodft/sto_forces.h"
-#include "source_pw/hamilt_stodft/sto_stress_pw.h"
+#include "source_pw/module_stodft/sto_dos.h"
+#include "source_pw/module_stodft/sto_elecond.h"
+#include "source_pw/module_stodft/sto_forces.h"
+#include "source_pw/module_stodft/sto_stress_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <fstream>
@@ -72,7 +72,7 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input
                                   true);
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
-    if (PARAM.inp.nbands > 0)
+    if (inp.nbands > 0)
     {
         this->stowf.chiortho
             = new psi::Psi<T, Device>(this->kv.get_nks(), 

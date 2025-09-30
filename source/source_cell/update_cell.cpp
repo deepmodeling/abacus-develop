@@ -1,8 +1,10 @@
 #include "update_cell.h"
 #include "bcast_cell.h"
 #include "source_base/global_function.h"
+
 namespace unitcell
 {
+
 void remake_cell(Lattice& lat)
 {
     ModuleBase::TITLE("Lattice", "rmake_cell");
@@ -13,18 +15,20 @@ void remake_cell(Lattice& lat)
     std::string& latName = lat.latName;
     ModuleBase::Matrix3&  latvec = lat.latvec;
 
-    if (latName == "none") {
-        ModuleBase::WARNING_QUIT("UnitCell",
-            "to use fixed_ibrav, latname must be provided");
-    } else if (latName == "sc") // ibrav = 1
+    if (latName == "none") 
     {
+        ModuleBase::WARNING_QUIT("UnitCell", "to use fixed_ibrav, latname must be provided");
+	} 
+	else if (latName == "sc") // ibrav = 1
+	{
         double celldm = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                   + pow(latvec.e13, 2));
 
         latvec.Zero();
         latvec.e11 = latvec.e22 = latvec.e33 = celldm;
-    } else if (latName == "fcc") // ibrav = 2
-    {
+	} 
+	else if (latName == "fcc") // ibrav = 2
+	{
         double celldm = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                 + pow(latvec.e13, 2)) / std::sqrt(2.0);
 
@@ -37,8 +41,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = -celldm;
         latvec.e32 = celldm;
         latvec.e33 = 0.0;
-    } else if (latName == "bcc") // ibrav = 3
-    {
+	} 
+	else if (latName == "bcc") // ibrav = 3
+	{
         double celldm = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                   + pow(latvec.e13, 2))
                         / std::sqrt(3.0);
@@ -52,9 +57,10 @@ void remake_cell(Lattice& lat)
         latvec.e31 = -celldm;
         latvec.e32 = -celldm;
         latvec.e33 = celldm;
-    } else if (latName == "hexagonal") // ibrav = 4
-    {
-        double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
+	} 
+	else if (latName == "hexagonal") // ibrav = 4
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm3 = std::sqrt(pow(latvec.e31, 2) + pow(latvec.e32, 2)
                                    + pow(latvec.e33, 2));
@@ -69,9 +75,10 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "trigonal") // ibrav = 5
-    {
-        double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
+	} 
+	else if (latName == "trigonal") // ibrav = 5
+	{
+		double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm2 = std::sqrt(pow(latvec.e21, 2) + pow(latvec.e22, 2)
                                    + pow(latvec.e23, 2));
@@ -79,9 +86,10 @@ void remake_cell(Lattice& lat)
                            + latvec.e13 * latvec.e23);
         double cos12 = celldm12 / celldm1 / celldm2;
 
-        if (cos12 <= -0.5 || cos12 >= 1.0) {
-            ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
-        }
+		if (cos12 <= -0.5 || cos12 >= 1.0) 
+		{
+			ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
+		}
         double t1 = sqrt(1.0 + 2.0 * cos12);
         double t2 = sqrt(1.0 - cos12);
 
@@ -99,8 +107,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = -e11;
         latvec.e32 = e12;
         latvec.e33 = e13;
-    } else if (latName == "st") // ibrav = 6
-    {
+	} 
+	else if (latName == "st") // ibrav = 6
+	{
         double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm3 = std::sqrt(pow(latvec.e31, 2) + pow(latvec.e32, 2)
@@ -114,8 +123,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "bct") // ibrav = 7
-    {
+	} 
+	else if (latName == "bct") // ibrav = 7
+	{
         double celldm1 = std::abs(latvec.e11);
         double celldm2 = std::abs(latvec.e13);
 
@@ -128,8 +138,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = -celldm1;
         latvec.e32 = -celldm1;
         latvec.e33 = celldm2;
-    } else if (latName == "so") // ibrav = 8
-    {
+	} 
+	else if (latName == "so") // ibrav = 8
+	{
         double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm2 = std::sqrt(pow(latvec.e21, 2) + pow(latvec.e22, 2)
@@ -146,8 +157,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "baco") // ibrav = 9
-    {
+	} 
+	else if (latName == "baco") // ibrav = 9
+	{
         double celldm1 = std::abs(latvec.e11);
         double celldm2 = std::abs(latvec.e22);
         double celldm3 = std::abs(latvec.e33);
@@ -161,8 +173,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "fco") // ibrav = 10
-    {
+	} 
+	else if (latName == "fco") // ibrav = 10
+	{
         double celldm1 = std::abs(latvec.e11);
         double celldm2 = std::abs(latvec.e22);
         double celldm3 = std::abs(latvec.e33);
@@ -176,8 +189,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = celldm2;
         latvec.e33 = celldm3;
-    } else if (latName == "bco") // ibrav = 11
-    {
+	} 
+	else if (latName == "bco") // ibrav = 11
+	{
         double celldm1 = std::abs(latvec.e11);
         double celldm2 = std::abs(latvec.e12);
         double celldm3 = std::abs(latvec.e13);
@@ -191,8 +205,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = -celldm1;
         latvec.e32 = -celldm2;
         latvec.e33 = celldm3;
-    } else if (latName == "sm") // ibrav = 12
-    {
+	} 
+	else if (latName == "sm") // ibrav = 12
+	{
         double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm2 = std::sqrt(pow(latvec.e21, 2) + pow(latvec.e22, 2)
@@ -215,16 +230,18 @@ void remake_cell(Lattice& lat)
         latvec.e31 = 0.0;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "bacm") // ibrav = 13
-    {
+	} 
+	else if (latName == "bacm") // ibrav = 13
+	{
         double celldm1 = std::abs(latvec.e11);
         double celldm2 = std::sqrt(pow(latvec.e21, 2) + pow(latvec.e22, 2)
                                    + pow(latvec.e23, 2));
         double celldm3 = std::abs(latvec.e13);
 
         double cos12 = latvec.e21 / celldm2;
-        if (cos12 >= 1.0) {
-            ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
+		if (cos12 >= 1.0) 
+		{
+			ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
         }
 
         double e21 = celldm2 * cos12;
@@ -239,8 +256,9 @@ void remake_cell(Lattice& lat)
         latvec.e31 = celldm1;
         latvec.e32 = 0.0;
         latvec.e33 = celldm3;
-    } else if (latName == "triclinic") // ibrav = 14
-    {
+	} 
+	else if (latName == "triclinic") // ibrav = 14
+	{
         double celldm1 = std::sqrt(pow(latvec.e11, 2) + pow(latvec.e12, 2)
                                    + pow(latvec.e13, 2));
         double celldm2 = std::sqrt(pow(latvec.e21, 2) + pow(latvec.e22, 2)
@@ -258,8 +276,9 @@ void remake_cell(Lattice& lat)
         double cos23 = celldm23 / celldm2 / celldm3;
 
         double sin12 = std::sqrt(1.0 - cos12 * cos12);
-        if (cos12 >= 1.0) {
-            ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
+		if (cos12 >= 1.0) 
+		{
+			ModuleBase::WARNING_QUIT("unitcell", "wrong cos12!");
         }
 
         latvec.e11 = celldm1;
@@ -278,15 +297,16 @@ void remake_cell(Lattice& lat)
     else 
     {
         std::cout << "latname is : " << latName << std::endl;
-        ModuleBase::WARNING_QUIT("UnitCell::remake_cell",
-                                 "latname not supported!");
+        ModuleBase::WARNING_QUIT("unitcell::remake_cell",
+                                 "latname type not supported!");
     }
 }
 
 // LiuXh add a new function here,
 // 20180515
-void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
-    ModuleBase::TITLE("UnitCell", "setup_cell_after_vc");
+void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) 
+{
+    ModuleBase::TITLE("unitcell", "setup_cell_after_vc");
     assert(ucell.lat0 > 0.0);
     ucell.omega = std::abs(ucell.latvec.Det()) * 
                            pow(ucell.lat0, 3);
@@ -325,9 +345,11 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
     ucell.GGT = ucell.G * ucell.GT;
     ucell.invGGT = ucell.GGT.Inverse();
 
-    for (int it = 0; it < ucell.ntype; it++) {
-        Atom* atom = &ucell.atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
+	for (int it = 0; it < ucell.ntype; it++) 
+	{
+		Atom* atom = &ucell.atoms[it];
+		for (int ia = 0; ia < atom->na; ia++) 
+		{
             atom->tau[ia] = atom->taud[ia] * ucell.latvec;
         }
     }
@@ -354,10 +376,13 @@ void update_pos_tau(const Lattice& lat,
                     Atom* atoms) 
 {
     int iat = 0;
-    for (int it = 0; it < ntype; it++) {
-        Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
+	for (int it = 0; it < ntype; it++) 
+	{
+		Atom* atom = &atoms[it];
+		for (int ia = 0; ia < atom->na; ia++) 
+		{
+			for (int ik = 0; ik < 3; ++ik) 
+			{
                 if (atom->mbl[ia][ik]) 
                 {
                     atom->dis[ia][ik] = pos[3 * iat + ik] / lat.lat0 - atom->tau[ia][ik];
@@ -454,9 +479,11 @@ void periodic_boundary_adjustment(Atom* atoms,
     // first adjust direct coordinates,
     // then update them into cartesian coordinates,
     //----------------------------------------------
-    for (int it = 0; it < ntype; it++) {
-        Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
+	for (int it = 0; it < ntype; it++) 
+	{
+		Atom* atom = &atoms[it];
+		for (int ia = 0; ia < atom->na; ia++) 
+		{
             // mohan update 2011-03-21
             for (int ik = 0; ik < 3; ik++) 
             {
@@ -476,12 +503,12 @@ void periodic_boundary_adjustment(Atom* atoms,
                 || atom->taud[ia].y >= 1.0 
                 || atom->taud[ia].z >= 1.0) 
             {
-                GlobalV::ofs_warning << " it=" << it + 1 << " ia=" << ia + 1 << std::endl;
-                GlobalV::ofs_warning << "d=" << atom->taud[ia].x << " "
+                GlobalV::ofs_warning << " atom type=" << it + 1 << " atom index=" << ia + 1 << std::endl;
+                GlobalV::ofs_warning << " direct coordinate=" << atom->taud[ia].x << " "
                                      << atom->taud[ia].y << " "
                                      << atom->taud[ia].z << std::endl;
-                ModuleBase::WARNING_QUIT("Ions_Move_Basic::move_ions",
-                    "the movement of atom is larger than the length of cell.");
+                ModuleBase::WARNING_QUIT("unitcell::periodic_boundary_adjustment",
+                    "Movement of atom is larger than the cell length");
             }
 
             atom->tau[ia] = atom->taud[ia] * latvec;

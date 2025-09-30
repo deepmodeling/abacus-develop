@@ -46,6 +46,7 @@ HContainer<T>::HContainer(HContainer<T>&& HR_in) noexcept
     this->wrapper_pointer = HR_in.wrapper_pointer;
     this->gamma_only = HR_in.gamma_only;
     this->paraV = HR_in.paraV;
+    this->allocated = HR_in.allocated;
     this->current_R = -1;
     HR_in.wrapper_pointer = nullptr;
     // tmp terms not moved
@@ -63,6 +64,7 @@ HContainer<T>& HContainer<T>::operator=(HContainer<T>&& HR_in) noexcept
         this->wrapper_pointer = HR_in.wrapper_pointer;
         this->gamma_only = HR_in.gamma_only;
         this->paraV = HR_in.paraV;
+        this->allocated = HR_in.allocated;
         this->current_R = -1;
 
         HR_in.wrapper_pointer = nullptr;
@@ -855,7 +857,7 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& uc
     }
 }
 
-// T of HContainer can be double or complex<double>
+// T of HContainer can be double or std::complex<double>
 template class HContainer<double>;
 template class HContainer<std::complex<double>>;
 

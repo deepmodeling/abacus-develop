@@ -1,11 +1,11 @@
 #include"source_hsolver/diago_david.h"
 #include"source_hsolver/diago_iter_assist.h"
-#include"source_pw/hamilt_pwdft/hamilt_pw.h"
+#include"source_pw/module_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "source_psi/psi.h"
 #include"gtest/gtest.h"
 #include "source_base/inverse_matrix.h"
-#include "source_base/lapack_connector.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #include"mpi.h"
 

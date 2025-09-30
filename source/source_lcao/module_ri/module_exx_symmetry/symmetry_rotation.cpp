@@ -1,14 +1,14 @@
 #include "symmetry_rotation.h"
 #include "source_base/constants.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include <cmath>
 #include "source_base/parallel_reduce.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"
 
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 
 namespace ModuleSymmetry
 {
@@ -16,9 +16,7 @@ namespace ModuleSymmetry
     {
         this->reduce_Cs_ = true;
         this->abfs_l_nchi_ = abfs_l_nchi;
-        this->abfs_Lmax_ = 0;
-        for (auto& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1);
-}
+        for (auto& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1); }
     }
     void Symmetry_rotation::cal_Ms(const K_Vectors& kv,
         //const std::vector<std::map<int, TCdouble>>& kstars,
@@ -36,9 +34,8 @@ namespace ModuleSymmetry
         }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         std::vector<ModuleBase::Matrix3> gmatc(nsym_);
-        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
-}
-        this->cal_rotmat_Slm(gmatc.data(), reduce_Cs_ ? std::max(this->abfs_Lmax_, ucell.lmax) : ucell.lmax);
+        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec); }
+        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax));
 
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
@@ -47,12 +44,9 @@ namespace ModuleSymmetry
                 kvec_res.x = fmod(kvec.x + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.y = fmod(kvec.y + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.z = fmod(kvec.z + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
-                if (std::abs(kvec_res.x) < symm_prec) { kvec_res.x = 0.0;
-}
-                if (std::abs(kvec_res.y) < symm_prec) { kvec_res.y = 0.0;
-}
-                if (std::abs(kvec_res.z) < symm_prec) { kvec_res.z = 0.0;
-}
+                if (std::abs(kvec_res.x) < symm_prec) { kvec_res.x = 0.0; }
+                if (std::abs(kvec_res.y) < symm_prec) { kvec_res.y = 0.0; }
+                if (std::abs(kvec_res.z) < symm_prec) { kvec_res.z = 0.0; }
                 return kvec_res;
             };
         int nks_ibz = kv.kstars.size(); // kv.nks = 2 * kv.nks_ibz when nspin=2

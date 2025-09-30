@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/inverse_matrix.h"
-#include "source_base/lapack_connector.h"
-#include "source_pw/hamilt_pwdft/structure_factor.h"
+#include "source_base/module_external/lapack_connector.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_psi/psi.h"
 #include "source_hamilt/hamilt.h"
-#include "source_pw/hamilt_pwdft/hamilt_pw.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
 #include "../diago_cg.h"
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"

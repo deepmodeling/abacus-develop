@@ -9,8 +9,8 @@ remove_definitions(-D__MLALGO)
 add_library(
     planewave_serial
     OBJECT
-    ../module_fft/fft_bundle.cpp
-    ../module_fft/fft_cpu.cpp
+    ../../../source_base/module_fft/fft_bundle.cpp
+    ../../../source_base/module_fft/fft_cpu.cpp
     ../pw_basis.cpp
     ../pw_basis_k.cpp
     ../pw_basis_sup.cpp

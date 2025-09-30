@@ -4,7 +4,7 @@
 #include <string>
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/record_adj.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 namespace elecstate
@@ -180,6 +180,13 @@ class DensityMatrix
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
     void cal_DMR(const int ik_in = -1);
+
+    /**
+     * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
+     * if ik_in < 0, calculate all k-points
+     * if ik_in >= 0, calculate only one k-point without summing over k-points
+     */
+    void cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in = -1);
 
     /**
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation

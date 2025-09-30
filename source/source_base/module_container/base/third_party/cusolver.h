@@ -87,50 +87,62 @@ static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, float * A, const int& lda)
 {
     int lwork;
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
     cusolverErrcheck(cusolverDnSpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     float* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(float)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnSpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnSpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, double * A, const int& lda)
 {
     int lwork;
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
     cusolverErrcheck(cusolverDnDpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     double* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(double)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnDpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnDpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<float> * A, const int& lda)
 {
     int lwork;
-    cusolverErrcheck(cusolverDnCpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, &lwork));
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
+    cusolverErrcheck(cusolverDnCpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
     cuComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuComplex)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnCpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnCpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), lda, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 static inline
 void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n, std::complex<double> * A, const int& lda)
 {
     int lwork;
-    cusolverErrcheck(cusolverDnZpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, &lwork));
+    int *info = nullptr;
+    cudaErrcheck(cudaMalloc((void**)&info, 1 * sizeof(int)));
+    cusolverErrcheck(cusolverDnZpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), lda, &lwork));
     cuDoubleComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuDoubleComplex)));
     // Perform Cholesky decomposition
-    cusolverErrcheck(cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, work, lwork, nullptr));
+    cusolverErrcheck(cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), lda, work, lwork, info));
     cudaErrcheck(cudaFree(work));
+    cudaErrcheck(cudaFree(info));
 }
 
 
 static inline
-void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
+void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
 {
     // prepare some values for cusolverDnSsyevd_bufferSize
     int lwork  = 0; 
@@ -150,13 +162,13 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
+void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
 {
     // prepare some values for cusolverDnDsyevd_bufferSize
     int lwork  = 0; 
@@ -176,13 +188,13 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
+void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
 {
     // prepare some values for cusolverDnCheevd_bufferSize
     int lwork  = 0; 
@@ -202,13 +214,13 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
+void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
 {
     // prepare some values for cusolverDnZheevd_bufferSize
     int lwork  = 0; 
@@ -228,14 +240,14 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 
 static inline
-void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
+void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
 {
     // prepare some values for cusolverDnSsygvd_bufferSize
     int lwork  = 0; 
@@ -255,13 +267,13 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
+void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
 {
     // prepare some values for cusolverDnDsygvd_bufferSize
     int lwork  = 0; 
@@ -281,13 +293,13 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
+void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
 {
     // prepare some values for cusolverDnChegvd_bufferSize
     int lwork  = 0; 
@@ -307,13 +319,13 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));
 }
 static inline
-void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
+void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
 {
     // prepare some values for cusolverDnZhegvd_bufferSize
     int lwork  = 0; 
@@ -333,7 +345,7 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
-        throw std::runtime_error("dnevd: failed to invert matrix");
+        throw std::runtime_error("heevd: failed to invert matrix");
     }
     cudaErrcheck(cudaFree(d_info));
     cudaErrcheck(cudaFree(d_work));

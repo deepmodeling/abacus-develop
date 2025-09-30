@@ -1,12 +1,11 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/module_ri/exx_opt_orb.h"
-#include "source_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#include "source_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
@@ -140,7 +139,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
         this->symrot_.find_irreducible_sector(
             ucell.symm, ucell.atoms, ucell.st,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-        // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+        this->symrot_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
         this->symrot_.cal_Ms(kv, ucell, pv);
     }
 }
@@ -181,15 +180,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
-    }
-
-    if (Exx_Abfs::Jle::generate_matrix)
-    {
-        //program should be stopped after this judgement
-        Exx_Opt_Orb exx_opt_orb;
-        exx_opt_orb.generate_matrix(kv, ucell,orb);
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
-        return;
     }
 
     // set initial parameter for mix_DMk_2D

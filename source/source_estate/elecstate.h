@@ -4,7 +4,7 @@
 #include "fp_energy.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_charge/charge.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 #include "module_pot/potential_new.h"
 
@@ -51,8 +51,6 @@ class ElecState
     {
         return;
     }
-    // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
-    // virtual void updateRhoK(const psi::Psi<double> &psi)=0
     virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
     {
         return;
@@ -77,12 +75,9 @@ class ElecState
         return;
     }
 
-
-
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
     
-
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();

@@ -1,6 +1,6 @@
 #include "numerical_basis.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
 #include "source_base/intarray.h"
@@ -9,9 +9,8 @@
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_io/numerical_basis_jyjy.h"
-#include "winput.h"
 
 #include <algorithm>
 #include <cstring>
@@ -82,13 +81,12 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi,
         this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
     }
-    ModuleBase::GlobalFunc::MAKE_DIR(winput::spillage_outdir);
+    ModuleBase::GlobalFunc::MAKE_DIR(PARAM.inp.spillage_outdir);
     for (int derivative_order = 0; derivative_order <= 1; ++derivative_order) // Peize Lin add 2020.04.23
     {
         std::ofstream ofs;
         std::stringstream ss;
-        // the parameter 'winput::spillage_outdir' is read from INPUTw.
-        ss << winput::spillage_outdir << "/";
+        ss << PARAM.inp.spillage_outdir << "/";
 
         if (PARAM.inp.bessel_nao_rcuts.size() > 1)
         {
@@ -134,7 +132,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi,
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_overlap_Q");
 
             // (2) generate Sq matrix if necessary.
-            if (winput::out_spillage == 2)
+            if (PARAM.inp.out_spillage == 2)
             {
 #ifndef __LCAO
                 // compute <jY|jY> in plane-wave basis
@@ -197,7 +195,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi,
             ModuleBase::WARNING_QUIT("Numerical_Basis", "Failed to write overlap Q to file.");
 }
         // because one stage of file io complete, re-check the file status.
-        if (winput::out_spillage == 2)
+        if (PARAM.inp.out_spillage == 2)
         {
             // caution: this is the largest matrix to be output, always flush
             if (ofs.good()) {

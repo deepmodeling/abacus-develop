@@ -1,19 +1,21 @@
 #include "charge_mixing.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
     ModuleBase::TITLE("Charge_Mixing", "get_drho");
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
     double drho = 0.0;
 
     if (PARAM.inp.scf_thr_type == 1)
     {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
             chr->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
@@ -23,15 +25,15 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
-        std::vector<std::complex<double>> drhog(PARAM.inp.nspin * this->rhopw->npw);
+        std::vector<std::complex<double>> drhog(nspin * this->rhopw->npw);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                drhog[is * rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
+                drhog[is * this->rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
             }
         }
 
@@ -42,7 +44,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     {
         // Note: Maybe it is wrong.
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < nspin; is++)
         {
             if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {
@@ -129,15 +131,13 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     auto part_of_noncolin = [&]()
     {
         double sum = 0.0;
+        const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-			if (this->rhopw->gg[ig] < 1e-8) 
-			{
-				continue;
-			}
+			if (ig == ig0) {continue;}
 			sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -152,14 +152,13 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 
     case 2: {
         // (1) First part of density error.
+        const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
-                continue;
-}
+            if (ig == ig0) {continue;}
             sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -203,19 +202,19 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         } else
         {
             // another part with magnetization
+            const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-				if (ig == this->rhopw->ig_gge0) 
+				if (ig == ig0) 
 				{
 					continue;
 				}
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
                 sum += fac2
@@ -298,14 +297,16 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     auto part_of_rho = [&]()
     {
         double sum = 0.0;
+        const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
+            if (ig == ig0) 
+            {
                 continue;
-}
+            }
             sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -319,14 +320,16 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     else if (PARAM.inp.nspin==2)
     {
         // charge density part
+        const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8) {
+            if (ig == ig0) 
+            {
                 continue;
-}
+            }
             sum += (conj(rhog1[ig]) * (rhog2[ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
@@ -369,18 +372,16 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         else if (this->mixing_angle <= 0)
         {
             // sum for tradtional mixing
+            const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0) {
-                    continue;
-}
+                if (ig == ig0) {continue;}
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
                 sum += fac2
@@ -408,18 +409,19 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         else if (this->mixing_angle > 0)
         {
             // sum for angle mixing
+            const int ig0 = this->rhopw->ig_gge0;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0) {
+                if (ig == ig0) 
+                {
                     continue;
-}
+                }
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
             if (ig0 > 0)
             {
                 sum += fac2

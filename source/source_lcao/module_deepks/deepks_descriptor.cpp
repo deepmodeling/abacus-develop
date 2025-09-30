@@ -8,12 +8,12 @@
 #include "deepks_descriptor.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
-#include "source_base/blas_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void DeePKS_domain::cal_descriptor_equiv(const int nat,
                                          const int des_per_atom,
@@ -65,7 +65,7 @@ void DeePKS_domain::cal_descriptor(const int nat,
         std::tuple<torch::Tensor, torch::Tensor> d_v(descriptor[inl], vd);
         // d_v = torch::symeig(pdm[inl], /*eigenvalues=*/true,
         // /*upper=*/true);
-        d_v = torch::linalg::eigh(pdm[inl], /*uplo*/ "U");
+        d_v = torch::linalg_eigh(pdm[inl], /*uplo*/ "U");
         descriptor[inl] = std::get<0>(d_v);
     }
     ModuleBase::timer::tick("DeePKS_domain", "cal_descriptor");

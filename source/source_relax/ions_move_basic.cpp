@@ -1,6 +1,6 @@
 #include "ions_move_basic.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_cell/update_cell.h"
@@ -147,12 +147,12 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     if (PARAM.inp.out_level == "ie")
     {
         std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
-        std::cout << " LARGEST GRAD (eV/A)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
                   << std::endl;
 
-        GlobalV::ofs_running << "\n Largest gradient in force is " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
-                             << " eV/A." << std::endl;
-        GlobalV::ofs_running << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A." << std::endl;
+        GlobalV::ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
+                             << " eV/Angstrom while threshold is " 
+                             << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     }
 
     const double etot_diff = std::abs(Ions_Move_Basic::ediff);

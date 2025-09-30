@@ -1,13 +1,13 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #endif
 #include "grid_technique.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/memory.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_pw/module_pwdft/global.h"
 #include "source_hsolver/kernels/cuda/helper_cuda.h"
 
 #include "source_lcao/module_gint/temp_gint/gint_helper.h"

@@ -1,9 +1,9 @@
 #ifndef DIPOLE_IO_H
 #define DIPOLE_IO_H
 
-#include <string>
-
 #include "source_basis/module_pw/pw_basis.h"
+
+#include <string>
 
 namespace ModuleIO
 {
@@ -13,10 +13,9 @@ void write_dipole(const UnitCell& ucell,
                   const int& is,
                   const int& istep,
                   const std::string& fn,
-                  const int& precision = 11,
-                  const bool for_plot = false);
+                  const int& precision = 11);
 
-double prepare(const UnitCell &cell, int &dir);
+double prepare(const UnitCell& cell, int& dir);
 
 } // namespace ModuleIO
 

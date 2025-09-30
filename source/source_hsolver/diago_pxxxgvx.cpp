@@ -1,7 +1,7 @@
 #include "diago_pxxxgvx.h"
 
-#include "source_base/blacs_connector.h"
-#include "source_base/scalapack_connector.h"
+#include "source_base/module_external/blacs_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
 
 #include <complex>
 #include <cstring>
@@ -480,7 +480,7 @@ void pxxxgvx_diag(const int* const desc,
     Cblacs_gridinfo(desc[1], &nprow, &npcol, &myprow, &mypcol);
     int dsize = nprow * npcol;
 
-    int degeneracy_max = 12; // only used for complex<float> and complex<double>
+    int degeneracy_max = 12; // only used for complex<float> and std::complex<double>
     while (true)
     {
         std::vector<T> h_tmp(ncol * nrow, 0);
@@ -507,7 +507,7 @@ void pxxxgvx_diag(const int* const desc,
         const typename GetTypeReal<T>::type vl = 0;
         const typename GetTypeReal<T>::type vu = 0;
         std::vector<T> work(1, 0);
-        std::vector<typename GetTypeReal<T>::type> rwork(3, 0); // only used for complex<float> and complex<double>
+        std::vector<typename GetTypeReal<T>::type> rwork(3, 0); // only used for complex<float> and std::complex<double>
         std::vector<int> iwork(1, 0);
         std::vector<int> ifail(ndim_global, 0);
         std::vector<int> iclustr(2 * dsize);

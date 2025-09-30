@@ -1,6 +1,6 @@
 #include "charge_mixing.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 
 void Charge_Mixing::allocate_mixing_dmr(const int nnr)

@@ -3,8 +3,8 @@
 #include "source_base/memory.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_pw/hamilt_pwdft/global.h"
-#include "module_parameter/parameter.h"
+#include "source_pw/module_pwdft/global.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_ux.h"
 
 namespace ModuleESolver
@@ -220,7 +220,7 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
  * @brief Rotate and renormalize the direction |d>,
  * make it orthogonal to phi (<d|phi> = 0), and <d|d> = nelec
  */
-void ESolver_OF::adjust_direction()
+void ESolver_OF::adjust_direction(void)
 {
     // filter the high frequency term in direction if of_full_pw = false
     if (!PARAM.inp.of_full_pw)

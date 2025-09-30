@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #define private public
 #define protected public
@@ -310,6 +310,13 @@ TEST_F(Verlet_test, print_md)
 
     std::ifstream ifs("running_verlet.log");
     std::string output_str;
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    getline(ifs, output_str);
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,

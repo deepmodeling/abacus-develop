@@ -6,7 +6,7 @@
 #include "elecstate.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/kernels/elecstate_op.h"
-#include "source_pw/hamilt_pwdft/kernels/meta_op.h"
+#include "source_pw/module_pwdft/kernels/meta_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
 namespace elecstate

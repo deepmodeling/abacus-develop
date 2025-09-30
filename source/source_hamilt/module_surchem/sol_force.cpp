@@ -1,6 +1,6 @@
 #include "surchem.h"
 #include "source_base/timer.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
@@ -12,7 +12,7 @@ void surchem::force_cor_one(const UnitCell& cell,
     //delta phi multiply by the derivative of nuclear charge density with respect to the positions
     std::complex<double> *N = new std::complex<double>[rho_basis->npw];
     std::complex<double> *vloc_at = new std::complex<double>[rho_basis->npw];
-    std::complex<double> *delta_phi_g = new complex<double>[rho_basis->npw];
+    std::complex<double> *delta_phi_g = new std::complex<double>[rho_basis->npw];
     //ModuleBase::GlobalFunc::ZEROS(delta_phi_g, rho_basis->npw);
 
     rho_basis->real2recip(this->delta_phi, delta_phi_g);
@@ -21,27 +21,24 @@ void surchem::force_cor_one(const UnitCell& cell,
     // double Ael1 = 0;
     // ModuleBase::GlobalFunc::ZEROS(vg, ngmc);
     int iat = 0;
-
+    const int ig0 = rho_basis->ig_gge0; 
     for (int it = 0;it < cell.ntype;it++)
     {
         for (int ia = 0;ia < cell.atoms[it].na ; ia++)
         {
             for (int ig = 0; ig < rho_basis->npw; ig++)
             {   
-                complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
+                std::complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
                 //vloc for each atom
                 vloc_at[ig] = vloc(it, rho_basis->ig2igg[ig]) * phase;
-                if(rho_basis->ig_gge0 == ig)
+                if(ig==ig0)
                 {
                     N[ig] = cell.atoms[it].ncpp.zv / cell.omega;
+                    continue; // skip G=0
                 }
-                else
-                {
-                    const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /
-                               (cell.tpiba2 * rho_basis->gg[ig]);
-
-                    N[ig] = -vloc_at[ig] / fac;
-                }
+                const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /
+                            (cell.tpiba2 * rho_basis->gg[ig]);
+                N[ig] = -vloc_at[ig] / fac;
                 
                 //force for each atom
                 forcesol(iat, 0) += rho_basis->gcar[ig][0] * imag(conj(delta_phi_g[ig]) * N[ig]);
@@ -72,15 +69,15 @@ void surchem::force_cor_one(const UnitCell& cell,
 void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
 {
    
-    complex<double> *n_pseudo = new complex<double>[rho_basis->npw];
+    std::complex<double> *n_pseudo = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(n_pseudo,rho_basis->npw);
 
     // this->gauss_charge(cell, pwb, n_pseudo);
 
     double *Vcav_sum =  new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(Vcav_sum, rho_basis->nrxx);
-    std::complex<double> *Vcav_g = new complex<double>[rho_basis->npw];
-    std::complex<double> *Vel_g = new complex<double>[rho_basis->npw];
+    std::complex<double> *Vcav_g = new std::complex<double>[rho_basis->npw];
+    std::complex<double> *Vel_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(Vcav_g, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(Vel_g, rho_basis->npw);
     for(int is=0; is<PARAM.inp.nspin; is++)
@@ -110,7 +107,7 @@ void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_
                 // G^2
                 double gg = rho_basis->gg[ig];
                 gg = gg * cell.tpiba2;
-                complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
+                std::complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
 
                 n_pseudo[ig].real((this->GetAtom.atom_Z[cell.atoms[it].ncpp.psd] - cell.atoms[it].ncpp.zv)
                                   * phase.real() * exp(-0.5 * gg * (sigma_rc_k * sigma_rc_k)));

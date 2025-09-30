@@ -11,7 +11,7 @@
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 #include "source_estate/elecstate_tools.h"
 
@@ -380,6 +380,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
+        auto spsi_func = [hm](T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+            hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
+        };
+
         Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_ngk()
@@ -393,7 +397,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   PARAM.inp.nb2d);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf));
+            dav_subspace
+                .diag(hpsi_func, spsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf));
     }
     else if (this->method == "dav")
     {

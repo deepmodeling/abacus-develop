@@ -1,9 +1,9 @@
 #ifndef H_TDDFT_PW_H
 #define H_TDDFT_PW_H
 
-#include "source_io/input_conv.h"
-#include "module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
 #include "pot_base.h"
+#include "source_io/input_conv.h"
+#include "source_io/module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
 
 namespace elecstate
 {
@@ -40,22 +40,21 @@ class H_TDDFT_pw : public PotBase
     void cal_fixed_v(double* vl_pseudo) override;
 
     /**
-     * @brief compute force of electric field
+     * @brief Compute ionic force of electric field
      *
-     * @param[in] cell information of cell
-     * @param[out] fe force of electric field  F=qE
+     * @param[in] cell Information of cell
+     * @param[out] fe Force of electric field  F = qE
      */
     static void compute_force(const UnitCell& cell, ModuleBase::matrix& fe);
 
     // parameters
-    static int stype; // 0 : length gauge  1: velocity gauge
+    static int stype; // 0: length gauge; 1: velocity gauge; 2: hybrid gauge
 
     static std::vector<int> ttype;
-    //  0  Gauss type function.
-    //  1  trapezoid type function.
-    //  2  Trigonometric functions, sin^2.
-    //  3  heaviside function.
-    //  4  HHG function.
+    //  0: Gaussian type function.
+    //  1: Trapezoid type function.
+    //  2: Trigonometric functions, sin^2.
+    //  3: Heaviside step function.
 
     static int tstart;
     static int tend;
@@ -64,16 +63,18 @@ class H_TDDFT_pw : public PotBase
     static double dt_int;
     static int istep_int;
 
-    // space domain parameters
+    // Space domain parameters
 
     // length gauge
     static double lcut1;
     static double lcut2;
 
-    // velocity gauge, vector magnetic potential
+    // velocity gauge, vector potential
     static ModuleBase::Vector3<double> At;
+    static ModuleBase::Vector3<double> At_laststep;
+    static ModuleBase::Vector3<double> Et;
 
-    // time domain parameters
+    // Time domain parameters
 
     // Gauss
     static int gauss_count;
@@ -82,11 +83,11 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> gauss_sigma; // time(a.u.)
     static std::vector<double> gauss_t0;
     static std::vector<double> gauss_amp; // Ry/bohr
-    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
-    // must be even, thus would get odd number of points for simpson integral
+    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate enough
+    // must be even, thus would get odd number of points for Simpson integral
     static std::vector<int> gauss_ncut;
 
-    // trapezoid
+    // Trapezoid
     static int trape_count;
     static std::vector<double> trape_omega; // time(a.u.)^-1
     static std::vector<double> trape_phase;
@@ -94,7 +95,7 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> trape_t2;
     static std::vector<double> trape_t3;
     static std::vector<double> trape_amp; // Ry/bohr
-    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
+    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate enough
     static std::vector<int> trape_ncut;
 
     // Trigonometric
@@ -104,7 +105,7 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> trigo_phase1;
     static std::vector<double> trigo_phase2;
     static std::vector<double> trigo_amp; // Ry/bohr
-    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
+    // add for velocity gauge, recut dt into n pieces to make sure the integral is accurate enough
     static std::vector<int> trigo_ncut;
 
     // Heaviside
@@ -116,41 +117,31 @@ class H_TDDFT_pw : public PotBase
     static void update_At();
 
   private:
-    // internal time-step,
-    //-------hypothesis-------
-    // Vext will evolve by time, every time cal_fixed_v() is called, istep++
-    //------------------------
     static int istep;
     static bool is_initialized; // static flag variable, used to ensure initialization only once
 
     static double amp;
     static vector<double> global_vext_time;
 
-    static double bmod;
-    static double bvec[3];
-
     const UnitCell* ucell_ = nullptr;
 
     // Obtain the current MD step information, used for restart calculation
     void current_step_info(const std::string& file_dir, int& istep);
 
-    // potential of electric field in space domain : length gauge and velocity gauge
+    // Potential of electric field in space domain: for length gauge only
     void cal_v_space(std::vector<double>& vext_space, int direc);
     void cal_v_space_length(std::vector<double>& vext_space, int direc);
     double cal_v_space_length_potential(double i);
 
-    // potential of electric field in time domain : Gauss , trapezoid, trigonometric, heaviside,  HHG
+    // Potential of electric field in time domain: Gaussian, trapezoid, trigonometric, Heaviside
     static double cal_v_time(int t_type, const bool last);
     static double cal_v_time_Gauss(const bool last);
     static double cal_v_time_trapezoid(const bool last);
     static double cal_v_time_trigonometric(const bool last);
-    static double cal_v_time_heaviside();
-    // double cal_v_time_HHG();
+    static double cal_v_time_heaviside(const bool last);
 
-    // get ncut number for At integral
+    // Get ncut number for At integral
     static int check_ncut(int t_type);
-
-    void prepare(const ModuleBase::Matrix3& G, int& dir);
 };
 
 } // namespace elecstate

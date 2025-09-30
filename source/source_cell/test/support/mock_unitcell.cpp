@@ -1,6 +1,6 @@
 #include "source_cell/unitcell.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 /*
     README:
@@ -17,6 +17,10 @@ UnitCell::~UnitCell() {
         delete[] atoms;
     }
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 

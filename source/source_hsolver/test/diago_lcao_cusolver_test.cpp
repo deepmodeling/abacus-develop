@@ -1,7 +1,7 @@
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
 #define private public
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "mpi.h"
 #include "string.h"
@@ -14,6 +14,7 @@
 #ifdef __CUDA
 #include "source_hsolver/diago_cusolver.h"
 #endif
+#include "source_base/module_external/scalapack_connector.h"
 
 #define PASSTHRESHOLD 1e-10
 #define DETAILINFO false

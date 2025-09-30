@@ -18,7 +18,9 @@ add_executable(
     ../../../source_cell/read_pp_upf201.cpp
     ../../../source_cell/read_pp_vwr.cpp
     ../../../source_cell/read_pp_blps.cpp
-    ../../../source_pw/hamilt_pwdft/soc.cpp
+    ../../../source_cell/sep.cpp
+    ../../../source_cell/sep_cell.cpp
+    ../../../source_pw/module_pwdft/soc.cpp
     ../../../source_io/output.cpp
     ../../../source_io/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
@@ -27,16 +29,19 @@ add_executable(
     ../../../source_estate/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
-    ../../../source_lcao/module_hcontainer/base_matrix.cpp 
-    ../../../source_lcao/module_hcontainer/hcontainer.cpp 
+    ../../../source_lcao/module_hcontainer/base_matrix.cpp
+    ../../../source_lcao/module_hcontainer/hcontainer.cpp
     ../../../source_lcao/module_hcontainer/atom_pair.cpp
     ../../../source_lcao/module_hcontainer/func_transfer.cpp
     ../../../source_lcao/module_hcontainer/func_folding.cpp
     ../../../source_lcao/module_hcontainer/transfer.cpp
     ../../../source_lcao/module_hcontainer/output_hcontainer.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
-    ../../../source_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/deepks_lcao.cpp
+    ../../../source_lcao/module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
+    ../../../source_lcao/module_rt/td_info.cpp
+    ../../../source_lcao/module_rt/td_folding.cpp
+    ../../../source_estate/module_pot/H_TDDFT_pw.cpp
 )
 
 target_link_libraries(

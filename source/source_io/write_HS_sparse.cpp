@@ -1,10 +1,10 @@
 #include "write_HS_sparse.h"
 
-#include "module_parameter/parameter.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_tddft/td_velocity.h"
-#include "source_pw/hamilt_pwdft/global.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "source_pw/module_pwdft/global.h"
 #include "single_R_io.h"
 
 void ModuleIO::save_HSR_sparse(const int& istep,
@@ -48,12 +48,12 @@ void ModuleIO::save_HSR_sparse(const int& istep,
     for (auto& R_coor: all_R_coor_ptr) {
         if (PARAM.inp.nspin != 4) {
             for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                if (TD_Velocity::tddft_velocity) {
+                if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1) {
                     auto iter
-                        = TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].find(
+                        = TD_info::td_vel_op->HR_sparse_td_vel[ispin].find(
                             R_coor);
                     if (iter
-                        != TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin]
+                        != TD_info::td_vel_op->HR_sparse_td_vel[ispin]
                                .end()) {
                         for (auto& row_loop: iter->second) {
                             H_nonzero_num[ispin][count]
@@ -254,9 +254,9 @@ void ModuleIO::save_HSR_sparse(const int& istep,
                 // }
             } else {
                 if (PARAM.inp.nspin != 4) {
-                    if (TD_Velocity::tddft_velocity) {
+                    if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1) {
                         output_single_R(g1[ispin],
-                                        TD_Velocity::td_vel_op
+                                        TD_info::td_vel_op
                                             ->HR_sparse_td_vel[ispin][R_coor],
                                         sparse_thr,
                                         binary,

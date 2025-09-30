@@ -45,6 +45,10 @@ pseudo::pseudo()
 pseudo::~pseudo()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 // constructor of UnitCell
 UnitCell::UnitCell()
@@ -107,7 +111,7 @@ Grid_Driver::~Grid_Driver()
 }
 
 // mock Record_adj
-#include "source_lcao/hamilt_lcaodft/record_adj.h"
+#include "source_lcao/record_adj.h"
 Record_adj::Record_adj()
 {
 }

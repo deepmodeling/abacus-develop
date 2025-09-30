@@ -7,7 +7,7 @@
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include <complex>
-#include "module_fft/fft_bundle.h"
+#include "source_base/module_fft/fft_bundle.h"
 #include <cstring>
 #ifdef __MPI
 #include "mpi.h"
@@ -243,9 +243,9 @@ public:
                         // done first; false: y-fft For gamma_only, true: we use half x; false: we use half y
     int ng_xeq0 = 0; //only used when xprime = true, number of g whose gx = 0
     int nmaxgr = 0;  // Gamma_only: max between npw and (nrxx+1)/2, others: max between npw and nrxx
-                     // Thus complex<double>[nmaxgr] is able to contain either reciprocal or real data
+                     // Thus std::complex<double>[nmaxgr] is able to contain either reciprocal or real data
     // FFT ft;
-    FFT_Bundle fft_bundle;
+    ModuleBase::FFT_Bundle fft_bundle;
     //The position of pointer in and out can be equal(in-place transform) or different(out-of-place transform).
     
     template <typename FPTYPE>
@@ -431,6 +431,9 @@ public:
     
     void set_device(std::string device_);
     void set_precision(std::string precision_);
+
+    std::string get_device() const { return device; }
+    std::string get_precision() const { return precision; }
 
 protected:
 

@@ -20,7 +20,7 @@ class Diago_DavSubspace
   private:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
-    // otherwise return the real type of T(complex<float>, complex<double>)
+    // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
 
   public:
@@ -41,6 +41,7 @@ class Diago_DavSubspace
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     int diag(const HPsiFunc& hpsi_func,
+             const HPsiFunc& spsi_func,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
@@ -79,7 +80,10 @@ class Diago_DavSubspace
     T* psi_in_iter = nullptr;
 
     /// the product of H and psi in the reduced basis set
-    T* hphi = nullptr;
+    T* hpsi = nullptr;
+
+    /// the product of S and psi in the reduced basis set
+    T* spsi = nullptr;
 
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;
@@ -90,29 +94,42 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    T* d_scc = nullptr;
+    Real* d_eigenvalue = nullptr;
+
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
     void cal_grad(const HPsiFunc& hpsi_func,
+                  const HPsiFunc& spsi_func,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
                   T* psi_iter,
-                  T* hphi,
+                  T* hpsi,
+                  T* spsi,
                   T* vcc,
                   const int* unconv,
                   std::vector<Real>* eigenvalue_iter);
 
-    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
+    void cal_elem(const int& dim,
+                  int& nbase,
+                  const int& notconv,
+                  const T* psi_iter,
+                  const T* spsi,
+                  const T* hpsi,
+                  T* hcc,
+                  T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
                  const Real* eigenvalue,
                  T* psi_iter,
-                 T* hphi,
+                 T* hpsi,
+                 T* spsi,
                  T* hcc,
                  T* scc,
                  T* vcc);
@@ -134,6 +151,7 @@ class Diago_DavSubspace
                      T* vcc);
 
     int diag_once(const HPsiFunc& hpsi_func,
+                  const HPsiFunc& spsi_func,
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
@@ -161,6 +179,7 @@ class Diago_DavSubspace
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
 #endif
     using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+    using setmem_complex_2d_op = base_device::memory::set_memory_2d_op<T, Device>;
 
     using resmem_real_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
     using delmem_real_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
@@ -169,6 +188,7 @@ class Diago_DavSubspace
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_complex_2d_op = base_device::memory::synchronize_memory_2d_op<T, Device, Device>;
     using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;

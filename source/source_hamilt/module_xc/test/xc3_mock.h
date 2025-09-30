@@ -187,6 +187,11 @@ Charge::~Charge(){};
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
 
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
+
 namespace elecstate
 {
     void cal_ux(UnitCell& ucell)
