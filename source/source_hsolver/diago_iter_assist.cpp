@@ -396,7 +396,7 @@ void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
     setmem_var_op()(eigenvalues, 0, matrix_size);
 
     // (const Device *d, const int matrix_size, const int lda, const T *A, const int num_eigenpairs, Real *eigenvalues, T *eigenvectors);
-    dnevx_op<T, Device>()(ctx, matrix_size, ldh, h, num_eigenpairs, eigenvalues, v);
+    heevx_op<T, Device>()(ctx, matrix_size, ldh, h, num_eigenpairs, eigenvalues, v);
 
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
