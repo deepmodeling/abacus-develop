@@ -1,6 +1,7 @@
 #include "phi_operator_kernel.cuh"
 #include "gint_helper.cuh"
 #include "sph.cuh"
+#include "source_base/module_device/device.h"
 
 namespace ModuleGint
 {
