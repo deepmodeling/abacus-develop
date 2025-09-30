@@ -669,7 +669,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
     if (PARAM.inp.dft_plus_u)
     {
-        if (istep != 0 || iter != 1)
+        // set_dmr to calculate the onsite-matrix and the energy correction for DFT+U,
+        // in SCF calculation, the DMR is updated from the second iteration
+        // in NSCF calculation, the DMR is not updated, so always set_dmr here
+        if (istep != 0 || iter != 1 || PARAM.inp.calculation == "nscf")
         {
             GlobalC::dftu.set_dmr(dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
         }
