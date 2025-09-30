@@ -266,6 +266,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
+    esolver_of_tddft.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
@@ -360,6 +361,7 @@ OBJS_HAMILT_OF=kedf_tf.o\
     kedf_xwm.o\
     kedf_lkt.o\
     kedf_manager.o\
+    evolve_ofdft.o\
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\

@@ -20,6 +20,7 @@ extern "C"
 #include "esolver_dp.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
+#include "esolver_of_tddft.h"
 #include "source_io/module_parameter/md_parameter.h"
 
 #include <stdexcept>
@@ -39,6 +40,10 @@ std::string determine_type()
         else if (PARAM.inp.esolver_type == "ofdft")
         {
             esolver_type = "ofdft";
+        }
+        else if (PARAM.inp.esolver_type == "tdofdft")
+        {
+            esolver_type = "tdofdft";
         }
         else if (PARAM.inp.esolver_type == "ksdft")
         {
@@ -320,6 +325,10 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "ofdft")
     {
         return new ESolver_OF();
+    }
+    else if (esolver_type == "tdofdft")
+    {
+        return new ESolver_OF_TDDFT();
     }
     else if (esolver_type == "lj_pot")
     {
