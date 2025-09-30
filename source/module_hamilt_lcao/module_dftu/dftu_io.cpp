@@ -55,7 +55,7 @@ void DFTU::output(const UnitCell &ucell)
     
     //Write onsite.dm
     std::ofstream ofdftu;
-    if(PARAM.inp.out_chg[0]){
+    if(PARAM.inp.out_chg[0] != -1){
       if(GlobalV::MY_RANK == 0){
         ofdftu.open(PARAM.globalv.global_out_dir + "onsite.dm");
       }
@@ -309,7 +309,7 @@ void DFTU::read_occup_m(const UnitCell& ucell,
 
                             if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                             {
-                                for (int is = 0; is < 2; is++)
+                                for (int is = 0; is < PARAM.inp.nspin; is++)
                                 {
                                     ifdftu >> word;
                                     if (strcmp("spin", word) == 0)
