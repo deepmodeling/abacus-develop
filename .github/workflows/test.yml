@@ -21,16 +21,13 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          # Do not checkout submodules here, we will do it manually
+          # We will handle submodules manually after fixing ownership
           submodules: 'false'
 
-      - name: Set git safe directory
+      - name: Take ownership of the workspace and update submodules
         run: |
-          git config --global --add safe.directory ${{ github.workspace }}
-          git config --global --add safe.directory ${{ github.workspace }}/deps/libpaw_interface
-
-      - name: Update submodules
-        run: git submodule update --init --recursive
+          sudo chown -R $(whoami) .
+          git submodule update --init --recursive
 
       - name: Install CI tools
         run: |
