@@ -17,15 +17,21 @@ jobs:
       volumes:
         - /tmp/ccache:/github/home/.ccache
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          submodules: recursive
           fetch-depth: 0
+          # Do not checkout submodules here, we will do it manually
+          submodules: 'false'
 
-      - name: Mark submodule directory as safe
-        run: git config --global --add safe.directory ${{ github.workspace }}/deps/libpaw_interface
-        
+      - name: Set git safe directory
+        run: |
+          git config --global --add safe.directory ${{ github.workspace }}
+          git config --global --add safe.directory ${{ github.workspace }}/deps/libpaw_interface
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
+
       - name: Install CI tools
         run: |
           sudo apt-get update
