@@ -28,7 +28,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool)
@@ -569,7 +569,7 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
     // In non-self consistent calculation, do until totally converged.
     const bool f2 = !scf && notconv > 0;
     // if self consistent calculation, if not converged > 5,
-    // using diagH_subspace and cg method again. ntry++
+    // using diag_subspace and cg method again. ntry++
     const bool f3 = scf && notconv > 5;
     return f1 && (f2 || f3);
 }
