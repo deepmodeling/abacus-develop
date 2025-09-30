@@ -7,7 +7,7 @@
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 
 template <typename T, typename Device>
-void setup_pot(const int istep, 
+void pw::setup_pot(const int istep, 
 		UnitCell& ucell, // unitcell 
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
@@ -18,7 +18,8 @@ void setup_pot(const int istep,
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		psi::Psi<T, Device>* kspw_psi, // electronic wave functions
-		const ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+        hamilt::Hamilt<T, Device>* p_hamilt, // hamiltonian
+		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
 		const Input_para& inp) // input parameters
 {
@@ -28,7 +29,7 @@ void setup_pot(const int istep,
     pelec->init_scf(istep,
             ucell,
             para_grid,
-            sf,
+            sf.strucFac,
             locpp.numeric,
 			ucell.symm,
 			(void*)pw_wfc);
@@ -66,14 +67,14 @@ void setup_pot(const int istep,
 		onsite_p->init(PARAM.inp.orbital_dir,
 				&ucell,
 				*(kspw_psi),
-				this->kv,
+				kv,
 				*(pw_wfc),
-				this->sf,
+				sf,
 				PARAM.inp.onsite_radius,
 				PARAM.globalv.nqx,
 				PARAM.globalv.dq,
-				this->pelec->wg,
-				this->pelec->ekb);
+				pelec->wg,
+				pelec->ekb);
 	}
 
     //----------------------------------------------------------
@@ -92,11 +93,11 @@ void setup_pot(const int istep,
                    ucell,
                    nullptr,
                    PARAM.inp.nspin,
-                   this->kv,
-                   this->p_hamilt,
-                   this->kspw_psi,
-                   this->pelec,
-                   this->pw_wfc);
+                   kv,
+                   p_hamilt,
+                   kspw_psi,
+                   pelec,
+                   pw_wfc);
     }
 
     //----------------------------------------------------------
@@ -105,7 +106,7 @@ void setup_pot(const int istep,
     if (PARAM.inp.dft_plus_u)
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
-        dftu->init(ucell, nullptr, this->kv.get_nks());
+        dftu->init(ucell, nullptr, kv.get_nks());
     }
 
     //----------------------------------------------------------
@@ -114,13 +115,13 @@ void setup_pot(const int istep,
     //----------------------------------------------------------
     if (PARAM.inp.dfthalf_type > 0)
     {
-        this->vsep_cell->generate_vsep_r(this->pw_rhod[0], this->sf.strucFac, ucell.sep_cell);
+        vsep_cell->generate_vsep_r(pw_rhod[0], sf.strucFac, ucell.sep_cell);
     }
 
     return;
 }
 
-template void setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
+template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         const int istep,  // ionic step
 		UnitCell& ucell, // unitcell 
 		const K_Vectors &kv, // kpoints
@@ -131,13 +132,14 @@ template void setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<float>, base_devcie::DEVICE_CPU>* kspw_psi, // electronic wave functions
-		const ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
+        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
+		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
 		const Input_para& inp); // input parameters
 
 
-template void setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
+template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         const int istep,  // ionic step
 		UnitCell& ucell, // unitcell 
 		const K_Vectors &kv, // kpoints
@@ -148,7 +150,8 @@ template void setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<double>, base_devcie::DEVICE_CPU>* kspw_psi, // electronic wave functions
-		const ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
+        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
+		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
 		const Input_para& inp); // input parameters

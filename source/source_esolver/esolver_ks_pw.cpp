@@ -255,9 +255,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     // 4) setup potentials (local, non-local, sc, +U, DFT-1/2)
     //----------------------------------------------------------
-    setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
+    pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->vsep_cell,
-              this->kspw_psi, this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->kspw_psi, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     //----------------------------------------------------------
     //! 5) Initialize wave functions
