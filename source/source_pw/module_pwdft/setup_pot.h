@@ -1,7 +1,13 @@
 #ifndef SETUP_POT_H
 #define SETUP_POT_H
 
+#include "source_cell/unitcell.h"
+#include "source_cell/klist.h"
+#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_estate/elecstate.h"
+#include "source_pw/module_pwdft/VL_in_pw.h"
 
+template <typename T, typename Device>
 void setup_pot(const int istep, 
 		UnitCell& ucell, // unitcell 
 		const K_Vectors &kv, // kpoints

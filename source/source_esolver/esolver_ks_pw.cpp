@@ -34,7 +34,7 @@
 
 #include <chrono>
 
-#include "source/source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
+#include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
 
 namespace ModuleESolver
@@ -257,7 +257,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->vsep_cell,
-              this->kspw_psi, this->pw_wfc, this->pw_rhod, inp);
+              this->kspw_psi, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
     //----------------------------------------------------------
     //! 5) Initialize wave functions

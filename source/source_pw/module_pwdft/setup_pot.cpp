@@ -6,6 +6,7 @@
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 
+template <typename T, typename Device>
 void setup_pot(const int istep, 
 		UnitCell& ucell, // unitcell 
 		const K_Vectors &kv, // kpoints
@@ -118,3 +119,36 @@ void setup_pot(const int istep,
 
     return;
 }
+
+template void setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
+        const int istep,  // ionic step
+		UnitCell& ucell, // unitcell 
+		const K_Vectors &kv, // kpoints
+        Structure_Factor &sf, // structure factors
+		elecstate::ElecState *pelec, // pointer of electrons
+		const Parallel_Grid &para_grid, // parallel of FFT grids
+		const Charge &chr, // charge density
+		pseudopot_cell_vl &locpp, // local pseudopotentials
+		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+		VSep* vsep_cell, // U-1/2 method
+		psi::Psi<std::complex<float>, base_devcie::DEVICE_CPU>* kspw_psi, // electronic wave functions
+		const ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		const Input_para& inp); // input parameters
+
+
+template void setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
+        const int istep,  // ionic step
+		UnitCell& ucell, // unitcell 
+		const K_Vectors &kv, // kpoints
+        Structure_Factor &sf, // structure factors
+		elecstate::ElecState *pelec, // pointer of electrons
+		const Parallel_Grid &para_grid, // parallel of FFT grids
+		const Charge &chr, // charge density
+		pseudopot_cell_vl &locpp, // local pseudopotentials
+		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+		VSep* vsep_cell, // U-1/2 method
+		psi::Psi<std::complex<double>, base_devcie::DEVICE_CPU>* kspw_psi, // electronic wave functions
+		const ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		const Input_para& inp); // input parameters
