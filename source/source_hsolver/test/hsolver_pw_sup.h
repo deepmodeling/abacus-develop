@@ -68,7 +68,7 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const Func& subspace_func,
+                            const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
                             const int& nproc_in_pool) {
