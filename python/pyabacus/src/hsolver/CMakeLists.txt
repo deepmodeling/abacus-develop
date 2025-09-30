@@ -9,7 +9,7 @@ list(APPEND _diago
     ${HSOLVER_PATH}/diago_pxxxgvx.cpp
 
 
-    ${HSOLVER_PATH}/kernels/dngvd_op.cpp
+    ${HSOLVER_PATH}/kernels/hegvd_op.cpp
     ${HSOLVER_PATH}/kernels/bpcg_kernel_op.cpp
     # dependency
     ${BASE_PATH}/kernels/math_kernel_op.cpp

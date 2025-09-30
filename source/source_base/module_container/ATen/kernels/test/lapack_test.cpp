@@ -92,14 +92,14 @@ TYPED_TEST(LapackTest, Potrf) {
     EXPECT_EQ(A, C);
 }
 
-TYPED_TEST(LapackTest, dnevd) {
+TYPED_TEST(LapackTest, heevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
     
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
-    lapack_dnevd<Type, Device> dnevdCalculator;
+    lapack_heevd<Type, Device> heevdCalculator;
 
     const int dim = 3;
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
@@ -121,7 +121,7 @@ TYPED_TEST(LapackTest, dnevd) {
     const Type beta  = static_cast<Type>(0.0);
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    dnevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
+    heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
     
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
@@ -139,14 +139,14 @@ TYPED_TEST(LapackTest, dnevd) {
 }
 
 
-TYPED_TEST(LapackTest, dngvd) {
+TYPED_TEST(LapackTest, hegvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
     
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
-    lapack_dngvd<Type, Device> dngvdCalculator;
+    lapack_hegvd<Type, Device> hegvdCalculator;
 
     const int dim = 3;
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
@@ -172,7 +172,7 @@ TYPED_TEST(LapackTest, dngvd) {
     const Type beta  = static_cast<Type>(0.0);
     // Note al<l blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    dngvdCalculator(1, 'V', 'U', B.data<Type>(), I.data<Type>(), dim, E.data<Real>());
+    hegvdCalculator(1, 'V', 'U', B.data<Type>(), I.data<Type>(), dim, E.data<Real>());
 
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({

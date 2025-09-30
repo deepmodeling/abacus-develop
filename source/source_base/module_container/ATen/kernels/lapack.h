@@ -41,7 +41,7 @@ struct lapack_potrf {
 
 
 template <typename T, typename Device>
-struct lapack_dnevd {
+struct lapack_heevd {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
@@ -53,7 +53,7 @@ struct lapack_dnevd {
 
 
 template <typename T, typename Device>
-struct lapack_dngvd {
+struct lapack_hegvd {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const int& itype,

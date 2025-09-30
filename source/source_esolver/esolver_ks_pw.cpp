@@ -12,7 +12,7 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/onsite_projector.h"
