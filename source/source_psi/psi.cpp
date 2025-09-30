@@ -171,54 +171,6 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
-
-// Constructor 2-2:
-template <typename T, typename Device>
-template <typename T_in, typename Device_in>
-Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
-{
-
-    this->ngk = psi_in.get_ngk_pointer();
-    this->nk = psi_in.get_nk();
-    this->nbands = psi_in.get_nbands();
-    this->nbasis = psi_in.get_nbasis();
-    this->current_k = psi_in.get_current_k();
-    this->current_b = psi_in.get_current_b();
-    this->k_first = psi_in.get_k_first();
-    // this function will copy psi_in.psi to this->psi no matter the device types of each other.
-
-    this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-
-    // Specifically, if the Device_in type is CPU and the Device type is GPU.
-    // Which means we need to initialize a GPU psi from a given CPU psi.
-    // We first malloc a memory in CPU, then cast the memory from T_in to T in CPU.
-    // Finally, synchronize the memory from CPU to GPU.
-    // This could help to reduce the peak memory usage of device.
-    if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
-    {
-        auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
-        // cast the memory from T_in to T in CPU
-        base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(arr,
-                                                                             psi_in.get_pointer()
-                                                                                 - psi_in.get_psi_bias(),
-                                                                             psi_in.size());
-        // synchronize the memory from CPU to GPU
-        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi,
-                                                                           arr,
-                                                                           psi_in.size());
-        free(arr);
-    }
-    else
-    {
-        base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->psi,
-                                                                          psi_in.get_pointer() - psi_in.get_psi_bias(),
-                                                                          psi_in.size());
-    }
-    this->psi_bias = psi_in.get_psi_bias();
-    this->current_nbasis = psi_in.get_current_nbas();
-    this->psi_current = this->psi + psi_in.get_psi_bias();
-}
-
 template <typename T, typename Device>
 void Psi<T, Device>::set_all_psi(const T* another_pointer, const std::size_t size_in)
 {

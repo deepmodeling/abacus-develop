@@ -40,7 +40,27 @@ public:
         ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
         const double *veff
-    ){} // a mock function
+    );
+
+    void generateTrainData_KS(
+        const std::string& dir,
+        psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi,
+        elecstate::ElecState *pelec,
+        ModulePW::PW_Basis_K *pw_psi,
+        ModulePW::PW_Basis *pw_rho,
+        UnitCell& ucell,
+        const double *veff
+    );
+    void generateTrainData_KS(
+        const std::string& dir,
+        psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* psi,
+        elecstate::ElecState *pelec,
+        ModulePW::PW_Basis_K *pw_psi,
+        ModulePW::PW_Basis *pw_rho,
+        UnitCell& ucell,
+        const double *veff
+    );
+
     void generate_descriptor(
         const std::string& out_dir,
         const double * const *prho, 
