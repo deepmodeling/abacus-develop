@@ -1463,15 +1463,18 @@ These variables are used to control the geometry relaxation.
 
 ### relax_method
 
-- **Type**: String
+- **Type**: Vector of string
 - **Description**: The methods to do geometry optimization.
+  the first element:
   - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
-  - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
-  - bfgs_trad: using the traditional Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm. 
+  - bfgs : using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
   - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
   - sd: using the steepest descent (SD) algorithm.
   - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
-- **Default**: cg
+
+  the second element:
+  when the first element is bfgs,  if the second parameter is 1, it indicates the use of the new BFGS algorithm; if the second parameter is not 1, it indicates the use of the old BFGS algorithm.
+- **Default**: cg 1
 
 ### relax_new
 
