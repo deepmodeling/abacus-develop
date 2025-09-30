@@ -18,7 +18,7 @@ void Gint::gpu_vlocal_interface(Gint_inout* inout) {
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
 
-    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hRGint_tmp[inout->ispin];
+    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hr_gint_tmp[inout->ispin];
     GintKernel::gint_vl_gpu(hRGint_kernel,
                             inout->vl,
                             ylmcoef,
@@ -45,7 +45,7 @@ void Gint::gpu_rho_interface(Gint_inout* inout) {
     int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
-        GintKernel::gint_rho_gpu(this->DMRGint[is],
+        GintKernel::gint_rho_gpu(this->dmr_gint[is],
                                        ylmcoef,
                                        dr,
                                        this->gridt->rcuts.data(),
@@ -76,7 +76,7 @@ void Gint::gpu_force_interface(Gint_inout* inout) {
     if (isforce || isstress) {
         std::vector<double> force(nat * 3, 0.0);
         std::vector<double> stress(6, 0.0);
-        GintKernel::gint_fvl_gpu(this->DMRGint[inout->ispin],
+        GintKernel::gint_fvl_gpu(this->dmr_gint[inout->ispin],
                                        inout->vl,
                                        force.data(),
                                        stress.data(),

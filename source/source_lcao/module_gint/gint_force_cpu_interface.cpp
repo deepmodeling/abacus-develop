@@ -82,7 +82,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
                 cal_flag.get_ptr_2D(),
                 psir_vlbr3.get_ptr_2D(), 
                 psir_vlbr3_DM.get_ptr_2D(), 
-                this->DMRGint[inout->ispin], 
+                this->dmr_gint[inout->ispin], 
                 false);
 
         if(inout->isforce)
@@ -230,19 +230,19 @@ void Gint::gint_kernel_force_meta(Gint_inout* inout) {
 	//calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
         Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, 
             na_grid, block_index.data(), block_size.data(), cal_flag.get_ptr_2D(),
-            psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
+            psir_vlbr3.get_ptr_2D(), psir_vlbr3_DM.get_ptr_2D(), this->dmr_gint[inout->ispin], false);
 
         Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, 
             na_grid, block_index.data(), block_size.data(), cal_flag.get_ptr_2D(),
-            dpsir_x_vlbr3.get_ptr_2D(), dpsirx_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
+            dpsir_x_vlbr3.get_ptr_2D(), dpsirx_v_DM.get_ptr_2D(), this->dmr_gint[inout->ispin], false);
 
         Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index,
             na_grid, block_index.data(), block_size.data(), cal_flag.get_ptr_2D(),
-            dpsir_y_vlbr3.get_ptr_2D(), dpsiry_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
+            dpsir_y_vlbr3.get_ptr_2D(), dpsiry_v_DM.get_ptr_2D(), this->dmr_gint[inout->ispin], false);
 
         Gint_Tools::mult_psi_DMR(*this->gridt, this->bxyz, LD_pool, grid_index, 
             na_grid, block_index.data(), block_size.data(), cal_flag.get_ptr_2D(),
-            dpsir_z_vlbr3.get_ptr_2D(), dpsirz_v_DM.get_ptr_2D(), this->DMRGint[inout->ispin], false);
+            dpsir_z_vlbr3.get_ptr_2D(), dpsirz_v_DM.get_ptr_2D(), this->dmr_gint[inout->ispin], false);
 
         if(inout->isforce)
         {

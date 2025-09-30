@@ -13,8 +13,7 @@ void Gint_vl_nspin4::cal_gint()
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
-    compose_hr_gint(hr_gint_part_, hr_gint_full_);
-    transfer_hr_gint_to_hR(hr_gint_full_, *hR_);
+    merge_hr_part_to_hR(hr_gint_part_, hR_, *gint_info_);
     ModuleBase::timer::tick("Gint", "cal_gint_vl");
 }
 
@@ -25,8 +24,6 @@ void Gint_vl_nspin4::init_hr_gint_()
     {
         hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
-    const int npol = 2;
-    hr_gint_full_ = gint_info_->get_hr<std::complex<double>>(npol);
 }
 
 void Gint_vl_nspin4::cal_hr_gint_()

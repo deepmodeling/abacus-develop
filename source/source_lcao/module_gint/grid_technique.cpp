@@ -556,7 +556,7 @@ void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver&
 {
     ModuleBase::TITLE("Grid_Technique", "init_ijr_and_nnrg");
 
-    hamilt::HContainer<double> hRGint_tmp(ucell.nat);
+    hamilt::HContainer<double> hr_gint_tmp(ucell.nat);
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
     std::vector<int> orb_index(ucell.nat + 1);
@@ -614,15 +614,15 @@ void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver&
                                         orb_index.data(),
                                         orb_index.data(),
                                         ucell.nat);
-                                    hRGint_tmp.insert_pair(tmp_atom_pair);
+                                    hr_gint_tmp.insert_pair(tmp_atom_pair);
                             }
                         }
                     }
                 }
             }
     }
-    this->ijr_info = hRGint_tmp.get_ijr_info();
-    this->nnrg = hRGint_tmp.get_nnr();
+    this->ijr_info = hr_gint_tmp.get_ijr_info();
+    this->nnrg = hr_gint_tmp.get_nnr();
     return;
 }
 
