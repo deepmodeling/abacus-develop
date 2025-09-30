@@ -8,8 +8,8 @@
 #include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_hamilt/module_vdw/vdw.h"
+//#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+//#include "source_hamilt/module_vdw/vdw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/kernels/dngvd_op.h"
@@ -23,7 +23,7 @@
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 
-#include <iostream>
+//#include <iostream>
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -107,24 +107,14 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
         {
             //! SDFT only supports double precision currently
             this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
-                                                                                        &(this->chr),
-                                                                                        &(this->kv),
-                                                                                        &ucell,
-                                                                                        &(this->ppcell),
-                                                                                        this->pw_rhod,
-                                                                                        this->pw_rho,
-                                                                                        this->pw_big);
+                &(this->chr), &(this->kv), &ucell, &(this->ppcell),
+                this->pw_rhod, this->pw_rho, this->pw_big);
         }
         else
         {
             this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                                                                &(this->chr),
-                                                                &(this->kv),
-                                                                &ucell,
-                                                                &this->ppcell,
-                                                                this->pw_rhod,
-                                                                this->pw_rho,
-                                                                this->pw_big);
+                &(this->chr), &(this->kv), &ucell, &this->ppcell,
+                this->pw_rhod, this->pw_rho, this->pw_big);
         }
     }
 
@@ -141,19 +131,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
         this->vsep_cell->init_vsep(*this->pw_rhod, ucell.sep_cell);
     }
 
-
     //! 4) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
-                                                    this->pw_rho,
-                                                    &ucell,
-                                                    &this->locpp.vloc,
-                                                    &(this->sf),
-                                                    &(this->solvent),
-                                                    &(this->pelec->f_en.etxc),
-                                                    &(this->pelec->f_en.vtxc),
-                                                    this->vsep_cell);
+              this->pw_rho, &ucell, &this->locpp.vloc, &(this->sf), 
+              &(this->solvent), &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc), this->vsep_cell);
     }
 
     //! 5) Initalize local pseudopotential
@@ -569,25 +552,18 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 
-    //------------------------------------------------------------------
-    // 1) since ESolver_KS::psi is hidden by ESolver_KS_PW::psi,
+    // since ESolver_KS::psi is hidden by ESolver_KS_PW::psi,
     // we need to copy the data from ESolver_KS::psi to ESolver_KS_PW::psi.
     // This part needs to be removed when we have a better design.
     // sunliang 2025-04-10
-    //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->psi[0]);
     }
 
-    //------------------------------------------------------------------
-    // 2) call after_scf() of ESolver_KS
-    //------------------------------------------------------------------
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-    //------------------------------------------------------------------
-    // 3) transfer data from GPU to CPU in pw basis
-    //------------------------------------------------------------------
+    // transfer data from GPU to CPU in pw basis
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
@@ -660,9 +636,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    //----------------------------------------------------------
-    //! 1) after_all_runners in ESolver_KS
-    //----------------------------------------------------------
     ESolver_KS<T, Device>::after_all_runners(ucell);
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
