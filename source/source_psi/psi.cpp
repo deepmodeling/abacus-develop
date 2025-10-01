@@ -171,7 +171,7 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
-// Constructor 2-2
+// Constructor 2-2:
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
@@ -198,20 +198,20 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
         auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU
         base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(arr,
-                                                                            psi_in.get_pointer()
-                                                                                - psi_in.get_psi_bias(),
-                                                                            psi_in.size());
+                                                                             psi_in.get_pointer()
+                                                                                 - psi_in.get_psi_bias(),
+                                                                             psi_in.size());
         // synchronize the memory from CPU to GPU
         base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi,
-                                                                        arr,
-                                                                        psi_in.size());
+                                                                           arr,
+                                                                           psi_in.size());
         free(arr);
     }
     else
     {
         base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->psi,
-                                                                        psi_in.get_pointer() - psi_in.get_psi_bias(),
-                                                                        psi_in.size());
+                                                                          psi_in.get_pointer() - psi_in.get_psi_bias(),
+                                                                          psi_in.size());
     }
     this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
