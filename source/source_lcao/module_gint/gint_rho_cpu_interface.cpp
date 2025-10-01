@@ -76,7 +76,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                     cal_flag.get_ptr_2D(),
                                     psir_ylm_1.get_ptr_2D(),
                                     psir_DM.get_ptr_2D(),
-                                    this->DMRGint[is],
+                                    this->dmr_gint[is],
                                     inout->if_symm);
 
             // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
@@ -156,7 +156,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                 cal_flag.get_ptr_2D(),
                 dpsir_ylm_x.get_ptr_2D(),
                 dpsix_DM.get_ptr_2D(),
-                this->DMRGint[is],
+                this->dmr_gint[is],
                 true);
             Gint_Tools::mult_psi_DMR(
                 *this->gridt, this->bxyz,
@@ -166,7 +166,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                 cal_flag.get_ptr_2D(),
                 dpsir_ylm_y.get_ptr_2D(),
                 dpsiy_DM.get_ptr_2D(),
-                this->DMRGint[is],
+                this->dmr_gint[is],
                 true);
             Gint_Tools::mult_psi_DMR(
                 *this->gridt, this->bxyz,
@@ -176,7 +176,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
                 cal_flag.get_ptr_2D(),
                 dpsir_ylm_z.get_ptr_2D(),
                 dpsiz_DM.get_ptr_2D(),
-                this->DMRGint[is],
+                this->dmr_gint[is],
                 true);
 
             //do sum_i,mu g_i,mu(r) * d/dx_i psi_mu(r) to get kinetic energy density on grid

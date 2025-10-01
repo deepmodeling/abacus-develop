@@ -47,19 +47,19 @@ Gint& Gint::operator=(Gint&& rhs)
     rhs.hRGint = nullptr;
     this->hRGintCd = rhs.hRGintCd;
     rhs.hRGintCd = nullptr;
-    for (int i = 0; i < this->DMRGint.size(); i++)
+    for (int i = 0; i < this->dmr_gint.size(); i++)
     {
-        delete this->DMRGint[i];
+        delete this->dmr_gint[i];
     }
-    for (int i = 0; i < this->hRGint_tmp.size(); i++)
+    for (int i = 0; i < this->hr_gint_tmp .size(); i++)
     {
-        delete this->hRGint_tmp[i];
+        delete this->hr_gint_tmp [i];
     }
     this->pvdpRx_reduced = std::move(rhs.pvdpRx_reduced);
     this->pvdpRy_reduced = std::move(rhs.pvdpRy_reduced);
     this->pvdpRz_reduced = std::move(rhs.pvdpRz_reduced);
-    this->DMRGint = std::move(rhs.DMRGint);
-    this->hRGint_tmp = std::move(rhs.hRGint_tmp);
+    this->dmr_gint = std::move(rhs.dmr_gint);
+    this->hr_gint_tmp  = std::move(rhs.hr_gint_tmp );
     this->dm2d_tmp = rhs.dm2d_tmp;
     rhs.dm2d_tmp = nullptr;
 
