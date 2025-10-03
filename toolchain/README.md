@@ -28,8 +28,8 @@ and give setup files that you can use to compile ABACUS.
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU-PW and GPU-LCAO compilation (elpa, cusolvermp is developing), and `-DUSE_CUDA=1` is needed builder scripts.
 - [x] Support for AMD compiler and math lib  `AOCL` and `AOCC` (not fully complete due to flang and AOCC-ABACUS compliation error)
+- [x] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
 - [ ] Support for more GPU device out of Nvidia.
-- [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
 - [ ] Support a JSON or YAML configuration file for toolchain, which can be easily modified by users.
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).

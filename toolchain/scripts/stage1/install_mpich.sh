@@ -12,8 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # mpich_sha256="17406ea90a6ed4ecd5be39c9ddcbfac9343e6ab4f77ac4e8c5ebe4a3e3b6c501"
 # mpich_ver="4.1.2"
 # mpich_sha256="3492e98adab62b597ef0d292fb2459b6123bc80070a8aa0a30be6962075a12f0"
-mpich_ver="4.3.0"
-mpich_sha256="5e04132984ad83cab9cc53f76072d2b5ef5a6d24b0a9ff9047a8ff96121bcc63"
+mpich_ver="4.3.1"
+mpich_sha256="acc11cb2bdc69678dc8bba747c24a28233c58596f81f03785bf2b7bb7a0ef7dc"
 mpich_pkg="mpich-${mpich_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh

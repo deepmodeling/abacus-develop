@@ -14,8 +14,8 @@ if [ "${OPENMPI_4TH}" = "yes" ]; then
     openmpi_ver="4.1.6"
     openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
 else
-    openmpi_ver="5.0.7"
-    openmpi_sha256="119f2009936a403334d0df3c0d74d5595a32d99497f9b1d41e90019fee2fc2dd"
+    openmpi_ver="5.0.8"
+    openmpi_sha256="53131e1a57e7270f645707f8b0b65ba56048f5b5ac3f68faabed3eb0d710e449"
 fi
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
