@@ -473,6 +473,7 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
 
+        GlobalC::exx_info.info_opt_abfs.pca_threshold = PARAM.inp.exx_pca_threshold;
         GlobalC::exx_info.info_opt_abfs.abfs_Lmax  = PARAM.inp.exx_opt_orb_lmax;
         GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
         GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;

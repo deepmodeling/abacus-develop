@@ -36,7 +36,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::IO::constr
 	const double kmesh_times )
 {
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> 
-		&&abfs = construct_abfs( orbs, files_abfs, kmesh_times );
+		abfs = construct_abfs( orbs, files_abfs, kmesh_times );
 			
 	assert( abfs.size() == abfs_pre.size() );
 	for( size_t T=0; T!=abfs.size(); ++T )
@@ -73,7 +73,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	
 	std::ifstream ifs( file_name.c_str() );
 	if(!ifs)
-		throw std::runtime_error(" Can't find the abfs ORBITAL file.");	
+		throw std::runtime_error(" Can't find the abfs ORBITAL file " + file_name);
 	
 	while( ifs.good() )
 	{
@@ -130,10 +130,22 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 		{
 			ModuleBase::GlobalFunc::READ_VALUE( ifs, N_size[8] );
 		}
+		else if ( "Lorbital-->"==word )
+		{
+			ModuleBase::GlobalFunc::READ_VALUE( ifs, N_size[9] );
+		}
+		else if ( "Morbital-->"==word )
+		{
+			ModuleBase::GlobalFunc::READ_VALUE( ifs, N_size[10] );
+		}
+		else if ( "Norbital-->"==word )
+		{
+			ModuleBase::GlobalFunc::READ_VALUE( ifs, N_size[11] );
+		}
 		else if ( "END"==word )
 		{
 			break;
-		}		
+		}
 	}
 	
 	ModuleBase::CHECK_NAME(ifs, "Mesh");
@@ -169,19 +181,11 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 	----------------------*/
 	for( size_t L=0; L<=L_size; ++L )
 		if( N_size.find(L) == N_size.end() )
-		{
-			std::stringstream ss;
-			ss<<"Can't find N of L="<<L<<" in "<<file_name;
-			throw std::domain_error(ss.str());
-		}
+			{ throw std::domain_error("Can't find N of L="+std::to_string(L)+" in "+file_name); }
 	for( size_t L=0; L<=L_size; ++L )
 		for( size_t N=0; N!=N_size[L]; ++N )
 			if( psis.find(L)==psis.end() || psis[L].find(N)==psis[L].end() )
-			{
-				std::stringstream ss;
-				ss<<"Can't find abf of L="<<L<<" T="<<T<<" in "<<file_name;
-				throw std::domain_error(ss.str());
-			}
+				{ throw std::domain_error("Can't find abf of L="+std::to_string(L)+" T="+std::to_string(T)+" in "+file_name); }
 
 			
 	/*----------------------
