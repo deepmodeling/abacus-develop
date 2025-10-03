@@ -12,6 +12,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
+# directly point to master
 libcomm_ver="master"
 libcomm_sha256="--no-checksum"
 source "${SCRIPT_DIR}"/common_vars.sh

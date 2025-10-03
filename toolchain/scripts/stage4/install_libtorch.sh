@@ -12,14 +12,12 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # From https://pytorch.org/get-started/locally/
 # libtorch_ver="1.12.1" 
 # libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
-# libtorch_ver="2.0.1" 
-# libtorch_sha256="137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd"
 libtorch_ver="2.1.2"
 libtorch_sha256="904b764df6106a8a35bef64c4b55b8c1590ad9d071eb276e680cf42abafe79e9"
 
 # user can manually download higher version of libtorch by:
 # wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-{libtorch_ver}%2Bcpu.zip
-# 2.4.0 latest, 2.1.2 recommended for lower GLIBC support (lower than 3.4.26)
+# 2.1.2 recommended for lower GLIBC support (lower than 3.4.26)
 
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}"/common_vars.sh

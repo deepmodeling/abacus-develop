@@ -11,6 +11,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
+# directly point to master
 rapidjson_ver="master" # latest version, instead of "1.1.0"  fixing issue of #5518
 rapidjson_sha256="--no-checksum" # latest version cannot maintain checksum
 source "${SCRIPT_DIR}"/common_vars.sh

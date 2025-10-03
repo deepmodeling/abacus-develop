@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 # elpa_ver="2024.05.001"
 # elpa_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
 # newer version of elpa may have problem in GPU-ELPA compliation
-elpa_ver="2025.01.001"
-elpa_sha256="3ef0c6aed9a3e05db6efafe6e14d66eb88b2a1354d61e765b7cde0d3d5f3951e"
+elpa_ver="2025.06.001"
+elpa_sha256="feeb1fea1ab4a8670b8d3240765ef0ada828062ef7ec9b735eecba2848515c94"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh

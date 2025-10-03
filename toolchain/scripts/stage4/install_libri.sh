@@ -11,11 +11,10 @@
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-# libri 0.2.0 and above need to be used in newer ABACUS
-# libri_ver="master"
-# libri_sha256="--no-checksum"
-libri_ver=0.2.1.1
-libri_sha256="cd33fd5428400ea696b82c9132878c07bf785847b3f56b1979e25a3a5fc0b311"
+
+# directly point to master
+libri_ver=master
+libri_sha256="--no-checksum"
 # libri_sha256="66a5540daba36effdad6ce2fe5e8368b96ddd4a7e148af90894ef21dc20ff29f"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh

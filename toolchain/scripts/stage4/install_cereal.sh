@@ -10,6 +10,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
+# directly point to master
 cereal_ver="master" # latest version, instead of "1.3.2"
 cereal_sha256="--no-checksum" # latest version cannot maintain checksum
 source "${SCRIPT_DIR}"/common_vars.sh
