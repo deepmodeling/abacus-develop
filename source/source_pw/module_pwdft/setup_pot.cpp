@@ -155,3 +155,41 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
 		const Input_para& inp); // input parameters
+
+#if ((defined __CUDA) || (defined __ROCM))
+
+template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
+        const int istep,  // ionic step
+		UnitCell& ucell, // unitcell 
+		const K_Vectors &kv, // kpoints
+        Structure_Factor &sf, // structure factors
+		elecstate::ElecState *pelec, // pointer of electrons
+		const Parallel_Grid &para_grid, // parallel of FFT grids
+		const Charge &chr, // charge density
+		pseudopot_cell_vl &locpp, // local pseudopotentials
+		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+		VSep* vsep_cell, // U-1/2 method
+		psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
+        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian
+		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		const Input_para& inp); // input parameters
+
+template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
+        const int istep,  // ionic step
+		UnitCell& ucell, // unitcell 
+		const K_Vectors &kv, // kpoints
+        Structure_Factor &sf, // structure factors
+		elecstate::ElecState *pelec, // pointer of electrons
+		const Parallel_Grid &para_grid, // parallel of FFT grids
+		const Charge &chr, // charge density
+		pseudopot_cell_vl &locpp, // local pseudopotentials
+		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
+		VSep* vsep_cell, // U-1/2 method
+		psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
+        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian
+		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
+		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		const Input_para& inp); // input parameters
+
+#endif
