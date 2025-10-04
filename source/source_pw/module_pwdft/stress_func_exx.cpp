@@ -1,5 +1,6 @@
 #include "global.h"
 #include "operator_pw/op_exx_pw.h"
+#include "source_base/parallel_common.h"
 #include "stress_pw.h"
 
 template <typename FPTYPE, typename Device>
@@ -10,19 +11,15 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            const K_Vectors *p_kv,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell)
 {
-    double nqs_half1 = 0.5 * p_kv->nmp[0];
-    double nqs_half2 = 0.5 * p_kv->nmp[1];
-    double nqs_half3 = 0.5 * p_kv->nmp[2];
     bool gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
-    if (!p_kv->get_is_mp())
+    bool is_mp = p_kv->get_is_mp();
+#ifdef __MPI
+    Parallel_Common::bcast_bool(is_mp);
+#endif
+    if (!is_mp)
     {
         gamma_extrapolation = false;
     }
-    auto isint = [](double x)
-    {
-        double epsilon = 1e-6; // this follows the isint judgement in q-e
-        return std::abs(x - std::round(x)) < epsilon;
-    };
 
     // T is complex of FPTYPE, if FPTYPE is double, T is std::complex<double>
     // but if FPTYPE is std::complex<double>, T is still std::complex<double>
@@ -54,11 +51,11 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     resmem_complex_op()(psi_mq_real, wfcpw->nrxx);
     resmem_complex_op()(density_real, rhopw->nrxx);
     resmem_complex_op()(density_recip, rhopw->npw);
-    resmem_real_op()(pot, rhopw->npw * nks * nks);
-    resmem_real_op()(pot_stress, rhopw->npw * nks * nks);
+    resmem_real_op()(pot, rhopw->npw);
+    resmem_real_op()(pot_stress, rhopw->npw);
 
-    hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega);
-    hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega);
+    // hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega);
+    // hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega);
 
     // calculate the stress
 
@@ -75,6 +72,8 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
             for (int iq = 0; iq < nqs; iq++)
             {
+                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true);
+                hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq);
                 for (int mband = 0; mband < d_psi_in->get_nbands(); mband++)
                 {
                     // psi_mq in real space
@@ -111,7 +110,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                 double kqg_beta = kqg[beta] * tpiba;
                                 // equation 10 of 10.1103/PhysRevB.73.125120
                                 double density_recip2 = std::real(density_recip[ig] * std::conj(density_recip[ig]));
-                                const int idx = ig + iq * rhopw->npw + ik * rhopw->npw * nqs;
+                                const int idx = ig;
                                 double pot_local = pot[idx];
                                 double pot_stress_local = pot_stress[idx];
                                 sigma_ab_loc += density_recip2 * pot_local * (kqg_alpha * kqg_beta * pot_stress_local - delta_ab) ;

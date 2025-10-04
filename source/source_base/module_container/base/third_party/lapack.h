@@ -136,7 +136,7 @@ int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int 
 }
 // wrap function of fortran lapack routine zhegvd. (pointer version)
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             float* a, const int lda,
             const float* b, const int ldb, float* w,
             float* work, int lwork, float* rwork, int lrwork,
@@ -150,7 +150,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             double* a, const int lda,
             const double* b, const int ldb, double* w,
             double* work, int lwork, double* rwork, int lrwork,
@@ -163,7 +163,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
             iwork, &liwork, &info);
 }
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda,
             const std::complex<float>* b, const int ldb, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
@@ -177,7 +177,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda,
             const std::complex<double>* b, const int ldb, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
@@ -192,7 +192,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              float* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, float* z, const int ldz,
@@ -205,7 +205,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              double* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              const int m, double* w, double* z, const int ldz,
@@ -217,7 +217,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
             work, &lwork, rwork, iwork, ifail, &info);
 }
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              std::complex<float>* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, std::complex<float>* z, const int ldz,
@@ -230,7 +230,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              std::complex<double>* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              const int m, double* w, std::complex<double>* z, const int ldz,
@@ -243,7 +243,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             float* a, const int lda, float* w,
             float* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -256,7 +256,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             double* a, const int lda, double* w,
             double* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -268,7 +268,7 @@ void dnevd(const char jobz, const char uplo, const int n,
              iwork, &liwork, &info);
 }
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -281,7 +281,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)

@@ -29,7 +29,8 @@ std::string filename_output(
             const int out_type,
             const bool out_app_flag,
             const bool gamma_only,
-            const int istep)
+            const int istep,
+            const int iter)
 {
       return "./support/wfs1_nao.txt";
 }

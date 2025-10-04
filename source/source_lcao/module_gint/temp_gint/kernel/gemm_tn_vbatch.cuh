@@ -8,7 +8,7 @@
 
 #include "gint_helper.cuh"
 #include <functional>
-
+#include "source_base/module_device/device.h"
 
 #define sA(i, j) sA[(j)*slda + (i)]
 #define sB(i, j) sB[(j)*sldb + (i)]

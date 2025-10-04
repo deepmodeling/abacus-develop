@@ -83,14 +83,14 @@ void FFT_DSP<double>::resource_handler(const int flag) const
 template <>
 void FFT_DSP<double>::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
 {
-    hthread_group_exec(thread_id_for, "execute_device", 1, 1, args_for);
+    hthread_group_exec(thread_id_for, "execute_mtfft_3d", 1, 1, args_for);
     hthread_group_wait(thread_id_for);
 }
 
 template <>
 void FFT_DSP<double>::fft3D_backward(std::complex<double>* in, std::complex<double>* out) const
 {
-    hthread_group_exec(thread_id_for, "execute_device", 1, 1, args_back);
+    hthread_group_exec(thread_id_for, "execute_mtfft_3d", 1, 1, args_back);
     hthread_group_wait(thread_id_for);
 }
 template <>

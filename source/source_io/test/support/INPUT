@@ -30,6 +30,7 @@ lspinorb                       0 #consider the spin-orbit interaction
 kpar                           1 #devide all processors into kpar groups and k points will be distributed among each group
 bndpar                         1 #devide all processors into bndpar groups and bands will be distributed among each group
 out_freq_elec                  0 #the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
+out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
 dft_plus_dmft                  0 #true:DFT+DMFT; false: standard DFT calcullation(default)
 rpa                            0 #true:generate output files used in rpa calculation; false:(default)
 mem_saver                      0 #Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.
@@ -37,7 +38,6 @@ diago_proc                     4 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
 soc_lambda                     1 #The fraction of SOC based on scalar relativity (SR) of the pseudopotential
 cal_force                      0 #if calculate the force at the end of the electronic iteration
-out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
 device                         cpu #the computing device for ABACUS
 
 #Parameters (2.PW)
@@ -136,7 +136,6 @@ lcao_dr                        0.01 #delta r for 1D integration in LCAO
 lcao_rmax                      30 #max R for 1D two-center integration table
 out_mat_hs                     0 #output H and S matrix
 out_mat_hs2                    0 #output H(R) and S(R) matrix
-out_interval               1 #interval for printing H(R) and S(R) matrix during MD
 out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD
 out_element_info               0 #output (projected) wavefunction of each element
 out_mat_r                      0 #output r(R) matrix

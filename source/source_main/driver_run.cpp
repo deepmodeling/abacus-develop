@@ -10,7 +10,7 @@
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>

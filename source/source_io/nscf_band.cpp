@@ -4,6 +4,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/formatter.h"
+#include "source_io/module_parameter/parameter.h" // mohan add 20250911
 
 #ifdef __MPI
 #include <mpi.h>
@@ -23,6 +24,7 @@ void ModuleIO::nscf_band(
 
     assert(precision>0);
 
+/*
 	GlobalV::ofs_running << "\n";
 	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
@@ -30,8 +32,9 @@ void ModuleIO::nscf_band(
 	GlobalV::ofs_running << " |                                                                    |" << std::endl;
 	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	GlobalV::ofs_running << "\n";
+*/
 
-    GlobalV::ofs_running << " Eigenvalues for plot are in file: " << eig_file << std::endl;
+    GlobalV::ofs_running << " Write eigenvalues data for plot to file: " << eig_file << std::endl;
 
     // number of k points without spin; 
     // nspin = 1,2, nkstot = nkstot_np * nspin; 
@@ -39,11 +42,19 @@ void ModuleIO::nscf_band(
     const int nkstot_np = kv.para_k.nkstot_np;
     const int nks_np = kv.para_k.nks_np;
 
+
 #ifdef __MPI
     if(GlobalV::MY_RANK==0)
-    {
-        std::ofstream ofs(eig_file.c_str());//make the file clear!!
-        ofs.close();
+	{
+		if(PARAM.inp.out_app_flag==true)
+		{
+            // do nothing
+		}
+		else
+		{
+			std::ofstream ofs(eig_file.c_str());
+			ofs.close();
+		}
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -90,7 +101,20 @@ void ModuleIO::nscf_band(
     std::vector<double> klength;
     klength.resize(nkstot_np);
     klength[0] = 0.0;
-    std::ofstream ofs(eig_file.c_str());
+
+    std::ofstream ofs;
+
+    if(GlobalV::MY_RANK==0)
+	{
+		if(PARAM.inp.out_app_flag==true)
+		{
+            ofs.open(eig_file.c_str(), std::ios::app);
+		}
+		else
+		{
+			ofs.open(eig_file.c_str());
+		}
+    }
 
     for(int ik=0;ik<nkstot_np;ik++)
     {
@@ -113,6 +137,7 @@ void ModuleIO::nscf_band(
             ofs << std::endl;
         }
     }
+
     ofs.close();
 #endif
 

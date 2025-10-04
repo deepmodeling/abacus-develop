@@ -44,6 +44,7 @@ list(APPEND objects
     radial_proj.cpp
     onsite_projector.cpp
     onsite_proj_tools.cpp
+    VSep_in_pw.cpp
 )
 
 add_library(

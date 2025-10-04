@@ -1,10 +1,10 @@
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
-#include "source_base/memory.h"
+
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -26,12 +26,11 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const int& david_ndim_in,
                                                 const double& diag_thr_in,
                                                 const int& diag_nmax_in,
-                                                const bool& need_subspace_in,
                                                 const diag_comm_info& diag_comm_in,
                                                 const int diag_subspace_in,
                                                 const int diago_subspace_bs_in)
     : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in),
+      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in),
         diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
@@ -51,12 +50,12 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     setmem_complex_op()(this->psi_in_iter, 0, this->nbase_x * this->dim);
 
     // the product of H and psi in the reduced psi set
-    resmem_complex_op()(this->hphi, this->nbase_x * this->dim, "DAV::hphi");
-    setmem_complex_op()(this->hphi, 0, this->nbase_x * this->dim);
+    resmem_complex_op()(this->hpsi, this->nbase_x * this->dim, "DAV::hpsi");
+    setmem_complex_op()(this->hpsi, 0, this->nbase_x * this->dim);
 
     // the product of S and psi in the reduced psi set
-    resmem_complex_op()(this->sphi, this->nbase_x * this->dim, "DAV::sphi");
-    setmem_complex_op()(this->sphi, 0, this->nbase_x * this->dim);
+    resmem_complex_op()(this->spsi, this->nbase_x * this->dim, "DAV::spsi");
+    setmem_complex_op()(this->spsi, 0, this->nbase_x * this->dim);
 
     // Hamiltonian on the reduced psi set
     resmem_complex_op()(this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
@@ -76,7 +75,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
         // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
-        base_device::memory::resize_memory_op<T, Device>()(this->d_scc, this->nbase_x * this->nbase_x);
+        resmem_complex_op()(this->d_scc, this->nbase_x * this->nbase_x);
         resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
 #endif
@@ -87,7 +86,8 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 {
     delmem_complex_op()(this->psi_in_iter);
 
-    delmem_complex_op()(this->hphi);
+    delmem_complex_op()(this->hpsi);
+    delmem_complex_op()(this->spsi);
     delmem_complex_op()(this->hcc);
     delmem_complex_op()(this->scc);
     delmem_complex_op()(this->vcc);
@@ -137,14 +137,14 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     // compute h*psi_in_iter
     // NOTE: bands after the first n_band should yield zero
-    // hphi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
-    hpsi_func(this->psi_in_iter, this->hphi, this->dim, this->notconv);
+    // hpsi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
+    hpsi_func(this->psi_in_iter, this->hpsi, this->dim, this->notconv);
 
     // compute s*psi_in_iter
-    // sphi[:, 0:nbase_x] = S * psi_in_iter[:, 0:nbase_x]
-    spsi_func(this->psi_in_iter, this->sphi, this->dim, this->notconv);
+    // spsi[:, 0:nbase_x] = S * psi_in_iter[:, 0:nbase_x]
+    spsi_func(this->psi_in_iter, this->spsi, this->dim, this->notconv);
 
-    this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->sphi, this->hphi, this->hcc, this->scc);
+    this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->spsi, this->hpsi, this->hcc, this->scc);
 
     this->diag_zhegvx(nbase, this->notconv, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
 
@@ -167,8 +167,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                        nbase,
                        this->notconv,
                        this->psi_in_iter,
-                       this->hphi,
-                       this->sphi,
+                       this->hpsi,
+                       this->spsi,
                        this->vcc,
                        unconv.data(),
                        &eigenvalue_iter);
@@ -177,8 +177,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                        nbase,
                        this->notconv,
                        this->psi_in_iter,
-                       this->sphi,
-                       this->hphi,
+                       this->spsi,
+                       this->hpsi,
                        this->hcc,
                        this->scc);
 
@@ -251,8 +251,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                               nbase,
                               eigenvalue_in_hsolver,
                               this->psi_in_iter,
-                              this->hphi,
-                              this->sphi,
+                              this->hpsi,
+                              this->spsi,
                               this->hcc,
                               this->scc,
                               this->vcc);
@@ -275,7 +275,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                             const int& nbase,
                                             const int& notconv,
                                             T* psi_iter,
-                                            T* hphi,
+                                            T* hpsi,
                                             T* spsi,
                                             T* vcc,
                                             const int* unconv,
@@ -303,7 +303,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          notconv,
                          nbase,
                          this->one,
-                         hphi,
+                         hpsi,
                          this->dim,
                          vcc,
                          this->nbase_x,
@@ -333,7 +333,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
          notconv,
          nbase,
          this->one,
-         sphi,
+         spsi,
          this->dim,
          vcc,
          this->nbase_x,
@@ -369,7 +369,6 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     {
         Real* psi_norm = nullptr;
         resmem_real_op()(psi_norm, notconv);
-        using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
         setmem_real_op()(psi_norm, 0.0, notconv);
 
         normalize_op<T, Device>()(this->dim,
@@ -392,8 +391,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     // update hpsi[:, nbase:nbase+notconv]
     // hpsi[:, nbase:nbase+notconv] = H * psi_iter[:, nbase:nbase+notconv]
-    hpsi_func(psi_iter + nbase * dim, hphi + nbase * this->dim, this->dim, notconv);
-    spsi_func(psi_iter + nbase * dim, sphi + nbase * this->dim, this->dim, notconv);
+    hpsi_func(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
+    spsi_func(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
 
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
     return;
@@ -405,7 +404,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                                             const int& notconv,
                                             const T* psi_iter,
                                             const T* spsi,
-                                            const T* hphi,
+                                            const T* hpsi,
                                             T* hcc,
                                             T* scc)
 {
@@ -424,7 +423,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          this->one,
          psi_iter,
          this->dim,
-         &hphi[nbase * this->dim],
+         &hpsi[nbase * this->dim],
          this->dim,
          this->zero,
          &hcc[nbase * this->nbase_x],
@@ -540,8 +539,8 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->diag_comm.rank == 0)
         {
-            base_device::memory::synchronize_memory_op<T, Device, Device>()(this->d_scc, scc, nbase * this->nbase_x);
-            dngvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
+            hegvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
@@ -563,7 +562,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                         s_diag[i][j] = scc[i * this->nbase_x + j];
                     }
                 }
-                dngvx_op<T, Device>()(this->ctx,
+                hegvx_op<T, Device>()(this->ctx,
                                       nbase,
                                       this->nbase_x,
                                       this->hcc,
@@ -659,8 +658,8 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                                            const Real* eigenvalue_in_hsolver,
                                            //    const psi::Psi<T, Device>& psi,
                                            T* psi_iter,
-                                           T* hphi,
-                                           T* sphi,
+                                           T* hpsi,
+                                           T* spsi,
                                            T* hcc,
                                            T* scc,
                                            T* vcc)
@@ -678,7 +677,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                          nband,
                          nbase,
                          this->one,
-                         this->hphi,
+                         this->hpsi,
                          this->dim,
                          this->vcc,
                          this->nbase_x,
@@ -686,8 +685,8 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                          psi_iter + nband * this->dim,
                          this->dim);
 
-    // update hphi
-    syncmem_complex_op()(hphi, psi_iter + nband * this->dim, this->dim * nband);
+    // update hpsi
+    syncmem_complex_op()(hpsi, psi_iter + nband * this->dim, this->dim * nband);
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -700,7 +699,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
          nband,
          nbase,
          this->one,
-         this->sphi,
+         this->spsi,
          this->dim,
          this->vcc,
          this->nbase_x,
@@ -708,8 +707,8 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
          psi_iter + nband * this->dim,
          this->dim);
 
-    // update sphi
-    syncmem_complex_op()(sphi, psi_iter + nband * this->dim, this->dim * nband);
+    // update spsi
+    syncmem_complex_op()(spsi, psi_iter + nband * this->dim, this->dim * nband);
 
     nbase = nband;
 

@@ -1,7 +1,8 @@
 #ifndef GET_PCHG_PW_H
 #define GET_PCHG_PW_H
 
-#include "cube_io.h"
+#include "source_io/cube_io.h"
+#include "source_estate/module_charge/symmetry_rho.h"
 
 namespace ModuleIO
 {

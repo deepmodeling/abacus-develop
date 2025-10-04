@@ -26,7 +26,7 @@ class Gint {
 
     hamilt::HContainer<double>* get_hRGint() const { return hRGint; }
 
-    std::vector<hamilt::HContainer<double>*> get_DMRGint() const { return DMRGint; }
+    std::vector<hamilt::HContainer<double>*> get_DMRGint() const { return dmr_gint; }
 
     int get_ncxyz() const { return ncxyz; }
 
@@ -58,14 +58,14 @@ class Gint {
     void initialize_pvpR(const UnitCell& unitcell, const Grid_Driver* gd, const int& nspin);
 
     /**
-     * @brief resize DMRGint to nspin and reallocate the memory
+     * @brief resize dmr_gint to nspin and reallocate the memory
      */
     void reset_DMRGint(const int& nspin);
 
     /**
      * @brief transfer DMR (2D para) to DMR (Grid para) in elecstate_lcao.cpp
      */
-    void transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D);
+    void transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> dm2d);
 
     const Grid_Technique* gridt = nullptr;
     const UnitCell* ucell;
@@ -256,13 +256,13 @@ class Gint {
     hamilt::HContainer<double>* hRGint = nullptr; 
 
     //! size of vec is 4, only used when nspin = 4
-    std::vector<hamilt::HContainer<double>*> hRGint_tmp; 
+    std::vector<hamilt::HContainer<double>*> hr_gint_tmp; 
 
     //! stores Hamiltonian in sparse format
     hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; 
 
     //! stores DMR in sparse format
-    std::vector<hamilt::HContainer<double>*> DMRGint; 
+    std::vector<hamilt::HContainer<double>*> dmr_gint; 
 
     //! tmp tools used in transfer_DM2DtoGrid 
     hamilt::HContainer<double>* dm2d_tmp = nullptr;

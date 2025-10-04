@@ -10,7 +10,7 @@
 #include <fstream>
 
 #include "../diag_hs_para.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 template <typename T>
 typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type
@@ -231,7 +231,7 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
             {
                 h_tmp = h_mat;
                 s_tmp = s_mat;
-                hsolver::dngvx_op<T,base_device::DEVICE_CPU>()(ctx,
+                hsolver::hegvx_op<T,base_device::DEVICE_CPU>()(ctx,
                                       lda,
                                       lda,
                                       h_tmp.data(),

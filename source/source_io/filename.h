@@ -19,6 +19,7 @@ namespace ModuleIO
  * @param out_app_flag: whether to append to existing file.
  * @param gamma_only: gamma_only algorithm or not.
  * @param istep: index of the ion step starting from 0. If < 0, the step number is not included in the file name.
+ * @param iter: index of the electronic step starting from 0. If < 0, the step number is not included in the file name. 
  * @return The generated filename.
  */
 std::string filename_output(
@@ -32,7 +33,8 @@ std::string filename_output(
             const int out_type,
 			const bool out_app_flag,
 			const bool gamma_only,
-			const int istep=-1);
+			const int istep=-1,
+            const int iter=-1);
 
 }
 #endif

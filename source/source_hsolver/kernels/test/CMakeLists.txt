@@ -5,7 +5,7 @@ if(USE_CUDA OR USE_ROCM)
     AddTest(
         TARGET MODULE_HSOLVER_KERNELS_Unittests
         LIBS parameter ${math_libs} base device
-        SOURCES math_dngvd_test.cpp
+        SOURCES math_hegvd_test.cpp
     )
 endif()
 

@@ -16,6 +16,7 @@ list(APPEND objects
     module_pot/pot_local_paw.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
+    module_pot/pot_sep.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp

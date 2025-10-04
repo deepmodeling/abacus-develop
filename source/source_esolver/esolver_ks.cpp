@@ -237,8 +237,15 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     bool conv_esolver = false;
     this->niter = this->maxniter;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
+    this->scf_nmax_flag = false; // mohan add 2025-09-21
     for (int iter = 1; iter <= this->maxniter; ++iter)
-    {
+	{
+        // mohan add 2025-09-21
+		if(iter == this->maxniter)
+		{
+			this->scf_nmax_flag=true;
+		}
+
 		//----------------------------------------------------------------
 		// 3) initialization of SCF iterations
 		//----------------------------------------------------------------
@@ -556,11 +563,42 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
-    // 3) write eigenvalues
-    if (istep % PARAM.inp.out_interval == 0)
+    // 3) write eigenvalues and occupations to eig_occ.txt
+    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
+
+    // 3) write band information to band.txt
+    if (PARAM.inp.out_band[0])
     {
-//        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
+        const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+        for (int is = 0; is < nspin0; is++)
+        {
+            std::stringstream ss;
+            ss << PARAM.globalv.global_out_dir << "band";
+
+            if(nspin0==1)
+            {
+                // do nothing
+            }
+            else if(nspin0==2)
+            {
+                ss << "s" << is + 1;
+            }
+
+            ss << ".txt";
+
+            const double eshift = 0.0;
+            ModuleIO::nscf_band(is,
+                                ss.str(),
+                                PARAM.inp.nbands,
+                                eshift,
+                                PARAM.inp.out_band[1], // precision
+                                this->pelec->ekb,
+                                this->kv);
+        }
     }
+
+
+
 }
 
 template <typename T, typename Device>
@@ -568,28 +606,6 @@ void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
 {
     // 1) write Etot information
     ESolver_FP::after_all_runners(ucell);
-
-    // 2) write eigenvalue information
-    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv);
-
-    // 3) write band information
-    if (PARAM.inp.out_band[0])
-    {
-        const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss2;
-            ss2 << PARAM.globalv.global_out_dir << "eigs" << is + 1 << ".txt";
-            const double eshift = 0.0;
-            ModuleIO::nscf_band(is,
-                                ss2.str(),
-                                PARAM.inp.nbands,
-                                eshift,
-                                PARAM.inp.out_band[1],
-                                this->pelec->ekb,
-                                this->kv);
-        }
-    }
 }
 
 //------------------------------------------------------------------------------

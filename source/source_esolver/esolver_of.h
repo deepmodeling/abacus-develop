@@ -27,7 +27,7 @@ class ESolver_OF : public ESolver_FP
 
     virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-  private:
+  protected:
     // ======================= variables ==========================
     // ---------- the kinetic energy density functionals ----------
     KEDF_Manager* kedf_manager_ = nullptr; // KEDF manager, which will be initialized in before_all_runners
@@ -83,7 +83,7 @@ class ESolver_OF : public ESolver_FP
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
-    void init_elecstate(UnitCell& ucell);
+    void init_elecstate(UnitCell& ucell);                                                                 
     void allocate_array();
 
     // --------------------- calculate physical qualities ---------------
