@@ -14,20 +14,21 @@ namespace elecstate
 
 template <typename T, typename Device>
 void setup_estate_pw(UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp); // input parameters
 
+template <typename T, typename Device>
 void teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell); 
 
 }

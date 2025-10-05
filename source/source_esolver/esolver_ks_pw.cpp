@@ -3,7 +3,6 @@
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_pw_sdft.h"
-#include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 
 #include "source_hsolver/diago_iter_assist.h"
@@ -89,7 +88,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
     //! setup and allocation for pelec, charge density, potentials, etc. 
-    elecstate::setup_estate_pw(ucell, this->kv, this->sf, this->pelec, this->chr,
+    elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
@@ -542,7 +541,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             this->kspw_psi, this->__kspw_psi, this->sf, 
             this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
     
-    elecstate::teardown_estate_pw(this->pelec, this->vsep_cell);
+    elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
 }
 
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;

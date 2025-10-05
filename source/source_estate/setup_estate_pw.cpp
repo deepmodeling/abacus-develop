@@ -1,18 +1,21 @@
 #include "source_estate/setup_estate_pw.h"
+#include "source_estate/elecstate_pw.h" // init of pelec
+#include "source_estate/elecstate_pw_sdft.h" // init of pelec for sdft
+#include "source_estate/elecstate_tools.h" // occupations
 
 template <typename T, typename Device>
 void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp) // input parameters
 {
@@ -81,6 +84,7 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
 }
 
 
+template <typename T, typename Device>
 void elecstate::teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell) 
 {
     ModuleBase::TITLE("elecstate", "teardown_estate_pw");
@@ -100,70 +104,82 @@ void elecstate::teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell)
 
 template void elecstate::setup_estate_pw<std::complex<float>, base_device::DEVICE_CPU>(
         UnitCell& ucell, // unitcell
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp); // input parameters
 
 template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVICE_CPU>(
         UnitCell& ucell, // unitcell
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp); // input parameters
 
+
+template void elecstate::teardown_estate_pw<std::complex<float>, base_device::DEVICE_CPU>(
+        elecstate::ElecState *pelec, VSep* vsep_cell); 
+
+template void elecstate::teardown_estate_pw<std::complex<double>, base_device::DEVICE_CPU>(
+        elecstate::ElecState *pelec, VSep* vsep_cell); 
 
 
 #if ((defined __CUDA) || (defined __ROCM))
 
 template void elecstate::setup_estate_pw<std::complex<float>, base_device::DEVICE_GPU>(
         UnitCell& ucell, // unitcell
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp); // input parameters
 
 template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVICE_GPU>(
         UnitCell& ucell, // unitcell
-		const K_Vectors &kv, // kpoints
+		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
-		const Charge &chr, // charge density
+		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
 		VSep* vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rho, // pw for rho
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-        const ModulePW::PW_Basis_Big* pw_big, // pw for big grid
+		ModulePW::PW_Basis *pw_rho, // pw for rho
+		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp); // input parameters
+
+template void elecstate::teardown_estate_pw<std::complex<float>, base_device::DEVICE_GPU>(
+        elecstate::ElecState *pelec, VSep* vsep_cell); 
+
+template void elecstate::teardown_estate_pw<std::complex<double>, base_device::DEVICE_GPU>(
+        elecstate::ElecState *pelec, VSep* vsep_cell); 
 
 #endif
