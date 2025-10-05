@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+
 // It stores all input parameters both defined in INPUT file and not defined in
 // INPUT file
 struct Input_para
@@ -150,7 +151,7 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::string relax_method = "cg"; ///< methods to move_ion: sd, bfgs, cg...
+    std::vector<std::string> relax_method = {"cg","1"}; ///< methods to move_ion: sd, bfgs, cg...
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;

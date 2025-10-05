@@ -1,4 +1,4 @@
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 #include <algorithm>
 #include <fstream>

@@ -38,6 +38,7 @@ class Ions_Move_CG
                      const double &fb,
                      const double x,
                      double &best_x);
+    void normalize(double *cg_gradn, const double *cg_grad, int dim);
 };
 
 #endif

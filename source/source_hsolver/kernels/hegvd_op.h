@@ -1,7 +1,15 @@
-// TODO: This is a temperary location for these functions.
-// And will be moved to a global module(module base) later.
+/// This is the module for wrapper of 
+/// DeNse Generalized eigenValue (eXtended)
+/// HErmitian / SYmmetric
 
-// DeNse Generalized eigenValue eXtended
+// named HEGVD, actually includes HE/SY GV/GVD/GVX
+
+#ifndef MODULE_HSOLVER_HEGVD_H
+#define MODULE_HSOLVER_HEGVD_H
+
+// Note:
+// names follow the same style as standard LAPACK APIs:
+// -----------------------------------
 // he stands for Hermitian
 // sy stands for Symmetric
 // gv stands for Generalized eigenValue problem
@@ -10,9 +18,12 @@
 // x stands for compute a subset of the eigenvalues and, optionally,
 // their corresponding eigenvectors
 // d for all, x for selected
+// gv: all, gvd: all/devide-and-conquer, x: selected eigenvalues
+// -----------------------------------
+// search for docs using the op function name as keywords.
 
-#ifndef MODULE_HSOLVER_DNGVD_H
-#define MODULE_HSOLVER_DNGVD_H
+// TODO: This is a temperary location for these functions.
+// And will be moved to a global module(module base) later.
 
 #include "source_base/macros.h"
 #include "source_base/module_external/lapack_wrapper.h"
@@ -108,13 +119,14 @@ struct heevx_op
     ///
     /// Input Parameters
     ///     @param d : the type of device
-    ///     @param nstart : the number of cols of the matrix
-    ///     @param ldh : the number of rows of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda B x (row major)
+    ///     @param ndim : the size of square matrix
+    ///     @param lda : leading dimension of the matrix
+    ///     @param A : the hermitian matrix A in A x=lambda x
+    ///     @param neig : the number of eigenpairs to be calculated
     /// Output Parameter
-    ///     @param W : calculated eigenvalues
-    ///     @param V : calculated eigenvectors (row major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, const int m, Real* W, T* V);
+    ///     @param w: calculated eigenvalues
+    ///     @param z: calculated eigenvectors
+    void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *w, T *z);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -126,4 +138,4 @@ void destroyGpuSolverHandle();
 
 } // namespace hsolver
 
-#endif // !MODULE_HSOLVER_DNGVD_H
+#endif // !MODULE_HSOLVER_HEGVD_H

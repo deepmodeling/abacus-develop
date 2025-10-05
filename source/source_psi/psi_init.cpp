@@ -157,7 +157,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 {
                     // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
                     // different
-                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(p_hamilt,
                                                                              psi_device->get_pointer(),
                                                                              nbands_start,
                                                                              nbasis,
@@ -167,7 +167,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 else
                 {
                     // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
-                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(p_hamilt,
                                                                         *psi_device,
                                                                         *kspw_psi,
                                                                         etatom.data(),

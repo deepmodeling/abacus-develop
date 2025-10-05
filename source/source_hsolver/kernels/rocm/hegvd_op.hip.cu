@@ -1,11 +1,11 @@
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 #include <hip/hip_runtime.h>
 #include <base/macros/macros.h>
 
 namespace hsolver {
 
-// NOTE: mimicked from ../cuda/dngvd_op.cu for three hegvd_op
+// NOTE: mimicked from ../cuda/hegvd_op.cu for three hegvd_op
 
 static hipsolverHandle_t hipsolver_H = nullptr;
 // Test on DCU platform. When nstart is greater than 234, code on DCU performs better.
@@ -36,7 +36,7 @@ void hegvd_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DE
                                                            double* _eigenvalue,
                                                            double* _vcc)
 {
-    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
+    // copied from ../cuda/hegvd_op.cu, "hegvd_op"
     assert(nstart == ldh);
 
     if (nstart > N_DCU){
@@ -110,7 +110,7 @@ void hegvd_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const ba
                                                                         float* _eigenvalue,
                                                                         std::complex<float>* _vcc)
 {
-    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
+    // copied from ../cuda/hegvd_op.cu, "hegvd_op"
     assert(nstart == ldh);
 
     if (nstart > N_DCU){
@@ -183,7 +183,7 @@ void hegvd_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const b
                                                                          std::complex<double>* _vcc
                                                                         )
 {
-    // copied from ../cuda/dngvd_op.cu, "hegvd_op"
+    // copied from ../cuda/hegvd_op.cu, "hegvd_op"
     // assert(nstart == ldh);
 
     // save a copy of scc in case the diagonalization fails

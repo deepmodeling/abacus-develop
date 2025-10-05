@@ -10,7 +10,7 @@
 #include <fstream>
 
 #include "../diag_hs_para.h"
-#include "source_hsolver/kernels/dngvd_op.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 template <typename T>
 typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type

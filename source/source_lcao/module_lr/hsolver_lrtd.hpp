@@ -100,7 +100,6 @@ namespace LR
                         PARAM.inp.pw_diag_ndim,
                         diag_ethr,
                         maxiter,
-                        false, //always do the subspace diag (check the implementation)
                         comm_info,
                         PARAM.inp.diag_subspace,
                         PARAM.inp.nb2d);
@@ -135,7 +134,7 @@ namespace LR
                     ////// why diago_cg depends on basis_type?
                     // hsolver::DiagoCG<T> cg("lcao", "nscf", true, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
 
-                    auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {};
+                    auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool S_orth) {};
                     hsolver::DiagoCG<T> cg("lcao", "nscf", false, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
 
                     auto psi_tensor = ct::TensorMap(psi, ct::DataTypeToEnum<T>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband, dim }));
