@@ -53,6 +53,8 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     // delete Hamilt
     this->deallocate_hamilt();
 
+    elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
+
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         delete this->kspw_psi;
@@ -542,7 +544,6 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             this->kspw_psi, this->__kspw_psi, this->sf, 
             this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
     
-    elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
 }
 
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
