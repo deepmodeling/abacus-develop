@@ -34,7 +34,7 @@ ESolver_FP::~ESolver_FP()
     }
     if (PARAM.globalv.double_grid)
     {
-        delete pw_rhod;
+        delete this->pw_rhod;
     }
     delete this->pelec;
 }

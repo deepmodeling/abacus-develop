@@ -249,7 +249,7 @@ OBJS_ELECSTAT=elecstate.o\
     cal_nelec_nband.o\
     read_pseudo.o\
     cal_wfc.o\
-    setup_estate_pw.cpp\
+    setup_estate_pw.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\

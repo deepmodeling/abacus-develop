@@ -3,7 +3,6 @@
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_estate/elecstate_tools.h" // occupations
 
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_pw.h"
@@ -18,14 +17,6 @@
 
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
-
-#include "source_estate/elecstate_pw_sdft.h"
-//#include "source_base/global_variable.h"
-//#include "source_base/kernels/math_kernel_op.h"
-//#include "source_base/memory.h"
-//#include "source_hsolver/kernels/dngvd_op.h"
-//#include <ATen/kernels/blas.h>
-//#include <ATen/kernels/lapack.h>
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -53,7 +44,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
     // delete Hamilt
     this->deallocate_hamilt();
-
 
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
@@ -95,59 +85,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
-/*
-    //! Initialize ElecState, set pelec pointer
-    if (this->pelec == nullptr)
-    {
-        if (inp.esolver_type == "sdft")
-        {
-            //! SDFT only supports double precision currently
-            this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
-                &this->chr, &this->kv, &ucell, &this->ppcell,
-                this->pw_rhod, this->pw_rho, this->pw_big);
-        }
-        else
-        {
-            this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                &this->chr, &this->kv, &ucell, &this->ppcell,
-                this->pw_rhod, this->pw_rho, this->pw_big);
-        }
-    }
-
-
-    //! Set the cell volume variable in this->pelec
-    this->pelec->omega = ucell.omega;
-
-    //! Inititlize the charge density.
-    this->chr.allocate(inp.nspin);
-
-    //! Initialize DFT-1/2
-    if (PARAM.inp.dfthalf_type > 0)
-    {
-        vsep_cell = new VSep;
-        vsep_cell->init_vsep(*this->pw_rhod, ucell.sep_cell);
-    }
-
-    //! Initialize the potential.
-    if (this->pelec->pot == nullptr)
-    {
-        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
-              this->pw_rho, &ucell, &this->locpp.vloc, &this->sf,
-              &this->solvent, &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc), vsep_cell);
-    }
-
-    //! Initalize local pseudopotential
-    this->locpp.init_vloc(ucell, this->pw_rhod);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
-    //! Initalize non-local pseudopotential
-    this->ppcell.init(ucell, &this->sf, this->pw_wfc);
-    this->ppcell.init_vnl(ucell, this->pw_rhod);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-*/
-
-
-
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
@@ -162,19 +99,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
-
-/*
-    //! Setup occupations
-    if (inp.ocp)
-    {
-        elecstate::fixed_weights(inp.ocp_kb,
-                                 inp.nbands,
-                                 inp.nelec,
-                                 this->pelec->klist,
-                                 this->pelec->wg,
-                                 this->pelec->skip_weights);
-    }
-*/
 
     //! Initialize exx pw
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
