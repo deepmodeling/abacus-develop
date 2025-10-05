@@ -20,6 +20,12 @@ void setup_pwrho(
 		const std::string &classname,
 		const Input_para& inp); // input parameters *
 
+
+void teardown_pwrho(bool &pw_rho_flag,
+		const bool double_grid,
+		ModulePW::PW_Basis* &pw_rho, // pw for rhod
+		ModulePW::PW_Basis* &pw_rhod); // pw for rhod
+
 }
 
 

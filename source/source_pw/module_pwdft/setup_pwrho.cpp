@@ -117,3 +117,23 @@ void pw::setup_pwrho(
     return;
 }
 
+
+void pw::teardown_pwrho(bool &pw_rho_flag,
+		const bool double_grid,
+		ModulePW::PW_Basis* &pw_rho, // pw for rhod
+		ModulePW::PW_Basis* &pw_rhod) // pw for rhod
+{
+    if (pw_rho_flag == true)
+    {
+        delete pw_rho;
+        pw_rho_flag = false;
+    }
+
+    if (double_grid)
+    {
+        delete pw_rhod;
+    }
+
+   return;
+}
+

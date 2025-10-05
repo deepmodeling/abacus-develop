@@ -27,15 +27,6 @@ ESolver_FP::ESolver_FP()
 
 ESolver_FP::~ESolver_FP()
 {
-    if (pw_rho_flag == true)
-    {
-        delete this->pw_rho;
-        this->pw_rho_flag = false;
-    }
-    if (PARAM.globalv.double_grid)
-    {
-        delete this->pw_rhod;
-    }
     delete this->pelec;
 }
 
@@ -265,6 +256,9 @@ void ESolver_FP::after_all_runners(UnitCell& ucell)
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+
+    // mohan add 20251005
+    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
 }
 
 } // namespace ModuleESolver
