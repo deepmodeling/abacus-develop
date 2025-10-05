@@ -1,26 +1,15 @@
 #include "source_pw/module_pwdft/setup_pwrho.h"
+#include "source_io/print_info.h" // use print_rhofft
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
-#include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/VSep_in_pw.h"
-
-template <typename T, typename Device>
-void pw::setup_pot(const int istep, 
+void pw::setup_pwrho(
 		UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
-        Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
-		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
-		pseudopot_cell_vl &locpp, // local pseudopotentials
-		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<T, Device>* kspw_psi, // electronic wave functions
-        hamilt::Hamilt<T, Device>* p_hamilt, // hamiltonian
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		const bool double_grid, // for USPP
+        bool &pw_rho_flag, // flag for allocation of pw_rho
+		ModulePW::PW_Basis* &pw_rho, // pw for rhod
+		ModulePW::PW_Basis* &pw_rhod, // pw for rhod
+		ModulePW::PW_Basis_Big* &pw_big, // pw for rhod
+		const std::string &classname,
 		const Input_para& inp) // input parameters *
 {
     ModuleBase::TITLE("pw", "setup_pwrho");
@@ -57,7 +46,7 @@ void pw::setup_pot(const int istep,
     pw_rho_flag = true;
 
     // initialize pw_rhod
-    if (PARAM.globalv.double_grid)
+    if (double_grid)
     {
         pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precision);
     }
@@ -70,137 +59,61 @@ void pw::setup_pot(const int istep,
     pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
     pw_big->setbxyz(inp.bx, inp.by, inp.bz);
 
-    // setup the structure factors
-    sf.set(pw_rhod, inp.nbspline);
-
-    //! read pseudopotentials, move somewhere else??? mohan note 20251005
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
-
     //! initialie the plane wave basis for rho
 #ifdef __MPI
-    this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+    pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
 
     //! for OFDFT calculations
-    if (this->classname == "ESolver_OF" || inp.of_ml_gene_data == 1)
+    if (classname == "ESolver_OF" || inp.of_ml_gene_data == 1)
     {
-        this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
+        pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
     }
 
     //! initialize the FFT grid
     if (inp.nx * inp.ny * inp.nz == 0)
     {
-        this->pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, 4.0 * inp.ecutwfc);
+        pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, 4.0 * inp.ecutwfc);
     }
     else
     {
-        this->pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.nx, inp.ny, inp.nz);
+        pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.nx, inp.ny, inp.nz);
     }
 
-    this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
-    this->pw_rho->fft_bundle.initfftmode(inp.fft_mode);
-    this->pw_rho->setuptransform();
-    this->pw_rho->collect_local_pw();
-    this->pw_rho->collect_uniqgg();
+    pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
+    pw_rho->fft_bundle.initfftmode(inp.fft_mode);
+    pw_rho->setuptransform();
+    pw_rho->collect_local_pw();
+    pw_rho->collect_uniqgg();
 
     //! initialize the double grid (for uspp) if necessary
-    if ( PARAM.globalv.double_grid)
+    if (double_grid)
     {
         ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
 #ifdef __MPI
-        this->pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+        pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
-        if (this->classname == "ESolver_OF")
+        if (classname == "ESolver_OF")
         {
-            this->pw_rhod->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
+            pw_rhod->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
         }
         if (inp.ndx * inp.ndy * inp.ndz == 0)
         {
-            this->pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ecutrho);
+            pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ecutrho);
         }
         else
         {
-            this->pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ndx, inp.ndy, inp.ndz);
+            pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ndx, inp.ndy, inp.ndz);
         }
-        this->pw_rhod->initparameters(false, inp.ecutrho);
-        this->pw_rhod->fft_bundle.initfftmode(inp.fft_mode);
-        pw_rhod_sup->setuptransform(this->pw_rho);
-        this->pw_rhod->collect_local_pw();
-        this->pw_rhod->collect_uniqgg();
+        pw_rhod->initparameters(false, inp.ecutrho);
+        pw_rhod->fft_bundle.initfftmode(inp.fft_mode);
+        pw_rhod_sup->setuptransform(pw_rho);
+        pw_rhod->collect_local_pw();
+        pw_rhod->collect_uniqgg();
     }
+
+    ModuleIO::print_rhofft(pw_rhod, pw_rho, pw_big, GlobalV::ofs_running);
 
     return;
 }
 
-template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
-        const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
-        Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
-		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
-		pseudopot_cell_vl &locpp, // local pseudopotentials
-		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
-        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-		const Input_para& inp); // input parameters
-
-
-template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
-        const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
-        Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
-		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
-		pseudopot_cell_vl &locpp, // local pseudopotentials
-		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
-        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* p_hamilt, // hamiltonian
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-		const Input_para& inp); // input parameters
-
-#if ((defined __CUDA) || (defined __ROCM))
-
-template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
-        const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
-        Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
-		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
-		pseudopot_cell_vl &locpp, // local pseudopotentials
-		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
-        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-		const Input_para& inp); // input parameters
-
-template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
-        const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
-		const K_Vectors &kv, // kpoints
-        Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
-		const Parallel_Grid &para_grid, // parallel of FFT grids
-		const Charge &chr, // charge density
-		pseudopot_cell_vl &locpp, // local pseudopotentials
-		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
-        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* p_hamilt, // hamiltonian
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
-		const Input_para& inp); // input parameters
-
-#endif

@@ -82,7 +82,7 @@ class ESolver_FP: public ESolver
     //! solvent model
     surchem solvent;
 
-    int pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
+    bool pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
 
     //! the start time of scf iteration
     #ifdef __MPI
