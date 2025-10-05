@@ -91,10 +91,11 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
     //! setup and allocation for pelec, charge density, potentials, etc. 
-//    elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
-  //    this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
-    //  this->pw_rhod, this->pw_big, this->solvent, inp);
+    elecstate::setup_estate_pw<T, Device>(ucell, this->kv, this->sf, this->pelec, this->chr,
+      this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
+      this->pw_rhod, this->pw_big, this->solvent, inp);
 
+/*
     //! Initialize ElecState, set pelec pointer
     if (this->pelec == nullptr)
     {
@@ -143,6 +144,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     this->ppcell.init(ucell, &this->sf, this->pw_wfc);
     this->ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+*/
 
 
 
@@ -161,6 +163,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
+/*
     //! Setup occupations
     if (inp.ocp)
     {
@@ -171,8 +174,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                  this->pelec->wg,
                                  this->pelec->skip_weights);
     }
-
-
+*/
 
     //! Initialize exx pw
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"

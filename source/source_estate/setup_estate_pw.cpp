@@ -7,14 +7,14 @@ template <typename T, typename Device>
 void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
+		elecstate::ElecState* &pelec, // pointer of electrons
 		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
-		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
-		ModulePW::PW_Basis *pw_rho, // pw for rho
-		ModulePW::PW_Basis *pw_rhod, // pw for rhod
+		VSep* &vsep_cell, // U-1/2 method
+		ModulePW::PW_Basis_K* pw_wfc,  // pw for wfc
+		ModulePW::PW_Basis* pw_rho, // pw for rho
+		ModulePW::PW_Basis* pw_rhod, // pw for rhod
         ModulePW::PW_Basis_Big* pw_big, // pw for big grid
         surchem &solvent, //  solvent
 		const Input_para& inp) // input parameters
@@ -69,7 +69,6 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
     ppcell.init_vnl(ucell, pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-/*
     //! Setup occupations
     if (inp.ocp)
     {
@@ -80,7 +79,6 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
                                  pelec->wg,
                                  pelec->skip_weights);
     }
-*/
 
     return;
 }
@@ -117,11 +115,11 @@ template void elecstate::setup_estate_pw<std::complex<float>, base_device::DEVIC
         UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
+		elecstate::ElecState* &pelec, // pointer of electrons
 		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
+		VSep* &vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		ModulePW::PW_Basis *pw_rho, // pw for rho
 		ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -133,11 +131,11 @@ template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVI
         UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
+		elecstate::ElecState* &pelec, // pointer of electrons
 		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
+		VSep* &vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		ModulePW::PW_Basis *pw_rho, // pw for rho
 		ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -159,11 +157,11 @@ template void elecstate::setup_estate_pw<std::complex<float>, base_device::DEVIC
         UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
+		elecstate::ElecState* &pelec, // pointer of electrons
 		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
+		VSep* &vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		ModulePW::PW_Basis *pw_rho, // pw for rho
 		ModulePW::PW_Basis *pw_rhod, // pw for rhod
@@ -175,11 +173,11 @@ template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVI
         UnitCell& ucell, // unitcell
 		K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
-		elecstate::ElecState *pelec, // pointer of electrons
+		elecstate::ElecState* &pelec, // pointer of electrons
 		Charge &chr, // charge density
 		pseudopot_cell_vl &locpp, // local pseudopotentials
 		pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-		VSep* vsep_cell, // U-1/2 method
+		VSep* &vsep_cell, // U-1/2 method
 		ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
 		ModulePW::PW_Basis *pw_rho, // pw for rho
 		ModulePW::PW_Basis *pw_rhod, // pw for rhod
