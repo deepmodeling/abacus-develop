@@ -606,6 +606,7 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::after_all_runners(UnitCell& ucell)
 {
+    ModuleBase::TITLE("ESolver_KS", "after_all_runners");
     //! Ensure the function of base class is called last 
     ESolver_FP::after_all_runners(ucell);
 }

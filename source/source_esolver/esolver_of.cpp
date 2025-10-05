@@ -540,6 +540,8 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
  */
 void ESolver_OF::after_all_runners(UnitCell& ucell)
 {
+    ModuleBase::TITLE("ESolver_OF", "after_all_runners");
+
     //! Ensure the function of base class is called last 
     ESolver_FP::after_all_runners(ucell);
 }

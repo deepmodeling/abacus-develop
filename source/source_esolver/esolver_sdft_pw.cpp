@@ -259,6 +259,8 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
+    ModuleBase::TITLE("ESolver_SDFT_PW", "after_all_runners");
+
     // release memory
     if (this->method_sto == 2)
     {

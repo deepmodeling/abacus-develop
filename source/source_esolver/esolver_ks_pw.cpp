@@ -530,6 +530,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
+    ModuleBase::TITLE("ESolver_KS_PW", "after_all_runners");
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->psi,
