@@ -530,7 +530,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::after_all_runners(ucell);
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->psi,
@@ -538,6 +537,9 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
 
     elecstate::teardown_estate_pw<T, Device>(this->pelec, this->vsep_cell);
+
+    //! Ensure the function of base class is called last 
+    ESolver_KS<T, Device>::after_all_runners(ucell);
     
 }
 

@@ -410,7 +410,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
-    ESolver_KS<TK>::after_all_runners(ucell);
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
@@ -511,6 +510,9 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 #endif
         );
     }
+
+    //! Ensure the function of base class is called last 
+    ESolver_KS<TK>::after_all_runners(ucell);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
