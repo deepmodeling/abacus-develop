@@ -30,6 +30,8 @@ ESolver_FP::~ESolver_FP()
 	//****************************************************
 	// do not add any codes in this deconstructor funcion
 	//****************************************************
+    // mohan add 20251005
+    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
 
 	delete this->pelec;
 }
@@ -255,15 +257,12 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
 void ESolver_FP::after_all_runners(UnitCell& ucell)
 {
-    ModuleBase::TITLE("ESolver_FP", "after_all_runners");
     // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    // mohan add 20251005, delete pw_rho and pw_rhod, ensure following functions will not use these
-    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
 }
 
 } // namespace ModuleESolver

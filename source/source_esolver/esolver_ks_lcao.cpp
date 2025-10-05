@@ -410,6 +410,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
+
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
     // 1) write projected band structure
