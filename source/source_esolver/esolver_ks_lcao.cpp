@@ -97,6 +97,9 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
 }
 
 template <typename TK, typename TR>

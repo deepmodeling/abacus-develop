@@ -126,12 +126,14 @@ void pw::teardown_pwrho(bool &pw_rho_flag,
     if (pw_rho_flag == true)
     {
         delete pw_rho;
+        pw_rho = nullptr;
         pw_rho_flag = false;
     }
 
-    if (double_grid)
+    if (double_grid == true)
     {
         delete pw_rhod;
+        pw_rhod = nullptr;
     }
 
    return;

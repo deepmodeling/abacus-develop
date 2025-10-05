@@ -27,6 +27,9 @@ ESolver_SDFT_PW<T, Device>::ESolver_SDFT_PW()
 template <typename T, typename Device>
 ESolver_SDFT_PW<T, Device>::~ESolver_SDFT_PW()
 {
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
 }
 
 template <typename T, typename Device>

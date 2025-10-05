@@ -27,7 +27,13 @@ ESolver_FP::ESolver_FP()
 
 ESolver_FP::~ESolver_FP()
 {
-    delete this->pelec;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+    // mohan add 20251005
+    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
+
+	delete this->pelec;
 }
 
 void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
@@ -257,8 +263,6 @@ void ESolver_FP::after_all_runners(UnitCell& ucell)
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    // mohan add 20251005
-    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
 }
 
 } // namespace ModuleESolver

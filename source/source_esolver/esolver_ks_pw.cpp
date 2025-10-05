@@ -42,7 +42,10 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
-    // delete Hamilt
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	// delete Hamilt
     this->deallocate_hamilt();
 
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
