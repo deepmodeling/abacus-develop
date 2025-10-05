@@ -1,12 +1,10 @@
 #include "esolver_fp.h"
 
-//#include "source_base/global_variable.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-//#include "source_pw/module_pwdft/global.h"
 #include "source_io/cif_io.h"
 #include "source_io/cube_io.h" // use write_vdata_palgrid
 #include "source_io/json_output/init_info.h"
@@ -15,7 +13,6 @@
 #include "source_io/print_info.h"
 #include "source_io/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
-//#include "source_cell/k_vector_utils.h"
 #include "source_io/ctrl_output_fp.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
@@ -73,16 +70,16 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
-    // 1) output convergence information
+    //! Output convergence information
     ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
 
-    // 2) write fermi energy
+    //! Write Fermi energy
     ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
 
-    // 3) update delta_rho for charge extrapolation
+    //! Update delta_rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
-    // 4) print out charge density, potential, elf, etc.
+    //! print out charge density, potential, elf, etc.
 	ModuleIO::ctrl_output_fp(ucell, this->pelec, this->pw_big, this->pw_rhod, 
 			this->chr, this->solvent, this->Pgrid, istep); 
 
@@ -127,9 +124,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
-    //----------------------------------------------------------
     // charge extrapolation
-    //----------------------------------------------------------
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
@@ -141,18 +136,14 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
                                     GlobalV::ofs_warning);
     }
 
-    //----------------------------------------------------------
     //! calculate D2 or D3 vdW
-    //----------------------------------------------------------
     auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
     }
 
-    //----------------------------------------------------------
     //! calculate ewald energy
-    //----------------------------------------------------------
     if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
@@ -190,9 +181,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
     }
 
-    //----------------------------------------------------------
     //! output total local potential of the initial charge density
-    //----------------------------------------------------------
     if (PARAM.inp.out_pot == 3)
     {
         for (int is = 0; is < nspin; is++)
@@ -227,7 +216,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
 void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
-    //! output charge density
+    //! output charge density in G-space, or if available, kinetic energy density in G-space
     if (PARAM.inp.out_chg[0] != -1)
     {
         if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
@@ -271,6 +260,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
 void ESolver_FP::after_all_runners(UnitCell& ucell)
 {
+    // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;

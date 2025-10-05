@@ -26,7 +26,6 @@
 #include "source_io/json_output/output_info.h"
 
 
-
 namespace ModuleESolver
 {
 

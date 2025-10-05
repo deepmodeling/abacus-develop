@@ -47,9 +47,7 @@ class ESolver_FP: public ESolver
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
 
-    //! ------------------------------------------------------------------------------
     //! These pointers will be deleted in the free_pointers() function every ion step.
-    //! ------------------------------------------------------------------------------
     elecstate::ElecState* pelec = nullptr; ///< Electronic states
 
     //! K points in Brillouin zone
