@@ -5,28 +5,53 @@
 
 namespace ModuleIO
 {
+
+
 void ReadInput::item_relax()
 {
     {
         Input_Item item("relax_method");
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
-        read_sync_string(input.relax_method);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs","bfgs_trad","lbfgs"};
-            if (std::find(relax_methods.begin(),relax_methods.end(), para.input.relax_method)==relax_methods.end())
-            {
-                const std::string warningstr = nofound_str(relax_methods, "relax_method");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+        if(item.get_size()==1)
+        {
+            para.input.relax_method[0] = item.str_values[0];
+            para.input.relax_method[1] = "1"; 
+        }
+        else if(item.get_size()>=2)
+        {
+            para.input.relax_method[0] = item.str_values[0];
+            para.input.relax_method[1] = item.str_values[1];
+        }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {          
+        const std::vector<std::string> relax_methods = {"cg", "sd", "cg_bfgs","lbfgs","bfgs"};
+        if (std::find(relax_methods.begin(), relax_methods.end(), para.input.relax_method[0]) == relax_methods.end()) {
+            const std::string warningstr = nofound_str(relax_methods, "relax_method");
+            ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+        }
         };
         this->add_item(item);
+        
+        // Input_Item item("relax_method");
+        // item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
+        // read_sync_string(input.relax_method);
+        // item.check_value = [](const Input_Item& item, const Parameter& para) {
+        //     const std::vector<std::string> relax_methods = {"cg", "bfgs_old", "sd", "cg_bfgs","bfgs","lbfgs"};
+        //     if (std::find(relax_methods.begin(),relax_methods.end(), para.input.relax_method)==relax_methods.end())
+        //     {
+        //         const std::string warningstr = nofound_str(relax_methods, "relax_method");
+        //         ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+        //     }
+        // };
+        // this->add_item(item);
     }
     {
         Input_Item item("relax_new");
         item.annotation = "whether to use the new relaxation method";
         read_sync_bool(input.relax_new);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.relax_new && para.input.relax_method != "cg")
+            if (para.input.relax_new && para.input.relax_method[0] != "cg")
             {
                 para.input.relax_new = false;
             }

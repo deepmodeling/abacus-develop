@@ -1,5 +1,4 @@
 #include "ions_move_cg.h"
-
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -77,20 +76,16 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     // ncggrad is a parameter to control the cg method , every ten cg directions,
     // we change the direction back to the steepest descent method                       
     static int ncggrad = 0;
-
     static double fa = 0.0;
     static double fb = 0.0;
     static double fc = 0.0;
-
     static double xa = 0.0;
     static double xb = 0.0;
     static double xc = 0.0;
     static double xpt = 0.0;
     static double steplength = 0.0;
     static double fmax = 0.0;
-
     static int nbrent = 0;
-
     
     // some arrays
     double *pos = new double[dim];
@@ -100,7 +95,6 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     double *cg_grad = new double[dim];
     double best_x = 0.0;
     double fmin = 0.0;
-
     int flag = 0;
 
     ModuleBase::GlobalFunc::ZEROS(pos, dim);
@@ -137,7 +131,6 @@ CG_begin:
     {
         Ions_Move_Basic::check_converged(ucell, grad);
     }
-
     if (Ions_Move_Basic::converged)
     {
         Ions_Move_Basic::terminate(ucell);
@@ -155,21 +148,7 @@ CG_begin:
                           flag); // we use the last direction ,the last grad and the grad now to get the direction now
             ncggrad++;
 
-            double norm = 0.0;
-            for (int i = 0; i < dim; ++i)
-            {
-                norm += pow(cg_grad[i], 2);
-            }
-            norm = sqrt(norm);
-
-            if (norm != 0.0)
-            {
-                for (int i = 0; i < dim; ++i)
-                {
-                    cg_gradn[i] = cg_grad[i] / norm;
-                }
-            }
-
+            normalize(cg_gradn, cg_grad, dim);
             setup_move(move0, cg_gradn, steplength); // move the atom position
             Ions_Move_Basic::move_atoms(ucell, move0, pos);
 
@@ -181,16 +160,16 @@ CG_begin:
 
             f_cal(move0, move0, dim, xb); // xb = trial steplength
             f_cal(move0, grad, dim, fa);  // fa is the projection force in this direction
-
             fmax = fa;
             sd = false;
 
-            if (Ions_Move_Basic::relax_method == "cg_bfgs")
+            if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
             {
                 if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
                     < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
-                    Ions_Move_Basic::relax_method = "bfgs";
+                    Ions_Move_Basic::relax_method[0] = "bfgs";
+                    Ions_Move_Basic::relax_method[1] = "2";
                 }
                 Ions_Move_Basic::best_xxx = steplength;
             }
@@ -204,7 +183,6 @@ CG_begin:
                 double e1 = etot_in;
                 f_cal(move0, grad, dim, fb);
                 f_cal(move0, move0, dim, xb);
-
                 if ((std::abs(fb) < std::abs((fa) / 10.0)))
                 {
                     sd = true;
@@ -214,21 +192,7 @@ CG_begin:
                     goto CG_begin;
                 }
 
-                double norm = 0.0;
-                for (int i = 0; i < dim; ++i)
-                {
-                    norm += pow(cg_grad0[i], 2);
-                }
-                norm = sqrt(norm);
-
-                if (norm != 0.0)
-                {
-                    for (int i = 0; i < dim; ++i)
-                    {
-                        cg_gradn[i] = cg_grad0[i] / norm;
-                    }
-                }
-
+                normalize(cg_gradn, cg_grad0, dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
                 if (best_x > 6 * xb || best_x < (-xb))
@@ -238,7 +202,6 @@ CG_begin:
 
                 setup_move(move, cg_gradn, best_x);
                 Ions_Move_Basic::move_atoms(ucell, move, pos);
-
                 trial = false;
                 xa = 0;
                 f_cal(move0, move, dim, xc);
@@ -250,7 +213,6 @@ CG_begin:
             {
                 double xtemp, ftemp;
                 f_cal(move0, grad, dim, fc);
-
                 fmin = std::abs(fc);
                 nbrent++;
 
@@ -275,24 +237,9 @@ CG_begin:
                         goto CG_begin;
                     }
 
-                    double norm = 0.0;
-                    for (int i = 0; i < dim; ++i)
-                    {
-                        norm += pow(cg_grad0[i], 2);
-                    }
-                    norm = sqrt(norm);
-
-                    if (norm != 0.0)
-                    {
-                        for (int i = 0; i < dim; ++i)
-                        {
-                            cg_gradn[i] = cg_grad0[i] / norm;
-                        }
-                    }
-
+                    normalize(cg_gradn, cg_grad0, dim);
                     setup_move(move, cg_gradn, best_x);
                     Ions_Move_Basic::move_atoms(ucell, move, pos);
-
                     Ions_Move_Basic::relax_bfgs_init = xc;
                 }
             }
@@ -342,7 +289,6 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
             cgp_gp += cg_grad0[i] * grad0[i];
             cgp_g += cg_grad0[i] * grad[i];
         }
-
         assert(g_gp != 0.0);
         const double gamma1 = gg / gp_gp; // FR
         // const double gamma2 = -(gg - g_gp)/(cgp_g - cgp_gp);  //CW
@@ -505,6 +451,25 @@ void Ions_Move_CG::setup_move(double *move, double *cg_gradn, const double &trus
     for (int i = 0; i < dim; ++i)
     {
         move[i] = -cg_gradn[i] * trust_radius;
+    }
+    return;
+}
+
+void Ions_Move_CG::normalize(double *cg_gradn, const double *cg_grad, int dim)
+{
+    double norm = 0.0;
+    for (int i = 0; i < dim; ++i)
+    {
+        norm += pow(cg_grad[i], 2);
+    }
+    norm = sqrt(norm);
+
+    if (norm != 0.0)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            cg_gradn[i] = cg_grad[i] / norm;
+        }
     }
     return;
 }

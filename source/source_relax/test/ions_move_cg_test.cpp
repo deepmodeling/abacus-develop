@@ -138,7 +138,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
-    Ions_Move_Basic::relax_method = "cg_bfgs";
+    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
@@ -162,7 +162,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 1.0);
@@ -201,7 +201,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 10.0);
@@ -239,7 +239,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -279,7 +279,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 490.0);
@@ -318,7 +318,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -358,7 +358,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
+    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_NEAR(Ions_Move_Basic::relax_bfgs_init, 1.2345679012345678, 1e-12);
