@@ -2,7 +2,6 @@
 
 #include "source_estate/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 
 #include "source_hsolver/diago_iter_assist.h"
@@ -17,6 +16,7 @@
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 
+//#include "source_estate/elecstate_pw_sdft.h"
 //#include "source_base/global_variable.h"
 //#include "source_base/kernels/math_kernel_op.h"
 //#include "source_base/memory.h"
@@ -50,7 +50,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 {
     // delete Hamilt
     this->deallocate_hamilt();
-
 
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
