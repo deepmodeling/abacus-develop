@@ -37,6 +37,7 @@ list(APPEND objects
     cal_nelec_nband.cpp
     read_pseudo.cpp
     cal_wfc.cpp
+    setup_estate_pw.cpp
 )
 
 if(ENABLE_LCAO)

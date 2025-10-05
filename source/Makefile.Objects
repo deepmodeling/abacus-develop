@@ -238,6 +238,7 @@ OBJS_ELECSTAT=elecstate.o\
     gatefield.o\
     potential_new.o\
     potential_types.o\
+    pot_sep.o\
     pot_local.o\
     pot_local_paw.o\
     H_Hartree_pw.o\
@@ -248,7 +249,7 @@ OBJS_ELECSTAT=elecstate.o\
     cal_nelec_nband.o\
     read_pseudo.o\
     cal_wfc.o\
-    pot_sep.o\
+    setup_estate_pw.cpp\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\

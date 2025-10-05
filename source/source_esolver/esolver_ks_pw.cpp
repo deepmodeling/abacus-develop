@@ -32,6 +32,7 @@
 #include <chrono>
 
 #include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
+#include "source_estate/setup_estate_pw.h" // mohan add 20251005
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
 
 namespace ModuleESolver
@@ -51,16 +52,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     // delete Hamilt
     this->deallocate_hamilt();
 
-    if (this->vsep_cell != nullptr)
-    {
-        delete this->vsep_cell;
-    }
-
-    if (this->pelec != nullptr)
-    {
-        delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
-        this->pelec = nullptr;
-    }
 
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
@@ -97,53 +88,10 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! Call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
-    //! Initialize ElecState, set pelec pointer
-    if (this->pelec == nullptr)
-    {
-        if (inp.esolver_type == "sdft")
-        {
-            //! SDFT only supports double precision currently
-            this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
-                &(this->chr), &(this->kv), &ucell, &(this->ppcell),
-                this->pw_rhod, this->pw_rho, this->pw_big);
-        }
-        else
-        {
-            this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                &(this->chr), &(this->kv), &ucell, &this->ppcell,
-                this->pw_rhod, this->pw_rho, this->pw_big);
-        }
-    }
-
-    //! Set the cell volume variable in pelec
-    this->pelec->omega = ucell.omega;
-
-    //! Inititlize the charge density.
-    this->chr.allocate(inp.nspin);
-
-    //! Initialize DFT-1/2
-    if (PARAM.inp.dfthalf_type > 0)
-    {
-        this->vsep_cell = new VSep;
-        this->vsep_cell->init_vsep(*this->pw_rhod, ucell.sep_cell);
-    }
-
-    //! Initialize the potential.
-    if (this->pelec->pot == nullptr)
-    {
-        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
-              this->pw_rho, &ucell, &this->locpp.vloc, &(this->sf), 
-              &(this->solvent), &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc), this->vsep_cell);
-    }
-
-    //! Initalize local pseudopotential
-    this->locpp.init_vloc(ucell, this->pw_rhod);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-
-    //! Initalize non-local pseudopotential
-    this->ppcell.init(ucell, &this->sf, this->pw_wfc);
-    this->ppcell.init_vnl(ucell, this->pw_rhod);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+    //! setup and allocation for pelec, charge density, potentials, etc. 
+    elecstate::setup_estate_pw(ucell, this->kv, this->sf, this->pelec, this->chr,
+      this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
+      this->pw_rhod, this->pw_big, this->solvent, inp);
 
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
@@ -159,17 +107,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
-
-    //! Setup occupations
-    if (inp.ocp)
-    {
-        elecstate::fixed_weights(inp.ocp_kb,
-                                 inp.nbands,
-                                 inp.nelec,
-                                 this->pelec->klist,
-                                 this->pelec->wg,
-                                 this->pelec->skip_weights);
-    }
 
     //! Initialize exx pw
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
@@ -604,7 +541,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->psi,
             this->kspw_psi, this->__kspw_psi, this->sf, 
             this->ppcell, this->solvent, this->ctx, this->Pgrid, PARAM.inp); 
-
+    
+    elecstate::teardown_estate_pw(this->pelec, this->vsep_cell);
 }
 
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;

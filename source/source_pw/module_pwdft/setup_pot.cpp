@@ -23,6 +23,7 @@ void pw::setup_pot(const int istep,
 		const ModulePW::PW_Basis *pw_rhod, // pw for rhod
 		const Input_para& inp) // input parameters
 {
+    ModuleBase::TITLE("pw", "setup_pot");
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
