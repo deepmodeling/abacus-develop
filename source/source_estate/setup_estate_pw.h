@@ -29,7 +29,7 @@ void setup_estate_pw(UnitCell& ucell, // unitcell
 		const Input_para& inp); // input parameters
 
 template <typename T, typename Device>
-void teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell); 
+void teardown_estate_pw(elecstate::ElecState* &pelec, VSep* &vsep_cell); 
 
 }
 

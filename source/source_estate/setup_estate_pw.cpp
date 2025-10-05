@@ -69,6 +69,7 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
     ppcell.init_vnl(ucell, pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
+/*
     //! Setup occupations
     if (inp.ocp)
     {
@@ -79,13 +80,14 @@ void elecstate::setup_estate_pw(UnitCell& ucell, // unitcell
                                  pelec->wg,
                                  pelec->skip_weights);
     }
+*/
 
     return;
 }
 
 
 template <typename T, typename Device>
-void elecstate::teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell) 
+void elecstate::teardown_estate_pw(elecstate::ElecState* &pelec, VSep* &vsep_cell) 
 {
     ModuleBase::TITLE("elecstate", "teardown_estate_pw");
 
@@ -94,10 +96,19 @@ void elecstate::teardown_estate_pw(elecstate::ElecState *pelec, VSep* vsep_cell)
         delete vsep_cell;
     }
 
+    // mohan update 20251005 to increase the security level
     if (pelec != nullptr)
     {
-        delete reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
-        pelec = nullptr;
+		auto* pw_elec = dynamic_cast<elecstate::ElecStatePW<T, Device>*>(pelec);
+		if (pw_elec) 
+		{
+			delete pw_elec;
+			pelec = nullptr;
+		} 
+		else 
+		{
+            ModuleBase::WARNING_QUIT("elecstate::teardown_estate_pw", "Invalid ElecState type");
+        }
     }
 }
 
@@ -136,10 +147,10 @@ template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVI
 
 
 template void elecstate::teardown_estate_pw<std::complex<float>, base_device::DEVICE_CPU>(
-        elecstate::ElecState *pelec, VSep* vsep_cell); 
+        elecstate::ElecState* &pelec, VSep* &vsep_cell); 
 
 template void elecstate::teardown_estate_pw<std::complex<double>, base_device::DEVICE_CPU>(
-        elecstate::ElecState *pelec, VSep* vsep_cell); 
+        elecstate::ElecState* &pelec, VSep* &vsep_cell); 
 
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -177,9 +188,9 @@ template void elecstate::setup_estate_pw<std::complex<double>, base_device::DEVI
 		const Input_para& inp); // input parameters
 
 template void elecstate::teardown_estate_pw<std::complex<float>, base_device::DEVICE_GPU>(
-        elecstate::ElecState *pelec, VSep* vsep_cell); 
+        elecstate::ElecState* &pelec, VSep* &vsep_cell); 
 
 template void elecstate::teardown_estate_pw<std::complex<double>, base_device::DEVICE_GPU>(
-        elecstate::ElecState *pelec, VSep* vsep_cell); 
+        elecstate::ElecState* &pelec, VSep* &vsep_cell); 
 
 #endif
