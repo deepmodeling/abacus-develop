@@ -236,6 +236,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners(UnitCell& ucell)
     {
+        ESolver_KS_PW<T>::after_all_runners(ucell);
 
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
@@ -261,10 +262,6 @@ namespace ModuleESolver
             );
         }
 #endif
-
-        //! Ensure the function of base class is called last 
-        ESolver_KS_PW<T>::after_all_runners(ucell);
-
     }
     template class ESolver_KS_LIP<std::complex<float>>;
     template class ESolver_KS_LIP<std::complex<double>>;
