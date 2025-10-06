@@ -680,6 +680,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
+	const std::vector<std::vector<TK>>& dm_vec
+		= dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
     {
@@ -689,11 +692,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             if (GlobalC::dftu.omc != 2)
             {
-                const std::vector<std::vector<TK>>& tmp_dm
-                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
                 ModuleDFTU::dftu_cal_occup_m(iter,
                                              ucell,
-                                             tmp_dm,
+                                             dm_vec,
                                              this->kv,
                                              this->p_chgmix->get_mixing_beta(),
                                              this->p_hamilt);
@@ -707,11 +708,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 #ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
-        const std::vector<std::vector<TK>>& dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-
-        ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
-        DeePKS_domain::update_dmr(this->kv.kvec_d, dm, ucell, orb_, this->pv, this->gd, ld.dm_r);
+        ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
+        DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, ld.dm_r);
         this->pelec->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
         this->pelec->f_en.edeepks_delta = ld.E_delta;
     }
