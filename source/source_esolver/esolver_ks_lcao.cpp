@@ -393,8 +393,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
           this->orb_, this->pw_rho, this->pw_rhod,
           this->sf, this->locpp.vloc, 
 #ifdef __EXX
-				*this->exd,
-				*this->exc,
+				this->exd,
+				this->exc,
 #endif
 				this->solvent);
 

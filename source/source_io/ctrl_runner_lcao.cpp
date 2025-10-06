@@ -10,10 +10,10 @@
 #include "source_io/write_vxc_r.hpp"
 
 // functions
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#include "source_lcao/module_ri/RPA_LRI.h" // use RPA code
-#endif
+//#ifdef __EXX
+//#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
+//#include "source_lcao/module_ri/RPA_LRI.h" // use RPA code
+//#endif
 
 namespace ModuleIO
 {
@@ -38,8 +38,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 #ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+		std::shared_ptr<Exx_LRI_Interface<TK, double>> exd,
+		std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc,
 #endif
         surchem &solvent)             // solvent model
 {
@@ -166,8 +166,8 @@ template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      /
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 #ifdef __EXX
-		Exx_LRI_Interface<double, double>& exd,
-		Exx_LRI_Interface<double, std::complex<double>>& exc,
+		std::shared_ptr<Exx_LRI_Interface<double, double>> exd,
+		std::shared_ptr<Exx_LRI_Interface<double, std::complex<double>>> exc,
 #endif
         surchem &solvent);             // solvent model
 
@@ -190,8 +190,8 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 #ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
+		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
+		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
 #endif
         surchem &solvent);             // solvent model
 
@@ -214,8 +214,8 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 #ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
+		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
+		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
 #endif
         surchem &solvent);             // solvent model
 

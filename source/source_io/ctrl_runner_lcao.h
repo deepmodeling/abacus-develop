@@ -35,8 +35,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 #ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+		std::shared_ptr<Exx_LRI_Interface<TK, double>> exd,
+		std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc,
 #endif
         surchem &solvent);             // solvent model
 
