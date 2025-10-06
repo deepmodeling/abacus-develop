@@ -242,24 +242,16 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
 			this->scf_nmax_flag=true;
 		}
 
-		//----------------------------------------------------------------
 		// 3) initialization of SCF iterations
-		//----------------------------------------------------------------
 		this->iter_init(ucell, istep, iter);
 
-		//----------------------------------------------------------------
         // 4) use Hamiltonian to obtain charge density
-		//----------------------------------------------------------------
         this->hamilt2rho(ucell, istep, iter, diag_ethr);
 
-		//----------------------------------------------------------------
         // 5) finish scf iterations
-		//----------------------------------------------------------------
         this->iter_finish(ucell, istep, iter, conv_esolver);
 
-		//----------------------------------------------------------------
         // 6) check convergence
-		//----------------------------------------------------------------
         if (conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
@@ -271,9 +263,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         }
     } // end scf iterations
 
-	//----------------------------------------------------------------
 	// 7) after scf
-	//----------------------------------------------------------------
     this->after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick(this->classname, "runner");
@@ -592,9 +582,6 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
                                 this->kv);
         }
     }
-
-
-
 }
 
 template <typename T, typename Device>

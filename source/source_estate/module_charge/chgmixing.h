@@ -7,9 +7,11 @@
 namespace module_charge
 {
 
-void chgmixing(const int iter,
+void chgmixing_ks_pw(const int iter,
         Charge_Mixing* p_chgmix,
 		const Input_para& inp); // input parameters
+
+//void chgmixing_ks_lcao();
 
 }
 

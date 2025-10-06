@@ -523,6 +523,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
+	elecstate::DensityMatrix<TK, double>* dm
+		= dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+
     if (iter == 1)
     {
         this->p_chgmix->mix_reset(); // init mixing
@@ -565,8 +568,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         if (PARAM.inp.mixing_dmr) // for mixing_dmr
         {
             // allocate memory for dmr_mdata
-            const elecstate::DensityMatrix<TK, double>* dm
-                = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
             int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
             this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
         }
@@ -652,7 +653,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         {
             this->exd->exx_eachiterinit(istep,
                                         ucell,
-                                        *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                        *dm,
                                         this->kv,
                                         iter);
         }
@@ -660,7 +661,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         {
             this->exc->exx_eachiterinit(istep,
                                         ucell,
-                                        *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                        *dm,
                                         this->kv,
                                         iter);
         }
@@ -671,7 +672,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (istep != 0 || iter != 1)
         {
-            GlobalC::dftu.set_dmr(dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
+            GlobalC::dftu.set_dmr(dm);
         }
         // Calculate U and J if Yukawa potential is used
         GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
@@ -702,7 +703,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // save density matrix DMR for mixing
     if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
-        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         dm->save_DMR();
     }
 }

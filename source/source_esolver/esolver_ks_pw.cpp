@@ -187,7 +187,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
     // perform charge mixing
-    module_charge::chgmixing(iter, this->p_chgmix, PARAM.inp);
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, PARAM.inp);
 
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
