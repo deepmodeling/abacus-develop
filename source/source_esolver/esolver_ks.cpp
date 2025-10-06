@@ -1,7 +1,5 @@
 #include "esolver_ks.h"
-
-// To setup plane wave for electronic wave functions
-#include "pw_setup.h"
+#include "pw_setup.h" // setup plane wave
 
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
@@ -152,10 +150,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 }
 
-//------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS: hamilt2rho_single
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
