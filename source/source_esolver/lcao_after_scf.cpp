@@ -1,5 +1,5 @@
 #include "esolver_ks_lcao.h"
-#include "source_io/ctrl_output_lcao.h"
+#include "source_io/ctrl_scf_lcao.h"
 
 namespace ModuleESolver
 {
@@ -23,7 +23,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 	if(!estate)
 	{
-		ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_lcao","pelec does not exist");
+		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","pelec does not exist");
+	}
+
+	if(!hamilt_lcao)
+	{
+		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_scf","p_hamilt does not exist");
 	}
 
 
@@ -49,7 +54,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
 	if (out_flag)
 	{
-		ModuleIO::ctrl_output_lcao<TK, TR>(ucell,
+		ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
 				PARAM.inp, 
 				this->kv,
 				estate, 
