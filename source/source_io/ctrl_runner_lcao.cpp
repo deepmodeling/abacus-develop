@@ -141,6 +141,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
 
 
+// TK: double  TR: double 
 template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
@@ -165,6 +166,7 @@ template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      /
 #endif
         surchem &solvent);             // solvent model
 
+// TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
@@ -189,6 +191,7 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 #endif
         surchem &solvent);             // solvent model
 
+// TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
         const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point

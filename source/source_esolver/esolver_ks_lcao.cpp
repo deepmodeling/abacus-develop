@@ -1,7 +1,6 @@
 #include "esolver_ks_lcao.h"
 
-
-#include "source_base/formatter.h"
+//#include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
 #include "source_estate/elecstate_tools.h"
@@ -9,19 +8,19 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_io/berryphase.h"
+//#include "source_io/berryphase.h"
 #include "source_io/cube_io.h"
 //#include "source_io/io_npz.h"
-#include "source_io/output_dmk.h"
+//#include "source_io/output_dmk.h"
 #include "source_io/output_log.h"
-#include "source_io/output_mat_sparse.h"
-#include "source_io/output_mulliken.h"
-#include "source_io/output_sk.h"
+//#include "source_io/output_mat_sparse.h"
+//#include "source_io/output_mulliken.h"
+//#include "source_io/output_sk.h"
 #include "source_io/read_wfc_nao.h"
-#include "source_io/to_qo.h"
-#include "source_io/to_wannier90_lcao.h"
-#include "source_io/to_wannier90_lcao_in_pw.h"
-#include "source_io/write_HS.h"
+//#include "source_io/to_qo.h"
+//#include "source_io/to_wannier90_lcao.h"
+//#include "source_io/to_wannier90_lcao_in_pw.h"
+//#include "source_io/write_HS.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -62,6 +61,7 @@
 
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
+#include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
 
 namespace ModuleESolver
@@ -603,8 +603,20 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-	const std::vector<std::vector<TK>>& dm_vec
-		= dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+    auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+
+    if(!estate)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","pelec does not exist");
+    }
+
+    if(!hamilt_lcao)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","p_hamilt does not exist");
+    }
+
+	const std::vector<std::vector<TK>>& dm_vec = estate->get_DM()->get_DMK_vector();
 
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
@@ -621,7 +633,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                              dm_vec,
                                              this->kv,
                                              this->p_chgmix->get_mixing_beta(),
-                                             this->p_hamilt);
+                                             hamilt_lcao);
             }
             GlobalC::dftu.cal_energy_correction(ucell, istep);
         }
@@ -634,8 +646,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
         DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, ld.dm_r);
-        this->pelec->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
-        this->pelec->f_en.edeepks_delta = ld.E_delta;
+        estate->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
+        estate->f_en.edeepks_delta = ld.E_delta;
     }
 #endif
 
@@ -658,8 +670,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         if (PARAM.inp.mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && PARAM.inp.mixing_dmr)
         {
-            elecstate::DensityMatrix<TK, double>* dm = 
-              dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            elecstate::DensityMatrix<TK, double>* dm = estate->get_DM();
             this->p_chgmix->mix_dmr(dm);
         }
     }
@@ -671,7 +682,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // control the output related to the finished iteration
-    ModuleIO::ctrl_iter_lcao<TK, TR>();
+    ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate,
+      this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
+      hamilt_lcao, this->orb_, 
+#ifdef __MLALGO
+      this->ld,
+#endif
+#ifdef __EXX
+      *this->exd,
+      *this->exc,
+#endif
+      iter, istep, conv_esolver, this->scf_ene_thr);
 
 }
 

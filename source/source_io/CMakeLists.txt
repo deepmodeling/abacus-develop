@@ -85,6 +85,7 @@ if(ENABLE_LCAO)
       output_mat_sparse.cpp
       ctrl_scf_lcao.cpp
       ctrl_runner_lcao.cpp
+      ctrl_iter_lcao.cpp
   )
 endif()
 
