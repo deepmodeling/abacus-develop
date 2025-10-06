@@ -49,6 +49,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DRapidJSON_DIR=$RAPIDJSON \
         -DLIBRI_DIR=$LIBRI \
 	    -DLIBCOMM_DIR=$LIBCOMM \
+	-DENABLE_NEPCPU=ON
 #         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
