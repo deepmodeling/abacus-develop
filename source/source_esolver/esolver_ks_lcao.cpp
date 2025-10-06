@@ -1,6 +1,5 @@
 #include "esolver_ks_lcao.h"
 
-#include "source_io/write_proj_band_lcao.h" // projcted band structure
 
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
@@ -11,7 +10,6 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_io/berryphase.h"
-#include "source_io/cal_ldos.h"
 #include "source_io/cube_io.h"
 //#include "source_io/io_npz.h"
 #include "source_io/output_dmk.h"
@@ -29,9 +27,6 @@
 
 // be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "source_lcao/hs_matrix_k.hpp"
-#include "source_io/write_eband_terms.hpp"
-#include "source_io/write_vxc.hpp"
-#include "source_io/write_vxc_r.hpp"
 
 #include "source_base/global_function.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -66,6 +61,7 @@
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 
 
 namespace ModuleESolver
@@ -391,20 +387,16 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 	}
 
 	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		  PARAM.inp, this->kv, estate, this->pv, 
-		  this->gd, this->psi, hamilt_lcao,
-          this->two_center_bundle_, this->GK,
-          this->orb_, this->pw_wfc, this->pw_rho,
-          this->GridT, this->pw_big, this->sf,
-		  this->rdmft_solver,
-#ifdef __MLALGO
-				this->ld,
-#endif
+		  PARAM.inp, this->kv, estate, this->pv, this->Pgrid, 
+		  this->gd, this->psi, this->chr, hamilt_lcao,
+          this->two_center_bundle_, this->GG, this->GK,
+          this->orb_, this->pw_rho, this->pw_rhod,
+          this->sf, this->locpp.vloc, 
 #ifdef __EXX
 				*this->exd,
 				*this->exc,
 #endif
-				istep);
+				this->solvent);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }

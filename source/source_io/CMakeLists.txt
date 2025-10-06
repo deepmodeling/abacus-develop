@@ -84,6 +84,7 @@ if(ENABLE_LCAO)
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
       ctrl_scf_lcao.cpp
+      ctrl_runner_lcao.cpp
   )
 endif()
 

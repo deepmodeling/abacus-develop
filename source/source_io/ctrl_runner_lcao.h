@@ -17,7 +17,7 @@ namespace ModuleIO
 
 template <typename TK, typename TR>
 void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
-        Input_para &inp,              // input
+        const Input_para &inp,              // input
 		K_Vectors &kv,                      // k-point
 		elecstate::ElecStateLCAO<TK>* pelec,// electronic info
 		Parallel_Orbitals &pv,              // orbital info

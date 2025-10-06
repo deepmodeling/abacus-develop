@@ -582,6 +582,7 @@ OBJS_IO=input_conv.o\
     output_log.o\
     output_mat_sparse.o\
     ctrl_scf_lcao.o\
+    ctrl_runner_lcao.o\
     ctrl_output_fp.o\
     ctrl_output_pw.o\
     para_json.o\
