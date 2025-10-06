@@ -56,9 +56,9 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     return;
 }
 
-/*
 void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
+        const int nnr, // dimension of density matrix
 		const Input_para& inp) // input parameters
 {
     ModuleBase::TITLE("module_charge", "chgmixing_ks_lcao");
@@ -105,11 +105,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         if (inp.mixing_dmr) // for mixing_dmr
         {
             // allocate memory for dmr_mdata
-            const elecstate::DensityMatrix<TK, double>* dm
-                = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-            int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
-            p_chgmix->allocate_mixing_dmr(nnr_tmp);
+            p_chgmix->allocate_mixing_dmr(nnr);
         }
     }
 }
-*/

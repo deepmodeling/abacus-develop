@@ -11,7 +11,10 @@ void chgmixing_ks_pw(const int iter,
         Charge_Mixing* p_chgmix,
 		const Input_para& inp); // input parameters
 
-//void chgmixing_ks_lcao();
+void chgmixing_ks_lcao(const int iter, // scf iteration number
+        Charge_Mixing* p_chgmix, // charge mixing class
+        const int nnr, // dimension of density matrix
+		const Input_para& inp); // input parameters
 
 }
 

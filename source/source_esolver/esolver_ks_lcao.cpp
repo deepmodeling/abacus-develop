@@ -63,10 +63,10 @@
 
 // test RDMFT
 #include "source_lcao/module_rdmft/rdmft.h"
-
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 
-#include <iostream>
+#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+
 
 namespace ModuleESolver
 {
@@ -526,52 +526,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 	elecstate::DensityMatrix<TK, double>* dm
 		= dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
 
-    if (iter == 1)
-    {
-        this->p_chgmix->mix_reset(); // init mixing
-        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-        this->p_chgmix->mixing_restart_count = 0;
-        // this output will be removed once the feeature is stable
-        if (GlobalC::dftu.uramping > 0.01)
-        {
-            std::cout << " U-Ramping! Current U = ";
-            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
-            {
-                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
-            }
-            std::cout << " eV " << std::endl;
-        }
-    }
-
-    // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
-    {
-        this->p_chgmix->init_mixing();
-        this->p_chgmix->mixing_restart_count++;
-        if (PARAM.inp.dft_plus_u)
-        {
-            GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
-            if (GlobalC::dftu.uramping > 0.01)
-            {
-                std::cout << " U-Ramping! Current U = ";
-                for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
-                {
-                    std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
-                }
-                std::cout << " eV " << std::endl;
-            }
-            if (GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged())
-            {
-                this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-            }
-        }
-        if (PARAM.inp.mixing_dmr) // for mixing_dmr
-        {
-            // allocate memory for dmr_mdata
-            int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
-            this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
-        }
-    }
+    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
