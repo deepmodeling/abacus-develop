@@ -9,12 +9,6 @@
 #include "source_io/write_vxc.hpp"
 #include "source_io/write_vxc_r.hpp"
 
-// functions
-//#ifdef __EXX
-//#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-//#include "source_lcao/module_ri/RPA_LRI.h" // use RPA code
-//#endif
-
 namespace ModuleIO
 {
 
