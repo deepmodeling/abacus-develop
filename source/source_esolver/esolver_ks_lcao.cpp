@@ -606,6 +606,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec
 		= dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
+    // control the output related to the finished iteration
+//    ModuleIO::ctrl_iter_lcao<TK, TR>();
+
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
     {
@@ -645,7 +648,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         sc.cal_mi_lcao(iter);
     }
 
-    // 4) call iter_finish() of ESolver_KS
+    // call iter_finish() of ESolver_KS, where band gap is printed,
+    // eig and occ are printed, magnetization is calculated,
+    // charge mixing is performed, potential is updated, 
+    // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // 5) mix density matrix if mixing_restart + mixing_dmr + not first
