@@ -1,4 +1,5 @@
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_pw/module_pwdft/global.h" // use GlobalC::restart
 
 namespace ModuleIO
 {
