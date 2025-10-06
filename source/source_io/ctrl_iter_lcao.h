@@ -6,6 +6,7 @@
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_estate/module_charge/charge.h" // use charge
+#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
