@@ -55,22 +55,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 	if (out_flag)
 	{
 		ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
-				PARAM.inp, 
-				this->kv,
-				estate, 
-				this->pv, 
-				this->gd,
-				this->psi,
-				hamilt_lcao,
-				this->two_center_bundle_,
-				this->GK,
-				this->orb_,
-				this->pw_wfc,
-				this->pw_rho,
-				this->GridT,
-				this->pw_big,
-				this->sf,
-				this->rdmft_solver,
+		  PARAM.inp, this->kv, estate, this->pv, 
+		  this->gd, this->psi, hamilt_lcao,
+          this->two_center_bundle_, this->GK,
+          this->orb_, this->pw_wfc, this->pw_rho,
+          this->GridT, this->pw_big, this->sf,
+		  this->rdmft_solver,
 #ifdef __MLALGO
 				this->ld,
 #endif

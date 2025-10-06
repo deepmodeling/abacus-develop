@@ -377,103 +377,34 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-    // 1) write projected band structure
-    if (PARAM.inp.out_proj_band)
-    {
-        ModuleIO::write_proj_band_lcao(this->psi, this->pv, this->pelec, this->kv, ucell, this->p_hamilt);
-    }
+	auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
 
-    // 2) out ldos
-    if (PARAM.inp.out_ldos[0])
-    {
-        ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(reinterpret_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec),
-                                              this->psi[0],
-                                              this->Pgrid,
-                                              ucell);
-    }
+	if(!estate)
+	{
+		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","pelec does not exist");
+	}
 
-    // 3) print out exchange-correlation potential
-    if (PARAM.inp.out_mat_xc)
-    {
-        ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
-                                    &this->pv,
-                                    *this->psi,
-                                    ucell,
-                                    this->sf,
-                                    this->solvent,
-                                    *this->pw_rho,
-                                    *this->pw_rhod,
-                                    this->locpp.vloc,
-                                    this->chr,
-                                    this->GG,
-                                    this->GK,
-                                    this->kv,
-                                    orb_.cutoffs(),
-                                    this->pelec->wg,
-                                    this->gd
-#ifdef __EXX
-                                    ,
-                                    this->exd ? &this->exd->get_Hexxs() : nullptr,
-                                    this->exc ? &this->exc->get_Hexxs() : nullptr
+	if(!hamilt_lcao)
+	{
+		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::after_all_runners","p_hamilt does not exist");
+	}
+
+	ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
+		  PARAM.inp, this->kv, estate, this->pv, 
+		  this->gd, this->psi, hamilt_lcao,
+          this->two_center_bundle_, this->GK,
+          this->orb_, this->pw_wfc, this->pw_rho,
+          this->GridT, this->pw_big, this->sf,
+		  this->rdmft_solver,
+#ifdef __MLALGO
+				this->ld,
 #endif
-        );
-    }
-
-    if (PARAM.inp.out_mat_xc2)
-    {
-        ModuleIO::write_Vxc_R<TK, TR>(PARAM.inp.nspin,
-                                      &this->pv,
-                                      ucell,
-                                      this->sf,
-                                      this->solvent,
-                                      *this->pw_rho,
-                                      *this->pw_rhod,
-                                      this->locpp.vloc,
-                                      this->chr,
-                                      this->GG,
-                                      this->GK,
-                                      this->kv,
-                                      orb_.cutoffs(),
-                                      this->gd
 #ifdef __EXX
-                                      ,
-                                      this->exd ? &this->exd->get_Hexxs() : nullptr,
-                                      this->exc ? &this->exc->get_Hexxs() : nullptr
+				*this->exd,
+				*this->exc,
 #endif
-        );
-    }
-
-    // write eband terms
-    if (PARAM.inp.out_eband_terms)
-    {
-        ModuleIO::write_eband_terms<TK, TR>(PARAM.inp.nspin,
-                                            PARAM.globalv.nlocal,
-                                            GlobalV::DRANK,
-                                            &this->pv,
-                                            *this->psi,
-                                            ucell,
-                                            this->sf,
-                                            this->solvent,
-                                            *this->pw_rho,
-                                            *this->pw_rhod,
-                                            this->locpp.vloc,
-                                            this->chr,
-                                            this->GG,
-                                            this->GK,
-                                            this->kv,
-                                            this->pelec->wg,
-                                            this->gd,
-                                            orb_.cutoffs(),
-                                            this->two_center_bundle_
-#ifdef __EXX
-                                            ,
-                                            this->exd ? &this->exd->get_Hexxs() : nullptr,
-                                            this->exc ? &this->exc->get_Hexxs() : nullptr
-#endif
-        );
-    }
+				istep);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
