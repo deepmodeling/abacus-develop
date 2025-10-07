@@ -72,7 +72,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 
             deepks_interface.out_deepks_labels(pelec->f_en.etot, kv.get_nks(),
               ucell.nat, PARAM.globalv.nlocal, pelec->ekb, kv.kvec_d,
-              ucell, orb, gd, &pv, *psi, estate->get_DM(),
+              ucell, orb, gd, &pv, *psi, pelec->get_DM(),
               p_hamilt, iter, conv_esolver, GlobalV::MY_RANK, GlobalV::ofs_running);
         }
     }
