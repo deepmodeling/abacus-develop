@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
+#ifndef LCAO_FORCE_H
+#define LCAO_FORCE_H
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

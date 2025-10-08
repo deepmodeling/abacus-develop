@@ -103,7 +103,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     LCAO_Deepks<TK> ld;
 #endif
 
-    Exx_NAO exx_nao;
+    Exx_NAO<TK> exx_nao;
 
     friend class LR::ESolver_LR<double, double>;
     friend class LR::ESolver_LR<std::complex<double>, double>;

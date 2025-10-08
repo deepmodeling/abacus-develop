@@ -55,7 +55,7 @@ class Force_Stress_LCAO
                         LCAO_Deepks<T>& ld,
                         const std::string& dpks_out_type,
 #endif
-                        Exx_NAO &exx_nao,
+                        Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);
 
   private:

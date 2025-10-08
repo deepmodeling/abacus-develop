@@ -1,6 +1,14 @@
 #include "source_lcao/setup_exx.h"
 
-void Exx_NAO::init()
+template <typename TK>
+Exx_NAO<TK>::Exx_NAO(){}
+
+template <typename TK>
+Exx_NAO<TK>::~Exx_NAO(){}
+
+
+template <typename TK>
+void Exx_NAO<TK>::init()
 {
 #ifdef __EXX
     // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
@@ -19,7 +27,13 @@ void Exx_NAO::init()
 #endif
 }
 
-void Exx_NAO::before_runner()
+template <typename TK>
+void Exx_NAO<TK>::before_runner(
+		UnitCell& ucell, // unitcell
+		K_Vectors &kv, // k points
+        const LCAO_Orbitals &orb, // orbital info 
+        const Parallel_Orbitals &pv, // parallel orbitals
+		const Input_para& inp)
 {
 #ifdef __EXX
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
@@ -35,15 +49,18 @@ void Exx_NAO::before_runner()
             // initialize 2-center radial tables for EXX-LRI
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                this->exd->init(MPI_COMM_WORLD, ucell, this->kv, orb_);
-                this->exd->exx_before_all_runners(this->kv, ucell, this->pv);
+                this->exd->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exd->exx_before_all_runners(kv, ucell, pv);
             }
             else
             {
-                this->exc->init(MPI_COMM_WORLD, ucell, this->kv, orb_);
-                this->exc->exx_before_all_runners(this->kv, ucell, this->pv);
+                this->exc->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exc->exx_before_all_runners(kv, ucell, pv);
             }
         }
     }
 #endif
 }
+
+template class Exx_NAO<double>;
+template class Exx_NAO<std::complex<double>>;
