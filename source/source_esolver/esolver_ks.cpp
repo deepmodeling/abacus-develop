@@ -51,9 +51,11 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
-    //! 1) initialize "before_all_runniers" in ESolver_FP
+
+    //! 1) init "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
     
+    //! 2) setup some parameters
     classname = "ESolver_KS";
     basisname = "";
 
@@ -65,8 +67,8 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     std::string fft_device = inp.device;
 
-    // Fast Fourier Transform
-    // LCAO basis doesn't support GPU acceleration on FFT currently
+    //! 3) setup pw_wfc
+    // currently LCAO doesn't support GPU acceleration of FFT
     if(inp.basis_type == "lcao")
     {
         fft_device = "cpu";
@@ -82,71 +84,49 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
-    // should not use INPUT here, mohan 2024-05-12
     tmp->setbxyz(inp.bx, inp.by, inp.bz);
 
-    ///----------------------------------------------------------
-    /// charge mixing
-    ///----------------------------------------------------------
+    //! 4) setup charge mixing
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
 
     // cell_factor
     this->ppcell.cell_factor = inp.cell_factor;
 
-
-    //! 3) it has been established that
-    // xc_func is same for all elements, therefore
-    // only the first one if used
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    //! 4) setup the charge mixing parameters
-    p_chgmix->set_mixing(inp.mixing_mode,
-                         inp.mixing_beta,
-                         inp.mixing_ndim,
-                         inp.mixing_gg0,
-                         inp.mixing_tau,
-                         inp.mixing_beta_mag,
-                         inp.mixing_gg0_mag,
-                         inp.mixing_gg0_min,
-                         inp.mixing_angle,
-                         inp.mixing_dmr,
-                         ucell.omega,
-                         ucell.tpiba);
+    //! 5) setup Exc for the first element '0', because all elements have same exc 
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    
+    //! 6) setup the charge mixing parameters
+    p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
+      inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
+      inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
 
     p_chgmix->init_mixing();
 
-    //! 5) ESolver depends on the Symmetry module
-    // symmetry analysis should be performed every time the cell is changed
+    //! 7) symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
-    //! 6) Setup the k points according to symmetry.
+    //! 8) Setup the k points according to symmetry.
     this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-    //! 7) print information
+    //! 9) print information
     ModuleIO::setup_parameters(ucell, this->kv);
 
-    //! 8) setup plane wave for electronic wave functions
+    //! 10) setup plane wave for electronic wave functions
     ModuleESolver::pw_setup(inp, ucell, *this->pw_rho, this->kv, *this->pw_wfc);
 
-    //! 9) initialize the real-space uniform grid for FFT and parallel
-    //! distribution of plane waves
-	Pgrid.init(this->pw_rhod->nx,
-			this->pw_rhod->ny,
-			this->pw_rhod->nz,
-			this->pw_rhod->nplane,
-			this->pw_rhod->nrxx,
-			pw_big->nbz,
-			pw_big->bz);
+    //! 11) parallel of FFT grid 
+	Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
+			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
 
-    //! 10) calculate the structure factor
+    //! 12) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 }
 

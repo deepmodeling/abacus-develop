@@ -1,53 +1,24 @@
 #include "esolver_ks_lcao.h"
-
-#include "source_base/global_variable.h"
-#include "source_base/tool_title.h"
 #include "source_estate/elecstate_tools.h"
-
-#include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu.h"
-#include "source_io/cube_io.h"
-#include "source_io/output_log.h"
 #include "source_io/read_wfc_nao.h"
-#include "source_io/write_elecstat_pot.h"
-#include "source_io/module_parameter/parameter.h"
-
-// be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
-#include "source_lcao/hs_matrix_k.hpp"
-
-#include "source_base/global_function.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_estate/occupy.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/print_info.h"
-
-#include <memory>
-
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
-//-----force& stress-------------------
 #include "source_lcao/FORCE_STRESS.h"
-
-//-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
-
 #ifdef __EXX
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
-
-// test RDMFT
 #include "source_lcao/module_rdmft/rdmft.h"
-#include "source_lcao/module_gint/temp_gint/gint_info.h"
-
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 #include "source_estate/module_dm/setup_dm.h" // setup dm from electronic wave functions
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
@@ -96,8 +67,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 1) before_all_runners in ESolver_KS
     ESolver_KS<TK>::before_all_runners(ucell, inp);
 
-    // 2) init ElecState
-    // autoset nbands in ElecState before init_basis (for Psi 2d division)
+    // 2) autoset nbands in ElecState before init_basis (for Psi 2d division)
     if (this->pelec == nullptr)
     {
         // TK stands for double and std::complex<double>?
@@ -105,23 +75,23 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
           this->kv.get_nks(), &(this->GG), &(this->GK), this->pw_rho, this->pw_big);
     }
 
-    // 3) read the LCAO orbitals/projectors and construct the interpolation tables.
+    // 3) read LCAO orbitals/projectors and construct the interpolation tables.
     LCAO_domain::init_basis_lcao(this->pv, inp.onsite_radius, inp.lcao_ecut,
       inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax, ucell, two_center_bundle_, orb_);
 
     // 4) setup EXX calculations
     if (PARAM.inp.calculation == "gen_opt_abfs")
     {
-      #ifdef __EXX
+#ifdef __EXX
         Exx_Opt_Orb exx_opt_orb;
         exx_opt_orb.generate_matrix(GlobalC::exx_info.info_opt_abfs, this->kv, ucell, this->orb_);
-      #else
+#else
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "calculation=gen_opt_abfs must compile __EXX");
-      #endif
+#endif
         return;
     }
 
-    // 5) initialize electronic wave function psi
+    // 5) init electronic wave function psi
     if (this->psi == nullptr)
     {
         int nsk = 0;
@@ -160,11 +130,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         }
     }
 
-    // 7) initialize the density matrix
-    // DMK are allocated here, but DMR is constructed in before_scf()
+    // 7) init DMK, but DMR is constructed in before_scf()
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
 
-    // 8) initialize exact exchange calculations
+    // 8) init exact exchange calculations
 #ifdef __EXX
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
         || inp.calculation == "md")
@@ -198,15 +167,15 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
-    // 10) initialize local pseudopotentials
+    // 10) init local pseudopotentials
     this->locpp.init_vloc(ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-    // 11) inititlize the charge density
+    // 11) init charge density
     this->chr.allocate(inp.nspin);
     this->pelec->omega = ucell.omega;
 
-    // 12) initialize the potential
+    // 12) init potentials
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod, this->pw_rho,
@@ -214,7 +183,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
           &(this->pelec->f_en.etxc), &(this->pelec->f_en.vtxc));
     }
 
-    // 13) initialize deepks
+    // 13) init deepks
 #ifdef __MLALGO
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
     if (inp.deepks_scf)
@@ -228,8 +197,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 #endif
 
-    // 14) set occupations
-    // tddft does not need to set occupations in the first scf
+    // 14) set occupations, tddft does not need to set occupations in the first scf
     if (inp.ocp && inp.esolver_type != "tddft")
     {
         elecstate::fixed_weights(inp.ocp_kb, inp.nbands, inp.nelec,
@@ -257,7 +225,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         }
     }
 
-    // 16) initialize rdmft, added by jghan
+    // 16) init rdmft, added by jghan
     if (inp.rdmft == true)
     {
         rdmft_solver.init(this->GG, this->GK, this->pv, ucell,
