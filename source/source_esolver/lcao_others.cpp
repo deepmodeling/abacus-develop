@@ -230,11 +230,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             this->kv,
             two_center_bundle_,
             orb_,
-            DM
-#ifdef __MLALGO
-            ,
-            &this->ld
-#endif
+            DM,
+            this->deepks
 #ifdef __EXX
             ,
             istep,

@@ -154,11 +154,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->kv,
             this->two_center_bundle_,
             this->orb_,
-            DM
-#ifdef __MLALGO
-            ,
-            &this->ld
-#endif
+            DM,
+            this->deepks
 #ifdef __EXX
             ,
             istep,

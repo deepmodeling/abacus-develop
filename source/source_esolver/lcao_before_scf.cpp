@@ -129,11 +129,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
             PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, DM
-#ifdef __MLALGO
-            ,
-            &this->ld
-#endif
+            two_center_bundle_, orb_, DM, this->deepks
 #ifdef __EXX
             ,
             istep,
