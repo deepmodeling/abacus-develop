@@ -11,11 +11,11 @@ template <typename TK>
 void Setup_DeePKS<TK>::before_runner(const UnitCell& ucell, // unitcell
 	const int nks, // number of k points
     const LCAO_Orbitals &orb, // orbital info
-	const Parallel_Orbitals &pv, // parallel orbitals
-	const Input_para& inp)
+	Parallel_Orbitals &pv, // parallel orbitals
+	const Input_para &inp)
 {
 #ifdef __MLALGO
-    LCAO_domain::DeePKS_init(ucell, pv, kv.get_nks(), orb, this->ld, GlobalV::ofs_running);
+    LCAO_domain::DeePKS_init(ucell, pv, nks, orb, this->ld, GlobalV::ofs_running);
     if (inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network

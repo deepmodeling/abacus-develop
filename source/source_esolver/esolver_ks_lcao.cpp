@@ -145,7 +145,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 13) init deepks
-    this->deepks.before_runner(ucell, kv.get_nks(), this->orb_, this->pv, PARAM.inp);
+    this->deepks.before_runner(ucell, this->kv.get_nks(), this->orb_, this->pv, PARAM.inp);
 
     // 14) set occupations, tddft does not need to set occupations in the first scf
     if (inp.ocp && inp.esolver_type != "tddft")
@@ -403,7 +403,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
 #ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
-    ld.set_hr_cal(true);
+    this->deepks.ld.set_hr_cal(true);
 
     // HR in HamiltLCAO should be recalculate
     if (PARAM.inp.deepks_scf)
@@ -551,10 +551,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 #ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
-        ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
-        DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, ld.dm_r);
-        estate->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
-        estate->f_en.edeepks_delta = ld.E_delta;
+        this->deepks.ld.dpks_cal_e_delta_band(dm_vec, this->kv.get_nks());
+        DeePKS_domain::update_dmr(this->kv.kvec_d, dm_vec, ucell, orb_, this->pv, this->gd, this->deepks.ld.dm_r);
+        estate->f_en.edeepks_scf = this->deepks.ld.E_delta - this->deepks.ld.e_delta_band;
+        estate->f_en.edeepks_delta = this->deepks.ld.E_delta;
     }
 #endif
 

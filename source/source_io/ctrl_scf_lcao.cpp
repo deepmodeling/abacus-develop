@@ -51,7 +51,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
-		DeePKS<TK> &deepks,
+		Setup_DeePKS<TK> &deepks,
 		Exx_NAO<TK> &exx_nao,
 		const int istep)
 {
@@ -453,7 +453,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
-		DeePKS<double> &deepks,
+		Setup_DeePKS<double> &deepks,
 		Exx_NAO<double> &exx_nao,
 		const int istep);
 
@@ -475,7 +475,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& uc
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
-		DeePKS<std::complex<double>> &deepks,
+		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
 		const int istep);
 
@@ -496,7 +496,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
-		DeePKS<std::complex<double>> &deepks,
+		Setup_DeePKS<std::complex<double>> &deepks,
 		Exx_NAO<std::complex<double>> &exx_nao,
 		const int istep);
 

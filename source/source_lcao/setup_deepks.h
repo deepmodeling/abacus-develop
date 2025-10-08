@@ -27,8 +27,8 @@ class Setup_DeePKS
 			const UnitCell& ucell, // unitcell
 			const int nks, // k points
             const LCAO_Orbitals &orb, // orbital info
-			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp);
+			Parallel_Orbitals &pv, // parallel orbitals
+			const Input_para &inp);
 
 };
 
