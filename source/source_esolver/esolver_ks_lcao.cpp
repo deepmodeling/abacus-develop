@@ -1,6 +1,5 @@
 #include "esolver_ks_lcao.h"
 
-//#include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
 #include "source_estate/elecstate_tools.h"
@@ -8,19 +7,9 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
-//#include "source_io/berryphase.h"
 #include "source_io/cube_io.h"
-//#include "source_io/io_npz.h"
-//#include "source_io/output_dmk.h"
 #include "source_io/output_log.h"
-//#include "source_io/output_mat_sparse.h"
-//#include "source_io/output_mulliken.h"
-//#include "source_io/output_sk.h"
 #include "source_io/read_wfc_nao.h"
-//#include "source_io/to_qo.h"
-//#include "source_io/to_wannier90_lcao.h"
-//#include "source_io/to_wannier90_lcao_in_pw.h"
-//#include "source_io/write_HS.h"
 #include "source_io/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -60,9 +49,9 @@
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
 
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_estate/module_dm/setup_dm.h" // setup dm from electronic wave functions
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
-
 
 namespace ModuleESolver
 {
@@ -164,12 +153,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
 	{
 		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
-					this->pv, 
-					*(this->psi), 
-					this->pelec, 
-                    this->pelec->klist->ik2iktot,
-                    this->pelec->klist->get_nkstot(),
-					inp.nspin))
+			 this->pv, *(this->psi), this->pelec, this->pelec->klist->ik2iktot,
+             this->pelec->klist->get_nkstot(), inp.nspin))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
         }
@@ -409,60 +394,35 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
-	elecstate::DensityMatrix<TK, double>* dm
-		= dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+    // cast pointers
+
+	auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+
+	if(!estate)
+	{
+		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_init","pelec does not exist");
+	}
+
+	elecstate::DensityMatrix<TK, double>* dm = estate->get_DM();
 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
     // mohan update 2012-06-05
-    this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
+    estate->f_en.deband_harris = estate->cal_delta_eband(ucell);
 
-    // first need to calculate the weight according to
-    // electrons number.
     if (istep == 0 && PARAM.inp.init_wfc == "file")
-    {
-        int exx_two_level_step = 0;
+	{
+		int exx_two_level_step = 0;
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            // the following steps are only needed in the first outer exx loop
-            exx_two_level_step
-                = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
-        }
+		if (GlobalC::exx_info.info_global.cal_exx)
+		{
+			// the following steps are only needed in the first outer exx loop
+			exx_two_level_step
+				= GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
+		}
 #endif
-        if (iter == 1 && exx_two_level_step == 0)
-        {
-            std::cout << " WAVEFUN -> CHARGE " << std::endl;
-
-            // calculate the density matrix using read in wave functions
-            // and then calculate the charge density on grid.
-
-            this->pelec->skip_weights = true;
-            elecstate::calculate_weights(this->pelec->ekb,
-                                         this->pelec->wg,
-                                         this->pelec->klist,
-                                         this->pelec->eferm,
-                                         this->pelec->f_en,
-                                         this->pelec->nelec_spin,
-                                         this->pelec->skip_weights);
-
-            auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-            elecstate::calEBand(_pelec->ekb, _pelec->wg, _pelec->f_en);
-            elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
-            _pelec->DM->cal_DMR();
-
-            this->pelec->psiToRho(*this->psi);
-            this->pelec->skip_weights = false;
-
-            elecstate::cal_ux(ucell);
-
-            //! update the potentials by using new electron charge density
-            this->pelec->pot->update_from_charge(&this->chr, &ucell);
-
-            //! compute the correction energy for metals
-            this->pelec->f_en.descf = this->pelec->cal_delta_escf();
-        }
-    }
+		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+	}
 
 #ifdef __EXX
     // calculate exact-exchange
@@ -523,7 +483,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
 
-    // i1) reset energy
+    // 1) reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
@@ -618,7 +578,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
 	const std::vector<std::vector<TK>>& dm_vec = estate->get_DM()->get_DMK_vector();
 
-
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     if (PARAM.inp.dft_plus_u)
     {
@@ -628,12 +587,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         {
             if (GlobalC::dftu.omc != 2)
             {
-                ModuleDFTU::dftu_cal_occup_m(iter,
-                                             ucell,
-                                             dm_vec,
-                                             this->kv,
-                                             this->p_chgmix->get_mixing_beta(),
-                                             hamilt_lcao);
+                ModuleDFTU::dftu_cal_occup_m(iter, ucell, dm_vec, this->kv,
+                  this->p_chgmix->get_mixing_beta(), hamilt_lcao);
             }
             GlobalC::dftu.cal_energy_correction(ucell, istep);
         }

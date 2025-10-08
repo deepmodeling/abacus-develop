@@ -253,6 +253,7 @@ OBJS_ELECSTAT=elecstate.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
+      setup_dm.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\
