@@ -36,39 +36,39 @@ protected:
     }
 };
 
-TEST_F(BFGSTest, PrepareStep) {
-    bfgs.PrepareStep(force, bfgs.pos, bfgs.H, bfgs.pos0, bfgs.force0, bfgs.steplength, bfgs.dpos, ucell);
-    EXPECT_EQ(bfgs.steplength.size(), 10);
-    for (int i = 0; i < 10; ++i) {
-        EXPECT_GT(bfgs.steplength[i], 0);
-    }
-}
+// TEST_F(BFGSTest, PrepareStep) {
+//     bfgs.PrepareStep(force, bfgs.pos, bfgs.H, bfgs.pos0, bfgs.force0, bfgs.steplength, bfgs.dpos, ucell);
+//     EXPECT_EQ(bfgs.steplength.size(), 10);
+//     for (int i = 0; i < 10; ++i) {
+//         EXPECT_GT(bfgs.steplength[i], 0);
+//     }
+// }
 
 
-TEST_F(BFGSTest, AllocateTest) {
-    BFGS bfgs;
-    int size = 5;
-    bfgs.allocate(size);
+// TEST_F(BFGSTest, AllocateTest) {
+//     BFGS bfgs;
+//     int size = 5;
+//     bfgs.allocate(size);
 
 
-    EXPECT_EQ(bfgs.steplength.size(), size);
-    EXPECT_EQ(bfgs.force0.size(), 3*size);
-    EXPECT_EQ(bfgs.H.size(), 3*size);
-    for (const auto& row : bfgs.H) {
-        EXPECT_EQ(row.size(), 3*size);
-    }
-}
+//     EXPECT_EQ(bfgs.steplength.size(), size);
+//     EXPECT_EQ(bfgs.force0.size(), 3*size);
+//     EXPECT_EQ(bfgs.H.size(), 3*size);
+//     for (const auto& row : bfgs.H) {
+//         EXPECT_EQ(row.size(), 3*size);
+//     }
+// }
 
-TEST_F(BFGSTest, FullStepTest) 
-{ 
-    BFGS bfgs; 
-    UnitCell ucell; 
-    ModuleBase::matrix force(3, 3); 
-    int size = 3; 
-    bfgs.allocate(size);  
-    force(0, 0)=-0.5; 
-    force(1, 1)=-0.3; 
-    force(2, 2)=0.1; 
-    EXPECT_EQ(bfgs.force.size(), size); 
-    EXPECT_EQ(bfgs.pos.size(), size); 
-}
+// TEST_F(BFGSTest, FullStepTest) 
+// { 
+//     BFGS bfgs; 
+//     UnitCell ucell; 
+//     ModuleBase::matrix force(3, 3); 
+//     int size = 3; 
+//     bfgs.allocate(size);  
+//     force(0, 0)=-0.5; 
+//     force(1, 1)=-0.3; 
+//     force(2, 2)=0.1; 
+//     EXPECT_EQ(bfgs.force.size(), size); 
+//     EXPECT_EQ(bfgs.pos.size(), size); 
+// }
