@@ -235,7 +235,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 #ifdef __MLALGO
         // ---------- output tot and precalc ----------
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->ld, [](LCAO_Deepks<TK>*) {});
+        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->deepks.ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
         deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
@@ -409,7 +409,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->pw_rho,
                        this->solvent,
 #ifdef __MLALGO
-                       this->ld,
+                       this->deepks.ld,
                        "base",
 #endif
 					   this->exx_nao,

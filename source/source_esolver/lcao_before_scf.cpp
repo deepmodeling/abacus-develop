@@ -147,15 +147,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
-        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
+        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->deepks.ld.phialpha);
         // build and save <phi(0)|alpha(R)> at beginning
         DeePKS_domain::build_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd,
-          pv, *(two_center_bundle_.overlap_orb_alpha), this->ld.phialpha);
+          pv, *(two_center_bundle_.overlap_orb_alpha), this->deepks.ld.phialpha);
 
         if (PARAM.inp.deepks_out_unittest)
         {
             DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_,
-              this->gd, pv, this->ld.phialpha, GlobalV::MY_RANK);
+              this->gd, pv, this->deepks.ld.phialpha, GlobalV::MY_RANK);
         }
     }
 #endif
@@ -198,7 +198,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 #ifdef __MLALGO
     // 14) initialize DMR of DeePKS
-    this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
 #endif
 
     // 15) two cases are considered:

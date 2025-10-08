@@ -224,7 +224,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->pw_rho,
                        this->solvent,
 #ifdef __MLALGO
-                       this->ld,
+                       this->deepks.ld,
                        "tot",
 #endif
                        this->exx_nao,
@@ -413,7 +413,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // if (iter == 1 && istep == 0)
     // {
     //     // initialize DMR
-    //     this->ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    //     this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
     // }
 #endif
 
@@ -593,7 +593,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, 
 #ifdef __MLALGO
-      this->ld,
+      this->deepks.ld,
 #endif
       exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
 
