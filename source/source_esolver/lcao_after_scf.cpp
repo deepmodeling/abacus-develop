@@ -61,14 +61,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
           this->orb_, this->pw_wfc, this->pw_rho,
           this->GridT, this->pw_big, this->sf,
 		  this->rdmft_solver,
-#ifdef __MLALGO
-				this->ld,
-#endif
-#ifdef __EXX
-				*this->exx_nao.exd,
-				*this->exx_nao.exc,
-#endif
-				istep);
+          this->deepks,
+		  this->exx_nao,
+		  istep);
 	}
 
     //------------------------------------------------------------------
