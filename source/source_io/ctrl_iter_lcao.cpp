@@ -24,10 +24,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 #ifdef __MLALGO
 		LCAO_Deepks<TK>& ld,
 #endif
-#ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
-#endif
+        Exx_NAO<TK> &exx_nao,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -53,13 +50,14 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             GlobalC::exx_info.info_ri.real_number ?
-              exd.exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
-              exc.exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
+              exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec,
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
         }
     }
 #endif
+
 
     // for deepks, output labels during electronic steps (after conv_esolver is renewed)
 #ifdef __MLALGO
@@ -96,10 +94,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
 #ifdef __MLALGO
 		LCAO_Deepks<double>& ld,
 #endif
-#ifdef __EXX
-		Exx_LRI_Interface<double, double>& exd,
-		Exx_LRI_Interface<double, std::complex<double>>& exc,
-#endif
+        Exx_NAO<double> &exx_nao,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -120,10 +115,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
 #ifdef __MLALGO
 		LCAO_Deepks<std::complex<double>>& ld,
 #endif
-#ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -144,10 +136,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
 #ifdef __MLALGO
 		LCAO_Deepks<std::complex<double>>& ld,
 #endif
-#ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         int &iter,
         const int istep,
         bool &conv_esolver,

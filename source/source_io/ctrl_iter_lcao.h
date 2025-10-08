@@ -8,9 +8,7 @@
 #include "source_estate/module_charge/charge.h" // use charge
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#endif
+#include "source_lcao/setup_exx.h" // mohan add 20251008
 
 namespace ModuleIO
 {
@@ -30,10 +28,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 #ifdef __MLALGO
 		LCAO_Deepks<TK>& ld,
 #endif
-#ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
-#endif
+        Exx_NAO<TK> &exx_nao,
         int &iter,
         const int istep,
         bool &conv_esolver,

@@ -609,11 +609,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 #ifdef __MLALGO
       this->ld,
 #endif
-#ifdef __EXX
-      *this->exx_nao.exd,
-      *this->exx_nao.exc,
-#endif
-      iter, istep, conv_esolver, this->scf_ene_thr);
+      exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
 
 }
 

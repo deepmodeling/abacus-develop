@@ -35,7 +35,6 @@ class Exx_NAO
 			const Parallel_Orbitals &pv, // parallel orbitals
 			const Input_para& inp);
 
-
 };
 
 
