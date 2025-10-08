@@ -4,6 +4,8 @@
 
 std::vector<double> ReshapeMToV(std::vector<std::vector<double>>& matrix) 
 {
+    assert(!matrix.empty());
+    assert(matrix[0].size() == 3);
     int size = matrix.size();
     std::vector<double> result;
     result.reserve(3*size);
@@ -16,6 +18,8 @@ std::vector<double> ReshapeMToV(std::vector<std::vector<double>>& matrix)
 std::vector<std::vector<double>> MAddM(std::vector<std::vector<double>>& a, 
                                              std::vector<std::vector<double>>& b) 
 {
+    assert(!a.empty() && !b.empty());
+    assert(a.size() == b.size() && a[0].size() == b[0].size());
     std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
     for(int i = 0; i < a.size(); i++)
     {
@@ -29,6 +33,7 @@ std::vector<std::vector<double>> MAddM(std::vector<std::vector<double>>& a,
 
 std::vector<double> VSubV(std::vector<double>& a, std::vector<double>& b) 
 {
+    assert(a.size() == b.size());
     std::vector<double> result = std::vector<double>(a.size(), 0.0);
     for(int i = 0; i < a.size(); i++)
     {
@@ -39,6 +44,7 @@ std::vector<double> VSubV(std::vector<double>& a, std::vector<double>& b)
 
 std::vector<std::vector<double>> ReshapeVToM(std::vector<double>& matrix) 
 {
+    assert(matrix.size() % 3 == 0);
     std::vector<std::vector<double>> result = std::vector<std::vector<double>>(matrix.size() / 3, std::vector<double>(3));
     for(int i = 0; i < result.size(); i++)
     {
@@ -52,6 +58,8 @@ std::vector<std::vector<double>> ReshapeVToM(std::vector<double>& matrix)
 
 std::vector<double> DotInMAndV1(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
 {
+    assert(!matrix.empty());
+    assert(matrix[0].size() == vec.size());
     std::vector<double> result(matrix.size(), 0.0);
     for(int i = 0; i < result.size(); i++)
     {
@@ -64,6 +72,8 @@ std::vector<double> DotInMAndV1(std::vector<std::vector<double>>& matrix, std::v
 }
 std::vector<double> DotInMAndV2(std::vector<std::vector<double>>& matrix, std::vector<double>& vec) 
 {
+    assert(!matrix.empty());
+    assert(matrix.size() == vec.size());
     std::vector<double> result(matrix.size(), 0.0);
     for(int i = 0; i < result.size(); i++)
     {
@@ -77,6 +87,7 @@ std::vector<double> DotInMAndV2(std::vector<std::vector<double>>& matrix, std::v
 
 double DotInVAndV(std::vector<double>& vec1, std::vector<double>& vec2) 
 {
+    assert(vec1.size() == vec2.size());
     double result = 0.0;
     for(int i = 0; i < vec1.size(); i++)
     {
@@ -87,6 +98,7 @@ double DotInVAndV(std::vector<double>& vec1, std::vector<double>& vec2)
 
 std::vector<std::vector<double>> OuterVAndV(std::vector<double>& a, std::vector<double>& b) 
 {
+    assert(a.size() == b.size());
     std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(b.size(), 0.0));
     for(int i = 0; i < a.size(); i++)
     {
@@ -100,6 +112,8 @@ std::vector<std::vector<double>> OuterVAndV(std::vector<double>& a, std::vector<
 
 std::vector<std::vector<double>> MPlus(std::vector<std::vector<double>>& a, double b)
 {
+    assert(!a.empty());
+    assert(b != 0);
     std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
     for(int i = 0; i < a.size(); i++)
     {
@@ -113,6 +127,8 @@ std::vector<std::vector<double>> MPlus(std::vector<std::vector<double>>& a, doub
 
 std::vector<std::vector<double>> MSubM(std::vector<std::vector<double>>& a, std::vector<std::vector<double>>& b)
 {
+    assert(!a.empty() && !b.empty());
+    assert(a.size() == b.size() && a[0].size() == b[0].size());
     std::vector<std::vector<double>> result = std::vector<std::vector<double>>(a.size(), std::vector<double>(a[0].size(), 0.0));
     for(int i = 0; i < a.size(); i++)
     {
@@ -126,6 +142,7 @@ std::vector<std::vector<double>> MSubM(std::vector<std::vector<double>>& a, std:
 
 std::vector<double> DotInVAndFloat(std::vector<double>& vec, double b) 
 {
+    assert(b != 0);
     std::vector<double> result(vec.size(), 0.0);
     for(int i = 0; i < vec.size(); i++)
     {
@@ -136,6 +153,7 @@ std::vector<double> DotInVAndFloat(std::vector<double>& vec, double b)
 
 std::vector<double> VAddV(std::vector<double>& a, std::vector<double>& b) 
 {
+    assert(a.size() == b.size());
     std::vector<double> result = std::vector<double>(a.size(), 0.0);
     for(int i = 0; i < a.size(); i++)
     {
