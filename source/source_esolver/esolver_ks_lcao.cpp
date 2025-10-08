@@ -350,9 +350,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 				= GlobalC::exx_info.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-//		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
 
-
+/*
     if (iter == 1 && exx_two_level_step == 0)
     {
         std::cout << " WAVEFUN -> CHARGE " << std::endl;
@@ -385,6 +385,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         estate->f_en.descf = estate->cal_delta_escf();
     }
 
+*/
 
 
 	}
