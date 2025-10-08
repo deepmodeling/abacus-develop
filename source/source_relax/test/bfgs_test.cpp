@@ -36,6 +36,7 @@ protected:
     }
 };
 
+
 // TEST_F(BFGSTest, PrepareStep) {
 //     bfgs.PrepareStep(force, bfgs.pos, bfgs.H, bfgs.pos0, bfgs.force0, bfgs.steplength, bfgs.dpos, ucell);
 //     EXPECT_EQ(bfgs.steplength.size(), 10);
