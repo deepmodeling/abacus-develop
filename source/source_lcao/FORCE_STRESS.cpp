@@ -55,10 +55,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           LCAO_Deepks<T>& ld,
                                           const std::string& dpks_out_type,
 #endif
-#ifdef __EXX
-                                          Exx_LRI_Interface<T, double>& exd,
-                                          Exx_LRI_Interface<T, std::complex<double>>& exc,
-#endif
+										  Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
@@ -378,26 +375,26 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                exd.cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exd.get_force();
+                exx_nao.exd->cal_exx_force(ucell.nat);
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_force();
             }
             else
             {
-                exc.cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exc.get_force();
+                exx_nao.exc->cal_exx_force(ucell.nat);
+                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_force();
             }
         }
         if (isstress)
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                exd.cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exd.get_stress();
+                exx_nao.exd->cal_exx_stress(ucell.omega, ucell.lat0);
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_stress();
             }
             else
             {
-                exc.cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exc.get_stress();
+                exx_nao.exc->cal_exx_stress(ucell.omega, ucell.lat0);
+                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_stress();
             }
         }
     }

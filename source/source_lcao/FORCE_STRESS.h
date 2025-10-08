@@ -16,6 +16,8 @@
 #include "force_stress_arrays.h"
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
+
 
 template <typename T>
 class Force_Stress_LCAO
@@ -53,10 +55,7 @@ class Force_Stress_LCAO
                         LCAO_Deepks<T>& ld,
                         const std::string& dpks_out_type,
 #endif
-#ifdef __EXX
-                        Exx_LRI_Interface<T, double>& exd,
-                        Exx_LRI_Interface<T, std::complex<double>>& exc,
-#endif
+                        Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);
 
   private:

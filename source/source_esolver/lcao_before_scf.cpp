@@ -28,17 +28,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     ESolver_KS<TK>::before_scf(ucell, istep);
 
     auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-
     if(!estate)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","pelec does not exist");
     }
 
-    if(!hamilt_lcao)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
-    }
 
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
@@ -143,9 +137,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 #ifdef __EXX
             ,
             istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
 #endif
         );
     }
@@ -185,11 +179,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
+            this->exx_nao.exd->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
         }
         else
         {
-            this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
+            this->exx_nao.exc->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
         }
     }
 #endif
@@ -199,6 +193,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     // 13) initalize DMR
     // DMR should be same size with Hamiltonian(R)
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+    if(!hamilt_lcao)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
+    }
     estate->get_DM()->init_DMR(*hamilt_lcao->getHR());
 
 #ifdef __MLALGO

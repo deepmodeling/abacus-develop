@@ -35,22 +35,7 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
-
-#ifdef __EXX
-    // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
-    //  because the latter is not reused by ESolver_LCAO_TDDFT,
-    //  which cause the failure of the subsequent procedure reused by ESolver_LCAO_TDDFT
-    // 2. always construct but only initialize when if(cal_exx) is true
-    //  because some members like two_level_step are used outside if(cal_exx)
-    if (GlobalC::exx_info.info_ri.real_number)
-    {
-        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(GlobalC::exx_info.info_ri);
-    }
-    else
-    {
-        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(GlobalC::exx_info.info_ri);
-    }
-#endif
+    this->exx_nao.init(); // mohan add 20251008
 }
 
 template <typename TK, typename TR>
@@ -137,31 +122,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
 
     // 8) init exact exchange calculations
-#ifdef __EXX
-    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
-        || inp.calculation == "md")
-    {
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
-            if (inp.init_wfc != "file")
-            { // if init_wfc==file, directly enter the EXX loop
-                XC_Functional::set_xc_first_loop(ucell);
-            }
-
-            // initialize 2-center radial tables for EXX-LRI
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
-                this->exd->init(MPI_COMM_WORLD, ucell, this->kv, orb_);
-                this->exd->exx_before_all_runners(this->kv, ucell, this->pv);
-            }
-            else
-            {
-                this->exc->init(MPI_COMM_WORLD, ucell, this->kv, orb_);
-                this->exc->exx_before_all_runners(this->kv, ucell, this->pv);
-            }
-        }
-    }
-#endif
+    this->exx_nao.before_runner(ucell, this->kv, this->orb_, this->pv, PARAM.inp);
 
     // 9) initialize DFT+U
     if (inp.dft_plus_u)
@@ -280,10 +241,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->ld,
                        "tot",
 #endif
-#ifdef __EXX
-                       *this->exd,
-                       *this->exc,
-#endif
+                       this->exx_nao,
                        &ucell.symm);
 
     // delete RA after cal_force
@@ -349,8 +307,8 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
           this->orb_, this->pw_rho, this->pw_rhod,
           this->sf, this->locpp.vloc, 
 #ifdef __EXX
-				this->exd,
-				this->exc,
+				this->exx_nao.exd,
+				this->exx_nao.exc,
 #endif
 				this->solvent);
 
@@ -389,7 +347,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
+				= GlobalC::exx_info.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
 //		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
@@ -437,11 +395,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
+            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
         }
         else
         {
-            this->exc->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
+            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *dm, this->kv, iter);
         }
     }
 #endif
@@ -528,11 +486,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
+            this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
         else
         {
-            this->exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
+            this->exx_nao.exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
     }
 #endif
@@ -651,8 +609,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
       this->ld,
 #endif
 #ifdef __EXX
-      *this->exd,
-      *this->exc,
+      *this->exx_nao.exd,
+      *this->exx_nao.exc,
 #endif
       iter, istep, conv_esolver, this->scf_ene_thr);
 

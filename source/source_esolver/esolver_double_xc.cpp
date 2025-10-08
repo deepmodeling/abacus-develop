@@ -162,9 +162,9 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 #ifdef __EXX
             ,
             istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
 #endif
         );
     }
@@ -415,11 +415,8 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->ld,
                        "base",
 #endif
-#ifdef __EXX
-                       *this->exd,
-                       *this->exc,
-#endif
-                       &ucell.symm);
+					   this->exx_nao,
+					   &ucell.symm);
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
