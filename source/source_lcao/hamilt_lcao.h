@@ -49,7 +49,7 @@ class HamiltLCAO : public Hamilt<TK>
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
 			   elecstate::DensityMatrix<TK, double>* DM_in,
-			   DeePKS<TK> &deepks
+			   Setup_DeePKS<TK> &deepks
 #ifdef __EXX
                ,
                const int istep,

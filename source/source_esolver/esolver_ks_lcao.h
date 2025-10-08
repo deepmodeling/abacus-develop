@@ -98,7 +98,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     bool have_force = false;
 
     // deepks method, mohan add 2025-10-08
-    DeePKS<TK> deepks;
+    Setup_DeePKS<TK> deepks;
 
     // exact-exchange energy, mohan add 2025-10-08
     Exx_NAO<TK> exx_nao;

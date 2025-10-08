@@ -145,7 +145,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 13) init deepks
-    this->deepks.before_runner(ucell, this->kv, this->orb_, this->pv, PARAM.inp);
+    this->deepks.before_runner(ucell, kv.get_nks(), this->orb_, this->pv, PARAM.inp);
 
     // 14) set occupations, tddft does not need to set occupations in the first scf
     if (inp.ocp && inp.esolver_type != "tddft")
