@@ -24,9 +24,6 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
-// tmp
-#include "source_estate/module_dm/cal_dm_psi.h"
-
 namespace ModuleESolver
 {
 
@@ -148,18 +145,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 13) init deepks
-#ifdef __MLALGO
-    LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
-    if (inp.deepks_scf)
-    {
-        // load the DeePKS model from deep neural network
-        DeePKS_domain::load_model(inp.deepks_model, ld.model_deepks);
-        // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        DeePKS_domain::read_pdm((inp.init_chg == "file"), inp.deepks_equiv,
-          ld.init_pdm, ucell.nat, orb_.Alpha[0].getTotal_nchi() * ucell.nat,
-          ld.lmaxd, ld.inl2l, *orb_.Alpha, ld.pdm);
-    }
-#endif
+    this->deepks.before_runner(ucell, this->kv, this->orb_, this->pv, PARAM.inp);
 
     // 14) set occupations, tddft does not need to set occupations in the first scf
     if (inp.ocp && inp.esolver_type != "tddft")

@@ -8,9 +8,7 @@
 #include "source_lcao/module_gint/gint_k.h" // gint for multi k-points
 #include "source_lcao/module_gint/temp_gint/gint.h" // gint
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
-#endif
+#include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 
@@ -99,10 +97,10 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     ModuleBase::matrix scs;
     bool have_force = false;
 
-#ifdef __MLALGO
-    LCAO_Deepks<TK> ld;
-#endif
+    // deepks method, mohan add 2025-10-08
+    DeePKS<TK> deepks;
 
+    // exact-exchange energy, mohan add 2025-10-08
     Exx_NAO<TK> exx_nao;
 
     friend class LR::ESolver_LR<double, double>;
