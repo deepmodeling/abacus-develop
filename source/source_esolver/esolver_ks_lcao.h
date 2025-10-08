@@ -2,32 +2,17 @@
 #define ESOLVER_KS_LCAO_H
 
 #include "esolver_ks.h"
-
-// for adjacent atoms
-#include "source_lcao/record_adj.h"
-
-// for NAO basis
-#include "source_basis/module_nao/two_center_bundle.h"
-
-// for grid integration
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
-#include "source_lcao/module_gint/temp_gint/gint.h"
+#include "source_lcao/record_adj.h" // adjacent atoms
+#include "source_basis/module_nao/two_center_bundle.h" // nao basis
+#include "source_lcao/module_gint/gint_gamma.h" // gint for gamma-only k-points
+#include "source_lcao/module_gint/gint_k.h" // gint for multi k-points
+#include "source_lcao/module_gint/temp_gint/gint.h" // gint
 #include "source_lcao/module_gint/temp_gint/gint_info.h"
-
-// for DeePKS
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
 #endif
-
-// for EXX
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
-#include "source_lcao/module_ri/Mix_DMk_2D.h"
-#endif
-
-// for RDMFT
-#include "source_lcao/module_rdmft/rdmft.h"
+#include "source_lcao/module_ri/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/module_rdmft/rdmft.h" // rdmft
 
 #include <memory>
 
@@ -118,10 +103,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     LCAO_Deepks<TK> ld;
 #endif
 
-#ifdef __EXX
-    std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;
-    std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
-#endif
+    Exx_NAO exx_nao;
 
     friend class LR::ESolver_LR<double, double>;
     friend class LR::ESolver_LR<std::complex<double>, double>;
