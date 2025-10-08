@@ -122,7 +122,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);
 
     // 8) init exact exchange calculations
-    exx_nao.before_runner();
+    this->exx_nao.before_runner();
 
     // 9) initialize DFT+U
     if (inp.dft_plus_u)

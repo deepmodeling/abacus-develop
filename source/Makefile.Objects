@@ -669,6 +669,7 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_allocate.o\
       LCAO_set_mat2d.o\
       LCAO_init_basis.o\
+      setup_exx.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
@@ -677,13 +678,13 @@ OBJS_LCAO=evolve_elec.o\
       wavefunc_in_pw.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
-      exx_abfs-abfs_index.o \
-      exx_abfs-jle.o \
-      exx_abfs-io.o \
-      exx_abfs-construct_orbs.o \
-      ABFs_Construct-PCA.o \
-      exx_opt_orb.o \
-      exx_opt_orb-print.o \
+      exx_abfs-abfs_index.o\
+      exx_abfs-jle.o\
+      exx_abfs-io.o\
+      exx_abfs-construct_orbs.o\
+      ABFs_Construct-PCA.o\
+      exx_opt_orb-print.o\
+      exx_opt_orb.o\
       Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\

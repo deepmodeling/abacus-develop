@@ -1,5 +1,5 @@
-#ifndef SETUP_EXX_H
-#define SETUP_EXX_H
+#ifndef SETUP_EXX_NAO_H
+#define SETUP_EXX_NAO_H
 
 /*
 #include "source_cell/unitcell.h" // use unitcell
@@ -23,7 +23,7 @@ class Exx_NAO
     std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
 #endif
 
-    void init0();
+    void init();
 
     void before_runner();
 

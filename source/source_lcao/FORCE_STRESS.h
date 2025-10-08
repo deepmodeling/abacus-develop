@@ -16,7 +16,7 @@
 #include "force_stress_arrays.h"
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
-#include "source_lcao/module_ri/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 
 
 template <typename T>

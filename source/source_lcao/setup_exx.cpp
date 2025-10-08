@@ -1,6 +1,6 @@
-#include "source_lcao/module_ri/setup_exx.h"
+#include "source_lcao/setup_exx.h"
 
-void Exx_NAO::init0()
+void Exx_NAO::init()
 {
 #ifdef __EXX
     // 1. currently this initialization must be put in constructor rather than `before_all_runners()`

@@ -11,7 +11,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
 #endif
-#include "source_lcao/module_ri/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 
 #include <memory>

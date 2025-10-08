@@ -415,11 +415,8 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->ld,
                        "base",
 #endif
-#ifdef __EXX
-                       *this->exd,
-                       *this->exc,
-#endif
-                       &ucell.symm);
+					   this->exx_nao,
+					   &ucell.symm);
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
