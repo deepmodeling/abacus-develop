@@ -24,6 +24,9 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
+// tmp
+#include "source_estate/module_dm/cal_dm_psi.h"
+
 namespace ModuleESolver
 {
 
@@ -389,12 +392,49 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 				= GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
 		}
 #endif
-		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+//		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
+
+
+    if (iter == 1 && exx_two_level_step == 0)
+    {
+        std::cout << " WAVEFUN -> CHARGE " << std::endl;
+
+        // calculate the density matrix using read in wave functions
+        // and then calculate the charge density on grid.
+
+        estate->skip_weights = true;
+        elecstate::calculate_weights(estate->ekb,
+                estate->wg,
+                estate->klist,
+                estate->eferm,
+                estate->f_en,
+                estate->nelec_spin,
+                estate->skip_weights);
+
+        elecstate::calEBand(estate->ekb, estate->wg, estate->f_en);
+        elecstate::cal_dm_psi(estate->DM->get_paraV_pointer(), estate->wg, *this->psi, *(estate->DM));
+        estate->DM->cal_DMR();
+
+        estate->psiToRho(*this->psi);
+        estate->skip_weights = false;
+
+        elecstate::cal_ux(ucell);
+
+        //! update the potentials by using new electron charge density
+        estate->pot->update_from_charge(&this->chr, &ucell);
+
+        //! compute the correction energy for metals
+        estate->f_en.descf = estate->cal_delta_escf();
+    }
+
+
+
 	}
 
 #ifdef __EXX
     // calculate exact-exchange
     if (PARAM.inp.calculation != "nscf")
+q
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
