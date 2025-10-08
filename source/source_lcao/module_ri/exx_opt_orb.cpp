@@ -4,6 +4,7 @@
 #include "exx_abfs.h"
 #include "exx_abfs-abfs_index.h"
 #include "exx_abfs-construct_orbs.h"
+#include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_lcao/module_ri/Matrix_Orbs11.h"
@@ -20,21 +21,37 @@ void Exx_Opt_Orb::generate_matrix(
 {
 	ModuleBase::TITLE("Exx_Opt_Orb::generate_matrix");
 
+	auto judge_orbs_empty = [](const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs) -> bool
+	{
+		for(const auto &orb_t : orbs) {
+			for(const auto &orb_tl : orb_t) {
+				if(orb_tl.size()>0) {
+					return false;
+		}}}
+		return true;
+	};
+
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 		lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, info.kmesh_times );
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(lcaos);
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,orb, lcaos, info.kmesh_times, GlobalC::exx_info.info_ri.pca_threshold );
+		abfs = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,orb, lcaos, info.kmesh_times, info.pca_threshold );
+	if(!info.files_abfs.empty())
+		{ abfs = Exx_Abfs::IO::construct_abfs( abfs, orb, info.files_abfs, info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(abfs);
 
 	std::vector< std::vector< std::vector< Numerical_Orbital_Lm>>>
 		jle = Exx_Abfs::Jle::init_jle(info, info.kmesh_times, ucell , orb);
+	if(!info.files_jles.empty())
+		{ jle = Exx_Abfs::IO::construct_abfs( jle, orb, info.files_jles, info.kmesh_times ); 	}
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(jle);
 
-	GlobalC::exx_info.info_ri.abfs_Lmax = info.abfs_Lmax;
-	for( size_t T=0; T!=abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(abfs[T].size())-1 ); }
+	// GlobalC::exx_info.info_ri.abfs_Lmax is used for Center2 temporarily
+	for(const auto &orb_T : abfs)
+		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(orb_T.size())-1 ); }
+	for(const auto &orb_T : jle)
+		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(orb_T.size())-1 ); }
 
 	const ModuleBase::Element_Basis_Index::Range    range_lcaos = Exx_Abfs::Abfs_Index::construct_range( lcaos );
 	const ModuleBase::Element_Basis_Index::IndexLNM index_lcaos = ModuleBase::Element_Basis_Index::construct_index( range_lcaos );
@@ -46,12 +63,14 @@ void Exx_Opt_Orb::generate_matrix(
 	const ModuleBase::Element_Basis_Index::IndexLNM index_jys = ModuleBase::Element_Basis_Index::construct_index( range_jys );
 
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs, GlobalV::ofs_running);
+	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, jle, GlobalV::ofs_running);
 
 	const std::map<size_t,std::map<size_t,std::set<double>>> radial_R = get_radial_R(ucell);
 
 	// < lcaos lcaos | lcaos lcaos >
 	const auto ms_lcaoslcaos_lcaoslcaos = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>> 
 	{
+		if(judge_orbs_empty(lcaos))	{ return {}; }
 		Matrix_Orbs22 m_lcaoslcaos_lcaoslcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -70,6 +89,8 @@ void Exx_Opt_Orb::generate_matrix(
 	// < lcaos lcaos | jys >
 	const auto ms_lcaoslcaos_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
+		if(judge_orbs_empty(lcaos))	{ return {}; }
+		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs21 m_jyslcaos_lcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -88,6 +109,7 @@ void Exx_Opt_Orb::generate_matrix(
 	// < jys | jys >
 	const auto ms_jys_jys = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
+		if(judge_orbs_empty(jle))	{ return {}; }
 		Matrix_Orbs11 m_jys_jys;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -106,6 +128,7 @@ void Exx_Opt_Orb::generate_matrix(
 	// < abfs | abfs >
 	const auto ms_abfs_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
+		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_abfs_abfs;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -124,6 +147,8 @@ void Exx_Opt_Orb::generate_matrix(
 	// < lcaos lcaos | abfs >
 	const auto ms_lcaoslcaos_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<double>>>>>>
 	{
+		if(judge_orbs_empty(lcaos))	{ return {}; }
+		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs21 m_abfslcaos_lcaos;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -142,6 +167,8 @@ void Exx_Opt_Orb::generate_matrix(
 	// < jys | abfs >
 	const auto ms_jys_abfs = [&]() -> std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,RI::Tensor<double>>>>>
 	{
+		if(judge_orbs_empty(jle))	{ return {}; }
+		if(judge_orbs_empty(abfs))	{ return {}; }
 		Matrix_Orbs11 m_jys_abfs;
 		ORB_gaunt_table MGT;
 		int Lmax;
@@ -168,7 +195,7 @@ void Exx_Opt_Orb::generate_matrix(
 					if( TA==TB && IA==IB )
 					{
 						const size_t T=TA, I=IA;
-						if(GlobalC::exx_info.info_ri.pca_threshold<=1)
+						if(!judge_orbs_empty(abfs))
 						{
 							// < abfs | abfs >.I
 							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, T,I,T,I );
@@ -194,11 +221,13 @@ void Exx_Opt_Orb::generate_matrix(
 								info,
 								ucell,
 								kv,
+								jle.at(T).size()-1,
+								{jle.at(T).at(0).size()},
 								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
 								m_lcaoslcaos_lcaoslcaos_proj,
-								TA, IA, TB, IB,
+								T, I, T, I,
                                 orb.cutoffs(),
 								range_jys, index_jys );
 						}
@@ -208,18 +237,20 @@ void Exx_Opt_Orb::generate_matrix(
 								info,
 								ucell,
 								kv,
+								jle.at(T).size()-1,
+								{jle.at(T).at(0).size()},
 								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
 								ms_lcaoslcaos_jys.at(T).at(I).at(T).at(I),
 								{{ms_jys_jys.at(T).at(I).at(T).at(I)}},
 								ms_lcaoslcaos_lcaoslcaos.at(T).at(I).at(T).at(I),
-								TA, IA, TB, IB,
+								T, I, T, I,
                                 orb.cutoffs(),
 								range_jys, index_jys );
 						}
 					}
 					else
 					{
-						if(GlobalC::exx_info.info_ri.pca_threshold<=1)
+						if(!judge_orbs_empty(abfs))
 						{
 							// < abfs | abfs >.I
 							const std::vector<std::vector<RI::Tensor<double>>> ms_abfs_abfs_I = cal_I( ms_abfs_abfs, TA,IA,TB,IB );
@@ -261,6 +292,8 @@ void Exx_Opt_Orb::generate_matrix(
 								info,
 								ucell,
 								kv,
+								std::max(jle.at(TA).size(), jle.at(TB).size())-1,
+								{jle.at(TA).at(0).size(), jle.at(TB).at(0).size()},
 								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
 								m_lcaoslcaos_jys_proj,
 								m_jys_jys_proj,
@@ -275,6 +308,8 @@ void Exx_Opt_Orb::generate_matrix(
 								info,
 								ucell,
 								kv,
+								std::max(jle.at(TA).size(), jle.at(TB).size())-1,
+								{jle.at(TA).at(0).size(), jle.at(TB).at(0).size()},
 								PARAM.globalv.global_out_dir+"/matrix-opt-abfs",
 								ms_lcaoslcaos_jys.at(TA).at(IA).at(TB).at(IB),
 								{{ms_jys_jys.at(TA).at(IA).at(TA).at(IA), ms_jys_jys.at(TA).at(IA).at(TB).at(IB)},

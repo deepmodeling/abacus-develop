@@ -25,7 +25,10 @@ ESolver_OF::ESolver_OF()
 
 ESolver_OF::~ESolver_OF()
 {
-    delete psi_;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_;
     delete[] this->pphi_;
 
     for (int i = 0; i < PARAM.inp.nspin; ++i)

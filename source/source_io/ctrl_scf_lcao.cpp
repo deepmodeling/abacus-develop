@@ -1,7 +1,7 @@
 #include <complex>
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
-#include "source_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
+#include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao() 
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_hamilt/hamilt.h" // use Hamilt<T>  
 
@@ -34,7 +34,7 @@ namespace ModuleIO
 {
 
 template <typename TK, typename TR>
-void ctrl_output_lcao(UnitCell& ucell,
+void ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<TK>* pelec, 
@@ -60,8 +60,8 @@ void ctrl_output_lcao(UnitCell& ucell,
 #endif
 		const int istep)
 {
-    ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
+    ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 
     const bool out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
@@ -434,14 +434,14 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
+    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 }
 
 } // End ModuleIO
 
 
 // For gamma only
-template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<double>* pelec, 
@@ -468,7 +468,7 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const int istep);
 
 // For multiple k-points
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -494,7 +494,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 #endif
 		const int istep);
 
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 

@@ -17,6 +17,7 @@ list(APPEND objects
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
     module_pot/pot_sep.cpp
+    module_charge/chgmixing.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp
@@ -37,6 +38,7 @@ list(APPEND objects
     cal_nelec_nband.cpp
     read_pseudo.cpp
     cal_wfc.cpp
+    setup_estate_pw.cpp
 )
 
 if(ENABLE_LCAO)

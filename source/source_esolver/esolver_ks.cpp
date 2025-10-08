@@ -1,7 +1,5 @@
 #include "esolver_ks.h"
-
-// To setup plane wave for electronic wave functions
-#include "pw_setup.h"
+#include "pw_setup.h" // setup plane wave
 
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
@@ -26,7 +24,6 @@
 #include "source_io/json_output/output_info.h"
 
 
-
 namespace ModuleESolver
 {
 
@@ -39,7 +36,10 @@ ESolver_KS<T, Device>::ESolver_KS()
 template <typename T, typename Device>
 ESolver_KS<T, Device>::~ESolver_KS()
 {
-    delete this->psi;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete this->psi;
     delete this->pw_wfc;
     delete this->p_hamilt;
     delete this->p_chgmix;
@@ -150,10 +150,6 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 }
 
-//------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS: hamilt2rho_single
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
@@ -246,24 +242,16 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
 			this->scf_nmax_flag=true;
 		}
 
-		//----------------------------------------------------------------
 		// 3) initialization of SCF iterations
-		//----------------------------------------------------------------
 		this->iter_init(ucell, istep, iter);
 
-		//----------------------------------------------------------------
         // 4) use Hamiltonian to obtain charge density
-		//----------------------------------------------------------------
         this->hamilt2rho(ucell, istep, iter, diag_ethr);
 
-		//----------------------------------------------------------------
         // 5) finish scf iterations
-		//----------------------------------------------------------------
         this->iter_finish(ucell, istep, iter, conv_esolver);
 
-		//----------------------------------------------------------------
         // 6) check convergence
-		//----------------------------------------------------------------
         if (conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
@@ -275,9 +263,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         }
     } // end scf iterations
 
-	//----------------------------------------------------------------
 	// 7) after scf
-	//----------------------------------------------------------------
     this->after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick(this->classname, "runner");
@@ -596,9 +582,6 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
                                 this->kv);
         }
     }
-
-
-
 }
 
 template <typename T, typename Device>

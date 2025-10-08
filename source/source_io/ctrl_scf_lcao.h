@@ -1,5 +1,5 @@
-#ifndef CTRL_OUTPUT_LCAO_H 
-#define CTRL_OUTPUT_LCAO_H 
+#ifndef CTRL_SCF_LCAO_H 
+#define CTRL_SCF_LCAO_H 
 
 #include <complex>
 
@@ -21,7 +21,7 @@ namespace ModuleIO
 {
     // in principle, we need to add const for all of the variables, mohan note 2025-06-05
 	template <typename TK, typename TR>
-		void ctrl_output_lcao(UnitCell& ucell, 
+		void ctrl_scf_lcao(UnitCell& ucell, 
 				const Input_para& inp,
 				K_Vectors& kv,
 				elecstate::ElecStateLCAO<TK>* pelec, 

@@ -1,0 +1,43 @@
+#ifndef CTRL_ITER_LCAO_H 
+#define CTRL_ITER_LCAO_H 
+
+#include "source_cell/unitcell.h" // use UnitCell
+#include "source_cell/klist.h" // use K_Vectors
+#include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
+#include "source_psi/psi.h" // use Psi<TK>
+#include "source_estate/module_charge/charge.h" // use charge
+#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
+#endif
+
+namespace ModuleIO
+{
+
+template <typename TK, typename TR>
+void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
+        const Input_para& inp, // input parameters *
+		K_Vectors& kv, // k points *
+		elecstate::ElecStateLCAO<TK>* pelec, // electronic info * 
+		Parallel_Orbitals& pv, // parallel orbital info *
+		Grid_Driver& gd, // adjacent atom info *
+		psi::Psi<TK>* psi, // wave functions *
+        Charge &chr, // charge density *
+        Charge_Mixing* p_chgmix, // charge mixing *
+		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian *
+		LCAO_Orbitals &orb, // orbital info *
+#ifdef __MLALGO
+		LCAO_Deepks<TK>& ld,
+#endif
+#ifdef __EXX
+		Exx_LRI_Interface<TK, double>& exd,
+		Exx_LRI_Interface<TK, std::complex<double>>& exc,
+#endif
+        int &iter,
+        const int istep,
+        bool &conv_esolver,
+		const double &scf_ene_thr);
+
+}
+#endif
