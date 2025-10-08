@@ -434,7 +434,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 #ifdef __EXX
     // calculate exact-exchange
     if (PARAM.inp.calculation != "nscf")
-q
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
