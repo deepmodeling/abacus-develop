@@ -331,6 +331,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 
     // doing on the real space grid.
     // vl_dphi
+    bool reset_dm_to_gint = PARAM.inp.calculation != "nscf" ? false : true;
     PulayForceStress::cal_pulay_fs(fvl_dphi,
                                    svl_dphi,
                                    *dm,
@@ -339,7 +340,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                    gint,
                                    isforce,
                                    isstress,
-                                   false /*reset dm to gint*/);
+                                   reset_dm_to_gint /*reset dm to gint*/);
 
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)

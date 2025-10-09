@@ -236,6 +236,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress);
 
     // vl_dphi
+    bool reset_dm_to_gint = PARAM.inp.calculation != "nscf" ? false : true;
     PulayForceStress::cal_pulay_fs(fvl_dphi,
                                    svl_dphi,
                                    *dm,
@@ -244,7 +245,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    gint,
                                    isforce,
                                    isstress,
-                                   false /*reset dm to gint*/);
+                                   reset_dm_to_gint);
 
 #ifdef __DEEPKS
     const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
