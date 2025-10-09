@@ -1,0 +1,33 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix          autotest
+calculation     scf
+ks_solver       dav
+dfthalf_type    1
+
+symmetry                1
+pseudo_dir      ../../PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc         50
+scf_thr                         1e-9
+scf_nmax                        100
+
+
+#Parameters (3.Basis)
+basis_type              pw
+
+#Parameters (4.Smearing)
+smearing_method         gauss
+smearing_sigma                  0.002
+
+#Parameters (5.Mixing)
+mixing_type             broyden
+mixing_beta             0.7
+
+dft_functional PBE
+
+#OUT
+out_bandgap true
+
+pw_seed 1

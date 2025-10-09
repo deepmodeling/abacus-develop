@@ -1,0 +1,28 @@
+ATOMIC_SPECIES
+Li  0.0 Li_ONCV_PBE-1.2.upf upf201
+F   0.0 F_ONCV_PBE-1.2.upf upf201
+
+LATTICE_CONSTANT
+1.0000000000
+
+LATTICE_VECTORS
+        0.0000000000        3.8379626543        3.8379626543
+        3.8379626543        0.0000000000        3.8379626543
+        3.8379626543        3.8379626543        0.0000000000
+
+SEP_FILES
+Li 0
+F  1 F_pbe_50.sep 0.0 2.2 20.0 1.0
+
+ATOMIC_POSITIONS
+Direct
+
+Li #label
+0.0000   #magnetism
+1 #number of atoms
+        0.0000000000        0.0000000000        0.0000000000 m 1 1 1
+
+F #label
+0.0000   #magnetism
+1 #number of atoms
+        0.5000000000        0.5000000000        0.5000000000 m 1 1 1
