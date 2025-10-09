@@ -154,17 +154,14 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->kv,
             this->two_center_bundle_,
             this->orb_,
-            DM
-#ifdef __MLALGO
-            ,
-            &this->ld
-#endif
+            DM,
+            this->deepks
 #ifdef __EXX
             ,
             istep,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
-            GlobalC::exx_info.info_ri.real_number ? &this->exd->get_Hexxs() : nullptr,
-            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exc->get_Hexxs()
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->two_level_step : &this->exx_nao.exc->two_level_step,
+            GlobalC::exx_info.info_ri.real_number ? &this->exx_nao.exd->get_Hexxs() : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &this->exx_nao.exc->get_Hexxs()
 #endif
         );
     }
@@ -238,7 +235,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 #ifdef __MLALGO
         // ---------- output tot and precalc ----------
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->ld, [](LCAO_Deepks<TK>*) {});
+        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->deepks.ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
         deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
@@ -412,14 +409,11 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->pw_rho,
                        this->solvent,
 #ifdef __MLALGO
-                       this->ld,
+                       this->deepks.ld,
                        "base",
 #endif
-#ifdef __EXX
-                       *this->exd,
-                       *this->exc,
-#endif
-                       &ucell.symm);
+					   this->exx_nao,
+					   &ucell.symm);
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 

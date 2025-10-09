@@ -14,9 +14,7 @@
 
 #include <vector>
 
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#endif
+#include "source_lcao/setup_deepks.h" // mohan add 20251008
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"
@@ -50,11 +48,8 @@ class HamiltLCAO : public Hamilt<TK>
 			   const K_Vectors& kv_in,
 			   const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-               elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __MLALGO
-               ,
-               LCAO_Deepks<TK>* ld_in
-#endif
+			   elecstate::DensityMatrix<TK, double>* DM_in,
+			   Setup_DeePKS<TK> &deepks
 #ifdef __EXX
                ,
                const int istep,

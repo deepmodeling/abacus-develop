@@ -57,7 +57,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 {
-    delete psi_laststep;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_laststep;
     if (Hk_laststep != nullptr)
     {
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)

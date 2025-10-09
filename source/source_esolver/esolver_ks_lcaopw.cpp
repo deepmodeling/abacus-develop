@@ -51,6 +51,9 @@ namespace ModuleESolver
     template <typename T>
     ESolver_KS_LIP<T>::~ESolver_KS_LIP()
     {
+        //****************************************************
+        // do not add any codes in this deconstructor funcion
+        //****************************************************
         delete this->psi_local;
         // delete Hamilt
         this->deallocate_hamilt();

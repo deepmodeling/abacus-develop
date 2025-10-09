@@ -1,21 +1,12 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include <cstring>
-//#include <fstream>
-
-// for first-principles esolver
-#include "esolver_fp.h"
-// for plane wave basis set 
-#include "source_basis/module_pw/pw_basis_k.h"
-// for k-points in Brillouin zone
-#include "source_cell/klist.h"
-// for charge mixing
-#include "source_estate/module_charge/charge_mixing.h"
-// for electronic wave functions
-#include "source_psi/psi.h"
-// for Hamiltonian
-#include "source_hamilt/hamilt.h"
+#include "esolver_fp.h" // first-principles esolver
+#include "source_basis/module_pw/pw_basis_k.h" // use plane wave
+#include "source_cell/klist.h" // use k-points in Brillouin zone
+#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_psi/psi.h" // use electronic wave functions
+#include "source_hamilt/hamilt.h" // use Hamiltonian
 
 namespace ModuleESolver
 {

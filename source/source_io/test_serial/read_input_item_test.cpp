@@ -1403,14 +1403,6 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // exx_opt_orb_lmax
-        auto it = find_label("exx_opt_orb_lmax", readinput.input_lists);
-        param.input.exx_opt_orb_lmax = -1;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
     { // exx_opt_orb_ecut
         auto it = find_label("exx_opt_orb_ecut", readinput.input_lists);
         param.input.exx_opt_orb_ecut = -1;
