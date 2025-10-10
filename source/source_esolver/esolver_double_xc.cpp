@@ -6,7 +6,6 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
-//-----force& stress-------------------
 #include "source_lcao/FORCE_STRESS.h"
 
 //-----HSolver ElecState Hamilt--------

@@ -93,11 +93,9 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& stvnl_dphi,
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
-#if __MLALGO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
-                       LCAO_Deepks<T>& ld,
-#endif
+                       Setup_DeePKS<T>& deepks,
                        Gint_Gamma& gint_gamma,
                        Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,

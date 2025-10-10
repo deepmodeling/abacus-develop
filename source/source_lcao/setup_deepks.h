@@ -6,6 +6,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
 #include "source_basis/module_ao/ORB_read.h" // orb
 #include "source_basis/module_nao/two_center_integrator.h" // overlap_orb_alpha 
+#include "source_cell/module_neighbor/sltk_grid_driver.h" // grid driver
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
