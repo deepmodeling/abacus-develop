@@ -46,6 +46,27 @@ void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
              int* iwork, int* liwork, int* info);
 
+void ssygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, float* A, const int* lda, float* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, const int* m, float* w, float* Z, const int* ldz,
+             float* work, const int* lwork, int* iwork, int* ifail, int* info);
+void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, double* A, const int* lda, double* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+             double* work, const int* lwork, int* iwork, int* ifail, int* info);
+void chegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<float>* A, const int* lda, std::complex<float>* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, const int* m, float* w, std::complex<float>* Z, const int* ldz,
+             std::complex<float>* work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+void zhegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<double>* A, const int* lda, std::complex<double>* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, const int* m, double* w, std::complex<double>* Z, const int* ldz,
+             std::complex<double>* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+
 void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<double>* a, const int* lda,
              const std::complex<double>* b, const int* ldb, double* w,
@@ -189,6 +210,68 @@ void hegvd(const int itype, const char jobz, const char uplo, const int n,
             work, &lwork, rwork, &lrwork,
             iwork, &liwork, &info);
 }
+
+// Note
+// rwork is only needed for complex version
+// and we include rwork in the function parameter list
+// for simplicity of function overloading
+// and unification of function parameter list
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            float* a, const int lda, float* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            const int m, float* w, float* z, const int ldz,
+            float* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    ssygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda, double* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    dsygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<float>* a, const int lda, std::complex<float>* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            const int m, float* w, std::complex<float>* z, const int ldz,
+            std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    chegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, std::complex<double>* z, const int ldz,
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    zhegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
 
 // wrap function of fortran lapack routine zheevx.
 static inline
