@@ -79,9 +79,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix fewalds;
     ModuleBase::matrix fcc;
     ModuleBase::matrix fscc;
-#ifdef __MLALGO
     ModuleBase::matrix fvnl_dalpha; // deepks
-#endif
 
     fvl_dphi.create(nat, 3); // must do it now, update it later, noted by zhengdy
 
@@ -95,9 +93,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         fewalds.create(nat, 3);
         fcc.create(nat, 3);
         fscc.create(nat, 3);
-#ifdef __MLALGO
         fvnl_dalpha.create(nat, 3); // deepks
-#endif
 
         // calculate basic terms in Force, same method with PW base
         this->calForcePwPart(ucell,
@@ -124,9 +120,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix stvnl_dphi;
     ModuleBase::matrix svnl_dbeta;
     ModuleBase::matrix svl_dphi;
-#ifdef __MLALGO
     ModuleBase::matrix svnl_dalpha; // deepks
-#endif
 
     //! stress
     if (isstress)
@@ -142,9 +136,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         stvnl_dphi.create(3, 3);
         svnl_dbeta.create(3, 3);
         svl_dphi.create(3, 3);
-#ifdef __MLALGO
         svnl_dalpha.create(3, 3);
-#endif
+
         // calculate basic terms in Stress, similar method with PW base
         this->calStressPwPart(ucell,
                               sigmadvl,
