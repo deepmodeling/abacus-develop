@@ -8,6 +8,38 @@ Setup_DeePKS<TK>::Setup_DeePKS(){}
 template <typename TK>
 Setup_DeePKS<TK>::~Setup_DeePKS(){}
 
+
+template <typename TK>
+void Setup_DeePKS<TK>::build_overlap(
+		const UnitCell &ucell,
+		const LCAO_Orbitals &orb,
+		const Parallel_Orbitals &pv,
+		const Grid_Driver &gd,
+        TwoCenterIntegrator &overlap_orb_alpha,
+		const Input_para &inp)
+{
+#ifdef __MLALGO
+	// 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
+	// since it depends on ionic positions
+	if (PARAM.globalv.deepks_setorb)
+	{
+		// allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
+		DeePKS_domain::allocate_phialpha(inp.cal_force, ucell, orb, gd, &pv, this->ld.phialpha);
+
+		// build and save <phi(0)|alpha(R)> at beginning
+		DeePKS_domain::build_phialpha(inp.cal_force, ucell, orb, gd,
+				&pv, overlap_orb_alpha, this->ld.phialpha);
+
+		if (inp.deepks_out_unittest)
+		{
+			DeePKS_domain::check_phialpha(inp.cal_force, ucell, orb,
+					gd, &pv, this->ld.phialpha, GlobalV::MY_RANK);
+		}
+	}
+#endif
+}
+
+
 template <typename TK>
 void Setup_DeePKS<TK>::before_runner(const UnitCell& ucell, // unitcell
 	const int nks, // number of k points

@@ -6,9 +6,6 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_tools.h"
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#endif
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
@@ -140,9 +137,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         );
     }
 
-#ifdef __MLALGO
+
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
+    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+
+/*
+#ifdef __MLALGO
     if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
@@ -159,6 +160,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         }
     }
 #endif
+*/
 
     // 10) prepare sc calculation
     if (PARAM.inp.sc_mag_switch)

@@ -7,10 +7,6 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/module_dftu/dftu.h"
-#ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
-#endif
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -336,43 +332,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		}
 #endif
 		elecstate::setup_dm<TK>(ucell, estate, this->psi, this->chr, iter, exx_two_level_step);
-
-/*
-    if (iter == 1 && exx_two_level_step == 0)
-    {
-        std::cout << " WAVEFUN -> CHARGE " << std::endl;
-
-        // calculate the density matrix using read in wave functions
-        // and then calculate the charge density on grid.
-
-        estate->skip_weights = true;
-        elecstate::calculate_weights(estate->ekb,
-                estate->wg,
-                estate->klist,
-                estate->eferm,
-                estate->f_en,
-                estate->nelec_spin,
-                estate->skip_weights);
-
-        elecstate::calEBand(estate->ekb, estate->wg, estate->f_en);
-        elecstate::cal_dm_psi(estate->DM->get_paraV_pointer(), estate->wg, *this->psi, *(estate->DM));
-        estate->DM->cal_DMR();
-
-        estate->psiToRho(*this->psi);
-        estate->skip_weights = false;
-
-        elecstate::cal_ux(ucell);
-
-        //! update the potentials by using new electron charge density
-        estate->pot->update_from_charge(&this->chr, &ucell);
-
-        //! compute the correction energy for metals
-        estate->f_en.descf = estate->cal_delta_escf();
-    }
-
-*/
-
-
 	}
 
 #ifdef __EXX
@@ -409,11 +368,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         this->p_hamilt->refresh();
     }
-    // if (iter == 1 && istep == 0)
-    // {
-    //     // initialize DMR
-    //     this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
-    // }
 #endif
 
     if (PARAM.inp.vl_in_h)
