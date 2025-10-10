@@ -229,7 +229,8 @@ void BFGS::Update(std::vector<double>& pos,
             dpos[iat * 3 + 2] = move_ion_dr.z ;
         }
     }
-    if(*max_element(dpos.begin(), dpos.end()) < 1e-7)
+    double threshold=1e-7;
+    if(*max_element(dpos.begin(), dpos.end()) < threshold)
     {
         return;
     } 
@@ -251,7 +252,8 @@ void BFGS::DetermineStep(std::vector<double>& steplength,
 {
     std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
-    assert(a > 1e-10);
+    double threshold=1e-10;
+    assert(a > threshold);
     if(a >= maxstep)
     {
         double scale = maxstep / a;
