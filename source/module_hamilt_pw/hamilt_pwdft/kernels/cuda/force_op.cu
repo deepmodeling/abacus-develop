@@ -1,6 +1,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-// #include "module_psi/kernels/device.h"
+// #include "source_psi/kernels/device.h"
 #include "module_base/module_device/types.h"
+#include "module_base/constants.h"
 
 #include <complex>
 
@@ -10,124 +11,18 @@
 #include <module_base/module_device/device.h>
 
 #define THREADS_PER_BLOCK 256
+#define FULL_MASK 0xffffffff
+#define WARP_SIZE 32
 
 namespace hamilt {
 
-// CUDA kernels for sincos loops
 template <typename FPTYPE>
-__global__ void cal_force_loc_sincos_kernel(
-    const int nat,
-    const int npw,
-    const int ntype,
-    const FPTYPE* gcar,
-    const FPTYPE* tau,
-    const FPTYPE* vloc_per_type,
-    const thrust::complex<FPTYPE>* aux,
-    const FPTYPE scale_factor,
-    FPTYPE* force)
-{
-    const FPTYPE TWO_PI = 2.0 * M_PI;
-    
-    const int iat = blockIdx.y;
-    const int ig_start = blockIdx.x * blockDim.x + threadIdx.x;
-    const int ig_stride = gridDim.x * blockDim.x;
-    
-    if (iat >= nat) return;
-    
-    // Load atom information to registers
-    const FPTYPE tau_x = tau[iat * 3 + 0];
-    const FPTYPE tau_y = tau[iat * 3 + 1];
-    const FPTYPE tau_z = tau[iat * 3 + 2];
-    
-    // Local accumulation variables
-    FPTYPE local_force_x = 0.0;
-    FPTYPE local_force_y = 0.0;
-    FPTYPE local_force_z = 0.0;
-    
-    // Grid-stride loop over G-vectors
-    for (int ig = ig_start; ig < npw; ig += ig_stride) {
-        // Calculate phase: 2π * (G · τ)
-        const FPTYPE phase = TWO_PI * (gcar[ig * 3 + 0] * tau_x + 
-                                       gcar[ig * 3 + 1] * tau_y + 
-                                       gcar[ig * 3 + 2] * tau_z);
-        
-        // Use CUDA intrinsic for sincos
-        FPTYPE sinp, cosp;
-        sincos(phase, &sinp, &cosp);
-        
-        // Calculate force factor
-        const FPTYPE vloc_factor = vloc_per_type[iat * npw + ig];
-        const FPTYPE factor = vloc_factor * (cosp * aux[ig].imag() + sinp * aux[ig].real());
-        
-        // Accumulate force contributions
-        local_force_x += gcar[ig * 3 + 0] * factor;
-        local_force_y += gcar[ig * 3 + 1] * factor;
-        local_force_z += gcar[ig * 3 + 2] * factor;
+__forceinline__
+__device__
+void warp_reduce(FPTYPE & val) {
+    for (int offset = 16; offset > 0; offset >>= 1) {
+        val += __shfl_down_sync(FULL_MASK, val, offset);
     }
-    
-    // Atomic add to global memory
-    atomicAdd(&force[iat * 3 + 0], local_force_x * scale_factor);
-    atomicAdd(&force[iat * 3 + 1], local_force_y * scale_factor);
-    atomicAdd(&force[iat * 3 + 2], local_force_z * scale_factor);
-}
-
-template <typename FPTYPE>
-__global__ void cal_force_ew_sincos_kernel(
-    const int nat,
-    const int npw,
-    const int ig_gge0,
-    const FPTYPE* gcar,
-    const FPTYPE* tau,
-    const FPTYPE* it_facts,
-    const thrust::complex<FPTYPE>* aux,
-    FPTYPE* force)
-{
-    const FPTYPE TWO_PI = 2.0 * M_PI;
-    
-    const int iat = blockIdx.y;
-    const int ig_start = blockIdx.x * blockDim.x + threadIdx.x;
-    const int ig_stride = gridDim.x * blockDim.x;
-    
-    if (iat >= nat) return;
-    
-    // Load atom information to registers
-    const FPTYPE tau_x = tau[iat * 3 + 0];
-    const FPTYPE tau_y = tau[iat * 3 + 1];
-    const FPTYPE tau_z = tau[iat * 3 + 2];
-    const FPTYPE it_fact = it_facts[iat];
-    
-    // Local accumulation variables
-    FPTYPE local_force_x = 0.0;
-    FPTYPE local_force_y = 0.0;
-    FPTYPE local_force_z = 0.0;
-    
-    // Grid-stride loop over G-vectors
-    for (int ig = ig_start; ig < npw; ig += ig_stride) {
-        // Skip G=0 term
-        if (ig == ig_gge0) continue;
-        
-        // Calculate phase: 2π * (G · τ)
-        const FPTYPE phase = TWO_PI * (gcar[ig * 3 + 0] * tau_x + 
-                                       gcar[ig * 3 + 1] * tau_y + 
-                                       gcar[ig * 3 + 2] * tau_z);
-        
-        // Use CUDA intrinsic for sincos
-        FPTYPE sinp, cosp;
-        sincos(phase, &sinp, &cosp);
-        
-        // Calculate Ewald sum contribution (fixed sign error)
-        const FPTYPE factor = it_fact * (-cosp * aux[ig].imag() + sinp * aux[ig].real());
-        
-        // Accumulate force contributions
-        local_force_x += gcar[ig * 3 + 0] * factor;
-        local_force_y += gcar[ig * 3 + 1] * factor;
-        local_force_z += gcar[ig * 3 + 2] * factor;
-    }
-    
-    // Atomic add to global memory
-    atomicAdd(&force[iat * 3 + 0], local_force_x);
-    atomicAdd(&force[iat * 3 + 1], local_force_y);
-    atomicAdd(&force[iat * 3 + 2], local_force_z);
 }
 
 template <typename FPTYPE>
@@ -301,65 +196,6 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
 
-    cudaCheckOnDebug();
-}
-
-// GPU operators
-template <typename FPTYPE>
-void cal_force_loc_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* ctx,
-    const int& nat,
-    const int& npw,
-    const int& ntype,
-    const FPTYPE* gcar,
-    const FPTYPE* tau,
-    const FPTYPE* vloc_per_type,
-    const std::complex<FPTYPE>* aux,
-    const FPTYPE& scale_factor,
-    FPTYPE* force)
-{
-    // Calculate optimal grid configuration for GPU load balancing
-    const int threads_per_block = THREADS_PER_BLOCK;
-    const int max_blocks_per_sm = 32; // Configurable per GPU architecture
-    const int max_blocks_x = std::min(max_blocks_per_sm, (npw + threads_per_block - 1) / threads_per_block);
-    
-    dim3 grid(max_blocks_x, nat);
-    dim3 block(threads_per_block);
-    
-    cal_force_loc_sincos_kernel<FPTYPE><<<grid, block>>>(
-        nat, npw, ntype, gcar, tau, vloc_per_type,
-        reinterpret_cast<const thrust::complex<FPTYPE>*>(aux),
-        scale_factor, force
-    );
-    
-    cudaCheckOnDebug();
-}
-
-template <typename FPTYPE>
-void cal_force_ew_sincos_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* ctx,
-    const int& nat,
-    const int& npw,
-    const int& ig_gge0,
-    const FPTYPE* gcar,
-    const FPTYPE* tau,
-    const FPTYPE* it_facts,
-    const std::complex<FPTYPE>* aux,
-    FPTYPE* force)
-{
-    // Calculate optimal grid configuration for GPU load balancing
-    const int threads_per_block = THREADS_PER_BLOCK;
-    const int max_blocks_per_sm = 32; // Configurable per GPU architecture
-    const int max_blocks_x = std::min(max_blocks_per_sm, (npw + threads_per_block - 1) / threads_per_block);
-    
-    dim3 grid(max_blocks_x, nat);
-    dim3 block(threads_per_block);
-    
-    cal_force_ew_sincos_kernel<FPTYPE><<<grid, block>>>(
-        nat, npw, ig_gge0, gcar, tau, it_facts,
-        reinterpret_cast<const thrust::complex<FPTYPE>*>(aux), force
-    );
-    
     cudaCheckOnDebug();
 }
 
@@ -781,6 +617,242 @@ void revertVkbValues(
     cudaCheckOnDebug();
 }
 
+template <typename FPTYPE>
+__global__ void force_loc_kernel(
+    const int nat,
+    const int npw,
+    const FPTYPE tpiba_omega,
+    const int* iat2it,
+    const int* ig2gg_d,
+    const FPTYPE* gcar_d,
+    const FPTYPE* tau_d,
+    const thrust::complex<FPTYPE>* aux_d,
+    const FPTYPE* vloc_d,
+    const int vloc_nc,
+    FPTYPE* forcelc_d)
+{
+    const int iat = blockIdx.x;
+    const int tid = threadIdx.x;
+    const int warp_id = tid / WARP_SIZE;
+    const int lane_id = tid % WARP_SIZE;
+    
+    if (iat >= nat) return;
+    const int it = iat2it[iat]; // get the type of atom
+
+    // Initialize force components
+    FPTYPE force_x = 0.0;
+    FPTYPE force_y = 0.0;
+    FPTYPE force_z = 0.0;
+    
+    const auto tau_x = tau_d[iat * 3 + 0];
+    const auto tau_y = tau_d[iat * 3 + 1];
+    const auto tau_z = tau_d[iat * 3 + 2];
+
+    // Process all plane waves in chunks of blockDim.x
+    for (int ig = tid; ig < npw; ig += blockDim.x) {
+        const auto gcar_x = gcar_d[ig * 3 + 0];
+        const auto gcar_y = gcar_d[ig * 3 + 1];
+        const auto gcar_z = gcar_d[ig * 3 + 2];
+
+        // Calculate phase factor
+        const FPTYPE phase = ModuleBase::TWO_PI * (gcar_x * tau_x +
+                                                   gcar_y * tau_y +
+                                                   gcar_z * tau_z);
+        FPTYPE sinp, cosp;
+        sincos(phase, &sinp, &cosp);
+        
+        // Get vloc value
+        const FPTYPE vloc_val = vloc_d[it * vloc_nc + ig2gg_d[ig]];
+        
+        // Calculate factor
+        const auto aux_val = aux_d[ig];
+        const FPTYPE factor = vloc_val * (cosp * aux_val.imag() + sinp * aux_val.real());
+        
+        // Multiply by gcar components
+        force_x += gcar_x * factor;
+        force_y += gcar_y * factor;
+        force_z += gcar_z * factor;
+    }
+    
+    // Warp-level reduction
+    warp_reduce<FPTYPE>(force_x);
+    warp_reduce<FPTYPE>(force_y);
+    warp_reduce<FPTYPE>(force_z);
+    
+    // First thread in each warp writes to shared memory
+    __shared__ FPTYPE warp_sums_x[THREADS_PER_BLOCK / WARP_SIZE]; // 256 threads / 32 = 8 warps
+    __shared__ FPTYPE warp_sums_y[THREADS_PER_BLOCK / WARP_SIZE];
+    __shared__ FPTYPE warp_sums_z[THREADS_PER_BLOCK / WARP_SIZE];
+    
+    if (lane_id == 0) {
+        warp_sums_x[warp_id] = force_x;
+        warp_sums_y[warp_id] = force_y;
+        warp_sums_z[warp_id] = force_z;
+    }
+    
+    __syncthreads();
+    
+    // Final reduction by first warp
+    if (warp_id == 0) {
+        FPTYPE final_x = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_x[lane_id] : 0.0;
+        FPTYPE final_y = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_y[lane_id] : 0.0;
+        FPTYPE final_z = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_z[lane_id] : 0.0;
+        
+        warp_reduce<FPTYPE>(final_x);
+        warp_reduce<FPTYPE>(final_y);
+        warp_reduce<FPTYPE>(final_z);
+        
+        if (lane_id == 0) {
+            forcelc_d[iat * 3 + 0] = final_x * tpiba_omega;
+            forcelc_d[iat * 3 + 1] = final_y * tpiba_omega;
+            forcelc_d[iat * 3 + 2] = final_z * tpiba_omega;
+        }
+    }
+}
+
+template <typename FPTYPE>
+__global__ void force_ew_kernel(
+    const int nat,
+    const int npw,
+    const int ig_gge0,
+    const int* iat2it,
+    const FPTYPE* gcar_d,
+    const FPTYPE* tau_d,
+    const FPTYPE* it_fact_d,
+    const thrust::complex<FPTYPE>* aux_d,
+    FPTYPE* forceion_d)
+{
+    const int iat = blockIdx.x;
+    const int tid = threadIdx.x;
+    const int warp_id = tid / WARP_SIZE;
+    const int lane_id = tid % WARP_SIZE;
+
+    if( iat >= nat) return;
+    const int it = iat2it[iat]; // get the type of atom
+    const FPTYPE it_fact_val = it_fact_d[it]; // Get it_fact value
+
+    // Initialize force components
+    FPTYPE force_x = 0.0;
+    FPTYPE force_y = 0.0;
+    FPTYPE force_z = 0.0;
+
+    const auto tau_x = tau_d[iat * 3 + 0];
+    const auto tau_y = tau_d[iat * 3 + 1];
+    const auto tau_z = tau_d[iat * 3 + 2];
+
+    for (int ig = tid; ig < npw; ig += blockDim.x) {
+        if(ig == ig_gge0)
+        { continue; }
+        const auto gcar_x = gcar_d[ig * 3 + 0];
+        const auto gcar_y = gcar_d[ig * 3 + 1];
+        const auto gcar_z = gcar_d[ig * 3 + 2];
+
+        // Calculate phase factor
+        const FPTYPE phase = ModuleBase::TWO_PI * (gcar_x * tau_x +
+                                                   gcar_y * tau_y +
+                                                   gcar_z * tau_z);
+        FPTYPE sinp, cosp;
+        sincos(phase, &sinp, &cosp);
+
+        // Calculate force contribution
+        const FPTYPE sumnb = -cosp * aux_d[ig].imag() + sinp * aux_d[ig].real();
+        
+        // Multiply by gcar components
+        force_x += gcar_x * sumnb;
+        force_y += gcar_y * sumnb;
+        force_z += gcar_z * sumnb;
+    }
+
+    // Warp-level reduction
+    warp_reduce<FPTYPE>(force_x);
+    warp_reduce<FPTYPE>(force_y);
+    warp_reduce<FPTYPE>(force_z);
+
+    // First thread in each warp writes to shared memory
+    __shared__ FPTYPE warp_sums_x[THREADS_PER_BLOCK / WARP_SIZE]; // 256 threads / 32 = 8 warps
+    __shared__ FPTYPE warp_sums_y[THREADS_PER_BLOCK / WARP_SIZE];
+    __shared__ FPTYPE warp_sums_z[THREADS_PER_BLOCK / WARP_SIZE];
+
+    if (lane_id == 0) {
+        warp_sums_x[warp_id] = force_x;
+        warp_sums_y[warp_id] = force_y;
+        warp_sums_z[warp_id] = force_z;
+    }
+
+    __syncthreads();
+
+    // Final reduction by first warp
+    if (warp_id == 0) {
+        FPTYPE final_x = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_x[lane_id] : 0.0;
+        FPTYPE final_y = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_y[lane_id] : 0.0;
+        FPTYPE final_z = (lane_id < blockDim.x/WARP_SIZE) ? warp_sums_z[lane_id] : 0.0;
+
+        warp_reduce<FPTYPE>(final_x);
+        warp_reduce<FPTYPE>(final_y);
+        warp_reduce<FPTYPE>(final_z);
+
+        if (lane_id == 0) {
+            forceion_d[iat * 3 + 0] = final_x * it_fact_val;
+            forceion_d[iat * 3 + 1] = final_y * it_fact_val;
+            forceion_d[iat * 3 + 2] = final_z * it_fact_val;
+        }
+    }
+}
+
+template <typename FPTYPE>
+void cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
+    const int nat,
+    const int npw,
+    const FPTYPE tpiba_omega,
+    const int* iat2it,
+    const int* ig2igg,
+    const FPTYPE* gcar,
+    const FPTYPE* tau,
+    const std::complex<FPTYPE>* aux,
+    const FPTYPE* vloc,
+    const int vloc_nc,
+    FPTYPE* forcelc)
+{
+    force_loc_kernel<FPTYPE>
+        <<<nat, THREADS_PER_BLOCK>>>(nat,
+                                     npw,
+                                     tpiba_omega,
+                                     iat2it,
+                                     ig2igg,
+                                     gcar,
+                                     tau,
+                                     reinterpret_cast<const thrust::complex<FPTYPE>*>(aux),
+                                     vloc,
+                                     vloc_nc,
+                                     forcelc); // array of data
+
+}
+
+template <typename FPTYPE>
+void cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
+    const int nat,
+    const int npw,
+    const int ig_gge0,
+    const int* iat2it,
+    const FPTYPE* gcar,
+    const FPTYPE* tau,
+    const FPTYPE* it_fact,
+    const std::complex<FPTYPE>* aux,
+    FPTYPE* forceion)
+{
+    force_ew_kernel<FPTYPE>
+        <<<nat, THREADS_PER_BLOCK>>>(nat,
+                                     npw,
+                                     ig_gge0,
+                                     iat2it,
+                                     gcar,
+                                     tau,
+                                     it_fact,
+                                     reinterpret_cast<const thrust::complex<FPTYPE>*>(aux),
+                                     forceion); // array of data
+}
+
+
 // for revertVkbValues functions instantiation
 template void revertVkbValues<double>(const int *gcar_zero_ptrs, std::complex<double> *vkb_ptr, const std::complex<double> *vkb_save_ptr, int nkb, int gcar_zero_count, int npw, int ipol, int npwx, const std::complex<double> coeff);
 // for saveVkbValues functions instantiation
@@ -788,12 +860,11 @@ template void saveVkbValues<double>(const int *gcar_zero_ptrs, const std::comple
 
 template struct cal_vkb1_nl_op<float, base_device::DEVICE_GPU>;
 template struct cal_force_nl_op<float, base_device::DEVICE_GPU>;
-template struct cal_force_loc_sincos_op<float, base_device::DEVICE_GPU>;
-template struct cal_force_ew_sincos_op<float, base_device::DEVICE_GPU>;
+template struct cal_force_loc_op<float, base_device::DEVICE_GPU>;
+template struct cal_force_ew_op<float, base_device::DEVICE_GPU>;
 
 template struct cal_vkb1_nl_op<double, base_device::DEVICE_GPU>;
 template struct cal_force_nl_op<double, base_device::DEVICE_GPU>;
-template struct cal_force_loc_sincos_op<double, base_device::DEVICE_GPU>;
-template struct cal_force_ew_sincos_op<double, base_device::DEVICE_GPU>;
-
+template struct cal_force_loc_op<double, base_device::DEVICE_GPU>;
+template struct cal_force_ew_op<double, base_device::DEVICE_GPU>;
 }  // namespace hamilt
