@@ -2,8 +2,10 @@
  * @file lapack_connector.h
  * 
  * @brief This is a wrapper of some LAPACK routines.
+ * \b Row-Major version.
  * 
  * @warning MAY BE DEPRECATED IN THE FUTURE.
+ * @warning For Column-major version, please refer to \c source/source_base/module_container/base/third_party/lapack.h.
  * 
  * @note 
  * !!! Note that 

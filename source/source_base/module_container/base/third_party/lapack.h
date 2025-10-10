@@ -1,7 +1,10 @@
 /**
  * @file lapack.h
  * @brief This is a direct wrapper of some LAPACK routines.
- * Direct wrapping of standard LAPACK routines. (column major, fortran style)
+ * \b Column-Major version.
+ * Direct wrapping of standard LAPACK routines. (Column-Major, fortran style)
+ * 
+ * @warning For Row-major version, please refer to \c source/source_base/module_external/lapack_connector.h.
  * 
  * @note
  * Some slight modification are made to fit the C++ style for overloading purpose.
