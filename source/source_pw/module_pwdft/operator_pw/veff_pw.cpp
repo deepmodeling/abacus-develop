@@ -58,7 +58,7 @@ void Veff<OperatorPW<T, Device>>::act(
 #ifdef __DSP
     if (npol == 1)
     {
-        ModulePW::FFT_Guard guard(wfcpw->fft_bundle);
+        ModuleBase::FFT_Guard guard(wfcpw->fft_bundle);
         for (int ib = 0; ib < nbands; ib += npol)
         {
             wfcpw->convolution(this->ctx,

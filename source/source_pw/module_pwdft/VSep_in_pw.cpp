@@ -46,9 +46,9 @@ double shell_cut(double r, double r_in, double r_out, double r_power)
 }
 } // namespace
 
-VSep::VSep() noexcept = default;
+VSep::VSep() = default;
 
-VSep::~VSep() noexcept = default;
+VSep::~VSep() = default;
 
 void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_cell)
 {
