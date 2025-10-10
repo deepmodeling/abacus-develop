@@ -79,12 +79,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
 
 void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
 {
-    int total_atoms = 0;
-    for(int i = 0; i < ucell.ntype; i++) 
-    {
-        total_atoms += ucell.atoms[i].na;
-    }
-    assert(pos.size() == total_atoms);
+    assert(pos.size() == ucell.nat);
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -101,12 +96,7 @@ void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
 void BFGS::GetPostaud(UnitCell& ucell,
                       std::vector<std::vector<double>>& pos_taud)
 {
-    int total_atoms = 0;
-    for(int i = 0; i < ucell.ntype; i++) 
-    {
-        total_atoms += ucell.atoms[i].na;
-    }
-    assert(pos_taud.size() == total_atoms);
+    assert(pos_taud.size() == ucell.nat);
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -158,9 +148,10 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
         }
     }
     std::vector<double> a=DotInMAndV2(V, changedforce);
+    double threshold=1e-8;
     for(int i = 0; i < a.size(); i++)
     {
-        assert(std::abs(omega[i]) > 1e-8);
+        assert(std::abs(omega[i]) > threshold);
         a[i]/=std::abs(omega[i]);    
     }
     std::vector<double> tmpdpos = DotInMAndV1(V, a);
