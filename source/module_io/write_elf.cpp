@@ -55,8 +55,15 @@ void write_elf(
     if (nspin == 1)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
-        {
-            tau_TF[0][ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
+        {   
+            // Because of numerical problem, the rho may be negative, and then pow(rho, 5/3) will be NaN.
+            // So we set tau_TF = 0 when rho < 0.
+            if (rho[0][ir] < 0.0) {
+                tau_TF[0][ir] = 0.0;
+            }
+            else {
+                tau_TF[0][ir] = c_tf * std::pow(rho[0][ir], 5.0 / 3.0);
+            }
         }
     }
     else if (nspin == 2)
@@ -65,7 +72,14 @@ void write_elf(
         {
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
-                tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
+                // Because of numerical problem, the rho may be negative, and then pow(rho, 5/3) will be NaN.
+                // So we set tau_TF = 0 when rho < 0.
+                if (rho[is][ir] < 0.0) {
+                    tau_TF[is][ir] = 0.0;
+                }
+                else {
+                    tau_TF[is][ir] = 0.5 * c_tf * std::pow(2.0 * rho[is][ir], 5.0 / 3.0);
+                }
             }
         }
     }
@@ -76,8 +90,16 @@ void write_elf(
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
-            elf[is][ir] = (tau[is][ir] - tau_vw[is][ir] + eps) / tau_TF[is][ir];
-            elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
+            // when tau_TF is small, then ELF is set to be zero.
+            if (tau_TF[is][ir] < 1e-12)
+            {
+                elf[is][ir] = 0.0;
+            }
+            else {
+                elf[is][ir] = (tau[is][ir] - tau_vw[is][ir] + eps) / tau_TF[is][ir];
+                elf[is][ir] = 1. / (1. + elf[is][ir] * elf[is][ir]);
+            }
+            
         }
     }
 
