@@ -37,6 +37,7 @@ if(NEP_FOUND)
     if(NOT TARGET NEP::nep_cpu)
         add_library(NEP::nep_cpu UNKNOWN IMPORTED)
         set_target_properties(NEP::nep_cpu PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${NEP_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${NEP_INCLUDE_DIR}"
         )
