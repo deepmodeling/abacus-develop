@@ -21,9 +21,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
-#ifdef __MLALGO
-		LCAO_Deepks<TK>& ld,
-#endif
+        Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
         int &iter,
         const int istep,
@@ -65,7 +63,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     {
         if (iter % inp.deepks_out_freq_elec == 0 )
         {
-            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
+            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
             LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
             deepks_interface.out_deepks_labels(pelec->f_en.etot, kv.get_nks(),
@@ -91,9 +89,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<double, double>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
-#ifdef __MLALGO
-		LCAO_Deepks<double>& ld,
-#endif
+        Setup_DeePKS<double> &deepks,
         Exx_NAO<double> &exx_nao,
         int &iter,
         const int istep,
@@ -112,9 +108,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
-#ifdef __MLALGO
-		LCAO_Deepks<std::complex<double>>& ld,
-#endif
+        Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
         int &iter,
         const int istep,
@@ -133,9 +127,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
-#ifdef __MLALGO
-		LCAO_Deepks<std::complex<double>>& ld,
-#endif
+        Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
         int &iter,
         const int istep,

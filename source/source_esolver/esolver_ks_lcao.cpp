@@ -590,11 +590,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // control the output related to the finished iteration
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, estate,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
-      hamilt_lcao, this->orb_, 
-#ifdef __MLALGO
-      this->deepks.ld,
-#endif
-      exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
+      hamilt_lcao, this->orb_, this->deepks, 
+      this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
 
 }
 

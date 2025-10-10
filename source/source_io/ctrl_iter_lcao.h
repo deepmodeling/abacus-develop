@@ -9,6 +9,7 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_lcao/setup_exx.h" // mohan add 20251008
+#include "source_lcao/setup_deepks.h" // mohan add 20251010
 
 namespace ModuleIO
 {
@@ -25,9 +26,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         Charge_Mixing* p_chgmix, // charge mixing *
 		hamilt::HamiltLCAO<TK, TR>* p_hamilt, // hamiltonian *
 		LCAO_Orbitals &orb, // orbital info *
-#ifdef __MLALGO
-		LCAO_Deepks<TK>& ld,
-#endif
+        Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
         int &iter,
         const int istep,
