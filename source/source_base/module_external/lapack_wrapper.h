@@ -1,5 +1,15 @@
 #ifndef LAPACK_HPP
 #define LAPACK_HPP
+
+/// This is a wrapper of some LAPACK routines.
+/// Direct wrapping of standard LAPACK routines. (column major, fortran style)
+/// including:
+/// 1. hegvd: compute all the eigenvalues and eigenvectors of a generalized Hermitian-definite eigenproblem
+/// 2. heevx: compute the first m eigenvalues and their corresponding eigenvectors of a generalized Hermitian-definite eigenproblem
+/// 3. hegvx: compute the first m eigenvalues and their corresponding eigenvectors of a generalized Hermitian-definite eigenproblem
+/// 4. hegv: compute all the eigenvalues and eigenvectors of a generalized Hermitian-definite eigenproblem
+
+
 #include <iostream>
 extern "C"
 {
