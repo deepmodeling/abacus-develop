@@ -121,7 +121,7 @@ void ReadInput::item_system()
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find DP model !");
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
                 }
             }
         };
