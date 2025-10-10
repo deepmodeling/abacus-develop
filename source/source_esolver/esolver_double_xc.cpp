@@ -16,6 +16,7 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/write_HS.h" // use ModuleIO::write_hsk()
+#include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
 namespace ModuleESolver
 {
@@ -388,6 +389,8 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
     // set as base functional Temporarily
     XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
 
+    this->deepks.dpks_out_type = "base";  // for deepks method
+
     fsl.getForceStress(ucell,
                        PARAM.inp.cal_force,
                        PARAM.inp.cal_stress,
@@ -408,12 +411,10 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->kv,
                        this->pw_rho,
                        this->solvent,
-#ifdef __MLALGO
-                       this->deepks.ld,
-                       "base",
-#endif
+                       this->deepks,
 					   this->exx_nao,
 					   &ucell.symm);
+
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 

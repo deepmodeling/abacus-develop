@@ -51,10 +51,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
-#ifdef __MLALGO
-                                          LCAO_Deepks<T>& ld,
-                                          const std::string& dpks_out_type,
-#endif
+                                          Setup_DeePKS<T>& deepks,
 										  Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm)
 {
@@ -182,7 +179,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __MLALGO
                         fvnl_dalpha,
                         svnl_dalpha,
-                        ld,
+                        deepks.ld,
 #endif
                         gint_gamma,
                         gint_k,
@@ -491,43 +488,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             this->forceSymmetry(ucell, fcs, symm);
         }
 
-#ifdef __MLALGO
-        // DeePKS force
-        if (PARAM.inp.deepks_out_labels) // not parallelized yet
-        {
-            if (PARAM.inp.deepks_out_base == "none" 
-                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
-            {
-                const std::string file_ftot = PARAM.globalv.global_out_dir
-                                            + (PARAM.inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
-                LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
+        // compute forces using the DeePKS model
+        deepks.write_forces(fcs, fvnl_dalpha, PARAM.inp);
 
-                if (PARAM.inp.deepks_out_labels == 1)
-                {
-                    // this base only considers subtracting the deepks_scf part
-                    const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-                    if (PARAM.inp.deepks_scf)
-                    {
-                        LCAO_deepks_io::save_matrix2npy(file_fbase,
-                                                        fcs - fvnl_dalpha,
-                                                        GlobalV::MY_RANK); // Hartree/Bohr, F_base
-                    }
-                    else
-                    {
-                        LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
-                    }
-                }
-            }
-            if (PARAM.inp.deepks_out_base != "none") 
-            {
-                // output fcs as tot or base in another dir
-                // this base considers changing xc functional to base functional
-                const std::string file_f = PARAM.globalv.global_deepks_label_elec_dir + 
-                    (dpks_out_type == "tot" ? "ftot.npy" : "fbase.npy");
-                LCAO_deepks_io::save_matrix2npy(file_f, fcs, GlobalV::MY_RANK);              
-            }
-        }
-#endif
         // print Rydberg force or not
         bool ry = false;
         if (istestf)
@@ -697,7 +660,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels == 1)
         {
             if (PARAM.inp.deepks_out_base == "none" 
-                || (PARAM.inp.deepks_out_base != "none" && dpks_out_type == "tot") )
+                || (PARAM.inp.deepks_out_base != "none" && deepks.dpks_out_type == "tot") )
             {
                 const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
                 LCAO_deepks_io::save_matrix2npy(file_stot,
@@ -730,7 +693,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // output scs as tot or base in another dir
                 // this base considers changing xc functional to base functional
                 const std::string file_s = PARAM.globalv.global_deepks_label_elec_dir + 
-                    (dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
+                    (deepks.dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
                 LCAO_deepks_io::save_matrix2npy(file_s,
                                                 scs,
                                                 GlobalV::MY_RANK,

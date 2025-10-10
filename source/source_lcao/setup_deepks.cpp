@@ -1,5 +1,6 @@
 #include "source_lcao/setup_deepks.h"
 #include "source_lcao/LCAO_domain.h"
+#include "source_io/module_parameter/parameter.h" // use parameter
 
 template <typename TK>
 Setup_DeePKS<TK>::Setup_DeePKS(){}
@@ -27,6 +28,55 @@ void Setup_DeePKS<TK>::before_runner(const UnitCell& ucell, // unitcell
     }
 #endif
 }
+
+
+template <typename TK>
+void Setup_DeePKS<TK>::write_forces(
+		const ModuleBase::matrix &fcs,
+		const ModuleBase::matrix &fvnl_dalpha,
+		const Input_para &inp)
+{
+#ifdef __MLALGO
+	// DeePKS force
+	if (inp.deepks_out_labels) // not parallelized yet
+	{
+		if (inp.deepks_out_base == "none"
+				|| (inp.deepks_out_base != "none" && this->dpks_out_type == "tot") )
+		{
+			const std::string file_ftot = PARAM.globalv.global_out_dir
+				+ (inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
+			LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Hartree/Bohr, F_tot
+
+			if (inp.deepks_out_labels == 1)
+			{
+				// this base only considers subtracting the deepks_scf part
+				const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
+				if (inp.deepks_scf)
+				{
+					LCAO_deepks_io::save_matrix2npy(file_fbase,
+							fcs - fvnl_dalpha,
+							GlobalV::MY_RANK); // Hartree/Bohr, F_base
+				}
+				else
+				{
+					LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
+				}
+			}
+		}
+		if (inp.deepks_out_base != "none")
+		{
+			// output fcs as tot or base in another dir
+			// this base considers changing xc functional to base functional
+			const std::string file_f = PARAM.globalv.global_deepks_label_elec_dir +
+				(dpks_out_type == "tot" ? "ftot.npy" : "fbase.npy");
+			LCAO_deepks_io::save_matrix2npy(file_f, fcs, GlobalV::MY_RANK);
+		}
+	}
+#endif
+
+}
+
+
 
 template class Setup_DeePKS<double>;
 template class Setup_DeePKS<std::complex<double>>;

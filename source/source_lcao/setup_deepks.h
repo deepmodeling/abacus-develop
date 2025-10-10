@@ -23,12 +23,19 @@ class Setup_DeePKS
     LCAO_Deepks<TK> ld;
 #endif
 
+    std::string dpks_out_type;
+
 	void before_runner(
 			const UnitCell& ucell, // unitcell
 			const int nks, // k points
             const LCAO_Orbitals &orb, // orbital info
 			Parallel_Orbitals &pv, // parallel orbitals
 			const Input_para &inp);
+
+    void write_forces(
+		const ModuleBase::matrix &fcs,
+		const ModuleBase::matrix &fvnl_dalpha,
+		const Input_para &inp);
 
 };
 

@@ -203,6 +203,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 
     Force_Stress_LCAO<TK> fsl(this->RA, ucell.nat);
 
+    deepks.dpks_out_type = "tot";  // for deepks method
+
     fsl.getForceStress(ucell,
                        PARAM.inp.cal_force,
                        PARAM.inp.cal_stress,
@@ -223,10 +225,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->kv,
                        this->pw_rho,
                        this->solvent,
-#ifdef __MLALGO
-                       this->deepks.ld,
-                       "tot",
-#endif
+                       this->deepks,
                        this->exx_nao,
                        &ucell.symm);
 

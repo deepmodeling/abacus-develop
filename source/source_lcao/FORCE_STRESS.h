@@ -17,6 +17,7 @@
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
 
 
 template <typename T>
@@ -51,10 +52,7 @@ class Force_Stress_LCAO
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
-#ifdef __MLALGO
-                        LCAO_Deepks<T>& ld,
-                        const std::string& dpks_out_type,
-#endif
+                        Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);
 
