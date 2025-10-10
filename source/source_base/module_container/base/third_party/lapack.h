@@ -1,3 +1,15 @@
+/**
+ * @file lapack.h
+ * @brief This is a direct wrapper of some LAPACK routines.
+ * Direct wrapping of standard LAPACK routines. (column major, fortran style)
+ * 
+ * @note
+ * Some slight modification are made to fit the C++ style for overloading purpose.
+ * You can find some function with different parameter list than the original LAPACK routine.
+ * And some of these parameters are not referred in the function body. They are included just to
+ * ensure the same parameter list for overloaded functions with a uniform name.
+ */
+
 #ifndef BASE_THIRD_PARTY_LAPACK_H_
 #define BASE_THIRD_PARTY_LAPACK_H_
 
@@ -9,6 +21,10 @@
 #elif defined(__ROCM)
 #include <base/third_party/hipsolver.h>
 #endif
+
+/// This is a wrapper of some LAPACK routines.
+/// Direct wrapping of standard LAPACK routines. (column major, fortran style)
+/// with some slight modification to fit the C++ style for overloading purpose.
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:

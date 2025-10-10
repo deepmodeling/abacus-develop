@@ -1,5 +1,24 @@
-#ifndef LAPACKCONNECTOR_HPP
-#define LAPACKCONNECTOR_HPP
+/**
+ * @file lapack_connector.h
+ * 
+ * @brief This is a wrapper of some LAPACK routines.
+ * 
+ * @warning MAY BE DEPRECATED IN THE FUTURE.
+ * 
+ * @note 
+ * !!! Note that 
+ * This wrapper is a <b>C++ style</b> wrapper of LAPACK routines,
+ * i.e., assuming that the input matrices are in \b row-major order.
+ * The data layout in C++ is row-major, C style,
+ * while the original LAPACK is column-major, fortran style.
+ * (ModuleBase::ComplexMatrix is in row-major order)
+ * The wrapper will do the data transformation between
+ * row-major and column-major order automatically.
+ * 
+ */
+
+#ifndef LAPACK_CONNECTOR_HPP
+#define LAPACK_CONNECTOR_HPP
 
 #include <new>
 #include <stdexcept>
@@ -11,8 +30,10 @@
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
-//  - d stands for double
-//  - z stands for complex double
+// - s stands for float
+// - d stands for double
+// - c stands for complex float
+// - z stands for complex double
 //"mm" specifies the type of matrix, for example:
 //  - he stands for hermitian
 //  - sy stands for symmetric
@@ -468,4 +489,4 @@ public:
         cherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
     }
 };
-#endif  // LAPACKCONNECTOR_HPP
+#endif  // LAPACK_CONNECTOR_HPP

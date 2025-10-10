@@ -1,5 +1,4 @@
 #include "source_hsolver/kernels/hegvd_op.h"
-// #include "source_base/module_external/lapack_wrapper.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 
 #include <algorithm>
