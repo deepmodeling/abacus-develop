@@ -142,26 +142,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // since it depends on ionic positions
     this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
 
-/*
-#ifdef __MLALGO
-    if (PARAM.globalv.deepks_setorb)
-    {
-        const Parallel_Orbitals* pv = &this->pv;
-        // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
-        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->deepks.ld.phialpha);
-        // build and save <phi(0)|alpha(R)> at beginning
-        DeePKS_domain::build_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd,
-          pv, *(two_center_bundle_.overlap_orb_alpha), this->deepks.ld.phialpha);
-
-        if (PARAM.inp.deepks_out_unittest)
-        {
-            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_,
-              this->gd, pv, this->deepks.ld.phialpha, GlobalV::MY_RANK);
-        }
-    }
-#endif
-*/
-
     // 10) prepare sc calculation
     if (PARAM.inp.sc_mag_switch)
     {
