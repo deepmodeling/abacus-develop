@@ -77,6 +77,68 @@ void Setup_DeePKS<TK>::write_forces(
 }
 
 
+template <typename TK>
+void Setup_DeePKS<TK>::write_stress(
+		const ModuleBase::matrix &scs,
+		const ModuleBase::matrix &svnl_dalpha,
+		const double &omega,
+		const Input_para &inp)
+{
+#ifdef __MLALGO
+	if (inp.deepks_out_labels == 1)
+	{
+        assert(omega>0.0);
+
+		if (inp.deepks_out_base == "none"
+				|| (inp.deepks_out_base != "none" && this->dpks_out_type == "tot") )
+		{
+			const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
+			LCAO_deepks_io::save_matrix2npy(file_stot,
+					scs,
+					GlobalV::MY_RANK,
+					omega,
+					'U'); // change to energy unit Ry when printing, S_tot;
+
+			// this base only considers subtracting the deepks_scf part
+			const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+			if (inp.deepks_scf)
+			{
+				LCAO_deepks_io::save_matrix2npy(file_sbase,
+						scs - svnl_dalpha,
+						GlobalV::MY_RANK,
+						omega,
+						'U'); // change to energy unit Ry when printing, S_base;
+			}
+			else
+			{
+				LCAO_deepks_io::save_matrix2npy(file_sbase,
+						scs,
+						GlobalV::MY_RANK,
+						omega,
+						'U'); // sbase = stot
+			}
+		}
+		if (inp.deepks_out_base != "none")
+		{
+			// output scs as tot or base in another dir
+			// this base considers changing xc functional to base functional
+			const std::string file_s = PARAM.globalv.global_deepks_label_elec_dir +
+				(this->dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
+			LCAO_deepks_io::save_matrix2npy(file_s,
+					scs,
+					GlobalV::MY_RANK,
+					omega,
+					'U'); // change to energy unit Ry when printing, S_tot;
+		}
+	}
+	else if (inp.deepks_out_labels == 2)
+	{
+		const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stress.npy";
+		LCAO_deepks_io::save_matrix2npy(file_stot, scs, GlobalV::MY_RANK, omega,
+				'F'); // flat mode
+	}
+#endif
+}
 
 template class Setup_DeePKS<double>;
 template class Setup_DeePKS<std::complex<double>>;

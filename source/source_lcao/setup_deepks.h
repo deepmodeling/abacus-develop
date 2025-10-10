@@ -37,6 +37,12 @@ class Setup_DeePKS
 		const ModuleBase::matrix &fvnl_dalpha,
 		const Input_para &inp);
 
+    void write_stress(
+		const ModuleBase::matrix &scs,
+		const ModuleBase::matrix &svnl_dalpha,
+		const double &omega,
+		const Input_para &inp);
+
 };
 
 
