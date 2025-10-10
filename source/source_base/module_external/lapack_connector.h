@@ -241,9 +241,8 @@ void zhegvx_i(const int* itype,
 // Class LapackConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.
 // Usage example:	LapackConnector::functionname(parameter list).
-class LapackConnector
+namespace LapackConnector
 {
-private:
     // Transpose the std::complex matrix to the fortran-form real-std::complex array.
     static inline
     std::complex<double>* transpose(const ModuleBase::ComplexMatrix& a, const int n, const int lda)
@@ -350,7 +349,6 @@ private:
 		}
 	}
 
-public:
     // wrap function of fortran lapack routine zheev.
     static inline
     void zheev( const char jobz,
@@ -490,5 +488,5 @@ public:
         const char trans_changed = change_trans_NC(trans);
         cherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
     }
-};
+} // namespace LapackConnector
 #endif  // LAPACK_CONNECTOR_HPP
