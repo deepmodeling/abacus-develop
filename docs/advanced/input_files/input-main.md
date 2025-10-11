@@ -147,7 +147,6 @@
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
-    - [out\_bandgap](#out_bandgap)
     - [out\_level](#out_level)
     - [out\_alllog](#out_alllog)
     - [out\_mat\_hs](#out_mat_hs)
@@ -1825,14 +1824,6 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
-- **Default**: False
-
-### out_bandgap
-
-- **Type**: Boolean
-- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
-  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
-  - [nupdown](#nupdown) = 0: `E_bandgap`
 - **Default**: False
 
 ### out_level

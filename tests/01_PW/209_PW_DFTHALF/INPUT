@@ -26,7 +26,4 @@ mixing_beta     0.7
 
 dft_functional PBE
 
-#OUT
-out_bandgap true
-
 pw_seed 1

@@ -311,16 +311,13 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     //----------------------------------------------------------------
     // 1) print out band gap 
     //----------------------------------------------------------------
-    if (PARAM.inp.out_bandgap)
+    if (!PARAM.globalv.two_fermi)
     {
-        if (!PARAM.globalv.two_fermi)
-        {
-            this->pelec->cal_bandgap();
-        }
-        else
-        {
-            this->pelec->cal_bandgap_updw();
-        }
+        this->pelec->cal_bandgap();
+    }
+    else
+    {
+        this->pelec->cal_bandgap_updw();
     }
 
 	if(iter % PARAM.inp.out_freq_elec == 0)

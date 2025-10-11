@@ -37,7 +37,6 @@ out_dos         1  # dos.txt g
 out_elf         1  # elf.txt
 out_band        1  # eig.txt
 out_stru        1  # g
-out_bandgap     1
 
 out_app_flag    0
 
