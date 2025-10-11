@@ -25,7 +25,11 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     }
 
     pelec->pot->update_from_charge(&chr, &ucell); // Hartree + XC + external
-    this->cal_tf_potential(chr.rho,pw_rho ,pelec->pot->get_effective_v()); // TF potential
+    this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_effective_v()); // TF potential
+    if (PARAM.inp.of_cd)
+    {
+        this->cal_CD_potential(psi_, pw_rho, pelec->pot->get_effective_v(), PARAM.inp.of_mCD_alpha); // CD potential
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -118,7 +122,8 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi,
 
 void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_, 
                                     ModulePW::PW_Basis* pw_rho, 
-                                    ModuleBase::matrix& rpot)
+                                    ModuleBase::matrix& rpot,
+                                    double mCD_para)
 {
     std::complex<double> imag(0.0,1.0);
     std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
@@ -180,7 +185,7 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
 
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpot(0, ir) -= std::real(2*rCDPotential[ir]*std::pow(ModuleBase::PI,3) / (2*std::pow(kF_r[ir],2)));
+            rpot(0, ir) -= mCD_para*std::real(2*rCDPotential[ir]*std::pow(ModuleBase::PI,3) / (2*std::pow(kF_r[ir],2)));
         }
         delete[] recipCurrent_x;
         delete[] recipCurrent_y;

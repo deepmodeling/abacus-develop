@@ -25,7 +25,10 @@ ESolver_OF::ESolver_OF()
 
 ESolver_OF::~ESolver_OF()
 {
-    delete psi_;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_;
     delete[] this->pphi_;
 
     for (int i = 0; i < PARAM.inp.nspin; ++i)
@@ -492,17 +495,16 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->kedf_manager_->get_energy_density(this->chr.rho, this->pphi_, this->pw_rho, this->chr.kin_r);
     }
 
-    //------------------------------------------------------------------
-    // 2) call after_scf() of ESolver_FP
-    //------------------------------------------------------------------
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
-
-
     // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
         this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
     }
+
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_FP
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
 #ifdef __MLALGO
     //------------------------------------------------------------------
