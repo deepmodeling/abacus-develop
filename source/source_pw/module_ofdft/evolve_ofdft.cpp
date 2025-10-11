@@ -120,11 +120,83 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
                                     ModulePW::PW_Basis* pw_rho, 
                                     ModuleBase::matrix& rpot)
 {
+    std::complex<double> imag(0.0,1.0);
+    std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
+    std::complex<double>** rPhi = new std::complex<double>*[PARAM.inp.nspin];
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+        rPhi[is] = new std::complex<double>[pw_rho->nrxx];
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            rPhi[is][ir]=psi_[is * pw_rho->nrxx + ir];
+        }
+    }
+
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        //recipCurrent = new std::complex<double>[pw_rho->npw];
-        //delete[] recipCurrent;
+        std::complex<double> *recipCurrent_x=new std::complex<double>[pw_rho->npw];
+        std::complex<double> *recipCurrent_y=new std::complex<double>[pw_rho->npw];
+        std::complex<double> *recipCurrent_z=new std::complex<double>[pw_rho->npw];
+        std::complex<double> *recipCDPotential=new std::complex<double>[pw_rho->npw];
+        std::complex<double> *rCurrent_x=new std::complex<double>[pw_rho->nrxx];
+        std::complex<double> *rCurrent_y=new std::complex<double>[pw_rho->nrxx];
+        std::complex<double> *rCurrent_z=new std::complex<double>[pw_rho->nrxx];
+        std::complex<double> *kF_r=new std::complex<double>[pw_rho->nrxx];
+        std::complex<double> *rCDPotential=new std::complex<double>[pw_rho->nrxx];
+        recipPhi[is] = new std::complex<double>[pw_rho->npw];
+
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            kF_r[ir]=std::pow(3*std::pow(ModuleBase::PI*std::abs(rPhi[is][ir]),2),1/3);
+        }
+
+        pw_rho->real2recip(rPhi[is], recipPhi[is]);
+        for (int ik = 0; ik < pw_rho->npw; ++ik)
+        {
+            recipCurrent_x[ik]=imag*pw_rho->gcar[ik].x*recipPhi[is][ik]* pw_rho->tpiba;
+            recipCurrent_y[ik]=imag*pw_rho->gcar[ik].y*recipPhi[is][ik]* pw_rho->tpiba;
+            recipCurrent_z[ik]=imag*pw_rho->gcar[ik].z*recipPhi[is][ik]* pw_rho->tpiba;
+        }
+        pw_rho->recip2real(recipCurrent_x,rCurrent_x);
+        pw_rho->recip2real(recipCurrent_y,rCurrent_y);
+        pw_rho->recip2real(recipCurrent_z,rCurrent_z);
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            rCurrent_x[ir]=std::imag(rCurrent_x[ir]*std::conj(rPhi[is][ir]));
+            rCurrent_y[ir]=std::imag(rCurrent_y[ir]*std::conj(rPhi[is][ir]));
+            rCurrent_z[ir]=std::imag(rCurrent_z[ir]*std::conj(rPhi[is][ir]));
+        }
+        pw_rho->real2recip(rCurrent_x,recipCurrent_x);
+        pw_rho->real2recip(rCurrent_y,recipCurrent_y);
+        pw_rho->real2recip(rCurrent_z,recipCurrent_z);
+        for (int ik = 0; ik < pw_rho->npw; ++ik)
+        {
+            recipCDPotential[ik]=recipCurrent_x[ik]*pw_rho->gcar[ik].x+recipCurrent_y[ik]*pw_rho->gcar[ik].y+recipCurrent_z[ik]*pw_rho->gcar[ik].z;
+            recipCDPotential[ik]*=imag/pw_rho->gg[ik];
+        }
+        pw_rho->recip2real(recipCDPotential,rCDPotential);
+
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            rpot(0, ir) -= std::real(2*rCDPotential[ir]*std::pow(ModuleBase::PI,3) / (2*std::pow(kF_r[ir],2)));
+        }
+        delete[] recipCurrent_x;
+        delete[] recipCurrent_y;
+        delete[] recipCurrent_z;
+        delete[] rCurrent_x;
+        delete[] rCurrent_y;
+        delete[] rCurrent_z;
     }
+
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        delete[] recipPhi[is];
+        delete[] rPhi[is];
+    }
+    delete[] recipPhi;
+    delete[] rPhi;
 }
 
 void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec, 
