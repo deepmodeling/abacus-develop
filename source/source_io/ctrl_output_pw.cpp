@@ -90,9 +90,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis *pw_rho,
 		const ModulePW::PW_Basis *pw_rhod,
 		const ModulePW::PW_Basis_Big *pw_big,
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-        psi::Psi<T, Device>* kspw_psi,
-        psi::Psi<std::complex<double>, Device>* __kspw_psi,
+        Setup_Psi<T, Device> &setup_psi,
         const Device* ctx,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
@@ -160,15 +158,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.out_pchg.size() > 0)
     {
-        if (__kspw_psi != nullptr && inp.precision == "single")
-        {
-            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(__kspw_psi);
-        }
-
-        // Refresh __kspw_psi
-        __kspw_psi = inp.precision == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi);
+        setup_psi.update_psi_d();
 
         const int nbands = kspw_psi->get_nbands();
         const int ngmc = chr.ngmc;
@@ -179,7 +169,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                               pw_rhod->nxyz,
                               ngmc,
                               &ucell,
-                              __kspw_psi,
+                              setup_psi.psi,
                               pw_rhod,
                               pw_wfc,
                               ctx,
@@ -207,7 +197,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                            inp.nnkpfile,
                            inp.wannier_spin);
         wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
-        wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, psi);
+        wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, psi_cpu);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
@@ -219,7 +209,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
         berryphase bp;
-        bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
+        bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi_cpu, pw_rho, pw_wfc, kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 
@@ -241,7 +231,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.onsite_radius > 0)
     { // float type has not been implemented
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi),
+        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(psi_t),
                                   pelec->wg);
     }
 

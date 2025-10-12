@@ -16,13 +16,13 @@ Setup_Psi<T, Device>::before_runner()
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
       this->sf, this->kv, this->ppcell, *this->pw_wfc);
 
-    allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
+    allocate_psi(this->psi_cpu, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
 
     this->p_psi_init->prepare_init(inp.pw_seed);
 
-    this->kspw_psi = inp.device == "gpu" || inp.precision == "single"
-                         ? new psi::Psi<T, Device>(this->psi[0])
-                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
+    this->psi_t = inp.device == "gpu" || inp.precision == "single"
+                         ? new psi::Psi<T, Device>(this->psi_cpu[0])
+                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu);
 }
 
 
@@ -46,7 +46,7 @@ void Setup_Psi<T>::init()
     //! Initialize wave functions
     if (!this->already_initpsi)
     {
-        this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
+        this->p_psi_init->initialize_psi(this->psi_cpu, this->psi_t, p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
     }
 }
@@ -57,15 +57,13 @@ void Setup_Psi<T>::clean()
 {
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
-        delete this->kspw_psi;
+        delete this->psi_t;
     }
     if (PARAM.inp.precision == "single")
     {
-        delete this->__kspw_psi;
+        delete this->psi_d;
     }
 
-    delete this->psi;
+    delete this->psi_cpu;
     delete this->p_psi_init;
-
-
 }

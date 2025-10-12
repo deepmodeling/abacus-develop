@@ -371,7 +371,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->psi, 
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->setup_psi.psi_cpu, 
               this->kv, this->pw_wfc, PARAM.inp);
 }
 
@@ -386,7 +386,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // sunliang 2025-04-10
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->psi[0]);
+        this->ESolver_KS<T, Device>::psi = new psi::Psi<T>(this->setup_psi.psi_cpu[0]);
     }
 
     // Call 'after_scf' of ESolver_KS
@@ -402,7 +402,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
 
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
-              this->pw_rho, this->pw_rhod, this->pw_big, this->psi, this->setup_psi,
+              this->pw_rho, this->pw_rhod, this->pw_big, this->setup_psi,
               this->ctx, this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
