@@ -55,7 +55,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     virtual void deallocate_hamilt();
 
     // Electronic wave function: wf
-    Setup_Psi &stp;
+    Setup_Psi<T, Device> stp;
 
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;

@@ -233,7 +233,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& 
                     this->locpp,
                     this->ppcell,
                     ucell,
-                    *this->kspw_psi,
+                    *this->stp.psi_t,
                     this->stowf);
 }
 

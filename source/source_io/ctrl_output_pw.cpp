@@ -90,7 +90,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis *pw_rho,
 		const ModulePW::PW_Basis *pw_rhod,
 		const ModulePW::PW_Basis_Big *pw_big,
-        Setup_Psi<T, Device> &setup_psi,
+        Setup_Psi<T, Device> &stp,
         const Device* ctx,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
@@ -158,7 +158,8 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.out_pchg.size() > 0)
     {
-        setup_psi.update_psi_d();
+        // update psi_d
+        stp.update_psi_d();
 
         const int nbands = kspw_psi->get_nbands();
         const int ngmc = chr.ngmc;
@@ -169,7 +170,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                               pw_rhod->nxyz,
                               ngmc,
                               &ucell,
-                              setup_psi.psi,
+                              stp.psi,
                               pw_rhod,
                               pw_wfc,
                               ctx,
@@ -247,9 +248,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         ModulePW::PW_Basis* pw_rhod,
 		Charge &chr,
         K_Vectors &kv,
-		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-		psi::Psi<T, Device>* kspw_psi,
-		psi::Psi<std::complex<double>, Device>* __kspw_psi,
+        Setup_Psi<T, Device> &stp,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
@@ -389,9 +388,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
@@ -407,9 +404,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
@@ -426,9 +421,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
@@ -444,9 +437,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
@@ -461,9 +452,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -480,9 +469,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -500,9 +487,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -519,9 +504,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
