@@ -126,6 +126,10 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
                                     double mCD_para)
 {
     std::complex<double> imag(0.0,1.0);
+
+    if (nspin <= 0) {
+        throw std::invalid_argument("nspin must be positive");
+    }
     std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
     std::complex<double>** rPhi = new std::complex<double>*[PARAM.inp.nspin];
 #ifdef _OPENMP
@@ -139,6 +143,9 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
         }
     }
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         std::complex<double> *recipCurrent_x=new std::complex<double>[pw_rho->npw];
@@ -195,6 +202,9 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
         delete[] rCurrent_z;
     }
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] recipPhi[is];
