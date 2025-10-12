@@ -256,6 +256,9 @@
     - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
     - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
     - [of\_ml\_local\_test](#of_ml_local_test)
+  - [TD-OFDFT: time dependent orbital free density functional theory](#tdofdft-time-dependent-orbital-free-density-functional-theory)
+    - [of\_cd](#of_cd)
+    - [of\_mcd\_alpha](#of_mcd_alpha)
   - [Electric Field and Dipole Correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
@@ -528,6 +531,7 @@ These variables are used to control general system parameters.
 - **Description**: choose the energy solver.
   - ksdft: Kohn-Sham density functional theory
   - ofdft: orbital-free density functional theory
+  - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
@@ -2728,6 +2732,25 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Default**: False
 
 [back to top](#full-list-of-input-keywords)
+
+## TDOFDFT: time dependent orbital free density functional theory
+
+### of_cd
+
+- **Type**: Boolean
+- **Availability**: TDOFDFT
+- **Type**: Boolean
+- **Description**: Added the current dependent(CD) potential. (https://doi.org/10.1103/PhysRevB.98.144302)
+  - True: Added the CD potential.
+  - False: Not added the CD potential.
+- **Default**: False
+
+### of_mcd_alpha
+
+- **Type**: Real
+- **Availability**: TDOFDFT
+- **Description**: The value of the parameter alpha in modified CD potential method. mCDPotenial=alpha*CDPotenial(proposed in paper PhysRevB.98.144302)
+- **Default**: 1.0
 
 ## Electric field and dipole correction
 
