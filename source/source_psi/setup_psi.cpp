@@ -16,10 +16,13 @@ Setup_Psi<T, Device>::before_runner()
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
       this->sf, this->kv, this->ppcell, *this->pw_wfc);
 
+    //! Allocate memory for cpu version of psi
     allocate_psi(this->psi_cpu, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
 
     this->p_psi_init->prepare_init(inp.pw_seed);
 
+    //! If GPU or single precision, allocate a new psi (psi_t).
+    //! otherwise, transform psi_cpu to psi_t
     this->psi_t = inp.device == "gpu" || inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi_cpu[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu);
@@ -50,6 +53,20 @@ void Setup_Psi<T>::init()
         this->already_initpsi = true;
     }
 }
+
+
+template <typename T, typename Device>
+void Setup_Psi<T>::copy_g22()
+{
+    // Transfer data from GPU to CPU in pw basis
+    if (this->device == base_device::GpuDevice)
+    {
+        castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                            this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
+                            this->psi_cpu[0].size());
+    }
+}
+
 
 
 template <typename T, typename Device>
