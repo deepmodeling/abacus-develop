@@ -185,7 +185,7 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
 
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpot(0, ir) -= mCD_para*std::real(2.0*rCDPotential[ir]*std::pow(ModuleBase::PI,3) / (2*std::pow(kF_r[ir],2)));
+            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) / (2.0*std::pow(std::real(kF_r[ir]),2));
         }
         delete[] recipCurrent_x;
         delete[] recipCurrent_y;
