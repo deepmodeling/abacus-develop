@@ -1,7 +1,7 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "source_psi/psi_init.h"
+#include "source_psi/setup_psi.h" // mohan add 20251012
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
@@ -54,11 +54,8 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     virtual void allocate_hamilt(const UnitCell& ucell);
     virtual void deallocate_hamilt();
 
-    //! hide the psi in ESolver_KS for tmp use
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
-
-    // psi_initializer controller
-    psi::PSIInit<T, Device>* p_psi_init = nullptr;
+    // Electronic wave function: wf
+    Setup_Psi &setup_psi;
 
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;
@@ -66,12 +63,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     Device* ctx = {};
 
     base_device::AbacusDevice_t device = {};
-
-    psi::Psi<T, Device>* kspw_psi = nullptr;
-
-    psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
-
-    bool already_initpsi = false;
 
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
