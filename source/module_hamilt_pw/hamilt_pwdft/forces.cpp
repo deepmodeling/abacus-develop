@@ -668,7 +668,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
             if (ucell.atoms[it].na != 0)
             {
                 double dzv;
-                 if (PARAM.inp.use_paw)
+                if (PARAM.inp.use_paw)
                 {
     #ifdef USE_PAW
                     dzv = GlobalC::paw_cell.get_val(it);
@@ -756,7 +756,16 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         std::vector<double> it_fact_h(ucell.ntype);
         for(int it = 0; it < ucell.ntype; ++it)
         {
-            it_fact_h[it] = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+            if (PARAM.inp.use_paw)
+            {
+#ifdef USE_PAW
+                it_fact_h[it] = GlobalC::paw_cell.get_val(it) * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+#endif
+            }
+            else
+            {
+                it_fact_h[it] = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+            }
         }
 
         int* iat2it_d = nullptr;
@@ -804,8 +813,18 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         {
             const int it = ucell.iat2it[iat];
             const int ia = ucell.iat2ia[iat];
-            double it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
-
+            //double it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+            double it_fact;
+            if (PARAM.inp.use_paw)
+            {
+#ifdef USE_PAW
+        it_fact = GlobalC::paw_cell.get_val(it) * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+#endif
+            }
+            else
+            {
+                it_fact = ucell.atoms[it].ncpp.zv * ModuleBase::e2 * ucell.tpiba * ModuleBase::TWO_PI / ucell.omega * fact;
+            }
             for(int ig = 0; ig < rho_basis->npw; ++ig)
             {
                 if(ig != rho_basis->ig_gge0) // skip G=0
