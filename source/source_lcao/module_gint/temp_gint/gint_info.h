@@ -39,6 +39,7 @@ class GintInfo
     int get_lgd() const { return lgd_; }
     int get_nat() const { return ucell_->nat; }        // return the number of atoms in the unitcell
     const UnitCell* get_ucell() const { return ucell_; }
+    const std::vector<int>& get_ijr_info() const {return ijr_info_;}
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
 

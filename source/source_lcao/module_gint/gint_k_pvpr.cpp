@@ -89,8 +89,8 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
         {
             hamilt::AtomPair<std::complex<double>>* upper_ap = ap;
             hamilt::AtomPair<std::complex<double>>* lower_ap = this->hRGintCd->find_pair(iat2, iat1);
-            const hamilt::AtomPair<double>* ap_nspin_0 = this->hRGint_tmp[0]->find_pair(iat1, iat2);
-            const hamilt::AtomPair<double>* ap_nspin_3 = this->hRGint_tmp[3]->find_pair(iat1, iat2);
+            const hamilt::AtomPair<double>* ap_nspin_0 = this->hr_gint_tmp[0]->find_pair(iat1, iat2);
+            const hamilt::AtomPair<double>* ap_nspin_3 = this->hr_gint_tmp[3]->find_pair(iat1, iat2);
             for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
             {   
                 const auto R_index = upper_ap->get_R_index(ir);
@@ -110,8 +110,8 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
 
                 if (PARAM.globalv.domag)
                 {
-                    const hamilt::AtomPair<double>* ap_nspin_1 = this->hRGint_tmp[1]->find_pair(iat1, iat2);
-                    const hamilt::AtomPair<double>* ap_nspin_2 = this->hRGint_tmp[2]->find_pair(iat1, iat2);
+                    const hamilt::AtomPair<double>* ap_nspin_1 = this->hr_gint_tmp[1]->find_pair(iat1, iat2);
+                    const hamilt::AtomPair<double>* ap_nspin_2 = this->hr_gint_tmp[2]->find_pair(iat1, iat2);
                     const auto mat_nspin_1 = ap_nspin_1->find_matrix(R_index);
                     const auto mat_nspin_2 = ap_nspin_2->find_matrix(R_index);
                     for (int irow = 0; irow < mat_nspin_1->get_row_size(); ++irow)

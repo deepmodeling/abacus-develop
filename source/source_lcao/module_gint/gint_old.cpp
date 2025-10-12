@@ -24,13 +24,13 @@ Gint::~Gint() {
 
     delete this->hRGint;
     delete this->hRGintCd;
-    // in gamma_only case, DMRGint.size()=0, 
-    // in multi-k case, DMRGint.size()=nspin
-    for (int is = 0; is < this->DMRGint.size(); is++) {
-        delete this->DMRGint[is];
+    // in gamma_only case, dmr_gint.size()=0, 
+    // in multi-k case, dmr_gint.size()=nspin
+    for (int is = 0; is < this->dmr_gint.size(); is++) {
+        delete this->dmr_gint[is];
     }
-    for(int is = 0; is < this->hRGint_tmp.size(); is++) {
-        delete this->hRGint_tmp[is];
+    for(int is = 0; is < this->hr_gint_tmp .size(); is++) {
+        delete this->hr_gint_tmp [is];
     }
 #ifdef __MPI
     delete this->dm2d_tmp;
@@ -141,13 +141,12 @@ void Gint::prep_grid(const Grid_Technique& gt,
 void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, const int& nspin)
 {
     ModuleBase::TITLE("Gint", "initialize_pvpR");
-
     int npol = 1;
-    // there is the only resize code of DMRGint
-    if (this->DMRGint.size() == 0) {
-        this->DMRGint.resize(nspin);
+    // there is the only resize code of dmr_gint
+    if (this->dmr_gint.size() == 0) {
+        this->dmr_gint.resize(nspin);
     }
-    hRGint_tmp.resize(nspin);
+    hr_gint_tmp.resize(nspin);
     if (nspin != 4) {
         if (this->hRGint != nullptr) {
             delete this->hRGint;
@@ -161,14 +160,14 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
         this->hRGintCd
             = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
         for (int is = 0; is < nspin; is++) {
-            if (this->DMRGint[is] != nullptr) {
-                delete this->DMRGint[is];
+            if (this->dmr_gint[is] != nullptr) {
+                delete this->dmr_gint[is];
             }
-            if (this->hRGint_tmp[is] != nullptr) {
-                delete this->hRGint_tmp[is];
+            if (this->hr_gint_tmp[is] != nullptr) {
+                delete this->hr_gint_tmp[is];
             }
-            this->DMRGint[is] = new hamilt::HContainer<double>(ucell_in.nat);
-            this->hRGint_tmp[is] = new hamilt::HContainer<double>(ucell_in.nat);
+            this->dmr_gint[is] = new hamilt::HContainer<double>(ucell_in.nat);
+            this->hr_gint_tmp[is] = new hamilt::HContainer<double>(ucell_in.nat);
         }
 #ifdef __MPI
         if (this->dm2d_tmp != nullptr) {
@@ -176,7 +175,6 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
         }
 #endif
     }
-
     if (PARAM.globalv.gamma_only_local && nspin != 4) {
         this->hRGint->fix_gamma();
     }
@@ -185,30 +183,30 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, const Grid_Driver* gd, cons
         this->hRGint->allocate(nullptr, true);
         ModuleBase::Memory::record("Gint::hRGint",
                             this->hRGint->get_memory_size());
-        // initialize DMRGint with hRGint when NSPIN != 4
-        for (int is = 0; is < this->DMRGint.size(); is++) {
-            if (this->DMRGint[is] != nullptr) {
-                delete this->DMRGint[is];
+        // initialize dmr_gint with hRGint when NSPIN != 4
+        for (int is = 0; is < this->dmr_gint.size(); is++) {
+            if (this->dmr_gint[is] != nullptr) {
+                delete this->dmr_gint[is];
             }
-            this->DMRGint[is] = new hamilt::HContainer<double>(*this->hRGint);
+            this->dmr_gint[is] = new hamilt::HContainer<double>(*this->hRGint);
         }
-        ModuleBase::Memory::record("Gint::DMRGint",
-                                   this->DMRGint[0]->get_memory_size()
-                                       * this->DMRGint.size());
+        ModuleBase::Memory::record("Gint::dmr_gint",
+                                   this->dmr_gint[0]->get_memory_size()
+                                       * this->dmr_gint.size());
     } else {
         this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
         this->hRGintCd->allocate(nullptr, true);
         for(int is = 0; is < nspin; is++) {
-            this->hRGint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
-            this->DMRGint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
-            this->hRGint_tmp[is]->allocate(nullptr, true);
-            this->DMRGint[is]->allocate(nullptr, true);
+            this->hr_gint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
+            this->dmr_gint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
+            this->hr_gint_tmp[is]->allocate(nullptr, true);
+            this->dmr_gint[is]->allocate(nullptr, true);
         }
-        ModuleBase::Memory::record("Gint::hRGint_tmp",
-                                       this->hRGint_tmp[0]->get_memory_size()*nspin);
-        ModuleBase::Memory::record("Gint::DMRGint",
-                                       this->DMRGint[0]->get_memory_size()
-                                           * this->DMRGint.size()*nspin);
+        ModuleBase::Memory::record("Gint::hr_gint_tmp",
+                                       this->hr_gint_tmp[0]->get_memory_size()*nspin);
+        ModuleBase::Memory::record("Gint::dmr_gint",
+                                       this->dmr_gint[0]->get_memory_size()
+                                           * this->dmr_gint.size()*nspin);
     }
 }
 
@@ -216,13 +214,13 @@ void Gint::reset_DMRGint(const int& nspin)
 {
     if (this->hRGint)
     {
-        for (auto& d : this->DMRGint) { delete d; }
-        this->DMRGint.resize(nspin);
-        this->DMRGint.shrink_to_fit();
-        for (auto& d : this->DMRGint) { d = new hamilt::HContainer<double>(*this->hRGint); }
+        for (auto& d : this->dmr_gint) { delete d; }
+        this->dmr_gint.resize(nspin);
+        this->dmr_gint.shrink_to_fit();
+        for (auto& d : this->dmr_gint) { d = new hamilt::HContainer<double>(*this->hRGint); }
         if (nspin == 4)
         {
-            for (auto& d : this->DMRGint) { d->allocate(nullptr, false); }
+            for (auto& d : this->dmr_gint) { d->allocate(nullptr, false); }
 #ifdef __MPI
             delete this->dm2d_tmp;
 #endif
@@ -230,36 +228,35 @@ void Gint::reset_DMRGint(const int& nspin)
     }
 }
 
-void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
+void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> dm2d) {
     ModuleBase::TITLE("Gint", "transfer_DMR");
-
-    // To check whether input parameter DM2D has been initialized
+    // To check whether input parameter dm2d has been initialized
 #ifdef __DEBUG
-    assert(!DM2D.empty()
-           && "Input parameter DM2D has not been initialized while calling "
+    assert(!dm2d.empty()
+           && "Input parameter dm2d has not been initialized while calling "
               "function transfer_DM2DtoGrid!");
 #endif
-
     ModuleBase::timer::tick("Gint", "transfer_DMR");
     if (PARAM.inp.nspin != 4) {
-        for (int is = 0; is < this->DMRGint.size(); is++) {
+        for (int is = 0; is < this->dmr_gint.size(); is++) {
 #ifdef __MPI
-            hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
+            hamilt::transferParallels2Serials(*dm2d[is], dmr_gint[is]);
 #else
-            this->DMRGint[is]->set_zero();
-            this->DMRGint[is]->add(*DM2D[is]);
+            this->dmr_gint[is]->set_zero();
+            this->dmr_gint[is]->add(*dm2d[is]);
 #endif
         }
     } else // NSPIN=4 case
     {
-#ifdef __MPI
         // is=0:↑↑, 1:↑↓, 2:↓↑, 3:↓↓
         const int row_set[4] = {0, 0, 1, 1};
         const int col_set[4] = {0, 1, 0, 1};
-        int mg = DM2D[0]->get_paraV()->get_global_row_size()/2;
-        int ng = DM2D[0]->get_paraV()->get_global_col_size()/2;
-        int nb = DM2D[0]->get_paraV()->get_block_size()/2;
-        int blacs_ctxt = DM2D[0]->get_paraV()->blacs_ctxt;
+        int mg = dm2d[0]->get_paraV()->get_global_row_size()/2;
+        int ng = dm2d[0]->get_paraV()->get_global_col_size()/2;
+        int nb = dm2d[0]->get_paraV()->get_block_size()/2;
+        auto ijr_info = dm2d[0]->get_ijr_info();
+#ifdef __MPI
+        int blacs_ctxt = dm2d[0]->get_paraV()->blacs_ctxt;
         std::vector<int> iat2iwt(ucell->nat);
         for (int iat = 0; iat < ucell->nat; iat++) {
             iat2iwt[iat] = ucell->get_iat2iwt()[iat]/2;
@@ -267,12 +264,19 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
         Parallel_Orbitals pv{};
         pv.set(mg, ng, nb, blacs_ctxt);
         pv.set_atomic_trace(iat2iwt.data(), ucell->nat, mg);
-        auto ijr_info = DM2D[0]->get_ijr_info();
         this-> dm2d_tmp = new hamilt::HContainer<double>(&pv, nullptr, &ijr_info);
+#else
+        if (this->dm2d_tmp != nullptr) {
+            delete this->dm2d_tmp;
+        }
+        this-> dm2d_tmp = new hamilt::HContainer<double>(*this->hRGint);
+        this-> dm2d_tmp -> insert_ijrs(this->gridt->get_ijr_info(), *(this->ucell));
+        this-> dm2d_tmp -> allocate(nullptr, true);
+#endif
         ModuleBase::Memory::record("Gint::dm2d_tmp", this->dm2d_tmp->get_memory_size());
         for (int is = 0; is < 4; is++){
-            for (int iap = 0; iap < DM2D[0]->size_atom_pairs(); ++iap) {
-                auto& ap = DM2D[0]->get_atom_pair(iap);
+            for (int iap = 0; iap < dm2d[0]->size_atom_pairs(); ++iap) {
+                auto& ap = dm2d[0]->get_atom_pair(iap);
                 int iat1 = ap.get_atom_i();
                 int iat2 = ap.get_atom_j();
                 for (int ir = 0; ir < ap.get_R_size(); ++ir) {
@@ -288,13 +292,15 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D) {
                     }
                 }
             }
-            hamilt::transferParallels2Serials( *(this->dm2d_tmp), this->DMRGint[is]);
-        }
+#ifdef __MPI
+            hamilt::transferParallels2Serials( *(this->dm2d_tmp), this->dmr_gint[is]);
+#else
+            this->dmr_gint[is]->set_zero();
+            this->dmr_gint[is]->add(*(this->dm2d_tmp));
+#endif
+        }//is=4
         delete this->dm2d_tmp;
         this->dm2d_tmp = nullptr;
-#else
-        //this->DMRGint_full = DM2D[0];
-#endif
     }
     ModuleBase::timer::tick("Gint", "transfer_DMR");
 }

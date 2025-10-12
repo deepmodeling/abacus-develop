@@ -1,6 +1,7 @@
 #include "gemm_tn_vbatch.cuh"
 #include "gemm_nn_vbatch.cuh"
 #include "dgemm_vbatch.h"
+#include "source_base/module_device/device.h"
 
 void dgemm_nn_vbatch(
     int max_m, int max_n, int max_k,

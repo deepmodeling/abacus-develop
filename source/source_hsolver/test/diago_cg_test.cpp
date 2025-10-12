@@ -136,7 +136,7 @@ class DiagoCGPrepare
         //  New interface of cg method
         /**************************************************************/
         // warp the subspace_func into a lambda function
-        auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
+        auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out, const bool S_orth) { /*do nothing*/ };
         hsolver::DiagoCG<std::complex<double>> cg(
             PARAM.input.basis_type,
             PARAM.input.calculation,

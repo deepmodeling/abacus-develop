@@ -10,10 +10,12 @@
 //! initialize H0、H、pos0、force0、force
 void BFGS::allocate(const int _size) 
 {
+    assert(_size > 0);
     alpha=70;//default value in ase is 70
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
-    sign =true;
+    largest_grad=0.0;
+    sign=true;
     H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     
     for (int i = 0; i < 3*size; ++i) 
@@ -37,6 +39,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     GetPos(ucell,pos);  
     GetPostaud(ucell,pos_taud);
     ucell.ionic_position_updated = true;
+    assert(_force.nr == force.size() && _force.nc == force[0].size());
     for(int i = 0; i < _force.nr; i++)
     {
         for(int j=0;j<_force.nc;j++)
@@ -65,7 +68,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
         k+=ucell.atoms[i].na;
     }
     
-    this->PrepareStep(force,pos,H,pos0,force0,steplength,dpos,ucell);
+    this->PrepareStep(force,pos,H,pos0,force0,steplength,dpos,size,ucell);
     this->DetermineStep(steplength,dpos,maxstep);
     this->UpdatePos(ucell);
     this->CalculateLargestGrad(_force,ucell);
@@ -76,6 +79,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
 
 void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
 {
+    assert(pos.size() == ucell.nat);
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -92,6 +96,7 @@ void BFGS::GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
 void BFGS::GetPostaud(UnitCell& ucell,
                       std::vector<std::vector<double>>& pos_taud)
 {
+    assert(pos_taud.size() == ucell.nat);
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -112,6 +117,7 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
                        std::vector<double>& force0,
                        std::vector<double>& steplength,
                        std::vector<std::vector<double>>& dpos,
+                       int& size,
                        UnitCell& ucell)
 {
     std::vector<double> changedforce = ReshapeMToV(force);
@@ -142,8 +148,10 @@ void BFGS::PrepareStep(std::vector<std::vector<double>>& force,
         }
     }
     std::vector<double> a=DotInMAndV2(V, changedforce);
+    double threshold=1e-8;
     for(int i = 0; i < a.size(); i++)
     {
+        assert(std::abs(omega[i]) > threshold);
         a[i]/=std::abs(omega[i]);    
     }
     std::vector<double> tmpdpos = DotInMAndV1(V, a);
@@ -221,7 +229,8 @@ void BFGS::Update(std::vector<double>& pos,
             dpos[iat * 3 + 2] = move_ion_dr.z ;
         }
     }
-    if(*max_element(dpos.begin(), dpos.end()) < 1e-7)
+    double threshold=1e-7;
+    if(*max_element(dpos.begin(), dpos.end()) < threshold)
     {
         return;
     } 
@@ -243,6 +252,8 @@ void BFGS::DetermineStep(std::vector<double>& steplength,
 {
     std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
+    double threshold=1e-10;
+    assert(a > threshold);
     if(a >= maxstep)
     {
         double scale = maxstep / a;
@@ -311,8 +322,8 @@ void BFGS::UpdatePos(UnitCell& ucell)
 
 void BFGS::IsRestrain(std::vector<std::vector<double>>& dpos)
 {
-    Ions_Move_Basic::converged = Ions_Move_Basic::largest_grad 
-        * ModuleBase::Ry_to_eV / 0.529177<PARAM.inp.force_thr_ev;
+    Ions_Move_Basic::converged = largest_grad 
+        * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A<PARAM.inp.force_thr_ev;
 }
 
 void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell)
@@ -334,20 +345,20 @@ void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell
             ++iat;
         }
     }
-    Ions_Move_Basic::largest_grad = 0.0;
+    largest_grad = 0.0;
     for (int i = 0; i < 3*size; i++)
     {
-        if (Ions_Move_Basic::largest_grad < std::abs(grad[i]))
+        if (largest_grad < std::abs(grad[i]))
         {
-            Ions_Move_Basic::largest_grad = std::abs(grad[i]);
+            largest_grad = std::abs(grad[i]);
         }
     }
+    assert(ucell.lat0 != 0);
     Ions_Move_Basic::largest_grad /= ucell.lat0;
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad 
-            * ModuleBase::Ry_to_eV / 0.5291772109
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << largest_grad 
+            * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                   << std::endl;
     }
-
 }

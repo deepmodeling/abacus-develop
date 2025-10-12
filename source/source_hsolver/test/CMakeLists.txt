@@ -115,7 +115,7 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_LCAO_cusolver
     LIBS parameter  ${math_libs}  base psi device 
     SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp 
-    ../kernels/dngvd_op.cpp
+    ../kernels/hegvd_op.cpp
     ../kernels/cuda/diag_cusolver.cu
   )
   endif()

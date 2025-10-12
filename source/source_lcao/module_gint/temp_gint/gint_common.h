@@ -6,12 +6,14 @@ namespace ModuleGint
 {
     // fill the lower triangle matrix with the upper triangle matrix
     void compose_hr_gint(HContainer<double>& hr_gint);
-    // for nspin=4 case
-    void compose_hr_gint(const std::vector<HContainer<double>>& hr_gint_part,
-                         HContainer<std::complex<double>>& hr_gint_full);
+    
 
     template <typename T>
     void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR);
+    // for nspin=4 case
+    void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_tmp ,
+                         hamilt::HContainer<std::complex<double>>* hR,
+                         const GintInfo& gint_info);
 
     template<typename T>
     void transfer_dm_2d_to_gint(

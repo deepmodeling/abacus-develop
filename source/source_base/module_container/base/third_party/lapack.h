@@ -1,3 +1,18 @@
+/**
+ * @file lapack.h
+ * @brief This is a direct wrapper of some LAPACK routines.
+ * \b Column-Major version.
+ * Direct wrapping of standard LAPACK routines. (Column-Major, fortran style)
+ * 
+ * @warning For Row-major version, please refer to \c source/source_base/module_external/lapack_connector.h.
+ * 
+ * @note
+ * Some slight modification are made to fit the C++ style for overloading purpose.
+ * You can find some function with different parameter list than the original LAPACK routine.
+ * And some of these parameters are not referred in the function body. They are included just to
+ * ensure the same parameter list for overloaded functions with a uniform name.
+ */
+
 #ifndef BASE_THIRD_PARTY_LAPACK_H_
 #define BASE_THIRD_PARTY_LAPACK_H_
 
@@ -9,6 +24,10 @@
 #elif defined(__ROCM)
 #include <base/third_party/hipsolver.h>
 #endif
+
+/// This is a wrapper of some LAPACK routines.
+/// Direct wrapping of standard LAPACK routines. (column major, fortran style)
+/// with some slight modification to fit the C++ style for overloading purpose.
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
@@ -45,6 +64,27 @@ void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              const std::complex<float>* b, const int* ldb, float* w,
              std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
              int* iwork, int* liwork, int* info);
+
+void ssygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, float* A, const int* lda, float* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, const int* m, float* w, float* Z, const int* ldz,
+             float* work, const int* lwork, int* iwork, int* ifail, int* info);
+void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, double* A, const int* lda, double* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+             double* work, const int* lwork, int* iwork, int* ifail, int* info);
+void chegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<float>* A, const int* lda, std::complex<float>* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, const int* m, float* w, std::complex<float>* Z, const int* ldz,
+             std::complex<float>* work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+void zhegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<double>* A, const int* lda, std::complex<double>* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, const int* m, double* w, std::complex<double>* Z, const int* ldz,
+             std::complex<double>* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
 
 void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<double>* a, const int* lda,
@@ -136,7 +176,7 @@ int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int 
 }
 // wrap function of fortran lapack routine zhegvd. (pointer version)
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             float* a, const int lda,
             const float* b, const int ldb, float* w,
             float* work, int lwork, float* rwork, int lrwork,
@@ -150,7 +190,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             double* a, const int lda,
             const double* b, const int ldb, double* w,
             double* work, int lwork, double* rwork, int lrwork,
@@ -163,7 +203,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
             iwork, &liwork, &info);
 }
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda,
             const std::complex<float>* b, const int ldb, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
@@ -177,7 +217,7 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda,
             const std::complex<double>* b, const int ldb, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
@@ -190,9 +230,71 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
             iwork, &liwork, &info);
 }
 
+// Note
+// rwork is only needed for complex version
+// and we include rwork in the function parameter list
+// for simplicity of function overloading
+// and unification of function parameter list
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            float* a, const int lda, float* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            const int m, float* w, float* z, const int ldz,
+            float* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    ssygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda, double* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    dsygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<float>* a, const int lda, std::complex<float>* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            const int m, float* w, std::complex<float>* z, const int ldz,
+            std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    chegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            const int m, double* w, std::complex<double>* z, const int ldz,
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    zhegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              float* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, float* z, const int ldz,
@@ -205,7 +307,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              double* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              const int m, double* w, double* z, const int ldz,
@@ -217,7 +319,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
             work, &lwork, rwork, iwork, ifail, &info);
 }
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              std::complex<float>* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
              const int m, float* w, std::complex<float>* z, const int ldz,
@@ -230,7 +332,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx( const int itype, const char jobz, const char range, const char uplo, const int n,
              std::complex<double>* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
              const int m, double* w, std::complex<double>* z, const int ldz,
@@ -243,7 +345,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             float* a, const int lda, float* w,
             float* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -256,7 +358,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             double* a, const int lda, double* w,
             double* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -268,7 +370,7 @@ void dnevd(const char jobz, const char uplo, const int n,
              iwork, &liwork, &info);
 }
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -281,7 +383,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)

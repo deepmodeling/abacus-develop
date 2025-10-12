@@ -30,7 +30,6 @@ class Diago_DavSubspace
                       const int& david_ndim_in,
                       const double& diag_thr_in,
                       const int& diag_nmax_in,
-                      const bool& need_subspace_in,
                       const diag_comm_info& diag_comm_in,
                       const int diago_dav_method_in,
                       const int block_size_in);
@@ -57,9 +56,6 @@ class Diago_DavSubspace
 
     /// maximal iteration number
     const int iter_nmax;
-
-    /// is diagH_subspace needed?
-    const bool is_subspace;
 
     /// the first dimension of the matrix to be diagonalized
     const int n_band = 0;

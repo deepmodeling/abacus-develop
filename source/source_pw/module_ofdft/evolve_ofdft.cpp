@@ -122,6 +122,7 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi,
 
 void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_, 
                                     ModulePW::PW_Basis* pw_rho, 
+<<<<<<< HEAD
                                     ModuleBase::matrix& rpot,
                                     double mCD_para)
 {
@@ -202,6 +203,15 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
     }
     delete[] recipPhi;
     delete[] rPhi;
+=======
+                                    ModuleBase::matrix& rpot)
+{
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        //recipCurrent = new std::complex<double>[pw_rho->npw];
+        //delete[] recipCurrent;
+    }
+>>>>>>> c66790bd1da1068b928178ce993d68a8fa4965b3
 }
 
 void Evolve_OFDFT::propagate_psi(elecstate::ElecState* pelec, 

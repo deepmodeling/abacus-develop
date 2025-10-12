@@ -1,4 +1,4 @@
-#include "hamilt_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
@@ -79,11 +79,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
-                               elecstate::DensityMatrix<TK, double>* DM_in
-#ifdef __MLALGO
-                               ,
-                               LCAO_Deepks<TK>* ld_in
-#endif
+                               elecstate::DensityMatrix<TK, double>* DM_in,
+                               Setup_DeePKS<TK> &deepks
 #ifdef __EXX
                                ,
                                const int istep,
@@ -205,7 +202,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
-            Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* deepks_op = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     this->hR, // no explicit call yet
                                                                     &ucell,
@@ -214,9 +211,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in,
-                                                                    ld_in);
-            this->getOperator()->add(deepks);
-            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
+                                                                    &deepks.ld);
+            this->getOperator()->add(deepks_op);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks_op)->get_V_delta_R();
         }
 #endif
 
@@ -330,7 +327,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
 #ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
-            Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
+            Operator<TK>* deepks_op = new DeePKS<OperatorLCAO<TK, TR>>(this->hsk,
                                                                     this->kv->kvec_d,
                                                                     hR,
                                                                     &ucell,
@@ -339,9 +336,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     &orb,
                                                                     this->kv->get_nks(),
                                                                     DM_in,
-                                                                    ld_in);
-            this->getOperator()->add(deepks);
-            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
+                                                                    &deepks.ld);
+            this->getOperator()->add(deepks_op);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks_op)->get_V_delta_R();
         }
 #endif
         // TDDFT_velocity_gauge

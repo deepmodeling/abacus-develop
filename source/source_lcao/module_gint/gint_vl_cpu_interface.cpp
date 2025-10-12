@@ -12,7 +12,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hRGint_tmp[inout->ispin];
+    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hr_gint_tmp[inout->ispin];
     hRGint_kernel->set_zero();
 
 #pragma omp parallel 
@@ -166,7 +166,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hRGint_tmp[inout->ispin];
+    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hr_gint_tmp[inout->ispin];
     hRGint_kernel->set_zero();
     const int nnrg = hRGint_kernel->get_nnr();
 

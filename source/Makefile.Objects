@@ -238,6 +238,7 @@ OBJS_ELECSTAT=elecstate.o\
     gatefield.o\
     potential_new.o\
     potential_types.o\
+    pot_sep.o\
     pot_local.o\
     pot_local_paw.o\
     H_Hartree_pw.o\
@@ -248,10 +249,11 @@ OBJS_ELECSTAT=elecstate.o\
     cal_nelec_nband.o\
     read_pseudo.o\
     cal_wfc.o\
-    pot_sep.o\
+    setup_estate_pw.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
+      setup_dm.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\
@@ -397,7 +399,7 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_lcaopw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
-    dngvd_op.o\
+    hegvd_op.o\
     bpcg_kernel_op.o\
     diag_const_nums.o\
     diag_hs_para.o\
@@ -580,7 +582,9 @@ OBJS_IO=input_conv.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
-    ctrl_output_lcao.o\
+    ctrl_scf_lcao.o\
+    ctrl_runner_lcao.o\
+    ctrl_iter_lcao.o\
     ctrl_output_fp.o\
     ctrl_output_pw.o\
     para_json.o\
@@ -651,7 +655,7 @@ OBJS_LCAO=evolve_elec.o\
 	  FORCE_k.o\
       stress_tools.o\
       edm.o\
-      pulay_force_stress_center2.o\
+      pulay_fs_center2.o\
 	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
@@ -665,6 +669,8 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_allocate.o\
       LCAO_set_mat2d.o\
       LCAO_init_basis.o\
+      setup_exx.o\
+      setup_deepks.o\
       center2_orb.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\
@@ -673,13 +679,13 @@ OBJS_LCAO=evolve_elec.o\
       wavefunc_in_pw.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
-      exx_abfs-abfs_index.o \
-      exx_abfs-jle.o \
-      exx_abfs-io.o \
-      exx_abfs-construct_orbs.o \
-      ABFs_Construct-PCA.o \
-      exx_opt_orb.o \
-      exx_opt_orb-print.o \
+      exx_abfs-abfs_index.o\
+      exx_abfs-jle.o\
+      exx_abfs-io.o\
+      exx_abfs-construct_orbs.o\
+      ABFs_Construct-PCA.o\
+      exx_opt_orb-print.o\
+      exx_opt_orb.o\
       Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
@@ -703,6 +709,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     VL_in_pw.o\
     VNL_in_pw.o\
     VNL_grad_pw.o\
+    chgmixing.o\
     charge.o\
     charge_init.o\
     charge_mpi.o\
@@ -714,6 +721,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\
     fp_energy.o\
+    setup_pot.o\
+    setup_pwrho.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
