@@ -1,82 +1,144 @@
-# ABACUS工具链重构方案文档
+# ABACUS工具链渐进式重构方案文档
 
-## 1. 重构目标
+> *"Talk is cheap. Show me the code."* - Linus Torvalds
 
-### 1.1 核心重构点
+## 1. 重构目标与哲学
 
-基于用户反馈和现状分析，本次重构聚焦于以下四个核心问题：
+### 1.1 核心重构理念
+
+基于Linus Torvalds的"好品味"哲学和开发者指南的深度分析，本次重构遵循以下核心原则：
+
+**渐进式改进（Incremental Improvement）**
+
+* 保持现有`scripts/stage[0-4]/install_[PKG].sh`结构不变
+
+* 在现有架构基础上进行模块化拆分和优化
+
+* 确保每一步改进都是可验证和可回滚的
+
+* 避免大规模重写，专注于解决实际问题
+
+**消除特殊情况（Eliminate Special Cases）**
+
+* 统一版本号和校验码管理，消除各脚本中的硬编码
+
+* 标准化公共函数，消除重复代码
+
+* 统一错误处理机制，消除分散的错误处理逻辑
+
+* 保持11个依赖包的安装逻辑一致性
+
+**简化复杂性（Simplify Complexity）**
+
+* 将955行的`install_abacus_toolchain.sh`拆分为功能模块
+
+* 通过配置文件管理复杂的20+命令行参数
+
+* 用模块化设计替代单体脚本架构
+
+* 提升用户友好度，简化配置流程
+
+**确保向后兼容性（Never Break User Space）**
+
+* 保持原有脚本接口完全可用
+
+* 维护相同的环境变量设置和路径配置
+
+* 确保`toolchain_*.sh`调用逻辑不变
+
+* 保持现有目录结构和文件命名规范
+
+### 1.2 重构核心目标
 
 **用户友好度提升**
-- 消除用户直接编辑`toolchain_*.sh`脚本的需求
-- 提供模板化的配置文件（YAML/TOML格式）
-- 实现配置验证和智能提示
-- 简化配置流程，降低使用门槛
 
-**代码去冗余**
-- 消除15+个安装脚本中的重复下载逻辑
-- 统一版本号和校验码管理
-- 提取公共的环境变量设置模块
-- 合并相似的错误处理代码
+* 简化配置流程，减少用户学习成本
 
-**解决硬编码问题**
-- 将所有版本号、路径、配置参数外化到配置文件
-- 实现动态配置加载机制
-- 支持环境变量覆盖和默认值
-- 建立配置模板和继承体系
+* 提供更清晰的错误信息和调试支持
 
-**错误处理统一化**
-- 建立统一的错误处理框架
-- 标准化错误代码和消息格式
-- 实现智能错误恢复机制
-- 提供详细的调试和诊断信息
+* 保持与原有工作流的完全兼容性
 
-### 1.2 重构后目标指标
+* 增强脚本的可读性和可维护性
 
-**用户体验指标**
-- 配置时间：从30分钟减少到5分钟
-- 配置错误率：减少80%（通过验证和提示）
-- 学习成本：新用户上手时间从2小时减少到30分钟
+**代码架构优化**
 
-**代码质量指标**
-- 代码重复率：从40%降低到<5%
-- 硬编码实例：从200+减少到0
-- 错误处理覆盖率：达到100%
+* 消除代码重复，实现DRY原则
 
-**维护性指标**
-- 新包集成时间：从2天减少到2小时
-- 配置变更影响范围：局部化，避免全局影响
+* 建立清晰的模块化架构
 
-## 2. 现状分析
+* 统一版本管理和依赖解析机制
 
-### 2.1 用户友好度问题
+* 保持所有11个依赖包的安装逻辑
 
-**当前用户配置流程**
+**运维和维护效率提升**
+
+* 简化新包集成流程
+
+* 降低配置错误率
+
+* 提供更好的调试和诊断工具
+
+* 确保与原版本相同的性能表现
+
+## 2. 现状分析与问题识别
+
+### 2.1 当前架构分析
+
+**优秀设计模式（需要保持）**
+
 ```bash
-# 用户需要直接编辑toolchain_gnu.sh
-./install_abacus_toolchain.sh \
-  --with-gcc=install \
-  --with-openmpi=install \
-  --with-openblas=install \
-  # ... 20+个参数需要手动配置
+# 分层架构设计 - 已验证的成功模式
+./scripts/stage0/install_stage0.sh  # 编译器和构建工具
+./scripts/stage1/install_stage1.sh  # MPI实现  
+./scripts/stage2/install_stage2.sh  # 数学库
+./scripts/stage3/install_stage3.sh  # 科学计算库
+./scripts/stage4/install_stage4.sh  # 高级功能库
+
+# 统一安装模式 - 经过验证的核心逻辑
+case "${with_package}" in
+  __INSTALL__)   # 从源码编译
+  __SYSTEM__)    # 使用系统库
+  __DONTUSE__)   # 跳过安装
+  *)             # 用户指定路径
+esac
+
+# 工具链调用模式 - 保持不变
+toolchain_gnu.sh -> install_abacus_toolchain.sh
+toolchain_intel.sh -> install_abacus_toolchain.sh
 ```
 
-**问题分析**
-- 用户需要了解20+个包的配置选项
-- 参数名称不直观（如`--with-libxc`）
-- 缺乏配置验证，错误配置导致安装失败
-- 没有配置模板，每次都需要从头配置
+### 2.2 关键问题识别
 
-### 2.2 代码冗余问题
+**1. 主脚本过于庞大（955行）**
 
-**重复代码统计**
 ```bash
-# 下载逻辑重复（出现在15个脚本中）
-if [ -f $filename ]; then
-    echo "$filename is found"
-else
-    download_pkg_from_url "${sha256}" "${filename}" "${url}"
-fi
+# install_abacus_toolchain.sh 包含多个功能模块：
+- 参数解析和验证 (200+ 行)
+- 默认值设置和环境检测 (150+ 行)
+- 帮助文档和使用说明 (100+ 行)
+- 包列表管理和依赖关系 (100+ 行)
+- 主执行逻辑和错误处理 (200+ 行)
+- 特殊环境处理 (CRAY等) (100+ 行)
+```
 
+**2. 版本号和校验码分散管理**
+
+```bash
+# 当前每个包脚本都有独立的版本定义
+# install_openblas.sh
+openblas_ver="0.3.30"
+openblas_sha256="27342cff518646afb4c2b976d809102e368957974c250a25ccc965e53063c95d"
+
+# install_fftw.sh  
+fftw_ver="3.3.10"
+fftw_sha256="..."
+
+# 需要集中管理，便于版本升级和维护
+```
+
+**3. 代码重复问题**
+
+```bash
 # 环境变量设置重复（出现在20个脚本中）
 cat << EOF > "${BUILDDIR}/setup_${package}"
 prepend_path CPATH "$pkg_install_dir/include"
@@ -84,1420 +146,964 @@ export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
 ```
 
-**冗余度分析**
-- 下载逻辑：15个脚本，每个50-80行，总计约1000行重复代码
-- 环境设置：20个脚本，每个20-30行，总计约500行重复代码
-- 错误处理：各脚本中约300行重复的错误处理代码
-
-### 2.3 硬编码问题
-
-**版本号硬编码示例**
-```bash
-# install_openmpi.sh
-openmpi_ver="5.0.8"
-openmpi_sha256="..."
-
-# install_fftw.sh  
-fftw_ver="3.3.10"
-fftw_sha256="..."
-
-# install_libxc.sh
-libxc_ver="6.2.2"
-libxc_sha256="..."
-```
-
-**路径硬编码示例**
-```bash
-# common_vars.sh
-SYS_INCLUDE_PATH="/usr/local/include:/usr/include"
-SYS_LIB_PATH="/usr/local/lib64:/usr/local/lib:/usr/lib64:/usr/lib"
-```
-
-**配置硬编码示例**
-```bash
-# 编译器标志硬编码在各个脚本中
-CFLAGS="-O3 -fPIC -fopenmp"
-FFLAGS="-O3 -fPIC -fopenmp"
-```
-
-### 2.4 错误处理问题
-
-**不一致的错误处理**
-```bash
-# tool_kit.sh中的标准处理
-report_error() {
-    echo "ERROR: (${SCRIPT_NAME}${__lineno}) $__message" >&2
-}
-
-# 但在install_cereal.sh中
-echo "==================== CANNOT Finding CEREAL ===================="
-
-# 在install_openmpi.sh中
-echo "OpenMPI installation failed" && exit 1
-```
-
-**缺乏错误恢复机制**
-- 安装失败后需要手动清理
-- 无法从中断点继续安装
-- 错误信息不够详细，难以定位问题
-
-## 3. 重构方案
-
-### 3.1 用户友好度改进方案
-
-#### 3.1.1 配置文件格式选择与分析
-
-**格式对比分析**
-
-针对ABACUS工具链的复杂配置需求，我们对YAML和TOML两种主流配置文件格式进行了深入分析：
-
-| 对比维度 | YAML | TOML | 项目适配性评估 |
-|---------|------|------|---------------|
-| **层次结构表达** | 优秀，支持深层嵌套 | 一般，深层嵌套复杂 | YAML更适合（3-4层配置结构） |
-| **可读性** | 优秀，缩进清晰 | 优秀，语法明确 | 两者相当 |
-| **数据类型支持** | 丰富（数组、对象、多行字符串） | 基础（表格、数组、字符串） | YAML更灵活 |
-| **注释支持** | 完整支持 | 完整支持 | 两者相当 |
-| **生态成熟度** | 成熟，工具丰富 | 较新，工具较少 | YAML优势明显 |
-| **解析复杂度** | 中等 | 简单 | TOML略优 |
-| **错误提示** | 一般 | 优秀 | TOML略优 |
-
-**项目特点分析**
-
-ABACUS工具链配置具有以下特点：
-- **复杂层次结构**：编译器→MPI→数学库→科学计算库，需要3-4层嵌套
-- **多样化数据类型**：版本号（字符串）、开关（布尔）、选项列表（数组）、路径（字符串）
-- **用户群体**：主要为科研人员和HPC管理员，对配置文件语法要求不高
-- **配置规模**：20+个软件包，每个包含3-8个配置项
-
-**格式选择结论**
-
-基于上述分析，我们选择**YAML格式**作为配置文件标准，理由如下：
-
-1. **层次结构优势**：YAML的缩进语法天然适合表达复杂的依赖关系
-2. **可读性强**：科研用户更容易理解和修改
-3. **生态成熟**：丰富的解析库和验证工具
-4. **扩展性好**：支持模板、继承等高级特性
-
-**配置文件模板设计**
-
-为了最大化用户友好性，我们设计了简化的YAML语法规范：
-
-```yaml
-# 简化语法示例
-compilers:
-  gcc: 
-    enabled: true
-    version: auto        # 而非复杂的 {version: "auto", source: "install"}
-    
-mpi: openmpi            # 简单字符串，而非复杂对象
-
-scientific_libraries:
-  - fftw                # 数组形式，启用默认配置
-  - libxc: 6.2.2        # 键值对，指定版本
-  - elpa:               # 对象形式，详细配置
-      version: 2023.11.001
-      gpu: false
-```
-
-**配置验证Schema设计**
-
-为确保配置正确性，我们设计了JSON Schema验证：
-
-```yaml
-# config/schema.yaml
-$schema: "http://json-schema.org/draft-07/schema#"
-title: "ABACUS Toolchain Configuration Schema"
-type: object
-
-properties:
-  compilers:
-    type: object
-    properties:
-      gcc:
-        type: object
-        properties:
-          enabled: {type: boolean}
-          version: {type: string, pattern: "^(auto|system|[0-9]+\\.[0-9]+)$"}
-          source: {type: string, enum: ["install", "system", "path"]}
-    required: ["gcc"]
-    
-  mpi:
-    oneOf:
-      - type: string
-        enum: ["openmpi", "mpich", "intelmpi"]
-      - type: object
-        properties:
-          provider: {type: string, enum: ["openmpi", "mpich", "intelmpi"]}
-          version: {type: string}
-          options:
-            type: object
-            properties:
-              enable_cuda: {type: boolean}
-              enable_fortran: {type: boolean}
-
-required: ["compilers", "mpi"]
-```
-
-**交互式配置工具设计**
-
-为进一步提升用户体验，我们设计了`abacus-config`交互式工具：
+**4. 用户配置复杂性**
 
 ```bash
-# 智能检测和推荐
-$ ./bin/abacus-config
-
-🔍 检测系统环境...
-  ✓ 检测到 GCC 11.2.0
-  ✓ 检测到 CUDA 11.8
-  ⚠️  未检测到 Intel OneAPI
-  
-📋 推荐配置：
-  编译器: GCC (系统版本)
-  MPI: OpenMPI (安装最新版)
-  数学库: OpenBLAS (针对您的CPU优化)
-  GPU支持: 启用 (检测到CUDA)
-
-❓ 是否使用推荐配置? [Y/n]: Y
-
-✅ 配置文件已生成: toolchain.yaml
-💡 提示: 您可以编辑此文件进行进一步定制
+# 当前用户需要理解20+个参数
+./install_abacus_toolchain.sh \
+  --with-gcc=install \
+  --with-openmpi=install \
+  --with-openblas=install \
+  --with-fftw=install \
+  --with-libxc=install \
+  # ... 更多参数
 ```
 
-**实施计划**
+## 3. 渐进式重构方案
 
-**第一阶段：配置标准化（2个月）**
-- 设计YAML配置schema和模板
-- 开发配置解析器和验证器
-- 创建配置文件生成工具
+### 3.1 整体重构策略
 
-**第二阶段：向后兼容（1个月）**
-- 保持现有脚本接口不变
-- 开发配置迁移工具
-- 提供双模式运行支持
+**阶段1：模块化拆分（不破坏现有结构）**
 
-**第三阶段：用户体验优化（1个月）**
-- 完善配置验证和错误提示
-- 优化交互式配置工具
-- 编写用户文档和教程
+* 保持`scripts/stage[0-4]/`目录结构不变
 
-**成功关键因素**
+* 保持每个`install_[PKG].sh`脚本的独立性
 
-1. **清晰的模板设计**：提供多种使用场景的配置模板
-2. **强大的工具支持**：自动检测、智能推荐、配置验证
-3. **向后兼容保证**：确保现有用户平滑迁移
-4. **详细的错误信息**：帮助用户快速定位和解决配置问题
+* 将`install_abacus_toolchain.sh`拆分为功能模块
 
-**配置文件模板化设计**
+* 创建公共库和配置管理模块
 
-创建YAML格式的配置文件`toolchain.yaml`：
-```yaml
-# ABACUS工具链配置文件
-metadata:
-  name: "ABACUS Toolchain Configuration"
-  version: "2025.2"
-  description: "用于ABACUS编译的依赖库配置"
+**阶段2：版本集中管理**
 
-# 编译器配置
-compilers:
-  gcc:
-    enabled: true
-    version: "auto"  # auto, system, 或具体版本号
-    source: "install"  # install, system, path:/custom/path
-  intel:
-    enabled: false
-  amd:
-    enabled: false
+* 创建统一的版本配置文件
 
-# MPI配置
-mpi:
-  provider: "openmpi"  # openmpi, mpich, intelmpi
-  version: "5.0.8"
-  source: "install"
-  options:
-    enable_cuda: false
-    enable_fortran: true
+* 从各个安装脚本中提取版本号和校验码
 
-# 数学库配置
-math_libraries:
-  provider: "openblas"  # openblas, mkl, aocl
-  version: "0.3.27"
-  source: "install"
-  options:
-    threading: "openmp"
-    architecture: "auto"
+* 保持脚本接口不变，只改变数据来源
 
-# 科学计算库配置
-scientific_libraries:
-  fftw:
-    enabled: true
-    version: "3.3.10"
-    source: "install"
-    options:
-      enable_mpi: true
-      enable_openmp: true
-  
-  libxc:
-    enabled: true
-    version: "6.2.2"
-    source: "install"
-  
-  elpa:
-    enabled: true
-    version: "2023.11.001"
-    source: "install"
-    options:
-      enable_gpu: false
-      kernels: ["AVX2", "AVX512"]
+**阶段3：去冗余优化**
 
-# 机器学习库配置（可选）
-ml_libraries:
-  libtorch:
-    enabled: false
-    version: "2.1.2"
-    source: "install"
-  
-  cereal:
-    enabled: true
-    version: "master"
-    source: "install"
+* 提取公共函数到共享库
 
-# 系统配置
-system:
-  build_jobs: "auto"  # auto 或具体数字
-  install_prefix: "./install"
-  build_dir: "./build"
-  enable_cuda: false
-  cuda_arch: "auto"  # auto, sm_70, sm_80等
-  target_cpu: "native"  # native, haswell, generic等
+* 统一错误处理和日志机制
 
-# 高级选项
-advanced:
-  offline_mode: false
-  pack_run_mode: false
-  dry_run: false
-  log_level: "info"  # debug, info, warn, error
-  keep_build_files: false
+* 优化重复的下载和安装逻辑
+
+**阶段4：用户体验优化**
+
+* 提供配置文件支持
+
+* 改进错误信息和调试功能
+
+* 增强`toolchain_*.sh`的用户友好度
+
+### 3.2 模块化架构设计
+
+#### 3.2.1 保持现有目录结构
+
+```
+toolchain/
+├── install_abacus_toolchain.sh     # 主入口（拆分后）
+├── toolchain_*.sh                  # 工具链脚本（保持不变）
+├── scripts/                        # 核心脚本目录（保持不变）
+│   ├── common_vars.sh              # 公共变量（增强）
+│   ├── tool_kit.sh                 # 工具函数（增强）
+│   ├── signal_trap.sh              # 信号处理（保持）
+│   ├── lib/                        # 新增：功能模块库
+│   │   ├── config_manager.sh       # 配置管理模块
+│   │   ├── package_manager.sh      # 包管理模块
+│   │   ├── version_manager.sh      # 版本管理模块
+│   │   └── user_interface.sh       # 用户界面模块
+│   ├── config/                     # 新增：配置文件目录
+│   │   ├── package_versions.conf   # 版本配置文件
+│   │   ├── default_settings.conf   # 默认设置
+│   │   └── toolchain_presets.conf  # 预设配置
+│   └── stage[0-4]/                 # 保持现有结构
+│       └── install_[PKG].sh        # 保持现有脚本
 ```
 
-**配置工具设计**
+#### 3.2.2 主脚本模块化拆分
 
-创建交互式配置工具`bin/abacus-config`：
+**原始`install_abacus_toolchain.sh`（955行）拆分为：**
+
 ```bash
-#!/bin/bash
-# ABACUS工具链配置工具
-
-show_welcome() {
-    cat << EOF
-欢迎使用ABACUS工具链配置工具！
-
-本工具将帮助您生成适合您系统的配置文件。
-请按照提示选择合适的选项。
-
-EOF
-}
-
-configure_compilers() {
-    echo "=== 编译器配置 ==="
-    echo "检测到的编译器："
-    
-    # 自动检测系统编译器
-    detect_gcc && echo "  ✓ GCC $(gcc --version | head -1)"
-    detect_intel && echo "  ✓ Intel OneAPI"
-    detect_amd && echo "  ✓ AMD AOCC"
-    
-    read -p "选择编译器 [1]GCC [2]Intel [3]AMD: " compiler_choice
-    # 根据选择更新配置
-}
-
-configure_mpi() {
-    echo "=== MPI配置 ==="
-    echo "可用的MPI实现："
-    echo "  [1] OpenMPI (推荐，兼容性好)"
-    echo "  [2] MPICH (轻量级)"
-    echo "  [3] Intel MPI (Intel编译器推荐)"
-    
-    read -p "选择MPI实现 [1-3]: " mpi_choice
-    # 根据选择更新配置
-}
-
-validate_config() {
-    echo "=== 配置验证 ==="
-    
-    # 检查编译器兼容性
-    if [[ "$compiler" == "intel" && "$mpi" == "openmpi" ]]; then
-        echo "⚠️  警告：Intel编译器建议使用Intel MPI以获得最佳性能"
-    fi
-    
-    # 检查系统资源
-    local mem_gb=$(free -g | awk '/^Mem:/{print $2}')
-    if [[ $mem_gb -lt 8 ]]; then
-        echo "⚠️  警告：系统内存不足8GB，建议减少并行编译任务数"
-    fi
-    
-    # 检查磁盘空间
-    local disk_gb=$(df . | awk 'NR==2{print int($4/1024/1024)}')
-    if [[ $disk_gb -lt 20 ]]; then
-        echo "❌ 错误：磁盘空间不足20GB，无法完成安装"
-        return 1
-    fi
-    
-    echo "✓ 配置验证通过"
-}
-
-generate_config() {
-    echo "=== 生成配置文件 ==="
-    
-    # 使用模板生成配置文件
-    envsubst < templates/toolchain.yaml.template > toolchain.yaml
-    
-    echo "✓ 配置文件已生成：toolchain.yaml"
-    echo "✓ 您可以手动编辑此文件进行进一步定制"
-}
+# install_abacus_toolchain.sh (主入口，约100行)
+#!/bin/bash -e
+source "${SCRIPTDIR}/lib/config_manager.sh"
+source "${SCRIPTDIR}/lib/package_manager.sh"
+source "${SCRIPTDIR}/lib/user_interface.sh"
 
 main() {
-    show_welcome
-    configure_compilers
-    configure_mpi
-    configure_math_libraries
-    configure_optional_libraries
-    validate_config || exit 1
-    generate_config
+    # 初始化配置
+    config_init "$@"
     
-    echo ""
-    echo "配置完成！运行以下命令开始安装："
-    echo "  ./bin/abacus-toolchain install"
+    # 验证环境
+    environment_check
+    
+    # 执行安装
+    package_install_all
+    
+    # 生成设置文件
+    generate_setup_files
 }
 
 main "$@"
 ```
 
-### 3.2 代码去冗余方案
+**功能模块拆分：**
 
-**统一下载管理器**
+1. **配置管理模块** (`scripts/lib/config_manager.sh`)
 
-创建`lib/download_manager.sh`：
 ```bash
-#!/bin/bash
-# 统一下载管理器
-
-download_manager_init() {
-    local config_file="$1"
-    
-    # 加载包配置
-    eval "$(parse_yaml "$config_file" "pkg_")"
-    
-    # 创建下载缓存目录
-    mkdir -p "${CACHE_DIR}/downloads"
-    mkdir -p "${CACHE_DIR}/checksums"
-}
-
-download_package() {
-    local package_name="$1"
-    local version="$2"
-    local url="$3"
-    local checksum="$4"
-    
-    local filename="${package_name}-${version}.tar.gz"
-    local filepath="${CACHE_DIR}/downloads/${filename}"
-    
-    # 检查缓存
-    if [[ -f "$filepath" ]] && verify_checksum "$filepath" "$checksum"; then
-        log_info "使用缓存文件：$filename"
-        echo "$filepath"
-        return 0
-    fi
-    
-    # 下载文件
-    log_info "下载 $package_name $version..."
-    
-    if command -v wget >/dev/null 2>&1; then
-        wget "$url" -O "$filepath" --progress=bar:force 2>&1
-    elif command -v curl >/dev/null 2>&1; then
-        curl -L "$url" -o "$filepath" --progress-bar
-    else
-        log_error "未找到wget或curl，无法下载文件"
-        return 1
-    fi
-    
-    # 验证校验和
-    if ! verify_checksum "$filepath" "$checksum"; then
-        log_error "文件校验失败：$filename"
-        rm -f "$filepath"
-        return 1
-    fi
-    
-    log_success "下载完成：$filename"
-    echo "$filepath"
-}
-
-verify_checksum() {
-    local filepath="$1"
-    local expected_checksum="$2"
-    
-    if [[ "$expected_checksum" == "--no-checksum" ]]; then
-        return 0
-    fi
-    
-    local actual_checksum
-    actual_checksum=$(sha256sum "$filepath" | cut -d' ' -f1)
-    
-    [[ "$actual_checksum" == "$expected_checksum" ]]
-}
+# 负责参数解析、默认值设置、配置验证
+config_parse_arguments()     # 解析命令行参数
+config_set_defaults()        # 设置默认值
+config_validate()            # 验证配置
+config_load_presets()        # 加载预设配置
 ```
 
-**统一环境管理器**
+1. **包管理模块** (`scripts/lib/package_manager.sh`)
 
-创建`lib/environment_manager.sh`：
+```bash
+# 负责包列表管理、依赖关系、安装调度
+package_list_init()          # 初始化包列表
+package_dependency_check()   # 检查依赖关系
+package_install_stage()      # 按阶段安装
+package_status_check()       # 检查安装状态
+```
+
+1. **版本管理模块** (`scripts/lib/version_manager.sh`)
+
+```bash
+# 负责版本号和校验码的集中管理
+version_get_package_info()   # 获取包版本信息
+version_validate_checksum()  # 验证校验码
+version_update_package()     # 更新包版本
+```
+
+1. **用户界面模块** (`scripts/lib/user_interface.sh`)
+
+```bash
+# 负责帮助信息、错误处理、用户交互
+ui_show_help()              # 显示帮助信息
+ui_show_progress()          # 显示进度信息
+ui_handle_error()           # 处理错误信息
+ui_confirm_action()         # 用户确认操作
+```
+
+### 3.3 版本集中管理方案
+
+#### 3.3.1 版本配置文件设计
+
+**创建`scripts/config/package_versions.conf`：**
+
+```bash
+# ABACUS Toolchain Package Versions Configuration
+# Format: PACKAGE_NAME_VERSION="version"
+#         PACKAGE_NAME_SHA256="checksum"
+#         PACKAGE_NAME_URL="download_url"
+
+# Stage 0: Compilers and Build Tools
+GCC_VERSION="13.2.0"
+GCC_SHA256="e275e76442a6067341a27f04c5c6b83d8613144004c0413528863dc6b5c743da"
+GCC_URL="https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz"
+
+# Stage 1: MPI Implementations  
+OPENMPI_VERSION="5.0.8"
+OPENMPI_SHA256="53131e1a57e7270f645707f8b0b65ba56048f5b5ac3f68faabed3eb0d710e449"
+OPENMPI_URL="https://download.open-mpi.org/release/open-mpi/v${OPENMPI_VERSION%.*}/openmpi-${OPENMPI_VERSION}.tar.bz2"
+
+# Stage 2: Math Libraries
+OPENBLAS_VERSION="0.3.30"
+OPENBLAS_SHA256="27342cff518646afb4c2b976d809102e368957974c250a25ccc965e53063c95d"
+OPENBLAS_URL="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${OPENBLAS_VERSION}"
+
+# Stage 3: Scientific Computing Libraries
+LIBXC_VERSION="7.0.0"
+LIBXC_SHA256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
+LIBXC_URL="https://www.tddft.org/programs/libxc/down.php?file=${LIBXC_VERSION}/libxc-${LIBXC_VERSION}.tar.bz2"
+
+FFTW_VERSION="3.3.10"
+FFTW_SHA256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
+FFTW_URL="https://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz"
+
+SCALAPACK_VERSION="2.2.2"
+SCALAPACK_SHA256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7b7d022"
+SCALAPACK_URL="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${SCALAPACK_VERSION}"
+
+ELPA_VERSION="2025.06.001"
+ELPA_SHA256="feeb1fea1ab4a8670b8d3240765ef0ada828062ef7ec9b735eecba2848515c94"
+ELPA_URL="https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${ELPA_VERSION}/elpa-${ELPA_VERSION}.tar.gz"
+
+# Stage 4: Advanced Libraries
+LIBTORCH_VERSION="2.1.2"
+LIBTORCH_SHA256="904b764df6106a8a35bef64c4b55b8c1590ad9d071eb276e680cf42abafe79e9"
+LIBTORCH_URL="https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip"
+
+# Note: 以下依赖库使用master分支，无固定版本号和校验码
+CEREAL_VERSION="master"
+CEREAL_SHA256="--no-checksum"
+CEREAL_URL="https://github.com/USCiLab/cereal/archive/v${CEREAL_VERSION}.tar.gz"
+
+RAPIDJSON_VERSION="master"
+RAPIDJSON_SHA256="--no-checksum"
+RAPIDJSON_URL="https://github.com/Tencent/rapidjson/archive/master.tar.gz"
+```
+
+#### 3.3.2 版本管理函数
+CEREAL_URL="https://github.com/USCiLab/cereal/archive/v${CEREAL_VERSION}.tar.gz"
+```
+
+#### 3.3.2 版本管理函数
+
+**在`scripts/lib/version_manager.sh`中实现：**
+
 ```bash
 #!/bin/bash
-# 统一环境管理器
 
-env_manager_init() {
-    local install_dir="$1"
-    
-    export INSTALL_DIR="$install_dir"
-    export SETUP_FILE="${install_dir}/setup"
-    export ENV_FILE="${install_dir}/toolchain.env"
-    
-    # 创建环境文件
-    cat > "$SETUP_FILE" << 'EOF'
-#!/bin/bash
-# ABACUS工具链环境设置文件
-# 此文件由abacus-toolchain自动生成，请勿手动编辑
-
-TOOLCHAIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EOF
-}
-
-add_package_env() {
-    local package_name="$1"
-    local install_path="$2"
-    local env_type="$3"  # library, compiler, tool
-    
-    local setup_fragment="${INSTALL_DIR}/setup_${package_name}"
-    
-    case "$env_type" in
-        "library")
-            cat > "$setup_fragment" << EOF
-# ${package_name} 环境设置
-export ${package_name^^}_ROOT="$install_path"
-prepend_path LD_LIBRARY_PATH "$install_path/lib"
-prepend_path PKG_CONFIG_PATH "$install_path/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$install_path"
-prepend_path CPATH "$install_path/include"
-EOF
-            ;;
-        "compiler")
-            cat > "$setup_fragment" << EOF
-# ${package_name} 编译器环境设置
-export ${package_name^^}_ROOT="$install_path"
-prepend_path PATH "$install_path/bin"
-prepend_path LD_LIBRARY_PATH "$install_path/lib"
-prepend_path MANPATH "$install_path/share/man"
-EOF
-            ;;
-        "tool")
-            cat > "$setup_fragment" << EOF
-# ${package_name} 工具环境设置
-prepend_path PATH "$install_path/bin"
-EOF
-            ;;
-    esac
-    
-    # 添加到主setup文件
-    echo "source \"$setup_fragment\"" >> "$SETUP_FILE"
-    
-    log_info "已添加 $package_name 环境配置"
-}
-
-prepend_path() {
-    local var_name="$1"
-    local new_path="$2"
-    
-    # 生成路径管理代码
-    cat >> "$SETUP_FILE" << EOF
-
-# 添加 $new_path 到 $var_name
-if [[ -d "$new_path" ]]; then
-    if [[ -z "\${$var_name}" ]]; then
-        export $var_name="$new_path"
+# 加载版本配置
+version_load_config() {
+    local config_file="${SCRIPTDIR}/config/package_versions.conf"
+    if [[ -f "$config_file" ]]; then
+        source "$config_file"
     else
-        # 移除已存在的路径（避免重复）
-        $var_name=\$(echo "\${$var_name}" | sed "s|$new_path:||g" | sed "s|:$new_path||g" | sed "s|^$new_path\$||g")
-        export $var_name="$new_path:\${$var_name}"
+        report_error "Version configuration file not found: $config_file"
+        exit 1
     fi
-fi
-EOF
 }
-```
 
-### 3.3 硬编码问题解决方案
-
-**包配置数据库**
-
-创建`config/packages.yaml`：
-```yaml
-# 包配置数据库
-packages:
-  # 编译器包
-  gcc:
-    name: "GNU Compiler Collection"
-    category: "compiler"
-    versions:
-      "13.2.0":
-        url: "https://gcc.gnu.org/releases/gcc-13.2.0/gcc-13.2.0.tar.gz"
-        sha256: "8cb4be3796651976f94b9356fa08d833524f62420d6292c5033a9a26af315078"
-        dependencies: []
-      "12.3.0":
-        url: "https://gcc.gnu.org/releases/gcc-12.3.0/gcc-12.3.0.tar.gz"
-        sha256: "949a5d4f99e786421a93b532b22ffab5578de7321369975b91aec97adfda8c3b"
-        dependencies: []
-    default_version: "13.2.0"
-    build_options:
-      configure_flags: ["--enable-languages=c,c++,fortran", "--disable-multilib"]
-      parallel_jobs: 4
-
-  # MPI包
-  openmpi:
-    name: "Open MPI"
-    category: "mpi"
-    versions:
-      "5.0.8":
-        url: "https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz"
-        sha256: "..."
-        dependencies: []
-      "4.1.6":
-        url: "https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.6.tar.gz"
-        sha256: "..."
-        dependencies: []
-    default_version: "5.0.8"
-    build_options:
-      configure_flags: ["--enable-mpi-fortran", "--enable-shared"]
-      parallel_jobs: 8
-
-  # 数学库
-  openblas:
-    name: "OpenBLAS"
-    category: "math"
-    versions:
-      "0.3.27":
-        url: "https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.27/OpenBLAS-0.3.27.tar.gz"
-        sha256: "..."
-        dependencies: []
-    default_version: "0.3.27"
-    build_options:
-      make_flags: ["USE_OPENMP=1", "NUM_THREADS=64"]
-      parallel_jobs: 8
-
-  # 科学计算库
-  fftw:
-    name: "FFTW"
-    category: "scientific"
-    versions:
-      "3.3.10":
-        url: "http://www.fftw.org/fftw-3.3.10.tar.gz"
-        sha256: "56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
-        dependencies: []
-    default_version: "3.3.10"
-    build_options:
-      configure_flags: ["--enable-shared", "--enable-openmp", "--enable-mpi"]
-      parallel_jobs: 8
-
-  libxc:
-    name: "LibXC"
-    category: "scientific"
-    versions:
-      "6.2.2":
-        url: "https://gitlab.com/libxc/libxc/-/archive/6.2.2/libxc-6.2.2.tar.gz"
-        sha256: "..."
-        dependencies: []
-    default_version: "6.2.2"
-    build_options:
-      configure_flags: ["--enable-shared", "--enable-fortran"]
-      parallel_jobs: 4
-
-# 依赖关系定义
-dependencies:
-  # MPI依赖编译器
-  openmpi: ["gcc"]
-  mpich: ["gcc"]
-  intelmpi: ["intel"]
-  
-  # 数学库依赖编译器
-  openblas: ["gcc"]
-  mkl: ["intel"]
-  aocl: ["amd"]
-  
-  # 科学计算库依赖MPI和数学库
-  fftw: ["mpi", "math"]
-  scalapack: ["mpi", "math"]
-  elpa: ["mpi", "math"]
-  
-  # 高级库依赖科学计算库
-  libri: ["fftw", "libxc", "cereal"]
-  libcomm: ["mpi"]
-
-# 环境适配配置
-environments:
-  # 系统路径配置
-  system_paths:
-    include_paths:
-      - "/usr/local/include"
-      - "/usr/include"
-      - "/opt/local/include"  # macOS MacPorts
-      - "/usr/local/homebrew/include"  # macOS Homebrew
+# 获取包版本信息
+version_get_package_info() {
+    local package="$1"
+    local info_type="$2"  # VERSION, SHA256, URL
     
-    library_paths:
-      - "/usr/local/lib64"
-      - "/usr/local/lib"
-      - "/usr/lib64"
-      - "/usr/lib"
-      - "/opt/local/lib"  # macOS MacPorts
-      - "/usr/local/homebrew/lib"  # macOS Homebrew
-  
-  # 编译器标志配置
-  compiler_flags:
-    gcc:
-      cflags: ["-O3", "-fPIC", "-march=native"]
-      cxxflags: ["-O3", "-fPIC", "-march=native", "-std=c++17"]
-      fflags: ["-O3", "-fPIC", "-march=native"]
-      ldflags: ["-Wl,--as-needed"]
+    local var_name="${package^^}_${info_type}"
+    local value="${!var_name}"
     
-    intel:
-      cflags: ["-O3", "-fPIC", "-xHost"]
-      cxxflags: ["-O3", "-fPIC", "-xHost", "-std=c++17"]
-      fflags: ["-O3", "-fPIC", "-xHost"]
-      ldflags: ["-Wl,--as-needed"]
-  
-  # GPU配置
-  gpu_support:
-    cuda:
-      architectures:
-        - "sm_70"  # V100
-        - "sm_80"  # A100
-        - "sm_86"  # RTX 30xx
-        - "sm_89"  # RTX 40xx
-      default_arch: "sm_80"
-    
-    hip:
-      architectures:
-        - "gfx906"  # MI50
-        - "gfx908"  # MI100
-        - "gfx90a"  # MI250
-      default_arch: "gfx908"
-```
-
-**配置加载器**
-
-创建`lib/config_loader.sh`：
-```bash
-#!/bin/bash
-# 配置加载器
-
-config_loader_init() {
-    local config_file="$1"
-    
-    # 检查配置文件存在性
-    if [[ ! -f "$config_file" ]]; then
-        log_error "配置文件不存在：$config_file"
+    if [[ -z "$value" ]]; then
+        report_error "No $info_type found for package: $package"
         return 1
     fi
     
-    # 验证配置文件格式
-    if ! validate_config_format "$config_file"; then
-        log_error "配置文件格式错误"
-        return 1
-    fi
-    
-    # 加载配置
-    load_user_config "$config_file"
-    load_package_database
-    load_environment_config
-    
-    log_info "配置加载完成"
+    echo "$value"
 }
 
-load_user_config() {
-    local config_file="$1"
+# 更新包脚本中的版本引用（保持向后兼容）
+version_update_package_script() {
+    local package="$1"
+    local script_path="$2"
     
-    # 使用yq或自定义解析器加载YAML
-    if command -v yq >/dev/null 2>&1; then
-        eval "$(yq eval -o=shell "$config_file" | sed 's/^/export USER_CONFIG_/')"
-    else
-        # 使用内置的简单YAML解析器
-        parse_yaml_simple "$config_file" "USER_CONFIG_"
-    fi
+    local version=$(version_get_package_info "$package" "VERSION")
+    local sha256=$(version_get_package_info "$package" "SHA256")
+    local url=$(version_get_package_info "$package" "URL")
+    
+    # 设置小写变量名（保持与现有脚本兼容）
+    local package_lower="${package,,}"
+    eval "${package_lower}_ver=\"$version\""
+    eval "${package_lower}_sha256=\"$sha256\""
+    eval "${package_lower}_url=\"$url\""
+    
+    # 同时设置大写变量名（供新函数使用）
+    eval "${package^^}_VERSION=\"$version\""
+    eval "${package^^}_SHA256=\"$sha256\""
+    eval "${package^^}_URL=\"$url\""
 }
 
-load_package_database() {
-    local pkg_db="${SCRIPT_DIR}/config/packages.yaml"
+# 验证版本配置完整性
+version_validate_config() {
+    local packages=("GCC" "OPENMPI" "OPENBLAS" "LIBXC" "FFTW" "SCALAPACK" "ELPA" "LIBTORCH")
+    local missing_packages=()
     
-    if command -v yq >/dev/null 2>&1; then
-        eval "$(yq eval -o=shell "$pkg_db" | sed 's/^/export PKG_DB_/')"
-    else
-        parse_yaml_simple "$pkg_db" "PKG_DB_"
-    fi
-}
-
-get_package_info() {
-    local package_name="$1"
-    local info_type="$2"  # version, url, sha256, dependencies
-    local version="$3"    # 可选，默认使用default_version
-    
-    # 如果未指定版本，使用默认版本
-    if [[ -z "$version" ]]; then
-        version=$(get_config_value "PKG_DB_packages_${package_name}_default_version")
-    fi
-    
-    # 获取信息
-    case "$info_type" in
-        "url")
-            get_config_value "PKG_DB_packages_${package_name}_versions_${version}_url"
-            ;;
-        "sha256")
-            get_config_value "PKG_DB_packages_${package_name}_versions_${version}_sha256"
-            ;;
-        "dependencies")
-            get_config_value "PKG_DB_packages_${package_name}_versions_${version}_dependencies"
-            ;;
-        *)
-            log_error "未知的信息类型：$info_type"
-            return 1
-            ;;
-    esac
-}
-
-get_config_value() {
-    local key="$1"
-    local default_value="$2"
-    
-    # 首先检查环境变量覆盖
-    local env_key=$(echo "$key" | tr '[:lower:]' '[:upper:]' | tr '.' '_')
-    if [[ -n "${!env_key}" ]]; then
-        echo "${!env_key}"
-        return 0
-    fi
-    
-    # 然后检查配置文件值
-    local config_var="export_${key}"
-    if [[ -n "${!config_var}" ]]; then
-        echo "${!config_var}"
-        return 0
-    fi
-    
-    # 最后返回默认值
-    echo "$default_value"
-}
-
-validate_config_format() {
-    local config_file="$1"
-    
-    # 基本YAML语法检查
-    if command -v yq >/dev/null 2>&1; then
-        yq eval 'true' "$config_file" >/dev/null 2>&1
-    else
-        # 简单的语法检查
-        if grep -q $'^\t' "$config_file"; then
-            log_error "YAML文件不能使用Tab字符，请使用空格缩进"
-            return 1
-        fi
+    for package in "${packages[@]}"; do
+        local version_var="${package}_VERSION"
+        local sha256_var="${package}_SHA256"
+        local url_var="${package}_URL"
         
-        # 检查基本结构
-        if ! grep -q "^metadata:" "$config_file"; then
-            log_error "配置文件缺少metadata部分"
-            return 1
+        if [[ -z "${!version_var}" ]] || [[ -z "${!sha256_var}" ]] || [[ -z "${!url_var}" ]]; then
+            missing_packages+=("$package")
         fi
+    done
+    
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        report_error "Missing version information for packages: ${missing_packages[*]}"
+        return 1
     fi
     
+    echo "Version configuration validation passed"
     return 0
 }
-```
 
-### 3.4 错误处理统一化方案
-
-**统一错误处理框架**
-
-创建`lib/error_handler.sh`：
-```bash
-#!/bin/bash
-# 统一错误处理框架
-
-# 错误代码定义
-declare -A ERROR_CODES=(
-    [SUCCESS]=0
-    [GENERAL_ERROR]=1
-    [CONFIG_ERROR]=10
-    [DOWNLOAD_ERROR]=20
-    [BUILD_ERROR]=30
-    [INSTALL_ERROR]=40
-    [DEPENDENCY_ERROR]=50
-    [SYSTEM_ERROR]=60
-)
-
-# 错误消息模板
-declare -A ERROR_MESSAGES=(
-    [CONFIG_ERROR]="配置错误"
-    [DOWNLOAD_ERROR]="下载失败"
-    [BUILD_ERROR]="编译失败"
-    [INSTALL_ERROR]="安装失败"
-    [DEPENDENCY_ERROR]="依赖错误"
-    [SYSTEM_ERROR]="系统错误"
-)
-
-error_handler_init() {
-    # 设置错误处理
-    set -eE  # 启用错误退出和ERR陷阱继承
+# 列出所有配置的包版本
+version_list_packages() {
+    echo "Configured package versions:"
+    echo "============================"
     
-    # 设置陷阱
-    trap 'handle_error $? $LINENO $BASH_LINENO "$BASH_COMMAND" "${FUNCNAME[@]}"' ERR
-    trap 'handle_exit $?' EXIT
-    trap 'handle_interrupt' INT TERM
+    local packages=("GCC" "OPENMPI" "OPENBLAS" "LIBXC" "FFTW" "SCALAPACK" "ELPA" "LIBTORCH" "CEREAL" "RAPIDJSON")
     
-    # 创建错误日志文件
-    ERROR_LOG="${LOG_DIR}/error.log"
-    mkdir -p "$(dirname "$ERROR_LOG")"
-    
-    log_info "错误处理框架已初始化"
+    for package in "${packages[@]}"; do
+        local version_var="${package}_VERSION"
+        local version="${!version_var}"
+        if [[ -n "$version" ]]; then
+            printf "%-12s: %s\n" "$package" "$version"
+        fi
+    done
 }
-
-handle_error() {
-    local exit_code=$1
-    local line_number=$2
-    local bash_line_number=$3
-    local command="$4"
-    shift 4
-    local function_stack=("$@")
+```
+    local value="${!var_name}"
     
-    # 记录错误信息
-    local error_info=$(cat << EOF
-错误发生时间: $(date '+%Y-%m-%d %H:%M:%S')
-退出代码: $exit_code
-错误行号: $line_number
-Bash行号: $bash_line_number
-失败命令: $command
-函数调用栈: ${function_stack[*]}
-当前目录: $(pwd)
-环境变量: $(env | grep -E '^(PATH|LD_LIBRARY_PATH|CC|CXX|FC)=' | head -10)
-EOF
-)
-    
-    # 写入错误日志
-    echo "$error_info" >> "$ERROR_LOG"
-    
-    # 显示用户友好的错误信息
-    show_user_error "$exit_code" "$command" "$line_number"
-    
-    # 尝试错误恢复
-    if attempt_error_recovery "$exit_code" "$command"; then
-        log_info "错误已自动恢复，继续执行"
-        return 0
+    if [[ -z "$value" ]]; then
+        report_error "No $info_type found for package: $package"
+        return 1
     fi
     
-    # 清理和退出
-    cleanup_on_error
-    exit "$exit_code"
+    echo "$value"
 }
+```
 
-show_user_error() {
-    local exit_code=$1
-    local command="$2"
-    local line_number=$3
+#### 3.3.3 包脚本适配
+
+**修改各个`install_[PKG].sh`脚本（以OpenBLAS为例）：**
+
+```bash
+#!/bin/bash -e
+# install_openblas.sh (修改后)
+
+[ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
+
+# 加载版本管理
+source "${SCRIPT_DIR}/lib/version_manager.sh"
+version_load_config
+version_update_package_script "OPENBLAS" "$SCRIPT_NAME"
+
+# 现在可以直接使用统一的版本变量，无需重复定义
+# openblas_ver="${OPENBLAS_VERSION}"  # 由version_update_package_script自动设置
+# openblas_sha256="${OPENBLAS_SHA256}"  # 由version_update_package_script自动设置
+openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
+
+# 使用统一的OpenBLAS源码准备函数，消除重复代码
+case "${with_openblas}" in
+  __INSTALL__)
+    echo "==================== Installing OpenBLAS ===================="
+    pkg_install_dir="${INSTALLDIR}/openblas-${openblas_ver}"
+    install_lock_file="$pkg_install_dir/install_successful"
     
-    echo ""
-    echo "❌ 安装过程中发生错误"
-    echo ""
+    if verify_checksums "${install_lock_file}"; then
+      echo "openblas-${openblas_ver} is already installed, skipping it."
+    else
+      # 使用统一的源码准备函数，消除与get_openblas_arch.sh的重复
+      openblas_dir=$(setup_openblas_source)
+      cd "$openblas_dir"
+      
+      # 其余编译逻辑保持不变...
+    fi
+    ;;
+esac
+```
+
+**同样修改`get_openblas_arch.sh`：**
+
+```bash
+#!/bin/bash -e
+# get_openblas_arch.sh (修改后)
+
+[ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
+
+# 加载版本管理，消除版本信息重复定义
+source "${SCRIPT_DIR}/lib/version_manager.sh"
+version_load_config
+
+echo "==================== Getting proc arch info using OpenBLAS tools ===================="
+
+# 使用统一的OpenBLAS源码准备函数
+openblas_dir=$(setup_openblas_source)
+
+# 其余逻辑保持不变...
+openblas_conf="${openblas_dir}/Makefile.conf"
+if ! [ -f "$openblas_conf" ]; then
+  cd "$openblas_dir"
+  make lapack_prebuild
+  cd ..
+fi
+# ...
+```
+
+### 3.4 去冗余和代码优化
+
+#### 3.4.1 公共函数提取
+
+**代码冗余分析结果：**
+经过深入代码审视，发现下载逻辑已经高度模块化（使用`tool_kit.sh`中的`download_pkg_from_url`等函数），无需进一步优化。真正需要关注的冗余问题如下：
+
+**高优先级冗余问题：**
+1. **版本信息分散重复** - 各个依赖库的版本、SHA256、URL信息分散在不同脚本中，存在手动同步风险
+2. **环境变量设置模板重复** - 每个包脚本都有相似的`cat << EOF > setup_xxx`模板
+3. **编译日志处理重复** - `|| tail -n ${LOG_LINES}`模式广泛使用
+
+**版本信息重复的典型案例 - OpenBLAS：**
+经过对比分析`get_openblas_arch.sh`和`install_openblas.sh`，发现严重的版本信息重复：
+
+1. **版本信息重复定义**：
+   ```bash
+   # get_openblas_arch.sh 和 install_openblas.sh 都有：
+   openblas_ver="0.3.30" # Keep in sync with install_openblas.sh
+   openblas_sha256="27342cff518646afb4c2b976d809102e368957974c250a25ccc965e53063c95d"
+   openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
+   ```
+
+2. **下载逻辑重复**：
+   ```bash
+   # 两个脚本都有相同的下载和检查逻辑：
+   if [ -f ${openblas_pkg} ]; then
+     echo "${openblas_pkg} is found"
+   else
+     url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
+     download_pkg_from_url "${openblas_sha256}" "${openblas_pkg}" "${url}"
+   fi
+   tar -xzf ${openblas_pkg}
+   ```
+
+**统一解决方案：**
+- 通过版本集中管理方案彻底解决版本信息重复问题
+- 将OpenBLAS相关的公共逻辑提取到`tool_kit.sh`中的`setup_openblas_source()`函数
+- 消除手动同步注释，实现版本信息的单一数据源
+
+**在`scripts/tool_kit.sh`中增强公共函数：**
+```bash
+# 统一的环境设置函数（解决高频冗余）
+generate_package_env() {
+    local package="$1"
+    local install_dir="$2"
+    local env_type="${3:-standard}"  # standard, lib-only, bin-only
+    local setup_file="${BUILDDIR}/setup_${package}"
     
-    # 根据错误代码显示具体信息
-    case $exit_code in
-        ${ERROR_CODES[DOWNLOAD_ERROR]})
-            cat << EOF
-📥 下载错误
-   可能原因：
-   • 网络连接问题
-   • 文件服务器不可用
-   • 文件校验失败
-   
-   建议解决方案：
-   • 检查网络连接
-   • 使用 --offline-mode 进行离线安装
-   • 手动下载文件到 build/ 目录
+    case "$env_type" in
+        "lib-only")
+            cat << EOF > "$setup_file"
+prepend_path LD_LIBRARY_PATH "$install_dir/lib"
+prepend_path LIBRARY_PATH "$install_dir/lib"
+prepend_path PKG_CONFIG_PATH "$install_dir/lib/pkgconfig"
 EOF
             ;;
-        ${ERROR_CODES[BUILD_ERROR]})
-            cat << EOF
-🔨 编译错误
-   可能原因：
-   • 编译器版本不兼容
-   • 缺少系统依赖
-   • 内存不足
-   
-   建议解决方案：
-   • 检查编译器版本：gcc --version
-   • 安装系统依赖：sudo apt install build-essential
-   • 减少并行编译任务数：--build-jobs 2
-EOF
-            ;;
-        ${ERROR_CODES[DEPENDENCY_ERROR]})
-            cat << EOF
-🔗 依赖错误
-   可能原因：
-   • 依赖库未正确安装
-   • 环境变量未正确设置
-   • 版本冲突
-   
-   建议解决方案：
-   • 检查依赖安装状态
-   • 重新source环境文件：source install/setup
-   • 清理并重新安装：--clean-build
+        "bin-only")
+            cat << EOF > "$setup_file"
+prepend_path PATH "$install_dir/bin"
 EOF
             ;;
         *)
-            cat << EOF
-⚠️  未知错误 (代码: $exit_code)
-   失败命令: $command
-   错误行号: $line_number
-   
-   建议解决方案：
-   • 查看详细日志：cat $ERROR_LOG
-   • 使用调试模式：--debug
-   • 联系技术支持并提供错误日志
+            cat << EOF > "$setup_file"
+prepend_path PATH "$install_dir/bin"
+prepend_path LD_LIBRARY_PATH "$install_dir/lib"
+prepend_path LIBRARY_PATH "$install_dir/lib"
+prepend_path CPATH "$install_dir/include"
+prepend_path PKG_CONFIG_PATH "$install_dir/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "$install_dir"
 EOF
             ;;
     esac
     
-    echo ""
-    echo "📋 详细错误信息已保存到：$ERROR_LOG"
-    echo "🔧 如需帮助，请运行：./bin/abacus-toolchain diagnose"
+    # 设置包特定的环境变量
+    local package_upper="${package^^}"
+    cat << EOF >> "$setup_file"
+export ${package_upper}_ROOT="$install_dir"
+EOF
 }
 
-attempt_error_recovery() {
-    local exit_code=$1
-    local command="$2"
+# 统一的编译日志处理
+run_with_log() {
+    local cmd="$1"
+    local log_file="$2"
+    eval "$cmd > $log_file 2>&1 || tail -n ${LOG_LINES} $log_file"
+}
+
+# OpenBLAS源码准备函数（配合版本集中管理使用）
+setup_openblas_source() {
+    # 从版本管理系统获取版本信息
+    local openblas_ver="${OPENBLAS_VERSION}"
+    local openblas_sha256="${OPENBLAS_SHA256}"
+    local openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
+    local url="${OPENBLAS_URL}"
     
-    case $exit_code in
-        ${ERROR_CODES[DOWNLOAD_ERROR]})
-            # 尝试重新下载
-            if [[ "$command" =~ download ]]; then
-                log_info "尝试重新下载..."
-                sleep 2
-                return 0  # 让调用者重试
+    # 查找现有OpenBLAS目录
+    local openblas_dir=""
+    for dir in *OpenBLAS*; do
+        if [ -d "$dir" ]; then
+            openblas_dir="$dir"
+            break
+        fi
+    done
+    
+    # 如果没有找到目录，下载并解压
+    if [ -z "$openblas_dir" ]; then
+        if [ -f "$openblas_pkg" ]; then
+            echo "$openblas_pkg is found"
+        else
+            download_pkg_from_url "$openblas_sha256" "$openblas_pkg" "$url"
+        fi
+        tar -xzf "$openblas_pkg"
+        
+        # 重新查找目录
+        for dir in *OpenBLAS*; do
+            if [ -d "$dir" ]; then
+                openblas_dir="$dir"
+                break
             fi
+        done
+    fi
+    
+    echo "$openblas_dir"
+}
+```
+
+# 统一的环境设置函数
+
+setup\_package\_environment() {
+local package="$1"
+local install\_dir="$2"
+local setup\_file="${BUILDDIR}/setup\_${package}"
+
+```
+cat << EOF > "$setup_file"
+```
+
+# ${package} environment setup
+
+prepend\_path PATH "$install\_dir/bin"
+prepend\_path LD\_LIBRARY\_PATH "$install\_dir/lib"
+prepend\_path LIBRARY\_PATH "$install\_dir/lib"
+prepend\_path CPATH "$install\_dir/include"
+prepend\_path PKG\_CONFIG\_PATH "$install\_dir/lib/pkgconfig"
+prepend\_path CMAKE\_PREFIX\_PATH "$install\_dir"
+EOF
+
+```
+# 设置包特定的环境变量
+local package_upper="${package^^}"
+cat << EOF >> "$setup_file"
+```
+
+export ${package\_upper}\_ROOT="$install\_dir"
+export ${package\_upper}\_CFLAGS="-I$install\_dir/include"
+export ${package\_upper}\_LDFLAGS="-L$install\_dir/lib"
+EOF
+}
+
+# 统一的安装验证函数
+
+verify\_package\_installation() {
+local package="$1"
+local install\_dir="$2"
+local required\_files="$3"  # 空格分隔的必需文件列表
+
+```
+local install_lock_file="$install_dir/install_successful"
+
+if verify_checksums "$install_lock_file"; then
+    echo "$package is already installed, skipping it."
+    return 0
+fi
+
+# 检查必需文件
+for file in $required_files; do
+    if [[ ! -f "$install_dir/$file" ]]; then
+        echo "Required file not found: $install_dir/$file"
+        return 1
+    fi
+done
+
+# 创建安装锁文件
+write_checksums "$install_lock_file"
+return 0
+```
+
+}
+
+````
+
+#### 3.4.2 错误处理统一化
+
+**现状分析：**
+当前各脚本的错误处理相对统一，主要使用`tool_kit.sh`中的`report_error`函数。主要改进点在于日志处理的标准化。
+
+**改进方案：**
+```bash
+# 在 scripts/tool_kit.sh 中增强
+standardized_build() {
+    local cmd="$1"
+    local log_file="$2"
+    local error_context="${3:-build process}"
+    
+    if ! eval "$cmd > $log_file 2>&1"; then
+        echo "Error in $error_context, showing last ${LOG_LINES} lines:"
+        tail -n ${LOG_LINES} "$log_file"
+        report_error "Failed: $error_context"
+        return 1
+    fi
+    echo "$error_context completed successfully"
+}
+````
+
+**使用示例：**
+
+```bash
+# 替换原有的复杂日志处理
+# 原来：make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+# 现在：standardized_build "make -j $(get_nprocs)" "make.log" "compilation"
+```
+
+### 3.5 用户体验优化
+
+#### 3.5.1 前后台脚本职责分工
+
+**设计原则：前台简洁，后台复杂**
+
+- **前台脚本（`toolchain_*.sh`）**：
+  - 仅包含配置参数定义
+  - 保持极简结构，便于用户理解和编辑
+  - 避免复杂的逻辑和函数调用
+  - 专注于参数传递
+
+- **后台脚本（`install_abacus_toolchain.sh`）**：
+  - 处理所有复杂逻辑
+  - 用户交互和系统检查
+  - 错误处理和进度显示
+  - 实际的安装流程控制
+
+#### 3.5.2 简化的toolchain脚本设计
+
+**新的`toolchain_gnu.sh`设计（极简版本）：**
+
+```bash
+#!/bin/bash
+# GNU Toolchain Configuration for ABACUS
+# Edit the parameters below to customize your installation
+
+#=============================================================================
+# TOOLCHAIN CONFIGURATION
+#=============================================================================
+
+# Toolchain Information
+TOOLCHAIN_NAME="GNU Toolchain"
+TOOLCHAIN_DESC="GCC + OpenMPI + OpenBLAS + FFTW + Scientific Libraries"
+
+# Package Installation Modes
+# Options: install, system, no, or /path/to/installation
+WITH_GCC="install"
+WITH_OPENMPI="install" 
+WITH_OPENBLAS="install"
+WITH_FFTW="install"
+WITH_LIBXC="install"
+WITH_SCALAPACK="install"
+WITH_ELPA="install"
+WITH_CEREAL="install"
+WITH_RAPIDJSON="install"
+
+# Library Modes
+MPI_MODE="openmpi"      # openmpi, mpich, intelmpi, no
+MATH_MODE="openblas"    # openblas, mkl, aocl, cray
+
+# Compilation Options
+PARALLEL_JOBS=""        # Leave empty for auto-detection
+TARGET_CPU=""           # Leave empty for auto-detection
+
+# Optional Features (uncomment to enable)
+# ENABLE_CUDA="yes"
+# ENABLE_HIP="yes"
+# GPU_VERSION="cuda"
+
+# Advanced Options (rarely need to change)
+DRY_RUN="no"           # Set to "yes" for configuration check only
+PACK_RUN="no"          # Set to "yes" for packaging mode
+
+#=============================================================================
+# DO NOT EDIT BELOW THIS LINE
+#=============================================================================
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN_SCRIPT="${SCRIPT_DIR}/install_abacus_toolchain.sh"
+
+# Build argument list
+ARGS=()
+
+# Add package options
+[[ -n "$WITH_GCC" ]] && ARGS+=(--with-gcc="$WITH_GCC")
+[[ -n "$WITH_OPENMPI" ]] && ARGS+=(--with-openmpi="$WITH_OPENMPI")
+[[ -n "$WITH_OPENBLAS" ]] && ARGS+=(--with-openblas="$WITH_OPENBLAS")
+[[ -n "$WITH_FFTW" ]] && ARGS+=(--with-fftw="$WITH_FFTW")
+[[ -n "$WITH_LIBXC" ]] && ARGS+=(--with-libxc="$WITH_LIBXC")
+[[ -n "$WITH_SCALAPACK" ]] && ARGS+=(--with-scalapack="$WITH_SCALAPACK")
+[[ -n "$WITH_ELPA" ]] && ARGS+=(--with-elpa="$WITH_ELPA")
+[[ -n "$WITH_CEREAL" ]] && ARGS+=(--with-cereal="$WITH_CEREAL")
+[[ -n "$WITH_RAPIDJSON" ]] && ARGS+=(--with-rapidjson="$WITH_RAPIDJSON")
+
+# Add mode options
+[[ -n "$MPI_MODE" ]] && ARGS+=(--mpi-mode="$MPI_MODE")
+[[ -n "$MATH_MODE" ]] && ARGS+=(--math-mode="$MATH_MODE")
+
+# Add compilation options
+[[ -n "$PARALLEL_JOBS" ]] && ARGS+=(-j "$PARALLEL_JOBS")
+[[ -n "$TARGET_CPU" ]] && ARGS+=(--target-cpu="$TARGET_CPU")
+
+# Add optional features
+[[ "$ENABLE_CUDA" == "yes" ]] && ARGS+=(--enable-cuda)
+[[ "$ENABLE_HIP" == "yes" ]] && ARGS+=(--enable-hip)
+[[ -n "$GPU_VERSION" ]] && ARGS+=(--gpu-ver="$GPU_VERSION")
+
+# Add advanced options
+[[ "$DRY_RUN" == "yes" ]] && ARGS+=(--dry-run)
+[[ "$PACK_RUN" == "yes" ]] && ARGS+=(--pack-run)
+
+# Pass through any additional command line arguments
+ARGS+=("$@")
+
+# Execute main script with all arguments
+exec "$MAIN_SCRIPT" --toolchain-name="$TOOLCHAIN_NAME" --toolchain-desc="$TOOLCHAIN_DESC" "${ARGS[@]}"
+```
+
+**新的`toolchain_intel.sh`设计（极简版本）：**
+
+```bash
+#!/bin/bash
+# Intel Toolchain Configuration for ABACUS
+# Edit the parameters below to customize your installation
+
+#=============================================================================
+# TOOLCHAIN CONFIGURATION  
+#=============================================================================
+
+# Toolchain Information
+TOOLCHAIN_NAME="Intel Toolchain"
+TOOLCHAIN_DESC="Intel Compiler + Intel MPI + Intel MKL + Scientific Libraries"
+
+# Package Installation Modes
+WITH_INTEL="system"     # Assumes Intel compiler is already installed
+WITH_INTELMPI="system"  # Assumes Intel MPI is already installed
+WITH_FFTW="install"
+WITH_LIBXC="install"
+WITH_SCALAPACK="install"
+WITH_ELPA="install"
+WITH_CEREAL="install"
+WITH_RAPIDJSON="install"
+
+# Library Modes
+MPI_MODE="intelmpi"
+MATH_MODE="mkl"
+
+# Compilation Options
+PARALLEL_JOBS=""
+TARGET_CPU=""
+
+# Advanced Options
+DRY_RUN="no"
+PACK_RUN="no"
+
+#=============================================================================
+# DO NOT EDIT BELOW THIS LINE
+#=============================================================================
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN_SCRIPT="${SCRIPT_DIR}/install_abacus_toolchain.sh"
+
+ARGS=()
+[[ -n "$WITH_INTEL" ]] && ARGS+=(--with-intel="$WITH_INTEL")
+[[ -n "$WITH_INTELMPI" ]] && ARGS+=(--with-intelmpi="$WITH_INTELMPI")
+[[ -n "$WITH_FFTW" ]] && ARGS+=(--with-fftw="$WITH_FFTW")
+[[ -n "$WITH_LIBXC" ]] && ARGS+=(--with-libxc="$WITH_LIBXC")
+[[ -n "$WITH_SCALAPACK" ]] && ARGS+=(--with-scalapack="$WITH_SCALAPACK")
+[[ -n "$WITH_ELPA" ]] && ARGS+=(--with-elpa="$WITH_ELPA")
+[[ -n "$WITH_CEREAL" ]] && ARGS+=(--with-cereal="$WITH_CEREAL")
+[[ -n "$WITH_RAPIDJSON" ]] && ARGS+=(--with-rapidjson="$WITH_RAPIDJSON")
+
+[[ -n "$MPI_MODE" ]] && ARGS+=(--mpi-mode="$MPI_MODE")
+[[ -n "$MATH_MODE" ]] && ARGS+=(--math-mode="$MATH_MODE")
+[[ -n "$PARALLEL_JOBS" ]] && ARGS+=(-j "$PARALLEL_JOBS")
+[[ -n "$TARGET_CPU" ]] && ARGS+=(--target-cpu="$TARGET_CPU")
+[[ "$DRY_RUN" == "yes" ]] && ARGS+=(--dry-run)
+[[ "$PACK_RUN" == "yes" ]] && ARGS+=(--pack-run)
+
+ARGS+=("$@")
+
+exec "$MAIN_SCRIPT" --toolchain-name="$TOOLCHAIN_NAME" --toolchain-desc="$TOOLCHAIN_DESC" "${ARGS[@]}"
+```
+
+#### 3.5.3 后台脚本增强的用户体验
+
+**在`install_abacus_toolchain.sh`中增加工具链感知功能：**
+
+```bash
+# 新增工具链信息处理
+process_toolchain_info() {
+    if [[ -n "$TOOLCHAIN_NAME" ]]; then
+        echo "============================================================================"
+        echo "ABACUS Toolchain: $TOOLCHAIN_NAME"
+        echo "Description: $TOOLCHAIN_DESC"
+        echo "============================================================================"
+        echo ""
+        
+        # 显示配置摘要
+        show_configuration_summary
+        
+        # 系统依赖检查
+        check_system_requirements_for_toolchain
+        
+        # 用户确认
+        if [[ "$DRY_RUN" != "yes" ]]; then
+            user_confirmation_prompt
+        fi
+    fi
+}
+
+# 显示配置摘要
+show_configuration_summary() {
+    echo "Configuration Summary:"
+    echo "====================="
+    echo "MPI Implementation: $MPI_MODE"
+    echo "Math Library: $MATH_MODE"
+    echo "Parallel Jobs: ${PARALLEL_JOBS:-auto}"
+    echo "Target CPU: ${TARGET_CPU:-auto}"
+    echo ""
+    
+    echo "Packages to install:"
+    local install_count=0
+    for pkg in gcc intel amd openmpi mpich intelmpi openblas mkl aocl fftw libxc scalapack elpa cereal rapidjson libtorch; do
+        local var_name="with_${pkg}"
+        local var_value="${!var_name}"
+        if [[ "$var_value" == "__INSTALL__" ]]; then
+            echo "  - $pkg (from source)"
+            ((install_count++))
+        elif [[ "$var_value" == "__SYSTEM__" ]]; then
+            echo "  - $pkg (system)"
+        elif [[ "$var_value" != "__DONTUSE__" && -n "$var_value" ]]; then
+            echo "  - $pkg (custom: $var_value)"
+        fi
+    done
+    
+    echo ""
+    echo "Estimated installation time: $((install_count * 10))-$((install_count * 15)) minutes"
+    echo "Estimated disk space: $((install_count * 500))MB - $((install_count * 1000))MB"
+    echo ""
+}
+
+# 工具链特定的系统要求检查
+check_system_requirements_for_toolchain() {
+    local missing_deps=()
+    
+    # 基础依赖检查
+    for cmd in make wget tar; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing_deps+=("$cmd")
+        fi
+    done
+    
+    # 工具链特定检查
+    case "$TOOLCHAIN_NAME" in
+        *"GNU"*)
+            for cmd in gcc g++ gfortran; do
+                if ! command -v "$cmd" &> /dev/null; then
+                    missing_deps+=("$cmd")
+                fi
+            done
             ;;
-        ${ERROR_CODES[BUILD_ERROR]})
-            # 检查是否是内存不足
-            local mem_available=$(free -m | awk '/^Mem:/{print $7}')
-            if [[ $mem_available -lt 1000 ]]; then
-                log_warn "检测到内存不足，减少并行编译任务数"
-                export MAKE_JOBS=1
-                return 0
+        *"Intel"*)
+            if ! command -v icc &> /dev/null && ! command -v icx &> /dev/null; then
+                echo "Warning: Intel compiler not found in PATH"
+                echo "Please ensure Intel compiler is properly installed and sourced"
             fi
             ;;
     esac
     
-    return 1  # 无法恢复
-}
-
-cleanup_on_error() {
-    log_info "执行错误清理..."
-    
-    # 停止后台进程
-    jobs -p | xargs -r kill 2>/dev/null || true
-    
-    # 清理临时文件
-    if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then
-        rm -rf "$TEMP_DIR"
-    fi
-    
-    # 恢复原始环境
-    if [[ -f "$ORIGINAL_ENV_BACKUP" ]]; then
-        source "$ORIGINAL_ENV_BACKUP"
-    fi
-    
-    log_info "错误清理完成"
-}
-
-handle_interrupt() {
-    echo ""
-    echo "⚠️  收到中断信号，正在安全退出..."
-    
-    cleanup_on_error
-    
-    echo "✓ 清理完成，可以安全重新运行安装程序"
-    exit 130
-}
-
-handle_exit() {
-    local exit_code=$1
-    
-    if [[ $exit_code -eq 0 ]]; then
-        log_success "安装成功完成！"
-    else
-        log_error "安装失败，退出代码：$exit_code"
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        echo "Error: Missing required dependencies: ${missing_deps[*]}"
+        echo "Please install them using your system package manager"
+        exit 1
     fi
 }
 
-# 诊断工具
-diagnose_system() {
-    echo "🔍 系统诊断报告"
-    echo "=================="
-    
-    echo ""
-    echo "📊 系统信息："
-    echo "  操作系统: $(uname -s -r)"
-    echo "  架构: $(uname -m)"
-    echo "  内存: $(free -h | awk '/^Mem:/{print $2}') 总计, $(free -h | awk '/^Mem:/{print $7}') 可用"
-    echo "  磁盘空间: $(df -h . | awk 'NR==2{print $4}') 可用"
-    
-    echo ""
-    echo "🔧 编译器检查："
-    check_compiler "gcc" "gcc --version 2>/dev/null | head -1"
-    check_compiler "g++" "g++ --version 2>/dev/null | head -1"
-    check_compiler "gfortran" "gfortran --version 2>/dev/null | head -1"
-    
-    echo ""
-    echo "📦 系统依赖检查："
-    check_system_package "make"
-    check_system_package "cmake"
-    check_system_package "wget"
-    check_system_package "curl"
-    
-    echo ""
-    echo "🌐 网络连接检查："
-    check_network_connectivity
-    
-    echo ""
-    echo "📁 权限检查："
-    check_directory_permissions
-}
-
-check_compiler() {
-    local name="$1"
-    local command="$2"
-    
-    if eval "$command" >/dev/null 2>&1; then
-        local version=$(eval "$command")
-        echo "  ✓ $name: $version"
-    else
-        echo "  ❌ $name: 未安装"
-    fi
-}
-
-check_system_package() {
-    local package="$1"
-    
-    if command -v "$package" >/dev/null 2>&1; then
-        echo "  ✓ $package: $(command -v "$package")"
-    else
-        echo "  ❌ $package: 未安装"
-    fi
-}
-
-check_network_connectivity() {
-    local test_urls=(
-        "https://github.com"
-        "https://download.open-mpi.org"
-        "http://www.fftw.org"
-    )
-    
-    for url in "${test_urls[@]}"; do
-        if curl -s --connect-timeout 5 "$url" >/dev/null 2>&1; then
-            echo "  ✓ $url: 可访问"
-        else
-            echo "  ❌ $url: 无法访问"
+# 简化的用户确认
+user_confirmation_prompt() {
+    if [[ -t 0 ]]; then  # 只在交互式终端中询问
+        local response
+        read -p "Proceed with installation? [Y/n]: " -n 1 -r response
+        echo
+        if [[ $response =~ ^[Nn]$ ]]; then
+            echo "Installation cancelled."
+            exit 0
         fi
-    done
-}
-
-check_directory_permissions() {
-    local dirs=("." "./build" "./install")
-    
-    for dir in "${dirs[@]}"; do
-        if [[ -w "$dir" ]] || mkdir -p "$dir" 2>/dev/null; then
-            echo "  ✓ $dir: 可写"
-        else
-            echo "  ❌ $dir: 无写权限"
-        fi
-    done
+    fi
 }
 ```
 
-## 4. 实施计划
+#### 3.5.4 配置文件支持（可选）
 
-### 4.1 第一阶段：核心框架重构（2-3个月）
+**为高级用户提供配置文件支持：**
 
-**目标**：建立新的架构基础，实现配置管理和错误处理统一化
+```bash
+# 在toolchain脚本中支持配置文件
+CONFIG_FILE="${SCRIPT_DIR}/toolchain_config.conf"
 
-**主要任务**：
+# 如果存在配置文件，加载它
+if [[ -f "$CONFIG_FILE" ]]; then
+    echo "Loading configuration from: $CONFIG_FILE"
+    source "$CONFIG_FILE"
+fi
+```
 
-1. **配置系统重构**（3周）
-   - 设计并实现YAML配置文件格式
-   - 开发配置加载器和验证器
-   - 创建配置模板和默认值系统
-   - 实现环境变量覆盖机制
+**示例配置文件`toolchain_config.conf`：**
 
-2. **错误处理框架**（2周）
-   - 建立统一的错误代码体系
-   - 实现错误捕获和恢复机制
-   - 开发用户友好的错误信息显示
-   - 创建系统诊断工具
+```bash
+# ABACUS Toolchain Configuration File
+# This file can override default settings in toolchain scripts
 
-3. **核心工具库重构**（3周）
-   - 重构`tool_kit.sh`为模块化库
-   - 实现统一的日志系统
-   - 开发下载管理器
-   - 创建环境管理器
+# Global settings
+PARALLEL_JOBS=8
+TARGET_CPU="native"
 
-4. **交互式配置工具**（2周）
-   - 开发`abacus-config`命令行工具
-   - 实现自动检测和智能推荐
-   - 添加配置验证和预检查
-   - 创建配置模板生成器
+# Package versions (optional override)
+# OPENMPI_VERSION="4.1.6"
+# OPENBLAS_VERSION="0.3.28"
 
-**交付物**：
-- 新的配置文件格式和加载系统
-- 统一的错误处理框架
-- 重构后的核心工具库
-- 交互式配置工具
-- 完整的单元测试套件
+# Custom paths
+# WITH_GCC="/opt/gcc-12"
+# WITH_OPENMPI="/usr/local/openmpi"
 
-**验收标准**：
-- 配置文件解析正确率100%
-- 错误处理覆盖率100%
-- 所有shellcheck警告清零
-- 用户配置时间减少80%
+# Feature flags
+ENABLE_CUDA="no"
+ENABLE_HIP="no"
+```
 
-### 4.2 第二阶段：包管理系统重构（2-3个月）
+#### 3.5.5 配置验证和预检查
 
-**目标**：重构所有安装脚本，消除代码重复，实现标准化包管理
+**创建配置验证模块：**
 
-**主要任务**：
-
-1. **包配置数据库**（2周）
-   - 创建完整的包配置数据库
-   - 定义包依赖关系
-   - 实现版本管理系统
-   - 添加环境适配配置
-
-2. **统一包安装器**（4周）
-   - 开发通用的包安装框架
-   - 重构所有Stage0-4安装脚本
-   - 实现标准化的安装流程
-   - 添加安装状态跟踪
-
-3. **依赖管理系统**（3周）
-   - 实现智能依赖解析
-   - 开发安装顺序优化
-   - 添加循环依赖检测
-   - 实现依赖冲突解决
-
-4. **环境管理优化**（2周）
-   - 统一环境变量设置
-   - 优化setup文件生成
-   - 实现环境隔离机制
-   - 添加环境验证工具
-
-**交付物**：
-- 完整的包配置数据库
-- 统一的包安装框架
-- 重构后的所有安装脚本
-- 智能依赖管理系统
-- 环境管理工具
-
-**验收标准**：
-- 代码重复率<5%
-- 所有包安装成功率>95%
-- 依赖解析正确率100%
-- 安装时间减少20%
-
-### 4.3 第三阶段：优化和完善（2个月）
-
-**目标**：性能优化、文档完善、测试覆盖
-
-**主要任务**：
-
-1. **性能优化**（3周）
-   - 优化下载和缓存机制
-   - 实现智能并行编译
-   - 优化磁盘I/O操作
-   - 添加性能监控
-
-2. **测试框架完善**（2周）
-   - 扩展单元测试覆盖
-   - 添加集成测试用例
-   - 实现自动化测试流水线
-   - 创建性能基准测试
-
-3. **文档和工具完善**（2周）
-   - 完善用户文档
-   - 创建开发者指南
-   - 添加故障排除指南
-   - 开发维护工具
-
-4. **向后兼容性**（1周）
-   - 实现旧配置文件迁移
-   - 添加兼容性检查
-   - 创建迁移指南
-   - 测试兼容性
-
-**交付物**：
-- 性能优化的安装系统
-- 完整的测试框架
-- 全面的文档体系
-- 向后兼容性支持
-- 维护和监控工具
-
-**验收标准**：
-- 测试覆盖率>90%
-- 性能提升>20%
-- 文档完整性100%
-- 向后兼容性100%
-
-## 5. 风险评估
-
-### 5.1 技术风险
-
-**配置复杂性风险**
-- **风险描述**：YAML配置可能对部分用户过于复杂
-- **影响程度**：中等
-- **缓解措施**：
-  - 提供图形化配置工具
-  - 创建详细的配置向导
-  - 提供多个预设配置模板
-  - 实现配置验证和智能提示
-
-**性能回归风险**
-- **风险描述**：重构可能导致安装性能下降
-- **影响程度**：中等
-- **缓解措施**：
-  - 建立性能基准测试
-  - 持续性能监控
-  - 优化关键路径
-  - 保留性能关键的原始代码
-
-**兼容性破坏风险**
-- **风险描述**：新系统可能与现有环境不兼容
-- **影响程度**：高
-- **缓解措施**：
-  - 实现渐进式迁移
-  - 保持旧接口兼容性
-  - 提供迁移工具
-  - 充分的兼容性测试
-
-### 5.2 项目风险
-
-**开发时间延期风险**
-- **风险描述**：重构工作量可能超出预期
-- **影响程度**：中等
-- **缓解措施**：
-  - 分阶段实施，降低单次风险
-  - 预留20%的缓冲时间
-  - 优先实现核心功能
-  - 建立里程碑检查点
-
-**团队协作风险**
-- **风险描述**：多人协作可能导致代码冲突
-- **影响程度**：低
-- **缓解措施**：
-  - 明确模块分工
-  - 建立代码审查流程
-  - 使用版本控制最佳实践
-  - 定期同步和集成
-
-**测试覆盖不足风险**
-- **风险描述**：重构后可能引入新的bug
-- **影响程度**：中等
-- **缓解措施**：
-  - 建立完整的测试框架
-  - 实现自动化测试
-  - 进行充分的回归测试
-  - 建立bug跟踪和修复流程
-
-### 5.3 业务风险
-
-**用户接受度风险**
-- **风险描述**：用户可能不适应新的配置方式
-- **影响程度**：中等
-- **缓解措施**：
-  - 提供详细的迁移指南
-  - 保持向后兼容性
-  - 提供用户培训和支持
-  - 收集用户反馈并快速响应
-
-**功能缺失风险**
-- **风险描述**：重构过程中可能遗漏某些功能
-- **影响程度**：中等
-- **缓解措施**：
-  - 详细的功能清单和检查
-  - 与现有用户充分沟通
-  - 实现功能对比测试
-  - 建立功能回归检测
-
-**维护成本增加风险**
-- **风险描述**：新系统可能增加维护复杂度
-- **影响程度**：低
-- **缓解措施**：
-  - 设计简洁清晰的架构
-  - 提供完整的文档
-  - 实现自动化维护工具
-  - 建立监控和告警系统
-
-## 6. 预期收益
-
-### 6.1 用户体验提升
-
-**配置简化**
-- 配置时间从30分钟减少到5分钟
-- 配置错误率减少80%
-- 新用户学习成本降低75%
-
-**错误处理改进**
-- 错误信息可读性提升90%
-- 自动错误恢复成功率>60%
-- 问题定位时间减少70%
-
-**功能增强**
-- 支持配置模板和预设
-- 提供智能推荐和验证
-- 实现一键式安装体验
-
-### 6.2 开发效率提升
-
-**代码质量改进**
-- 代码重复率从40%降低到<5%
-- 维护工作量减少50%
-- 新功能开发速度提升40%
-
-**扩展性增强**
-- 新包集成时间从2天减少到2小时
-- 支持插件化扩展
-- 配置变更影响局部化
-
-**测试覆盖完善**
-- 自动化测试覆盖率>90%
-- 回归测试时间减少60%
-- Bug发现和修复效率提升50%
-
-### 6.3 长期价值
-
-**技术债务清理**
-- 消除历史遗留的技术债务
-- 建立可持续发展的架构
-- 提升代码可读性和可维护性
-
-**社区贡献**
-- 降低新贡献者的参与门槛
-- 提供标准化的开发流程
-- 促进开源社区发展
-
-**未来扩展**
-- 为容器化部署奠定基础
-- 支持云原生安装方式
-- 为AI/ML工作负载优化
-
-## 7. 结论
-
-本重构方案针对ABACUS工具链当前面临的核心问题，提出了系统性的解决方案。通过用户友好度提升、代码去冗余、硬编码问题解决和错误处理统一化，将显著改善用户体验和开发效率。
-
-重构采用渐进式实施策略，分三个阶段完成，总计6-8个月。每个阶段都有明确的目标和交付物，风险可控，收益明显。
-
-预期重构完成后，用户配置时间将减少80%，代码重复率降低到5%以下，维护工作量减少50%，为ABACUS工具链的长期发展奠定坚实基础。
+```bash
+# 在 scripts/lib/config_validator.sh 中实现
+validate_toolchain_config() {
+    local config_errors=()
+    
+    # 检查编译器配置
+    if [[ "$with_gcc" == "install" && "$with_intel" == "install" ]]; then
+        config_errors+=("Cannot install both GCC and Intel compilers simultaneously")
+    fi
+    
+    # 检查MPI配置
+    if [[ "$mpi_mode" == "intelmpi" && "$with_intel" != "system" && "$with_intel" != "install" ]]; then
+        config_errors+=("Intel MPI requires Intel compiler to be available")
+    fi
+    
+    # 检查数学库配置
+    if [[ "$math_mode" == "mkl" && "$with_intel" == "no" ]]; then
+        config_errors+=("MKL math mode requires Intel compiler support")
+    fi
+    
+    # 显示配置错误
+    if [[ ${#config_errors[@]} -gt 0 ]]; then
+        echo "Configuration validation failed:"
+        printf "  - %s\n" "${config_errors[@]}"
+        return 1
+    fi
+    
+    echo "Configuration validation passed"
+    return 0
+}
