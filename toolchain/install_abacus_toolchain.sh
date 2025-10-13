@@ -266,19 +266,8 @@ with_gcc="__SYSTEM__"
 with_fftw="__INSTALL__"
 with_libxc="__INSTALL__"
 with_scalapack="__INSTALL__"
-# default math library settings, MATH_MODE picks the math library
-# to use, and with_* defines the default method of installation if it
-# is picked. For non-CRAY systems defaults to mkl if $MKLROOT is
-# available, otherwise defaults to openblas
-if [ "${MKLROOT}" ]; then
-  export MATH_MODE="mkl"
-  with_mkl="__SYSTEM__"
-elif [ "${AOCLhome}" ]; then
-  export MATH_MODE="aocl"
-  with_aocl="__SYSTEM__"
-else
-  export MATH_MODE="openblas"
-fi
+# default math library setting: openblas
+export MATH_MODE="openblas"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
