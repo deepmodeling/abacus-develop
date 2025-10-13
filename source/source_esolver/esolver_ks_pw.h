@@ -54,7 +54,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     virtual void allocate_hamilt(const UnitCell& ucell);
     virtual void deallocate_hamilt();
 
-    // Electronic wave function: wf
+    // Electronic wave function psi
     Setup_Psi<T, Device> stp;
 
     // DFT-1/2 method
