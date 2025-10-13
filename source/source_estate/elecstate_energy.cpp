@@ -16,7 +16,8 @@ void ElecState::cal_bandgap()
         this->bandgap = 0.0;
         return;
     }
-    int nbands = PARAM.inp.nbands;
+    // int nbands = PARAM.inp.nbands;
+    int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
     double homo = this->ekb(0, 0);
     double lumo = this->ekb(0, nbands - 1);
@@ -47,7 +48,8 @@ void ElecState::cal_bandgap_updw()
         this->bandgap_dw = 0.0;
         return;
     }
-    int nbands = PARAM.inp.nbands;
+    // int nbands = PARAM.inp.nbands;
+    int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
     double homo_up = this->ekb(0, 0);
     double lumo_up = this->ekb(0, nbands - 1);
