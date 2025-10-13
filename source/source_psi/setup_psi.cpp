@@ -11,6 +11,7 @@ Setup_Psi<T, Device>::~Setup_Psi(){}
 
 template <typename T, typename Device>
 void Setup_Psi<T, Device>::before_runner(
+		const UnitCell& ucell,
 		const K_Vectors& kv,
 		const Structure_Factor& sf,
 		const ModulePW::PW_Basis_K* pw_wfc, 

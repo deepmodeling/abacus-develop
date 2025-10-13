@@ -2,6 +2,7 @@
 #define SETUP_PSI_H
 
 #include "source_psi/psi_init.h"
+#include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_basis/module_pw/pw_basis_k.h"
@@ -44,6 +45,7 @@ class Setup_Psi
     //------------
 
     void before_runner(
+		const UnitCell& ucell,
 		const K_Vectors& kv,
 		const Structure_Factor& sf,
 		const ModulePW::PW_Basis_K* pw_wfc, 
