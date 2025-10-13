@@ -1,3 +1,4 @@
+#include "source_psi/setup_psi.h"
 #include "source_lcao/setup_deepks.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_io/module_parameter/parameter.h" // use parameter
@@ -9,7 +10,7 @@ template <typename T, typename Device>
 Setup_Psi<T, Device>::~Setup_Psi(){}
 
 template <typename T, typename Device>
-Setup_Psi<T, Device>::before_runner()
+void Setup_Psi<T, Device>::before_runner()
 {
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
@@ -30,11 +31,11 @@ Setup_Psi<T, Device>::before_runner()
 
 
 template <typename T, typename Device>
-Setup_Psi<T, Device>::update_psi_d()
+void Setup_Psi<T, Device>::update_psi_d()
 {
     if (this->psi_d != nullptr && PARAM.inp.precision == "single")
     {
-        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_t);
+        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->psi_d);
     }
 
     // Refresh this->psi_d
@@ -44,7 +45,7 @@ Setup_Psi<T, Device>::update_psi_d()
 }
 
 template <typename T, typename Device>
-void Setup_Psi<T>::init()
+void Setup_Psi<T, Device>::init()
 {
     //! Initialize wave functions
     if (!this->already_initpsi)
@@ -55,10 +56,10 @@ void Setup_Psi<T>::init()
 }
 
 
+// Transfer data from GPU to CPU in pw basis
 template <typename T, typename Device>
-void Setup_Psi<T>::copy_g22()
+void Setup_Psi<T, Device>::copy_g2c()
 {
-    // Transfer data from GPU to CPU in pw basis
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
@@ -70,7 +71,7 @@ void Setup_Psi<T>::copy_g22()
 
 
 template <typename T, typename Device>
-void Setup_Psi<T>::clean()
+void Setup_Psi<T, Device>::clean()
 {
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
@@ -84,3 +85,10 @@ void Setup_Psi<T>::clean()
     delete this->psi_cpu;
     delete this->p_psi_init;
 }
+
+template class Setup_Psi<std::complex<float>, base_device::DEVICE_CPU>;
+template class Setup_Psi<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Setup_Psi<std::complex<float>, base_device::DEVICE_GPU>;
+template class Setup_Psi<std::complex<double>, base_device::DEVICE_GPU>;
+#endif

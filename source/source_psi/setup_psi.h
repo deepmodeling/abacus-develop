@@ -44,7 +44,8 @@ class Setup_Psi
 
     void update_psi_d();
 
-    void copy_g22();
+    // Transfer data from GPU to CPU in pw basis
+    void copy_g2c();
 
     void clean();
 
