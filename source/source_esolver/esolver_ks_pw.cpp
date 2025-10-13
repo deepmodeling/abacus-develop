@@ -81,7 +81,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
-    this->stp.before_runner(ucell, this->kv, this->sf, this->pw_wfc, this->ppcell, PARAM.inp);
+    this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell, PARAM.inp);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
@@ -140,7 +140,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
 
-    this->stp.init();
+    this->stp.init(this->p_hamilt);
 
     //! Exx calculations
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" 
@@ -393,7 +393,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
     // Transfer data from GPU to CPU in pw basis
-    this->stp.copy_g2c();
+    this->stp.copy_g2c(this->device);
 
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,

@@ -8,6 +8,8 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_pw/module_pwdft/VNL_in_pw.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_base/module_device/device.h"
+#include "source_hamilt/hamilt.h"
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class Setup_Psi
@@ -45,21 +47,24 @@ class Setup_Psi
     //------------
 
     void before_runner(
-		const UnitCell& ucell,
-		const K_Vectors& kv,
-		const Structure_Factor& sf,
-		const ModulePW::PW_Basis_K* pw_wfc, 
+		const UnitCell &ucell,
+		const K_Vectors &kv,
+		const Structure_Factor &sf,
+		const ModulePW::PW_Basis_K &pw_wfc, 
 		const pseudopot_cell_vnl &ppcell,
-		const Input_para& inp);
+		const Input_para &inp);
 
-    void init();
+    void init(hamilt::Hamilt<T, Device>* p_hamilt);
 
     void update_psi_d();
 
     // Transfer data from GPU to CPU in pw basis
-    void copy_g2c();
+    void copy_g2c(base_device::AbacusDevice_t &device);
 
     void clean();
+
+    using castmem_2d_d2h_op
+        = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
 
 };
 

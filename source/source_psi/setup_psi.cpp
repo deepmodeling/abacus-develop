@@ -11,12 +11,12 @@ Setup_Psi<T, Device>::~Setup_Psi(){}
 
 template <typename T, typename Device>
 void Setup_Psi<T, Device>::before_runner(
-		const UnitCell& ucell,
-		const K_Vectors& kv,
-		const Structure_Factor& sf,
-		const ModulePW::PW_Basis_K* pw_wfc, 
+		const UnitCell &ucell,
+		const K_Vectors &kv,
+		const Structure_Factor &sf,
+		const ModulePW::PW_Basis_K &pw_wfc, 
 		const pseudopot_cell_vnl &ppcell,
-		const Input_para& inp)
+		const Input_para &inp)
 {
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
@@ -24,7 +24,7 @@ void Setup_Psi<T, Device>::before_runner(
       sf, kv, ppcell, pw_wfc);
 
     //! Allocate memory for cpu version of psi
-    allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc->npwk_max);
+    allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 
     this->p_psi_init->prepare_init(inp.pw_seed);
 
@@ -51,7 +51,7 @@ void Setup_Psi<T, Device>::update_psi_d()
 }
 
 template <typename T, typename Device>
-void Setup_Psi<T, Device>::init()
+void Setup_Psi<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
 {
     //! Initialize wave functions
     if (!this->already_initpsi)
@@ -64,9 +64,9 @@ void Setup_Psi<T, Device>::init()
 
 // Transfer data from GPU to CPU in pw basis
 template <typename T, typename Device>
-void Setup_Psi<T, Device>::copy_g2c()
+void Setup_Psi<T, Device>::copy_g2c(base_device::AbacusDevice_t &device)
 {
-    if (this->device == base_device::GpuDevice)
+    if (device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
                             this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
