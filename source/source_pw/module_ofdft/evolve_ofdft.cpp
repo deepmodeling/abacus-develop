@@ -77,7 +77,7 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>> pphi,
                                         std::vector<std::complex<double>> Hpsi)
 {
     if (PARAM.inp.nspin <= 0) {
-        throw std::invalid_argument("nspin must be positive");
+        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
     }
     std::complex<double>** rLapPhi = new std::complex<double>*[PARAM.inp.nspin];
 #ifdef _OPENMP
@@ -131,7 +131,7 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>> psi_,
     std::complex<double> imag(0.0,1.0);
 
     if (PARAM.inp.nspin <= 0) {
-        throw std::invalid_argument("nspin must be positive");
+        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
     }
     std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
     std::complex<double>** rPhi = new std::complex<double>*[PARAM.inp.nspin];
