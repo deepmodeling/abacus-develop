@@ -10,15 +10,20 @@ template <typename T, typename Device>
 Setup_Psi<T, Device>::~Setup_Psi(){}
 
 template <typename T, typename Device>
-void Setup_Psi<T, Device>::before_runner()
+void Setup_Psi<T, Device>::before_runner(
+		const K_Vectors& kv,
+		const Structure_Factor& sf,
+		const ModulePW::PW_Basis_K* pw_wfc, 
+		const pseudopot_cell_vnl &ppcell,
+		const Input_para& inp)
 {
     //! Allocate and initialize psi
     this->p_psi_init = new psi::PSIInit<T, Device>(inp.init_wfc,
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
-      this->sf, this->kv, this->ppcell, *this->pw_wfc);
+      sf, kv, ppcell, pw_wfc);
 
     //! Allocate memory for cpu version of psi
-    allocate_psi(this->psi_cpu, this->kv.get_nks(), this->kv.ngk, PARAM.globalv.nbands_l, this->pw_wfc->npwk_max);
+    allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc->npwk_max);
 
     this->p_psi_init->prepare_init(inp.pw_seed);
 

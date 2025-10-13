@@ -2,6 +2,11 @@
 #define SETUP_PSI_H
 
 #include "source_psi/psi_init.h"
+#include "source_cell/klist.h"
+#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class Setup_Psi
@@ -38,7 +43,12 @@ class Setup_Psi
     // functions
     //------------
 
-    void before_runner();
+    void before_runner(
+		const K_Vectors& kv,
+		const Structure_Factor& sf,
+		const ModulePW::PW_Basis_K* pw_wfc, 
+		const pseudopot_cell_vnl &ppcell,
+		const Input_para& inp);
 
     void init();
 
