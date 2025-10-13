@@ -106,8 +106,7 @@ OPTIONS:
                           or --with-openblas options will switch --math-mode to the
                           respective modes.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
-                          options are: K20X, K40, K80, P100, V100, Mi50, Mi100, Mi250, 
-                          and no.
+                          options: CUDA_Architecture number (75, 80, etc) or no
                           This setting determines the value of nvcc's '-arch' flag.
                           Default = no.
 --log-lines               Number of log file lines dumped in case of a non-zero exit code.
