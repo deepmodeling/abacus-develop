@@ -334,10 +334,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 	//----------------------------------------------------------------
     // 2) compute magnetization, only for LSDA(spin==2)
 	//----------------------------------------------------------------
-    ucell.magnet.compute_mag(ucell.omega,
-                                       this->chr.nrxx,
-                                       this->chr.nxyz,
-                                       this->chr.rho,
+    ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
                                        this->pelec->nelec_spin.data());
 
 	//----------------------------------------------------------------
@@ -434,27 +431,21 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
-	//----------------------------------------------------------------
     // 4) Update potentials (should be done every SF iter)
-	//----------------------------------------------------------------
-    // Hamilt should be used after it is constructed.
-    // this->phamilt->update(conv_esolver);
     this->update_pot(ucell, istep, iter, conv_esolver);
 
-	//----------------------------------------------------------------
     // 5) calculate energies
-	//----------------------------------------------------------------
     // 1 means Harris-Foulkes functional
     // 2 means Kohn-Sham functional
     this->pelec->cal_energies(1);
     this->pelec->cal_energies(2);
+
     if (iter == 1)
     {
         this->pelec->f_en.etot_old = this->pelec->f_en.etot;
     }
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
-
 
 
 	//----------------------------------------------------------------
@@ -481,21 +472,15 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
 
 #ifdef __RAPIDJSON
-	//----------------------------------------------------------------
     // 7) add Json of scf mag
-	//----------------------------------------------------------------
-    Json::add_output_scf_mag(ucell.magnet.tot_mag,
-                             ucell.magnet.abs_mag,
+    Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
-                             drho,
-                             duration);
+                             drho, duration);
 #endif //__RAPIDJSON
 
 
-	//----------------------------------------------------------------
     // 7) SCF restart information 
-	//----------------------------------------------------------------
     if (PARAM.inp.mixing_restart > 0 
         && iter == this->p_chgmix->mixing_restart_step - 1 
         && iter != PARAM.inp.scf_nmax)
@@ -504,9 +489,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         std::cout << " SCF restart after this step!" << std::endl;
     }
 
-	//----------------------------------------------------------------
     // 8) Iter finish 
-	//----------------------------------------------------------------
     ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
