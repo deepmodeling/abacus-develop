@@ -135,7 +135,6 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     PARAM.input.nspin = 2;
@@ -221,7 +220,6 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 2;
     GlobalV::MY_RANK = 0;
 
@@ -251,7 +249,6 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 4;
     PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;

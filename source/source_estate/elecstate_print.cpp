@@ -276,20 +276,17 @@ void print_etot(const Magnetism& magnet,
     }
 
     // print out the band gap if needed
-    if (PARAM.inp.out_bandgap)
+    if (!PARAM.globalv.two_fermi)
     {
-        if (!PARAM.globalv.two_fermi)
-        {
-            titles.push_back("E_bandgap");
-            energies_Ry.push_back(elec.bandgap);
-        }
-        else
-        {
-            titles.push_back("E_bandgap_up");
-            energies_Ry.push_back(elec.bandgap_up);
-            titles.push_back("E_bandgap_dw");
-            energies_Ry.push_back(elec.bandgap_dw);
-        }
+        titles.push_back("E_bandgap");
+        energies_Ry.push_back(elec.bandgap);
+    }
+    else
+    {
+        titles.push_back("E_bandgap_up");
+        energies_Ry.push_back(elec.bandgap_up);
+        titles.push_back("E_bandgap_dw");
+        energies_Ry.push_back(elec.bandgap_dw);
     }
     energies_eV.resize(energies_Ry.size());
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
