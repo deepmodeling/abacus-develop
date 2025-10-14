@@ -105,13 +105,12 @@ namespace ModuleESolver
                                                                            ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
-                                                                           this->kspw_psi,
+                                                                           this->stp.psi_t,
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
                                                                            &ucell,
                                                                            this->pelec));
-                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_psi_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
             }
 }
 #endif
