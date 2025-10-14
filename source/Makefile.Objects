@@ -460,8 +460,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 
 OBJS_PSI=psi.o\
 
-OBJS_PSI_INITIALIZER=setup_psi.o\
-                     psi_initializer.o\
+OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_random.o\
                      psi_initializer_file.o\
                      psi_initializer_atomic.o\
@@ -765,6 +764,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
     symmetry_rhog.o\
+    setup_psi.o\
     psi_init.o\
     elecond.o\
     sto_tool.o\

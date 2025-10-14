@@ -63,6 +63,8 @@ class Setup_Psi
 
     void clean();
 
+    private:
+
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
 
