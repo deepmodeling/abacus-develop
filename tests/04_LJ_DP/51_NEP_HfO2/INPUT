@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix              autotest
+calculation         md
+pseudo_dir          ../../PP_ORB
+
+esolver_type        nep
+pot_file            ../../PP_ORB/nep_hfo2.txt
+
+cal_force           1
+cal_stress          1
+
+md_nstep            3
+md_type             npt
+md_dt               1
+md_tfirst           300
+md_thermostat       nhc  
+md_dumpfreq         1
+md_seed             1
+
+init_vel            1
