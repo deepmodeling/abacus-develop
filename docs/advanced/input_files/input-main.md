@@ -2302,7 +2302,7 @@ Warning: this function is not robust enough for the current version. Please try 
   - 0: Don't include bandgap label
   - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
   - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
-  - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
+  - 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
 - **Default**: 0
 
 ### deepks_band_range
