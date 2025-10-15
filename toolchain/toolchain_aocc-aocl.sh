@@ -8,6 +8,7 @@
 # Users can easily modify these parameters to customize the build
 # Before running this script, ensure you have loaded your system packages
 
+<<<<<<< HEAD
 # Compiler Configuration
 TOOLCHAIN_COMPILER="aocc-aocl"
 WITH_AMD="system"
@@ -40,6 +41,7 @@ WITH_LIBCOMM="install"
 
 # Optional Features (DeepKS support)
 WITH_LIBTORCH="no"  # Set to "install" for DeepKS support
+WITH_NEP="no"
 WITH_LIBNPY="no"    # Set to "install" for DeepKS support
 
 # AMD Compiler Options
@@ -95,6 +97,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-cereal="$WITH_CEREAL" \
   --with-rapidjson="$WITH_RAPIDJSON" \
   --with-libtorch="$WITH_LIBTORCH" \
+  --with-nep="$WITH_NEP" \
   --with-libnpy="$WITH_LIBNPY" \
   --with-libri="$WITH_LIBRI" \
   --with-libcomm="$WITH_LIBCOMM" \

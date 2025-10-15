@@ -19,3 +19,4 @@
 19_LJ_RE_stop
 20_LJ_dry_run
 #50_DP_Al
+#101_NEP_HfO2

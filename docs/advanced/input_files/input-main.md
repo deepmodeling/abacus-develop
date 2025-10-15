@@ -532,6 +532,7 @@ These variables are used to control general system parameters.
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
+  - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
 - **Default**: ksdft
@@ -3295,7 +3296,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
+- **Description**: The filename of DP/NEP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### dp_rescaling

@@ -14,6 +14,7 @@ WITH_GCC="system"
 WITH_AMD="no"
 WITH_INTEL="no"
 
+<<<<<<< HEAD
 # Math Libraries (AMD AOCL recommended)
 MATH_MODE="aocl"
 
@@ -40,6 +41,7 @@ WITH_LIBCOMM="install"
 
 # Optional Features (MLALGO support)
 WITH_LIBTORCH="no"
+WITH_NEP="no"
 WITH_LIBNPY="no"
 
 # ELPA-GPU Support (uncomment and modify as needed)
@@ -92,6 +94,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-cereal="$WITH_CEREAL" \
   --with-rapidjson="$WITH_RAPIDJSON" \
   --with-libtorch="$WITH_LIBTORCH" \
+  --with-nep="$WITH_NEP" \
   --with-libnpy="$WITH_LIBNPY" \
   --with-libri="$WITH_LIBRI" \
   --with-libcomm="$WITH_LIBCOMM" \
