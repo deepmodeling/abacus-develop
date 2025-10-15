@@ -496,12 +496,13 @@ void periodic_boundary_adjustment(Atom* atoms,
                     atom->taud[ia][ik] -= 1.0;
                 }
             }
-            if (atom->taud[ia].x < 0 
-                || atom->taud[ia].y < 0
-                || atom->taud[ia].z < 0 
-                || atom->taud[ia].x >= 1.0
-                || atom->taud[ia].y >= 1.0 
-                || atom->taud[ia].z >= 1.0) 
+            const double eps = 1e-12;
+            if (atom->taud[ia].x < -eps
+                || atom->taud[ia].y < -eps
+                || atom->taud[ia].z < -eps
+                || atom->taud[ia].x >= 1.0+eps
+                || atom->taud[ia].y >= 1.0+eps
+                || atom->taud[ia].z >= 1.0+eps) 
             {
                 GlobalV::ofs_warning << " atom type=" << it + 1 << " atom index=" << ia + 1 << std::endl;
                 GlobalV::ofs_warning << " direct coordinate=" << atom->taud[ia].x << " "

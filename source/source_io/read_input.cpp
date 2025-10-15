@@ -101,6 +101,7 @@ ReadInput::ReadInput(const int& rank)
     this->item_sdft();
     this->item_deepks();
     this->item_rt_tddft();
+    this->item_tdofdft();
     this->item_lr_tddft();
     this->item_output();
     this->item_postprocess();

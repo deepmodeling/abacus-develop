@@ -308,23 +308,20 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
 
+    //----------------------------------------------------------------
+    // 1) print out band gap 
+    //----------------------------------------------------------------
+    if (!PARAM.globalv.two_fermi)
+    {
+        this->pelec->cal_bandgap();
+    }
+    else
+    {
+        this->pelec->cal_bandgap_updw();
+    }
+
 	if(iter % PARAM.inp.out_freq_elec == 0)
 	{
-		//----------------------------------------------------------------
-		// 1) print out band gap 
-		//----------------------------------------------------------------
-		if (PARAM.inp.out_bandgap)
-		{
-			if (!PARAM.globalv.two_fermi)
-			{
-				this->pelec->cal_bandgap();
-			}
-			else
-			{
-				this->pelec->cal_bandgap_updw();
-			}
-		}
-
 		//----------------------------------------------------------------
 		// 2) print out eigenvalues and occupations
 		//----------------------------------------------------------------

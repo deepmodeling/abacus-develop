@@ -166,7 +166,7 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
     }
     delmem_complex_op()(vcc);
 
-    ModuleBase::timer::tick("DiagoAssist", "diag_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace");
 }
 
 template <typename T, typename Device>
