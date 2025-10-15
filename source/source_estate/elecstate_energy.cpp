@@ -13,36 +13,36 @@ namespace elecstate
 void ElecState::cal_bandgap()
 {
     if (this->ekb.nr == 0 || this->ekb.nc == 0)
-    { // which means no homo and no lumo
+    { // which means no vbm and no cbm
         this->bandgap = 0.0;
         return;
     }
 
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double homo = -std::numeric_limits<double>::infinity();
-    double lumo = std::numeric_limits<double>::infinity();
+    double vbm = -std::numeric_limits<double>::infinity(); // Valence Band Maximum
+    double cbm = std::numeric_limits<double>::infinity(); // Conduction Band Minimum
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ik = 0; ik < nks; ik++)
         {
-            if (this->ekb(ik, ib) <= this->eferm.ef && this->ekb(ik, ib) > homo)
+            if (this->ekb(ik, ib) <= this->eferm.ef && this->ekb(ik, ib) > vbm)
             {
-                homo = this->ekb(ik, ib);
+                vbm = this->ekb(ik, ib);
             }
-            if (this->ekb(ik, ib) >= this->eferm.ef && this->ekb(ik, ib) < lumo)
+            if (this->ekb(ik, ib) >= this->eferm.ef && this->ekb(ik, ib) < cbm)
             {
-                lumo = this->ekb(ik, ib);
+                cbm = this->ekb(ik, ib);
             }
         }
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, homo);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, lumo);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm);
 #endif
 
-    this->bandgap = lumo - homo;
+    this->bandgap = cbm - vbm;
 }
 
 /// @brief calculate spin up & down band gap
@@ -50,7 +50,7 @@ void ElecState::cal_bandgap()
 void ElecState::cal_bandgap_updw()
 {
     if (this->ekb.nr == 0 || this->ekb.nc == 0)
-    { // which means no homo and no lumo
+    { // which means no vbm and no cbm
         this->bandgap_up = 0.0;
         this->bandgap_dw = 0.0;
         return;
@@ -58,48 +58,48 @@ void ElecState::cal_bandgap_updw()
     // int nbands = PARAM.inp.nbands;
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
-    double homo_up = -std::numeric_limits<double>::infinity();
-    double lumo_up = std::numeric_limits<double>::infinity();
-    double homo_dw = -std::numeric_limits<double>::infinity();
-    double lumo_dw = std::numeric_limits<double>::infinity();
+    double vbm_up = -std::numeric_limits<double>::infinity();
+    double cbm_up = std::numeric_limits<double>::infinity();
+    double vbm_dw = -std::numeric_limits<double>::infinity();
+    double cbm_dw = std::numeric_limits<double>::infinity();
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ik = 0; ik < nks; ik++)
         {
             if (this->klist->isk[ik] == 0)
             {
-                if (this->ekb(ik, ib) <= this->eferm.ef_up && this->ekb(ik, ib) > homo_up)
+                if (this->ekb(ik, ib) <= this->eferm.ef_up && this->ekb(ik, ib) > vbm_up)
                 {
-                    homo_up = this->ekb(ik, ib);
+                    vbm_up = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) >= this->eferm.ef_up && this->ekb(ik, ib) < lumo_up)
+                if (this->ekb(ik, ib) >= this->eferm.ef_up && this->ekb(ik, ib) < cbm_up)
                 {
-                    lumo_up = this->ekb(ik, ib);
+                    cbm_up = this->ekb(ik, ib);
                 }
             }
             if (this->klist->isk[ik] == 1)
             {
-                if (this->ekb(ik, ib) <= this->eferm.ef_dw && this->ekb(ik, ib) > homo_dw)
+                if (this->ekb(ik, ib) <= this->eferm.ef_dw && this->ekb(ik, ib) > vbm_dw)
                 {
-                    homo_dw = this->ekb(ik, ib);
+                    vbm_dw = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) >= this->eferm.ef_dw && this->ekb(ik, ib) < lumo_dw)
+                if (this->ekb(ik, ib) >= this->eferm.ef_dw && this->ekb(ik, ib) < cbm_dw)
                 {
-                    lumo_dw = this->ekb(ik, ib);
+                    cbm_dw = this->ekb(ik, ib);
                 }
             }
         }
     }
 
 #ifdef __MPI
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, homo_up);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, lumo_up);
-    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, homo_dw);
-    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, lumo_dw);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm_up);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm_up);
+    Parallel_Reduce::gather_max_double_all(GlobalV::NPROC, vbm_dw);
+    Parallel_Reduce::gather_min_double_all(GlobalV::NPROC, cbm_dw);
 #endif
 
-    this->bandgap_up = lumo_up - homo_up;
-    this->bandgap_dw = lumo_dw - homo_dw;
+    this->bandgap_up = cbm_up - vbm_up;
+    this->bandgap_dw = cbm_dw - vbm_dw;
 }
 
 /// @brief calculate deband
