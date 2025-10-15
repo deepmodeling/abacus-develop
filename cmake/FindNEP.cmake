@@ -1,21 +1,23 @@
 ###############################################################################
-# - Find NEP_CPU
-# Finds the NEP_CPU header and library.
+# - Find NEP
+# Finds the NEP header and library.
 #
-# This module will search for the NEP_CPU library, looking for a hint
+# This module will search for the NEP library, looking for a hint
 # from the NEP_DIR environment variable or CMake variable.
 #
 # This module defines the following variables:
 #
-#  NEP_FOUND        - True if the NEP_CPU library and headers were found.
+#  NEP_FOUND        - True if the NEP library and headers were found.
 #  NEP_INCLUDE_DIR  - The directory where nep.h is located.
-#  NEP_LIBRARY      - The full path to the NEP_CPU library.
+#  NEP_LIBRARY      - The full path to the NEP library.
 #
 # It also defines the following imported target:
 #
-#  NEP::nep_cpu     - The NEP_CPU library target.
+#  NEP::nep     - The NEP library target.
 #
 ###############################################################################
+# Note: Currently only CPU version is supported, Since the NEP interface with GPU support is not available yet.
+#       In feature, if available, we can use USE_CUDA to switch between CPU and GPU version.
 
 find_path(NEP_INCLUDE_DIR nep.h
     HINTS ${NEP_DIR}
@@ -23,7 +25,7 @@ find_path(NEP_INCLUDE_DIR nep.h
     )
 
 find_library(NEP_LIBRARY
-    NAMES nepcpu
+    NAMES nep
     HINTS ${NEP_DIR}
     PATH_SUFFIXES "lib"
     )
@@ -34,9 +36,9 @@ find_package_handle_standard_args(NEP
     NEP_LIBRARY NEP_INCLUDE_DIR)
 
 if(NEP_FOUND)
-    if(NOT TARGET NEP::nep_cpu)
-        add_library(NEP::nep_cpu UNKNOWN IMPORTED)
-        set_target_properties(NEP::nep_cpu PROPERTIES
+    if(NOT TARGET NEP::nep)
+        add_library(NEP::nep UNKNOWN IMPORTED)
+        set_target_properties(NEP::nep PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${NEP_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${NEP_INCLUDE_DIR}"

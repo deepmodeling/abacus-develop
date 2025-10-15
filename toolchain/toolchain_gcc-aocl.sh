@@ -28,7 +28,7 @@
 --with-cereal=install \
 --with-rapidjson=install \
 --with-libtorch=no \
---with-nepcpu=no \
+--with-nep=no \
 --with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \

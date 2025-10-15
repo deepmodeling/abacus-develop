@@ -8,30 +8,30 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-nepcpu_ver="main"
-nepcpu_sha256="--no-checksum"
+nep_ver="main"
+nep_sha256="--no-checksum"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
-[ -f "${BUILDDIR}/setup_nepcpu" ] && rm "${BUILDDIR}/setup_nepcpu"
+[ -f "${BUILDDIR}/setup_nep" ] && rm "${BUILDDIR}/setup_nep"
 
-NEPCPU_CFLAGS=""
-NEPCPU_LDFLAGS=""
-NEPCPU_LIBS=""
+NEP_CFLAGS=""
+NEP_LDFLAGS=""
+NEP_LIBS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
-case "$with_nepcpu" in
+case "$with_nep" in
   __INSTALL__)
-    echo "==================== Installing NEP_CPU ===================="
-    dirname="NEP_CPU-${nepcpu_ver}"
-    pkg_install_dir="${INSTALLDIR}/nep_cpu-${nepcpu_ver}"
+    echo "==================== Installing NEP (CPU version) ===================="
+    dirname="NEP_CPU-${nep_ver}"
+    pkg_install_dir="${INSTALLDIR}/${dirname}"
     install_lock_file="$pkg_install_dir/install_successful"
-    filename="NEP_CPU-${nepcpu_ver}.tar.gz"
-    url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nepcpu_ver}"
+    filename="nep-${nep_ver}.tar.gz"
+    url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
 
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
@@ -40,7 +40,7 @@ case "$with_nepcpu" in
             echo "$filename is found"
         else
             echo "===> Notice: This version of NEP_CPU is downloaded from the GitHub master repository <==="
-            download_pkg_from_url "${nepcpu_sha256}" "${filename}" "${url}"
+            download_pkg_from_url "${nep_sha256}" "${filename}" "${url}"
         fi
 
         if [ "${PACK_RUN}" = "__TRUE__" ]; then
@@ -52,7 +52,6 @@ case "$with_nepcpu" in
             cd $dirname
 
             cat << EOF > Makefile
-# Compiler - Use CXX from the environment
 CXX ?= g++
 
 # Compiler flags
@@ -68,7 +67,7 @@ SRCS = ./src/nep.cpp
 OBJS = \$(SRCS:.cpp=.o)
 
 # Target shared library
-TARGET = libnepcpu.so
+TARGET = libnep.so
 
 # Default target
 all: \$(TARGET)
@@ -100,33 +99,31 @@ EOF
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
     fi
-    NEPCPU_CFLAGS="-I'${pkg_install_dir}/include'"
-    NEPCPU_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    NEP_CFLAGS="-I'${pkg_install_dir}/include'"
+    NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     ;;
 
   __SYSTEM__)
     echo "==================== Finding NEP_CPU from system paths ===================="
-    echo "Finding NEP_CPU from system paths is not supported yet."
-    echo "Please use __INSTALL__ or provide a path to a pre-installed version."
-    exit 1
+    check_lib -lnep "nep"
+    add_include_from_paths NEP_CFLAGS "nep.h" $INCLUDE_PATHS
+    add_lib_from_paths NEP_LDFLAGS "libnep.*" $LIB_PATHS
     ;;
-
   __DONTUSE__) ;;
-
   *)
     echo "==================== Linking NEP_CPU to user paths ===================="
-    pkg_install_dir="$with_nepcpu"
+    pkg_install_dir="$with_nep"
     check_dir "${pkg_install_dir}/lib"
     check_dir "${pkg_install_dir}/include"
-    NEPCPU_CFLAGS="-I'${pkg_install_dir}/include'"
-    NEPCPU_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    NEP_CFLAGS="-I'${pkg_install_dir}/include'"
+    NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     ;;
 esac
 
-if [ "$with_nepcpu" != "__DONTUSE__" ]; then
-  NEPCPU_LIBS="-lnepcpu"
-  if [ "$with_nepcpu" != "__SYSTEM__" ]; then
-    cat << EOF > "${BUILDDIR}/setup_nepcpu"
+if [ "$with_nep" != "__DONTUSE__" ]; then
+  NEP_LIBS="-lnep"
+  if [ "$with_nep" != "__SYSTEM__" ]; then
+    cat << EOF > "${BUILDDIR}/setup_nep"
 prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
 prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
@@ -138,22 +135,22 @@ export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
 export CPATH="$pkg_install_dir/include":\${CPATH}
 export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 EOF
-    cat "${BUILDDIR}/setup_nepcpu" >> $SETUPFILE
+    cat "${BUILDDIR}/setup_nep" >> $SETUPFILE
   fi
-  cat << EOF >> "${BUILDDIR}/setup_nepcpu"
-export NEPCPU_CFLAGS="${NEPCPU_CFLAGS}"
-export NEPCPU_LDFLAGS="${NEPCPU_LDFLAGS}"
-export NEPCPU_LIBS="${NEPCPU_LIBS}"
+  cat << EOF >> "${BUILDDIR}/setup_nep"
+export NEP_CFLAGS="${NEP_CFLAGS}"
+export NEP_LDFLAGS="${NEP_LDFLAGS}"
+export NEP_LIBS="${NEP_LIBS}"
 export CP_DFLAGS="\${CP_DFLAGS} -D__NEP"
-export CP_CFLAGS="\${CP_CFLAGS} \${NEPCPU_CFLAGS}"
-export CP_LDFLAGS="\${CP_LDFLAGS} \${NEPCPU_LDFLAGS}"
-export CP_LIBS="\${NEPCPU_LIBS} \${CP_LIBS}"
-export NEPCPU_ROOT="$pkg_install_dir"
+export CP_CFLAGS="\${CP_CFLAGS} \${NEP_CFLAGS}"
+export CP_LDFLAGS="\${CP_LDFLAGS} \${NEP_LDFLAGS}"
+export CP_LIBS="\${NEP_LIBS} \${CP_LIBS}"
+export NEP_ROOT="$pkg_install_dir"
 EOF
 fi
 
-load "${BUILDDIR}/setup_nepcpu"
+load "${BUILDDIR}/setup_nep"
 write_toolchain_env "${INSTALLDIR}"
 
 cd "${ROOTDIR}"
-report_timing "nepcpu"
+report_timing "nep"

@@ -31,7 +31,7 @@ RAPIDJSON=$INSTALL_DIR/rapidjson-master/
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 LIBRI=$INSTALL_DIR/LibRI-0.2.1.1
 LIBCOMM=$INSTALL_DIR/LibComm-master
-# NEP_DIR=$INSTALL_DIR/nep_cpu-main
+# NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
 
 # Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are recommended 

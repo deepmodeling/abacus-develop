@@ -659,7 +659,7 @@ if(DEFINED NEP_DIR)
 
   if(NEP_FOUND)
     add_compile_definitions(__NEP)
-    target_link_libraries(${ABACUS_BIN_NAME} NEP::nep_cpu)
+    target_link_libraries(${ABACUS_BIN_NAME} NEP::nep)
   endif()
 endif()
 
