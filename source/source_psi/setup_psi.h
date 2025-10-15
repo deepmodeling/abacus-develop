@@ -58,8 +58,8 @@ class Setup_Psi
 
     void update_psi_d();
 
-    // Transfer data from GPU to CPU in pw basis
-    void copy_g2c(base_device::AbacusDevice_t &device);
+    // Transfer data from device to host in pw basis
+    void copy_d2h(const base_device::AbacusDevice_t &device);
 
     void clean();
 

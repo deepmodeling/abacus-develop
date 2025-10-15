@@ -92,11 +92,15 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis_Big *pw_big,
         Setup_Psi<T, Device> &stp,
         const Device* ctx,
+        const base_device::AbacusDevice_t &device,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
+
+    // Transfer data from device (GPU) to host (CPU) in pw basis
+    stp.copy_d2h(device);
 
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)
@@ -382,6 +386,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi<std::complex<float>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -398,6 +403,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi<std::complex<double>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -415,6 +421,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi<std::complex<float>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -431,6 +438,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
     const ModulePW::PW_Basis_Big *pw_big,
     Setup_Psi<std::complex<double>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif

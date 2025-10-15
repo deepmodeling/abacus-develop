@@ -60,8 +60,10 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;
 
+    // for get_pchg and get_wf, use ctx as input of fft
     Device* ctx = {};
 
+    // for device to host data transformation
     base_device::AbacusDevice_t device = {};
 
 };

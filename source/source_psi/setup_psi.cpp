@@ -64,7 +64,7 @@ void Setup_Psi<T, Device>::init(hamilt::Hamilt<T, Device>* p_hamilt)
 
 // Transfer data from GPU to CPU in pw basis
 template <typename T, typename Device>
-void Setup_Psi<T, Device>::copy_g2c(base_device::AbacusDevice_t &device)
+void Setup_Psi<T, Device>::copy_d2h(const base_device::AbacusDevice_t &device)
 {
     if (device == base_device::GpuDevice)
     {
@@ -72,6 +72,11 @@ void Setup_Psi<T, Device>::copy_g2c(base_device::AbacusDevice_t &device)
                             this->psi_t[0].get_pointer() - this->psi_t[0].get_psi_bias(),
                             this->psi_cpu[0].size());
     }
+	else
+	{
+       // do nothing
+	}
+    return;
 }
 
 

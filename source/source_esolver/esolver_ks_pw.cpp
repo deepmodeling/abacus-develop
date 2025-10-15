@@ -392,13 +392,10 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Call 'after_scf' of ESolver_KS
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-    // Transfer data from GPU to CPU in pw basis
-    this->stp.copy_g2c(this->device);
-
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
               this->pw_rho, this->pw_rhod, this->pw_big, this->stp,
-              this->ctx, this->Pgrid, PARAM.inp);
+              this->ctx, this->device, this->Pgrid, PARAM.inp);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
