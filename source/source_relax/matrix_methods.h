@@ -2,6 +2,7 @@
 #define MATRIX_METHODS
 
 #include <vector>
+#include <cassert>
 
 
 

@@ -9,7 +9,7 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/pulay_force_stress.h"
+#include "source_lcao/pulay_fs.h"
 #include "source_pw/module_pwdft/global.h"
 #include "source_io/write_HS.h"
 #include "source_io/module_parameter/parameter.h"
@@ -204,11 +204,9 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               ModuleBase::matrix& stvnl_dphi,
                                               ModuleBase::matrix& svnl_dbeta,
                                               ModuleBase::matrix& svl_dphi,
-#ifdef __MLALGO
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
-                                              LCAO_Deepks<std::complex<double>>& ld,
-#endif
+                                              Setup_DeePKS<std::complex<double>>& deepks,
                                               TGint<std::complex<double>>::type& gint,
                                               const TwoCenterBundle& two_center_bundle,
                                               const LCAO_Orbitals& orb,
@@ -232,53 +230,40 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                    kv->kvec_d);
 
     const double* dSx[3] = {fsr.DSloc_Rx, fsr.DSloc_Ry, fsr.DSloc_Rz};
+
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
     PulayForceStress::cal_pulay_fs(
-        foverlap,
-        soverlap,
+        foverlap, soverlap,
         this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
-        ucell,
-        pv,
-        dSx,
-        fsr.DH_r,
-        isforce,
-        isstress,
-        ra,
-        -1.0,
-        1.0);
+        ucell, pv, dSx, fsr.DH_r, isforce, isstress, ra, -1.0, 1.0);
 
     const double* dHx[3] = {fsr.DHloc_fixedR_x, fsr.DHloc_fixedR_y, fsr.DHloc_fixedR_z};                    // T+Vnl
     const double* dHxy[6] = {fsr.stvnl11, fsr.stvnl12, fsr.stvnl13, fsr.stvnl22, fsr.stvnl23, fsr.stvnl33}; // T
+
     // tvnl_dphi
     PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress, ra, 1.0, -1.0);
 
     // doing on the real space grid.
     // vl_dphi
-    PulayForceStress::cal_pulay_fs(fvl_dphi,
-                                   svl_dphi,
-                                   *dm,
-                                   ucell,
-                                   pelec->pot,
-                                   gint,
-                                   isforce,
-                                   isstress,
+    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell,
+                                   pelec->pot, gint, isforce, isstress,
                                    false /*reset dm to gint*/);
 
 #ifdef __MLALGO
     if (PARAM.inp.deepks_scf)
     {
         // No need to update E_delta since it have been done in LCAO_Deepks_Interface in after_scf
-        DeePKS_domain::cal_f_delta<std::complex<double>>(ld.dm_r,
+        DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r,
                                                          ucell,
                                                          orb,
                                                          gd,
                                                          pv,
                                                          kv->get_nks(),
                                                          kv->kvec_d,
-                                                         ld.phialpha,
-                                                         ld.gedm,
-                                                         ld.inl_index,
+                                                         deepks.ld.phialpha,
+                                                         deepks.ld.gedm,
+                                                         deepks.ld.inl_index,
                                                          fvnl_dalpha,
                                                          isstress,
                                                          svnl_dalpha);

@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
+#ifndef TWO_CENTER_BUNDLE_H
+#define TWO_CENTER_BUNDLE_H
 
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_integrator.h"

@@ -147,7 +147,6 @@
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
-    - [out\_bandgap](#out_bandgap)
     - [out\_level](#out_level)
     - [out\_alllog](#out_alllog)
     - [out\_mat\_hs](#out_mat_hs)
@@ -256,6 +255,9 @@
     - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
     - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
     - [of\_ml\_local\_test](#of_ml_local_test)
+  - [TD-OFDFT: time dependent orbital free density functional theory](#tdofdft-time-dependent-orbital-free-density-functional-theory)
+    - [of\_cd](#of_cd)
+    - [of\_mcd\_alpha](#of_mcd_alpha)
   - [Electric Field and Dipole Correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
@@ -528,6 +530,7 @@ These variables are used to control general system parameters.
 - **Description**: choose the energy solver.
   - ksdft: Kohn-Sham density functional theory
   - ofdft: orbital-free density functional theory
+  - tdofdft: time-dependent orbital-free density functional theory
   - sdft: [stochastic density functional theory](#electronic-structure-sdft)
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
@@ -1074,7 +1077,20 @@ calculations.
 
 - **Type**: String
 - **Description**: In our package, the XC functional can either be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file.
-  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/source_hamilt/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://libxc.gitlab.io/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
+  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/source_hamilt/module_xc/xc_functional.cpp). Supported density functionals are:
+  - LDA functionals
+    - LDA (equivalent with PZ and SLAPZNOGXNOGC), PWLDA
+  - GGA functionals
+    - PBE (equivalent with SLAPWPBXPBC), PBESOL, REVPBE, WC, BLYP, BP(referred to BP86), PW91, HCTH, OLYP, BLYP_LR
+  - meta-GGA functionals
+    - SCAN (require LIBXC)
+  - Hybrid functionals
+    - PBE0, HF
+    - If LIBXC is avaliale, additional short-hand names of hybrid functionals are supported: HSE(referred to HSE06), B3LYP, LC_PBE, LC_WPBE, LRC_WPBE, LRC_WPBEH, CAM_PBEH, WP22, CWP22, MULLER (equivalent with POWER)
+  - Hybrid meta-GGA functionals
+    - SCAN0 (require LIBXC)
+
+   The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://libxc.gitlab.io/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**. Some popular functionals and their usage are: RPBE of [Hammer et al.](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.59.7413), set `dft_functional` to 'GGA_X_RPBE+GGA_C_PBE', and [r$^{2}$SCAN](https://pubs.acs.org/doi/10.1021/acs.jpclett.0c02405), set `dft_functional` to 'MGGA_X_R2SCAN+MGGA_C_R2SCAN'.
 
   Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum CPU cores for running exx in parallel is $N(N+1)/2$, with N being the number of atoms.
 
@@ -1826,14 +1842,6 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
-- **Default**: False
-
-### out_bandgap
-
-- **Type**: Boolean
-- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
-  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
-  - [nupdown](#nupdown) = 0: `E_bandgap`
 - **Default**: False
 
 ### out_level
@@ -2734,6 +2742,25 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Default**: False
 
 [back to top](#full-list-of-input-keywords)
+
+## TDOFDFT: time dependent orbital free density functional theory
+
+### of_cd
+
+- **Type**: Boolean
+- **Availability**: TDOFDFT
+- **Type**: Boolean
+- **Description**: Added the current dependent(CD) potential. (https://doi.org/10.1103/PhysRevB.98.144302)
+  - True: Added the CD potential.
+  - False: Not added the CD potential.
+- **Default**: False
+
+### of_mcd_alpha
+
+- **Type**: Real
+- **Availability**: TDOFDFT
+- **Description**: The value of the parameter alpha in modified CD potential method. mCDPotenial=alpha*CDPotenial(proposed in paper PhysRevB.98.144302)
+- **Default**: 1.0
 
 ## Electric field and dipole correction
 

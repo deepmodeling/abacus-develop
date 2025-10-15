@@ -1,5 +1,5 @@
 #pragma once
-#include "pulay_force_stress.h"
+#include "pulay_fs.h"
 #include "source_lcao/stress_tools.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"

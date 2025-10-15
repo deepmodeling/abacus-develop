@@ -48,7 +48,8 @@ class Evolve_OFDFT
                               std::vector<std::complex<double>> Hpsi); // -1/2 \nabla^2 \phi
     void cal_CD_potential(std::vector<std::complex<double>> psi_, 
                           ModulePW::PW_Basis* pw_rho, 
-                          ModuleBase::matrix& rpot);
+                          ModuleBase::matrix& rpot,
+                          double mCD_para);
  
 };
 #endif

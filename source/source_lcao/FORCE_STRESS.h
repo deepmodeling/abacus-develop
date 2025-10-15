@@ -16,6 +16,9 @@
 #include "force_stress_arrays.h"
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
+#include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
+
 
 template <typename T>
 class Force_Stress_LCAO
@@ -49,14 +52,8 @@ class Force_Stress_LCAO
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
-#ifdef __MLALGO
-                        LCAO_Deepks<T>& ld,
-                        const std::string& dpks_out_type,
-#endif
-#ifdef __EXX
-                        Exx_LRI_Interface<T, double>& exd,
-                        Exx_LRI_Interface<T, std::complex<double>>& exc,
-#endif
+                        Setup_DeePKS<T> &deepks,
+                        Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm);
 
   private:
@@ -96,11 +93,9 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& stvnl_dphi,
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
-#if __MLALGO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
-                       LCAO_Deepks<T>& ld,
-#endif
+                       Setup_DeePKS<T>& deepks,
                        Gint_Gamma& gint_gamma,
                        Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,

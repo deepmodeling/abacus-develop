@@ -7,8 +7,8 @@
 #include "source_pw/module_pwdft/VSep_in_pw.h"
 
 template <typename T, typename Device>
-void pw::setup_pot(const int istep, 
-		UnitCell& ucell, // unitcell 
+void pw::setup_pot(const int istep,
+		UnitCell& ucell, // unitcell
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
@@ -24,6 +24,16 @@ void pw::setup_pot(const int istep,
 		const Input_para& inp) // input parameters
 {
     ModuleBase::TITLE("pw", "setup_pot");
+
+    //----------------------------------------------------------
+    //! 0) DFT-1/2 calculations, sep potential need to generate
+    // before effective potential calculation
+    //----------------------------------------------------------
+    if (PARAM.inp.dfthalf_type > 0)
+    {
+        vsep_cell->generate_vsep_r(pw_rhod[0], sf.strucFac, ucell.sep_cell);
+    }
+
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
@@ -110,21 +120,12 @@ void pw::setup_pot(const int istep,
         dftu->init(ucell, nullptr, kv.get_nks());
     }
 
-    //----------------------------------------------------------
-    //! 7) DFT-1/2 calculations, sep potential need to generate 
-    // before effective potential calculation
-    //----------------------------------------------------------
-    if (PARAM.inp.dfthalf_type > 0)
-    {
-        vsep_cell->generate_vsep_r(pw_rhod[0], sf.strucFac, ucell.sep_cell);
-    }
-
     return;
 }
 
 template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
+		UnitCell& ucell, // unitcell
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
@@ -142,7 +143,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
 
 template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
+		UnitCell& ucell, // unitcell
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
@@ -161,7 +162,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
 
 template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
         const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
+		UnitCell& ucell, // unitcell
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons
@@ -178,7 +179,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
 
 template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
         const int istep,  // ionic step
-		UnitCell& ucell, // unitcell 
+		UnitCell& ucell, // unitcell
 		const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
 		elecstate::ElecState *pelec, // pointer of electrons

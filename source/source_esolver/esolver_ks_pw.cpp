@@ -22,11 +22,12 @@
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
-#include <chrono>
+//#include <chrono>
 
 #include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_estate/setup_estate_pw.h" // mohan add 20251005
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
+#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
 
 namespace ModuleESolver
 {
@@ -185,50 +186,8 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // Call iter_init() of ESolver_KS
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
-    if (iter == 1)
-    {
-        this->p_chgmix->init_mixing();
-        this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-    }
-
-    // For mixing restart
-    if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
-    {
-        this->p_chgmix->init_mixing();
-        this->p_chgmix->mixing_restart_count++;
-
-        if (PARAM.inp.dft_plus_u)
-        {
-            auto* dftu = ModuleDFTU::DFTU::get_instance();
-            if (dftu->uramping > 0.01 && !dftu->u_converged())
-            {
-                this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
-            }
-            if (dftu->uramping > 0.01)
-            {
-                bool do_uramping = true;
-                if (PARAM.inp.sc_mag_switch)
-                {
-                    spinconstrain::SpinConstrain<std::complex<double>>& sc
-                        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-                    if (!sc.mag_converged()) // skip uramping if mag not converged
-                    {
-                        do_uramping = false;
-                    }
-                }
-                if (do_uramping)
-                {
-                    dftu->uramping_update(); // update U by uramping if uramping > 0.01
-                    std::cout << " U-Ramping! Current U = ";
-                    for (int i = 0; i < dftu->U0.size(); i++)
-                    {
-                        std::cout << dftu->U[i] * ModuleBase::Ry_to_eV << " ";
-                    }
-                    std::cout << " eV " << std::endl;
-                }
-            }
-        }
-    }
+    // perform charge mixing
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, PARAM.inp);
 
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)

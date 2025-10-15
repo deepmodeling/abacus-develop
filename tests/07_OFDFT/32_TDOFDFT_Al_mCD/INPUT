@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix		autotest
+calculation     md
+esolver_type    tdofdft
+
+pseudo_dir      ../../PP_ORB
+pseudo_rcut     16
+cal_force	1
+cal_stress	1
+
+#Parameters (2.Iteration)
+ecutwfc		17
+scf_nmax	100
+
+#OFDFT
+of_kinetic	tf+
+of_method	tn
+of_full_pw  1
+of_full_pw_dim   1
+of_cd		1
+of_mcd_alpha	2.0
+
+#Parameters (3.Basis)
+basis_type	pw
+
+init_vel	1
+
+md_restart	0
+md_type		nve
+md_nstep	2
+md_dt		0.25
+md_tfirst	58022.52706
+md_dumpfreq	10
+md_tfreq	1.08
+md_tchain		1
+nbspline    10 # be sure fft dimension is odd

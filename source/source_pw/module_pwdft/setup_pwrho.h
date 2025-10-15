@@ -1,7 +1,6 @@
 #ifndef SETUP_PWRHO_H
 #define SETUP_PWRHO_H
 
-#include "source_base/module_device/device.h" // use Device
 #include "source_cell/unitcell.h" // use UnitCell
 #include "source_pw/module_pwdft/structure_factor.h" // use Structure_Factor
 #include "source_basis/module_pw/pw_basis.h" // use PW_Basis

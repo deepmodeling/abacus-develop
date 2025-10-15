@@ -12,7 +12,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/pulay_force_stress.h"
+#include "source_lcao/pulay_fs.h"
 #include "source_io/write_HS.h"
 
 template <>
@@ -167,11 +167,9 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 ModuleBase::matrix& stvnl_dphi,
                                 ModuleBase::matrix& svnl_dbeta,
                                 ModuleBase::matrix& svl_dphi,
-#ifdef __MLALGO
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
-                                LCAO_Deepks<double>& ld,
-#endif
+                                Setup_DeePKS<double>& deepks,
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
                                 const LCAO_Orbitals& orb,
@@ -232,16 +230,16 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
-        DeePKS_domain::cal_f_delta<double>(ld.dm_r,
+        DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r,
                                            ucell,
                                            orb,
                                            gd,
                                            *this->ParaV,
                                            nks,
                                            kv->kvec_d,
-                                           ld.phialpha,
-                                           ld.gedm,
-                                           ld.inl_index,
+                                           deepks.ld.phialpha,
+                                           deepks.ld.gedm,
+                                           deepks.ld.inl_index,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);

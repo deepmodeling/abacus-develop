@@ -26,7 +26,6 @@
 // And will be moved to a global module(module base) later.
 
 #include "source_base/macros.h"
-#include "source_base/module_external/lapack_wrapper.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_device/types.h"
 
@@ -68,22 +67,22 @@ struct hegvd_op
     void operator()(const Device* d, const int nstart, const int ldh, const T* A, const T* B, Real* W, T* V);
 };
 
-template <typename T, typename Device>
-struct hegv_op
-{
-    using Real = typename GetTypeReal<T>::type;
-    /// @brief HEGV computes first m eigenvalues and eigenvectors of a complex generalized
-    /// Input Parameters
-    ///     @param d : the type of device
-    ///     @param nbase : the number of dim of the matrix
-    ///     @param ldh : the number of dmx of the matrix
-    ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
-    ///     @param B : the overlap matrix B in A x=lambda B x (col major)
-    /// Output Parameter
-    ///     @param W : calculated eigenvalues
-    ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, T* B, Real* W, T* V);
-};
+// template <typename T, typename Device>
+// struct hegv_op
+// {
+//     using Real = typename GetTypeReal<T>::type;
+//     /// @brief HEGV computes first m eigenvalues and eigenvectors of a complex generalized
+//     /// Input Parameters
+//     ///     @param d : the type of device
+//     ///     @param nbase : the number of dim of the matrix
+//     ///     @param ldh : the number of dmx of the matrix
+//     ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
+//     ///     @param B : the overlap matrix B in A x=lambda B x (col major)
+//     /// Output Parameter
+//     ///     @param W : calculated eigenvalues
+//     ///     @param V : calculated eigenvectors (col major)
+//     void operator()(const Device* d, const int nstart, const int ldh, const T* A, T* B, Real* W, T* V);
+// };
 
 template <typename T, typename Device>
 struct hegvx_op

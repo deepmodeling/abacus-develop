@@ -1,6 +1,7 @@
 #include "fft_dsp.h"
 
 #include "source_base/global_variable.h"
+#include "source_base/global_function.h"
 
 #include <iostream>
 #include <string.h>
