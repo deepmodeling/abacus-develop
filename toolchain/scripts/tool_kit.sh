@@ -110,7 +110,7 @@ report_warning_enhanced() {
 }
 
 # recommend users to use offline installation when download failed
-# zhaoqing in 2023.09.15
+# zhaoqing in 2025.10.15
 recommend_offline_installation(){
   __filename=$1
   __url=$2
@@ -122,10 +122,10 @@ Rename it as $__filename and put it into ${BUILDDIR},
 And re-run toolchain installation script.
 
 You can manually install requirements packages via:
+0. Download by `wget $__url -O $__filename` manually
 1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
-2. Download from github.com (for CEREAL, RapidJSON, libnpy, LibRI and others stage4 packages)
-3. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps.zip (a mirror in Bohrium)
-4. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager our visit Intel official website
+2. Download from github.com (especially for CEREAL, RapidJSON, libnpy, LibRI and other stage4 packages)
+3. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager our visit their official website
 EOF
 }
 
