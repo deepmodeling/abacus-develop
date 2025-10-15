@@ -106,7 +106,7 @@ OPTIONS:
                           or --with-openblas options will switch --math-mode to the
                           respective modes.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
-                          options: CUDA_Architecture number (75, 80, etc) or no
+                          options: CUDA architecture number (7.5 / 75, 8.0 / 80, etc) or no
                           This setting determines the value of nvcc's '-arch' flag.
                           Default = no.
 --log-lines               Number of log file lines dumped in case of a non-zero exit code.
@@ -856,7 +856,7 @@ for ii in ${package_list}; do
 done
 
 # ------------------------------------------------------------------------
-# Build packages unless dry-run mode is enabled.
+# Build packages unless dry-run or pack-run mode is enabled.
 # ------------------------------------------------------------------------
 if [ "${dry_run}" = "__TRUE__" ]; then
   echo "Wrote only configuration files (--dry-run)."

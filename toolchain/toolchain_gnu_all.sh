@@ -4,28 +4,26 @@
 #SBATCH -n 16
 #SBATCH -o compile.log
 #SBATCH -e compile.err
-
 # Users can easily modify these parameters to customize the build
 
 # Compiler Configuration
-TOOLCHAIN_COMPILER="aocc-aocl"
-WITH_AMD="system"
+TOOLCHAIN_COMPILER="gnu"
+WITH_GCC="install"
 WITH_INTEL="no"
-WITH_GCC="no"
 
-# Math Libraries (AMD AOCL recommended)
-MATH_MODE="aocl"
+# Math Libraries
+MATH_MODE="openblas"
+WITH_OPENBLAS="install"
 
-# MPI Implementation (OpenMPI recommended)
-MPI_IMPLEMENTATION="openmpi"
+# MPI Implementation
 WITH_OPENMPI="install"
 WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4
 
 # Core Dependencies
 WITH_CMAKE="install"
-WITH_SCALAPACK="system"  # AOCL provides ScaLAPACK
+WITH_SCALAPACK="install"
 WITH_LIBXC="install"
-WITH_FFTW="system"       # AOCL provides FFTW
+WITH_FFTW="install"
 WITH_ELPA="install"
 
 # Utility Libraries
@@ -33,15 +31,12 @@ WITH_CEREAL="install"
 WITH_RAPIDJSON="install"
 
 # Optional Features (DeepKS support)
-WITH_LIBTORCH="no"  # Set to "install" for DeepKS support
-WITH_LIBNPY="no"    # Set to "install" for DeepKS support
+WITH_LIBTORCH="install"  # Set to "install" for DeepKS support
+WITH_LIBNPY="install"    # Set to "install" for DeepKS support
 
 # Advanced Features (EXX calculations)
-WITH_LIBRI="no"     # Set to "install" for EXX calculations
-WITH_LIBCOMM="no"   # Set to "install" for advanced communication
-
-# AMD Compiler Options
-WITH_FLANG="no"     # Flang is not recommended in current stage
+WITH_LIBRI="install"     # Set to "install" for EXX calculations
+WITH_LIBCOMM="install"   # Set to "install" for advanced communication
 
 # GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
@@ -53,11 +48,11 @@ WITH_FLANG="no"     # Flang is not recommended in current stage
 # ============================================================================
 
 # Call the main installation script with configured parameters
-exec ./install_abacus_toolchain.sh \
-  --with-amd="$WITH_AMD" \
+exec ./install_abacus_toolchain_new.sh \
   --with-gcc="$WITH_GCC" \
+  --with-intel="$WITH_INTEL" \
   --math-mode="$MATH_MODE" \
-  --with-aocl="$WITH_AOCL" \
+  --with-openblas="$WITH_OPENBLAS" \
   --with-openmpi="$WITH_OPENMPI" \
   --with-cmake="$WITH_CMAKE" \
   --with-scalapack="$WITH_SCALAPACK" \
@@ -70,6 +65,7 @@ exec ./install_abacus_toolchain.sh \
   --with-libnpy="$WITH_LIBNPY" \
   --with-libri="$WITH_LIBRI" \
   --with-libcomm="$WITH_LIBCOMM" \
+  --with-4th-openmpi="$WITH_4TH_OPENMPI" \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
   "$@" \

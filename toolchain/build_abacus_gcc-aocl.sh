@@ -22,7 +22,7 @@ BUILD_DIR=build_abacus_aocl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
+ELPA=$INSTALL_DIR/elpa-2025.06.001/cpu
 # ELPA=$INSTALL_DIR/elpa-2025.01.001/nvidia # for gpu-lcao
 CEREAL=$INSTALL_DIR/cereal-master/include/cereal
 LIBXC=$INSTALL_DIR/libxc-7.0.0

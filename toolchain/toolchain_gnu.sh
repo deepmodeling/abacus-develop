@@ -4,37 +4,69 @@
 #SBATCH -n 16
 #SBATCH -o compile.log
 #SBATCH -e compile.err
+# Users can easily modify these parameters to customize the build
 
-# JamesMisaka in 2025-05-05
-# install abacus dependency by gnu-toolchain
-# one can use mpich or openmpi. openmpi will be faster and less compatiable
-# libtorch and libnpy are for deepks support, which can be =no
-# if you want to run EXX calculation, you should set --with-libri=install
+# Compiler Configuration
+TOOLCHAIN_COMPILER="gnu"
+WITH_GCC="system"
+WITH_INTEL="no"
 
-# gpu-lcao supporting modify: CUDA_PATH and --enable-cuda
-# export CUDA_PATH=/usr/local/cuda
+# Math Libraries
+MATH_MODE="openblas"
+WITH_OPENBLAS="install"
 
-./install_abacus_toolchain.sh \
---with-gcc=system \
---with-intel=no \
---with-openblas=install \
---with-openmpi=install \
---with-cmake=install \
---with-scalapack=install \
---with-libxc=install \
---with-fftw=install \
---with-elpa=install \
---with-cereal=install \
---with-rapidjson=install \
---with-libtorch=no \
---with-libnpy=no \
---with-libri=no \
---with-libcomm=no \
---with-4th-openmpi=no \
-| tee compile.log
-# to use openmpi-version4: set --with-4th-openmpi=yes
-# to enable gpu-lcao, add the following lines:
-# --enable-cuda \
-# --gpu-ver=75 \ 
-# one should check your gpu compute capability number 
-# and use it in --gpu-ver
+# MPI Implementation
+WITH_OPENMPI="install"
+WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4
+
+# Core Dependencies
+WITH_CMAKE="install"
+WITH_SCALAPACK="install"
+WITH_LIBXC="install"
+WITH_FFTW="install"
+WITH_ELPA="install"
+
+# Utility Libraries
+WITH_CEREAL="install"
+WITH_RAPIDJSON="install"
+
+# Optional Features (DeepKS support)
+WITH_LIBTORCH="no"  # Set to "install" for DeepKS support
+WITH_LIBNPY="no"    # Set to "install" for DeepKS support
+
+# Advanced Features (EXX calculations)
+WITH_LIBRI="no"     # Set to "install" for EXX calculations
+WITH_LIBCOMM="no"   # Set to "install" for advanced communication
+
+# GPU Support (uncomment and modify as needed)
+# ENABLE_CUDA="yes"
+# GPU_VERSION="75"  # Check your GPU compute capability
+# export CUDA_PATH="/usr/local/cuda"
+
+# ============================================================================
+# Execute Installation (DO NOT MODIFY BELOW THIS LINE)
+# ============================================================================
+
+# Call the main installation script with configured parameters
+exec ./install_abacus_toolchain_new.sh \
+  --with-gcc="$WITH_GCC" \
+  --with-intel="$WITH_INTEL" \
+  --math-mode="$MATH_MODE" \
+  --with-openblas="$WITH_OPENBLAS" \
+  --with-openmpi="$WITH_OPENMPI" \
+  --with-cmake="$WITH_CMAKE" \
+  --with-scalapack="$WITH_SCALAPACK" \
+  --with-libxc="$WITH_LIBXC" \
+  --with-fftw="$WITH_FFTW" \
+  --with-elpa="$WITH_ELPA" \
+  --with-cereal="$WITH_CEREAL" \
+  --with-rapidjson="$WITH_RAPIDJSON" \
+  --with-libtorch="$WITH_LIBTORCH" \
+  --with-libnpy="$WITH_LIBNPY" \
+  --with-libri="$WITH_LIBRI" \
+  --with-libcomm="$WITH_LIBCOMM" \
+  --with-4th-openmpi="$WITH_4TH_OPENMPI" \
+  ${ENABLE_CUDA:+--enable-cuda} \
+  ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
+  "$@" \
+  | tee compile.log

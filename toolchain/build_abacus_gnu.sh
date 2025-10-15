@@ -21,15 +21,15 @@ BUILD_DIR=build_abacus_gnu
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-LAPACK=$INSTALL_DIR/openblas-0.3.29/lib
+LAPACK=$INSTALL_DIR/openblas-0.3.30/lib
 SCALAPACK=$INSTALL_DIR/scalapack-2.2.2/lib
-ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
+ELPA=$INSTALL_DIR/elpa-2025.06.001/cpu
 # ELPA=$INSTALL_DIR/elpa-2025.01.001/nvidia # for gpu-lcao
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-master/include/cereal
 LIBXC=$INSTALL_DIR/libxc-7.0.0
 RAPIDJSON=$INSTALL_DIR/rapidjson-master/
-# LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
+# LIBRI=$INSTALL_DIR/LibRI-master
 # LIBCOMM=$INSTALL_DIR/LibComm-master
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
