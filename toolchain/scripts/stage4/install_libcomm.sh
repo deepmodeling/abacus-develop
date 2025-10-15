@@ -34,6 +34,8 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libcomm" "$version_suffix"
+dirname="LibComm-${libcomm_ver}"
+filename="LibComm-${libcomm_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -46,12 +48,10 @@ cd "${BUILDDIR}"
 case "$with_libcomm" in
     __INSTALL__)
         echo "==================== Installing LIBCOMM ===================="
-        dirname="LibComm-${libcomm_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libcomm/${libcomm_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
         # url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
-        filename="LibComm-${libcomm_ver}.tar.gz"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix

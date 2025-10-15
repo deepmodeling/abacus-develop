@@ -10,6 +10,8 @@
 
 # Global configuration variables
 declare -A CONFIG_CACHE
+declare -A USER_EXPLICIT_MPI
+declare -A USER_EXPLICIT_MATH
 CONFIG_INITIALIZED=false
 CONFIG_FILE_LOADED=false
 
@@ -297,7 +299,19 @@ config_set_defaults() {
     # Default MPI and Math modes (following original script logic)
     # Default math library settings to openblas
     CONFIG_CACHE["MATH_MODE"]="openblas"
-    CONFIG_CACHE["with_openblas"]="__INSTALL__"
+    
+    # Set math library defaults based on MATH_MODE (before user input processing)
+    case "${CONFIG_CACHE[MATH_MODE]}" in
+        mkl)
+            CONFIG_CACHE["with_mkl"]="__SYSTEM__"
+            ;;
+        aocl)
+            CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+            ;;
+        openblas)
+            CONFIG_CACHE["with_openblas"]="__INSTALL__"
+            ;;
+    esac
     
     # For MPI, we try to detect system MPI variant (following original script logic)
     if command -v mpiexec > /dev/null 2>&1; then
@@ -374,6 +388,10 @@ config_set_defaults() {
         CONFIG_CACHE["MPI_MODE"]="mpich"
         # set default value for some installers appropriate for CLE
         CONFIG_CACHE["with_gcc"]="__DONTUSE__"
+        # Reset math library defaults for CRAY environment
+        CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        CONFIG_CACHE["with_openblas"]="__DONTUSE__"
     fi
     
     return 0
@@ -410,22 +428,6 @@ read_with_option() {
     else
         echo "__INSTALL__"
     fi
-}
-
-
-
-# Set all packages to install mode (--install-all)
-# Usage: config_set_install_all
-config_set_install_all() {
-    for ii in ${package_list}; do
-        if [ "${ii}" != "intel" ] && 
-           [ "${ii}" != "intelmpi" ] &&
-           [ "${ii}" != "amd" ]; then
-            CONFIG_CACHE["with_${ii}"]="__INSTALL__"
-        fi
-    done
-    # Use OpenMPI as default
-    CONFIG_CACHE["MPI_MODE"]="openmpi"
 }
 
 # Validate configuration
@@ -627,10 +629,6 @@ config_parse_arguments() {
                 CONFIG_CACHE["PACK_RUN"]="__TRUE__"
                 shift
                 ;;
-            --install-all)
-                config_set_install_all
-                shift
-                ;;
                 
             # Package version selection
             --package-version)
@@ -653,7 +651,7 @@ config_parse_arguments() {
                     local ver="${BASH_REMATCH[2]}"
                     CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
                 else
-                    report_error $LINENO "Invalid package version format: $package_version_value. Use format 'package:version' (e.g., openmpi:alt)"
+                    report_error $LINENO "Invalid package version format: $package_version_value. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
                     return 1
                 fi
                 ;;
@@ -709,11 +707,19 @@ config_parse_arguments() {
                 fi
                 
                 case "$math_value" in
-                    mkl|aocl|openblas|no)
+                    mkl|aocl|openblas|cray|no)
                         CONFIG_CACHE["MATH_MODE"]="$math_value"
+                        # Apply automatic parameter settings for specific math modes
+                        case "$math_value" in
+                            aocl)
+                                CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+                                CONFIG_CACHE["with_fftw"]="__SYSTEM__"
+                                CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
+                                ;;
+                        esac
                         ;;
                     *)
-                        report_error $LINENO "Invalid math mode: $math_value. Valid options: mkl, aocl, openblas, no"
+                        report_error $LINENO "Invalid math mode: $math_value. Valid options: mkl, aocl, openblas, cray, no"
                         return 1
                         ;;
                 esac
@@ -728,6 +734,14 @@ config_parse_arguments() {
                 if [[ "$option" =~ ^(.+)=(.+)$ ]]; then
                     option="${BASH_REMATCH[1]}"
                     value="${BASH_REMATCH[2]}"
+                fi
+                
+                # Special handling for --with-mpich-device=* (must be handled before general mpich)
+                if [[ "$option" == "mpich-device" ]]; then
+                    CONFIG_CACHE["MPICH_DEVICE"]="$value"
+                    CONFIG_CACHE["MPI_MODE"]="mpich"
+                    shift
+                    continue
                 fi
                 
                 # Convert value to internal format (matching original read_with function)
@@ -750,7 +764,7 @@ config_parse_arguments() {
                         ;;
                 esac
                 
-                # Convert option name to lowercase and handle special cases
+                # Handle special cases with specific processing logic
                 case "$option" in
                     4th-openmpi)
                         # Handle --with-4th-openmpi parameter (only yes/no options)
@@ -767,8 +781,142 @@ config_parse_arguments() {
                                 ;;
                         esac
                         ;;
+                    mpich)
+                        CONFIG_CACHE["with_mpich"]="$value"
+                        USER_EXPLICIT_MPI["with_mpich"]="true"  # Mark as explicitly set by user
+                        # Set MPI_MODE if not disabled
+                        if [ "$value" != "__DONTUSE__" ]; then
+                            CONFIG_CACHE["MPI_MODE"]="mpich"
+                        fi
+                        ;;
+                    openmpi)
+                        CONFIG_CACHE["with_openmpi"]="$value"
+                        USER_EXPLICIT_MPI["with_openmpi"]="true"  # Mark as explicitly set by user
+                        # Set MPI_MODE if not disabled
+                        if [ "$value" != "__DONTUSE__" ]; then
+                            CONFIG_CACHE["MPI_MODE"]="openmpi"
+                        fi
+                        ;;
+                    intelmpi)
+                        CONFIG_CACHE["with_intelmpi"]="$value"
+                        USER_EXPLICIT_MPI["with_intelmpi"]="true"  # Mark as explicitly set by user
+                        # Set MPI_MODE if not disabled
+                        if [ "$value" != "__DONTUSE__" ]; then
+                            CONFIG_CACHE["MPI_MODE"]="intelmpi"
+                        fi
+                        ;;
+                    intel-classic)
+                        # Special handling for intel-classic: only accepts yes/no values
+                        case "$value" in
+                            "__INSTALL__"|""|"__DONTUSE__")
+                                value="no"  # Default to "no"
+                                ;;
+                            "yes")
+                                value="yes"
+                                ;;
+                            "no")
+                                value="no"
+                                ;;
+                            *)
+                                report_error $LINENO "Invalid value '$value' for --with-intel-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                                return 1
+                                ;;
+                        esac
+                        CONFIG_CACHE["intel_classic"]="$value"
+                        ;;
+                    intel-mpi-clas*)
+                        # Special handling for intel-mpi-classic: only accepts yes/no values
+                        case "$value" in
+                            "__INSTALL__"|""|"__DONTUSE__")
+                                value="no"  # Default to "no"
+                                ;;
+                            "yes")
+                                value="yes"
+                                ;;
+                            "no")
+                                value="no"
+                                ;;
+                            *)
+                                report_error $LINENO "Invalid value '$value' for --with-intel-mpi-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                                return 1
+                                ;;
+                        esac
+                        CONFIG_CACHE["INTELMPI_CLASSIC"]="$value"
+                        ;;
+                    intel)
+                        CONFIG_CACHE["with_intel"]="$value"
+                        ;;
+                    ifx)
+                        # Special handling for ifx: only accepts yes/no values
+                        case "$value" in
+                            "__INSTALL__"|""|"__DONTUSE__")
+                                value="no"  # Default to "no"
+                                ;;
+                            "yes")
+                                value="yes"
+                                ;;
+                            "no")
+                                value="no"
+                                ;;
+                            *)
+                                report_error $LINENO "Invalid value '$value' for --with-ifx. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                                return 1
+                                ;;
+                        esac
+                        CONFIG_CACHE["WITH_IFX"]="$value"
+                        ;;
+                    amd)
+                        CONFIG_CACHE["with_amd"]="$value"
+                        ;;
+                    flang)
+                        # Special handling for flang: only accepts yes/no values
+                        case "$value" in
+                            "__INSTALL__"|""|"__DONTUSE__")
+                                value="no"  # Default to "no"
+                                ;;
+                            "yes")
+                                value="yes"
+                                ;;
+                            "no")
+                                value="no"
+                                ;;
+                            *)
+                                report_error $LINENO "Invalid value '$value' for --with-flang. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                                return 1
+                                ;;
+                        esac
+                        CONFIG_CACHE["WITH_FLANG"]="$value"
+                        ;;
+                    aocl)
+                        CONFIG_CACHE["with_aocl"]="$value"
+                        USER_EXPLICIT_MATH["with_aocl"]="true"  # Mark as explicitly set by user
+                        ;;
+                    mkl)
+                        CONFIG_CACHE["with_mkl"]="$value"
+                        USER_EXPLICIT_MATH["with_mkl"]="true"  # Mark as explicitly set by user
+                        # Set MATH_MODE if not disabled
+                        if [ "$value" != "__DONTUSE__" ]; then
+                            CONFIG_CACHE["MATH_MODE"]="mkl"
+                        fi
+                        ;;
+                    openblas)
+                        CONFIG_CACHE["with_openblas"]="$value"
+                        USER_EXPLICIT_MATH["with_openblas"]="true"  # Mark as explicitly set by user
+                        # Set MATH_MODE if not disabled
+                        if [ "$value" != "__DONTUSE__" ]; then
+                            CONFIG_CACHE["MATH_MODE"]="openblas"
+                        fi
+                        ;;
+                    fftw)
+                        CONFIG_CACHE["with_fftw"]="$value"
+                        USER_EXPLICIT_MATH["with_fftw"]="true"  # Mark as explicitly set by user
+                        ;;
+                    scalapack)
+                        CONFIG_CACHE["with_scalapack"]="$value"
+                        USER_EXPLICIT_MATH["with_scalapack"]="true"  # Mark as explicitly set by user
+                        ;;
                     *)
-                        # Convert to standard format
+                        # Convert to standard format for all other options
                         option="${option,,}"  # Convert to lowercase
                         CONFIG_CACHE["with_${option}"]="$value"
                         ;;
@@ -920,24 +1068,25 @@ config_apply_modes() {
     if [[ -n "$mpi_mode" ]]; then
         case "$mpi_mode" in
             mpich)
-                CONFIG_CACHE["with_mpich"]="__INSTALL__"
-                CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-                CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+                # Only override if user hasn't explicitly set these values via command line
+                [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__INSTALL__"
+                [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
                 ;;
             openmpi)
-                CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-                CONFIG_CACHE["with_openmpi"]="__INSTALL__"
-                CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__INSTALL__"
+                [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
                 ;;
             intelmpi)
-                CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-                CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-                CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
+                [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
                 ;;
             no)
-                CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-                CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-                CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
                 ;;
         esac
     fi
@@ -947,29 +1096,29 @@ config_apply_modes() {
     if [[ -n "$math_mode" ]]; then
         case "$math_mode" in
             mkl)
-                CONFIG_CACHE["with_mkl"]="__SYSTEM__"
-                CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-                CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__SYSTEM__"
+                [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
                 # MKL provides FFTW and ScaLAPACK, so disable them (original logic)
-                CONFIG_CACHE["with_fftw"]="__DONTUSE__"
-                CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
                 ;;
             aocl)
-                CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-                CONFIG_CACHE["with_aocl"]="__SYSTEM__"
-                CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-                CONFIG_CACHE["with_fftw"]="__SYSTEM__"
-                CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
+                [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+                [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__SYSTEM__"
+                [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
                 ;;
             openblas)
-                CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-                CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-                CONFIG_CACHE["with_openblas"]="__INSTALL__"
+                [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__INSTALL__"
                 ;;
             cray)
-                CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-                CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-                CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+                [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
                 ;;
         esac
     fi

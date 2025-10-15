@@ -119,6 +119,9 @@ main() {
     # Export configuration to environment variables
     config_export_to_env
     
+    # Export version configuration for stage scripts
+    package_export_version_config
+    
     # Preliminaries
     mkdir -p ${INSTALLDIR}
 

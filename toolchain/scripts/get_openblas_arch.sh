@@ -61,10 +61,8 @@ if [ "${PACK_RUN}" = "__TRUE__" ]; then
     echo "--pack-run mode specified, skip arch detection"
     exit 0
 fi
+tar -xzf ${openblas_pkg}
 openblas_dir="$(find_openblas_dir)"
-if [ -z "$openblas_dir" ]; then
-    tar -xzf ${openblas_pkg}
-fi
 openblas_conf="${openblas_dir}/Makefile.conf"
 # try find Makefile.config, if not then generate one with make lapack_prebuild
 if ! [ -f "$openblas_conf" ]; then

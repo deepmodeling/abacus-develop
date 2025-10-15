@@ -31,6 +31,8 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "elpa" "$version_suffix"
+elpa_pkg="elpa-${elpa_ver}.tar.gz"
+
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -71,7 +73,6 @@ case "$with_elpa" in
             echo "elpa-${elpa_ver} is already installed, skipping it."
         else
             require_env MATH_LIBS
-            elpa_pkg="elpa-${elpa_ver}.tar.gz"
             url="https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
             if [ -f ${elpa_pkg} ]; then
                 echo "${elpa_pkg} is found"

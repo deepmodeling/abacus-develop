@@ -33,6 +33,8 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libnpy" "$version_suffix"
+dirname="libnpy-${libnpy_ver}"
+filename="libnpy-${libnpy_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -45,12 +47,10 @@ cd "${BUILDDIR}"
 case "$with_libnpy" in
     __INSTALL__)
         echo "==================== Installing LIBNPY ===================="
-        dirname="libnpy-${libnpy_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
         url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
-        filename="libnpy-${libnpy_ver}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else

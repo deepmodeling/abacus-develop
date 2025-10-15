@@ -286,7 +286,7 @@ version_validate_config() {
             local pkg_lower=$(echo "$pkg_name" | tr '[:upper:]' '[:lower:]')
             
             # Check if the requested version exists
-            local version_var="${pkg_name}_${requested_version}_ver"
+            local version_var="${pkg_lower}_${requested_version}_ver"
             if [[ -z "${!version_var}" ]]; then
                 echo "Warning: Requested version '$requested_version' for package '$pkg_lower' is not available"
                 validation_errors=$((validation_errors + 1))

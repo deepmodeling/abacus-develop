@@ -30,6 +30,8 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "cereal" "$version_suffix"
+dirname="cereal-${cereal_ver}"
+filename="cereal-${cereal_ver}.tar.gz"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -42,7 +44,6 @@ cd "${BUILDDIR}"
 case "$with_cereal" in
     __INSTALL__)
         echo "==================== Installing CEREAL ===================="
-        dirname="cereal-${cereal_ver}"
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
@@ -54,7 +55,6 @@ case "$with_cereal" in
         else
             url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
         fi
-        filename="cereal-${cereal_ver}.tar.gz"
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else

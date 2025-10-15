@@ -165,7 +165,13 @@ validate_logical_consistency() {
     # Check if ELPA is enabled without ScaLAPACK
     if [[ "${CONFIG_CACHE[with_elpa]}" == "__INSTALL__" || "${CONFIG_CACHE[with_elpa]}" == "__SYSTEM__" ]]; then
         if [[ "${CONFIG_CACHE[with_scalapack]}" == "__DONTUSE__" ]]; then
-            add_validation_error "ELPA requires ScaLAPACK but ScaLAPACK is disabled."
+            # Check if MKL is enabled (MKL provides ScaLAPACK functionality)
+            if [[ "${CONFIG_CACHE[MATH_MODE]}" == "mkl" || "${CONFIG_CACHE[with_mkl]}" == "__SYSTEM__" || "${CONFIG_CACHE[with_mkl]}" == "__INSTALL__" ]]; then
+                # MKL provides ScaLAPACK, so this is acceptable
+                :
+            else
+                add_validation_error "ELPA requires ScaLAPACK but ScaLAPACK is disabled."
+            fi
         fi
     fi
     

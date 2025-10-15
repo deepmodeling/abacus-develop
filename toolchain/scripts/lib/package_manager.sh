@@ -406,13 +406,28 @@ package_install_all_pack_run() {
 package_export_version_config() {
     # Export version suffix configuration
     local use_alt_versions=$(config_get use_alt_versions)
-    local package_versions=$(config_get package_versions)
     
     if [[ "$use_alt_versions" == "__TRUE__" ]]; then
         export ABACUS_TOOLCHAIN_VERSION_SUFFIX="alt"
     else
         export ABACUS_TOOLCHAIN_VERSION_SUFFIX="main"
     fi
+    
+    # Build package versions string from CONFIG_CACHE PACKAGE_VERSION_* entries
+    local package_versions=""
+    for key in "${!CONFIG_CACHE[@]}"; do
+        if [[ "$key" =~ ^PACKAGE_VERSION_(.+)$ ]]; then
+            local pkg_name="${BASH_REMATCH[1]}"
+            local pkg_version="${CONFIG_CACHE[$key]}"
+            local pkg_lower=$(echo "$pkg_name" | tr '[:upper:]' '[:lower:]')
+            
+            if [[ -n "$package_versions" ]]; then
+                package_versions="${package_versions} ${pkg_lower}:${pkg_version}"
+            else
+                package_versions="${pkg_lower}:${pkg_version}"
+            fi
+        fi
+    done
     
     # Export individual package version overrides
     if [[ -n "$package_versions" ]]; then

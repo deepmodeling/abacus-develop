@@ -30,6 +30,7 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
 fi
 # Load package variables with appropriate version
 load_package_vars "libxc" "$version_suffix"
+libxc_pkg="libxc-${libxc_ver}.tar.bz2"
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
@@ -47,7 +48,6 @@ case "$with_libxc" in
         pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
         #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
         install_lock_file="$pkg_install_dir/install_successful"
-        libxc_pkg="libxc-${libxc_ver}.tar.bz2"
         if verify_checksums "${install_lock_file}"; then
             echo "libxc-${libxc_ver} is already installed, skipping it."
         else
