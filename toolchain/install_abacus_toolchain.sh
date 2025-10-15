@@ -41,6 +41,29 @@ export SHA256_CHECKSUM="${SCRIPTDIR}/checksums.sha256"
 TOOLCHAIN_OPTIONS="$@"
 
 # ------------------------------------------------------------------------
+# DEPRECATED WARNING
+# ------------------------------------------------------------------------
+echo ""
+echo -e "\033[1;31m╔══════════════════════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[1;31m║                                [DEPRECATED]                                  ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;33m║  This script (install_abacus_toolchain.sh) will be deprecated soon.        ║\033[0m"
+echo -e "\033[1;33m║                                                                              ║\033[0m"
+echo -e "\033[1;32m║  Please migrate to the refactored version:                                  ║\033[0m"
+echo -e "\033[1;32m║    → install_abacus_toolchain_new.sh                                        ║\033[0m"
+echo -e "\033[1;32m║                                                                              ║\033[0m"
+echo -e "\033[1;36m║  Migration Guide:                                                            ║\033[0m"
+echo -e "\033[1;36m║    • Use toolchain_*.sh frontend scripts for easier configuration          ║\033[0m"
+echo -e "\033[1;36m║    • New version supports main/alt package version switch                    ║\033[0m"
+echo -e "\033[1;36m║    • Improved parameter handling and error reporting                        ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;31m╚══════════════════════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "\033[1;33mContinuing with legacy script in 3 seconds...\033[0m"
+sleep 3
+echo ""
+
+# ------------------------------------------------------------------------
 # Load common variables and tools
 # ------------------------------------------------------------------------
 source "${SCRIPTDIR}"/common_vars.sh
