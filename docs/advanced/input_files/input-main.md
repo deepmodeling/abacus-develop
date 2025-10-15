@@ -3328,7 +3328,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
+- **Description**: The filename of DP/NEP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### dp_rescaling
