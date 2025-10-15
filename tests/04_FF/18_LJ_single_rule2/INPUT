@@ -1,0 +1,15 @@
+INPUT_PARAMETERS
+#Parameters (General)
+suffix              autotest
+calculation         scf
+
+#Parameters (esolver)
+esolver_type        lj
+lj_eshift           true
+lj_rule             2
+lj_rcut             8.5
+lj_epsilon          0.01  0.02
+lj_sigma            3.4  3.5
+
+cal_force           1
+cal_stress          1
