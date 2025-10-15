@@ -25,27 +25,22 @@ void sparse_format::cal_SR(
     const int nspin = PARAM.inp.nspin;
 
     // cal_STN_R_sparse(current_spin, sparse_thr);
-    if (nspin == 1 || nspin == 2) {
+    if (nspin == 1 || nspin == 2)
+    {
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(
                 p_ham);
         const int cspin = 0;
-        sparse_format::cal_HContainer_d(pv,
-                                        cspin,
-                                        sparse_thr,
-                                        *(p_ham_lcao->getSR()),
-                                        SR_sparse);
-    } else if (nspin == 4) {
+        sparse_format::cal_HContainer<double>(pv, sparse_thr, *(p_ham_lcao->getSR()), SR_sparse);
+    }
+    else if (nspin == 4)
+    {
         hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*
             p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>,
                                               std::complex<double>>*>(p_ham);
         const int cspin = 0;
-        sparse_format::cal_HContainer_cd(pv,
-                                         cspin,
-                                         sparse_thr,
-                                         *(p_ham_lcao->getSR()),
-                                         SR_soc_sparse);
+        sparse_format::cal_HContainer<std::complex<double>>(pv, sparse_thr, *(p_ham_lcao->getSR()), SR_soc_sparse);
     }
 
     return;

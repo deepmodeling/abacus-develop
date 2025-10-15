@@ -51,37 +51,22 @@ void set_gint_pointer<std::complex<double>>(Gint_Gamma& gint_gamma,
 }
 #endif
 
-template <typename TR> std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
+template <typename TR>
+std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
 {
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
 
     return all_R_coor;
 }
 
-template <typename TR>
-std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TR>>>
-cal_HR_sparse(const hamilt::HContainer<TR>& hR,
-    const int current_spin,
-    const double sparse_thr);
-
-template <>
-std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>
-cal_HR_sparse(const hamilt::HContainer<double>& hR,
+template <typename T>
+std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> cal_HR_sparse(
+    const hamilt::HContainer<T>& hR,
     const int current_spin,
     const double sparse_thr)
 {
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> target;
-    sparse_format::cal_HContainer_d(*hR.get_paraV(), current_spin, sparse_thr, hR, target);
-    return target;
-}
-template <>
-std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
-cal_HR_sparse(const hamilt::HContainer<std::complex<double>>& hR,
-    const int current_spin,
-    const double sparse_thr)
-{
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> target;
-    sparse_format::cal_HContainer_cd(*hR.get_paraV(), current_spin, sparse_thr, hR, target);
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> target;
+    sparse_format::cal_HContainer<T>(*hR.get_paraV(), sparse_thr, hR, target);
     return target;
 }
 
@@ -106,7 +91,7 @@ void write_Vxc_R(const int nspin,
     const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* const Hexxd,
     const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc,
 #endif
-const double sparse_thr=1e-10)
+    const double sparse_thr=1e-10)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
     // 1. real-space xc potential

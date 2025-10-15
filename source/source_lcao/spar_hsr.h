@@ -51,25 +51,12 @@ void cal_HSR(const UnitCell& ucell,
 #endif
 );
 
-void cal_HContainer_d(const Parallel_Orbitals& pv,
-                      const int& current_spin,
-                      const double& sparse_threshold,
-                      const hamilt::HContainer<double>& hR,
-                      std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
-
-void cal_HContainer_cd(
+template <typename TI, typename TO = TI>
+void cal_HContainer(
     const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_threshold,
-    const hamilt::HContainer<std::complex<double>>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
-
-void cal_HContainer_td(
-    const Parallel_Orbitals& pv,
-    const int& current_spin,
-    const double& sparse_threshold,
-    const hamilt::HContainer<double>& hR,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
+    const double& sparse_thr,
+    const hamilt::HContainer<TI>& hR,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target);
 
 void clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr);
 
