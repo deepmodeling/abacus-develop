@@ -316,15 +316,27 @@ config_set_defaults() {
     if [[ -z "${CONFIG_CACHE[MPI_MODE]}" ]] && command -v mpiexec > /dev/null 2>&1; then
         # check if we are dealing with openmpi, mpich or intelmpi
         if mpiexec --version 2>&1 | grep -s -q "HYDRA"; then
-            echo "MPI is detected and it appears to be MPICH"
+            if command -v ui_info &> /dev/null; then
+                ui_info "🔍 Detected system MPI: MPICH"
+            else
+                echo "MPI is detected and it appears to be MPICH"
+            fi
             CONFIG_CACHE["MPI_MODE"]="mpich"
             CONFIG_CACHE["with_mpich"]="__SYSTEM__"
         elif mpiexec --version 2>&1 | grep -s -q "OpenRTE"; then
-            echo "MPI is detected and it appears to be OpenMPI"
+            if command -v ui_info &> /dev/null; then
+                ui_info "🔍 Detected system MPI: OpenMPI"
+            else
+                echo "MPI is detected and it appears to be OpenMPI"
+            fi
             CONFIG_CACHE["MPI_MODE"]="openmpi"
             CONFIG_CACHE["with_openmpi"]="__SYSTEM__"
         elif mpiexec --version 2>&1 | grep -s -q "Intel"; then
-            echo "MPI is detected and it appears to be Intel MPI"
+            if command -v ui_info &> /dev/null; then
+                ui_info "🔍 Detected system MPI: Intel MPI"
+            else
+                echo "MPI is detected and it appears to be Intel MPI"
+            fi
             CONFIG_CACHE["with_gcc"]="__DONTUSE__"
             CONFIG_CACHE["with_amd"]="__DONTUSE__"
             CONFIG_CACHE["with_aocl"]="__DONTUSE__"
@@ -332,7 +344,11 @@ config_set_defaults() {
             CONFIG_CACHE["with_intelmpi"]="__SYSTEM__"
             CONFIG_CACHE["MPI_MODE"]="intelmpi"
         else # default to mpich
-            echo "MPI is detected and defaults to MPICH"
+            if command -v ui_info &> /dev/null; then
+                ui_info "🔍 MPI detected, defaulting to MPICH configuration"
+            else
+                echo "MPI is detected and defaults to MPICH"
+            fi
             CONFIG_CACHE["MPI_MODE"]="mpich"
             CONFIG_CACHE["with_mpich"]="__SYSTEM__"
         fi
@@ -1065,7 +1081,11 @@ config_apply_modes() {
     # Apply MPI mode settings (with output for user feedback)
     local mpi_mode="${CONFIG_CACHE[MPI_MODE]}"
     if [[ -n "$mpi_mode" ]]; then
-        echo "Applying MPI mode: $mpi_mode"
+        if command -v ui_info &> /dev/null; then
+            ui_info "⚙️ Configuring MPI mode: $mpi_mode"
+        else
+            echo "Applying MPI mode: $mpi_mode"
+        fi
         case "$mpi_mode" in
             mpich)
                 # Only override if user hasn't explicitly set these values via command line
@@ -1094,7 +1114,11 @@ config_apply_modes() {
     # Apply math mode settings (with output for user feedback)
     local math_mode="${CONFIG_CACHE[MATH_MODE]}"
     if [[ -n "$math_mode" ]]; then
-        echo "Applying Math mode: $math_mode"
+        if command -v ui_info &> /dev/null; then
+            ui_info "🧮 Configuring Math mode: $math_mode"
+        else
+            echo "Applying Math mode: $math_mode"
+        fi
         case "$math_mode" in
             mkl)
                 [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__SYSTEM__"

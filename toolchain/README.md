@@ -86,17 +86,6 @@ All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org
 - `RapidJSON` which will be downloaded from [RapidJSON](https://github.com/Tencent/rapidjson)
 Notice: These packages will be downloaded by `wget` from `codeload.github.com`, which bypass the difficulty of Chinese Internet in some extent. If any downloading problem occurs, you may need to use offline installation method.
 
-Instead of github.com, we offer other package station, you can use it by:
-```shell
-wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v3 -O abacus-deps-v3.zip
-```
-`unzip` it ,and you can do offline installation of these packages above after rename. 
-```shell
-# packages downloaded from github.com
-mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
-```
-The above station will be updated handly but one should notice that the version will always lower than github repo.
-
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name

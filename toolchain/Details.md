@@ -1,7 +1,7 @@
 # The ABACUS Toolchain
 
 ## Author
-QuantumMisaka (Zhaoqing Liu) @PKU @AISI
+QuantumMisaka (Zhaoqing Liu) @PKU-CCME
 
 Inspired by cp2k-toolchain, still in improvement.
 
