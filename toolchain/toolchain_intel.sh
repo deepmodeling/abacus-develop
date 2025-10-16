@@ -66,8 +66,8 @@ WITH_INTEL_CLASSIC="no"  # Set to "yes" to use classic Intel compilers (icc/icpc
                          # Set to "no" to use new Intel compilers (icx/icpx/ifx)
                          # Classic compilers needed for AMD-CPU or GPU-version
 
-WITH_IFX="no"           # Set to "yes" to use new Fortran compiler ifx
-                        # Set to "no" to use traditional ifort (default)
+WITH_IFX="yes"           # Set to "yes" to use new Fortran compiler ifx (default)
+                        # Set to "no" to use traditional ifort
                         # Only applies when WITH_INTEL_CLASSIC="no"
 
 # Intel MPI Version Selection  

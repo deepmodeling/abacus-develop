@@ -190,9 +190,8 @@ config_load_from_file() {
 # Apply mode-based configuration after loading from file
 # Usage: config_apply_modes_from_file
 config_apply_modes_from_file() {
-    # Apply MPI mode if set in config file
+    # Apply MPI mode if set in config file (silent mode to avoid duplicate output)
     if [[ -n "${CONFIG_CACHE[MPI_MODE]}" ]]; then
-        echo "Applying MPI mode: ${CONFIG_CACHE[MPI_MODE]}"
         case "${CONFIG_CACHE[MPI_MODE]}" in
             mpich)
                 CONFIG_CACHE["with_mpich"]="__INSTALL__"
@@ -217,9 +216,8 @@ config_apply_modes_from_file() {
         esac
     fi
     
-    # Apply Math mode if set in config file
+    # Apply Math mode if set in config file (silent mode to avoid duplicate output)
     if [[ -n "${CONFIG_CACHE[MATH_MODE]}" ]]; then
-        echo "Applying Math mode: ${CONFIG_CACHE[MATH_MODE]}"
         case "${CONFIG_CACHE[MATH_MODE]}" in
             mkl)
                 CONFIG_CACHE["with_mkl"]="__SYSTEM__"
@@ -314,7 +312,8 @@ config_set_defaults() {
     esac
     
     # For MPI, we try to detect system MPI variant (following original script logic)
-    if command -v mpiexec > /dev/null 2>&1; then
+    # Only detect if MPI_MODE is not already set (to avoid duplicate detection)
+    if [[ -z "${CONFIG_CACHE[MPI_MODE]}" ]] && command -v mpiexec > /dev/null 2>&1; then
         # check if we are dealing with openmpi, mpich or intelmpi
         if mpiexec --version 2>&1 | grep -s -q "HYDRA"; then
             echo "MPI is detected and it appears to be MPICH"
@@ -1063,9 +1062,10 @@ config_init() {
 # Apply configuration based on modes
 # Usage: config_apply_modes
 config_apply_modes() {
-    # Apply MPI mode settings
+    # Apply MPI mode settings (with output for user feedback)
     local mpi_mode="${CONFIG_CACHE[MPI_MODE]}"
     if [[ -n "$mpi_mode" ]]; then
+        echo "Applying MPI mode: $mpi_mode"
         case "$mpi_mode" in
             mpich)
                 # Only override if user hasn't explicitly set these values via command line
@@ -1091,9 +1091,10 @@ config_apply_modes() {
         esac
     fi
     
-    # Apply math mode settings
+    # Apply math mode settings (with output for user feedback)
     local math_mode="${CONFIG_CACHE[MATH_MODE]}"
     if [[ -n "$math_mode" ]]; then
+        echo "Applying Math mode: $math_mode"
         case "$math_mode" in
             mkl)
                 [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__SYSTEM__"

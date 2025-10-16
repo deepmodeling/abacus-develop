@@ -119,6 +119,10 @@ case "${with_cmake}" in
         ;;
     __SYSTEM__)
         echo "==================== Finding CMake from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_command cmake "cmake"
         ;;
     __DONTUSE__)

@@ -148,7 +148,9 @@ case "$with_elpa" in
                         CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
                         CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
                         LDFLAGS="${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
-                        LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \
+                        LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI") ${MPI_LIBS}" \
+                        SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}" \
+                        SCALAPACK_FCFLAGS="${SCALAPACK_CFLAGS}" \
                         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
                     # remove unsupported compile option in libtool
                     sed -i ./libtool \
@@ -177,6 +179,8 @@ case "$with_elpa" in
                         CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
                         LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
                         LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \
+                        SCALAPACK_LDFLAGS="${SCALAPACK_LDFLAGS}" \
+                        SCALAPACK_FCFLAGS="${SCALAPACK_CFLAGS}" \
                         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
                 fi
                 make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -198,6 +202,10 @@ case "$with_elpa" in
         ;;
     __SYSTEM__)
         echo "==================== Finding ELPA from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_lib -lelpa_openmp "ELPA"
         # get the include paths
         elpa_include="$(find_in_paths "elpa_openmp-*" $INCLUDE_PATHS)"

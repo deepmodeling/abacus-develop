@@ -80,27 +80,63 @@ if [ "${with_mkl}" != "__DONTUSE__" ]; then
             exit 1
         fi
     done
-    MKL_CFLAGS="${MKL_CFLAGS} -I'${MKLROOT}/include'"
+
+
+    case ${MPI_MODE} in
+        intelmpi | mpich)
+        mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
+        mkl_blacs_lib="IF_MPI(-lmkl_blacs_intelmpi_lp64|)"
+        ;;
+        openmpi)
+        mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
+        mkl_blacs_lib="IF_MPI(-lmkl_blacs_openmpi_lp64|)"
+        ;;
+        *)
+        echo "Not using MKL provided ScaLAPACK and BLACS"
+        mkl_scalapack_lib=""
+        mkl_blacs_lib=""
+        ;;
+    esac
+
+
+    # added by trae
     MKL_LDFLAGS="-L'${mkl_lib_dir}' -Wl,-rpath,'${mkl_lib_dir}'"
-    MKL_LIBS="-lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+    # set the correct lib flags from MLK link adviser
+    MKL_LIBS="-L${mkl_lib_dir} -Wl,-rpath,${mkl_lib_dir} ${mkl_scalapack_lib}"
+    MKL_LIBS+=" -Wl,--start-group -lmkl_gf_lp64 -lmkl_sequential -lmkl_core"
+    MKL_LIBS+=" ${mkl_blacs_lib} -Wl,--end-group -lpthread -lm -ldl"
+    # setup_mkl disables using separate FFTW library (see below)
+    MKL_CFLAGS="${MKL_CFLAGS} -I${MKLROOT}/include"
+    if [ "${MKL_FFTW}" != "no" ]; then
+        MKL_CFLAGS+=" -I${MKLROOT}/include/fftw"
+    fi
+
+  # write setup files
     cat << EOF > "${BUILDDIR}/setup_mkl"
-prepend_path LD_LIBRARY_PATH "${mkl_lib_dir}"
-prepend_path LD_RUN_PATH "${mkl_lib_dir}"
-prepend_path LIBRARY_PATH "${mkl_lib_dir}"
-prepend_path CPATH "${MKLROOT}/include"
-export MKL_CFLAGS="${MKL_CFLAGS}"
-export MKL_LDFLAGS="${MKL_LDFLAGS}"
-export MKL_LIBS="${MKL_LIBS}"
-export FAST_MATH_CFLAGS="\${FAST_MATH_CFLAGS} ${MKL_CFLAGS}"
-export FAST_MATH_LDFLAGS="\${FAST_MATH_LDFLAGS} ${MKL_LDFLAGS}"
-export FAST_MATH_LIBS="\${FAST_MATH_LIBS} ${MKL_LIBS}"
-export CP_DFLAGS="\${CP_DFLAGS} IF_BLAS(-D__MKL|)"
-export CP_CFLAGS="\${CP_CFLAGS} IF_BLAS(${MKL_CFLAGS}|)"
-export CP_LDFLAGS="\${CP_LDFLAGS} IF_BLAS(${MKL_LDFLAGS}|)"
-export CP_LIBS="\${CP_LIBS} IF_BLAS(${MKL_LIBS}|)"
 export MKLROOT="${MKLROOT}"
+export MKL_CFLAGS="${MKL_CFLAGS}"
+export MKL_LIBS="${MKL_LIBS}"
+export MATH_CFLAGS="\${MATH_CFLAGS} ${MKL_CFLAGS}"
+export MATH_LIBS="\${MATH_LIBS} ${MKL_LIBS}"
+export CP_DFLAGS="\${CP_DFLAGS} -D__MKL -D__FFTW3 IF_COVERAGE(IF_MPI(|-U__FFTW3)|)"
 EOF
-    cat "${BUILDDIR}/setup_mkl" >> $SETUPFILE
+    if [ -n "${mkl_scalapack_lib}" ]; then
+        cat << EOF >> "${BUILDDIR}/setup_mkl"
+export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__SCALAPACK|)"
+export with_scalapack="__DONTUSE__"
+EOF
+    fi
+    if [ "${MKL_FFTW}" != "no" ]; then
+        cat << EOF >> "${BUILDDIR}/setup_mkl"
+export with_fftw="__DONTUSE__"
+export FFTW3_INCLUDES="${MKL_CFLAGS}"
+export FFTW3_LIBS="${MKL_LIBS}"
+export FFTW_CFLAGS="${MKL_CFLAGS}"
+export FFTW_LDFLAGS="${MKL_LDFLAGS}"
+export FFTW_LIBS="${MKL_LIBS}"
+EOF
+    fi
+    cat "${BUILDDIR}/setup_mkl" >> ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_mkl"

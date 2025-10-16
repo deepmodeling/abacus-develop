@@ -139,6 +139,10 @@ case "${with_openblas}" in
         ;;
     __SYSTEM__)
         echo "==================== Finding OpenBLAS/LAPACK from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         # assume that system openblas is threaded
         check_lib -lopenblas "OpenBLAS"
         OPENBLAS_LIBS="-lopenblas"

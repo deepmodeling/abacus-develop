@@ -89,6 +89,10 @@ case "$with_libxc" in
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBXC from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_lib -lxcf03 "libxc"
         check_lib -lxc "libxc"
         add_include_from_paths LIBXC_CFLAGS "xc.h" $INCLUDE_PATHS

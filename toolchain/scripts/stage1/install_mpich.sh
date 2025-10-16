@@ -106,6 +106,10 @@ case "${with_mpich}" in
         ;;
     __SYSTEM__)
         echo "==================== Finding MPICH from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_command mpiexec "mpich" && MPIRUN="$(command -v mpiexec)"
         check_command mpicc "mpich" && MPICC="$(command -v mpicc)" || exit 1
         if [ $(command -v mpic++ > /dev/null 2>&1) ]; then

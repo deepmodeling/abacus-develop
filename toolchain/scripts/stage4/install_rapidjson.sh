@@ -89,6 +89,10 @@ EOF
         ;;
     __SYSTEM__)
         echo "==================== Finding RapidJSON from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         add_include_from_paths RAPIDJSON_CFLAGS "rapidjson/rapidjson.h" $INCLUDE_PATHS
         ;;
     __DONTUSE__) ;;

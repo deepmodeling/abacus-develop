@@ -76,6 +76,10 @@ case "${with_libtorch}" in
         ;;
     __SYSTEM__)
         echo "==================== Finding libtorch from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_lib -ltorch "libtorch"
         add_include_from_paths LIBTORCH_CXXFLAGS "libtorch.h" $INCLUDE_PATHS
         add_lib_from_paths LIBTORCH_LDFLAGS "libtorch.*" "$LIB_PATHS"

@@ -94,6 +94,10 @@ case "${with_scalapack}" in
         ;;
     __SYSTEM__)
         echo "==================== Finding ScaLAPACK from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
         check_lib -lscalapack "ScaLAPACK"
         add_lib_from_paths SCALAPACK_LDFLAGS "libscalapack.*" $LIB_PATHS
         ;;

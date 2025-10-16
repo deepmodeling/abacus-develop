@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
-# TODO: Review and if possible fix shellcheck errors.
-# shellcheck disable=all
+# developer: QuantumMisaka
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"

@@ -34,8 +34,7 @@ source "${SCRIPTDIR}/lib/package_manager.sh"
 source "${SCRIPTDIR}/lib/user_interface.sh"
 source "${SCRIPTDIR}/lib/config_validator.sh"
 
-# Initialize modules
-config_manager_init
+# Initialize modules (version helper only - config will be initialized in main)
 version_helper_init
 
 # Show help function
