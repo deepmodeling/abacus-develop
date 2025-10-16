@@ -28,6 +28,7 @@
 #include "source_estate/setup_estate_pw.h" // mohan add 20251005
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
+#include "source_estate/update_pot.h" // mohan add 20251016
 
 namespace ModuleESolver
 {
@@ -268,24 +269,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2rho_single");
 }
 
-// Temporary, it should be rewritten with Hamilt class.
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
-{
-    if (!conv_esolver)
-    {
-        elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(&this->chr, &ucell);
-        this->pelec->f_en.descf = this->pelec->cal_delta_escf();
-#ifdef __MPI
-        MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, BP_WORLD);
-#endif
-    }
-    else
-    {
-        this->pelec->cal_converged();
-    }
-}
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
@@ -343,7 +326,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                               << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    update_pot(ucell, istep, iter, conv_esolver);
+                    elecstate::update_pot(ucell, istep, iter, conv_esolver);
                     exx_helper.iter_inc();
                 }
             }
