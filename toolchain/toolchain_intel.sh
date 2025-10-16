@@ -36,13 +36,13 @@ WITH_ELPA="install"
 WITH_CEREAL="install"
 WITH_RAPIDJSON="install"
 
-# Optional Features (DeepKS support)
-WITH_LIBTORCH="no"
-WITH_LIBNPY="no"
-
 # Advanced Features (EXX calculations)
 WITH_LIBRI="install"
 WITH_LIBCOMM="install"
+
+# Optional Features (MLALGO support)
+WITH_LIBTORCH="no"
+WITH_LIBNPY="no"
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"

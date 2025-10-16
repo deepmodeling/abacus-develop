@@ -4,8 +4,8 @@
 # ABACUS Toolchain Error Handler
 # ============================================================================
 # Provides error handling and reporting functions for the toolchain
-# Author: ABACUS Development Team
-# Date: 2025-01-12
+# Author: Quantum Misaka by Trae SOLO
+# Date: 2025-10-16
 # ============================================================================
 
 # Global error handling state

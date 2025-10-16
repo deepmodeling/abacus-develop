@@ -34,13 +34,13 @@ WITH_ELPA="install"
 WITH_CEREAL="install"
 WITH_RAPIDJSON="install"
 
+# Advanced Features (EXX calculations)
+WITH_LIBRI="install"
+WITH_LIBCOMM="install"
+
 # Optional Features (DeepKS support)
 WITH_LIBTORCH="no"  # Set to "install" for DeepKS support
 WITH_LIBNPY="no"    # Set to "install" for DeepKS support
-
-# Advanced Features (EXX calculations)
-WITH_LIBRI="no"     # Set to "install" for EXX calculations
-WITH_LIBCOMM="no"   # Set to "install" for advanced communication
 
 # AMD Compiler Options
 WITH_FLANG="no"     # Flang is not recommended in current stage

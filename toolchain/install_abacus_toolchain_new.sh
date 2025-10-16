@@ -1,14 +1,14 @@
 #!/bin/bash -e
 
 # ============================================================================
-# ABACUS Toolchain Installation Script (Modular Version)
+# ABACUS Toolchain Installation Script (New Version)
 # ============================================================================
-# This is the new modular version of the ABACUS toolchain installation script.
+# This is the new refactored version of the ABACUS toolchain installation script.
 # It provides the same functionality as the original script but with improved
 # modularity, maintainability, and extensibility.
 #
-# Author: ABACUS Development Team
-# Date: 2025-01-12
+# Author: Quantum Misaka by Trae SOLO
+# Date: 2025-10-16
 # ============================================================================
 
 # Set script name for error reporting

@@ -6,7 +6,7 @@
 # Provides version display, help information, and user interaction for
 # dual-version switching functionality
 # Author: Quantum Misaka by Trae SOLO
-# Date: 2025-01-12
+# Date: 2025-10-16
 # ============================================================================
 
 # Source required modules
