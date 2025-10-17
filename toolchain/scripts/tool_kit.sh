@@ -121,11 +121,13 @@ By download $__filename from $__url,
 Rename it as $__filename and put it into ${BUILDDIR},
 And re-run toolchain installation script.
 
+Also. the --pack-run option can help in OFFLINE installation.
+
 You can manually install requirements packages via:
 0. Download by 'wget $__url -O $__filename' manually
 1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
 2. Download from github.com (especially for CEREAL, RapidJSON, libnpy, LibRI and other stage4 packages)
-3. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager our visit their official website
+3. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager or visit their official website
 EOF
 }
 

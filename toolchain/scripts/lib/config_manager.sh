@@ -481,9 +481,68 @@ config_validate() {
     return 0
 }
 
-# Apply environment variable processing logic (from original script lines 704-744)
+# Apply environment variable processing logic (from original script lines 668-744)
 # Usage: config_apply_env_logic
 config_apply_env_logic() {
+    # Compiler conflicts (from original script L668-677)
+    if [ "${CONFIG_CACHE[with_intel]}" != "__DONTUSE__" ] && [ "${CONFIG_CACHE[with_gcc]}" = "__INSTALL__" ]; then
+        echo "You have chosen to use the Intel compiler, therefore the installation of the GNU compiler will be skipped."
+        CONFIG_CACHE["with_gcc"]="__SYSTEM__"
+    fi
+    if [ "${CONFIG_CACHE[with_amd]}" != "__DONTUSE__" ] && [ "${CONFIG_CACHE[with_gcc]}" = "__INSTALL__" ]; then
+        echo "You have chosen to use the AMD compiler, therefore the installation of the GNU compiler will be skipped."
+        CONFIG_CACHE["with_gcc"]="__SYSTEM__"
+    fi
+    if [ "${CONFIG_CACHE[with_amd]}" != "__DONTUSE__" ] && [ "${CONFIG_CACHE[with_intel]}" != "__DONTUSE__" ]; then
+        report_error "You have chosen to use the AMD and the Intel compiler to compile dependent packages. Select only one compiler."
+        exit 1
+    fi
+
+    # MPI library conflicts (from original script L679-710)
+    if [ "${CONFIG_CACHE[MPI_MODE]}" = "no" ]; then
+        if [ "${CONFIG_CACHE[with_scalapack]}" != "__DONTUSE__" ]; then
+            echo "Not using MPI, so scalapack is disabled."
+            CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
+        fi
+        if [ "${CONFIG_CACHE[with_elpa]}" != "__DONTUSE__" ]; then
+            echo "Not using MPI, so ELPA is disabled."
+            CONFIG_CACHE["with_elpa"]="__DONTUSE__"
+        fi
+    else
+        # if gcc is installed, then mpi needs to be installed too
+        if [ "${CONFIG_CACHE[with_gcc]}" = "__INSTALL__" ]; then
+            echo "You have chosen to install the GNU compiler, therefore MPI libraries have to be installed too"
+            case ${CONFIG_CACHE[MPI_MODE]} in
+                mpich)
+                    CONFIG_CACHE["with_mpich"]="__INSTALL__"
+                    CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                    ;;
+                openmpi)
+                    CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                    CONFIG_CACHE["with_openmpi"]="__INSTALL__"
+                    ;;
+            esac
+            echo "and the use of the Intel compiler and Intel MPI will be disabled."
+            CONFIG_CACHE["with_intel"]="__DONTUSE__"
+            CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        fi
+        # Enable only one MPI implementation
+        case ${CONFIG_CACHE[MPI_MODE]} in
+            mpich)
+                CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+                ;;
+            openmpi)
+                CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+                ;;
+            intelmpi)
+                CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+                CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+                ;;
+        esac
+    fi
+
     # If MATH_MODE is mkl, then openblas, scalapack and fftw is not needed
     # QuantumMisaka in 2023-09-17
     if [ "${CONFIG_CACHE[MATH_MODE]}" = "mkl" ]; then

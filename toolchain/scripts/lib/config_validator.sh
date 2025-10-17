@@ -41,6 +41,14 @@ add_validation_warning() {
     VALIDATION_WARNINGS+=("WARNING: $message")
 }
 
+# Add validation info (for successful validations)
+# Usage: add_validation_info "info message"
+add_validation_info() {
+    local message="$1"
+    # Info messages are displayed immediately during validation
+    echo "INFO: $message"
+}
+
 # Check for conflicting math libraries
 # Usage: validate_math_libraries
 validate_math_libraries() {
@@ -156,6 +164,97 @@ validate_system_requirements() {
     
     if [[ ${#missing_dev[@]} -gt 0 ]]; then
         add_validation_warning "Potentially missing development packages: ${missing_dev[*]}"
+    fi
+    
+    # Check GCC version consistency and minimum requirements
+    # This mirrors the logic from original install_abacus_toolchain.sh L636-667
+    if [[ "${CONFIG_CACHE[with_gcc]}" != "__INSTALL__" ]]; then
+        local gcc_min_version=5
+        
+        # Check if GCC tools are available
+        if ! command -v gcc &> /dev/null || ! command -v g++ &> /dev/null || ! command -v gfortran &> /dev/null; then
+            local missing_tools=()
+            ! command -v gcc &> /dev/null && missing_tools+=("gcc")
+            ! command -v g++ &> /dev/null && missing_tools+=("g++")
+            ! command -v gfortran &> /dev/null && missing_tools+=("gfortran")
+            
+            add_validation_error "System GCC toolchain incomplete. Missing: ${missing_tools[*]}"
+            add_validation_error ""
+            add_validation_error "SOLUTION: Use '--with-gcc=install' to automatically download and install a complete GCC toolchain:"
+            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
+            add_validation_error ""
+            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with all required components (gcc, g++, gfortran)."
+            return
+        fi
+        
+        # Get versions of GCC components
+        local gcc_version=$(gcc --version 2>/dev/null | head -n 1 | awk '{print $NF}')
+        local gxx_version=$(g++ --version 2>/dev/null | head -n 1 | awk '{print $NF}')
+        local gfc_version=$(gfortran --version 2>/dev/null | head -n 1 | awk '{print $NF}')
+        
+        # Check if version extraction was successful
+        if [[ -z "$gcc_version" || -z "$gxx_version" || -z "$gfc_version" ]]; then
+            local failed_tools=()
+            [[ -z "$gcc_version" ]] && failed_tools+=("gcc")
+            [[ -z "$gxx_version" ]] && failed_tools+=("g++")
+            [[ -z "$gfc_version" ]] && failed_tools+=("gfortran")
+            
+            add_validation_error "Failed to determine GCC toolchain versions for: ${failed_tools[*]}"
+            add_validation_error "This usually indicates corrupted or non-standard GCC installation."
+            add_validation_error ""
+            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a known-good GCC version:"
+            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
+            add_validation_error ""
+            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with proper version information."
+            return
+        fi
+        
+        # Check version consistency
+        if [[ "$gcc_version" != "$gxx_version" ]] || [[ "$gcc_version" != "$gfc_version" ]]; then
+            add_validation_error "GCC toolchain versions are inconsistent:"
+            add_validation_error "  gcc:      $gcc_version"
+            add_validation_error "  g++:      $gxx_version"
+            add_validation_error "  gfortran: $gfc_version"
+            add_validation_error ""
+            add_validation_error "All GCC components must have the same version for proper compilation."
+            add_validation_error ""
+            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a consistent GCC toolchain:"
+            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
+            add_validation_error ""
+            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with all components at the same version."
+            return
+        fi
+        
+        # Extract major version number
+        local gcc_major=$(echo "$gcc_version" | awk -F. '{print $1}')
+        
+        # Validate major version is numeric and meets minimum requirement
+        if ! [[ "$gcc_major" =~ ^[0-9]+$ ]]; then
+            add_validation_error "Unable to parse GCC major version from: $gcc_version"
+            add_validation_error "Expected format: X.Y.Z (e.g., 13.2.0), but got: $gcc_version"
+            add_validation_error ""
+            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a standard GCC version:"
+            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
+            add_validation_error ""
+            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with standard version format."
+            return
+        fi
+        
+        if [[ "$gcc_major" -lt "$gcc_min_version" ]]; then
+            add_validation_error "GCC version $gcc_version is too old (major version: $gcc_major)"
+            add_validation_error "Minimum required: GCC $gcc_min_version.x or newer"
+            add_validation_error ""
+            add_validation_error "Your system GCC is outdated and may cause compilation failures."
+            add_validation_error ""
+            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a modern GCC version:"
+            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
+            add_validation_error ""
+            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} (>= $gcc_min_version.x) with full C++17/C++20 support."
+            return
+        fi
+        
+        # Success - add informational message
+        add_validation_info "System GCC toolchain validated: version $gcc_version (>= $gcc_min_version.x required)"
     fi
 }
 

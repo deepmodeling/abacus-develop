@@ -66,22 +66,198 @@ else
     readonly UI_BG_YELLOW=''
 fi
 
-# Unicode symbols for enhanced visual appeal
-readonly UI_ICON_SUCCESS="✅"
-readonly UI_ICON_ERROR="❌"
-readonly UI_ICON_WARNING="⚠️"
-readonly UI_ICON_INFO="ℹ️"
-readonly UI_ICON_PROGRESS="🔄"
-readonly UI_ICON_ROCKET="🚀"
-readonly UI_ICON_GEAR="⚙️"
-readonly UI_ICON_PACKAGE="📦"
-readonly UI_ICON_DOWNLOAD="⬇️"
-readonly UI_ICON_BUILD="🔨"
-readonly UI_ICON_INSTALL="📥"
-readonly UI_ICON_CHECK="✓"
-readonly UI_ICON_CROSS="✗"
-readonly UI_ICON_ARROW="→"
-readonly UI_ICON_STAR="⭐"
+# Terminal Unicode support detection
+UI_UNICODE_SUPPORT=""
+
+# Detect terminal Unicode support capability
+# Returns: "full", "basic", or "none"
+ui_detect_unicode_support() {
+    # Check if already detected
+    if [[ -n "$UI_UNICODE_SUPPORT" ]]; then
+        echo "$UI_UNICODE_SUPPORT"
+        return 0
+    fi
+    
+    # Manual override via environment variable
+    if [[ "${ABACUS_UI_SIMPLE:-}" == "1" ]] || [[ "${ABACUS_UI_ASCII:-}" == "1" ]]; then
+        UI_UNICODE_SUPPORT="none"
+        echo "none"
+        return 0
+    fi
+    
+    # Force Unicode mode if explicitly requested
+    if [[ "${ABACUS_UI_UNICODE:-}" == "1" ]]; then
+        UI_UNICODE_SUPPORT="full"
+        echo "full"
+        return 0
+    fi
+    
+    # Check if we're in a non-interactive environment
+    if [[ ! -t 1 ]]; then
+        UI_UNICODE_SUPPORT="none"
+        echo "none"
+        return 0
+    fi
+    
+    # Check locale settings for UTF-8 support
+    local locale_utf8=false
+    
+    # First check environment variables
+    if [[ "${LC_ALL:-}" =~ [Uu][Tt][Ff]-?8 ]] || \
+       [[ "${LC_CTYPE:-}" =~ [Uu][Tt][Ff]-?8 ]] || \
+       [[ "${LANG:-}" =~ [Uu][Tt][Ff]-?8 ]]; then
+        locale_utf8=true
+    fi
+    
+    # Additional check using locale command if available
+    if [[ "$locale_utf8" == "false" ]] && command -v locale &>/dev/null; then
+        local charset=$(locale charmap 2>/dev/null || echo "")
+        if [[ "$charset" =~ UTF-?8 ]]; then
+            locale_utf8=true
+        fi
+    fi
+    
+    # Check terminal type and capabilities
+    local term_support="none"
+    case "${TERM:-}" in
+        xterm*|screen*|tmux*|rxvt*|gnome*|konsole*|alacritty*|kitty*|iterm*)
+            if [[ "$locale_utf8" == "true" ]]; then
+                term_support="full"
+            else
+                term_support="basic"
+            fi
+            ;;
+        linux|vt*)
+            # Linux console - basic Unicode support
+            if [[ "$locale_utf8" == "true" ]]; then
+                term_support="basic"
+            else
+                term_support="none"
+            fi
+            ;;
+        dumb|unknown)
+            term_support="none"
+            ;;
+        *)
+            # Unknown terminal - be conservative
+            if [[ "$locale_utf8" == "true" ]]; then
+                term_support="basic"
+            else
+                term_support="none"
+            fi
+            ;;
+    esac
+    
+    # Final validation - ensure we have both locale and terminal support
+    if [[ "$term_support" != "none" && "$locale_utf8" == "false" ]]; then
+        # Terminal claims support but locale doesn't - be conservative
+        term_support="none"
+    fi
+    
+    UI_UNICODE_SUPPORT="$term_support"
+    echo "$term_support"
+}
+
+# Unicode symbols with ASCII fallbacks
+# These will be set based on terminal capability
+UI_ICON_SUCCESS=""
+UI_ICON_ERROR=""
+UI_ICON_WARNING=""
+UI_ICON_INFO=""
+UI_ICON_PROGRESS=""
+UI_ICON_ROCKET=""
+UI_ICON_GEAR=""
+UI_ICON_PACKAGE=""
+UI_ICON_DOWNLOAD=""
+UI_ICON_BUILD=""
+UI_ICON_INSTALL=""
+UI_ICON_CHECK=""
+UI_ICON_CROSS=""
+UI_ICON_ARROW=""
+UI_ICON_STAR=""
+
+# Progress bar characters
+UI_PROGRESS_FULL=""
+UI_PROGRESS_PARTIAL1=""
+UI_PROGRESS_PARTIAL2=""
+UI_PROGRESS_EMPTY=""
+
+# Initialize Unicode icons based on terminal capability
+ui_init_icons() {
+    local support=$(ui_detect_unicode_support)
+    
+    case "$support" in
+        "full")
+            # Full Unicode support - use emoji and special symbols
+            readonly UI_ICON_SUCCESS="✅"
+            readonly UI_ICON_ERROR="❌"
+            readonly UI_ICON_WARNING="⚠️"
+            readonly UI_ICON_INFO="ℹ️"
+            readonly UI_ICON_PROGRESS="🔄"
+            readonly UI_ICON_ROCKET="🚀"
+            readonly UI_ICON_GEAR="⚙️"
+            readonly UI_ICON_PACKAGE="📦"
+            readonly UI_ICON_DOWNLOAD="⬇️"
+            readonly UI_ICON_BUILD="🔨"
+            readonly UI_ICON_INSTALL="📥"
+            readonly UI_ICON_CHECK="✓"
+            readonly UI_ICON_CROSS="✗"
+            readonly UI_ICON_ARROW="→"
+            readonly UI_ICON_STAR="⭐"
+            # Full Unicode progress bar
+            readonly UI_PROGRESS_FULL="█"
+            readonly UI_PROGRESS_PARTIAL1="▓"
+            readonly UI_PROGRESS_PARTIAL2="▒"
+            readonly UI_PROGRESS_EMPTY="░"
+            ;;
+        "basic")
+            # Basic Unicode support - use simple Unicode symbols
+            readonly UI_ICON_SUCCESS="✓"
+            readonly UI_ICON_ERROR="✗"
+            readonly UI_ICON_WARNING="!"
+            readonly UI_ICON_INFO="i"
+            readonly UI_ICON_PROGRESS="*"
+            readonly UI_ICON_ROCKET="^"
+            readonly UI_ICON_GEAR="*"
+            readonly UI_ICON_PACKAGE="+"
+            readonly UI_ICON_DOWNLOAD="v"
+            readonly UI_ICON_BUILD="#"
+            readonly UI_ICON_INSTALL="+"
+            readonly UI_ICON_CHECK="✓"
+            readonly UI_ICON_CROSS="✗"
+            readonly UI_ICON_ARROW="→"
+            readonly UI_ICON_STAR="*"
+            # Basic Unicode progress bar
+            readonly UI_PROGRESS_FULL="█"
+            readonly UI_PROGRESS_PARTIAL1="▓"
+            readonly UI_PROGRESS_PARTIAL2="▒"
+            readonly UI_PROGRESS_EMPTY="░"
+            ;;
+        *)
+            # ASCII fallback - maximum compatibility
+            readonly UI_ICON_SUCCESS="[OK]"
+            readonly UI_ICON_ERROR="[ERR]"
+            readonly UI_ICON_WARNING="[WARN]"
+            readonly UI_ICON_INFO="[INFO]"
+            readonly UI_ICON_PROGRESS="[*]"
+            readonly UI_ICON_ROCKET="[^]"
+            readonly UI_ICON_GEAR="[*]"
+            readonly UI_ICON_PACKAGE="[+]"
+            readonly UI_ICON_DOWNLOAD="[v]"
+            readonly UI_ICON_BUILD="[#]"
+            readonly UI_ICON_INSTALL="[+]"
+            readonly UI_ICON_CHECK="[+]"
+            readonly UI_ICON_CROSS="[-]"
+            readonly UI_ICON_ARROW="->"
+            readonly UI_ICON_STAR="[*]"
+            # ASCII progress bar
+            readonly UI_PROGRESS_FULL="#"
+            readonly UI_PROGRESS_PARTIAL1="#"
+            readonly UI_PROGRESS_PARTIAL2="-"
+            readonly UI_PROGRESS_EMPTY="."
+            ;;
+    esac
+}
 
 # Initialize user interface
 # Usage: ui_init [verbose] [quiet] [log_file]
@@ -109,6 +285,9 @@ ui_init() {
         esac
         shift
     done
+    
+    # Initialize icons based on terminal capability
+    ui_init_icons
     
     UI_INITIALIZED=true
     return 0
@@ -169,6 +348,116 @@ ui_debug() {
     fi
 }
 
+# Detect glibc version using multiple methods for maximum compatibility
+# Usage: ui_get_glibc_version
+ui_get_glibc_version() {
+    local glibc_version="unknown"
+    
+    # Skip on non-Linux systems
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        echo "unknown"
+        return 0
+    fi
+    
+    # Method 1: ldd --version (most reliable)
+    if command -v ldd &> /dev/null; then
+        local ldd_output=$(ldd --version 2>/dev/null | head -n1)
+        if [[ $? -eq 0 && -n "$ldd_output" ]]; then
+            # Extract version from ldd output (e.g., "ldd (Ubuntu GLIBC 2.35-0ubuntu3.1) 2.35")
+            glibc_version=$(echo "$ldd_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+            if [[ -n "$glibc_version" ]]; then
+                echo "$glibc_version"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Method 2: Direct library call (fallback)
+    local libc_paths=(
+        "/lib/x86_64-linux-gnu/libc.so.6"
+        "/lib64/libc.so.6"
+        "/lib/libc.so.6"
+        "/usr/lib/x86_64-linux-gnu/libc.so.6"
+        "/usr/lib64/libc.so.6"
+    )
+    
+    for libc_path in "${libc_paths[@]}"; do
+        if [[ -x "$libc_path" ]]; then
+            local libc_output=$("$libc_path" 2>/dev/null | head -n1)
+            if [[ $? -eq 0 && -n "$libc_output" ]]; then
+                # Extract version from libc output
+                glibc_version=$(echo "$libc_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+                if [[ -n "$glibc_version" ]]; then
+                    echo "$glibc_version"
+                    return 0
+                fi
+            fi
+        fi
+    done
+    
+    # Method 3: getconf GNU_LIBC_VERSION (alternative)
+    if command -v getconf &> /dev/null; then
+        local getconf_output=$(getconf GNU_LIBC_VERSION 2>/dev/null)
+        if [[ $? -eq 0 && -n "$getconf_output" ]]; then
+            # Extract version from getconf output (e.g., "glibc 2.35")
+            glibc_version=$(echo "$getconf_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+            if [[ -n "$glibc_version" ]]; then
+                echo "$glibc_version"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Method 4: Check /proc/version_signature or similar (last resort)
+    if [[ -r "/proc/version" ]]; then
+        local proc_version=$(cat /proc/version 2>/dev/null)
+        if [[ -n "$proc_version" ]]; then
+            # Look for glibc version in kernel version string (rare but possible)
+            glibc_version=$(echo "$proc_version" | grep -oE 'glibc[[:space:]]*[0-9]+\.[0-9]+(\.[0-9]+)?' | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+            if [[ -n "$glibc_version" ]]; then
+                echo "$glibc_version"
+                return 0
+            fi
+        fi
+    fi
+    
+    # All methods failed - return unknown
+    echo "unknown"
+    return 0
+}
+
+# Read version from VERSION file
+# Usage: ui_get_version
+ui_get_version() {
+    local version_file
+    local version="Unknown"
+    
+    # Try to find VERSION file in multiple locations
+    if [[ -n "${SCRIPT_DIR:-}" && -f "${SCRIPT_DIR}/VERSION" ]]; then
+        version_file="${SCRIPT_DIR}/VERSION"
+    elif [[ -f "$(dirname "${BASH_SOURCE[0]}")/../VERSION" ]]; then
+        version_file="$(dirname "${BASH_SOURCE[0]}")/../VERSION"
+    elif [[ -f "./scripts/VERSION" ]]; then
+        version_file="./scripts/VERSION"
+    elif [[ -f "./VERSION" ]]; then
+        version_file="./VERSION"
+    fi
+    
+    if [[ -n "$version_file" && -f "$version_file" ]]; then
+        # Extract version from VERSION file, handling different formats
+        version=$(grep -E '^VERSION=' "$version_file" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+        if [[ -z "$version" ]]; then
+            # Fallback: try to read the entire file content if no VERSION= line
+            version=$(head -n 1 "$version_file" 2>/dev/null | grep -v '^#' | xargs)
+        fi
+        if [[ -z "$version" ]]; then
+            version="Unknown"
+        fi
+    fi
+    
+    echo "$version"
+}
+
 # Print beautiful welcome banner
 # Usage: ui_welcome_banner
 ui_welcome_banner() {
@@ -179,12 +468,15 @@ ui_welcome_banner() {
     local banner_width=80
     local title="ABACUS Toolchain Installation"
     local subtitle="DFT Calculation Made Simple"
+    local version=$(ui_get_version)
+    local version_text="Version $version"
     
     echo ""
     ui_print_color "${UI_CYAN}${UI_BOLD}" "$(printf '═%.0s' $(seq 1 $banner_width))"
     echo ""
     ui_print_color "${UI_BLUE}${UI_BOLD}" "$(printf '%*s' $(((banner_width + ${#title}) / 2)) "$title")"
     ui_print_color "${UI_GRAY}${UI_ITALIC}" "$(printf '%*s' $(((banner_width + ${#subtitle}) / 2)) "$subtitle")"
+    ui_print_color "${UI_GRAY}${UI_DIM}" "$(printf '%*s' $(((banner_width + ${#version_text}) / 2)) "$version_text")"
     echo ""
     ui_print_color "${UI_CYAN}${UI_BOLD}" "$(printf '═%.0s' $(seq 1 $banner_width))"
     echo ""
@@ -221,20 +513,20 @@ ui_progress() {
     local filled=$((percent / 2))
     local empty=$((50 - filled))
     
-    # Create progress bar with gradient effect
+    # Create progress bar with gradient effect using detected characters
     local progress_bar=""
     for ((i=1; i<=filled; i++)); do
         if [[ $i -le 10 ]]; then
-            progress_bar+="█"
+            progress_bar+="$UI_PROGRESS_FULL"
         elif [[ $i -le 30 ]]; then
-            progress_bar+="▓"
+            progress_bar+="$UI_PROGRESS_PARTIAL1"
         else
-            progress_bar+="▒"
+            progress_bar+="$UI_PROGRESS_PARTIAL2"
         fi
     done
     
     for ((i=1; i<=empty; i++)); do
-        progress_bar+="░"
+        progress_bar+="$UI_PROGRESS_EMPTY"
     done
     
     # Format ETA if provided
@@ -265,7 +557,7 @@ USAGE:
 DESCRIPTION:
     This script installs the ABACUS toolchain and its dependencies with a beautiful
     and user-friendly interface. It supports various compilers, MPI implementations,
-    and mathematical libraries for quantum chemistry calculations.
+    and mathematical libraries for density functional theory calculations.
 
 RECOMMENDED WORKFLOW:
     1. 🔍 Run with --help to see all available options
@@ -278,7 +570,7 @@ BASIC OPTIONS:
     --version                 Show version information
     --version-info [PACKAGE]  Show version information for specific package or all
     --dry-run                 Preview installation without executing (recommended first)
-    --pack-run                Only check and install required system packages
+    --pack-run                Only download packages without building
     
 CONFIGURATION OPTIONS:
     --config-file <FILE>      Load configuration from specified file
@@ -286,7 +578,7 @@ CONFIGURATION OPTIONS:
     
     --mpi-mode <MODE>         MPI implementation to use
                               📋 Options: mpich, openmpi, intelmpi, no
-                              🎯 Default: auto-detect or mpich
+                              🎯 Default: mpich (auto-detect available)
     
     --math-mode <MODE>        Mathematical library to use
                               📋 Options: mkl, aocl, openblas, cray, no
@@ -305,14 +597,16 @@ CONFIGURATION OPTIONS:
 PACKAGE CONTROL OPTIONS:
     --package-version <PKG:VER>  Set package version strategy
                               📋 Format: package:version (e.g., openmpi:alt, openblas:main)
-                              📋 Versions: main, alt
+                              📋 Versions: main (latest stable), alt (alternative/legacy)
     
     --with-<PACKAGE>=<MODE>   Fine-tune package installation modes
                               📋 Modes: install, system, no, <custom_path>
-                              📦 Packages: gcc, intel, intel-classic, ifx, amd, flang,
-                                         cmake, openmpi, mpich, intelmpi, libxc, fftw,
-                                         mkl, aocl, openblas, scalapack, elpa, cereal,
-                                         rapidjson, libtorch, libnpy, libri, libcomm
+                              📦 Build Tools: gcc, cmake
+                              📦 Compilers: intel, intel-classic, ifx, amd, flang
+                              📦 MPI Libraries: openmpi, mpich, intelmpi
+                              📦 Math Libraries: mkl, aocl, openblas, scalapack
+                              📦 Scientific: libxc, fftw, elpa
+                              📦 Advanced: cereal, rapidjson, libtorch, libnpy, libri, libcomm
 
 ADVANCED OPTIONS:
     --enable-<FEATURE>[=yes/no]  Enable specific advanced features
@@ -320,19 +614,19 @@ ADVANCED OPTIONS:
                               🎯 Default: no for all features
     
     --with-intel-classic[=yes/no]     Use Intel Classic compiler (icc/ifort)
-                              🎯 Default: no
+                              🎯 Default: no (uses OneAPI icx/ifx)
     
     --with-intel-mpi-classic[=yes/no] Use Intel MPI Classic
                               🎯 Default: no
     
     --with-ifx[=yes/no]       Use Intel Fortran compiler (ifx)
-                              🎯 Default: yes
+                              🎯 Default: yes (when Intel is enabled)
     
     --with-flang[=yes/no]     Use AMD Flang Fortran compiler
                               🎯 Default: no
     
-    --with-4th-openmpi[=yes/no]      Use OpenMPI 4th generation
-                              🎯 Default: no
+    --with-4th-openmpi[=yes/no]      Use OpenMPI 4th generation (v4.x)
+                              🎯 Default: no (uses v5.x)
     
     --with-mpich-device=<DEV> MPICH device type
                               📋 Options: ch3, ch4
@@ -358,14 +652,26 @@ EXAMPLES:
     
     # 📁 Load configuration from file
     ./install_abacus_toolchain_new.sh --config-file my_config.conf --dry-run
+    
+    # 🚀 Use pre-configured toolchain scripts (recommended)
+    ./toolchain_gnu.sh         # GNU toolchain (GCC + OpenMPI + OpenBLAS)
+    ./toolchain_intel.sh       # Intel toolchain (Intel + MPI + MKL)
+    ./toolchain_gcc-aocl.sh    # GCC + AMD AOCL
+    ./toolchain_aocc-aocl.sh   # AMD AOCC + AOCL
+
+ENVIRONMENT VARIABLES:
+    NPROCS_OVERWRITE=N        Override parallel compilation processes
+    DOWNLOAD_CERT_POLICY      Certificate verification policy (strict/smart/skip)
+                              🎯 Default: smart (try secure, fallback if needed)
 
 NOTES:
     📁 Build and install directories can be safely deleted after installation
-    🔧 Source the setup file (setup or abacus_env.sh) before running ABACUS
+    🔧 Source the setup file (install/setup) before building ABACUS
     🧪 Always use --dry-run first to preview changes
-    📋 Check log files in case of compilation errors
-    💡 For detailed information, see the documentation in Details.md
+    📋 Check log files in build/PKG_NAME/make.log for compilation errors
+    💡 For detailed information, see the documentation in README.md
     🎛️  Configuration files allow saving and reusing complex setups
+    🚀 Use toolchain_*.sh scripts for easier pre-configured installations
 
 EOF
     
@@ -382,6 +688,7 @@ ui_show_summary() {
     ui_print_color "${UI_BLUE}${UI_BOLD}" "🖥️  System Information:"
     echo "   ├─ OS: $(uname -s) $(uname -m)"
     echo "   ├─ Kernel: $(uname -r)"
+    echo "   ├─ glibc: $(ui_get_glibc_version)"
     echo "   ├─ CPU Cores: $(nproc 2>/dev/null || echo "unknown")"
     if command -v free &> /dev/null; then
         local mem_gb=$(free -g | awk '/^Mem:/ {print $2}')
