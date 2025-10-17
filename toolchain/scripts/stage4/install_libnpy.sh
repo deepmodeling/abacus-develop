@@ -75,8 +75,12 @@ case "$with_libnpy" in
         LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
-        echo "==================== CANNOT Finding LIBNPY from system paths NOW ===================="
-        recommend_offline_installation $filename $url
+        echo "==================== Finding LIBNPY from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
+        add_include_from_paths LIBNPY_CFLAGS "npy.hpp" $INCLUDE_PATHS
         ;;
     __DONTUSE__) ;;
     

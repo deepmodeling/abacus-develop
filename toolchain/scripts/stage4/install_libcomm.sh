@@ -84,8 +84,12 @@ case "$with_libcomm" in
         LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
         ;;
     __SYSTEM__)
-        echo "==================== CANNOT Finding LIBCOMM from system paths NOW ===================="
-        recommend_offline_installation $filename $url
+        echo "==================== Finding LIBCOMM from system paths ===================="
+        if [ "${PACK_RUN}" = "__TRUE__" ]; then
+            echo "--pack-run mode specified, skip system check"
+            exit 0
+        fi
+        add_include_from_paths LIBCOMM_CFLAGS "comm/comm.h" $INCLUDE_PATHS
         ;;
     __DONTUSE__) ;;
     
