@@ -81,7 +81,7 @@ struct lapack_heevx {
     void operator()(
         const int dim,
         const int lda,
-        T *Mat,
+        const T *Mat,
         const int neig,
         Real *eigen_val,
         T *eigen_vec);

@@ -1,9 +1,11 @@
+#include "source_base/module_device/types.h"
 #include <ATen/kernels/lapack.h>
 
 #include <base/third_party/lapack.h>
 
 // #include <cstring> // std::memcpy
 #include <algorithm> // std::copy
+#include <complex>
 #include <stdexcept>
 #include <string>
 
@@ -108,7 +110,7 @@ struct lapack_heevx<T, DEVICE_CPU> {
     void operator()(
         const int n,
         const int lda,
-        T *Mat,
+        const T *Mat,
         const int neig,
         Real *eigen_val,
         T *eigen_vec)
@@ -116,7 +118,7 @@ struct lapack_heevx<T, DEVICE_CPU> {
         Tensor aux(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
         // Copy Mat to aux since heevx will destroy it
         // aux = Mat
-        std::copy(Mat, Mat + n * lda, aux);
+        std::copy(Mat, Mat + n * lda, aux.data<T>());
 
         char jobz = 'V';        // Compute eigenvalues and eigenvectors
         char range = 'I';       // Find eigenvalues in index range [il, iu]
@@ -139,17 +141,17 @@ struct lapack_heevx<T, DEVICE_CPU> {
         // when lwork = -1
         lapackConnector::heevx(
             jobz, range, uplo, n,
-            aux, lda,
+            aux.data<T>(), lda,
             0.0, 0.0, il, iu,   // vl, vu not used when range='I'
             abstol,
-            &found,
+            found,
             eigen_val,
             eigen_vec, lda,
             &work_query, lwork,
             &rwork_query,
             &iwork_query,
             &ifail_query,
-            &info);
+            info);
 
         if (info != 0) {
             throw std::runtime_error("heevx workspace query failed with info = " + std::to_string(info));
@@ -173,17 +175,17 @@ struct lapack_heevx<T, DEVICE_CPU> {
         // Actual call to heevx
         lapackConnector::heevx(
             jobz, range, uplo, n,
-            aux, lda,
+            aux.data<T>(), lda,
             0.0, 0.0, il, iu,
             abstol,
-            &found,
+            found,
             eigen_val,
             eigen_vec, lda,
             work.data<T>(), lwork,
             rwork.data<Real>(),
             iwork.data<int>(),
             ifail.data<int>(),
-            &info);
+            info);
 
         if (info != 0) {
             throw std::runtime_error("heevx failed with info = " + std::to_string(info));
@@ -387,6 +389,11 @@ template struct lapack_heevd<float,  DEVICE_CPU>;
 template struct lapack_heevd<double, DEVICE_CPU>;
 template struct lapack_heevd<std::complex<float>,  DEVICE_CPU>;
 template struct lapack_heevd<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_heevx<float, DEVICE_CPU>;
+template struct lapack_heevx<double, DEVICE_CPU>;
+template struct lapack_heevx<std::complex<float>, DEVICE_CPU>;
+template struct lapack_heevx<std::complex<double>, DEVICE_CPU>;
 
 template struct lapack_hegvd<float,  DEVICE_CPU>;
 template struct lapack_hegvd<double, DEVICE_CPU>;

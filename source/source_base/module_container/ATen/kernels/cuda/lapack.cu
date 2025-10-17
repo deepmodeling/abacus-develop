@@ -107,7 +107,7 @@ struct lapack_heevx<T, DEVICE_GPU> {
     void operator()(
         const int n,
         const int lda,
-        T *d_Mat,
+        const T *d_Mat,
         const int neig,
         Real *d_eigen_val,
         T *d_eigen_vec)
@@ -231,6 +231,11 @@ template struct lapack_heevd<float,  DEVICE_GPU>;
 template struct lapack_heevd<double, DEVICE_GPU>;
 template struct lapack_heevd<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_heevd<std::complex<double>, DEVICE_GPU>;
+
+template struct lapack_heevx<float, DEVICE_GPU>;
+template struct lapack_heevx<double, DEVICE_GPU>;
+template struct lapack_heevx<std::complex<float>, DEVICE_GPU>;
+template struct lapack_heevx<std::complex<double>, DEVICE_GPU>;
 
 template struct lapack_hegvd<float,  DEVICE_GPU>;
 template struct lapack_hegvd<double, DEVICE_GPU>;
