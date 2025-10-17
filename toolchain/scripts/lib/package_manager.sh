@@ -66,6 +66,7 @@ package_manager_define_dependencies() {
     PACKAGE_DEPENDENCIES["libnpy"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libri"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libcomm"]="gcc cmake"
+    PACKAGE_DEPENDENCIES["nep"]="gcc cmake"
 }
 
 # Check if package is enabled for installation

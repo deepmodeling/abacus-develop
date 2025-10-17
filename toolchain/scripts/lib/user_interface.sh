@@ -606,7 +606,7 @@ PACKAGE CONTROL OPTIONS:
                               📦 MPI Libraries: openmpi, mpich, intelmpi
                               📦 Math Libraries: mkl, aocl, openblas, scalapack
                               📦 Scientific: libxc, fftw, elpa
-                              📦 Advanced: cereal, rapidjson, libtorch, libnpy, libri, libcomm
+                              📦 Advanced: cereal, rapidjson, libri, libcomm, libtorch, libnpy, nep
 
 ADVANCED OPTIONS:
     --enable-<FEATURE>[=yes/no]  Enable specific advanced features

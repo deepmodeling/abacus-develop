@@ -112,6 +112,10 @@ libri_sha256="--no-checksum"
 rapidjson_ver="master"
 rapidjson_sha256="--no-checksum"
 
+# NEP (Neural Evolution Potential) - CPU version
+nep_ver="main"
+nep_sha256="--no-checksum"
+
 # =============================================================================
 # Package Variable Loading Function
 # =============================================================================
@@ -251,6 +255,10 @@ load_package_vars() {
         "rapidjson")
             rapidjson_ver="${rapidjson_ver}"
             rapidjson_sha256="${rapidjson_sha256}"
+            ;;
+        "nep")
+            nep_ver="${nep_ver}"
+            nep_sha256="${nep_sha256}"
             ;;
         *)
             echo "Error: Unknown package '${package_name}'"

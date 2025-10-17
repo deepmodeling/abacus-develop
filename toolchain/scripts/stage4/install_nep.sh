@@ -3,13 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2025-10-10
+# contributor: MoseyQAQ (Denan Li)
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-nep_ver="main"
-nep_sha256="--no-checksum"
+# Load version information from centralized package_versions.sh
+source "${SCRIPT_DIR}/package_versions.sh"
+load_package_vars "nep"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh

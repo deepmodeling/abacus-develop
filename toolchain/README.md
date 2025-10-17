@@ -102,8 +102,28 @@ Downloads packages automatically from official sources:
 ```
 
 **Package Sources:**
-- Core libraries: [CP2K static downloads](https://www.cp2k.org/static/downloads)
-- GitHub packages: CEREAL, LibNPY, LibRI, LibComm, RapidJSON
+- **Build Tools:**
+  - [GCC](https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/) - GNU Compiler Collection
+  - [CMake](https://cmake.org/download/) - Cross-platform build system
+- **MPI Libraries:**
+  - [OpenMPI](https://download.open-mpi.org/release/open-mpi/) - Open source MPI implementation
+  - [MPICH](https://www.mpich.org/downloads/) - High-performance MPI implementation
+- **Math Libraries:**
+  - [OpenBLAS](https://github.com/xianyi/OpenBLAS/releases) - Optimized BLAS library
+  - [ScaLAPACK](http://www.netlib.org/scalapack/) - Scalable Linear Algebra PACKage
+- **Scientific Libraries:**
+  - [FFTW](http://www.fftw.org/) - Fast Fourier Transform library
+  - [LibXC](https://www.tddft.org/programs/libxc/) - Exchange-correlation functionals
+  - [ELPA](https://elpa.mpcdf.mpg.de/) - Eigenvalue solver
+- **Advanced Features:**
+  - [LibTorch](https://download.pytorch.org/libtorch/cpu/) - PyTorch C++ API
+  - [LibNPY](https://github.com/llohse/libnpy) - NumPy I/O for C++
+  - [LibRI](https://github.com/abacusmodeling/LibRI) - Resolution of Identity library
+  - [LibComm](https://github.com/abacusmodeling/LibComm) - Communication library
+  - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential
+  - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
+  - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
+- **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
 
 ### Offline Installation
 
@@ -113,7 +133,7 @@ For air-gapped systems or unreliable internet:
 # 1. Create build directory and download packages
 mkdir build
 # Download required packages to build/ directory with proper naming
-# e.g., fftw-3.3.10.tar.gz, openmpi-5.0.7.tar.bz2
+# e.g., fftw-3.3.10.tar.gz, openmpi-5.0.8.tar.bz2
 
 # 2. Run toolchain (will detect local packages)
 ./toolchain_gnu.sh
@@ -146,28 +166,29 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 
 ### Supported Packages
 
-| Package | Version | Purpose | License | Default |
-|---------|---------|---------|---------|---------|
+| Package | Version (main/alt) | Purpose | License | Default |
+|---------|-------------------|---------|---------|---------|
 | **Build Tools** |||||
-| CMake | 3.31.7 | Build system | BSD-3-Clause | Install |
-| GCC | 14.2.0 | C/C++ compiler | GPL-3.0-or-later WITH GCC-exception-3.1 | Install |
+| CMake | 3.31.7 / 3.30.5 | Build system | BSD-3-Clause | Install |
+| GCC | 13.2.0 / 11.4.0 | C/C++ compiler | GPL-3.0-or-later WITH GCC-exception-3.1 | Install |
 | **MPI Libraries** |||||
-| OpenMPI | 5.0.8 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
-| MPICH | 4.3.1 | Alternative MPI | mpich2 (BSD-like) | Alternative |
+| OpenMPI | 5.0.8 / 4.1.6 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
+| MPICH | 4.3.1 / 4.1.0 | Alternative MPI | mpich2 (BSD-like) | Alternative |
 | **Math Libraries** |||||
-| OpenBLAS | 0.3.30 | Linear algebra | BSD-3-Clause | Install |
-| ScaLAPACK | 2.2.2 | Parallel linear algebra | BSD-3-Clause | Install |
+| OpenBLAS | 0.3.30 / 0.3.27 | Linear algebra | BSD-3-Clause | Install |
+| ScaLAPACK | 2.2.2 / 2.2.1 | Parallel linear algebra | BSD-3-Clause | Install |
 | **Scientific Libraries** |||||
-| FFTW | 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
-| LibXC | 7.0.0 | Exchange-correlation | MPL-2.0 | Install |
-| ELPA | 2025.06.001 | Eigenvalue solver | LGPL-3.0-only | Install |
+| FFTW | 3.3.10 / 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
+| LibXC | 7.0.0 / 6.2.2 | Exchange-correlation | MPL-2.0 | Install |
+| ELPA | 2025.06.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
 | **Advanced Features** |||||
 | Cereal | master | C++ Serialization | BSD | Install |
 | RapidJSON | master | JSON parsing | MIT | Install |
-| LibRI | 0.2.1.0 | EXX calculations | GPL-3.0 | Install |
+| LibRI | master | EXX calculations | GPL-3.0 | Install |
 | LibComm | master | EXX calculations | GPL-3.0 | Install |
-| LibTorch | 2.1.2 | MLALGO support | BSD-3-Clause | Optional |
-| LibNPY | 1.0.1 | NumPy I/O | MIT | Optional |
+| LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
+| LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
+| NEP | main | Neural network potential | MIT | Optional |
 
 ### System Requirements
 
