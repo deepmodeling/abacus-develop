@@ -4,9 +4,16 @@
 
 // #include <cstring> // std::memcpy
 #include <algorithm> // std::copy
+#include <stdexcept>
+#include <string>
 
 namespace container {
 namespace kernels {
+
+inline double get_real(const std::complex<double> &x) { return x.real(); }
+inline float get_real(const std::complex<float> &x) { return x.real(); }
+inline double get_real(const double &x) { return x; }
+inline float get_real(const float &x) { return x; }
 
 template <typename T>
 struct set_matrix<T, DEVICE_CPU> {
@@ -92,6 +99,96 @@ struct lapack_heevd<T, DEVICE_CPU> {
         if (info != 0) {
             throw std::runtime_error("heevd failed with info = " + std::to_string(info));
         }
+    }
+};
+
+template <typename T>
+struct lapack_heevx<T, DEVICE_CPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T *Mat,
+        const int neig,
+        Real *eigen_val,
+        T *eigen_vec)
+    {
+        Tensor aux(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {n * lda});
+        // Copy Mat to aux since heevx will destroy it
+        // aux = Mat
+        std::copy(Mat, Mat + n * lda, aux);
+
+        char jobz = 'V';        // Compute eigenvalues and eigenvectors
+        char range = 'I';       // Find eigenvalues in index range [il, iu]
+        char uplo = 'L';        // Use Lower triangle
+        int info = 0;
+        int found = 0;          // Number of eigenvalues found
+        // found should be iu - il + 1, i.e. found = neig
+        const int il = 1;
+        const int iu = neig;
+        Real abstol = 0.0;
+
+        // Workspace query first
+        int lwork = -1;
+        T work_query;
+        Real rwork_query;
+        int iwork_query;
+        int ifail_query;
+
+        // Dummy call to get optimal workspace size
+        // when lwork = -1
+        lapackConnector::heevx(
+            jobz, range, uplo, n,
+            aux, lda,
+            0.0, 0.0, il, iu,   // vl, vu not used when range='I'
+            abstol,
+            &found,
+            eigen_val,
+            eigen_vec, lda,
+            &work_query, lwork,
+            &rwork_query,
+            &iwork_query,
+            &ifail_query,
+            &info);
+
+        if (info != 0) {
+            throw std::runtime_error("heevx workspace query failed with info = " + std::to_string(info));
+        }
+
+        lwork = static_cast<int>(get_real(work_query));
+
+        // Allocate buffers using Tensor (RAII)
+        Tensor work(DataTypeToEnum<T>::value, DeviceType::CpuDevice, {lwork});
+        work.zero();
+
+        Tensor rwork(DataTypeToEnum<Real>::value, DeviceType::CpuDevice, {7 * n});
+        rwork.zero();
+
+        Tensor iwork(DataType::DT_INT, DeviceType::CpuDevice, {5 * n});
+        iwork.zero();
+
+        Tensor ifail(DataType::DT_INT, DeviceType::CpuDevice, {n});
+        ifail.zero();
+
+        // Actual call to heevx
+        lapackConnector::heevx(
+            jobz, range, uplo, n,
+            aux, lda,
+            0.0, 0.0, il, iu,
+            abstol,
+            &found,
+            eigen_val,
+            eigen_vec, lda,
+            work.data<T>(), lwork,
+            rwork.data<Real>(),
+            iwork.data<int>(),
+            ifail.data<int>(),
+            &info);
+
+        if (info != 0) {
+            throw std::runtime_error("heevx failed with info = " + std::to_string(info));
+        }
+
     }
 };
 

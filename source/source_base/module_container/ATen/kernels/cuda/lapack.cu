@@ -102,6 +102,39 @@ struct lapack_heevd<T, DEVICE_GPU> {
 };
 
 template <typename T>
+struct lapack_heevx<T, DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int n,
+        const int lda,
+        T *d_Mat,
+        const int neig,
+        Real *d_eigen_val,
+        T *d_eigen_vec)
+    {
+        // copy d_Mat to d_eigen_vec, and results will be overwritten into d_eigen_vec
+        // by cuSolver
+        cudaErrcheck(cudaMemcpy(d_eigen_vec, d_Mat, sizeof(T) * n * lda, cudaMemcpyDeviceToDevice));
+
+        int meig = 0;
+
+        cuSolverConnector::heevdx(
+            cusolver_handle,
+            n,
+            lda,
+            d_eigen_vec,
+            'V',        // jobz: compute vectors
+            'L',        // uplo: lower triangle
+            'I',        // range: by index
+            1, neig,    // il, iu
+            Real(0), Real(0), // vl, vu (unused)
+            d_eigen_val,
+            &meig
+        );
+
+    }
+};
+template <typename T>
 struct lapack_hegvd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(

@@ -246,6 +246,248 @@ void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
     cudaErrcheck(cudaFree(d_work));
 }
 
+// =====================================================================================================
+// heevdx: Compute eigenvalues and eigenvectors of symmetric/Hermitian matrix
+// =====================================================================================================
+// --- float ---
+static inline
+void heevdx(cusolverDnHandle_t& cusolver_handle,
+    const int n,
+    const int lda,
+    float* d_A,
+    const char jobz,
+    const char uplo,
+    const char range,
+    const int il, const int iu,
+    const float vl, const float vu,
+    float* d_eigen_val,
+    int* h_meig)
+{
+    int lwork = 0;
+    int* d_info = nullptr;
+    float* d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+
+    cusolverErrcheck(cusolverDnSsyevdx_bufferSize(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n, d_A, lda,
+        vl, vu, il, iu,
+        h_meig,         // ← int* output: number of eigenvalues found
+        d_eigen_val,    // ← const float* W (used for query, can be dummy)
+        &lwork          // ← int* lwork (output)
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
+
+    // Main call
+    cusolverErrcheck(cusolverDnSsyevdx(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        d_A, lda,
+        vl, vu, il, iu,
+        h_meig,         // ← int* output
+        d_eigen_val,    // ← float* W: eigenvalues
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        cudaFree(d_info); cudaFree(d_work);
+        throw std::runtime_error("heevdx (float) failed with info = " + std::to_string(h_info));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
+// --- double ---
+static inline
+void heevdx(cusolverDnHandle_t& cusolver_handle,
+    const int n,
+    const int lda,
+    double* d_A,
+    const char jobz,
+    const char uplo,
+    const char range,
+    const int il, const int iu,
+    const double vl, const double vu,
+    double* d_eigen_val,
+    int* h_meig)
+{
+    int lwork = 0;
+    int* d_info = nullptr;
+    double* d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+
+    cusolverErrcheck(cusolverDnDsyevdx_bufferSize(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n, d_A, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
+
+    cusolverErrcheck(cusolverDnDsyevdx(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        d_A, lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        cudaFree(d_info); cudaFree(d_work);
+        throw std::runtime_error("heevdx (double) failed with info = " + std::to_string(h_info));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
+// --- complex<float> ---
+static inline
+void heevdx(cusolverDnHandle_t& cusolver_handle,
+    const int n,
+    const int lda,
+    std::complex<float>* d_A,
+    const char jobz,
+    const char uplo,
+    const char range,
+    const int il, const int iu,
+    const float vl, const float vu,
+    float* d_eigen_val,
+    int* h_meig)
+{
+    int lwork = 0;
+    int* d_info = nullptr;
+    cuComplex* d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+
+    cusolverErrcheck(cusolverDnCheevdx_bufferSize(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        reinterpret_cast<cuComplex*>(d_A), lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
+
+    cusolverErrcheck(cusolverDnCheevdx(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        reinterpret_cast<cuComplex*>(d_A), lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        cudaFree(d_info); cudaFree(d_work);
+        throw std::runtime_error("heevdx (complex<float>) failed with info = " + std::to_string(h_info));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
+// --- complex<double> ---
+static inline
+void heevdx(cusolverDnHandle_t& cusolver_handle,
+    const int n,
+    const int lda,
+    std::complex<double>* d_A,
+    const char jobz,
+    const char uplo,
+    const char range,
+    const int il, const int iu,
+    const double vl, const double vu,
+    double* d_eigen_val,
+    int* h_meig)
+{
+    int lwork = 0;
+    int* d_info = nullptr;
+    cuDoubleComplex* d_work = nullptr;
+
+    cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+
+    cusolverEigMode_t jobz_t = cublas_eig_mode(jobz);
+    cublasFillMode_t uplo_t = cublas_fill_mode(uplo);
+    cusolverEigRange_t range_t = cublas_eig_range(range);
+
+    cusolverErrcheck(cusolverDnZheevdx_bufferSize(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        reinterpret_cast<cuDoubleComplex*>(d_A), lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        &lwork
+    ));
+
+    cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+
+    cusolverErrcheck(cusolverDnZheevdx(
+        cusolver_handle,
+        jobz_t, range_t, uplo_t,
+        n,
+        reinterpret_cast<cuDoubleComplex*>(d_A), lda,
+        vl, vu, il, iu,
+        h_meig,
+        d_eigen_val,
+        d_work, lwork,
+        d_info
+    ));
+
+    int h_info = 0;
+    cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+    if (h_info != 0) {
+        cudaFree(d_info); cudaFree(d_work);
+        throw std::runtime_error("heevdx (complex<double>) failed with info = " + std::to_string(h_info));
+    }
+
+    cudaFree(d_info);
+    cudaFree(d_work);
+}
+
 static inline
 void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
 {

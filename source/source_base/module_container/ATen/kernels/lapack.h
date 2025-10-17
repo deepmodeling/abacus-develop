@@ -1,6 +1,7 @@
 #ifndef ATEN_KERNELS_LAPACK_H_
 #define ATEN_KERNELS_LAPACK_H_
 
+#include "source_base/macros.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
@@ -51,6 +52,40 @@ struct lapack_heevd {
         Real* eigen_val);
 };
 
+template <typename T, typename Device>
+struct lapack_heevx {
+    using Real = typename GetTypeReal<T>::type;
+    /**
+     * @brief Computes selected eigenvalues and, optionally, eigenvectors of a complex Hermitian matrix.
+     *
+     * This function solves the problem A*x = lambda*x, where A is a Hermitian matrix.
+     * It computes a subset of eigenvalues and, optionally, the corresponding eigenvectors.
+     *
+     * @param jobz  'N': Compute eigenvalues only; 'V': Compute eigenvalues and eigenvectors.
+     * @param range 'A': All eigenvalues; 'V': Eigenvalues in the half-open interval (vl, vu]; 'I': Eigenvalues with indices il through iu.
+     * @param uplo  'U': Upper triangle of A is stored; 'L': Lower triangle is stored.
+     * @param dim   The order of the matrix A. dim >= 0.
+     * @param Mat   On entry, the Hermitian matrix A. On exit, it may be overwritten.
+     * @param vl    Lower bound of the interval to search for eigenvalues if range == 'V'.
+     * @param vu    Upper bound of the interval to search for eigenvalues if range == 'V'.
+     * @param il    Index of the smallest eigenvalue to be returned if range == 'I'.
+     * @param iu    Index of the largest eigenvalue to be returned if range == 'I'.
+     * @param m     Output: The total number of found eigenvalues.
+     * @param eigen_val Array to store the computed eigenvalues in ascending order.
+     * @param eigen_vec If not nullptr and jobz == 'V', array to store the computed eigenvectors.
+     *
+     * @note
+     * See LAPACK ZHEEVX or CHEEVX documentation for more details.
+     *
+     */
+    void operator()(
+        const int dim,
+        const int lda,
+        T *Mat,
+        const int neig,
+        Real *eigen_val,
+        T *eigen_vec);
+};
 
 template <typename T, typename Device>
 struct lapack_hegvd {
@@ -60,8 +95,8 @@ struct lapack_hegvd {
      *
      * This function solves the problem A*x = lambda*B*x, where A and B are Hermitian matrices, and B is also positive definite.
      *
-     * @param dim The order of the matrices Mat_A and Mat_B. dim >= 0.
-     * @param lda The leading dimension of the arrays Mat_A and Mat_B. lda >= max(1, dim).
+     * @param n The order of the matrices Mat_A and Mat_B. n >= 0.
+     * @param lda The leading dimension of the arrays Mat_A and Mat_B. lda >= max(1, n).
      * @param Mat_A On entry, the Hermitian matrix A. On exit, it may be overwritten.
      * @param Mat_B On entry, the Hermitian positive definite matrix B. On exit, it may be overwritten.
      * @param eigen_val Array to store the computed eigenvalues in ascending order.
@@ -72,7 +107,7 @@ struct lapack_hegvd {
      * This function assumes that A and B have the same leading dimensions, lda.
      */
     void operator()(
-        const int dim,
+        const int n,
         const int lda,
         T *Mat_A,
         T *Mat_B,
