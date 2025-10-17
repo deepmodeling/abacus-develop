@@ -274,8 +274,6 @@ RECOMMENDED WORKFLOW:
     4. ⚙️  Source the setup file before building ABACUS
 
 BASIC OPTIONS:
-    -j <N>                    Number of parallel compilation processes
-                              🎯 Default: auto-detect (nproc)
     -h, --help                Show this comprehensive help message
     --version                 Show version information
     --version-info [PACKAGE]  Show version information for specific package or all

@@ -1,400 +1,519 @@
-# The ABACUS Toolchain
+# ABACUS Toolchain
 
-Version 2025.2
+[![Version](https://img.shields.io/badge/version-2025.3-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
+[![License](https://img.shields.io/badge/license-GPL--compatible-green.svg)](#license)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)]()
 
-## Main Developer
+> **Automated dependency management and compilation toolchain for ABACUS**
 
-[QuantumMisaka](https://github.com/QuantumMisaka) 
-(Zhaoqing Liu) @PKU @AISI
+## Table of Contents
 
-Inspired by cp2k-toolchain, still in improvement.
+- [Overview](#overview)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation Methods](#installation-methods)
+- [Supported Toolchains](#supported-toolchains)
+- [Dependencies](#dependencies)
+- [GPU Support](#gpu-support)
+- [Troubleshooting](#troubleshooting)
+- [Advanced Usage](#advanced-usage)
+- [Developer Guide](#developer-guide)
+- [License](#license)
+- [Contributing](#contributing)
 
-You should have read this README before using this toolchain.
+## Overview
 
-## Introduction
+The ABACUS Toolchain is an automated build system inspired by the cp2k-toolchain that simplifies the compilation and installation of ABACUS and its dependencies. It supports both online and offline installation modes, multiple compiler toolchains, and provides a streamlined path from dependency installation to ABACUS compilation.
 
-This toolchain will help you easily compile and install, 
-or link libraries ABACUS depends on 
-in ONLINE or OFFLINE way,
-and give setup files that you can use to compile ABACUS.
+### Main Developer
 
-## Todo
+**[QuantumMisaka](https://github.com/QuantumMisaka)** (Zhaoqing Liu)  
+*Peking University, CCME*
 
-- [x] `gnu-openblas` toolchain support for `openmpi` and `mpich`.
-- [x] `intel-mkl-mpi` toolchain support using `icc`/`icpc`/`ifort` or `icx`/`icpx`/`ifort`. (`icx` as default, but will have problem for ELPA in AMD machine, one can specify `--with-intel-classic=yes` to use `icc`), 
-- [x] `intel-mkl-mpich` toolchain support.
-- [x] Automatic installation of [CEREAL](https://github.com/USCiLab/cereal) and [LIBNPY](https://github.com/llohse/libnpy) (by github.com)
-- [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
-- [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
-- [x] Support for GPU-PW and GPU-LCAO compilation (elpa, cusolvermp is developing), and `-DUSE_CUDA=1` is needed builder scripts.
-- [x] Support for AMD compiler and math lib  `AOCL` and `AOCC` (not fully complete due to flang and AOCC-ABACUS compliation error)
-- [x] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
-- [ ] Support for more GPU device out of Nvidia.
-- [ ] Support a JSON or YAML configuration file for toolchain, which can be easily modified by users.
-- [ ] A better README and Detail markdown file.
-- [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
-- [ ] Modulefile generation scripts.
+## Features
 
+- ✅ **Multiple Toolchain Support**: GNU, Intel OneAPI, AMD AOCC/AOCL
+- ✅ **Flexible Installation**: Online/offline modes with automatic dependency resolution  
+- ✅ **GPU Acceleration**: CUDA support for NVIDIA GPUs with ELPA and cuSolverMP
+- ✅ **MPI Implementations**: OpenMPI, MPICH, Intel MPI support
+- ✅ **Math Libraries**: OpenBLAS, Intel MKL, AMD AOCL integration
+- ✅ **Advanced Features**: LibRI, LibComm and MLALGO support
+- ✅ **Resumable Installation**: Interrupt and resume capability
+- ✅ **Environment Management**: Automatic setup file generation
 
-## Usage Online & Offline
+## Quick Start
 
-Main script is *install_abacus_toolchain.sh*, 
-which will use scripts in *scripts* directory 
-to compile install dependencies of ABACUS.
-It can be directly used, but not recommended.
+### Prerequisites
 
-There are also well-modified script to run *install_abacus_toolchain.sh* for `gnu` (gcc-openblas), `intel` (intel-mkl-mpi-compiler), `gcc-aocl` and `aocc-aocl`  toolchains dependencies.
+- **GCC**: Version ≥ 5.0 (recommended ≥ 7.3.0)
+- **Internet Connection**: For online installation mode
+- **System Libraries**: Basic development tools (see [System Requirements](#system-requirements))
 
-```shell
-# for gnu-openblas
-> ./toolchain_gnu.sh
-# for intel-mkl
-> ./toolchain_intel.sh
-# for AMD gcc-aocl
-> ./toolchain_gcc-aocl.sh
-# for AMD aocc-aocl
-> ./toolchain_aocc-aocl.sh
-```
+### Basic Installation
 
-It is recommended to run one of them first to get a fast installation of ABACUS under certain environments.
+For new users, start with one of these pre-configured toolchains:
 
-If you are using Intel environments via Intel-OneAPI: please note:
-1. After version 2024.0, Intel classic compilers `icc` and `icpc` are not present, so as `ifort` after version 2025.0. Intel MPI compiler will also be updated to `mpiicx`, `mpiicpx` and `mpiifx`.
-2. toolchain will detect `icx`, `icpx`, `ifx`, `mpiicx`, `mpiicpx` and `mpiifx` as default compiler.
-3. Users can manually specify `--with-intel-classic=yes` to use Intel classic compiler in `toolchain*.sh`, or specify `--with-intel-mpi-clas=yes` to use Intel MPI classic compiler in `toolchain*.sh` while keep the CC, CXX and F90 compiler to new version.
-4. Users can manually specify `--with-ifx=no` in `toolchain*.sh` to use `ifort` while keep other compiler to new version. 
-5. More information is in the later part of this README.
-
-If you are using AMD AOCL and AOCC, please note:
-
-
-**Notice: You GCC version should be no lower than 5 !!!. The toolchain will check it, and gcc with version larger than 7.3.0 is recommended.**
-
-**Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, especially for `intel`, `gcc-aocl` or `aocc-aocl` toolchain! For example, `module load mkl mpi icc compiler` for loading oneapi envs.**
-
-**Notice: You SHOULD keep your environments systematic, for example, you CANNOT load `intel-OneAPI` environments while use gcc toolchain !!!**
-
-**Notice: If your server system already have libraries like `cmake`, `openmpi`, please change related setting in `toolchain*.sh` like `--with-cmake=system`, note that the environments of these system package will not be added into install/setup file**
-
-
-All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org/static/downloads). by  `wget` , and will be detailedly compiled and installed in `install` directory by toolchain scripts, despite of:
-
-- `CEREAL` which will be downloaded from [CEREAL](https://github.com/USCiLab/cereal)  
-- `Libnpy` which will be downloaded from [LIBNPY](https://github.com/llohse/libnpy)
-- `LibRI` which will be downloaded from [LibRI](https://github.com/abacusmodeling/LibRI)
-- `LibCOMM` which will be downloaded from [LibComm](https://github.com/abacusmodeling/LibComm)
-- `RapidJSON` which will be downloaded from [RapidJSON](https://github.com/Tencent/rapidjson)
-Notice: These packages will be downloaded by `wget` from `codeload.github.com`, which bypass the difficulty of Chinese Internet in some extent. If any downloading problem occurs, you may need to use offline installation method.
-
-If one want to install ABACUS by toolchain OFFLINE, 
-one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
-and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.7.tar.bz2*, 
-then run this toolchain. 
-All package will be detected and installed automatically. 
-Also, one can install parts of packages OFFLINE and parts of packages ONLINE
-just by using this toolchain
-
-```shell
-# for OFFLINE installation
-# in toolchain directory
-> mkdir build 
-> cp ***.tar.gz build/
-```
-
-The needed dependencies version default:
-
-- `cmake` 3.31.7
-- `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 5.0.7 (Version 5 OpenMPI is good but will have compability problem, user can manually downarade to Version 4 in toolchain scripts by specify `--with-openmpi4`)
-- `MPICH` 4.3.0
-- `OpenBLAS` 0.3.29 (Intel toolchain need `get_vars.sh` tool from it)
-- `ScaLAPACK` 2.2.2
-- `FFTW` 3.3.10
-- `LibXC` 7.0.0
-- `ELPA` 2025.01.001 (may not be conpatiable for gpu-ver)
-- `CEREAL` master (for oneapi compatibility)
-- `RapidJSON` master (for oneapi compatibility)
-And:
-- Intel-oneAPI need user or server manager to manually install from Intel.
-- - [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
-- AMD AOCC-AOCL need user or server manager to manually install from AMD.
-- - [AOCC](https://www.amd.com/zh-cn/developer/aocc.html)
-- - [AOCL](https://www.amd.com/zh-cn/developer/aocl.html)
-
-Dependencies below are optional， which is NOT installed by default:
-- `LibTorch` 2.1.2
-- `Libnpy` 1.0.1
-- `LibRI` 0.2.1.0
-- `LibComm` master (for openmpi compatibility)
-
-Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default. Also, user can specify the absolute path of the package by `--with-*=path/to/package` in toolchain*.sh to allow toolchain to use the package.
-> Notice: LibTorch always suffer from GLIBC_VERSION problem, if you encounter this, please downgrade LibTorch version to 1.12.1 in scripts/stage4/install_torch.sh
-> 
-> Notice: LibRI, LibComm, Rapidjson and Libnpy is on actively development, you should check-out the package version when using this toolchain. 
-
-Users can easily compile and install dependencies of ABACUS
-by running these scripts after loading related environment.
-
-The toolchain installation process can be interrupted at anytime.
-just re-run *toolchain_\*.sh*, toolchain itself may fix it. If you encouter some problem like file corrupted, you can always remove some package in the interrupted points and re-run the toolchain.
-
-Some useful options:
-- `--dry-run`: just run the main install scripts for environment setting, without any package downloading or installation.
-- `--pack-run`: just run the install scripts without any package building, which helps user to download and check the packages, paticularly for offline installation to a server.
-
-If compliation is successful, a message will be shown like this:
-
-```shell
-========================== usage =========================
-Done!
-To use the installed tools and libraries and ABACUS version
-compiled with it you will first need to execute at the prompt:
-  source ${SETUPFILE}
-To build ABACUS by gnu-toolchain, just use:
-    ./build_abacus_gnu.sh
-To build ABACUS by intel-toolchain, just use:
-    ./build_abacus_intel.sh
-To build ABACUS by amd-toolchain in gcc-aocl, just use:
-    ./build_abacus_gnu-aocl.sh
-To build ABACUS by amd-toolchain in aocc-aocl, just use:
-    ./build_abacus_aocc-aocl.sh
-or you can modify the builder scripts to suit your needs.
-```
-
-You can run *build_abacus_gnu.sh* or *build_abacus_intel.sh* to build ABACUS 
-by gnu-toolchain or intel-toolchain respectively, same for the `gcc-aocl` and `aocc-aocl` toolchain.
-Then, the builder scripts will automatically locate the environment and compile ABACUS.
-You can manually change the builder scripts to suit your needs.
-The builder scripts will generate `abacus_env.sh` for source
-
-Then, after `source abacus_env.sh`, one can easily 
-run builder scripts to build ABACUS binary software.
-
-If users want to use toolchain but lack of some system library
-dependencies, *install_requirements.sh* scripts will help.
-
-If users want to re-install all the package, just do:
-
-```shell
-> rm -rf install
-```
-
-or you can also do it in a more completely way:
-
-```shell
-> rm -rf install build/*/* build/OpenBLAS*/ build/setup_*
-```
-
-## GPU version of ABACUS
-
-Toolchain supports compiling GPU version of ABACUS with Nvidia-GPU and CUDA. For usage, adding following options in build*.sh:
-
-```shell
-# in build_abacus_gnu.sh
-cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DMPI_CXX_COMPILER=mpicxx \
-        ......
-        -DUSE_CUDA=ON \
-        # -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \ # add if needed
-        ......
-# in build_abacus_intel.sh
-cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_CXX_COMPILER=icpc \
-        -DMPI_CXX_COMPILER=mpiicpc \
-        ......
-        -DUSE_CUDA=ON \
-        # -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \ # add if needed
-        ......
-```
-which will enable GPU version of ABACUS, and the `ks_solver cusolver` method can be directly used for PW and LCAO calculation.
-
-Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now, see discussion here [#2906](https://github.com/deepmodeling/abacus-develop/issues/2906) and [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
-
-If you wants to use ABACUS GPU-LCAO by `cusolvermp` or `elpa` for multiple-GPU calculation, please compile according to the following usage:
-
-1. For the elpa method, add
-```shell
-export CUDA_PATH=/path/to/CUDA
-# install_abacus_toolchain.sh part options
---enable-cuda \
---gpu-ver=(GPU-compatibility-number) \
-```
-to the `toolchain_*.sh`, and then follow the normal step to install the dependencies using `./toolchain_*.sh`. For checking the GPU compatibility number, you can refer to the [CUDA compatibility](https://developer.nvidia.com/cuda-gpus).
-
-Afterwards, make sure these option are enable in your `build_abacus_*.sh` script 
-```shell
--DUSE_ELPA=ON \
--DUSE_CUDA=ON \
-```
-then just build the abacus executable program by compiling it with `./build_abacus_*.sh`.
-
-The ELPA method need more parameter setting, but it doesn't seem to be affected by the CUDA toolkits version, and it is no need to manually install and package. 
-
-Note: ELPA-2025.01.001 may have problem in nvidia-GPU compilation on some V100-GPU with AMD-CPU machine, error message:
 ```bash
- 1872 | static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
-      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~
-../src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c:51:47: note: in definition of macro 'CONCAT2_8ARGS'
-   51 | #define CONCAT2_8ARGS(a, b, c, d, e, f, g, h) a ## b ## c ## d ## e ## f ## g ## h
-      |                                               ^
-../src/elpa2/kernels/complex_128bit_256bit_512bit_BLOCK_template.c:1872:27: note: in expansion of macro 'CONCAT_8ARGS'
- 1872 | static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int nb, int ldq
-      |                           ^~~~~~~~~~~~
-  PPFC     src/GPU/libelpa_openmp_private_la-mod_vendor_agnostic_general_layer.lo
-  PPFC     test/shared/GPU/libelpatest_openmp_la-test_gpu_vendor_agnostic_layer.lo
-../src/GPU/CUDA/./cudaFunctions_template.h(942): error: identifier "creal" is undefined
-    double alpha_real = creal(alpha);
-                        ^
+# GNU toolchain (GCC + OpenMPI + OpenBLAS)
+./toolchain_gnu.sh
 
-../src/GPU/CUDA/./cudaFunctions_template.h(960): error: identifier "creal" is undefined
-    float alpha_real = creal(alpha);
+# Intel toolchain (Intel compilers + Intel MPI + MKL)
+./toolchain_intel.sh
+
+# AMD toolchain options
+./toolchain_gcc-aocl.sh    # GCC + AMD AOCL
+./toolchain_aocc-aocl.sh   # AMD AOCC + AOCL
 ```
 
-And you may need to change ELPA version to 2024.05.001, edit `toolchain/scripts/stage3/install_elpa.sh` to do it.
+### Build ABACUS
 
-1. For the cusolvermp method, toolchain_*.sh does not need to be changed, just follow it directly install dependencies using `./toolchain_*.sh`, and then add
-```shell
--DUSE_CUDA=ON \
--DENABLE_CUSOLVERMP=ON \
--D CAL_CUSOLVERMP_PATH=/path/to/math.libs/1x.x/target/x86_64-linux/lib \
-```
-to the `build.abacus_*.sh` file. add the following three items to the environment (assuming you are using hpcsdk):
-```shell
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/comm_libs/1x.x/hpcx/hpcx-x.xx/ucc/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/comm_libs/1x.x/hpcx/hpcx-x.xx/ucx/lib
-export CPATH=$CPATH:/path/to/math_libs/1x.x/targets/x86_64-linux/include
-```
-Just enough to build the abacus executable program by compiling it with `./build_abacus_*.sh`.
+After successful toolchain installation:
 
-You can refer to the linking video for auxiliary compilation and installation. [Bilibili](https://www.bilibili.com/video/BV1eqr5YuETN/).
+```bash
+# For GNU toolchain
+./build_abacus_gnu.sh
 
-The cusolverMP requires installation from sources such as apt or yum, which is suitable for containers or local computers.
-The second choice is using [NVIDIA HPC_SDK](https://developer.nvidia.com/hpc-sdk-downloads) for installation, which is relatively simple, but the package from NVIDIA HPC_SDK may not be suitable, especially for muitiple-GPU parallel running. To better use cusolvermp and its dependency (libcal, ucx, ucc) in multi-GPU running, please contact your server manager.
+# For Intel toolchain  
+./build_abacus_intel.sh
 
-After compiling, you can specify `device GPU` in INPUT file to use GPU version of ABACUS.
-
-
-## Common Problems and Solutions
-
-### Intel-oneAPI problem
-
-#### OneAPI 2025.0 problem
-
-Generally, OneAPI 2025.0 can be useful to compile basic function of ABACUS, but one will encounter compatible problem related to something.
-- related to LibRI: refer to [#6190](https://github.com/deepmodeling/abacus-develop/issues/6190), it is recommended not to use LibRI or downgrade your OneAPI now.
-
-#### ELPA problem via Intel-oneAPI toolchain in AMD server
-
-The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
-
-The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in *toolchain_intel.sh* via `--with-intel-classic=yes`
-
-Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
-
-You can get Intel-OneAPI in [QE-managed website](https://pranabdas.github.io/espresso/setup/hpc/#installing-intel-oneapi-libraries), and use this code to get Intel oneAPI Base Toolkit and HPC Toolkit:
-```shell
-wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/992857b9-624c-45de-9701-f6445d845359/l_BaseKit_p_2023.2.0.49397_offline.sh
-wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0722521a-34b5-4c41-af3f-d5d14e88248d/l_HPCKit_p_2023.2.0.49440_offline.sh
+# For AMD toolchains
+./build_abacus_gcc-aocl.sh
+./build_abacus_aocc-aocl.sh
 ```
 
-Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
+### Environment Setup
 
-#### linking problem in early 2023 version oneAPI
+```bash
+# Source the generated environment
+source install/setup
 
-Sometimes Intel-oneAPI have problem to link `mpirun`, 
-which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
-Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
-
-which is fixed in 2024.0.0 version of Intel-oneAPI, 
-And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
-
-More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
-
-#### gcc-MKL problem
-
-You cannot use gcc as compiler while using MKL as math library for compile ABACUS, there will be lots of error in the lask linking step. See [#3198](https://github.com/deepmodeling/abacus-develop/issues/3198)
-
-### AMD AOCC-AOCL problem
-
-Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS efficiency. But you need to get rid of `flang` while compiling ELPA. Toolchain itself helps you make this `flang` shade in default of `aocc-aocl` toolchain, and you can manually use `flang` by setting `--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain helps you to bypass the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be relatively lower compared to `gnu` or `gcc-aocl` toolchain.
-
-The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. However, the gcc-dependent aocl will have some package linking problem related to OpenMPI. Take it with caution.
-
-
-### OpenMPI problem
-
-#### in EXX and LibRI
-
-- [Fixed in Toolchain 2025-02] GCC toolchain with OpenMPI cannot compile LibComm v0.1.1 due to the different MPI variable type from MPICH and IntelMPI, see discussion here [#5033](https://github.com/deepmodeling/abacus-develop/issues/5033), you can try use a newest branch of LibComm by 
-```
-git clone https://gitee.com/abacus_dft/LibComm -b MPI_Type_Contiguous_Pool
-``` 
-or pull the newest master branch of LibComm
-```
-git clone https://github.com/abacusmodeling/LibComm
-```
-. yet another is switching to GCC-MPICH or Intel toolchain
-- It is recommended to use Intel toolchain if one wants to include EXX feature in ABACUS, which can have much better performance and can use more than 16 threads in OpenMP parallelization to accelerate the EXX process.
-
-#### OpenMPI-v5 
-
-OpenMPI in version 5 has huge update, lead to compatibility problem. If one wants to use the OpenMPI in version 4 (4.1.6), one can specify `--with-openmpi-4th=yes` in *toolchain_gnu.sh*
-
-
-### Shell problem
-
-If you encounter problem like:
-
-```shell
-/bin/bash^M: bad interpreter: No such file or directory
+# Or use the generated ABACUS environment
+source abacus_env.sh
 ```
 
-or   `permission denied` problem, you can simply run:
+## Installation Methods
 
-```shell
-./pre_set.sh
+### Online Installation
+
+Downloads packages automatically from official sources:
+
+```bash
+./toolchain_gnu.sh  # Uses system package managers and official repositories
 ```
 
-And also, you can fix `permission denied` problem via `chmod +x`
-if *pre_set.sh* have no execution permission; 
-if the *pre_set.sh* also have `/bin/bash^M` problem, you can run:
+**Package Sources:**
+- Core libraries: [CP2K static downloads](https://www.cp2k.org/static/downloads)
+- GitHub packages: CEREAL, LibNPY, LibRI, LibComm, RapidJSON
 
-```shell
-> dos2unix pre_set.sh
+### Offline Installation
+
+For air-gapped systems or unreliable internet:
+
+```bash
+# 1. Create build directory and download packages
+mkdir build
+# Download required packages to build/ directory with proper naming
+# e.g., fftw-3.3.10.tar.gz, openmpi-5.0.7.tar.bz2
+
+# 2. Run toolchain (will detect local packages)
+./toolchain_gnu.sh
 ```
 
-to fix it
+### Hybrid Installation
 
-### Libtorch and DeePKS problem
+Mix online and offline packages as needed - the toolchain automatically detects locally available packages and downloads missing ones.
 
-If deepks feature have problem, you can manually change libtorch version
-from 2.1.2 to 2.0.1 or 1.12.0 in `toolchain/scripts/stage4/install_libtorch.sh`.
+## Supported Toolchains
 
-Also, you can install ABACUS without deepks by removing all the deepks and related options.
+### GNU Toolchain
+- **Compilers**: System GCC (≥5.0)
+- **MPI**: OpenMPI or MPICH
+- **Math**: OpenBLAS + ScaLAPACK
+- **Features**: Most stable, widely compatible
 
-NOTICE: if you want deepks feature, your intel-mkl environment should be accessible in building process. you can check it in `build_abacus_gnu.sh`
+### Intel Toolchain
+- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort)
+- **MPI**: Intel MPI
+- **Math**: Intel MKL
+- **Features**: Optimized performance, EXX support
 
-### DeePMD feature problem
+### AMD Toolchain
+- **Compilers**: AMD AOCC or GCC
+- **Math**: AMD AOCL (Optimized math libraries)
+- **Features**: AMD processor optimization
 
-When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your `gcc` version is lower than the requirement of `libdeepmd`.
+## Dependencies
 
-After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
+### Supported Packages
 
+| Package | Version | Purpose | License | Default |
+|---------|---------|---------|---------|---------|
+| **Build Tools** |||||
+| CMake | 3.31.7 | Build system | BSD-3-Clause | Install |
+| GCC | 14.2.0 | C/C++ compiler | GPL-3.0-or-later WITH GCC-exception-3.1 | Install |
+| **MPI Libraries** |||||
+| OpenMPI | 5.0.8 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
+| MPICH | 4.3.1 | Alternative MPI | mpich2 (BSD-like) | Alternative |
+| **Math Libraries** |||||
+| OpenBLAS | 0.3.30 | Linear algebra | BSD-3-Clause | Install |
+| ScaLAPACK | 2.2.2 | Parallel linear algebra | BSD-3-Clause | Install |
+| **Scientific Libraries** |||||
+| FFTW | 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
+| LibXC | 7.0.0 | Exchange-correlation | MPL-2.0 | Install |
+| ELPA | 2025.06.001 | Eigenvalue solver | LGPL-3.0-only | Install |
+| **Advanced Features** |||||
+| Cereal | master | C++ Serialization | BSD | Install |
+| RapidJSON | master | JSON parsing | MIT | Install |
+| LibRI | 0.2.1.0 | EXX calculations | GPL-3.0 | Install |
+| LibComm | master | EXX calculations | GPL-3.0 | Install |
+| LibTorch | 2.1.2 | MLALGO support | BSD-3-Clause | Optional |
+| LibNPY | 1.0.1 | NumPy I/O | MIT | Optional |
 
-## Advanced Installation Usage
+### System Requirements
 
-1. Users can move toolchain directory to anywhere you like, 
-and complete installation by change the setting in 
-`toolchain_*.sh` and `build_*.sh` by your own setting.
-By moving toolchain out or rename it ,one can make toolchain independent
-from ABACUS repo, make dependencies package more independent and flexible.
-2. Users can manually change `pkg_install_dir` variable 
-in `scripts/stage*/install*` to change the installation directory 
-of each packages, which may let the installation more fiexible.
+Install system dependencies using provided scripts:
 
+```bash
+# Ubuntu/Debian
+sudo ./root_requirements/install_requirements_ubuntu.sh
 
-## More
+# Fedora/RHEL/CentOS  
+sudo ./root_requirements/install_requirements_fedora.sh
 
-More infomation can be read from `Details.md`.
+# Generic
+sudo ./root_requirements/install_requirements.sh
+```
+
+## GPU Support
+
+### CUDA Support for NVIDIA GPUs
+
+#### Basic GPU Support
+
+Add to your build script:
+
+```bash
+cmake -B $BUILD_DIR \
+    -DUSE_CUDA=ON \
+    -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
+    # ... other options
+```
+
+#### Multi-GPU with ELPA
+
+1. **Configure toolchain with CUDA:**
+```bash
+export CUDA_PATH=/path/to/CUDA
+./toolchain_gnu.sh --enable-cuda --gpu-ver=70  # For V100 (compute capability 7.0)
+```
+
+2. **Build with ELPA GPU support:**
+```bash
+cmake -B $BUILD_DIR \
+    -DUSE_CUDA=ON \
+    -DUSE_ELPA=ON \
+    # ... other options
+```
+
+#### Multi-GPU with cuSolverMP
+
+1. **Check or install cuSolverMP manually:**
+One may use NVIDIA HPC_SDK as an easy way to install cuSolverMP.
+
+2. **Install dependencies normally:**
+```bash
+./toolchain_gnu.sh
+```
+
+3. **Build with cuSolverMP:**
+```bash
+cmake -B $BUILD_DIR \
+    -DUSE_CUDA=ON \
+    -DENABLE_CUSOLVERMP=ON \
+    -DCAL_CUSOLVERMP_PATH=/path/to/math_libs/lib \
+    # ... other options
+```
+
+3. **Set environment variables:**
+```bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/hpcx/ucc/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/hpcx/ucx/lib  
+export CPATH=$CPATH:/path/to/math_libs/include
+```
+
+**Note**: cuSolverMP requires NVIDIA HPC SDK or system installation via package manager.
+
+## Troubleshooting
+
+### Common Issues
+
+#### Intel OneAPI Problems
+
+**OneAPI 2025.0 Compatibility:**
+- LibRI compatibility issues ([#6190](https://github.com/deepmodeling/abacus-develop/issues/6190))
+- Solution: Using the patch from Cereal and the master version of Cereal to fix the compatibility issue (included in toolchain).
+
+**ELPA on AMD servers with Intel compilers:**
+```bash
+# Use Intel classic compilers instead
+./toolchain_intel.sh --with-intel-classic=yes
+```
+
+#### OpenMPI Issues
+
+**Version 5 compatibility problems:**
+```bash
+# Use OpenMPI v4 instead
+./toolchain_gnu.sh --with-openmpi-4th=yes
+```
+
+**LibComm compilation with OpenMPI:**
+- Fixed in toolchain 2025.2 which downlo the master branch of LibComm
+- Alternative: Use MPICH or Intel MPI
+
+#### Shell and Permission Issues
+
+**Line ending problems:**
+```bash
+./pre_set.sh  # Fixes line endings and permissions
+# Or manually:
+dos2unix *.sh
+chmod +x *.sh
+```
+
+#### Library Version Issues
+
+**LibTorch GLIBC errors:**
+- Change version from 2.1.2 to 1.12.1
+- Use --package-version libtorch:alt when calling toolchain
+
+**DeepMD GLIBC errors:**
+- Requires GCC ≥ 11.3.1
+- Upgrade system GCC or use newer toolchain
+
+### Getting Help
+
+1. **Check logs**: Look in `build/PKG_NAME/make.log` for compilation errors
+2. **Reduce parallelism**: Use `-j N` option to limit parallel processes
+3. **System libraries**: Use `--with-PKG=system` for system-installed packages
+4. **Clean installation**: Remove `install/` and `build/` directories to restart
+
+## Advanced Usage
+
+### Package-Specific Options
+
+```bash
+# Use Intel MKL instead of installing OpenBLAS
+./toolchain_gnu.sh --with-mkl=system
+
+# Use system FFTW instead of installing
+./toolchain_gnu.sh --with-fftw=system
+
+# Specify custom package installation path
+./toolchain_gnu.sh --with-fftw=/path/to/custom/fftw
+```
+
+### Execution Mode Control
+
+```bash
+# Test configuration without actual installation (recommended for first run)
+./toolchain_gnu.sh --dry-run
+
+# Only download packages without building (useful for offline preparation)
+./toolchain_gnu.sh --pack-run
+```
+
+### Environment Variable Configuration
+
+The toolchain supports several environment variables for advanced configuration:
+
+#### Download Certificate Verification
+
+Control SSL/TLS certificate verification during package downloads:
+
+```bash
+# Strict mode: Always verify certificates (secure)
+export DOWNLOAD_CERT_POLICY=strict
+./toolchain_gnu.sh
+
+# Smart mode: Try secure first, fallback if needed (default)
+export DOWNLOAD_CERT_POLICY=smart  # or leave unset
+./toolchain_gnu.sh
+
+# Skip mode: Skip certificate verification (legacy compatibility)
+export DOWNLOAD_CERT_POLICY=skip
+./toolchain_gnu.sh
+```
+
+**Smart Mode Behavior**: The default `smart` mode first attempts secure downloads with certificate verification. If this fails (e.g., due to corporate firewalls or outdated certificates), it automatically falls back to skipping certificate verification while providing clear user feedback.
+
+#### Parallel Compilation Control
+
+Override the automatic CPU core detection for compilation:
+
+```bash
+# Use 8 cores for compilation (useful for resource-limited systems)
+export NPROCS_OVERWRITE=8
+./toolchain_gnu.sh
+
+# Use single core for debugging compilation issues
+export NPROCS_OVERWRITE=1
+./toolchain_gnu.sh
+
+# Or specify inline
+NPROCS_OVERWRITE=4 ./toolchain_gnu.sh --with-gcc --with-openmpi
+```
+
+**Use Cases**:
+- **Resource-limited systems**: Reduce parallelism to avoid memory exhaustion
+- **Shared servers**: Limit resource usage to be considerate of other users
+- **CI/CD environments**: Match container resource limits
+- **Debugging**: Use single-core compilation for clearer error messages
+
+### Legacy Script Options
+
+The deprecated `install_abacus_toolchain.sh` supports additional options:
+
+| Option | Description | Availability |
+|--------|-------------|--------------|
+| `--dry-run` | Test configuration without installation | ✅ New & Legacy |
+| `--pack-run` | Download packages without building | ✅ New & Legacy |
+| `--no-check-certificate` | Skip SSL certificate verification | ⚠️ Legacy only (use `DOWNLOAD_CERT_POLICY=skip`) |
+| `-j N` | Limit parallel compilation processes | ⚠️ Legacy only (use `NPROCS_OVERWRITE=N`) |
+
+> **Migration Note**: The new toolchain system (`toolchain_*.sh` scripts) is recommended over the legacy `install_abacus_toolchain.sh`. Legacy options like `--no-check-certificate` and `-j N` are replaced by environment variables `DOWNLOAD_CERT_POLICY` and `NPROCS_OVERWRITE` respectively.
+
+### Environment Management
+
+The toolchain generates several setup files:
+
+- `install/setup`: Main environment setup
+- `build/setup_PKG`: Individual package environments  
+- `abacus_env.sh`: ABACUS-specific environment (generated by build scripts)
+
+## Developer Guide
+
+### Toolchain Architecture
+
+The toolchain follows a modular design with staged dependency installation:
+
+```
+scripts/
+├── stage0/          # Compilers and build tools
+├── stage1/          # MPI implementations  
+├── stage2/          # Math libraries (BLAS, LAPACK)
+├── stage3/          # Scientific libraries (FFTW, LibXC, ELPA)
+├── stage4/          # Advanced features (LibTorch, LibRI)
+└── lib/             # Core toolchain libraries
+```
+
+### Key Components
+
+| File | Purpose |
+|------|---------|
+| `install_abacus_toolchain.sh` | Main orchestration script |
+| `scripts/lib/config_manager.sh` | Configuration management |
+| `scripts/lib/package_manager.sh` | Package installation logic |
+| `scripts/lib/user_interface.sh` | User interaction and output |
+| `scripts/common_vars.sh` | Shared variables and defaults |
+| `scripts/tool_kit.sh` | Utility functions and macros |
+
+### Package Installation Scripts
+
+Each `scripts/stage*/install_PKG.sh` script:
+
+1. **Downloads** the package (if not available locally)
+2. **Configures** build with appropriate flags
+3. **Compiles** with error handling and logging
+4. **Installs** to the toolchain directory
+5. **Generates** setup files for environment configuration
+
+### Configuration System
+
+#### Package Control Options
+
+- `--with-PKG=install`: Compile from source (default)
+- `--with-PKG=system`: Use system installation
+- `--with-PKG=/path`: Use specific installation path
+- `--with-PKG=no`: Skip package
+
+#### Feature Control Options
+
+- `--enable-FEATURE=yes`: Enable optional feature
+- `--enable-FEATURE=no`: Disable feature
+
+#### Mode Selection
+
+For packages with multiple implementations:
+- `--mpi-mode=openmpi|mpich|intelmpi`: Choose MPI implementation
+- `--math-mode=openblas|mkl|aocl`: Choose math library
+
+### Adding New Packages
+
+1. **Create installation script**: `scripts/stageN/install_newpkg.sh`
+2. **Add to stage script**: Include in `scripts/stageN/install_stageN.sh`
+3. **Update configuration**: Add options to `config_manager.sh`
+4. **Add version info**: Update `scripts/package_versions.sh`
+5. **Test thoroughly**: Verify with different toolchain combinations
+
+### Best Practices
+
+- **Reuse toolkit functions**: Use macros from `scripts/tool_kit.sh`
+- **Portable compiler flags**: Filter through `allowed_gcc_flags`
+- **Environment variables**: Use `${VAR:-default}` pattern
+- **Lock files**: Create completion markers for resumable installation
+- **Error handling**: Provide clear error messages and recovery suggestions
+
+## License
+
+The ABACUS Toolchain downloads and installs only [GPL-compatible](https://www.gnu.org/licenses/gpl-faq.html#WhatDoesCompatMean) packages. All included packages maintain their original licenses as listed in the Dependencies section above.
+
+**License Compatibility**: All packages use GPL-compatible licenses including BSD, MIT, LGPL, MPL-2.0, and GPL variants, ensuring seamless integration with GPL-licensed software.
+
+**Note**: Proprietary packages like Intel OneAPI (MKL/Compiler/MPI) and AMD AOCC/AOCL are supported but must be installed separately by the user.
+
+## Contributing
+
+We welcome contributions to improve the ABACUS Toolchain! Here's how you can help:
+
+### Reporting Issues
+
+1. **Search existing issues** before creating new ones
+2. **Provide detailed information**:
+   - Operating system and version
+   - Compiler versions
+   - Complete error messages and logs
+   - Steps to reproduce
+
+### Contributing Code
+
+1. **Fork the repository** and create a feature branch
+2. **Follow coding standards**:
+   - Use consistent shell scripting style
+   - Add comments for complex logic
+   - Test with multiple toolchain combinations
+3. **Update documentation** for new features
+4. **Submit pull request** with clear description
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/deepmodeling/abacus-develop.git
+cd abacus-develop/toolchain
+
+# Test your changes
+./toolchain_gnu.sh --dry-run
+```
+
+### Areas for Contribution
+
+- 🔧 **New package support**: Add support for additional scientific libraries
+- 🐛 **Bug fixes**: Resolve compatibility issues and installation problems  
+- 📚 **Documentation**: Improve guides and troubleshooting information
+- 🧪 **Testing**: Expand test coverage for different systems and configurations
+- 🚀 **Performance**: Optimize installation speed and resource usage
+
+---
+
+**For questions, issues, or contributions, please visit the [ABACUS GitHub repository](https://github.com/deepmodeling/abacus-develop).**

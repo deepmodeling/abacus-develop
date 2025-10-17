@@ -34,4 +34,7 @@ MATH_MODE=${MATH_MODE:-openblas}
 # default for log file dump size
 export LOG_LINES="200"
 
+# download configuration
+DOWNLOAD_CERT_POLICY=${DOWNLOAD_CERT_POLICY:-"smart"}  # strict|smart|skip
+
 export NVCC=${NVCC:-nvcc}

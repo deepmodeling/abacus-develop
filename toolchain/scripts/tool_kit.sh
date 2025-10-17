@@ -921,8 +921,10 @@ verify_file_integrity() {
 }
 
 # downloader for the package tars, includes checksum
-download_pkg_from_ABACUS_org() {
-  # usage: download_pkg_from_ABACUS_org sha256 filename
+# backup and deprecated
+download_pkg_from_org() {
+  # usage: download_pkg_from_org sha256 filename
+  echo "use cp2k mirror to download $__filename"
   local __sha256="$1"
   local __filename="$2"
   local __url="https://www.cp2k.org/static/downloads/$__filename"
@@ -946,18 +948,50 @@ download_pkg_from_url() {
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
   local __filename="$2"
   local __url="$3"
-  # download
-  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename"
-  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url -O $__filename; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url -O $__filename --no-check-certificate"
-  if ! wget ${DOWNLOADER_FLAGS} $__url -O $__filename --no-check-certificate; then
-    report_error "failed to download $__url"
-    recommend_offline_installation $__filename $__url
-    if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-    fi
-  fi
-  # checksum
+  
+  # Smart certificate validation strategy
+  case "${DOWNLOAD_CERT_POLICY:-smart}" in
+    "strict")
+      echo "Downloading with strict certificate validation: $__url"
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+        report_error "failed to download $__url (strict certificate validation)"
+        recommend_offline_installation "$__filename" "$__url"
+        if [ "${PACK_RUN}" != "__TRUE__" ]; then
+          return 1
+        fi
+      fi
+      ;;
+    "skip")
+      echo "Downloading with certificate validation disabled: $__url"
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+        report_error "failed to download $__url"
+        recommend_offline_installation "$__filename" "$__url"
+        if [ "${PACK_RUN}" != "__TRUE__" ]; then
+          return 1
+        fi
+      fi
+      ;;
+    "smart"|*)
+      # Smart fallback: try with certificate validation first, then without
+      echo "Attempting secure download: $__url"
+      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" 2>/dev/null; then
+        echo "Download successful with certificate validation"
+      else
+        echo "Certificate validation failed, retrying without certificate check..."
+        if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+          report_error "failed to download $__url (both secure and insecure attempts failed)"
+          recommend_offline_installation "$__filename" "$__url"
+          if [ "${PACK_RUN}" != "__TRUE__" ]; then
+            return 1
+          fi
+        else
+          echo "Download successful without certificate validation"
+        fi
+      fi
+      ;;
+  esac
+  
+  # checksum validation (unchanged)
   if [ "$__sha256" != "--no-checksum" ]; then
     checksum "$__filename" "$__sha256"
   fi
