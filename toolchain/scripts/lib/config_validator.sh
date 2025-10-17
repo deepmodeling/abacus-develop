@@ -11,6 +11,8 @@
 # Global validation state
 VALIDATION_ERRORS=()
 VALIDATION_WARNINGS=()
+VALIDATION_ERROR_GROUPS=()
+VALIDATION_WARNING_GROUPS=()
 VALIDATION_INITIALIZED=false
 
 # Initialize configuration validator
@@ -22,6 +24,8 @@ config_validator_init() {
     
     VALIDATION_ERRORS=()
     VALIDATION_WARNINGS=()
+    VALIDATION_ERROR_GROUPS=()
+    VALIDATION_WARNING_GROUPS=()
     VALIDATION_INITIALIZED=true
     
     return 0
@@ -39,6 +43,50 @@ add_validation_error() {
 add_validation_warning() {
     local message="$1"
     VALIDATION_WARNINGS+=("WARNING: $message")
+}
+
+# Start a new error group (represents one logical error)
+# Usage: start_error_group "group_name"
+start_error_group() {
+    local group_name="$1"
+    VALIDATION_ERROR_GROUPS+=("$group_name")
+}
+
+# Start a new warning group (represents one logical warning)
+# Usage: start_warning_group "group_name"
+start_warning_group() {
+    local group_name="$1"
+    VALIDATION_WARNING_GROUPS+=("$group_name")
+}
+
+# Add validation error group (complete error with all details)
+# Usage: add_validation_error_group "group_name" "line1" "line2" ...
+add_validation_error_group() {
+    local group_name="$1"
+    shift
+    
+    # Add the group to track unique errors
+    VALIDATION_ERROR_GROUPS+=("$group_name")
+    
+    # Add all error lines
+    for line in "$@"; do
+        VALIDATION_ERRORS+=("ERROR: $line")
+    done
+}
+
+# Add validation warning group (complete warning with all details)
+# Usage: add_validation_warning_group "group_name" "line1" "line2" ...
+add_validation_warning_group() {
+    local group_name="$1"
+    shift
+    
+    # Add the group to track unique warnings
+    VALIDATION_WARNING_GROUPS+=("$group_name")
+    
+    # Add all warning lines
+    for line in "$@"; do
+        VALIDATION_WARNINGS+=("WARNING: $line")
+    done
 }
 
 # Add validation info (for successful validations)
@@ -141,10 +189,11 @@ validate_system_requirements() {
     # ABACUS itself and some dependencies require cmake.
     # Check cmake requirement based on configuration (mirrors original L768-772)
     if [[ "${CONFIG_CACHE[with_cmake]}" == "__DONTUSE__" ]]; then
-        add_validation_error "CMake is required for ABACUS and some dependencies. Please enable it."
-        add_validation_error ""
-        add_validation_error "SOLUTION: Use '--with-cmake=install' to automatically install CMake:"
-        add_validation_error "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]"
+        add_validation_error_group "cmake_required" \
+            "CMake is required for ABACUS and some dependencies. Please enable it." \
+            "" \
+            "SOLUTION: Use '--with-cmake=install' to automatically install CMake:" \
+            "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]"
         return
     fi
     
@@ -156,6 +205,64 @@ validate_system_requirements() {
     if [[ "${CONFIG_CACHE[with_cmake]}" == "__SYSTEM__" ]]; then
         if ! command -v "cmake" &> /dev/null; then
             missing_tools+=("cmake")
+        else
+            # Check cmake version if it exists
+            local cmake_min_version="3.16"
+            local cmake_version=$(cmake --version 2>/dev/null | head -n 1 | awk '{print $3}')
+            
+            if [[ -z "$cmake_version" ]]; then
+                add_validation_error "Failed to determine CMake version"
+                add_validation_error "This usually indicates a corrupted or non-standard CMake installation."
+                add_validation_error ""
+                add_validation_error "SOLUTION: Use '--with-cmake=install' to install a known-good CMake version:"
+                add_validation_error "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]"
+                add_validation_error ""
+                add_validation_error "This will install CMake ${cmake_ver:-3.29.6} with proper version information."
+                return
+            fi
+            
+            # Extract major and minor version numbers for comparison
+            local cmake_major=$(echo "$cmake_version" | awk -F. '{print $1}')
+            local cmake_minor=$(echo "$cmake_version" | awk -F. '{print $2}')
+            local min_major=$(echo "$cmake_min_version" | awk -F. '{print $1}')
+            local min_minor=$(echo "$cmake_min_version" | awk -F. '{print $2}')
+            
+            # Validate version format
+            if ! [[ "$cmake_major" =~ ^[0-9]+$ ]] || ! [[ "$cmake_minor" =~ ^[0-9]+$ ]]; then
+                add_validation_error "Unable to parse CMake version from: $cmake_version"
+                add_validation_error "Expected format: X.Y.Z (e.g., 3.29.6), but got: $cmake_version"
+                add_validation_error ""
+                add_validation_error "SOLUTION: Use '--with-cmake=install' to install a standard CMake version:"
+                add_validation_error "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]"
+                add_validation_error ""
+                add_validation_error "This will install CMake ${cmake_ver:-3.29.6} with standard version format."
+                return
+            fi
+            
+            # Compare versions (major.minor comparison)
+            local version_too_old=false
+            if [[ "$cmake_major" -lt "$min_major" ]]; then
+                version_too_old=true
+            elif [[ "$cmake_major" -eq "$min_major" ]] && [[ "$cmake_minor" -lt "$min_minor" ]]; then
+                version_too_old=true
+            fi
+            
+            if [[ "$version_too_old" == "true" ]]; then
+                add_validation_error "CMake version $cmake_version is too old"
+                add_validation_error "Minimum required: CMake $cmake_min_version or newer (ABACUS requirement)"
+                add_validation_error ""
+                add_validation_error_group "cmake_outdated" \
+                    "Your system CMake is outdated and may cause build failures." \
+                    "" \
+                    "SOLUTION: Use '--with-cmake=install' to install a modern CMake version:" \
+                    "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]" \
+                    "" \
+                    "This will install CMake ${cmake_ver:-3.29.6} (>= $cmake_min_version) with full feature support."
+                return
+            fi
+            
+            # Success - add informational message
+            add_validation_info "System CMake validated: version $cmake_version (>= $cmake_min_version required)"
         fi
     fi
     
@@ -166,7 +273,31 @@ validate_system_requirements() {
     done
     
     if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        add_validation_error "Missing required system tools: ${missing_tools[*]}"
+        # Check if cmake is in the missing tools and provide specific guidance
+        if [[ " ${missing_tools[*]} " =~ " cmake " ]]; then
+            add_validation_error_group "cmake_missing" \
+                "CMake is not installed on your system" \
+                "CMake is required for building ABACUS and its dependencies." \
+                "" \
+                "SOLUTION: Use '--with-cmake=install' to automatically install CMake:" \
+                "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]" \
+                "" \
+                "This will install CMake ${cmake_ver:-3.29.6} with full feature support."
+            
+            # Remove cmake from missing_tools to avoid duplicate error messages
+            local filtered_tools=()
+            for tool in "${missing_tools[@]}"; do
+                if [[ "$tool" != "cmake" ]]; then
+                    filtered_tools+=("$tool")
+                fi
+            done
+            missing_tools=("${filtered_tools[@]}")
+        fi
+        
+        # Report other missing tools if any
+        if [[ ${#missing_tools[@]} -gt 0 ]]; then
+            add_validation_error "Missing required system tools: ${missing_tools[*]}"
+        fi
     fi
     
     # Check for development packages (common names)
@@ -195,12 +326,13 @@ validate_system_requirements() {
             ! command -v g++ &> /dev/null && missing_tools+=("g++")
             ! command -v gfortran &> /dev/null && missing_tools+=("gfortran")
             
-            add_validation_error "System GCC toolchain incomplete. Missing: ${missing_tools[*]}"
-            add_validation_error ""
-            add_validation_error "SOLUTION: Use '--with-gcc=install' to automatically download and install a complete GCC toolchain:"
-            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
-            add_validation_error ""
-            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with all required components (gcc, g++, gfortran)."
+            add_validation_error_group "gcc_incomplete" \
+                "System GCC toolchain incomplete. Missing: ${missing_tools[*]}" \
+                "" \
+                "SOLUTION: Use '--with-gcc=install' to automatically download and install a complete GCC toolchain:" \
+                "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]" \
+                "" \
+                "This will install GCC ${gcc_ver:-13.2.0} with all required components (gcc, g++, gfortran)."
             return
         fi
         
@@ -216,29 +348,30 @@ validate_system_requirements() {
             [[ -z "$gxx_version" ]] && failed_tools+=("g++")
             [[ -z "$gfc_version" ]] && failed_tools+=("gfortran")
             
-            add_validation_error "Failed to determine GCC toolchain versions for: ${failed_tools[*]}"
-            add_validation_error "This usually indicates corrupted or non-standard GCC installation."
-            add_validation_error ""
-            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a known-good GCC version:"
-            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
-            add_validation_error ""
-            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with proper version information."
+            add_validation_error_group "gcc_version_failed" \
+                "Failed to determine GCC toolchain versions for: ${failed_tools[*]}" \
+                "This usually indicates corrupted or non-standard GCC installation." \
+                "" \
+                "SOLUTION: Use '--with-gcc=install' to install a known-good GCC version:" \
+                "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]" \
+                "" \
+                "This will install GCC ${gcc_ver:-13.2.0} with proper version information."
             return
         fi
         
         # Check version consistency
         if [[ "$gcc_version" != "$gxx_version" ]] || [[ "$gcc_version" != "$gfc_version" ]]; then
-            add_validation_error "GCC toolchain versions are inconsistent:"
-            add_validation_error "  gcc:      $gcc_version"
-            add_validation_error "  g++:      $gxx_version"
-            add_validation_error "  gfortran: $gfc_version"
-            add_validation_error ""
-            add_validation_error "All GCC components must have the same version for proper compilation."
-            add_validation_error ""
-            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a consistent GCC toolchain:"
-            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
-            add_validation_error ""
-            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with all components at the same version."
+            add_validation_error_group "gcc_version_inconsistent" \
+                "GCC toolchain versions are inconsistent:" \
+                "  gcc:      $gcc_version" \
+                "  g++:      $gxx_version" \
+                "  gfortran: $gfc_version" \
+                "" \
+                "All GCC components must have the same version for proper compilation." \
+                "SOLUTION: Use '--with-gcc=install' to install a consistent GCC toolchain:" \
+                "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]" \
+                "" \
+                "This will install GCC ${gcc_ver:-13.2.0} with all components at the same version."
             return
         fi
         
@@ -247,26 +380,28 @@ validate_system_requirements() {
         
         # Validate major version is numeric and meets minimum requirement
         if ! [[ "$gcc_major" =~ ^[0-9]+$ ]]; then
-            add_validation_error "Unable to parse GCC major version from: $gcc_version"
-            add_validation_error "Expected format: X.Y.Z (e.g., 13.2.0), but got: $gcc_version"
-            add_validation_error ""
-            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a standard GCC version:"
-            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
-            add_validation_error ""
-            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} with standard version format."
+            add_validation_error_group "gcc_version_parse_failed" \
+                "Unable to parse GCC major version from: $gcc_version" \
+                "Expected format: X.Y.Z (e.g., 13.2.0), but got: $gcc_version" \
+                "" \
+                "SOLUTION: Use '--with-gcc=install' to install a standard GCC version:" \
+                "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]" \
+                "" \
+                "This will install GCC ${gcc_ver:-13.2.0} with standard version format."
             return
         fi
         
         if [[ "$gcc_major" -lt "$gcc_min_version" ]]; then
-            add_validation_error "GCC version $gcc_version is too old (major version: $gcc_major)"
-            add_validation_error "Minimum required: GCC $gcc_min_version.x or newer"
-            add_validation_error ""
-            add_validation_error "Your system GCC is outdated and may cause compilation failures."
-            add_validation_error ""
-            add_validation_error "SOLUTION: Use '--with-gcc=install' to install a modern GCC version:"
-            add_validation_error "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]"
-            add_validation_error ""
-            add_validation_error "This will install GCC ${gcc_ver:-13.2.0} (>= $gcc_min_version.x) with full C++17/C++20 support."
+            add_validation_error_group "gcc_version_too_old" \
+                "GCC version $gcc_version is too old (major version: $gcc_major)" \
+                "Minimum required: GCC $gcc_min_version.x or newer (ABACUS requirement)" \
+                "" \
+                "Your system GCC is outdated and may cause compilation failures." \
+                "" \
+                "SOLUTION: Use '--with-gcc=install' to install a modern GCC version:" \
+                "  ./install_abacus_toolchain_new.sh --with-gcc=install [other options]" \
+                "" \
+                "This will install GCC ${gcc_ver:-13.2.0} (>= $gcc_min_version.x) with full C++17/C++20 support."
             return
         fi
         
@@ -344,8 +479,10 @@ validate_configuration() {
     validate_logical_consistency
     validate_package_versions
     
-    # Report results
-    local total_issues=$((${#VALIDATION_ERRORS[@]} + ${#VALIDATION_WARNINGS[@]}))
+    # Report results using error groups for accurate counting
+    local error_groups=${#VALIDATION_ERROR_GROUPS[@]}
+    local warning_groups=${#VALIDATION_WARNING_GROUPS[@]}
+    local total_issues=$((error_groups + warning_groups))
     
     if [[ ${#VALIDATION_ERRORS[@]} -gt 0 ]]; then
         echo ""
@@ -371,11 +508,11 @@ validate_configuration() {
     else
         echo ""
         echo "Configuration validation completed with $total_issues issue(s)."
-        echo "  Errors: ${#VALIDATION_ERRORS[@]}"
-        echo "  Warnings: ${#VALIDATION_WARNINGS[@]}"
+        echo "  Errors: $error_groups"
+        echo "  Warnings: $warning_groups"
         
         # Return error code if there are validation errors
-        if [[ ${#VALIDATION_ERRORS[@]} -gt 0 ]]; then
+        if [[ $error_groups -gt 0 ]]; then
             return 1
         else
             return 0

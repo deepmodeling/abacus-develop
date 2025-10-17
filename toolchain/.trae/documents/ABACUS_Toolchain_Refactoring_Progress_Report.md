@@ -26,6 +26,7 @@
 - ✅ **版本号显示功能完成**：智能版本文件读取和欢迎横幅版本号显示
 - ✅ **系统信息增强完成**：glibc版本检测和系统摘要信息优化
 - ✅ **--package-version参数修复完成**：支持多个键值对，消除边界情况，提升用户体验
+- ✅ **系统检测与报错机制优化完成**：cmake条件检查、版本验证和错误计数逻辑全面优化
 
 ---
 
@@ -209,6 +210,7 @@
 | **--package-version参数** | 只支持单个键值对，静默忽略后续参数 | 支持多个键值对和两种写法：多个独立参数和单个参数多键值对 | 消除边界情况，提升用户体验，保持向后兼容 |
 | **错误处理** | 分散的report_error调用 | 统一error_handler模块 | 一致性，可追踪 |
 | **配置验证** | 内联检查逻辑 | 专用validator模块 | 全面性，可扩展 |
+| **系统检测** | 无条件cmake检查，错误计数不准确 | 条件检查+版本验证+错误组计数 | 智能检测，准确报错 |
 | **版本管理** | 硬编码版本信息 | 集中版本管理 | 易更新，支持多版本 |
 
 ---
@@ -390,11 +392,182 @@
 - `validate_math_libraries()`: 数学库冲突检测
 - `validate_mpi_implementations()`: MPI实现冲突检测
 - `validate_compiler_consistency()`: 编译器一致性检查
+- `validate_system_requirements()`: 系统需求验证
 
 **设计特点**：
 - 分离验证逻辑与业务逻辑
 - 累积错误和警告，一次性报告
 - 可配置的验证级别和跳过选项
+
+#### 系统检测与报错机制优化 - "好品味"的典型实现
+
+**问题背景**：原始的系统检测逻辑存在多个设计缺陷，违背了"好品味"原则：
+1. **cmake检查逻辑缺陷**：无条件检查cmake存在，忽略了`--with-cmake=install`的情况
+2. **版本验证不足**：只检查cmake是否存在，不验证版本是否满足ABACUS最低要求（≥3.16）
+3. **错误计数不准确**：将每行ERROR信息都单独计算，导致错误数量虚高，用户体验差
+
+**"好品味"解决方案**：
+
+##### 1. cmake系统检查逻辑修复
+
+**修复前的逻辑**（存在边界情况）：
+```bash
+# 无条件检查cmake，忽略用户配置
+if ! command -v cmake >/dev/null 2>&1; then
+    add_validation_error "CMake is not installed or not in PATH"
+fi
+```
+
+**修复后的逻辑**（消除边界情况）：
+```bash
+# 根据用户配置进行条件检查
+local cmake_config="${CONFIG_CACHE[with_cmake]}"
+case "$cmake_config" in
+    "__INSTALL__")
+        # 用户选择安装cmake，跳过系统检查
+        ;;
+    "__SYSTEM__")
+        # 用户选择使用系统cmake，检查存在性和版本
+        if ! command -v cmake >/dev/null 2>&1; then
+            add_validation_error_group "cmake_missing" \
+                "System CMake not found but --with-cmake=system specified" \
+                "CMake is required for building ABACUS and its dependencies" \
+                "Solutions:" \
+                "  1. Install CMake (≥3.16): sudo apt install cmake" \
+                "  2. Use toolchain CMake: --with-cmake=install"
+        else
+            # 验证cmake版本
+            validate_cmake_version
+        fi
+        ;;
+    "__DONTUSE__"|"no")
+        add_validation_error_group "cmake_disabled" \
+            "CMake is disabled (--with-cmake=no) but is required for ABACUS" \
+            "CMake is mandatory for building ABACUS and most dependencies" \
+            "Solutions:" \
+            "  1. Use system CMake: --with-cmake=system" \
+            "  2. Install via toolchain: --with-cmake=install"
+        ;;
+esac
+```
+
+##### 2. cmake版本验证功能
+
+新增`validate_cmake_version()`函数，实现智能版本比较：
+
+```bash
+validate_cmake_version() {
+    local cmake_version
+    cmake_version=$(cmake --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+    
+    if [[ -z "$cmake_version" ]]; then
+        add_validation_error_group "cmake_version_unknown" \
+            "Unable to determine CMake version" \
+            "CMake version detection failed"
+        return 1
+    fi
+    
+    local required_version="3.16.0"
+    if ! version_compare "$cmake_version" ">=" "$required_version"; then
+        add_validation_error_group "cmake_version_too_old" \
+            "System CMake version $cmake_version is too old (minimum required: $required_version)" \
+            "ABACUS requires CMake ≥3.16 for modern C++ features and build system support" \
+            "Current version: $cmake_version" \
+            "Required version: ≥$required_version" \
+            "Solutions:" \
+            "  1. Upgrade system CMake to ≥3.16" \
+            "  2. Use toolchain CMake: --with-cmake=install"
+        return 1
+    fi
+    
+    echo "INFO: System CMake version $cmake_version meets requirements (≥$required_version)"
+    return 0
+}
+```
+
+##### 3. 错误计数逻辑优化
+
+**核心问题**：原始逻辑将每行ERROR信息都单独计算，一个逻辑错误可能产生多行描述，导致错误计数虚高。
+
+**"好品味"解决方案**：引入"错误组"概念，区分"错误组"和"错误行"：
+
+```bash
+# 新增错误组数组
+declare -a VALIDATION_ERROR_GROUPS=()
+declare -a VALIDATION_WARNING_GROUPS=()
+
+# 新增错误组函数
+add_validation_error_group() {
+    local group_id="$1"
+    shift
+    
+    # 记录错误组ID（用于计数）
+    VALIDATION_ERROR_GROUPS+=("$group_id")
+    
+    # 记录所有错误行（用于显示）
+    for line in "$@"; do
+        VALIDATION_ERRORS+=("ERROR: $line")
+    done
+}
+
+add_validation_warning_group() {
+    local group_id="$1"
+    shift
+    
+    # 记录警告组ID（用于计数）
+    VALIDATION_WARNING_GROUPS+=("$group_id")
+    
+    # 记录所有警告行（用于显示）
+    for line in "$@"; do
+        VALIDATION_WARNINGS+=("WARNING: $line")
+    done
+}
+```
+
+**错误报告逻辑更新**：
+```bash
+# 使用错误组数量进行计数
+local error_count=${#VALIDATION_ERROR_GROUPS[@]}
+local warning_count=${#VALIDATION_WARNING_GROUPS[@]}
+
+if [[ $error_count -gt 0 ]]; then
+    echo "Configuration validation failed with $error_count error(s) and $warning_count warning(s):"
+    # 显示所有错误行（详细信息）
+    for error in "${VALIDATION_ERRORS[@]}"; do
+        echo "  $error"
+    done
+fi
+```
+
+**"好品味"原则体现**：
+
+1. **消除边界情况**：
+   - **修复前**：cmake检查与用户配置脱节，产生不一致的行为
+   - **修复后**：统一的条件检查逻辑，用户配置决定检查行为
+
+2. **简洁性原则**：
+   - 使用case语句清晰处理不同配置选项
+   - 错误组概念简化了错误计数逻辑
+   - 统一的错误报告格式
+
+3. **实用主义**：
+   - 提供具体的解决方案和用户指导
+   - 智能版本比较满足实际需求
+   - 准确的错误计数提升用户体验
+
+4. **健壮性**：
+   - 严格的版本验证和错误处理
+   - 清晰的错误消息和解决方案
+   - 防止配置不一致导致的构建失败
+
+**功能增强效果**：
+- ✅ **智能cmake检查**：根据用户配置进行条件检查，避免不必要的错误
+- ✅ **版本验证**：确保cmake版本满足ABACUS最低要求（≥3.16）
+- ✅ **准确错误计数**：区分逻辑错误和描述行，提供准确的错误数量
+- ✅ **用户友好**：提供具体的解决方案和操作指导
+- ✅ **配置一致性**：确保系统检查与用户配置保持一致
+
+此优化为ABACUS toolchain提供了更加智能和用户友好的系统检测机制，确保在各种配置下都能提供准确的验证结果和有用的错误信息。
 
 ### 3. package_manager.sh - 包管理器
 **主要职责**：
