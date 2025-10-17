@@ -138,9 +138,26 @@ validate_compiler_consistency() {
 # Check system requirements
 # Usage: validate_system_requirements
 validate_system_requirements() {
-    # Check for required system tools
-    local required_tools=("make" "cmake" "git" "wget" "tar" "gzip")
+    # ABACUS itself and some dependencies require cmake.
+    # Check cmake requirement based on configuration (mirrors original L768-772)
+    if [[ "${CONFIG_CACHE[with_cmake]}" == "__DONTUSE__" ]]; then
+        add_validation_error "CMake is required for ABACUS and some dependencies. Please enable it."
+        add_validation_error ""
+        add_validation_error "SOLUTION: Use '--with-cmake=install' to automatically install CMake:"
+        add_validation_error "  ./install_abacus_toolchain_new.sh --with-cmake=install [other options]"
+        return
+    fi
+    
+    # Check for required system tools (excluding cmake which is handled above)
+    local required_tools=("make" "git" "wget" "tar" "gzip")
     local missing_tools=()
+    
+    # Only check for system cmake if using system cmake
+    if [[ "${CONFIG_CACHE[with_cmake]}" == "__SYSTEM__" ]]; then
+        if ! command -v "cmake" &> /dev/null; then
+            missing_tools+=("cmake")
+        fi
+    fi
     
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then

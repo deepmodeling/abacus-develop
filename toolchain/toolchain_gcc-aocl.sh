@@ -14,7 +14,6 @@ WITH_GCC="system"
 WITH_AMD="no"
 WITH_INTEL="no"
 
-<<<<<<< HEAD
 # Math Libraries (AMD AOCL recommended)
 MATH_MODE="aocl"
 WITH_AOCL="system"

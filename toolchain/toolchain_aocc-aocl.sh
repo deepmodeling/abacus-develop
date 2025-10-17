@@ -8,7 +8,6 @@
 # Users can easily modify these parameters to customize the build
 # Before running this script, ensure you have loaded your system packages
 
-<<<<<<< HEAD
 # Compiler Configuration
 TOOLCHAIN_COMPILER="aocc-aocl"
 WITH_AMD="system"
