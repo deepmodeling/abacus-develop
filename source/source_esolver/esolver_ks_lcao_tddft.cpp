@@ -336,9 +336,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
         GlobalV::ofs_running << std::endl;
     }
 
+    ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
+
     this->save2(ucell, istep, iter, conv_esolver);
 
-    ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 template <typename TR, typename Device>
