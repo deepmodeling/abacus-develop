@@ -90,13 +90,25 @@ case "$with_cereal" in
             echo "--pack-run mode specified, skip system check"
             exit 0
         fi
-        add_include_from_paths CEREAL_CFLAGS "cereal/cereal.hpp" $INCLUDE_PATHS
+        # Find cereal header file and derive package root directory
+        cereal_header_path="$(find_in_paths "cereal/cereal.hpp" $INCLUDE_PATHS)"
+        if [ "$cereal_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # cereal/cereal.hpp -> remove /cereal/cereal.hpp -> get include dir -> get parent dir
+            cereal_include_dir="$(dirname "$(dirname "$cereal_header_path")")"
+            pkg_install_dir="$(dirname "$cereal_include_dir")"
+            echo "Found cereal at: $pkg_install_dir"
+            CEREAL_CFLAGS="-I'${cereal_include_dir}'"
+        else
+            report_error "Cannot find cereal/cereal.hpp in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
-
+    
     *)
         echo "==================== Linking CEREAL to user paths ===================="
-        pkg_install_dir="$with_cereal"
+        pkg_install_dir="${with_cereal}"
         check_dir "${pkg_install_dir}"
         CEREAL_CFLAGS="-I'${pkg_install_dir}'"
         ;;

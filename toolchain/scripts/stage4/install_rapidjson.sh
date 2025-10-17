@@ -93,13 +93,25 @@ EOF
             echo "--pack-run mode specified, skip system check"
             exit 0
         fi
-        add_include_from_paths RAPIDJSON_CFLAGS "rapidjson/rapidjson.h" $INCLUDE_PATHS
+        # Find rapidjson header file and derive package root directory
+        rapidjson_header_path="$(find_in_paths "rapidjson/rapidjson.h" $INCLUDE_PATHS)"
+        if [ "$rapidjson_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # rapidjson/rapidjson.h -> remove /rapidjson/rapidjson.h -> get include dir -> get parent dir
+            rapidjson_include_dir="$(dirname "$(dirname "$rapidjson_header_path")")"
+            pkg_install_dir="$(dirname "$rapidjson_include_dir")"
+            echo "Found rapidjson at: $pkg_install_dir"
+            RAPIDJSON_CFLAGS="-I'${rapidjson_include_dir}'"
+        else
+            report_error "Cannot find rapidjson/rapidjson.h in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
 
     *)
         echo "==================== Linking RapidJSON to user paths ===================="
-        pkg_install_dir="$with_rapidjson"
+        pkg_install_dir="${with_rapidjson}"
         check_dir "${pkg_install_dir}"
         RAPIDJSON_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;

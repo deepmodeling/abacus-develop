@@ -80,12 +80,25 @@ case "$with_libnpy" in
             echo "--pack-run mode specified, skip system check"
             exit 0
         fi
-        add_include_from_paths LIBNPY_CFLAGS "npy.hpp" $INCLUDE_PATHS
+        # Find libnpy header file and derive package root directory
+        libnpy_header_path="$(find_in_paths "npy.hpp" $INCLUDE_PATHS)"
+        if [ "$libnpy_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # npy.hpp -> get include dir -> get parent dir
+            libnpy_include_dir="$(dirname "$libnpy_header_path")"
+            pkg_install_dir="$(dirname "$libnpy_include_dir")"
+            echo "Found libnpy at: $pkg_install_dir"
+            LIBNPY_CFLAGS="-I'${libnpy_include_dir}'"
+        else
+            report_error "Cannot find npy.hpp in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
     
     *)
         echo "==================== Linking LIBNPY to user paths ===================="
+        pkg_install_dir="${with_libnpy}"
         check_dir "${pkg_install_dir}"
         LIBNPY_CFLAGS="-I'${pkg_install_dir}'"
         ;;

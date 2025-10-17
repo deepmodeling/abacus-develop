@@ -88,12 +88,25 @@ case "$with_libri" in
             echo "--pack-run mode specified, skip system check"
             exit 0
         fi
-        add_include_from_paths LIBRI_CFLAGS "RI/RI.h" $INCLUDE_PATHS
+        # Find libri header file and derive package root directory
+        libri_header_path="$(find_in_paths "RI/version.h" $INCLUDE_PATHS)"
+        if [ "$libri_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # RI/version.h -> remove /RI/version.h -> get include dir -> get parent dir
+            libri_include_dir="$(dirname "$(dirname "$libri_header_path")")"
+            pkg_install_dir="$(dirname "$libri_include_dir")"
+            echo "Found libri at: $pkg_install_dir"
+            LIBRI_CFLAGS="-I'${libri_include_dir}'"
+        else
+            report_error "Cannot find RI/version.h in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
 
     *)
         echo "==================== Linking LIBRI to user paths ===================="
+        pkg_install_dir="${with_libri}"
         check_dir "${pkg_install_dir}"
         LIBRI_CFLAGS="-I'${pkg_install_dir}'"
         ;;

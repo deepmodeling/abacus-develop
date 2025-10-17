@@ -89,12 +89,25 @@ case "$with_libcomm" in
             echo "--pack-run mode specified, skip system check"
             exit 0
         fi
-        add_include_from_paths LIBCOMM_CFLAGS "comm/comm.h" $INCLUDE_PATHS
+        # Find libcomm header file and derive package root directory
+        libcomm_header_path="$(find_in_paths "Comm/Comm_Tools.h" $INCLUDE_PATHS)"
+        if [ "$libcomm_header_path" != "__FALSE__" ]; then
+            # Derive pkg_install_dir from found header path
+            # Comm/Comm_Tools.h -> remove /Comm/Comm_Tools.h -> get include dir -> get parent dir
+            libcomm_include_dir="$(dirname "$(dirname "$libcomm_header_path")")"
+            pkg_install_dir="$(dirname "$libcomm_include_dir")"
+            echo "Found libcomm at: $pkg_install_dir"
+            LIBCOMM_CFLAGS="-I'${libcomm_include_dir}'"
+        else
+            report_error "Cannot find Comm/Comm_Tools.h in system paths"
+            exit 1
+        fi
         ;;
     __DONTUSE__) ;;
     
     *)
         echo "==================== Linking LIBCOMM to user paths ===================="
+        pkg_install_dir="${with_libcomm}"
         check_dir "${pkg_install_dir}"
         LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
         ;;
