@@ -5,7 +5,7 @@
 #include "source_base/module_device/device.h"   // base_device
 #include "source_base/module_device/memory_op.h"// base_device::memory
 
-// #include "source_base/module_container/ATen/kernels/lapack.h" // container::kernels
+#include "source_base/module_container/ATen/kernels/lapack.h" // container::kernels
 
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -341,6 +341,8 @@ class DiagoDavid
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
+    // Note that ct_Device is different from base_device!
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
     // using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info; // Dependence of hpsi removed
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
