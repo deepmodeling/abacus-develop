@@ -101,6 +101,10 @@ Downloads packages automatically from official sources:
 ./toolchain_gnu.sh  # Uses system package managers and official repositories
 ```
 
+Before running the toolchain, please make sure you have loaded the related environments and set the environment variables.
+- You SHOULD source or module load related environments before use toolchain method for installation, especially for *intel*, *gcc-aocl* or *aocc-aocl* toolchain! For example, `module load mkl mpi icc compiler` for loading intel-oneapi envs.
+- You SHOULD keep your environments systematic, for example, you CANNOT load intel-OneAPI environments while use gcc toolchain !!!
+
 **Package Sources:**
 - **Build Tools:**
   - [GCC](https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/) - GNU Compiler Collection
@@ -124,6 +128,7 @@ Downloads packages automatically from official sources:
   - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
   - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
 - **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
+- All package from GitHub will be downloaded by `wget` from `codeload.github.com`, which bypass the difficulty of CN Internet in some extent. 
 
 ### Offline Installation
 
@@ -189,6 +194,55 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
 | LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
 | NEP | main | Neural network potential | MIT | Optional |
+
+Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html) and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and [AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to system option, but one should install them manually by server administrator.
+
+### Package Version Switching
+
+The toolchain supports a dual-version system for most packages, providing both **main** (latest stable) and **alt** (alternative/legacy) versions. This allows users to choose between cutting-edge features and proven stability based on their specific requirements.
+
+#### Version Selection Methods
+
+The `--package-version` parameter supports two flexible usage patterns:
+
+**Method 1: Multiple Independent Parameters** (Original support)
+```bash
+./toolchain_gnu.sh --package-version libtorch:alt --package-version elpa:alt
+```
+
+**Method 2: Single Parameter with Multiple Key-Value Pairs** (Enhanced functionality)
+```bash
+./toolchain_gnu.sh --package-version "libtorch:alt elpa:alt"
+```
+
+One can also manually edit the `toolchain_gnu.sh` for selecting specific version of packages.
+
+```bash
+# ============================================================================
+# Package Version Selection (main/alt versions)
+# ============================================================================
+# Choose between main (latest stable) and alt (alternative/legacy) versions
+# Refer to scripts/package_versions.sh for specific version numbers
+
+CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
+OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
+OPENBLAS_VERSION="main"     # main=0.3.30, alt=0.3.27
+ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
+LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+SCALAPACK_VERSION="main"    # main=2.2.2, alt=2.2.1
+# Optional Libraries
+LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+```
+
+and other `toolchain_*.sh` scripts share the same version selection.
+
+#### Global Version Strategy
+
+- **Default Behavior**: All packages use their **main** versions unless explicitly overridden
+- **Selective Override**: Use `--package-version` to specify alternative versions for specific packages
+- **Consistency**: Version selections are validated against available options in `scripts/package_versions.sh`
+- **Backward Compatibility**: Both usage methods are fully supported to ensure existing scripts continue to work
+
 
 ### System Requirements
 
@@ -270,6 +324,14 @@ export CPATH=$CPATH:/path/to/math_libs/include
 
 #### Intel OneAPI Problems
 
+Most of the OneAPI problem arise from the newer version of Intel-OneAPI. For users who encounter OneAPI problem, one can get Intel-OneAPI in [QE-managed website](https://pranabdas.github.io/espresso/setup/hpc/#installing-intel-oneapi-libraries), and use this code to get Intel oneAPI Base Toolkit and HPC Toolkit:
+```shell
+wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/992857b9-624c-45de-9701-f6445d845359/l_BaseKit_p_2023.2.0.49397_offline.sh
+wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0722521a-34b5-4c41-af3f-d5d14e88248d/l_HPCKit_p_2023.2.0.49440_offline.sh
+```
+
+Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
+
 **OneAPI 2025.0 Compatibility:**
 - LibRI compatibility issues ([#6190](https://github.com/deepmodeling/abacus-develop/issues/6190))
 - Solution: Using the patch from Cereal and the master version of Cereal to fix the compatibility issue (included in toolchain).
@@ -280,11 +342,25 @@ export CPATH=$CPATH:/path/to/math_libs/include
 ./toolchain_intel.sh --with-intel-classic=yes
 ```
 
+Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI are not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
+
+#### Gcc-MKL Issues
+
+You cannot use gcc as compiler while using MKL as math library for compile ABACUS, there will be lots of error in the lask linking step. See [#3198](https://github.com/deepmodeling/abacus-develop/issues/3198)
+
+#### AMD AOCC-AOCL problem
+
+Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS efficiency. But you need to get rid of `flang` while compiling ELPA. Toolchain itself helps you make this `flang` shade in default of `aocc-aocl` toolchain, and you can manually use `flang` by setting `--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain helps you to bypass the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be relatively lower compared to `gnu` or `gcc-aocl` toolchain. There are some issues related to the numeric instability of ABACUS compiled by AOCC-AOCL toolchain, see [#6420](https://github.com/deepmodeling/abacus-develop/issues/6420)
+
+The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. However, the gcc-dependent aocl will have some package linking problem related to OpenMPI. Take it with caution.
+
 #### OpenMPI Issues
 
 **Version 5 compatibility problems:**
 ```bash
 # Use OpenMPI v4 instead
+./toolchain_gnu.sh --package-version openmpi:alt
+# an deprecated option, but still works
 ./toolchain_gnu.sh --with-openmpi-4th=yes
 ```
 
@@ -305,11 +381,15 @@ chmod +x *.sh
 #### Library Version Issues
 
 **LibTorch GLIBC errors:**
+- Requires GLIBCXX_3.4.26
 - Change version from 2.1.2 to 1.12.1
-- Use --package-version libtorch:alt when calling toolchain
+- Use `--package-version libtorch:alt` when calling toolchain
+- Can combine with other packages using two writing styles:
+  - Multiple independent parameters: `--package-version libtorch:alt --package-version elpa:alt`
+  - Single parameter with multiple key-value pairs: `--package-version libtorch:alt elpa:alt`
 
 **DeepMD GLIBC errors:**
-- Requires GCC ≥ 11.3.1
+- Requires GCC ≥ 11.3.1 for GLIBCXX_3.4.29
 - Upgrade system GCC or use newer toolchain
 
 ### Getting Help

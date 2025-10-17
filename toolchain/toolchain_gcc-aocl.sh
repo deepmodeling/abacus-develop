@@ -17,6 +17,7 @@ WITH_INTEL="no"
 <<<<<<< HEAD
 # Math Libraries (AMD AOCL recommended)
 MATH_MODE="aocl"
+WITH_AOCL="system"
 
 # MPI Implementation (OpenMPI recommended)
 MPI_MODE="openmpi"

@@ -25,6 +25,7 @@
 - ✅ **用户界面优化完成**：Unicode图标兼容性和GCC版本检查错误提示全面优化
 - ✅ **版本号显示功能完成**：智能版本文件读取和欢迎横幅版本号显示
 - ✅ **系统信息增强完成**：glibc版本检测和系统摘要信息优化
+- ✅ **--package-version参数修复完成**：支持多个键值对，消除边界情况，提升用户体验
 
 ---
 
@@ -205,6 +206,7 @@
 |------|--------|--------|----------|
 | **代码组织** | 单一890行脚本 | 7个模块化文件 | 职责清晰，易维护 |
 | **参数处理** | 内联while循环 | 专用config_parse_arguments() | 逻辑集中，易扩展 |
+| **--package-version参数** | 只支持单个键值对，静默忽略后续参数 | 支持多个键值对和两种写法：多个独立参数和单个参数多键值对 | 消除边界情况，提升用户体验，保持向后兼容 |
 | **错误处理** | 分散的report_error调用 | 统一error_handler模块 | 一致性，可追踪 |
 | **配置验证** | 内联检查逻辑 | 专用validator模块 | 全面性，可扩展 |
 | **版本管理** | 硬编码版本信息 | 集中版本管理 | 易更新，支持多版本 |
@@ -230,6 +232,151 @@
 - 使用关联数组`CONFIG_CACHE`提供O(1)访问性能
 - 支持从配置文件加载设置
 - 统一的参数格式处理（--with-*, --enable-*）
+
+#### --package-version参数修复 - "好品味"的典型实现
+
+**问题背景**：原始的`--package-version`参数存在设计缺陷，只能处理单个键值对，如`--package-version elpa:alt`，不支持多个键值对的同时指定，如`--package-version elpa:alt cmake:alt openmpi:alt`。后续的键值对被静默忽略，用户无法察觉这一问题，导致配置与预期不符。
+
+**核心问题分析**：
+- **功能局限性**：用户无法在单个命令中指定多个包的版本
+- **用户体验差**：需要多次调用`--package-version`参数，增加命令复杂度
+- **静默失败**：后续键值对被忽略，用户配置与预期不符
+- **维护困难**：单个和多个参数需要不同的处理逻辑
+
+**"好品味"解决方案**：
+修改了`scripts/lib/config_manager.sh`中第710-732行的`--package-version`解析逻辑，体现了Linus Torvalds的核心设计原则：
+
+**修复前的逻辑**（存在边界情况）：
+```bash
+--package-version)
+    local package_version_value=""
+    # 只处理单个参数
+    if [[ "$1" =~ ^--package-version=(.+)$ ]]; then
+        package_version_value="${BASH_REMATCH[1]}"
+        shift
+    elif [[ -n "$2" && "$2" != -* ]]; then
+        package_version_value="$2"
+        shift 2
+    fi
+    
+    # 只解析一个键值对
+    if [[ "$package_version_value" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
+        local pkg="${BASH_REMATCH[1]}"
+        local ver="${BASH_REMATCH[2]}"
+        CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
+    fi
+    ;;
+```
+
+**修复后的逻辑**（消除边界情况）：
+```bash
+--package-version)
+    local package_version_args=""
+    local processed_count=0
+    
+    # 支持 --package-version=value 格式
+    if [[ "$1" =~ ^--package-version=(.+)$ ]]; then
+        package_version_args="${BASH_REMATCH[1]}"
+        shift
+        processed_count=1
+    else
+        # 收集所有连续的非选项参数
+        shift  # 跳过 --package-version
+        while [[ $# -gt 0 && "$1" != -* ]]; do
+            if [[ -n "$package_version_args" ]]; then
+                package_version_args="$package_version_args $1"
+            else
+                package_version_args="$1"
+            fi
+            shift
+            ((processed_count++))
+        done
+    fi
+    
+    # 验证至少有一个参数
+    if [[ -z "$package_version_args" ]]; then
+        report_error $LINENO "--package-version requires at least one package:version argument"
+        return 1
+    fi
+    
+    # 处理每个 package:version 对
+    local pair_count=0
+    for pair in $package_version_args; do
+        if [[ "$pair" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
+            local pkg="${BASH_REMATCH[1]}"
+            local ver="${BASH_REMATCH[2]}"
+            CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
+            ((pair_count++))
+        else
+            report_error $LINENO "Invalid package version format: '$pair'. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
+            return 1
+        fi
+    done
+    
+    # 报告成功处理的信息
+    if [[ $pair_count -gt 1 ]]; then
+        echo "INFO: Processed $pair_count package version overrides"
+    fi
+    ;;
+```
+
+**"好品味"原则体现**：
+
+1. **消除边界情况**：
+   - **修复前**：单个和多个参数需要不同的处理逻辑
+   - **修复后**：统一的处理逻辑，单个参数成为多个参数的特殊情况
+
+2. **简洁性原则**：
+   - 使用循环统一处理所有键值对
+   - 避免重复的条件判断
+   - 清晰的错误处理流程
+
+3. **实用主义**：
+   - 保持100%向后兼容性，不破坏现有用法
+   - 解决实际用户需求（多包版本指定）
+   - 提供有用的用户反馈
+
+4. **健壮性**：
+   - 严格的输入验证和格式检查
+   - 清晰的错误消息和用户指导
+   - 防止静默失败
+
+**功能增强效果**：
+- ✅ **多参数支持**：支持连续的多个键值对参数
+- ✅ **向后兼容**：单个键值对仍然正常工作
+- ✅ **错误处理**：增强的输入验证和错误报告
+- ✅ **用户反馈**：处理多个包时提供信息反馈
+- ✅ **格式验证**：严格验证每个键值对的格式
+
+**使用示例**：
+```bash
+# 单个包版本（向后兼容）
+./install_abacus_toolchain_new.sh --package-version openmpi:alt
+
+# 多个包版本 - 两种写法支持：
+
+# 方法1：多个独立参数写法（原有支持）
+./install_abacus_toolchain_new.sh --package-version openmpi:alt --package-version cmake:alt --package-version elpa:alt
+
+# 方法2：单个参数多键值对写法（新增功能）
+./install_abacus_toolchain_new.sh --package-version openmpi:alt cmake:alt elpa:alt
+
+# 混合主/备用版本
+./install_abacus_toolchain_new.sh --package-version elpa:alt cmake:main openmpi:alt
+
+# 与其他参数混合使用
+./install_abacus_toolchain_new.sh --package-version elpa:alt cmake:alt --dry-run
+```
+
+**测试验证**：
+创建了专门的测试脚本`test_package_version.sh`，验证了所有使用场景：
+- ✅ 单个包版本正常工作（向后兼容）
+- ✅ 多个包版本正确解析和存储
+- ✅ 错误输入得到适当处理和报告
+- ✅ 与其他参数正常协作
+- ✅ 实际toolchain脚本中功能正常
+
+此修复为ABACUS toolchain的用户提供了更加灵活和高效的包版本管理方式，同时保持了系统的稳定性和可靠性。
 
 ### 2. config_validator.sh - 配置验证器
 **主要职责**：

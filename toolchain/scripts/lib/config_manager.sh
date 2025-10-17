@@ -707,29 +707,53 @@ config_parse_arguments() {
                 shift
                 ;;
                 
-            # Package version selection
+            # Package version selection - Support multiple package:version pairs
             --package-version)
-                local package_version_value=""
+                local package_version_args=""
+                local processed_count=0
+                
                 # Handle --package-version=value format
                 if [[ "$1" =~ ^--package-version=(.+)$ ]]; then
-                    package_version_value="${BASH_REMATCH[1]}"
+                    package_version_args="${BASH_REMATCH[1]}"
                     shift
-                elif [[ -n "$2" && "$2" != -* ]]; then
-                    package_version_value="$2"
-                    shift 2
+                    processed_count=1
                 else
-                    report_error $LINENO "--package-version requires an argument"
+                    # Collect all consecutive non-option arguments
+                    shift  # Skip --package-version
+                    while [[ $# -gt 0 && "$1" != -* ]]; do
+                        if [[ -n "$package_version_args" ]]; then
+                            package_version_args="$package_version_args $1"
+                        else
+                            package_version_args="$1"
+                        fi
+                        shift
+                        ((processed_count++))
+                    done
+                fi
+                
+                # Validate we have at least one argument
+                if [[ -z "$package_version_args" ]]; then
+                    report_error $LINENO "--package-version requires at least one package:version argument"
                     return 1
                 fi
                 
-                # Parse package:version format
-                if [[ "$package_version_value" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
-                    local pkg="${BASH_REMATCH[1]}"
-                    local ver="${BASH_REMATCH[2]}"
-                    CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
-                else
-                    report_error $LINENO "Invalid package version format: $package_version_value. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
-                    return 1
+                # Process each package:version pair
+                local pair_count=0
+                for pair in $package_version_args; do
+                    if [[ "$pair" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
+                        local pkg="${BASH_REMATCH[1]}"
+                        local ver="${BASH_REMATCH[2]}"
+                        CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
+                        ((pair_count++))
+                    else
+                        report_error $LINENO "Invalid package version format: '$pair'. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
+                        return 1
+                    fi
+                done
+                
+                # Report successful processing
+                if [[ $pair_count -gt 1 ]]; then
+                    echo "INFO: Processed $pair_count package version overrides"
                 fi
                 ;;
                 

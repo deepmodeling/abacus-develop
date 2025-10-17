@@ -74,7 +74,10 @@ ABACUS Toolchain Version Switching Help
 
 Command Line Options:
   --use-alt-versions          Use alternative versions for all packages
-  --package-version PKG=VER   Set specific package version (PKG=main|alt)
+  --package-version PKG:VER   Set specific package version (PKG:main|alt)
+                              Supports two writing styles:
+                              1. Multiple independent parameters: --package-version PKG1:VER1 --package-version PKG2:VER2
+                              2. Single parameter with multiple key-value pairs: --package-version PKG1:VER1 PKG2:VER2 ...
   --config-file FILE          Load configuration from file
   --version-info [PKG]        Show version info for package (or all)
 
@@ -86,8 +89,17 @@ Examples:
   # Use alternative versions for all packages
   ./install_abacus_toolchain_new.sh --use-alt-versions
   
-  # Use specific package versions
-  ./install_abacus_toolchain_new.sh --package-version openmpi=alt --package-version gcc=main
+  # Use specific package versions (single)
+  ./install_abacus_toolchain_new.sh --package-version openmpi:alt
+  
+  # Use specific package versions (multiple independent parameters)
+  ./install_abacus_toolchain_new.sh --package-version openmpi:alt --package-version gcc:main --package-version cmake:alt
+  
+  # Use specific package versions (single parameter with multiple key-value pairs)
+  ./install_abacus_toolchain_new.sh --package-version openmpi:alt gcc:main cmake:alt
+  
+  # Mixed with other options
+  ./install_abacus_toolchain_new.sh --package-version elpa:alt cmake:alt --dry-run
   
   # Show version information
   ./install_abacus_toolchain_new.sh --version-info openmpi
