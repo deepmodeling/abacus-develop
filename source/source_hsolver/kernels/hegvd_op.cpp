@@ -177,7 +177,6 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         // When lwork = -1, the demension of work will be assumed
         // Assume the denmension of work by output work[0]
         lapackConnector::heevx(
-            1,          // ITYPE = 1:  A*x = (lambda)*B*x
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.
@@ -211,7 +210,6 @@ struct heevx_op<T, base_device::DEVICE_CPU>
         // obtained by the zhegvx operation is (nstart * nstart) and stored in zux (internal to the function). When
         // the function is output, the data of zux will be mapped to the corresponding position of V.
         lapackConnector::heevx(
-            1,          // ITYPE = 1:  A*x = (lambda)*B*x
             'V',        // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I',        // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
             'L',        // UPLO = 'L':  Lower triangles of A and B are stored.
