@@ -41,8 +41,8 @@ WITH_LIBCOMM="install"
 
 # Optional Features (MLALGO support)
 WITH_LIBTORCH="no"
-WITH_NEP="no"
 WITH_LIBNPY="no"
+WITH_NEP="no"
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"

@@ -41,8 +41,8 @@ WITH_LIBCOMM="install"
 
 # Optional Features (DeepKS support)
 WITH_LIBTORCH="no"  # Set to "install" for DeepKS support
-WITH_NEP="no"
 WITH_LIBNPY="no"    # Set to "install" for DeepKS support
+WITH_NEP="no"
 
 # AMD Compiler Options
 WITH_FLANG="no"     # Flang is not recommended in current stage
