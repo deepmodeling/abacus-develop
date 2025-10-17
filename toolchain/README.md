@@ -294,9 +294,10 @@ chmod +x *.sh
 ### Getting Help
 
 1. **Check logs**: Look in `build/PKG_NAME/make.log` for compilation errors
-2. **Reduce parallelism**: Use `-j N` option to limit parallel processes
+2. **Reduce parallelism**: Use `NPROCS_OVERWRITE=N` environment variable to limit parallel processes
 3. **System libraries**: Use `--with-PKG=system` for system-installed packages
 4. **Clean installation**: Remove `install/` and `build/` directories to restart
+5. **Certificate issues**: Use `DOWNLOAD_CERT_POLICY=skip` for download problems
 
 ## Advanced Usage
 
@@ -411,12 +412,28 @@ scripts/
 
 | File | Purpose |
 |------|---------|
-| `install_abacus_toolchain.sh` | Main orchestration script |
+| `install_abacus_toolchain_new.sh` | Main orchestration script (new version) |
+| `install_abacus_toolchain.sh` | Legacy main script (deprecated) |
+| `toolchain_*.sh` | Frontend scripts for specific toolchains |
 | `scripts/lib/config_manager.sh` | Configuration management |
 | `scripts/lib/package_manager.sh` | Package installation logic |
 | `scripts/lib/user_interface.sh` | User interaction and output |
 | `scripts/common_vars.sh` | Shared variables and defaults |
 | `scripts/tool_kit.sh` | Utility functions and macros |
+| `scripts/parse_if.py` | Parser for IF_XYZ constructs |
+| `checksums.sha256` | Pre-calculated SHA256 checksums for packages |
+
+### Script Structure Details
+
+**Individual Package Scripts**: Each `scripts/stage*/install_PKG.sh` script is relatively independent and should:
+
+1. **Generate setup files**: Write to both `build/setup_PKG` and `install/setup`
+   - `build/setup_PKG`: Variables for toolchain compilation and arch file flags
+   - `install/setup`: Environment setup for compiling/running ABACUS
+
+2. **Handle dependencies**: May depend on other libraries being installed with correct environment variables
+
+3. **Use toolkit macros**: Leverage functionality from `scripts/tool_kit.sh` for common operations
 
 ### Package Installation Scripts
 
@@ -430,23 +447,40 @@ Each `scripts/stage*/install_PKG.sh` script:
 
 ### Configuration System
 
-#### Package Control Options
+#### Package Control Options (`--with-PKG`)
 
-- `--with-PKG=install`: Compile from source (default)
-- `--with-PKG=system`: Use system installation
-- `--with-PKG=/path`: Use specific installation path
-- `--with-PKG=no`: Skip package
+The `--with-PKG` options control how a package is going to be installed:
 
-#### Feature Control Options
+- `--with-PKG=install` (or `--with-PKG` alone): Compile and install from source downloaded (default)
+- `--with-PKG=system`: Link to locations provided by system search paths
+- `--with-PKG=/path/to/pkg`: Link to locations provided by the user (custom path)
+- `--with-PKG=no`: Skip package installation entirely
 
-- `--enable-FEATURE=yes`: Enable optional feature
-- `--enable-FEATURE=no`: Disable feature
+**System Search Paths**: When using `system` mode, the installation script searches in:
+- `LD_LIBRARY_PATH`, `LD_RUN_PATH`, `LIBRARY_PATH`
+- `/usr/local/lib64`, `/usr/local/lib`, `/usr/lib64`, `/usr/lib`
+- For MKL libraries: `MKLROOT` environment variable
 
-#### Mode Selection
+**Troubleshooting System Libraries**: If `--with-PKG=system` cannot find the library:
+1. Use `module show PKG` to see module-defined paths
+2. Find the root installation directory manually
+3. Use `--with-PKG=/path/to/pkg` to specify exact location
 
-For packages with multiple implementations:
+#### Feature Control Options (`--enable-FEATURE`)
+
+The `--enable-FEATURE` options control whether optional features are enabled:
+
+- `--enable-FEATURE=yes` (or `--enable-FEATURE` alone): Enable the feature
+- `--enable-FEATURE=no`: Disable the feature
+
+#### Mode Selection (`PKG_MODE` Variables)
+
+For packages serving the same purpose, mode variables act as selectors:
+
 - `--mpi-mode=openmpi|mpich|intelmpi`: Choose MPI implementation
 - `--math-mode=openblas|mkl|aocl`: Choose math library
+
+**Note**: While `--with-PKG` controls the installation method, the `PKG_MODE` variable picks which package to actually use, providing maximum flexibility.
 
 ### Adding New Packages
 
@@ -456,12 +490,77 @@ For packages with multiple implementations:
 4. **Add version info**: Update `scripts/package_versions.sh`
 5. **Test thoroughly**: Verify with different toolchain combinations
 
+### Advanced Developer Features
+
+#### The IF_XYZ Constructs
+
+The toolchain uses a special syntax construct for conditional compilation flags:
+
+```shell
+IF_XYZ(A | B)
+```
+
+This construct is parsed by `scripts/parse_if.py`:
+- Evaluates to *A* if *XYZ* is passed as command line option
+- Evaluates to *B* if *XYZ* is not passed
+
+**Nested Constructs**: The `IF_XYZ(A|B)` construct can be nested:
+
+```shell
+IF_XYZ(IF_ABC(flag1|flag2) | flag3)
+```
+
+This parses to:
+- *flag1* if both *XYZ* and *ABC* are present
+- *flag2* if only *XYZ* is present  
+- *flag3* if neither is present
+
+#### Portability Requirements
+
+**Compiler Flag Filtering**: Always pass compiler flags through compatibility filters:
+
+```shell
+# Filter flags for GCC compatibility
+CFLAGS="$(allowed_gcc_flags $CFLAGS)"
+FCFLAGS="$(allowed_gfortran_flags $FCFLAGS)"
+```
+
+**IF_XYZ with Flag Filtering**: Since filters don't work with IF_XYZ constructs, break them down:
+
+```shell
+# Instead of: FCFLAGS="IF_XYZ(flag1 flag2 | flag3 flag4)"
+XYZ_TRUE_FLAGS="flag1 flag2"
+XYZ_FALSE_FLAGS="flag3 flag4"
+# Apply filtering
+XYZ_TRUE_FLAGS="$(allowed_gcc_flags $XYZ_TRUE_FLAGS)"
+XYZ_FALSE_FLAGS="$(allowed_gcc_flags $XYZ_FALSE_FLAGS)"
+# Reconstruct
+FCFLAGS="IF_XYZ($XYZ_TRUE_FLAGS | $XYZ_FALSE_FLAGS)"
+```
+
+**Fortran Module Checking**: Check intrinsic Fortran modules with:
+
+```shell
+check_gfortran_module module_name
+```
+
+**Avoid Hard Coding**: Use common variables instead of hard-coded paths:
+
+```shell
+# Good practice
+./configure --prefix=some_dir CC=${MPICC} FC=${MPIFC}
+# Avoid
+./configure --prefix=some_dir CC=mpicc FC=mpif90
+```
+
 ### Best Practices
 
 - **Reuse toolkit functions**: Use macros from `scripts/tool_kit.sh`
-- **Portable compiler flags**: Filter through `allowed_gcc_flags`
-- **Environment variables**: Use `${VAR:-default}` pattern
+- **Modular functionality**: Add new functionality as macros in `scripts/tool_kit.sh` rather than inline code
+- **Portable compiler flags**: Filter through `allowed_gcc_flags` and `allowed_gfortran_flags`
+- **Environment variables**: Use `${VAR:-default}` pattern for configurable defaults
 - **Lock files**: Create completion markers for resumable installation
+- **Separate directories**: Install each package in its own directory
 - **Error handling**: Provide clear error messages and recovery suggestions
 
 ## License

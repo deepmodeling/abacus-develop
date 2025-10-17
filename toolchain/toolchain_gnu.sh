@@ -19,7 +19,8 @@ WITH_AMD="no"
 MATH_MODE="openblas"
 WITH_OPENBLAS="install"
 
-# MPI Implementation
+# MPI Implementation (OpenMPI recommended)
+MPI_MODE="openmpi"
 WITH_OPENMPI="install"
 WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4, deprecated
 WITH_MPICH="no"
@@ -82,6 +83,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-intel="$WITH_INTEL" \
   --with-amd="$WITH_AMD" \
   --math-mode="$MATH_MODE" \
+  --mpi-mode="$MPI_MODE" \
   --with-openblas="$WITH_OPENBLAS" \
   --with-openmpi="$WITH_OPENMPI" \
   --with-mpich="$WITH_MPICH" \

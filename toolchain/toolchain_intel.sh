@@ -20,7 +20,7 @@ MATH_MODE="mkl"
 WITH_MKL="system"  # Use system MKL when MATH_MODE is mkl
 
 # MPI Implementation (Intel MPI recommended, but OpenMPI/MPICH also supported)
-MPI_IMPLEMENTATION="intelmpi"
+MPI_MODE="intelmpi"
 WITH_INTELMPI="system"
 WITH_OPENMPI="no"
 WITH_MPICH="no"
@@ -100,6 +100,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-intel="$WITH_INTEL" \
   --with-gcc="$WITH_GCC" \
   --math-mode="$MATH_MODE" \
+  --mpi-mode="$MPI_MODE" \
   --with-mkl="$WITH_MKL" \
   --with-openmpi="$WITH_OPENMPI" \
   --with-mpich="$WITH_MPICH" \
