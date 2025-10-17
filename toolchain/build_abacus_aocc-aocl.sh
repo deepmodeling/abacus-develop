@@ -58,6 +58,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLIBRI_DIR=$LIBRI \
         -DLIBCOMM_DIR=$LIBCOMM \
         -DUSE_CUDA=$USE_CUDA \
+#        -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
 #         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
