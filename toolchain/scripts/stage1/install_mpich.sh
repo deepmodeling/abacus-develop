@@ -179,7 +179,6 @@ export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
 export LD_RUN_PATH "${pkg_install_dir}/lib":\${LD_RUN_PATH}
 export LIBRARY_PATH "${pkg_install_dir}/lib":\${LIBRARY_PATH}
 export CPATH "${pkg_install_dir}/include":\${CPATH}
-
 EOF
     fi
     cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}

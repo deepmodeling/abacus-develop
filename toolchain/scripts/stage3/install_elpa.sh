@@ -262,8 +262,8 @@ export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
 export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 export ELPA_ROOT="$pkg_install_dir"
 EOF
+        cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
     fi
-    cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
     cat << EOF >> "${BUILDDIR}/setup_elpa"
 export ELPA_CFLAGS="${ELPA_CFLAGS}"
 export ELPA_LDFLAGS="${ELPA_LDFLAGS}"

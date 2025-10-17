@@ -126,8 +126,8 @@ export CPATH="$pkg_install_dir/include":\${CPATH}
 export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
 export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 EOF
+        cat "${BUILDDIR}/setup_libxc" >> $SETUPFILE
     fi
-    cat "${BUILDDIR}/setup_libxc" >> $SETUPFILE
     cat << EOF >> "${BUILDDIR}/setup_libxc"
 export LIBXC_CFLAGS="${LIBXC_CFLAGS}"
 export LIBXC_LDFLAGS="${LIBXC_LDFLAGS}"

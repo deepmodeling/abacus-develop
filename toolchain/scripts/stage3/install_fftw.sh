@@ -141,9 +141,9 @@ export CPATH="$pkg_install_dir/include":\${CPATH}
 export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
 export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 EOF
-  fi
-  # we may also want to cover FFT_SG
-  cat << EOF >> "${BUILDDIR}/setup_fftw"
+    fi
+    # we may also want to cover FFT_SG
+    cat << EOF >> "${BUILDDIR}/setup_fftw"
 export FFTW3_INCLUDES="${FFTW_CFLAGS}"
 export FFTW3_LIBS="${FFTW_LIBS}"
 export FFTW_CFLAGS="${FFTW_CFLAGS}"
@@ -156,7 +156,7 @@ export CP_LIBS="${FFTW_LIBS} \${CP_LIBS}"
 export FFTW_ROOT=${FFTW_ROOT:-${pkg_install_dir}}
 export FFTW3_ROOT=${pkg_install_dir}
 EOF
-  cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
+    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
 fi
 cd "${ROOTDIR}"
 
