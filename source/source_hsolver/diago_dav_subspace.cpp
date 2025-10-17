@@ -4,12 +4,15 @@
 
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
-#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
 #include "source_base/kernels/dsp/dsp_connector.h"
+// #include "source_base/module_container/ATen/kernels/lapack.h"
 
+#include <ATen/kernels/lapack.h>
+
+#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/diag_hs_para.h"
+#include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
 
 #include <vector>
 
@@ -540,7 +543,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            hegvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
