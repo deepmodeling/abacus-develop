@@ -150,7 +150,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         {
             ModuleBase::WARNING_QUIT("read_atom_species","Lattice constant <= 0.0");
         }
-        lat0_angstrom = lat0 * 0.529177;
+        lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Bohr)",lat0);
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Angstrom)",lat0_angstrom);
         lat.tpiba  = ModuleBase::TWO_PI / lat0;

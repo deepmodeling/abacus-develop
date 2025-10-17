@@ -1,6 +1,5 @@
 #include "lbfgs.h"
 #include "source_pw/module_pwdft/global.h"
-#include "source_base/matrix3.h"
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
@@ -15,13 +14,13 @@ void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、for
     iteration=0;
     H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     H0=1/alpha;
-    pos = std::vector<std::vector<double>> (size, std::vector<double>(3, 0.0)); 
+    pos = std::vector<ModuleBase::Vector3<double>> (size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); 
     pos0 = std::vector<double>(3*size, 0.0);
-    pos_taud = std::vector<std::vector<double>> (size, std::vector<double>(3, 0.0)); 
+    pos_taud = std::vector<ModuleBase::Vector3<double>> (size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); 
     pos_taud0 = std::vector<double>(3*size, 0.0);
-    dpos = std::vector<std::vector<double>>(size, std::vector<double>(3, 0.0));
+    dpos = std::vector<ModuleBase::Vector3<double>>(size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     force0 = std::vector<double>(3*size, 0.0);
-    force = std::vector<std::vector<double>>(size, std::vector<double>(3, 0.0));
+    force = std::vector<ModuleBase::Vector3<double>>(size, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     steplength = std::vector<double>(size, 0.0);
     //l_search.init_line_search();
 }
@@ -64,12 +63,12 @@ void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const dou
     this->determine_step(steplength,dpos,maxstep);
     this->update_pos(ucell);
     this->calculate_largest_grad(_force,ucell);
-    this->is_restrain(dpos);  
+    this->is_restrain();  
     // mohan add 2025-06-22
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
 }
 
-void LBFGS::get_pos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
+void LBFGS::get_pos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
 {
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
@@ -84,7 +83,7 @@ void LBFGS::get_pos(UnitCell& ucell,std::vector<std::vector<double>>& pos)
     }
 }
 
-void LBFGS::get_pos_taud(UnitCell& ucell,std::vector<std::vector<double>>& pos_taud)
+void LBFGS::get_pos_taud(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos_taud)
 {
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
@@ -99,12 +98,12 @@ void LBFGS::get_pos_taud(UnitCell& ucell,std::vector<std::vector<double>>& pos_t
     }
 }
 
-void LBFGS::prepare_step(std::vector<std::vector<double>>& force,
-                         std::vector<std::vector<double>>& pos,
+void LBFGS::prepare_step(std::vector<ModuleBase::Vector3<double>>& force,
+                         std::vector<ModuleBase::Vector3<double>>& pos,
                          std::vector<std::vector<double>>& H,
                          std::vector<double>& pos0,
                          std::vector<double>& force0,
-                         std::vector<std::vector<double>>& dpos,
+                         std::vector<ModuleBase::Vector3<double>>& dpos,
                          UnitCell& ucell,
                          const double &etot)
 {
@@ -130,7 +129,7 @@ void LBFGS::prepare_step(std::vector<std::vector<double>>& force,
     std::vector<double> temp0=DotInVAndFloat(z,-1);
     dpos=ReshapeVToM(temp0);
     std::vector<double> temp1=DotInVAndFloat(changedforce,-1);
-    std::vector<std::vector<double>> g=ReshapeVToM(temp1);
+    //std::vector<std::vector<double>> g=ReshapeVToM(temp1);
     energy=etot;
     //alpha_k=l_search.line_search(ucell,pos,g,energy,maxstep,size,dpos,pos,solver);
     //std::vector<double> temp2=DotInVAndFloat(temp0,alpha_k);
@@ -150,7 +149,7 @@ void LBFGS::prepare_step(std::vector<std::vector<double>>& force,
     pos_taud0=ReshapeMToV(pos_taud);
     force0 = changedforce;
 }
-void LBFGS::update(std::vector<std::vector<double>>& pos_taud, 
+void LBFGS::update(std::vector<ModuleBase::Vector3<double>>& pos_taud, 
                    std::vector<double>& pos_taud0, 
                    std::vector<double>& force,
                    std::vector<double>& force0, 
@@ -178,7 +177,7 @@ void LBFGS::update(std::vector<std::vector<double>>& pos_taud,
             }
             dpos[i]=shortest_move;
         }
-        std::vector<std::vector<double>> c=ReshapeVToM(dpos);
+        std::vector<ModuleBase::Vector3<double>> c=ReshapeVToM(dpos);
         for(int iat=0; iat<size; iat++)
         {
             //Cartesian coordinate
@@ -186,9 +185,9 @@ void LBFGS::update(std::vector<std::vector<double>>& pos_taud,
 
             //convert unit
             ModuleBase::Vector3<double> move_ion_cart;
-            move_ion_cart.x = c[iat][0] *ModuleBase::BOHR_TO_A * ucell.lat0;
-            move_ion_cart.y = c[iat][1] * ModuleBase::BOHR_TO_A * ucell.lat0;
-            move_ion_cart.z = c[iat][2] * ModuleBase::BOHR_TO_A * ucell.lat0;
+            move_ion_cart.x = c[iat].x * ModuleBase::BOHR_TO_A * ucell.lat0;
+            move_ion_cart.y = c[iat].y * ModuleBase::BOHR_TO_A * ucell.lat0;
+            move_ion_cart.z = c[iat].z * ModuleBase::BOHR_TO_A * ucell.lat0;
 
             //convert pos
             ModuleBase::Vector3<double> move_ion_dr = move_ion_cart* ucell.latvec;
@@ -222,7 +221,7 @@ void LBFGS::update(std::vector<std::vector<double>>& pos_taud,
         rho.erase(rho.begin());
     }
 }
-void LBFGS::determine_step(std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,double& maxstep)
+void LBFGS::determine_step(std::vector<double>& steplength,std::vector<ModuleBase::Vector3<double>>& dpos,double& maxstep)
 {
     std::vector<double>::iterator maxsteplength = max_element(steplength.begin(), steplength.end());
     double a = *maxsteplength;
@@ -252,9 +251,9 @@ void LBFGS::update_pos(UnitCell& ucell)
     unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
 }
 
-void LBFGS::is_restrain(std::vector<std::vector<double>>& dpos)
+void LBFGS::is_restrain()
 {
-    Ions_Move_Basic::converged = Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177<PARAM.inp.force_thr_ev;
+    Ions_Move_Basic::converged = Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A<PARAM.inp.force_thr_ev;
 }
 
 void LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& ucell)
@@ -288,7 +287,7 @@ void LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& uc
     if (PARAM.inp.out_level == "ie")
     {
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
-                  << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.5291772109
+                  << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                   << std::endl;
     }
 
