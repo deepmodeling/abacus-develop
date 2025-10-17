@@ -654,6 +654,15 @@ if(DEFINED DeePMD_DIR)
   endif()
 endif()
 
+if(DEFINED NEP_DIR)
+  find_package(NEP REQUIRED)
+
+  if(NEP_FOUND)
+    add_compile_definitions(__NEP)
+    target_link_libraries(${ABACUS_BIN_NAME} NEP::nep)
+  endif()
+endif()
+
 if(DEFINED TensorFlow_DIR)
   find_package(TensorFlow REQUIRED)
   include_directories(${TensorFlow_DIR}/include)

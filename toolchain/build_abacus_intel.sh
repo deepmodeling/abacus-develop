@@ -31,6 +31,7 @@ RAPIDJSON=$INSTALL_DIR/rapidjson-master/
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 LIBRI=$INSTALL_DIR/LibRI-0.2.1.1
 LIBCOMM=$INSTALL_DIR/LibComm-master
+# NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
 
 # Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are recommended 
@@ -48,12 +49,13 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_RAPIDJSON=ON \
         -DRapidJSON_DIR=$RAPIDJSON \
         -DLIBRI_DIR=$LIBRI \
-	    -DLIBCOMM_DIR=$LIBCOMM \
+	    -DLIBCOMM_DIR=$LIBCOMM
 #         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
 #	      -DENABLE_LIBRI=ON \
 # 	      -DDeePMD_DIR=$DEEPMD \
+#          -DNEP_DIR=$NEP_DIR \
 #         -DUSE_CUDA=ON \
 #         -DENABLE_CUSOLVERMP=ON \
 #         -D CAL_CUSOLVERMP_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2x.xx/math_libs/1x.x/targets/x86_64-linux/lib

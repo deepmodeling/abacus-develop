@@ -81,7 +81,7 @@ namespace ModuleESolver
     void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
     {
         ESolver_KS_PW<T>::before_scf(ucell, istep);
-        this->p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
+        this->stp.p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
     }
 
     template <typename T>
@@ -89,9 +89,9 @@ namespace ModuleESolver
     {
         ESolver_KS_PW<T>::before_all_runners(ucell, inp);
         delete this->psi_local;
-        this->psi_local = new psi::Psi<T>(this->psi->get_nk(),
-                                          this->p_psi_init->psi_initer->nbands_start(),
-                                          this->psi->get_nbasis(),
+        this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
+                                          this->stp.p_psi_init->psi_initer->nbands_start(),
+                                          this->stp.psi_cpu->get_nbasis(),
                                           this->kv.ngk,
                                           true);
 #ifdef __EXX
@@ -105,13 +105,12 @@ namespace ModuleESolver
                                                                            ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
-                                                                           this->kspw_psi,
+                                                                           this->stp.psi_t,
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
                                                                            &ucell,
                                                                            this->pelec));
-                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_psi_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
             }
 }
 #endif
@@ -147,7 +146,8 @@ namespace ModuleESolver
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
+        hsolver_lip_obj.solve(this->p_hamilt, this->stp.psi_t[0], this->pelec, 
+          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
 #ifdef __EXX
@@ -244,7 +244,7 @@ namespace ModuleESolver
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
-                                *this->kspw_psi,
+                                *this->stp.psi_t,
                                 ucell,
                                 this->sf,
                                 this->solvent,

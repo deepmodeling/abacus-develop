@@ -379,7 +379,6 @@ struct Input_para
     std::string out_level = "ie";         ///< control the output information.
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
     std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
-    bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.

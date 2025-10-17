@@ -147,7 +147,6 @@
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
     - [out\_stru](#out_stru)
-    - [out\_bandgap](#out_bandgap)
     - [out\_level](#out_level)
     - [out\_alllog](#out_alllog)
     - [out\_mat\_hs](#out_mat_hs)
@@ -536,6 +535,7 @@ These variables are used to control general system parameters.
   - tddft: real-time time-dependent density functional theory (TDDFT)
   - lj: Leonard Jones potential
   - dp: DeeP potential, see details in [md.md](../md.md#dpmd)
+  - nep: Neuroevolution Potential, see details in [md.md](../md.md#nep)
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
 - **Default**: ksdft
@@ -1844,14 +1844,6 @@ These variables are used to control the output of properties.
 - **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into `OUT.${suffix}/STRU_ION${istep}_D`, where `${istep}` is the ionic step.
 - **Default**: False
 
-### out_bandgap
-
-- **Type**: Boolean
-- **Description**: Whether to print the bandgap per electronic iteration into `OUT.${suffix}/running_${calculation}.log`. The value of bandgaps can be obtained by searching for the keyword:
-  - [nupdown](#nupdown) > 0: `E_bandgap_up` and `E_bandgap_dw`
-  - [nupdown](#nupdown) = 0: `E_bandgap`
-- **Default**: False
-
 ### out_level
 
 - **Type**: String
@@ -2319,7 +2311,7 @@ Warning: this function is not robust enough for the current version. Please try 
   - 0: Don't include bandgap label
   - 1: Include target bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
   - 2: Include multiple bandgap label (see [deepks\_band\_range](#deepks_band_range) for more details)
-  - 3: For systems containing H atoms only, HOMO is defined as the max occupation expect H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
+  - 3: Used for systems containing H atoms. Here HOMO is defined as the max occupation except H atoms and the bandgap label is the energy between HOMO and (HOMO + 1)
 - **Default**: 0
 
 ### deepks_band_range
@@ -3336,7 +3328,7 @@ These variables are used to control molecular dynamics calculations. For more in
 ### pot_file
 
 - **Type**: String
-- **Description**: The filename of DP potential files, see [md.md](../md.md#dpmd) in detail.
+- **Description**: The filename of DP/NEP potential files, see [md.md](../md.md#dpmd) in detail.
 - **Default**: graph.pb
 
 ### dp_rescaling

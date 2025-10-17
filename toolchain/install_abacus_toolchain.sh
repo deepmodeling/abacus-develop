@@ -211,6 +211,8 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-libcomm          Enable LibComm for higher-level methods like hybrid functionals, RPA or GW
                           Default = no
+  --with-nep              Enable NEP (CPU version) for machine learning potentials
+                          Default = no
 
 FURTHER INSTRUCTIONS
 
@@ -246,7 +248,7 @@ EOF
 tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl aocl openblas"
-lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
+lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
 
@@ -595,6 +597,9 @@ while [ $# -ge 1 ]; do
       ;;
     --with-libcomm*)
       with_libcomm=$(read_with "${1}")
+      ;;
+    --with-nep*)
+      with_nep=$(read_with "${1}")
       ;;
     --help*)
       show_help

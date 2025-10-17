@@ -111,17 +111,17 @@ void ReadInput::item_system()
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (para.input.esolver_type == "dp")
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find DP model !");
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
                 }
             }
         };
