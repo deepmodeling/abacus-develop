@@ -375,7 +375,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         if (this->scf_ene_thr > 0.0)
         {
             // calculate energy of output charge density
-            elecstate::update_pot(ucell, istep, iter, conv_esolver);
+            elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
             this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
             // now, etot_old is the energy of input density, while etot is the energy of output density
             this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
@@ -433,7 +433,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 #endif
 
     // 4) Update potentials (should be done every SF iter)
-    this->update_pot(ucell, istep, iter, conv_esolver);
+    elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
     // 5) calculate energies
     // 1 means Harris-Foulkes functional

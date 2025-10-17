@@ -326,8 +326,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                               << std::endl;
                     exx_helper.op_exx->first_iter = false;
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    elecstate::update_pot(ucell, istep, iter, conv_esolver);
-                    exx_helper.iter_inc();
+					elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
+					exx_helper.iter_inc();
                 }
             }
         }

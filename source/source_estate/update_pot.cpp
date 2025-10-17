@@ -1,8 +1,10 @@
 #include "source_estate/update_pot.h"
 
-void elecstate::update_pot(UnitCell& ucell, // unitcell 
+void elecstate::update_pot(const UnitCell& ucell, // unitcell 
 		elecstate::ElecState* &pelec, // pointer of electrons
-		Charge &chr) // charge density
+		const Charge &chr,
+        const bool conv_esolver
+         ) // charge density
 {
     if (!conv_esolver)
     {

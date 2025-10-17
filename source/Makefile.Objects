@@ -250,6 +250,7 @@ OBJS_ELECSTAT=elecstate.o\
     read_pseudo.o\
     cal_wfc.o\
     setup_estate_pw.o\
+    update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
