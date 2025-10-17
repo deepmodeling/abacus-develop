@@ -145,14 +145,14 @@ static inline
 void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float * W)
 {
     // prepare some values for cusolverDnSsyevd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*   d_info = nullptr;
     float* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnSsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnSsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
@@ -171,14 +171,14 @@ static inline
 void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double * W)
 {
     // prepare some values for cusolverDnDsyevd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*    d_info = nullptr;
     double* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnDsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnDsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
@@ -197,14 +197,14 @@ static inline
 void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, float * W)
 {
     // prepare some values for cusolverDnCheevd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*    d_info = nullptr;
     cuComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnCheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnCheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuComplex*>(A), lda, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
@@ -223,14 +223,14 @@ static inline
 void heevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, double* W)
 {
     // prepare some values for cusolverDnZheevd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*    d_info = nullptr;
     cuDoubleComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnZheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnZheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
@@ -250,19 +250,19 @@ static inline
 void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, float* A, const int& lda, float* B, const int& ldb, float * W)
 {
     // prepare some values for cusolverDnSsygvd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*   d_info = nullptr;
     float* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnSsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnSsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, B, ldb, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnSsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnSsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, B, ldb, W, d_work, lwork, d_info));
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
@@ -276,19 +276,19 @@ static inline
 void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, double* A, const int& lda, double* B, const int& ldb, double * W)
 {
     // prepare some values for cusolverDnDsygvd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*   d_info = nullptr;
     double* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnDsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnDsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, B, ldb, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnDsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnDsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, B, ldb, W, d_work, lwork, d_info));
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
@@ -302,19 +302,19 @@ static inline
 void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<float>* A, const int& lda, std::complex<float>* B, const int& ldb, float* W)
 {
     // prepare some values for cusolverDnChegvd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*   d_info = nullptr;
     cuComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnChegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnChegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnChegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnChegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, d_work, lwork, d_info));
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
@@ -328,19 +328,19 @@ static inline
 void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& jobz, const char& uplo, const int& n, std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb, double* W)
 {
     // prepare some values for cusolverDnZhegvd_bufferSize
-    int lwork  = 0; 
-    int h_info = 0; 
+    int lwork  = 0;
+    int h_info = 0;
     int*   d_info = nullptr;
     cuDoubleComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    cusolverErrcheck(cusolverDnZhegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnZhegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, &lwork));
     // allocate memory
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
     // compute eigenvalues and eigenvectors.
-    cusolverErrcheck(cusolverDnZhegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
+    cusolverErrcheck(cusolverDnZhegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, d_work, lwork, d_info));
 
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
@@ -351,6 +351,208 @@ void hegvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     cudaErrcheck(cudaFree(d_work));
 }
 
+// -----------------------------
+// CUDA hegvx implementations
+// -----------------------------
+
+// static inline
+// void hegvx(cusolverDnHandle_t& cusolver_handle,
+//            const int& itype,
+//            const char& jobz,
+//            const char& uplo,
+//            const int& n,
+//            float* A,
+//            const int& lda,
+//            float* B,
+//            const int& ldb,
+//            const int& il,
+//            const int& iu,
+//            const float& abstol,
+//            int& m_out,
+//            float* W,
+//            float* Z,
+//            const int& ldz) {
+//     // Step 1: Query workspace size
+//     int lwork = 0;
+//     cusolverErrcheck(cusolverDnSsygvdx_bufferSize(
+//         cusolver_handle,
+//         cublas_eig_type(itype),       // itype
+//         cublas_eig_mode(jobz),        // jobz
+//         cublas_fill_mode(uplo),       // uplo
+//         n, A, lda, B, ldb,
+//         il, iu,                       // range: index interval
+//         abstol,                       // tolerance
+//         &m_out,                       // output: number of eigenvalues found
+//         W,                            // eigenvalues
+//         Z, ldz,                       // eigenvectors
+//         &lwork));                      // workspace size
+
+//     // Step 2: Allocate workspace and info
+//     float* d_work = nullptr;
+//     int*   d_info  = nullptr;
+//     cudaErrcheck(cudaMalloc(&d_work, sizeof(float) * lwork));
+//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+
+//     // Step 3: Call the solver
+//     cusolverErrcheck(cusolverDnSsygvdx(
+//         cusolver_handle,
+//         cublas_eig_type(itype),
+//         cublas_eig_mode(jobz),
+//         cublas_fill_mode(uplo),
+//         n, A, lda, B, ldb,
+//         il, iu, abstol, &m_out, W, Z, ldz, d_work, lwork, d_info));
+
+//     // Step 4: Check result
+//     int h_info = 0;
+//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+//     if (h_info != 0) {
+//         throw std::runtime_error("hegvx: cusolverDnSsygvdx failed with info = " + std::to_string(h_info));
+//     }
+
+//     // Cleanup
+//     cudaErrcheck(cudaFree(d_work));
+//     cudaErrcheck(cudaFree(d_info));
+// }
+
+// Double precision
+// static inline
+// void hegvx(cusolverDnHandle_t& cusolver_handle,
+//            const int& itype,
+//            const char& jobz,
+//            const char& uplo,
+//            const int& n,
+//            double* A,
+//            const int& lda,
+//            double* B,
+//            const int& ldb,
+//            const int& il,
+//            const int& iu,
+//            const double& abstol,
+//            int& m_out,
+//            double* W,
+//            double* Z,
+//            const int& ldz) {
+//     int lwork = 0;
+//     cusolverErrcheck(cusolverDnDsygvdx_bufferSize(
+//         cusolver_handle, itype, jobz, uplo, n, A, lda, B, ldb,
+//         il, iu, abstol, &m_out, W, Z, ldz, &lwork));
+
+//     double* d_work = nullptr;
+//     int*    d_info  = nullptr;
+//     cudaErrcheck(cudaMalloc(&d_work, sizeof(double) * lwork));
+//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+
+//     cusolverErrcheck(cusolverDnDsygvdx(
+//         cusolver_handle, itype, jobz, uplo, n, A, lda, B, ldb,
+//         il, iu, abstol, &m_out, W, Z, ldz, d_work, lwork, d_info));
+
+//     int h_info = 0;
+//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+//     if (h_info != 0) {
+//         throw std::runtime_error("hegvx: cusolverDnDsygvdx failed with info = " + std::to_string(h_info));
+//     }
+
+//     cudaErrcheck(cudaFree(d_work));
+//     cudaErrcheck(cudaFree(d_info));
+// }
+
+// // Complex single precision
+// static inline
+// void hegvx(cusolverDnHandle_t& cusolver_handle,
+//            const int& itype,
+//            const char& jobz,
+//            const char& uplo,
+//            const int& n,
+//            cuComplex* A,
+//            const int& lda,
+//            cuComplex* B,
+//            const int& ldb,
+//            const int& il,
+//            const int& iu,
+//            const float& abstol,
+//            int& m_out,
+//            float* W,
+//            cuComplex* Z,
+//            const int& ldz) {
+//     int lwork = 0;
+//     cusolverErrcheck(cusolverDnChegvdx_bufferSize(
+//         cusolver_handle, itype, jobz, uplo, n,
+//         reinterpret_cast<cuFloatComplex*>(A), lda,
+//         reinterpret_cast<cuFloatComplex*>(B), ldb,
+//         il, iu, abstol, &m_out, W,
+//         reinterpret_cast<cuFloatComplex*>(Z), ldz, &lwork));
+
+//     cuComplex* d_work = nullptr;
+//     int*       d_info  = nullptr;
+//     cudaErrcheck(cudaMalloc(&d_work, sizeof(cuComplex) * lwork));
+//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+
+//     cusolverErrcheck(cusolverDnChegvdx(
+//         cusolver_handle, itype, jobz, uplo, n,
+//         reinterpret_cast<cuFloatComplex*>(A), lda,
+//         reinterpret_cast<cuFloatComplex*>(B), ldb,
+//         il, iu, abstol, &m_out, W,
+//         reinterpret_cast<cuFloatComplex*>(Z), ldz, d_work, lwork, d_info));
+
+//     int h_info = 0;
+//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+//     if (h_info != 0) {
+//         throw std::runtime_error("hegvx: cusolverDnChegvdx failed with info = " + std::to_string(h_info));
+//     }
+
+//     cudaErrcheck(cudaFree(d_work));
+//     cudaErrcheck(cudaFree(d_info));
+// }
+
+// // Complex double precision
+// static inline
+// void hegvx(cusolverDnHandle_t& cusolver_handle,
+//            const int& itype,
+//            const char& jobz,
+//            const char& uplo,
+//            const int& n,
+//            cuDoubleComplex* A,
+//            const int& lda,
+//            cuDoubleComplex* B,
+//            const int& ldb,
+//            const int& il,
+//            const int& iu,
+//            const double& abstol,
+//            int& m_out,
+//            double* W,
+//            cuDoubleComplex* Z,
+//            const int& ldz) {
+//     int lwork = 0;
+//     cusolverErrcheck(cusolverDnZhegvdx_bufferSize(
+//         cusolver_handle, itype, jobz, uplo, n,
+//         reinterpret_cast<cuDoubleComplex*>(A), lda,
+//         reinterpret_cast<cuDoubleComplex*>(B), ldb,
+//         il, iu, abstol, &m_out, W,
+//         reinterpret_cast<cuDoubleComplex*>(Z), ldz, &lwork));
+
+//     cuDoubleComplex* d_work = nullptr;
+//     int*             d_info  = nullptr;
+//     cudaErrcheck(cudaMalloc(&d_work, sizeof(cuDoubleComplex) * lwork));
+//     cudaErrcheck(cudaMalloc(&d_info,  sizeof(int)));
+
+//     cusolverErrcheck(cusolverDnZhegvdx(
+//         cusolver_handle, itype, jobz, uplo, n,
+//         reinterpret_cast<cuDoubleComplex*>(A), lda,
+//         reinterpret_cast<cuDoubleComplex*>(B), ldb,
+//         il, iu, abstol, &m_out, W,
+//         reinterpret_cast<cuDoubleComplex*>(Z), ldz, d_work, lwork, d_info));
+
+//     int h_info = 0;
+//     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
+//     if (h_info != 0) {
+//         throw std::runtime_error("hegvx: cusolverDnZhegvdx failed with info = " + std::to_string(h_info));
+//     }
+
+//     cudaErrcheck(cudaFree(d_work));
+//     cudaErrcheck(cudaFree(d_info));
+// }
+
+// --- getrf
 static inline
 void getrf(cusolverDnHandle_t& cusolver_handle, const int& m, const int& n, float* A, const int& lda, int* ipiv)
 {

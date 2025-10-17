@@ -33,14 +33,14 @@ TYPED_TEST(LapackTest, Trtri) {
     Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
                                  static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
     Tensor B = A;
     Tensor C = B;
     C.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
@@ -51,7 +51,7 @@ TYPED_TEST(LapackTest, Trtri) {
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     trtriCalculator('L', 'N', dim, B.data<Type>(), dim);
     gemmCalculator(trans, trans, m, n, k, &alpha, B.data<Type>(), k, A.data<Type>(), n, &beta, C.data<Type>(), n);
-    
+
     EXPECT_EQ(C, I);
 }
 
@@ -69,11 +69,11 @@ TYPED_TEST(LapackTest, Potrf) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(2.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(2.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor B = A;
     Tensor C = B;
     C.zero();
-    
+
     const char transa = 'N';
     const char transb = 'C';
     const int m = 3;
@@ -96,7 +96,7 @@ TYPED_TEST(LapackTest, heevd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
-    
+
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
     lapack_heevd<Type, Device> heevdCalculator;
@@ -105,14 +105,14 @@ TYPED_TEST(LapackTest, heevd) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
     expected_C1.zero();
     expected_C2.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
@@ -122,10 +122,10 @@ TYPED_TEST(LapackTest, heevd) {
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     heevdCalculator('V', 'U', B.data<Type>(), dim, E.data<Real>());
-    
+
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
-            static_cast<Type>(E.data<Real>()[0]), 
+            static_cast<Type>(E.data<Real>()[0]),
             static_cast<Type>(E.data<Real>()[1]),
             static_cast<Type>(E.data<Real>()[2])}));
 
@@ -143,7 +143,7 @@ TYPED_TEST(LapackTest, hegvd) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Real = typename GetTypeReal<Type>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
-    
+
     blas_gemm<Type, Device> gemmCalculator;
     blas_axpy<Type, Device> axpyCalculator;
     lapack_hegvd<Type, Device> hegvdCalculator;
@@ -152,31 +152,31 @@ TYPED_TEST(LapackTest, hegvd) {
     Tensor A = std::move(Tensor({static_cast<Type>(4.0), static_cast<Type>(1.0), static_cast<Type>(1.0),
                                  static_cast<Type>(1.0), static_cast<Type>(5.0), static_cast<Type>(3.0),
                                  static_cast<Type>(1.0), static_cast<Type>(3.0), static_cast<Type>(6.0)}).to_device<Device>());
-    
+
     Tensor I = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(1.0), static_cast<Type>(0.0),
                                  static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(1.0)}).to_device<Device>());
-    
+
     Tensor E = std::move(Tensor({static_cast<Real>(0.0), static_cast<Real>(0.0), static_cast<Real>(0.0)}).to_device<Device>());
     Tensor B = A;
     Tensor expected_C1 = A;
     Tensor expected_C2 = A;
     expected_C1.zero();
     expected_C2.zero();
-    
+
     const char trans = 'N';
     const int m = 3;
     const int n = 3;
     const int k = 3;
     const Type alpha = static_cast<Type>(1.0);
     const Type beta  = static_cast<Type>(0.0);
-    // Note al<l blas and lapack operators within container are column major!
+    // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
-    hegvdCalculator(1, 'V', 'U', B.data<Type>(), I.data<Type>(), dim, E.data<Real>());
+    hegvdCalculator(dim, dim, A.data<Type>(), I.data<Type>(), E.data<Real>(), B.data<Type>());
 
     E = E.to_device<DEVICE_CPU>();
     const Tensor Alpha = std::move(Tensor({
-            static_cast<Type>(E.data<Real>()[0]), 
+            static_cast<Type>(E.data<Real>()[0]),
             static_cast<Type>(E.data<Real>()[1]),
             static_cast<Type>(E.data<Real>()[2])}));
 

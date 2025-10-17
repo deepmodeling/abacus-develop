@@ -1,7 +1,6 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -146,7 +145,7 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
 /**
  * @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
  * a complex generalized Hermitian-definite eigenproblem.
- * 
+ *
  * both heevx and syevx are implemented through the `evx` interface of LAPACK.
  * wrapped in LapackWrapper::xheevx
  */

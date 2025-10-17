@@ -105,18 +105,37 @@ template <typename T>
 struct lapack_hegvd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
+        const int dim,
+        const int lda,
         T* Mat_A,
         T* Mat_B,
-        const int& dim,
-        Real* eigen_val)
+        Real* eigen_val,
+        T *eigen_vec)
     {
-        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        cudaErrcheck(cudaMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, cudaMemcpyDeviceToDevice));
+        cuSolverConnector::hegvd(cusolver_handle, itype, jobz, uplo, dim, eigen_vec, lda, Mat_B, lda, eigen_val);
     }
 };
 
+// template <typename T>
+// struct lapack_hegvx<T, DEVICE_GPU> {
+//     using Real = typename GetTypeReal<T>::type;
+//     void operator()(
+//         const int n,
+//         const int lda,
+//         T *A,
+//         T *B,
+//         const int m,
+//         Real *eigen_val,
+//         T *eigen_vec)
+//     {
+//         cuSolverConnector::hegvx(cusolver_handle, n, lda, A, B, m, eigen_val, eigen_vec);
+//     }
+// };
+//
 template <typename T>
 struct lapack_getrf<T, DEVICE_GPU> {
     void operator()(
