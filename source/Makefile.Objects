@@ -546,7 +546,7 @@ OBJS_IO=input_conv.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_fermi_surf.o\
-    nscf_band.o\
+    write_bands.o\
     cal_dos.o\
     cal_pdos_gamma.o\
     cal_pdos_multik.o\

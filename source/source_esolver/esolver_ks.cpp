@@ -12,8 +12,7 @@
 #include "source_hsolver/hsolver.h"
 #include "source_io/cube_io.h"
 
-// for NSCF calculations of band structures
-#include "source_io/nscf_band.h"
+#include "source_io/write_bands.h"
 // for output log information
 #include "source_io/output_log.h"
 #include "source_io/print_info.h"
@@ -284,13 +283,13 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     }
 
     // 1.2) print out eigenvalues and occupations
-	if(iter % PARAM.inp.out_freq_elec == 0)
-	{
-		if (PARAM.inp.out_band[0] || iter == PARAM.inp.scf_nmax || conv_esolver)
+    if (PARAM.inp.out_band[0])
+    {
+		if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
 		{
 			ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
 		}
-	}
+    }
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
@@ -369,32 +368,9 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 3) write eigenvalues and occupations to eig_occ.txt
     ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
 
-    // 3) write band information to band.txt
-    if (PARAM.inp.out_band[0])
-    {
-        const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "band";
+    // 4) write band information to band.txt
+    ModuleIO::write_bands(PARAM.inp, this->pelec->ekb, this->kv);
 
-            if(nspin0==1)
-            {
-                // do nothing
-            }
-            else if(nspin0==2)
-            {
-                ss << "s" << is + 1;
-            }
-
-            ss << ".txt";
-
-            const double eshift = 0.0;
-            ModuleIO::nscf_band(is, ss.str(), PARAM.inp.nbands,
-                                eshift, PARAM.inp.out_band[1], // precision
-                                this->pelec->ekb, this->kv);
-        }
-    }
 }
 
 template <typename T, typename Device>

@@ -1,4 +1,4 @@
-#include "nscf_band.h"
+#include "write_bands.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
@@ -10,7 +10,41 @@
 #include <mpi.h>
 #endif
 
-void ModuleIO::nscf_band(
+
+void ModuleIO::write_bands(const Input_para& inp,
+    const ModuleBase::matrix& ekb,
+    const K_Vectors& kv)
+{
+    // write band information to band.txt
+    if (inp.out_band[0])
+    {
+        const int nspin0 = (inp.nspin == 2) ? 2 : 1;
+        for (int is = 0; is < nspin0; is++)
+        {
+            std::stringstream ss;
+            ss << PARAM.globalv.global_out_dir << "band";
+
+            if(nspin0==1)
+            {
+                // do nothing
+            }
+            else if(nspin0==2)
+            {
+                ss << "s" << is + 1;
+            }
+
+            ss << ".txt";
+
+            const double eshift = 0.0;
+            nscf_bands(is, ss.str(), inp.nbands, eshift, 
+                       inp.out_band[1], // precision
+                       ekb, kv);
+        }
+    }
+}
+
+
+void ModuleIO::nscf_bands(
     const int &is,
     const std::string &eig_file, 
     const int &nband,
@@ -19,8 +53,8 @@ void ModuleIO::nscf_band(
     const ModuleBase::matrix& ekb,
     const K_Vectors& kv)
 {
-    ModuleBase::TITLE("ModuleIO","nscf_band");
-    ModuleBase::timer::tick("ModuleIO", "nscf_band");
+    ModuleBase::TITLE("ModuleIO","nscf_bands");
+    ModuleBase::timer::tick("ModuleIO", "nscf_bands");
 
     assert(precision>0);
 
@@ -34,7 +68,7 @@ void ModuleIO::nscf_band(
 	GlobalV::ofs_running << "\n";
 */
 
-    GlobalV::ofs_running << " Write eigenvalues data for plot to file: " << eig_file << std::endl;
+    GlobalV::ofs_running << " Write eigenvalues to file: " << eig_file << std::endl;
 
     // number of k points without spin; 
     // nspin = 1,2, nkstot = nkstot_np * nspin; 

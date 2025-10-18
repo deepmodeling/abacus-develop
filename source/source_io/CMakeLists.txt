@@ -9,7 +9,7 @@ list(APPEND objects
     cal_mlkedf_descriptors.cpp
     cif_io.cpp
     write_dos_pw.cpp
-    nscf_band.cpp
+    write_bands.cpp
     nscf_fermi_surf.cpp
     write_eig_occ.cpp
     numerical_basis.cpp
