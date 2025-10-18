@@ -286,12 +286,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 		  this->gd, this->psi, this->chr, hamilt_lcao,
           this->two_center_bundle_, this->GG, this->GK,
           this->orb_, this->pw_rho, this->pw_rhod,
-          this->sf, this->locpp.vloc, 
-#ifdef __EXX
-				this->exx_nao.exd,
-				this->exx_nao.exc,
-#endif
-				this->solvent);
+          this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
@@ -305,9 +300,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
     // cast pointers
-
 	auto* estate = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-
 	if(!estate)
 	{
 		ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_init","pelec does not exist");

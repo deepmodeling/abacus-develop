@@ -31,10 +31,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<TK, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc,
-#endif
+		Exx_NAO<TK> &exx_nao,
         surchem &solvent)             // solvent model
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
@@ -75,8 +72,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     gd
 #ifdef __EXX
                                     ,
-                                    exd ? &exd->get_Hexxs() : nullptr,
-                                    exc ? &exc->get_Hexxs() : nullptr
+                                    exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                    exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
         );
     }
@@ -99,8 +96,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       gd
 #ifdef __EXX
                                       ,
-                                      exd ? &exd->get_Hexxs() : nullptr,
-                                      exc ? &exc->get_Hexxs() : nullptr
+                                      exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                      exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
         );
     }
@@ -130,8 +127,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             two_center_bundle
 #ifdef __EXX
                                             ,
-                                            exd ? &exd->get_Hexxs() : nullptr,
-                                            exc ? &exc->get_Hexxs() : nullptr
+                                            exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
+                                            exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
 #endif
        );
     }
@@ -160,10 +157,7 @@ template void ModuleIO::ctrl_runner_lcao<double, double>(UnitCell& ucell,      /
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<double, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<double, std::complex<double>>> exc,
-#endif
+        Exx_NAO<double> &exx_nao,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: double 
@@ -185,10 +179,7 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: complex<double>
@@ -210,10 +201,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<std::complex<double>, std::complex<double>>> exc,
-#endif
+        Exx_NAO<std::complex<double>> &exx_nao,
         surchem &solvent);             // solvent model
 
 } // end namespace
