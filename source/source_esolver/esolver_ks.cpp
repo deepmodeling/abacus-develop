@@ -24,14 +24,13 @@
 #include "source_io/json_output/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
+#include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
 
 namespace ModuleESolver
 {
 
 template <typename T, typename Device>
-ESolver_KS<T, Device>::ESolver_KS()
-{
-}
+ESolver_KS<T, Device>::ESolver_KS(){}
 
 
 template <typename T, typename Device>
@@ -274,31 +273,15 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
 
     if (PARAM.inp.esolver_type == "ksdft")
     {
-        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type,
-                                             PARAM.inp.esolver_type,
-                                             PARAM.inp.calculation,
-                                             PARAM.inp.init_chg,
-                                             PARAM.inp.precision,
-                                             istep,
-                                             iter,
-                                             drho,
-                                             PARAM.inp.pw_diag_thr,
-                                             diag_ethr,
-                                             PARAM.inp.nelec);
+        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type, PARAM.inp.esolver_type,
+          PARAM.inp.calculation, PARAM.inp.init_chg, PARAM.inp.precision, istep, iter,
+          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec);
     }
     else if (PARAM.inp.esolver_type == "sdft")
     {
-        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type,
-                                               PARAM.inp.esolver_type,
-                                               PARAM.inp.calculation,
-                                               PARAM.inp.init_chg,
-                                               istep,
-                                               iter,
-                                               drho,
-                                               PARAM.inp.pw_diag_thr,
-                                               diag_ethr,
-                                               PARAM.inp.nbands,
-                                               esolver_KS_ne);
+        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type, PARAM.inp.esolver_type,
+          PARAM.inp.calculation, PARAM.inp.init_chg, istep, iter, drho,
+          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne);
     }
 
     // save input charge density (rho)
@@ -309,9 +292,7 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
 
-    //----------------------------------------------------------------
-    // 1) print out band gap 
-    //----------------------------------------------------------------
+    // 1.1) print out band gap 
     if (!PARAM.globalv.two_fermi)
     {
         this->pelec->cal_bandgap();
@@ -321,125 +302,30 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         this->pelec->cal_bandgap_updw();
     }
 
+    // 1.2) print out eigenvalues and occupations
 	if(iter % PARAM.inp.out_freq_elec == 0)
 	{
-		//----------------------------------------------------------------
-		// 2) print out eigenvalues and occupations
-		//----------------------------------------------------------------
 		if (PARAM.inp.out_band[0] || iter == PARAM.inp.scf_nmax || conv_esolver)
 		{
 			ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
 		}
 	}
 
-	//----------------------------------------------------------------
-    // 2) compute magnetization, only for LSDA(spin==2)
-	//----------------------------------------------------------------
+    // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
                                        this->pelec->nelec_spin.data());
 
-	//----------------------------------------------------------------
-    // 3) charge mixing 
-	//----------------------------------------------------------------
-    if (PARAM.globalv.ks_run)
-    {
-        // mixing will restart at this->p_chgmix->mixing_restart steps
-        if (drho <= PARAM.inp.mixing_restart && PARAM.inp.mixing_restart > 0.0
-            && this->p_chgmix->mixing_restart_step > iter)
-        {
-            this->p_chgmix->mixing_restart_step = iter + 1;
-        }
+    // 2.2) charge mixing 
+    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
+      this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
+      this->scf_thr, this->scf_ene_thr, PARAM.inp);
 
-        if (PARAM.inp.scf_os_stop) // if oscillation is detected, SCF will stop
-        {
-            this->oscillate_esolver
-                = this->p_chgmix->if_scf_oscillate(iter, drho, PARAM.inp.scf_os_ndim, PARAM.inp.scf_os_thr);
-        }
-
-        // drho will be 0 at this->p_chgmix->mixing_restart step, which is
-        // not ground state
-        bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0);
-        // SCF will continue if U is not converged for uramping calculation
-        bool is_U_converged = true;
-        // to avoid unnecessary dependence on dft+u, refactor is needed
-#ifdef __LCAO
-        if (PARAM.inp.dft_plus_u)
-        {
-            is_U_converged = GlobalC::dftu.u_converged();
-        }
-#endif
-
-        conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
-
-        // add energy threshold for SCF convergence
-        if (this->scf_ene_thr > 0.0)
-        {
-            // calculate energy of output charge density
-            elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
-            this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
-            // now, etot_old is the energy of input density, while etot is the energy of output density
-            this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
-            // output etot_delta
-            GlobalV::ofs_running << " DeltaE_womix = " << this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV"
-                                 << std::endl;
-            if (iter > 1 && conv_esolver == 1) // only check when density is converged
-            {
-                // update the convergence flag
-                conv_esolver
-                    = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
-            }
-        }
-
-        // If drho < hsolver_error in the first iter or drho < scf_thr, we
-        // do not change rho.
-        if (drho < hsolver_error || conv_esolver || PARAM.inp.calculation == "nscf")
-        {
-            if (drho < hsolver_error)
-            {
-                GlobalV::ofs_warning << " drho < hsolver_error, keep "
-                                        "charge density unchanged."
-                                     << std::endl;
-            }
-        }
-        else
-        {
-            //----------charge mixing---------------
-            // mixing will restart after this->p_chgmix->mixing_restart
-            // steps
-            if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1
-                && drho <= PARAM.inp.mixing_restart)
-            {
-                // do not mix charge density
-            }
-            else
-            {
-                p_chgmix->mix_rho(&this->chr); // update chr->rho by mixing
-            }
-            if (PARAM.inp.scf_thr_type == 2)
-            {
-                this->chr.renormalize_rho(); // renormalize rho in R-space would
-                                                  // induce a error in K-space
-            }
-            //----------charge mixing done-----------
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, BP_WORLD);
-
-    // change MPI_DOUBLE to MPI_C_BOOL, mohan 2025-04-13 
-    MPI_Bcast(&conv_esolver, 1, MPI_C_BOOL, 0, BP_WORLD);
-    MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
-#endif
-
-    // 4) Update potentials (should be done every SF iter)
+    // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
-    // 5) calculate energies
-    // 1 means Harris-Foulkes functional
-    // 2 means Kohn-Sham functional
-    this->pelec->cal_energies(1);
-    this->pelec->cal_energies(2);
+    // 3.1) calculate energies
+    this->pelec->cal_energies(1); // Harris-Foulkes functional
+    this->pelec->cal_energies(2); // Kohn-Sham functional
 
     if (iter == 1)
     {
@@ -448,10 +334,18 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
 
+    // 4) get meta-GGA related parameters
+    double dkin = 0.0; // for meta-GGA
+    if (XC_Functional::get_ked_flag())
+    {
+        dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
+    }
 
-	//----------------------------------------------------------------
-    // 6) time and meta-GGA 
-	//----------------------------------------------------------------
+    // Iter finish 
+    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
+
+
+    // the end, print time
 #ifdef __MPI
     double duration = (double)(MPI_Wtime() - iter_time);
 #else
@@ -460,38 +354,19 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
           / static_cast<double>(1e6);
 #endif
 
-    // get mtaGGA related parameters
-    double dkin = 0.0; // for meta-GGA
-    if (XC_Functional::get_ked_flag())
-    {
-        dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
-    }
-
-    // pint energy
-    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, 
+    // print energies
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, 
     dkin, duration, diag_ethr);
 
 
 #ifdef __RAPIDJSON
-    // 7) add Json of scf mag
+    // add Json of scf mag
     Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho, duration);
 #endif //__RAPIDJSON
 
-
-    // 7) SCF restart information 
-    if (PARAM.inp.mixing_restart > 0 
-        && iter == this->p_chgmix->mixing_restart_step - 1 
-        && iter != PARAM.inp.scf_nmax)
-    {
-        this->p_chgmix->mixing_restart_last = iter;
-        std::cout << " SCF restart after this step!" << std::endl;
-    }
-
-    // 8) Iter finish 
-    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
@@ -534,13 +409,9 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
             ss << ".txt";
 
             const double eshift = 0.0;
-            ModuleIO::nscf_band(is,
-                                ss.str(),
-                                PARAM.inp.nbands,
-                                eshift,
-                                PARAM.inp.out_band[1], // precision
-                                this->pelec->ekb,
-                                this->kv);
+            ModuleIO::nscf_band(is, ss.str(), PARAM.inp.nbands,
+                                eshift, PARAM.inp.out_band[1], // precision
+                                this->pelec->ekb, this->kv);
         }
     }
 }
