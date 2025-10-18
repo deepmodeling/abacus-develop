@@ -1,21 +1,4 @@
 #include "esolver_ks_pw.h"
-
-/*
-#include "source_base/global_variable.h"
-#include "source_pw/module_pwdft/elecond.h"
-#include "source_io/input_conv.h"
-#include "source_io/output_log.h"
-
-#include <iostream>
-
-//--------------temporary----------------------------
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_estate/occupy.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/print_info.h"
-*/
-
 #include "source_base/memory.h"
 #include "source_base/module_device/device.h"
 #include "source_io/numerical_basis.h"
