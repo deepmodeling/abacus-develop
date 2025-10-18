@@ -51,9 +51,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_nscf_band
+  TARGET MODULE_IO_write_bands
   LIBS parameter ${math_libs} base device
-  SOURCES nscf_band_test.cpp ../nscf_band.cpp
+  SOURCES write_bands_test.cpp ../write_bands.cpp
 )
 
 AddTest(
