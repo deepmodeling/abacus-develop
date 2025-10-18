@@ -22,8 +22,6 @@
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
-//#include <chrono>
-
 #include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
 #include "source_estate/setup_estate_pw.h" // mohan add 20251005
 #include "source_io/ctrl_output_pw.h" // mohan add 20250927
@@ -52,7 +50,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 
     // mohan add 2025-10-12
     this->stp.clean();
-
 }
 
 template <typename T, typename Device>
@@ -140,7 +137,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->chr, this->locpp, this->ppcell, this->vsep_cell,
               this->stp.psi_t, this->p_hamilt, this->pw_wfc, this->pw_rhod, PARAM.inp);
 
-
+    // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
 
     //! Exx calculations
@@ -161,17 +158,17 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    // Call iter_init() of ESolver_KS
+    // 1) Call iter_init() of ESolver_KS
     ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
-    // perform charge mixing
+    // 2) perform charge mixing for KSDFT using pw basis
     module_charge::chgmixing_ks_pw(iter, this->p_chgmix, PARAM.inp);
 
-    // mohan move harris functional to here, 2012-06-05
+    // 3) mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
-    // update local occupations for DFT+U
+    // 4) update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
     if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
@@ -200,7 +197,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     // be careful that istep start from 0 and iter start from 1
     // if (iter == 1)
     hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-
     hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
@@ -248,15 +244,8 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                      PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(this->p_hamilt,
-                             this->stp.psi_t[0],
-                             this->pelec,
-                             this->pelec->ekb.c,
-                             GlobalV::RANK_IN_POOL,
-                             GlobalV::NPROC_IN_POOL,
-                             skip_charge,
-                             ucell.tpiba,
-                             ucell.nat);
+        hsolver_pw_obj.solve(this->p_hamilt, this->stp.psi_t[0], this->pelec, this->pelec->ekb.c,
+          GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, skip_charge, ucell.tpiba, ucell.nat);
     }
 
     // symmetrize the charge density
