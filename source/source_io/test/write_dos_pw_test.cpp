@@ -65,7 +65,7 @@ TEST_F(DosPWTest,Dos1)
 	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
-    elecstate::efermi fermi_energy;
+    elecstate::Efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
     
@@ -130,7 +130,7 @@ TEST_F(DosPWTest,Dos2)
 	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
-    elecstate::efermi fermi_energy;
+    elecstate::Efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
 

@@ -1,16 +1,5 @@
 #include "esolver_ks.h"
 
-/*
-#include "source_base/timer.h"
-#include "source_base/global_variable.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_dftu/dftu.h"
-
-#include "source_cell/cal_atoms_info.h"
-#include "source_io/cube_io.h"
-*/
-
 // for jason output information
 #include "source_io/json_output/init_info.h"
 #include "source_io/json_output/output_info.h"

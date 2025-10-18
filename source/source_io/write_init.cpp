@@ -1,7 +1,7 @@
 #include "source_io/write_init.h"
 #include "source_io/cube_io.h"
 
-void write_chg_init(
+void ModuleIO::write_chg_init(
     const UnitCell& ucell,
     const Parallel_Grid &para_grid,
     const Charge &chr,
@@ -60,7 +60,7 @@ void write_chg_init(
 }
 
 
-void write_pot_init(
+void ModuleIO::write_pot_init(
     const UnitCell& ucell,
     const Parallel_Grid &para_grid,
     elecstate::ElecState *pelec,
