@@ -24,7 +24,7 @@ rm -rf $BUILD_DIR
 PREFIX=$ABACUS_DIR
 ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
 # ELPA=$INSTALL_DIR/elpa-2024.05.001/nvidia # for gpu-lcao
-CEREAL=$INSTALL_DIR/cereal-master/include/cereal
+CEREAL=$INSTALL_DIR/cereal-master/include
 LIBXC=$INSTALL_DIR/libxc-7.0.0
 RAPIDJSON=$INSTALL_DIR/rapidjson-master
 LIBRI=$INSTALL_DIR/LibRI-master
