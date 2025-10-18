@@ -116,10 +116,10 @@ esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
     if [ "$with_cereal" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_cereal"
-prepend_path CPATH "$pkg_install_dir"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export CPATH="$pkg_install_dir":\${CPATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
+prepend_path CPATH "$pkg_install_dir/include"
+prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir/include"
+export CPATH="$pkg_install_dir/include":\${CPATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir/include":\${CMAKE_PREFIX_PATH}
 export CEREAL_ROOT="$pkg_install_dir"
 EOF
     else
