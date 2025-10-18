@@ -59,11 +59,11 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     classname = "ESolver_KS";
     basisname = "";
 
-    scf_thr = inp.scf_thr;
-    scf_ene_thr = inp.scf_ene_thr;
-    maxniter = inp.scf_nmax;
-    niter = maxniter;
-    drho = 0.0;
+    this->scf_thr = inp.scf_thr;
+    this->scf_ene_thr = inp.scf_ene_thr;
+    this->maxniter = inp.scf_nmax;
+    this->niter = maxniter;
+    this->drho = 0.0;
 
     std::string fft_device = inp.device;
 
@@ -82,8 +82,9 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 #endif
 
     pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
-    ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
+    // for LCAO calculations, we need to set bx, by, and bz
+    ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
     tmp->setbxyz(inp.bx, inp.by, inp.bz);
 
     //! 4) setup charge mixing
@@ -117,7 +118,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 9) print information
-    ModuleIO::setup_parameters(ucell, this->kv);
+    ModuleIO::print_parameters(ucell, this->kv, inp);
 
     //! 10) setup plane wave for electronic wave functions
     ModuleESolver::pw_setup(inp, ucell, *this->pw_rho, this->kv, *this->pw_wfc);

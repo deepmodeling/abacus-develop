@@ -319,7 +319,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     }
     this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-    ModuleIO::setup_parameters(ucell, this->kv);
+    ModuleIO::print_parameters(ucell, this->kv, inp);
 
     this->parameter_check();
 

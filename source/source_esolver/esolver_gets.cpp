@@ -43,7 +43,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-    ModuleIO::setup_parameters(ucell, this->kv);
+    ModuleIO::print_parameters(ucell, this->kv, inp);
 
     // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)

@@ -7,36 +7,39 @@
 namespace ModuleIO
 {
 
-void setup_parameters(UnitCell& ucell, K_Vectors& kv)
+void print_parameters(
+	const UnitCell& ucell, 
+	K_Vectors& kv,
+    const Input_para& inp)
 {
-    ModuleBase::TITLE("ModuleIO", "setup_parameters");
+    ModuleBase::TITLE("ModuleIO", "print_parameters");
 
-	if(PARAM.inp.calculation=="scf" 
-			|| PARAM.inp.calculation=="relax" 
-			|| PARAM.inp.calculation=="cell-relax" 
-			|| PARAM.inp.calculation=="nscf"
-			|| PARAM.inp.calculation=="get_pchg" 
-			|| PARAM.inp.calculation=="get_wf" 
-			|| PARAM.inp.calculation=="md")
+	if(inp.calculation=="scf" 
+			|| inp.calculation=="relax" 
+			|| inp.calculation=="cell-relax" 
+			|| inp.calculation=="nscf"
+			|| inp.calculation=="get_pchg" 
+			|| inp.calculation=="get_wf" 
+			|| inp.calculation=="md")
 	{
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(PARAM.inp.calculation=="scf")
+		if(inp.calculation=="scf")
 		{
 			std::cout << " Self-consistent calculations for electrons" << std::endl;
 		}
-		else if(PARAM.inp.calculation=="test")
+		else if(inp.calculation=="test")
 		{
 			std::cout << " Test run" << std::endl;
 		}
-		if(PARAM.inp.calculation=="relax")
+		if(inp.calculation=="relax")
 		{
             std::cout << " Ion relaxation calculations" << std::endl;
 		}
-        if(PARAM.inp.calculation=="cell-relax")
+        if(inp.calculation=="cell-relax")
         {
             std::cout << " Cell relaxation calculations" << std::endl;
         }
-		if(PARAM.inp.calculation=="md")
+		if(inp.calculation=="md")
 		{
 			std::cout << " Molecular Dynamics simulations" << std::endl;
 
@@ -79,12 +82,12 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 		     << std::setw(12) << "PROCESSORS"
              << std::setw(12) << "THREADS";
 
-		const bool orbinfo = (PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" 
-						  || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"));
+		const bool orbinfo = (inp.basis_type=="lcao" || inp.basis_type=="lcao_in_pw" 
+						  || (inp.basis_type=="pw" && inp.init_wfc.substr(0, 3) == "nao"));
 		if (orbinfo) { std::cout << std::setw(12) << "NBASE"; }
 
 		std::cout << std::endl;
-		std::cout << " " << std::setw(8) << PARAM.inp.nspin;
+		std::cout << " " << std::setw(8) << inp.nspin;
 
 		if(PARAM.globalv.gamma_only_local)
 		{
@@ -105,15 +108,15 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 
 
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		if(PARAM.inp.basis_type == "lcao")
+		if(inp.basis_type == "lcao")
 		{
 			std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
 		}
-		else if(PARAM.inp.basis_type == "lcao_in_pw")
+		else if(inp.basis_type == "lcao_in_pw")
 		{
 			std::cout << " Expand Atomic bases into plane waves" << std::endl;
 		}
-		else if(PARAM.inp.basis_type == "pw")
+		else if(inp.basis_type == "pw")
 		{
 			std::cout << " Use plane wave basis" << std::endl;
 		}
