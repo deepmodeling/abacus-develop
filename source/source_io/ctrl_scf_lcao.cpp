@@ -1,7 +1,7 @@
 #include <complex>
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
-#include "source_io/ctrl_output_lcao.h" // use ctrl_output_lcao() 
+#include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao() 
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_hamilt/hamilt.h" // use Hamilt<T>  
 
@@ -34,7 +34,7 @@ namespace ModuleIO
 {
 
 template <typename TK, typename TR>
-void ctrl_output_lcao(UnitCell& ucell,
+void ctrl_scf_lcao(UnitCell& ucell,
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<TK>* pelec, 
@@ -50,18 +50,13 @@ void ctrl_output_lcao(UnitCell& ucell,
 		Grid_Technique &gt, // for berryphase
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
-        rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
-#ifdef __MLALGO
-		LCAO_Deepks<TK>& ld,
-#endif
-#ifdef __EXX
-		Exx_LRI_Interface<TK, double>& exd,
-		Exx_LRI_Interface<TK, std::complex<double>>& exc,
-#endif
+		rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
+		Setup_DeePKS<TK> &deepks,
+		Exx_NAO<TK> &exx_nao,
 		const int istep)
 {
-    ModuleBase::TITLE("ModuleIO", "ctrl_output_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
+    ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 
     const bool out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
@@ -162,7 +157,7 @@ void ctrl_output_lcao(UnitCell& ucell,
 #ifdef __MLALGO
     // need control parameter
 	hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = p_hamilt;
-	std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
+	std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
 	LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
 	deepks_interface.out_deepks_labels(pelec->f_en.etot,
@@ -364,11 +359,11 @@ void ctrl_output_lcao(UnitCell& ucell,
                 + "HexxR" + std::to_string(GlobalV::MY_RANK);
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exd.get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs());
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exc.get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs());
             }
         }
     }
@@ -434,14 +429,14 @@ void ctrl_output_lcao(UnitCell& ucell,
     }
 
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_output_lcao");
+    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
 }
 
 } // End ModuleIO
 
 
 // For gamma only
-template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<double>* pelec, 
@@ -458,17 +453,12 @@ template void ModuleIO::ctrl_output_lcao<double, double>(UnitCell& ucell,
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<double, double> &rdmft_solver, // for RDMFT
-#ifdef __MLALGO
-		LCAO_Deepks<double>& ld,
-#endif
-#ifdef __EXX
-		Exx_LRI_Interface<double, double>& exd,
-		Exx_LRI_Interface<double, std::complex<double>>& exc,
-#endif
+		Setup_DeePKS<double> &deepks,
+		Exx_NAO<double> &exx_nao,
 		const int istep);
 
 // For multiple k-points
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -485,16 +475,11 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, double>(UnitCell&
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, double> &rdmft_solver, // for RDMFT
-#ifdef __MLALGO
-		LCAO_Deepks<std::complex<double>>& ld,
-#endif
-#ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
-#endif
+		Setup_DeePKS<std::complex<double>> &deepks,
+		Exx_NAO<std::complex<double>> &exx_nao,
 		const int istep);
 
-template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
+template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, 
         const Input_para& inp,
 		K_Vectors& kv,
 		elecstate::ElecStateLCAO<std::complex<double>>* pelec, 
@@ -511,12 +496,7 @@ template void ModuleIO::ctrl_output_lcao<std::complex<double>, std::complex<doub
 		const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 		const Structure_Factor& sf, // for Wannier90
 		rdmft::RDMFT<std::complex<double>, std::complex<double>> &rdmft_solver, // for RDMFT
-#ifdef __MLALGO
-		LCAO_Deepks<std::complex<double>>& ld,
-#endif
-#ifdef __EXX
-		Exx_LRI_Interface<std::complex<double>, double>& exd,
-		Exx_LRI_Interface<std::complex<double>, std::complex<double>>& exc,
-#endif
+		Setup_DeePKS<std::complex<double>> &deepks,
+		Exx_NAO<std::complex<double>> &exx_nao,
 		const int istep);
 

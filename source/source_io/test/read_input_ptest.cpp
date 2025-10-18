@@ -114,7 +114,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.fixed_axes, "None");
     EXPECT_FALSE(param.inp.fixed_ibrav);
     EXPECT_FALSE(param.inp.fixed_atoms);
-    EXPECT_EQ(param.inp.relax_method, "cg");
+    EXPECT_EQ(param.inp.relax_method[0], "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
@@ -364,6 +364,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.of_full_pw_dim, 0);
     EXPECT_FALSE(param.inp.of_read_kernel);
     EXPECT_EQ(param.inp.of_kernel_file, "WTkernel.txt");
+    EXPECT_FALSE(param.inp.of_cd);
+    EXPECT_DOUBLE_EQ(param.inp.of_mCD_alpha,1.0);
     EXPECT_DOUBLE_EQ(param.inp.of_xwm_kappa, 1.);
     EXPECT_DOUBLE_EQ(param.inp.of_xwm_rho_ref, 1.);
     EXPECT_EQ(param.inp.device, "cpu");

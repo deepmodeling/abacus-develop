@@ -10,7 +10,6 @@
 # Before running this script, ensure you have loaded your system packages
 # module load mkl mpi compiler
 
-<<<<<<< HEAD
 # Compiler Configuration
 TOOLCHAIN_COMPILER="intel"
 WITH_INTEL="system"

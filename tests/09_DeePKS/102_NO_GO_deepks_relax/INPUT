@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			    autotest
 calculation     	relax
-relax_method        bfgs
+relax_method        bfgs 2
 relax_nmax		    10
 dft_functional		pbe
 

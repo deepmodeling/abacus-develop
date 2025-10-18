@@ -1,5 +1,5 @@
-#ifndef CTRL_OUTPUT_LCAO_H 
-#define CTRL_OUTPUT_LCAO_H 
+#ifndef CTRL_SCF_LCAO_H 
+#define CTRL_SCF_LCAO_H 
 
 #include <complex>
 
@@ -13,15 +13,15 @@
 #include "source_basis/module_pw/pw_basis_k.h" // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
 #include "source_pw/module_pwdft/structure_factor.h" // use Structure_Factor 
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#endif
+
+#include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 
 namespace ModuleIO
 {
     // in principle, we need to add const for all of the variables, mohan note 2025-06-05
 	template <typename TK, typename TR>
-		void ctrl_output_lcao(UnitCell& ucell, 
+		void ctrl_scf_lcao(UnitCell& ucell, 
 				const Input_para& inp,
 				K_Vectors& kv,
 				elecstate::ElecStateLCAO<TK>* pelec, 
@@ -38,13 +38,8 @@ namespace ModuleIO
 				const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
 				const Structure_Factor& sf, // for Wannier90
 				rdmft::RDMFT<TK, TR> &rdmft_solver, // for RDMFT
-#ifdef __MLALGO
-				LCAO_Deepks<TK>& ld,
-#endif
-#ifdef __EXX
-				Exx_LRI_Interface<TK, double>& exd,
-				Exx_LRI_Interface<TK, std::complex<double>>& exc,
-#endif
+                Setup_DeePKS<TK> &deepks,
+                Exx_NAO<TK> &exx_nao,
 				const int istep);
 }
 #endif

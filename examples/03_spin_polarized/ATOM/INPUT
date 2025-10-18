@@ -46,7 +46,6 @@ cal_force          1
 cal_stress         1
 out_stru           1  # print STRU in OUT
 out_chg            0  # print CHG or not
-out_bandgap        1  # if bandgap and mul out, chg will out
 out_mul            1  # print Mulliken charge and mag of atom in mulliken.txt
 # out_wfc_lcao       1
 # out_interval       1

@@ -17,11 +17,17 @@ jobs:
       volumes:
         - /tmp/ccache:/github/home/.ccache
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          submodules: recursive
           fetch-depth: 0
+          # We will handle submodules manually after fixing ownership
+          submodules: 'false'
+
+      - name: Take ownership of the workspace and update submodules
+        run: |
+          sudo chown -R $(whoami) .
+          git submodule update --init --recursive
 
       - name: Install CI tools
         run: |

@@ -10,8 +10,8 @@
 class VSep
 {
   public:
-    VSep() noexcept;
-    ~VSep() noexcept;
+    VSep();
+    ~VSep();
 
     void init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_cell);
     void generate_vsep_r(const ModulePW::PW_Basis& rho_basis, const ModuleBase::ComplexMatrix& sf_in, const Sep_Cell& sep_cell);

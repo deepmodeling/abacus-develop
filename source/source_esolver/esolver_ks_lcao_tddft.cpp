@@ -57,7 +57,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 {
-    delete psi_laststep;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+	delete psi_laststep;
     if (Hk_laststep != nullptr)
     {
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
@@ -334,15 +337,19 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(
     }
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
+
+    this->save2(ucell, istep, iter, conv_esolver);
+
 }
 
 template <typename TR, typename Device>
-void ESolver_KS_LCAO_TDDFT<TR, Device>::update_pot(UnitCell& ucell, 
+void ESolver_KS_LCAO_TDDFT<TR, Device>::save2(UnitCell& ucell, 
 		const int istep, 
 		const int iter, 
 		const bool conv_esolver)
 {
     // Calculate new potential according to new Charge Density
+/*
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
@@ -353,6 +360,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::update_pot(UnitCell& ucell,
     {
         this->pelec->cal_converged();
     }
+*/
 
     const int nloc = this->pv.nloc;
     const int ncol_nbands = this->pv.ncol_bands;

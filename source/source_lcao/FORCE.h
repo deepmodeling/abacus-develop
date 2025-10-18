@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
+#ifndef LCAO_FORCE_H
+#define LCAO_FORCE_H
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -13,6 +13,7 @@
 #include "source_lcao/module_gint/gint_gamma.h"
 #include "source_lcao/module_gint/gint_k.h"
 #include "source_psi/psi.h"
+#include "source_lcao/setup_deepks.h"
 
 #ifndef TGINT_H
 #define TGINT_H
@@ -63,11 +64,9 @@ class Force_LCAO
                 ModuleBase::matrix& stvnl_dphi,
                 ModuleBase::matrix& svnl_dbeta,
                 ModuleBase::matrix& svl_dphi,
-#ifdef __MLALGO
                 ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
-                LCAO_Deepks<T>& ld,
-#endif
+                Setup_DeePKS<T>& deepks,
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
                 const LCAO_Orbitals& orb,
