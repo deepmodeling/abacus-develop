@@ -46,13 +46,14 @@ case "$with_nep" in
 
         if [ "${PACK_RUN}" = "__TRUE__" ]; then
             echo "--pack-run mode specified, skip installation"
-        else
-            echo "Installing from scratch into ${pkg_install_dir}"
-            [ -d $dirname ] && rm -rf $dirname
-            tar -xzf $filename
-            cd $dirname
+            exit 0
+        fi
+        echo "Installing from scratch into ${pkg_install_dir}"
+        [ -d $dirname ] && rm -rf $dirname
+        tar -xzf $filename
+        cd $dirname
 
-            cat << EOF > Makefile
+        cat << EOF > Makefile
 CXX ?= g++
 
 # Compiler flags
@@ -93,12 +94,11 @@ install:
 	cp src/nep.h \$(PREFIX)/include/
 EOF
 
-            make > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-            make PREFIX="${pkg_install_dir}" install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        make > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make PREFIX="${pkg_install_dir}" install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
 
-            cd ..
-            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-        fi
+        cd ..
+        write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     NEP_CFLAGS="-I'${pkg_install_dir}/include'"
     NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
