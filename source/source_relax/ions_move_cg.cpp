@@ -165,7 +165,7 @@ CG_begin:
 
             if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
             {
-                if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
+                if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                     < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
                     Ions_Move_Basic::relax_method[0] = "bfgs";

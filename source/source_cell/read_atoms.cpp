@@ -414,7 +414,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     }
                     else if(Coordinate=="Cartesian_angstrom")
                     {
-                        ucell.atoms[it].tau[ia] = v / 0.529177 / ucell.lat0;
+                        ucell.atoms[it].tau[ia] = v / ModuleBase::BOHR_TO_A / ucell.lat0;
                     }    
                     else if(Coordinate=="Cartesian_angstrom_center_xy")
                     {
@@ -422,7 +422,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         ucell.latcenter.x = (ucell.latvec.e11 + ucell.latvec.e21 + ucell.latvec.e31)/2.0;
                         ucell.latcenter.y = (ucell.latvec.e12 + ucell.latvec.e22 + ucell.latvec.e32)/2.0;
                         ucell.latcenter.z = 0.0;
-                        ucell.atoms[it].tau[ia] = v / 0.529177 / ucell.lat0 + ucell.latcenter; 
+                        ucell.atoms[it].tau[ia] = v / ModuleBase::BOHR_TO_A / ucell.lat0 + ucell.latcenter; 
                     }
                     else if(Coordinate=="Cartesian_angstrom_center_xz")
                     {
@@ -430,7 +430,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         ucell.latcenter.x = (ucell.latvec.e11 + ucell.latvec.e21 + ucell.latvec.e31)/2.0;
                         ucell.latcenter.y = 0.0; 
                         ucell.latcenter.z = (ucell.latvec.e13 + ucell.latvec.e23 + ucell.latvec.e33)/2.0;    
-                        ucell.atoms[it].tau[ia] = v / 0.529177 / ucell.lat0 + ucell.latcenter; 
+                        ucell.atoms[it].tau[ia] = v / ModuleBase::BOHR_TO_A / ucell.lat0 + ucell.latcenter; 
                     }
                     else if(Coordinate=="Cartesian_angstrom_center_yz")
                     {
@@ -438,7 +438,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         ucell.latcenter.x = 0.0; 
                         ucell.latcenter.y = (ucell.latvec.e12 + ucell.latvec.e22 + ucell.latvec.e32)/2.0;
                         ucell.latcenter.z = (ucell.latvec.e13 + ucell.latvec.e23 + ucell.latvec.e33)/2.0;    
-                        ucell.atoms[it].tau[ia] = v / 0.529177 / ucell.lat0 + ucell.latcenter; 
+                        ucell.atoms[it].tau[ia] = v / ModuleBase::BOHR_TO_A / ucell.lat0 + ucell.latcenter; 
                     }
                     else if(Coordinate=="Cartesian_angstrom_center_xyz")
                     {
@@ -446,7 +446,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                         ucell.latcenter.x = (ucell.latvec.e11 + ucell.latvec.e21 + ucell.latvec.e31)/2.0;
                         ucell.latcenter.y = (ucell.latvec.e12 + ucell.latvec.e22 + ucell.latvec.e32)/2.0;
                         ucell.latcenter.z = (ucell.latvec.e13 + ucell.latvec.e23 + ucell.latvec.e33)/2.0;    
-                        ucell.atoms[it].tau[ia] = v / 0.529177 / ucell.lat0 + ucell.latcenter; 
+                        ucell.atoms[it].tau[ia] = v / ModuleBase::BOHR_TO_A / ucell.lat0 + ucell.latcenter; 
                     }
                     else if(Coordinate=="Cartesian_au")
                     {

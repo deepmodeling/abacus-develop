@@ -49,28 +49,28 @@ private:
     double alpha_k;                         ///< Step size parameter
 
     ModuleESolver::ESolver* solver;         ///< Structure solver
-    std::vector<std::vector<double>> H;     ///< Inverse Hessian approximation
-    std::vector<double> force0;             ///< Previous step forces
-    std::vector<std::vector<double>> force;  ///< Force history
-    std::vector<double> pos0;                ///< Previous positions
-    std::vector<std::vector<double>> pos;   ///< Position history
-    std::vector<double> pos_taud0;           ///< Previous fractional positions
-    std::vector<std::vector<double>> pos_taud; ///< Fractional position history
-    std::vector<std::vector<double>> dpos;  ///< Position displacements
+    std::vector<double> steplength;//the length of atoms displacement 
+    std::vector<std::vector<double>> H;//Hessian matrix
+    std::vector<double> force0;//force in previous step
+    std::vector<ModuleBase::Vector3<double>> force;
+    std::vector<double> pos0;//atom pos in previous step(cartesian coordinates)
+    std::vector<ModuleBase::Vector3<double>> pos;
+    std::vector<double> pos_taud0;//atom pos in previous step(relative coordinates)
+    std::vector<ModuleBase::Vector3<double>> pos_taud;
+    std::vector<ModuleBase::Vector3<double>> dpos;
     std::vector<std::vector<double>> s;     ///< Position difference vectors
     std::vector<std::vector<double>> y;     ///< Force difference vectors
     std::vector<double> rho;                ///< Scalar products for L-BFGS update
-    std::vector<double> steplength;         ///< Step lengths for each atom
 
     /**
      * @brief Prepare optimization step parameters
      */
-    void prepare_step(std::vector<std::vector<double>>& force,
-                      std::vector<std::vector<double>>& pos,
+    void prepare_step(std::vector<ModuleBase::Vector3<double>>& force,
+                      std::vector<ModuleBase::Vector3<double>>& pos,
                       std::vector<std::vector<double>>& H,
                       std::vector<double>& pos0,
                       std::vector<double>& force0,
-                      std::vector<std::vector<double>>& dpos,
+                      std::vector<ModuleBase::Vector3<double>>& dpos,
                       UnitCell& ucell,
                       const double &etot);
 
@@ -78,7 +78,7 @@ private:
      * @brief Judge if the cell is restrain
      * @param dpos Position displacements to constrain
      */
-    void is_restrain(std::vector<std::vector<double>>& dpos);
+    void is_restrain();
 
     /**
      * @brief Calculate maximum gradient component
@@ -94,7 +94,7 @@ private:
      * @param pos Output position vector
      */
     void get_pos(UnitCell& ucell,
-                 std::vector<std::vector<double>>& pos);
+                 std::vector<ModuleBase::Vector3<double>>& pos);
 
     /**
      * @brief Get fractional positions from unit cell
@@ -102,7 +102,7 @@ private:
      * @param pos_taud Output fractional positions
      */
     void get_pos_taud(UnitCell& ucell,
-                      std::vector<std::vector<double>>& pos_taud);
+                      std::vector<ModuleBase::Vector3<double>>& pos_taud);
 
     /**
      * @brief Update L-BFGS history buffers
@@ -117,7 +117,7 @@ private:
      * @param y Force differences buffer
      * @param rho Scalar products buffer
      */
-    void update(std::vector<std::vector<double>>& pos_taud, 
+    void update(std::vector<ModuleBase::Vector3<double>>& pos_taud, 
                 std::vector<double>& pos_taud0, 
                 std::vector<double>& force,
                 std::vector<double>& force0, 
@@ -135,7 +135,7 @@ private:
      * @param maxstep Maximum allowed step length
      */
     void determine_step(std::vector<double>& steplength,
-                       std::vector<std::vector<double>>& dpos,
+                       std::vector<ModuleBase::Vector3<double>>& dpos,
                        double& maxstep);
 
     /**
