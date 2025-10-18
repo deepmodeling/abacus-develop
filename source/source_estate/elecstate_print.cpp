@@ -278,14 +278,14 @@ void print_etot(const Magnetism& magnet,
     // print out the band gap if needed
     if (!PARAM.globalv.two_fermi)
     {
-        titles.push_back("E_bandgap");
+        titles.push_back("E_gap(k)"); // gap of given k-points
         energies_Ry.push_back(elec.bandgap);
     }
     else
     {
-        titles.push_back("E_bandgap_up");
+        titles.push_back("E_gap_up(k)");
         energies_Ry.push_back(elec.bandgap_up);
-        titles.push_back("E_bandgap_dw");
+        titles.push_back("E_gap_dw(k)");
         energies_Ry.push_back(elec.bandgap_dw);
     }
     energies_eV.resize(energies_Ry.size());
