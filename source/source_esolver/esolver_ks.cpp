@@ -324,10 +324,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
     // 3.1) calculate energies
-    // 1 means Harris-Foulkes functional
-    // 2 means Kohn-Sham functional
-    this->pelec->cal_energies(1);
-    this->pelec->cal_energies(2);
+    this->pelec->cal_energies(1); // Harris-Foulkes functional
+    this->pelec->cal_energies(2); // Kohn-Sham functional
 
     if (iter == 1)
     {
@@ -341,15 +339,6 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     if (XC_Functional::get_ked_flag())
     {
         dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
-    }
-
-    // SCF restart information 
-    if (PARAM.inp.mixing_restart > 0 
-        && iter == this->p_chgmix->mixing_restart_step - 1 
-        && iter != PARAM.inp.scf_nmax)
-    {
-        this->p_chgmix->mixing_restart_last = iter;
-        std::cout << " SCF restart after this step!" << std::endl;
     }
 
     // Iter finish 
@@ -366,7 +355,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 #endif
 
     // print energies
-    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, 
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, 
     dkin, duration, diag_ethr);
 
 
@@ -420,13 +409,9 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
             ss << ".txt";
 
             const double eshift = 0.0;
-            ModuleIO::nscf_band(is,
-                                ss.str(),
-                                PARAM.inp.nbands,
-                                eshift,
-                                PARAM.inp.out_band[1], // precision
-                                this->pelec->ekb,
-                                this->kv);
+            ModuleIO::nscf_band(is, ss.str(), PARAM.inp.nbands,
+                                eshift, PARAM.inp.out_band[1], // precision
+                                this->pelec->ekb, this->kv);
         }
     }
 }
