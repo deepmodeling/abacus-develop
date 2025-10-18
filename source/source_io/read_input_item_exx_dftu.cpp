@@ -337,12 +337,6 @@ void ReadInput::item_exx()
         Input_Item item("exx_opt_orb_lmax");
         item.annotation = "the maximum l of the spherical Bessel functions for opt ABFs";
         read_sync_int(input.exx_opt_orb_lmax);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_opt_orb_lmax < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_opt_orb_lmax must >= 0");
-            }
-        };
         this->add_item(item);
     }
     {

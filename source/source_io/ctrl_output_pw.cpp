@@ -90,15 +90,17 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 		const ModulePW::PW_Basis *pw_rho,
 		const ModulePW::PW_Basis *pw_rhod,
 		const ModulePW::PW_Basis_Big *pw_big,
-        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-        psi::Psi<T, Device>* kspw_psi,
-        psi::Psi<std::complex<double>, Device>* __kspw_psi,
+        Setup_Psi<T, Device> &stp,
         const Device* ctx,
+        const base_device::AbacusDevice_t &device,
         const Parallel_Grid &para_grid,
         const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::tick("ModuleIO", "ctrl_scf_pw");
+
+    // Transfer data from device (GPU) to host (CPU) in pw basis
+    stp.copy_d2h(device);
 
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)
@@ -160,17 +162,10 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.out_pchg.size() > 0)
     {
-        if (__kspw_psi != nullptr && inp.precision == "single")
-        {
-            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(__kspw_psi);
-        }
+        // update psi_d
+        stp.update_psi_d();
 
-        // Refresh __kspw_psi
-        __kspw_psi = inp.precision == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi);
-
-        const int nbands = kspw_psi->get_nbands();
+        const int nbands = stp.psi_t->get_nbands();
         const int ngmc = chr.ngmc;
 
         ModuleIO::get_pchg_pw(inp.out_pchg,
@@ -179,7 +174,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                               pw_rhod->nxyz,
                               ngmc,
                               &ucell,
-                              __kspw_psi,
+                              stp.psi_d,
                               pw_rhod,
                               pw_wfc,
                               ctx,
@@ -207,7 +202,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                            inp.nnkpfile,
                            inp.wannier_spin);
         wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
-        wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, psi);
+        wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, stp.psi_cpu);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
@@ -219,7 +214,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
         berryphase bp;
-        bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, psi, pw_rho, pw_wfc, kv);
+        bp.Macroscopic_polarization(ucell, pw_wfc->npwk_max, stp.psi_cpu, pw_rho, pw_wfc, kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 
@@ -241,7 +236,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.onsite_radius > 0)
     { // float type has not been implemented
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi),
+        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.psi_t),
                                   pelec->wg);
     }
 
@@ -257,9 +252,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         ModulePW::PW_Basis* pw_rhod,
 		Charge &chr,
         K_Vectors &kv,
-		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-		psi::Psi<T, Device>* kspw_psi,
-		psi::Psi<std::complex<double>, Device>* __kspw_psi,
+        Setup_Psi<T, Device> &stp,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
 		surchem &solvent,
@@ -276,7 +269,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 	if (inp.out_ldos[0])
 	{
 		ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
-			    psi[0], para_grid, ucell);
+			    stp.psi_cpu[0], para_grid, ucell);
 	}
 
     //----------------------------------------------------------
@@ -296,7 +289,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               << " a.u." << std::endl;
                 }
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(psi[0], sf, kv, pw_wfc, ucell, i);
+                numerical_basis.output_overlap(stp.psi_cpu[0], sf, kv, pw_wfc, ucell, i);
             }
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
         }
@@ -307,23 +300,15 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     //----------------------------------------------------------
     if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
     {
-        if (__kspw_psi != nullptr && inp.precision == "single")
-        {
-            delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(__kspw_psi);
-        }
-
-        // Refresh __kspw_psi
-        __kspw_psi = inp.precision == "single"
-                               ? new psi::Psi<std::complex<double>, Device>(kspw_psi[0])
-                               : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(kspw_psi);
+        stp.update_psi_d();
 
         ModuleIO::get_wf_pw(inp.out_wfc_norm,
                             inp.out_wfc_re_im,
-                            kspw_psi->get_nbands(),
+                            stp.psi_t->get_nbands(),
                             inp.nspin,
                             pw_rhod->nxyz,
                             &ucell,
-                            __kspw_psi,
+                            stp.psi_d,
                             pw_wfc,
                             ctx,
                             para_grid,
@@ -339,7 +324,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     if (inp.cal_cond)
     {
         using Real = typename GetTypeReal<T>::type;
-        EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, kspw_psi, &ppcell);
+        EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.psi_t, &ppcell);
         elec_cond.KG(inp.cond_smear,
                      inp.cond_fwhm,
                      inp.cond_wcut,
@@ -376,7 +361,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                              pw_rho);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
-                                               kspw_psi,
+                                               stp.psi_t,
                                                pelec,
                                                pw_wfc,
                                                pw_rho,
@@ -399,10 +384,9 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -417,10 +401,9 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_CPU> &stp,
     const base_device::DEVICE_CPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -436,10 +419,9 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 
@@ -454,10 +436,9 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
     const ModulePW::PW_Basis *pw_rho,
     const ModulePW::PW_Basis *pw_rhod,
     const ModulePW::PW_Basis_Big *pw_big,
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_GPU> &stp,
     const base_device::DEVICE_GPU* ctx,
+    const base_device::AbacusDevice_t &device,
     const Parallel_Grid &para_grid,
     const Input_para& inp);
 #endif
@@ -471,9 +452,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -490,9 +469,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
 	ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_CPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -510,9 +487,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<float>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,
@@ -529,9 +504,7 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
     ModulePW::PW_Basis* pw_rhod,
 	Charge &chr,
 	K_Vectors &kv,
-	psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // T and Device
-	psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* __kspw_psi, // Device
+    Setup_Psi<std::complex<double>, base_device::DEVICE_GPU> &stp,
     Structure_Factor &sf,
     pseudopot_cell_vnl &ppcell,
 	surchem &solvent,

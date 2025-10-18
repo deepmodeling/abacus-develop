@@ -1,7 +1,7 @@
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
-#include "source_base/memory.h"
+
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -26,12 +26,11 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const int& david_ndim_in,
                                                 const double& diag_thr_in,
                                                 const int& diag_nmax_in,
-                                                const bool& need_subspace_in,
                                                 const diag_comm_info& diag_comm_in,
                                                 const int diag_subspace_in,
                                                 const int diago_subspace_bs_in)
     : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in),
+      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in),
         diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
@@ -76,7 +75,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     {
         resmem_real_op()(this->d_precondition, nbasis_in);
         // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
-        base_device::memory::resize_memory_op<T, Device>()(this->d_scc, this->nbase_x * this->nbase_x);
+        resmem_complex_op()(this->d_scc, this->nbase_x * this->nbase_x);
         resmem_real_op()(this->d_eigenvalue, this->nbase_x);
     }
 #endif
@@ -370,7 +369,6 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     {
         Real* psi_norm = nullptr;
         resmem_real_op()(psi_norm, notconv);
-        using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
         setmem_real_op()(psi_norm, 0.0, notconv);
 
         normalize_op<T, Device>()(this->dim,
@@ -541,7 +539,7 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->diag_comm.rank == 0)
         {
-            base_device::memory::synchronize_memory_op<T, Device, Device>()(this->d_scc, scc, nbase * this->nbase_x);
+            syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
             hegvd_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }

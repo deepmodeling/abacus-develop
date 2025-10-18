@@ -236,12 +236,6 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
-        Input_Item item("out_bandgap");
-        item.annotation = "if true, print out bandgap";
-        read_sync_bool(input.out_bandgap);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
 		item.read_value = [](const Input_Item& item, Parameter& para) {

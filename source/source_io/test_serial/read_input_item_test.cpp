@@ -766,7 +766,7 @@ TEST_F(InputTest, Item_test)
     }
     { // relax_method
         auto it = find_label("relax_method", readinput.input_lists);
-        param.input.relax_method = "none";
+        param.input.relax_method[0] = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -775,12 +775,12 @@ TEST_F(InputTest, Item_test)
     { //relax_new
         auto it = find_label("relax_new", readinput.input_lists);
         param.input.relax_new = true;
-        param.input.relax_method = "cg";
+        param.input.relax_method[0] = "cg";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_new, true);
 
         param.input.relax_new = true;
-        param.input.relax_method = "none";
+        param.input.relax_method[0] = "none";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_new, false);
     }
@@ -1398,14 +1398,6 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EQ(param.input.exx_ccp_rmesh_times, "1");
 
         param.input.exx_ccp_rmesh_times = "0";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // exx_opt_orb_lmax
-        auto it = find_label("exx_opt_orb_lmax", readinput.input_lists);
-        param.input.exx_opt_orb_lmax = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

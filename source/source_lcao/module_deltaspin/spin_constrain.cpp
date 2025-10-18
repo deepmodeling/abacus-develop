@@ -487,7 +487,7 @@ double SpinConstrain<FPTYPE>::get_sc_drop_thr()
 }
 
 template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_solver_parameters(K_Vectors& kv_in,
+void SpinConstrain<FPTYPE>::set_solver_parameters(const K_Vectors& kv_in,
                                                   void* p_hamilt_in,
                                                   void* psi_in,
                                                   elecstate::ElecState* pelec_in)

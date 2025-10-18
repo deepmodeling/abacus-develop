@@ -7,6 +7,7 @@ add_library(
 add_library(
     psi_overall_init
     OBJECT
+    setup_psi.cpp
     psi_init.cpp
 )
 
@@ -21,6 +22,7 @@ add_library(
   psi_initializer_nao.cpp
   psi_initializer_nao_random.cpp
 )
+
 
 if(ENABLE_COVERAGE)
   add_coverage(psi)

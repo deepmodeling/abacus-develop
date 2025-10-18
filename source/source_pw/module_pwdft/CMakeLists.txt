@@ -12,6 +12,8 @@ list(APPEND objects
     operator_pw/op_exx_pw.cpp
     operator_pw/exx_pw_ace.cpp
     operator_pw/exx_pw_pot.cpp
+    setup_pot.cpp
+    setup_pwrho.cpp
     forces_nl.cpp
     forces_cc.cpp
     forces_scc.cpp

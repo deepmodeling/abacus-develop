@@ -67,6 +67,53 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     delete ptempRho;
 }
 
+void Write_MLKEDF_Descriptors::generateTrainData_KS(
+    const std::string& out_dir,
+    psi::Psi<std::complex<float>> *psi,
+    elecstate::ElecState *pelec,
+    ModulePW::PW_Basis_K *pw_psi,
+    ModulePW::PW_Basis *pw_rho,
+    UnitCell& ucell,
+    const double* veff
+)
+{
+    psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_double(*psi);
+
+    this->generateTrainData_KS(out_dir, &psi_double, pelec, pw_psi, pw_rho, ucell, veff);
+}
+
+#if ((defined __CUDA) || (defined __ROCM))
+void Write_MLKEDF_Descriptors::generateTrainData_KS(
+    const std::string& out_dir,
+    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi,
+    elecstate::ElecState *pelec,
+    ModulePW::PW_Basis_K *pw_psi,
+    ModulePW::PW_Basis *pw_rho,
+    UnitCell& ucell,
+    const double* veff
+)
+{
+    psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_cpu(*psi);
+
+    this->generateTrainData_KS(out_dir, &psi_cpu, pelec, pw_psi, pw_rho, ucell, veff);
+}
+
+void Write_MLKEDF_Descriptors::generateTrainData_KS(
+    const std::string& dir,
+    psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* psi,
+    elecstate::ElecState *pelec,
+    ModulePW::PW_Basis_K *pw_psi,
+    ModulePW::PW_Basis *pw_rho,
+    UnitCell& ucell,
+    const double *veff
+)
+{
+    psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_cpu_double(*psi);
+
+    this->generateTrainData_KS(dir, &psi_cpu_double, pelec, pw_psi, pw_rho, ucell, veff);
+}
+#endif
+
 void Write_MLKEDF_Descriptors::generate_descriptor(
     const std::string& out_dir,
     const double * const *prho, 

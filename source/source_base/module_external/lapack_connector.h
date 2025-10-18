@@ -1,5 +1,26 @@
-#ifndef LAPACKCONNECTOR_HPP
-#define LAPACKCONNECTOR_HPP
+/**
+ * @file lapack_connector.h
+ * 
+ * @brief This is a wrapper of some LAPACK routines.
+ * \b Row-Major version.
+ * 
+ * @warning MAY BE DEPRECATED IN THE FUTURE.
+ * @warning For Column-major version, please refer to \c source/source_base/module_container/base/third_party/lapack.h.
+ * 
+ * @note 
+ * !!! Note that 
+ * This wrapper is a <b>C++ style</b> wrapper of LAPACK routines,
+ * i.e., assuming that the input matrices are in \b row-major order.
+ * The data layout in C++ is row-major, C style,
+ * while the original LAPACK is column-major, fortran style.
+ * (ModuleBase::ComplexMatrix is in row-major order)
+ * The wrapper will do the data transformation between
+ * row-major and column-major order automatically.
+ * 
+ */
+
+#ifndef LAPACK_CONNECTOR_HPP
+#define LAPACK_CONNECTOR_HPP
 
 #include <new>
 #include <stdexcept>
@@ -11,8 +32,10 @@
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
-//  - d stands for double
-//  - z stands for complex double
+// - s stands for float
+// - d stands for double
+// - c stands for complex float
+// - z stands for complex double
 //"mm" specifies the type of matrix, for example:
 //  - he stands for hermitian
 //  - sy stands for symmetric
@@ -218,9 +241,8 @@ void zhegvx_i(const int* itype,
 // Class LapackConnector provide the connector to fortran lapack routine.
 // The entire function in this class are static and inline function.
 // Usage example:	LapackConnector::functionname(parameter list).
-class LapackConnector
+namespace LapackConnector
 {
-private:
     // Transpose the std::complex matrix to the fortran-form real-std::complex array.
     static inline
     std::complex<double>* transpose(const ModuleBase::ComplexMatrix& a, const int n, const int lda)
@@ -327,7 +349,6 @@ private:
 		}
 	}
 
-public:
     // wrap function of fortran lapack routine zheev.
     static inline
     void zheev( const char jobz,
@@ -467,5 +488,5 @@ public:
         const char trans_changed = change_trans_NC(trans);
         cherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
     }
-};
-#endif  // LAPACKCONNECTOR_HPP
+} // namespace LapackConnector
+#endif  // LAPACK_CONNECTOR_HPP

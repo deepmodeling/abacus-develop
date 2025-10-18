@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+
 // It stores all input parameters both defined in INPUT file and not defined in
 // INPUT file
 struct Input_para
@@ -150,7 +151,7 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::string relax_method = "cg"; ///< methods to move_ion: sd, bfgs, cg...
+    std::vector<std::string> relax_method = {"cg","1"}; ///< methods to move_ion: sd, bfgs, cg...
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
@@ -378,7 +379,6 @@ struct Input_para
     std::string out_level = "ie";         ///< control the output information.
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
     std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
-    bool out_bandgap = false;             ///< QO added for bandgap printing
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
@@ -686,5 +686,10 @@ struct Input_para
     // src/gga_c_pbe.c
     std::vector<double> xc_corr_ext = {
         130, 0.06672455060314922, 0.031090690869654895034, 1.00000};
+
+    // ==============   #Parameters (24.td-ofdft) ===========================
+    bool of_cd = false;      ///< add CD potential or not   https://doi.org/10.1103/PhysRevB.98.144302
+    double of_mCD_alpha = 1.0;     /// parameter of modified CD Potential
+
 };
 #endif

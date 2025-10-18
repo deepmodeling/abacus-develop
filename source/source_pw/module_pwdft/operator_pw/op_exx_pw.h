@@ -55,13 +55,14 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     bool first_iter = true;
 
+    static std::vector<Real> fock_div, erfc_div;
+
   private:
     const int* isk = nullptr;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
-//    Real exx_div = 0;
     Real tpiba = 0;
     
     std::vector<int> get_q_points(const int ik) const;
@@ -167,7 +168,10 @@ void get_exx_potential(const K_Vectors* kv,
                        Real* pot,
                        double tpiba,
                        bool gamma_extrapolation,
-                       double ucell_omega);
+                       double ucell_omega,
+                       int ik,
+                       int iq,
+                       bool is_stress = false);
 
 template <typename Real, typename Device>
 void get_exx_stress_potential(const K_Vectors* kv,
@@ -176,7 +180,9 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               Real* pot,
                               double tpiba,
                               bool gamma_extrapolation,
-                              double ucell_omega);
+                              double ucell_omega,
+                              int ik,
+                              int iq);
 
 double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
                       double erfc_omega,
