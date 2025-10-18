@@ -30,6 +30,7 @@ list(APPEND objects
     write_elecstat_pot.cpp
     write_elf.cpp
     write_dipole.cpp
+    write_init.cpp
     write_mlkedf_descriptors.cpp
     td_current_io.cpp
     write_libxc_r.cpp

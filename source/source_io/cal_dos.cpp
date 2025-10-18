@@ -7,7 +7,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 void ModuleIO::prepare_dos(std::ofstream& ofs_running,
-		const elecstate::efermi &energy_fermi,
+		const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const int nks,
         const int nbands,

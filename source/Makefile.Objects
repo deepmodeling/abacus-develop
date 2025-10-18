@@ -579,6 +579,7 @@ OBJS_IO=input_conv.o\
     write_elecstat_pot.o\
     write_elf.o\
     write_dipole.o\
+    write_init.o\
     td_current_io.o\
     write_libxc_r.o\
     output_log.o\

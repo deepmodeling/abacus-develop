@@ -13,13 +13,12 @@
 //a forward declaration of UnitCell
 class UnitCell;
 
-//==========================================================
 // Electron Charge Density
-//==========================================================
 class Charge
 {
 
   public:
+
     Charge();
     ~Charge();
 
@@ -43,8 +42,8 @@ class Charge
 
     double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
     double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
-                                   // wenfei 2021-07-28
     const Parallel_Grid* pgrid = nullptr;
+
   private:
 
     //temporary
@@ -56,6 +55,7 @@ class Charge
     double *_space_kin_r_save = nullptr;
 
   public:
+
     double **nhat = nullptr; //compensation charge for PAW
     double **nhat_save = nullptr; //compensation charge for PAW
                                  // wenfei 2023-09-05
@@ -77,7 +77,7 @@ class Charge
      * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
-    void init_rho(elecstate::efermi& eferm_iout,
+    void init_rho(elecstate::Efermi& eferm_iout,
                   const UnitCell& ucell,
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucFac,
@@ -96,6 +96,7 @@ class Charge
     void set_rho_core(const UnitCell& ucell,
                       const ModuleBase::ComplexMatrix& structure_factor, 
                       const bool* numeric);
+
     void set_rho_core_paw();
 
     void renormalize_rho();
@@ -119,14 +120,13 @@ class Charge
 
 	double cal_rho2ne(const double *rho_in) const;
 
-  void check_rho(); // to check whether the charge density is normal
+    void check_rho(); // to check whether the charge density is normal
 
-  void init_final_scf(); //LiuXh add 20180619
+    void init_final_scf(); //LiuXh add 20180619
 
 	public:
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
-     * 
      */
     void init_chgmpi();
 
@@ -136,14 +136,14 @@ class Charge
      */
     void rho_mpi();
 
-	  /**
-	   * @brief 	Reduce among different pools 
+	/**
+	 * @brief 	Reduce among different pools 
      *          If NPROC_IN_POOLs are all the same, use GlobalV::KP_WORLD
      *          else, gather rho in a POOL, and then reduce among different POOLs
-	   * 
-	   * @param array_rho f(rho): an array [nrxx]
-	   */
-	  void reduce_diff_pools(double* array_rho) const;
+	 * 
+	 * @param array_rho f(rho): an array [nrxx]
+	 */
+	void reduce_diff_pools(double* array_rho) const;
 
     void set_omega(double* omega_in){this->omega_ = omega_in;};
 
@@ -154,6 +154,7 @@ class Charge
     int nspin=0; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
     bool cal_elf = false; // whether to calculate electron localization function (ELF)
+
   private:
 
     void destroy();    // free arrays  liuyu 2023-03-12
@@ -163,8 +164,8 @@ class Charge
     bool allocate_rho;
 
     bool allocate_rho_final_scf; // LiuXh add 20180606
+
 #ifdef __MPI
-  private:
     int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
     int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
 #endif
