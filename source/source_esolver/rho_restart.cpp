@@ -1,5 +1,6 @@
 #include "rho_restart.h"
 
+/*
 void ModuleESolver::rho_restart(const Input_para& inp,
 		const UnitCell& ucell, 
         const elecstate::ElecState& elec,
@@ -145,3 +146,4 @@ void ModuleESolver::rho_restart(const Input_para& inp,
 #endif
 
 }
+*/

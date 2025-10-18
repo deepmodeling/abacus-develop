@@ -18,6 +18,7 @@ extern "C"
 }
 #endif
 #include "esolver_dp.h"
+#include "esolver_nep.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
@@ -96,6 +97,10 @@ std::string determine_type()
     else if (PARAM.inp.esolver_type == "dp")
     {
         esolver_type = "dp_pot";
+    }
+    else if (PARAM.inp.esolver_type == "nep")
+    {
+        esolver_type = "nep_pot";
     }
     else if (esolver_type == "none")
     {
@@ -337,6 +342,10 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "dp_pot")
     {
         return new ESolver_DP(PARAM.mdp.pot_file);
+    }
+    else if (esolver_type == "nep_pot")
+    {
+        return new ESolver_NEP(PARAM.mdp.pot_file);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));

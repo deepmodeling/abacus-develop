@@ -250,6 +250,7 @@ OBJS_ELECSTAT=elecstate.o\
     read_pseudo.o\
     cal_wfc.o\
     setup_estate_pw.o\
+    update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
@@ -267,6 +268,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_sdft_pw.o\
     esolver_lj.o\
     esolver_dp.o\
+    esolver_nep.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_tool.o\
@@ -764,6 +766,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
     symmetry_rhog.o\
+    setup_psi.o\
     psi_init.o\
     elecond.o\
     sto_tool.o\

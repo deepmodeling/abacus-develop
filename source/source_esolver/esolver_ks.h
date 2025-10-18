@@ -46,9 +46,6 @@ class ESolver_KS : public ESolver_FP
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver){};
-
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
 

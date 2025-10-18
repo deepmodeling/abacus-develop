@@ -52,8 +52,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
-
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;

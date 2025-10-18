@@ -111,9 +111,9 @@ process_many_npys() {
     # energy 
     process_npy "$mode" "abs" "etot" "" "deepks_e_label$suffix" "$output_file"
     process_npy "$mode" "delta" "etot" "ebase" "deepks_edelta$suffix" "$output_file"
-    
-    # For deepks_bandgap = 1
-    if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
+
+    # For deepks_bandgap > 0
+    if ! test -z "$deepks_bandgap" && [ $deepks_bandgap -gt 0 ]; then
         process_npy "$mode" "abs" "otot" "" "deepks_o_label$suffix" "$output_file"
         process_npy "$mode" "delta" "otot" "obase" "deepks_odelta$suffix" "$output_file"
         process_npy "$mode" "numpy" "orbpre" "" "deepks_oprec$suffix" "$output_file"

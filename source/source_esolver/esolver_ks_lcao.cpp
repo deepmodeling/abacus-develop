@@ -446,22 +446,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
-{
-    ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
-
-    if (!conv_esolver)
-    {
-        elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(&this->chr, &ucell);
-        this->pelec->f_en.descf = this->pelec->cal_delta_escf();
-    }
-    else
-    {
-        this->pelec->cal_converged();
-    }
-}
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)

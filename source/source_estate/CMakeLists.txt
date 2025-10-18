@@ -39,6 +39,7 @@ list(APPEND objects
     read_pseudo.cpp
     cal_wfc.cpp
     setup_estate_pw.cpp
+    update_pot.cpp
 )
 
 if(ENABLE_LCAO)
