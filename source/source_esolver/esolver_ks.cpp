@@ -1,5 +1,4 @@
 #include "esolver_ks.h"
-#include "pw_setup.h" // setup plane wave
 
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
@@ -25,6 +24,7 @@
 
 #include "source_estate/update_pot.h" // mohan add 20251016
 #include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
+#include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 
 namespace ModuleESolver
 {
@@ -40,10 +40,12 @@ ESolver_KS<T, Device>::~ESolver_KS()
 	// do not add any codes in this deconstructor funcion
 	//****************************************************
 	delete this->psi;
-    delete this->pw_wfc;
     delete this->p_hamilt;
     delete this->p_chgmix;
     this->ppcell.release_memory();
+    
+    // mohan add 2025-10-18, should be put int clean() function
+    pw::teardown_pwwfc(this->pw_wfc);
 }
 
 
@@ -65,69 +67,47 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     this->niter = maxniter;
     this->drho = 0.0;
 
-    std::string fft_device = inp.device;
-
-    //! 3) setup pw_wfc
-    // currently LCAO doesn't support GPU acceleration of FFT
-    if(inp.basis_type == "lcao")
-    {
-        fft_device = "cpu";
-    }
-    std::string fft_precision = inp.precision;
-#ifdef __ENABLE_FLOAT_FFTW
-    if (inp.cal_cond && inp.esolver_type == "sdft")
-    {
-        fft_precision = "mixing";
-    }
-#endif
-
-    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, fft_precision);
-
-    // for LCAO calculations, we need to set bx, by, and bz
-    ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
-    tmp->setbxyz(inp.bx, inp.by, inp.bz);
-
-    //! 4) setup charge mixing
-    p_chgmix = new Charge_Mixing();
-    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-
     // cell_factor
     this->ppcell.cell_factor = inp.cell_factor;
 
+    //! 3) setup charge mixing
+    p_chgmix = new Charge_Mixing();
+    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
+
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    //! 5) setup Exc for the first element '0', because all elements have same exc 
+    //! 4) setup Exc for the first element '0', because all elements have same exc 
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     
-    //! 6) setup the charge mixing parameters
+    //! 5) setup the charge mixing parameters
     p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
       inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
       inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
 
     p_chgmix->init_mixing();
 
-    //! 7) symmetry analysis should be performed every time the cell is changed
+    //! 6) symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
-    //! 8) Setup the k points according to symmetry.
+    //! 7) Setup the k points according to symmetry.
     this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-    //! 9) print information
+    //! 8) print information
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
-    //! 10) setup plane wave for electronic wave functions
-    ModuleESolver::pw_setup(inp, ucell, *this->pw_rho, this->kv, *this->pw_wfc);
+    //! 9) setup plane wave for electronic wave functions
+    pw::setup_pwwfc(inp, ucell, *this->pw_rho, this->kv, this->pw_wfc);
 
-    //! 11) parallel of FFT grid 
+    //! 10) parallel of FFT grid 
 	Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
 			this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
 
-    //! 12) calculate the structure factor
+    //! 11) calculate the structure factor
     this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 }
 

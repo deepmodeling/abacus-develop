@@ -274,7 +274,6 @@ OBJS_ESOLVER=esolver.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
-    pw_setup.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
@@ -725,6 +724,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     fp_energy.o\
     setup_pot.o\
     setup_pwrho.o\
+    setup_pwwfc.o\
     forces.o\
     forces_us.o\
     forces_nl.o\
