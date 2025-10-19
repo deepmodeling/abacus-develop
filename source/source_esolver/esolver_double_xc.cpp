@@ -399,8 +399,6 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                        this->pv,
                        this->pelec_base,
                        this->psi,
-                       this->GG, // mohan add 2024-04-01
-                       this->GK, // mohan add 2024-04-01
                        this->two_center_bundle_,
                        this->orb_,
                        force_base,

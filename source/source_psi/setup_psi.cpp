@@ -74,3 +74,5 @@ void Setup_Psi<T>::deallocate_psi(psi::Psi<T>* &psi)
 
 template class Setup_Psi<double>;
 template class Setup_Psi<std::complex<double>>;
+template class Setup_Psi<float>;
+template class Setup_Psi<std::complex<float>>;

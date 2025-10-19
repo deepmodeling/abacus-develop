@@ -10,26 +10,9 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/force_stress_arrays.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_psi/psi.h"
 #include "source_lcao/setup_deepks.h"
 
-#ifndef TGINT_H
-#define TGINT_H
-template <typename T>
-struct TGint;
-template <>
-struct TGint<double>
-{
-    using type = Gint_Gamma;
-};
-template <>
-struct TGint<std::complex<double>>
-{
-    using type = Gint_k;
-};
-#endif
 
 template <typename T>
 class Force_Stress_LCAO;
@@ -67,7 +50,6 @@ class Force_LCAO
                 ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
                 Setup_DeePKS<T>& deepks,
-                typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
                 const LCAO_Orbitals& orb,
                 const Parallel_Orbitals& pv,
@@ -127,7 +109,6 @@ class Force_LCAO
     void cal_fvl_dphi(const bool isforce,
                       const bool isstress,
                       const elecstate::Potential* pot_in,
-                      typename TGint<T>::type& gint,
                       ModuleBase::matrix& fvl_dphi,
                       ModuleBase::matrix& svl_dphi);
 

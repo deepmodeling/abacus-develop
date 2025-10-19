@@ -10,6 +10,12 @@
 #include "source_base/tool_title.h" // use title
 #include "source_base/global_function.h" // use READ_VALUE
 
+// mohan add 2025-10-19
+void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, float& data)
+{
+    ifs >> data;
+}
+
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, double& data)
 {
     ifs >> data;
@@ -21,6 +27,14 @@ void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& d
     double b = 0.0;
     ifs >> a >> b;
     data = std::complex<double>(a, b);
+}
+
+void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, std::complex<float>& data)
+{
+    float a = 0.0;
+    float b = 0.0;
+    ifs >> a >> b;
+    data = std::complex<float>(a, b);
 }
 
 template <typename T>
@@ -218,9 +232,33 @@ template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_di
     const int istep,
     const int skip_band);
 
+// mohan add 2025-10-19
+template bool ModuleIO::read_wfc_nao<float>(const std::string& global_readin_dir,
+    const Parallel_Orbitals& ParaV,
+    psi::Psi<float>& psid,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
+    const int istep,
+    const int skip_band);
+
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
 	psi::Psi<std::complex<double>>& psid,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
+	const std::vector<int> &ik2iktot,
+	const int nkstot,
+	const int nspin,
+    const int istep,
+	const int skip_band);
+
+// mohan add 2025-10-19
+template bool ModuleIO::read_wfc_nao<std::complex<float>>(const std::string& global_readin_dir,
+    const Parallel_Orbitals& ParaV,
+	psi::Psi<std::complex<float>>& psid,
 	ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,

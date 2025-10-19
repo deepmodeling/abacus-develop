@@ -207,7 +207,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
                                               Setup_DeePKS<std::complex<double>>& deepks,
-                                              TGint<std::complex<double>>::type& gint,
                                               const TwoCenterBundle& two_center_bundle,
                                               const LCAO_Orbitals& orb,
                                               const Parallel_Orbitals& pv,
@@ -247,7 +246,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     // doing on the real space grid.
     // vl_dphi
     PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell,
-                                   pelec->pot, gint, isforce, isstress,
+                                   pelec->pot, isforce, isstress,
                                    false /*reset dm to gint*/);
 
 #ifdef __MLALGO

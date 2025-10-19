@@ -308,29 +308,13 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    fsl.getForceStress(ucell,
-                       PARAM.inp.cal_force,
-                       PARAM.inp.cal_stress,
-                       PARAM.inp.test_force,
-                       PARAM.inp.test_stress,
-                       this->gd,
-                       this->pv,
-                       this->pelec,
-                       this->psi,
-                       this->GG, // mohan add 2024-04-01
-                       this->GK, // mohan add 2024-04-01
-                       two_center_bundle_,
-                       orb_,
-                       force,
-                       this->scs,
-                       this->locpp,
-                       this->sf,
-                       this->kv,
-                       this->pw_rho,
-                       this->solvent,
-                       this->deepks,
-                       this->exx_nao,
-                       &ucell.symm);
+    fsl.getForceStress(ucell, PARAM.inp.cal_force, PARAM.inp.cal_stress, 
+                       PARAM.inp.test_force, PARAM.inp.test_stress,
+                       this->gd, this->pv, this->pelec, this->psi,
+                       two_center_bundle_, orb_, force, this->scs,
+                       this->locpp, this->sf, this->kv,
+                       this->pw_rho, this->solvent, this->deepks,
+                       this->exx_nao, &ucell.symm);
 
     // delete RA after cal_force
     this->RA.delete_grid();

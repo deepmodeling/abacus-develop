@@ -14,8 +14,6 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
 #include "force_stress_arrays.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
 
@@ -41,8 +39,6 @@ class Force_Stress_LCAO
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
                         const psi::Psi<T>* psi,
-                        Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-                        Gint_k& gint_k,         // mohan add 2024-04-01
                         const TwoCenterBundle& two_center_bundle,
                         const LCAO_Orbitals& orb,
                         ModuleBase::matrix& fcs,
@@ -96,8 +92,6 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
                        Setup_DeePKS<T>& deepks,
-                       Gint_Gamma& gint_gamma,
-                       Gint_k& gint_k,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        const Parallel_Orbitals& pv,
