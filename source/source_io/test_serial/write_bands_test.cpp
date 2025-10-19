@@ -1,17 +1,17 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/nscf_band.h"
+#include "source_io/write_bands.h"
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/klist.h"
 
 
 /************************************************
- *  unit test of nscf_band
+ *  unit test of ns
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - nscf_band()
+ *   - nscf_bands()
  *     - output band structure in nscf calculation
  */
 
@@ -61,14 +61,14 @@ protected:
     K_Vectors* kv;
 };
 
-TEST_F(BandTest, nscf_band)
+TEST_F(BandTest, nscf_bands)
 {
     kv->para_k.nks_pool.resize(1);
     kv->para_k.nks_pool[0] = nks;
     kv->para_k.nkstot_np = nks;
     kv->para_k.nks_np = nks;
     // Call the function to be tested
-    ModuleIO::nscf_band(is, out_band_dir, nband, fermie, 8, ekb, *kv);
+    ModuleIO::nscf_bands(is, out_band_dir, nband, fermie, 8, ekb, *kv);
 
     // Check the output file
     std::ifstream ifs(out_band_dir);

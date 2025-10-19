@@ -150,7 +150,7 @@ class ElecState
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
-    efermi eferm; ///< fermi energies
+    Efermi eferm; ///< fermi energies
 
     // below defines the bandgap:
 

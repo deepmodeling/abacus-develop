@@ -250,6 +250,7 @@ OBJS_ELECSTAT=elecstate.o\
     read_pseudo.o\
     cal_wfc.o\
     setup_estate_pw.o\
+    update_pot.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\
@@ -273,7 +274,6 @@ OBJS_ESOLVER=esolver.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
     pw_others.o\
-    pw_setup.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
@@ -546,7 +546,7 @@ OBJS_IO=input_conv.o\
     cal_test.o\
     write_dos_pw.o\
     nscf_fermi_surf.o\
-    nscf_band.o\
+    write_bands.o\
     cal_dos.o\
     cal_pdos_gamma.o\
     cal_pdos_multik.o\
@@ -579,6 +579,7 @@ OBJS_IO=input_conv.o\
     write_elecstat_pot.o\
     write_elf.o\
     write_dipole.o\
+    write_init.o\
     td_current_io.o\
     write_libxc_r.o\
     output_log.o\
@@ -724,6 +725,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     fp_energy.o\
     setup_pot.o\
     setup_pwrho.o\
+    setup_pwwfc.o\
     forces.o\
     forces_us.o\
     forces_nl.o\

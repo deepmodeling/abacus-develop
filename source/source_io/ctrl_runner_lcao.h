@@ -8,9 +8,7 @@
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "source_lcao/module_gint/gint_k.h" // use Gint_k
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#endif
+#include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
 
 namespace ModuleIO
 {
@@ -33,12 +31,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		ModulePW::PW_Basis* pw_rho,   // charge density
 		ModulePW::PW_Basis* pw_rhod,  // dense charge density 
 		Structure_Factor &sf,         // structure factor
-        ModuleBase::matrix &vloc,     // local pseudopotential 
-#ifdef __EXX
-		std::shared_ptr<Exx_LRI_Interface<TK, double>> exd,
-		std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc,
-#endif
-        surchem &solvent);             // solvent model
+		ModuleBase::matrix &vloc,     // local pseudopotential 
+		Exx_NAO<TK> &exx_nao,
+		surchem &solvent);             // solvent model
 
 }
 

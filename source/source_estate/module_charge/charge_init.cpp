@@ -18,7 +18,7 @@
 #include "source_io/rhog_io.h"
 #include "source_io/read_wf2rho_pw.h"
 
-void Charge::init_rho(elecstate::efermi& eferm_iout,
+void Charge::init_rho(elecstate::Efermi& eferm_iout,
                       const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,

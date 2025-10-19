@@ -64,7 +64,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
+    // mohan change update_pot to save2, 2025-10-17
+    void save2(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 

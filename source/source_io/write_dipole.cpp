@@ -37,9 +37,9 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
 
 #ifndef __MPI
     double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
-    double lat_factor_x = ucell.lat0 * 0.529177 / rhopw->nx;
-    double lat_factor_y = ucell.lat0 * 0.529177 / rhopw->ny;
-    double lat_factor_z = ucell.lat0 * 0.529177 / rhopw->nz;
+    double lat_factor_x = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->nx;
+    double lat_factor_y = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->ny;
+    double lat_factor_z = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->nz;
 
     for (int k = 0; k < rhopw->nz; k++)
     {

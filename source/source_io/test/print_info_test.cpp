@@ -33,7 +33,7 @@ bool berryphase::berry_phase_flag=false;
 
 /**
  * - Tested Functions:
- *   - setup_parameters()
+ *   - print_parameters()
  *     - setup calculation parameters
  */
 
@@ -73,7 +73,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 			PARAM.sys.gamma_only_local = false;
 			PARAM.input.calculation = cal_type[i];
 			testing::internal::CaptureStdout();
-            EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+            EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
             output = testing::internal::GetCapturedStdout();
 			if(PARAM.input.calculation == "scf")
 			{
@@ -96,7 +96,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 			{
                 PARAM.input.mdp.md_type = md_types[j];
                 testing::internal::CaptureStdout();
-                EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+                EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
                 if (PARAM.mdp.md_type == "fire")
@@ -131,7 +131,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		PARAM.input.basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
-        EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+        EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
         output = testing::internal::GetCapturedStdout();
 		if(PARAM.input.basis_type == "lcao")
 		{

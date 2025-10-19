@@ -68,9 +68,9 @@ TEST_F(BFGSTest, DetermineStepScaling)
     bfgs.allocate(size);
 
     std::vector<double> steplength = {1.0, 0.1};
-    std::vector<std::vector<double>> dpos = {
-        {1.0, 1.0, 1.0},
-        {0.1, 0.1, 0.1}
+    std::vector<ModuleBase::Vector3<double>> dpos = {
+        ModuleBase::Vector3<double>(1.0, 1.0, 1.0),
+        ModuleBase::Vector3<double>(0.1, 0.1, 0.1)
     };
     double maxstep = 0.5;
     bfgs.DetermineStep(steplength, dpos, maxstep);

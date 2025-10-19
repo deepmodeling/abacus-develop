@@ -6,7 +6,7 @@
 #include "source_psi/psi.h"     // use psi::Psi<T>
 #include "source_hamilt/hamilt.h" // use hamilt::Hamilt<T>
 #include "source_basis/module_ao/parallel_orbitals.h" // use Parallel_Orbitals
-#include "source_estate/fp_energy.h" // use elecstate::efermi
+#include "source_estate/fp_energy.h" // use elecstate::Efermi
 
 
 namespace ModuleIO
@@ -22,7 +22,7 @@ namespace ModuleIO
         const UnitCell& ucell,       // Unit cell information
 		const K_Vectors& kv,         // k-point information in Brillouin zone
 		const int nbands,            // Number of bands
-		const elecstate::efermi &energy_fermi,  // Fermi energy
+		const elecstate::Efermi &energy_fermi,  // Fermi energy
         const ModuleBase::matrix& ekb,          // Eigenvalues per k-point and band
         const ModuleBase::matrix& wg,           // Weights of eigenvalues
         const double& dos_edelta_ev,            // Delta energy

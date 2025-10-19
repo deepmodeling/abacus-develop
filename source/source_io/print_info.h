@@ -15,7 +15,11 @@ namespace ModuleIO
 {
 
 // print out to screen about the readin parameters
-void setup_parameters(UnitCell& ucell, K_Vectors& kv);
+void print_parameters(
+	const UnitCell& ucell, 
+	K_Vectors& kv,
+    const Input_para& inp);
+
 void print_time(time_t& time_start, time_t& time_finish);
 void print_screen(const int& stress_step, const int& force_step, const int& istep);
 //! Print charge density using FFT
