@@ -120,12 +120,8 @@ struct lapack_hegvd<T, DEVICE_GPU> {
     void operator()(
         const int dim,
         const int lda,
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
         T* Mat_A,
         T* Mat_B,
-        const int& dim,
         Real* eigen_val,
         T *eigen_vec)
     {
