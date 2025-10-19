@@ -14,6 +14,7 @@ namespace ModuleIO
  * @param ifs The input file stream to read from.
  * @param data The variable to store the read data value.
  */
+void read_wfc_nao_one_data(std::ifstream& ifs, float& data);
 void read_wfc_nao_one_data(std::ifstream& ifs, double& data);
 
 /**
@@ -22,6 +23,7 @@ void read_wfc_nao_one_data(std::ifstream& ifs, double& data);
  * @param ifs The input file stream to read from.
  * @param data The variable to store the read complex data value.
  */
+void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<float>& data);
 void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
 
 /**
