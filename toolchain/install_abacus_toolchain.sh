@@ -41,6 +41,29 @@ export SHA256_CHECKSUM="${SCRIPTDIR}/checksums.sha256"
 TOOLCHAIN_OPTIONS="$@"
 
 # ------------------------------------------------------------------------
+# DEPRECATED WARNING
+# ------------------------------------------------------------------------
+echo ""
+echo -e "\033[1;31m╔══════════════════════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[1;31m║                                [DEPRECATED]                                  ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;33m║  This script (install_abacus_toolchain.sh) will be deprecated soon.        ║\033[0m"
+echo -e "\033[1;33m║                                                                              ║\033[0m"
+echo -e "\033[1;32m║  Please migrate to the refactored version:                                  ║\033[0m"
+echo -e "\033[1;32m║    → install_abacus_toolchain_new.sh                                        ║\033[0m"
+echo -e "\033[1;32m║                                                                              ║\033[0m"
+echo -e "\033[1;36m║  Migration Guide:                                                            ║\033[0m"
+echo -e "\033[1;36m║    • Use toolchain_*.sh frontend scripts for easier configuration          ║\033[0m"
+echo -e "\033[1;36m║    • New version supports main/alt package version switch                    ║\033[0m"
+echo -e "\033[1;36m║    • Improved parameter handling and error reporting                        ║\033[0m"
+echo -e "\033[1;31m║                                                                              ║\033[0m"
+echo -e "\033[1;31m╚══════════════════════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "\033[1;33mContinuing with legacy script in 3 seconds...\033[0m"
+sleep 3
+echo ""
+
+# ------------------------------------------------------------------------
 # Load common variables and tools
 # ------------------------------------------------------------------------
 source "${SCRIPTDIR}"/common_vars.sh
@@ -106,8 +129,7 @@ OPTIONS:
                           or --with-openblas options will switch --math-mode to the
                           respective modes.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
-                          options are: K20X, K40, K80, P100, V100, Mi50, Mi100, Mi250, 
-                          and no.
+                          options: CUDA architecture number (7.5 / 75, 8.0 / 80, etc) or no
                           This setting determines the value of nvcc's '-arch' flag.
                           Default = no.
 --log-lines               Number of log file lines dumped in case of a non-zero exit code.
@@ -268,19 +290,8 @@ with_gcc="__SYSTEM__"
 with_fftw="__INSTALL__"
 with_libxc="__INSTALL__"
 with_scalapack="__INSTALL__"
-# default math library settings, MATH_MODE picks the math library
-# to use, and with_* defines the default method of installation if it
-# is picked. For non-CRAY systems defaults to mkl if $MKLROOT is
-# available, otherwise defaults to openblas
-if [ "${MKLROOT}" ]; then
-  export MATH_MODE="mkl"
-  with_mkl="__SYSTEM__"
-elif [ "${AOCLhome}" ]; then
-  export MATH_MODE="aocl"
-  with_aocl="__SYSTEM__"
-else
-  export MATH_MODE="openblas"
-fi
+# default math library setting: openblas
+export MATH_MODE="openblas"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
@@ -873,7 +884,7 @@ for ii in ${package_list}; do
 done
 
 # ------------------------------------------------------------------------
-# Build packages unless dry-run mode is enabled.
+# Build packages unless dry-run or pack-run mode is enabled.
 # ------------------------------------------------------------------------
 if [ "${dry_run}" = "__TRUE__" ]; then
   echo "Wrote only configuration files (--dry-run)."
