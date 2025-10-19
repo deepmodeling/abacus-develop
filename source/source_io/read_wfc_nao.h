@@ -1,9 +1,8 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_IO_READ_WFC_NAO_H
+#ifndef READ_WFC_NAO_H
+#define READ_WFC_NAO_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
-#include "source_estate/elecstate.h"
 
 // mohan add 2010-09-09
 namespace ModuleIO
@@ -40,7 +39,8 @@ bool read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	elecstate::ElecState* const pelec,
+	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& wg,
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,

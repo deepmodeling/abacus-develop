@@ -20,6 +20,7 @@
 #include "source_io/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
+#include "source_psi/setup_psi_lcao.h" // mohan add 20251019
 
 namespace ModuleESolver
 {
@@ -74,43 +75,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 5) init electronic wave function psi
-    if (this->psi == nullptr)
-    {
-        int nsk = 0;
-        int ncol = 0;
-        if (PARAM.globalv.gamma_only_local)
-        {
-            nsk = inp.nspin;
-            ncol = this->pv.ncol_bands;
-            if (inp.ks_solver == "genelpa" || inp.ks_solver == "elpa" || inp.ks_solver == "lapack"
-                || inp.ks_solver == "pexsi" || inp.ks_solver == "cusolver"
-                || inp.ks_solver == "cusolvermp")
-            {
-                ncol = this->pv.ncol;
-            }
-        }
-        else
-        {
-            nsk = this->kv.get_nks();
-#ifdef __MPI
-            ncol = this->pv.ncol_bands;
-#else
-            ncol = inp.nbands;
-#endif
-        }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
-    }
-
-    // 6) read psi from file
-    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
-	{
-		if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, 
-			 this->pv, *(this->psi), this->pelec, this->pelec->klist->ik2iktot,
-             this->pelec->klist->get_nkstot(), inp.nspin))
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
-        }
-    }
+    Setup_Psi_LCAO::before_runner();
 
     // 7) init DMK, but DMR is constructed in before_scf()
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);

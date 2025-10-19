@@ -1,6 +1,6 @@
 #include "source_psi/setup_psi.h"
-#include "source_lcao/setup_deepks.h"
-#include "source_lcao/LCAO_domain.h"
+//#include "source_lcao/setup_deepks.h"
+//#include "source_lcao/LCAO_domain.h"
 #include "source_io/module_parameter/parameter.h" // use parameter
 
 template <typename T, typename Device>
