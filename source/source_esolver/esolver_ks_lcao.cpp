@@ -21,6 +21,7 @@
 #include "source_io/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_psi/setup_psi.h" // mohan add 20251019
+#include "source_io/read_wfc_nao.h" 
 
 namespace ModuleESolver
 {
@@ -75,7 +76,19 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 5) init electronic wave function psi
-    Setup_Psi<TK>::allocate_psi(this->psi, this->pelec->ekb, this->pelec->wg, this->kv, this->pv, PARAM.inp);
+    Setup_Psi<TK>::allocate_psi(this->psi, this->kv, this->pv, PARAM.inp);
+
+    //! read psi from file
+    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
+             this->pv, *this->psi, this->pelec->ekb, this->pelec->wg, this->kv.ik2iktot,
+             this->kv.get_nkstot(), PARAM.inp.nspin))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
+        }
+    }
+
 
     // 7) init DMK, but DMR is constructed in before_scf()
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), inp.nspin);

@@ -1,6 +1,5 @@
 #include "source_psi/setup_psi.h"
 #include "source_io/module_parameter/parameter.h" // use parameter
-#include "source_io/read_wfc_nao.h"
 
 template <typename T>
 Setup_Psi<T>::Setup_Psi(){}
@@ -14,8 +13,6 @@ Setup_Psi<T>::~Setup_Psi(){}
 template <typename T>
 void Setup_Psi<T>::allocate_psi(
 		psi::Psi<T>* &psi,
-		ModuleBase::matrix &ekb,
-		ModuleBase::matrix &wg,
 		const K_Vectors &kv,
         const Parallel_Orbitals &para_orb,
 		const Input_para &inp)
@@ -46,19 +43,6 @@ void Setup_Psi<T>::allocate_psi(
 #endif
         }
         psi = new psi::Psi<T>(nsk, ncol, para_orb.nrow, kv.ngk, true);
-    }
-
-    //------------------------------
-    //! read psi from file
-    //------------------------------
-    if (inp.init_wfc == "file" && inp.esolver_type != "tddft")
-    {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
-             para_orb, *psi, ekb, wg, kv.ik2iktot,
-             kv.get_nkstot(), inp.nspin))
-        {
-            ModuleBase::WARNING_QUIT("Setup_Psi", "read electronic wave functions failed");
-        }
     }
 }
 
